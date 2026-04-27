@@ -1,15 +1,31 @@
 import { atom } from "jotai";
 
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType, type Parameter } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { EnsembleMode } from "@modules/ParameterDistributions/typesAndEnums";
 
-import { selectedEnsembleModeAtom, showConstantParametersAtom, showLogParametersAtom } from "./baseAtoms";
+import {
+    selectedEnsembleModeAtom,
+    showConstantParametersAtom,
+    showLogParametersAtom,
+    showNumericDiscreteParametersAtom,
+} from "./baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedPosteriorEnsembleIdentAtom,
     selectedPriorEnsembleIdentAtom,
 } from "./persistableFixableAtoms";
+
+function shouldIncludeDistributionParameter(
+    parameter: Parameter,
+    showNumericDiscreteParameters: boolean,
+): boolean {
+    if (parameter.type === ParameterType.CONTINUOUS) {
+        return true;
+    }
+
+    return showNumericDiscreteParameters && parameter.isNumerical;
+}
 
 export const intersectedParameterIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -19,6 +35,7 @@ export const intersectedParameterIdentsAtom = atom((get) => {
     const ensembleMode = get(selectedEnsembleModeAtom);
     const showConstantParameters = get(showConstantParametersAtom);
     const showLogParameters = get(showLogParametersAtom);
+    const showNumericDiscreteParameters = get(showNumericDiscreteParametersAtom);
 
     // In prior/posterior mode, only use the selected prior/posterior ensembles
     if (ensembleMode === EnsembleMode.PRIOR_POSTERIOR && priorEnsembleIdent && posteriorEnsembleIdent) {
@@ -33,14 +50,15 @@ export const intersectedParameterIdentsAtom = atom((get) => {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) continue;
 
-        let parameters = ensemble
+        let parameters: Parameter[] = ensemble
             .getParameters()
             .getParameterArr()
-            .filter(
-                (parameter) =>
-                    (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS,
-            );
-        !showLogParameters && (parameters = parameters.filter((parameter) => !parameter.groupName?.includes("LOG"))); // Only include non-log parameters unless showLogParameters is true
+            .filter((parameter) => shouldIncludeDistributionParameter(parameter, showNumericDiscreteParameters));
+        !showConstantParameters && (parameters = parameters.filter((parameter) => !parameter.isConstant));
+        !showLogParameters &&
+            (parameters = parameters.filter(
+                (parameter) => parameter.type !== ParameterType.CONTINUOUS || !parameter.isLogarithmic,
+            ));
         const identArr: ParameterIdent[] = [];
         for (const parameter of parameters) {
             identArr.push(new ParameterIdent(parameter.name, parameter.groupName));

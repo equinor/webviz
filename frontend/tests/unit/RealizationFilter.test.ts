@@ -333,6 +333,7 @@ describe("Test functionality of Realization Filter class", () => {
             groupName: "group1",
             description: null,
             isConstant: false,
+            isNumerical: true,
             realizations: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15],
             values: [0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3],
         };
@@ -343,6 +344,7 @@ describe("Test functionality of Realization Filter class", () => {
             groupName: "group2",
             description: null,
             isConstant: false,
+            isNumerical: false,
             realizations: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15],
             values: ["a", "b", "b", "b", "b", "c", "c", "c", "d", "d", "d"],
         };
@@ -395,6 +397,7 @@ describe("Test functionality of Realization Filter class", () => {
             groupName: "group2",
             description: null,
             isConstant: false,
+            isNumerical: true,
             realizations: [1, 2, 3],
             values: [1, 2, 3],
         };
@@ -405,6 +408,7 @@ describe("Test functionality of Realization Filter class", () => {
             groupName: "group3",
             description: null,
             isConstant: false,
+            isNumerical: false,
             realizations: [1, 2, 3],
             values: ["a", "b", "c"],
         };
