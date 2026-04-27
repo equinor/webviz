@@ -1,4 +1,8 @@
+import React from "react";
+
 import type { Meta, StoryObj } from "@storybook/react";
+
+import { Field } from "../Field";
 
 import { Switch, SwitchItem } from "./index";
 
@@ -58,16 +62,16 @@ boilerplate for the common case of a switch with a plain text label.
     },
     tags: ["autodocs"],
     argTypes: {
-        size: {
-            control: "select",
-            options: ["small", "default"],
-        },
         disabled: {
             control: "boolean",
         },
         defaultChecked: {
             control: "boolean",
         },
+    },
+    args: {
+        disabled: false,
+        defaultChecked: false,
     },
 };
 
@@ -83,21 +87,31 @@ export const Default: Story = {
         },
     },
     args: {
-        defaultChecked: false,
         "aria-label": "Toggle",
     },
 };
 
-export const Small: Story = {
+export const Controlled: Story = {
     parameters: {
         docs: {
-            description: { story: "The `small` size variant." },
+            description: {
+                story:
+                    "Pass `checked` and `onCheckedChange` to own the state externally. " +
+                    "Useful when other parts of the UI depend on the toggled value.",
+            },
         },
     },
-    args: {
-        size: "small",
-        defaultChecked: true,
-        "aria-label": "Toggle",
+    render: () => {
+        const [checked, setChecked] = React.useState(false);
+        return (
+            <div className="flex flex-col gap-3">
+                <label className="flex cursor-pointer items-center gap-2 select-none">
+                    <Switch checked={checked} onCheckedChange={setChecked} />
+                    <span>Enable notifications</span>
+                </label>
+                <p className="text-sm text-neutral-500">State: {checked ? "on" : "off"}</p>
+            </div>
+        );
     },
 };
 
@@ -109,7 +123,6 @@ export const Disabled: Story = {
     },
     args: {
         disabled: true,
-        defaultChecked: false,
         "aria-label": "Toggle",
     },
 };
@@ -150,6 +163,25 @@ export const SiblingLabel: Story = {
             </label>
             <Switch id="wifi-switch" />
         </div>
+    ),
+};
+
+export const WithField: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Wrap `Switch` in `Field.Root` to attach a shared label and description. " +
+                    "The field label acts as the accessible name for the switch via `aria-labelledby`.",
+            },
+        },
+    },
+    render: () => (
+        <Field.Root>
+            <Field.Label>Dark mode</Field.Label>
+            <Field.Details>Use a dark color theme across the application.</Field.Details>
+            <Switch defaultChecked />
+        </Field.Root>
     ),
 };
 

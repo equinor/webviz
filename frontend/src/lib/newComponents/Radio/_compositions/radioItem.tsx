@@ -16,7 +16,7 @@ export function RadioItem(props: RadioItemProps) {
 
     return (
         <label
-            data-disabled={radioProps.disabled}
+            data-disabled={radioProps.disabled || undefined}
             className={resolveClassNames("selectable gap-horizontal-xs flex items-center", {
                 "flex-col": direction === "vertical",
             })}

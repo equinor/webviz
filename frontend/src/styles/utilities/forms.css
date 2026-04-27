@@ -1,11 +1,11 @@
 @utility form-element {
-    opacity: 0.75;
+    @apply outline-neutral outline-1;
+
     &:hover {
-        opacity: 1;
+        @apply outline-neutral-strong outline-1;
     }
 
     &:focus-within {
-        opacity: 1;
         box-shadow:
             0 0 0 1px var(--eds-color-bg-neutral-canvas),
             0 0 0 2px var(--eds-color-border-focus);

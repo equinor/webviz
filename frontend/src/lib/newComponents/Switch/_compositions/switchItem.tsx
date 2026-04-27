@@ -12,7 +12,7 @@ export function SwitchItem(props: SwitchItemProps) {
     const { label, children, ...switchProps } = props;
     return (
         <label
-            data-disabled={switchProps.disabled}
+            data-disabled={switchProps.disabled || undefined}
             className={resolveClassNames("selectable gap-horizontal-xs flex items-center")}
             data-selectable-wrapper
         >

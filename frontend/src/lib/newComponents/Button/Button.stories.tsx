@@ -7,6 +7,11 @@ const meta: Meta<typeof Button> = {
     component: Button,
     parameters: {
         layout: "centered",
+        docs: {
+            description: {
+                component: "A button component that can be used to trigger an action or event.",
+            },
+        },
     },
     tags: ["autodocs"],
     argTypes: {

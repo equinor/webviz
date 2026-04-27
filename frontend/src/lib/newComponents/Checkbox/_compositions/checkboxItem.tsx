@@ -16,7 +16,7 @@ export function CheckboxItem(props: CheckboxItemProps) {
 
     return (
         <label
-            data-disabled={checkboxProps.disabled}
+            data-disabled={checkboxProps.disabled || undefined}
             className={resolveClassNames("selectable gap-horizontal-xs flex items-center", {
                 "flex-col": direction === "vertical",
             })}
