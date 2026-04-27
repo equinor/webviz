@@ -13,9 +13,11 @@ type InternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION
 type ExternalValueType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["externalValue"] | null;
 type ValueRangeType = SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["valueConstraints"] | null;
 
-export class WellboreDepthFilterSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
-{
+export class WellboreDepthFilterSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueRangeType
+> {
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
@@ -82,6 +84,10 @@ export class WellboreDepthFilterSetting
             return null;
         }
 
+        if (valueConstraints.surfaceNamesInStratOrder.length === 0) {
+            return null;
+        }
+
         if (currentValue === null) {
             return {
                 topSurfaceName: valueConstraints.surfaceNamesInStratOrder[0],
@@ -113,7 +119,15 @@ export class WellboreDepthFilterSetting
     }
 
     isValueValid(value: InternalValueType, valueConstraints: ValueRangeType): boolean {
-        if (value === null || valueConstraints === null) {
+        if (valueConstraints === null) {
+            return false;
+        }
+
+        if (valueConstraints.surfaceNamesInStratOrder.length === 0) {
+            return value === null;
+        }
+
+        if (value === null) {
             return false;
         }
 
