@@ -3,8 +3,9 @@ import React from "react";
 import { Combobox as ComboboxBase } from "@base-ui/react";
 import type { ComboboxRootProps } from "@base-ui/react";
 import { Check, Clear, UnfoldMore } from "@mui/icons-material";
-import { Typography } from "../Typography";
+
 import { Button } from "../Button";
+import { Typography } from "../Typography";
 
 export type ComboboxGroup<TItem> = {
     value: string;
@@ -61,25 +62,49 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
 
     const hasGroups = isGroupedItems(items);
 
+    const inputRef = React.useRef<HTMLInputElement | null>(null);
+    React.useImperativeHandle(ref, () => inputRef.current!);
+
+    const handleMouseDown = React.useCallback(function handleMouseDown(event: React.MouseEvent) {
+        const target = event.target as HTMLElement;
+
+        console.log("Combobox handleMouseDown", { target });
+
+        // Do not steal clicks from real controls.
+        if (
+            target.closest(
+                'button, [role="button"], a, input, textarea, select, [data-combobox-chip], [data-base-ui-chip-remove]',
+            )
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        inputRef.current?.focus();
+    }, []);
+
     return (
         <ComboboxBase.Root items={items as any} {...rootProps}>
-            <ComboboxBase.InputGroup className="pl-selectable-x form-element outline-neutral bg-canvas text-body-sm gap-horizontal-sm py-vertical-2xs flex w-64 cursor-text items-center outline -outline-offset-2">
-                <div className="gap-horizontal-sm flex grow flex-wrap items-center">
-                    <ComboboxBase.Value>
-                        {(value) => (
-                            <React.Fragment>
-                                {Array.isArray(value) && value.length > 0 && (
-                                    <ComboboxBase.Chips className="gap-horizontal-xs flex flex-wrap items-center">
-                                        {value.map((item) => {
+            <ComboboxBase.InputGroup
+                className="form-element outline-neutral bg-canvas text-body-sm gap-horizontal-sm py-vertical-2xs pl-selectable-x flex cursor-text items-center outline -outline-offset-2"
+                onMouseDown={handleMouseDown}
+            >
+                {defaultedProps.multiple ? (
+                    <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex w-full grow flex-wrap items-center">
+                        <ComboboxBase.Value>
+                            {(value) => (
+                                <React.Fragment>
+                                    {Array.isArray(value) &&
+                                        value.map((item) => {
                                             const label = getItemLabel(item, rootProps.itemToStringLabel as any);
                                             const key = getItemKey(item, rootProps.itemToStringValue as any);
                                             return (
                                                 <ComboboxBase.Chip
                                                     key={key}
                                                     aria-label={label}
-                                                    className="gap-horizontal-xs bg-neutral text-neutral-strong flex items-center overflow-hidden rounded whitespace-nowrap"
+                                                    className="gap-horizontal-xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover focus-within:bg-accent-hover flex items-center overflow-hidden rounded whitespace-nowrap"
                                                 >
-                                                    <span className="px-selectable-x py-selectable-y">{label}</span>
+                                                    <span className="px-horizontal-xs py-vertical-xs">{label}</span>
                                                     <ComboboxBase.ChipRemove
                                                         aria-label={`Remove ${label}`}
                                                         render={(subProps) => (
@@ -99,39 +124,46 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                                 </ComboboxBase.Chip>
                                             );
                                         })}
-                                    </ComboboxBase.Chips>
-                                )}
-                                <ComboboxBase.Input
-                                    ref={ref}
-                                    placeholder={defaultedProps.multiple ? "" : placeholder}
-                                    className="py-selectable-y box-border min-w-8 flex-1 border-0 bg-transparent focus:outline-0"
-                                />
-                            </React.Fragment>
-                        )}
-                    </ComboboxBase.Value>
-                </div>
-                <div className="pr-selectable-x gap-selectable-x box-border flex h-full items-center justify-center">
-                    {clearable && (
-                        <ComboboxBase.Clear
-                            className="Clear box-border flex items-center justify-center"
-                            aria-label="Clear selection"
-                            render={(subProps) => (
-                                <Button variant="text" tone="neutral" size="small" iconOnly {...subProps}>
-                                    <span className="text-body-sm flex items-center">
-                                        <Clear fontSize="inherit" />
-                                    </span>
-                                </Button>
+                                    <ComboboxBase.Input
+                                        ref={ref}
+                                        placeholder={defaultedProps.multiple ? "" : placeholder}
+                                        className="py-vertical-xs box-border min-w-8 flex-1 border-0 bg-transparent focus:outline-0"
+                                    />
+                                </React.Fragment>
                             )}
-                        />
-                    )}
+                        </ComboboxBase.Value>
+                    </ComboboxBase.Chips>
+                ) : (
+                    <ComboboxBase.Input
+                        ref={ref}
+                        placeholder={placeholder}
+                        className="py-vertical-xs box-border min-w-0 flex-1 border-0 bg-transparent focus:outline-0"
+                    />
+                )}
+                {!rootProps.multiple && (
+                    <div className="pr-selectable-x gap-selectable-x box-border flex h-full items-center justify-center">
+                        {clearable && (
+                            <ComboboxBase.Clear
+                                className="Clear box-border flex items-center justify-center"
+                                aria-label="Clear selection"
+                                render={(subProps) => (
+                                    <Button variant="text" tone="neutral" size="small" iconOnly {...subProps}>
+                                        <span className="text-body-sm flex items-center">
+                                            <Clear fontSize="inherit" />
+                                        </span>
+                                    </Button>
+                                )}
+                            />
+                        )}
 
-                    <ComboboxBase.Trigger
-                        className="box-border flex items-center justify-center"
-                        aria-label="Open options"
-                    >
-                        <UnfoldMore fontSize="inherit" />
-                    </ComboboxBase.Trigger>
-                </div>
+                        <ComboboxBase.Trigger
+                            className="box-border flex items-center justify-center"
+                            aria-label="Open options"
+                        >
+                            <UnfoldMore fontSize="inherit" />
+                        </ComboboxBase.Trigger>
+                    </div>
+                )}
             </ComboboxBase.InputGroup>
 
             <ComboboxBase.Portal>
