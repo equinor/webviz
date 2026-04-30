@@ -4,5 +4,5 @@ import type { DataProviderManager } from "@modules/_shared/DataProviderFramework
 import { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 export const dataProviderManagerAtom = atom<DataProviderManager | null>(null);
-export const preferredViewLayoutAtom = atom<PreferredViewLayout>(PreferredViewLayout.VERTICAL);
+export const preferredViewLayoutAtom = atom<PreferredViewLayout>(PreferredViewLayout.GRID);
 export const dataProviderSerializedStateAtom = atom<string>("");
