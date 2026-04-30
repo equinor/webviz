@@ -31,7 +31,7 @@ export const Default: Story = {
     render: () => (
         <Field.Root
             validationMode="onChange"
-            validate={(v) => {
+            validate={(v: any) => {
                 if (typeof v === "string" && v.includes(" ")) return "Name cannot include space";
                 return null;
             }}
