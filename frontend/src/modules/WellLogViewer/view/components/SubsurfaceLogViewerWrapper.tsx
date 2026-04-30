@@ -8,7 +8,7 @@ import type {
     WellLogViewOptions,
     WellPickProps,
 } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 import { isNaN } from "lodash";
 
 import type { WellboreHeader_api } from "@api";
@@ -53,7 +53,7 @@ export type SubsurfaceLogViewerWrapperProps = {
 
     // Viewer config
     viewerTemplate: Template;
-    colorMapFunctions?: ColorMapFunction[];
+    colorMapFunctions?: ColormapFunction[];
     horizontal: boolean;
 
     // Passing the module props to make context and service access less cumbersome

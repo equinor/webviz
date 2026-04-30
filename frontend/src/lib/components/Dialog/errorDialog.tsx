@@ -2,6 +2,7 @@ import React from "react";
 
 import { BugReport, Error } from "@mui/icons-material";
 
+import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
@@ -13,17 +14,6 @@ import { Dialog } from "./dialog";
 export type ErrorDialogProps = {
     error: Error | null;
 } & DialogProps;
-
-function useIsMountedRef() {
-    const isMountedRef = React.useRef(true);
-    React.useEffect(() => {
-        isMountedRef.current = true;
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, []);
-    return isMountedRef;
-}
 
 export function ErrorDialog(props: ErrorDialogProps): React.ReactNode {
     const isMountedRef = useIsMountedRef();

@@ -3,7 +3,7 @@ import React from "react";
 import { CircularProgress } from "@mui/material";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 
 import type { WellboreTrajectory_api } from "@api";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
@@ -126,7 +126,7 @@ function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | n
     return createLogViewerWellPicks(wellPickCollections) ?? undefined;
 }
 
-function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | null): ColorMapFunction[] {
+function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | null): ColormapFunction[] {
     if (!factoryProduct) return [];
 
     const accData = factoryProduct.accumulatedData;

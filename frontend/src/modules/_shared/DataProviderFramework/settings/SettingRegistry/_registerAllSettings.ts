@@ -32,6 +32,7 @@ import { SliderRangeSetting } from "../implementations/SliderRangeSetting";
 import { StaticRotationSetting } from "../implementations/StaticRotationSetting";
 import { StatisticFunctionSetting } from "../implementations/StatisticFunctionSetting";
 import { TimeOrIntervalSetting } from "../implementations/TimeOrIntervalSetting";
+import { WellboreDepthFilterAttributeSetting } from "../implementations/WellboreDepthFilterAttributeSetting";
 import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilterSetting";
 import { Setting } from "../settingsDefinitions";
 
@@ -145,7 +146,11 @@ SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE, "Depth Filte
 });
 SettingRegistry.registerSetting(Setting.MD_RANGE, "MD Range", SliderRangeSetting);
 SettingRegistry.registerSetting(Setting.TVD_RANGE, "TVD Range", SliderRangeSetting);
-SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, "Surface Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(
+    Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE,
+    "Surface Attribute",
+    WellboreDepthFilterAttributeSetting,
+);
 SettingRegistry.registerSetting(
     Setting.WELLBORE_DEPTH_FORMATION_FILTER,
     "Formation Filter",

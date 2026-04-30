@@ -16,7 +16,7 @@ import type {
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
+const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 
 export type DrilledWellborePicksData = WellborePick_api[];
@@ -41,7 +41,7 @@ export class DrilledWellborePicksProvider
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<DrilledWellborePicksSettings, DrilledWellborePicksData>): Promise<WellborePick_api[]> {
-        const selectedWellbores = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellbores = getSetting(Setting.WELLBORES) ?? [];
         const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
         const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
@@ -63,11 +63,11 @@ export class DrilledWellborePicksProvider
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
-        const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
+        const selectedWellbores = getSetting(Setting.WELLBORES);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
-            smdaWellboreHeaders !== null &&
-            smdaWellboreHeaders.length > 0 &&
+            selectedWellbores !== null &&
+            selectedWellbores.length > 0 &&
             getSetting(Setting.SURFACE_NAME) !== null
         );
     }
@@ -81,30 +81,21 @@ export class DrilledWellborePicksProvider
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
+            if (!fieldIdentifier) {
+                return [];
+            }
             const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            if (!fieldIdentifier) {
                 return null;
             }
-
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-            if (!ensemble) {
-                return null;
-            }
-
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
             return await queryClient.fetchQuery({
                 ...getDrilledWellboreHeadersOptions({
                     query: { field_identifier: fieldIdentifier },
@@ -137,7 +128,7 @@ export class DrilledWellborePicksProvider
             });
         });
 
-        valueConstraintsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        valueConstraintsUpdater(Setting.WELLBORES, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {
