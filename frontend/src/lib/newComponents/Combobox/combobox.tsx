@@ -77,12 +77,19 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const listCols = renderItemAdornment ? "grid-cols-[1.5rem_auto_1fr]" : "grid-cols-[1.5rem_1fr]";
     const itemColSpan = renderItemAdornment ? "col-span-3" : "col-span-2";
 
+    const flatItems = React.useMemo(
+        () => (isGroupedItems(items) ? items.flatMap((g) => g.items) : (items as ComboboxItem<TValue>[])),
+        [items],
+    );
+
+    function getLabelForValue(value: TValue): string {
+        return flatItems.find((item) => item.value === value)?.label ?? String(value);
+    }
+
     return (
         <ComboboxBase.Root
             items={items}
-            itemToStringLabel={(item) => (item as unknown as ComboboxItem<TValue>).label}
-            itemToStringValue={(item) => String((item as unknown as ComboboxItem<TValue>).value)}
-            isItemEqualToValue={(item, value) => (item as unknown as ComboboxItem<TValue>).value === value}
+            itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
             {...rootProps}
         >
             <ComboboxBase.InputGroup className="form-element outline-neutral bg-canvas text-body-sm gap-horizontal-sm py-vertical-2xs pl-selectable-x flex cursor-text items-center outline -outline-offset-2">
@@ -93,8 +100,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                 <React.Fragment>
                                     {Array.isArray(value) &&
                                         value.map((item) => {
-                                            const label = item.label;
-                                            const key = getItemValueKey(item);
+                                            const label = getLabelForValue(item as unknown as TValue);
+                                            const key = String(item);
                                             return (
                                                 <ComboboxBase.Chip
                                                     key={key}
