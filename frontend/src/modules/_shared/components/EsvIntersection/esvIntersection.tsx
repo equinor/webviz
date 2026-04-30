@@ -299,6 +299,13 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
         if (!isEqual(prevZFactor, props.zFactor)) {
             esvController.zoomPanHandler.zFactor = props.zFactor ?? 1;
+
+            // At zFactor 10, showing a full wellbore path would hit the default 0.1 limit
+            automaticChanges.current = true;
+            esvController.zoomPanHandler.setMinZoomLevel(0.1 / (props.zFactor ?? 1));
+            esvController.zoomPanHandler.setMaxZoomLevel(256 / (props.zFactor ?? 1));
+            esvController.zoomPanHandler.updateTranslateExtent();
+
             setPrevZFactor(props.zFactor);
         }
 
@@ -434,6 +441,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     );
 
     React.useEffect(
+        // ! HMR causes the viewport to reset, since this re-triggers. Shouldn't matter in production,
+        // ! and a fix would need some larger re-structuring, so we're leaving it as is for now...
         function handleMount() {
             if (!containerRef.current) {
                 return;
@@ -473,6 +482,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     if (!isValidViewport(candidateViewport)) {
                         return;
                     }
+
                     canvasViewportRef.current = candidateViewport;
                     setInternalViewport(candidateViewport);
                 }
@@ -483,8 +493,10 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             const gridLayer = new GridLayer("grid", {
                 order: 1,
             });
+
             newEsvController.addLayer(gridLayer);
             newEsvController.hideLayer("grid");
+            newEsvController.hideAxisLabels();
 
             initializePixiApplication();
             setEsvController(newEsvController);
@@ -508,8 +520,10 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevViewport(undefined);
                 setPrevShowAxesLabels(undefined);
                 setPrevShowAxes(undefined);
+                setPrevIntersectionReferenceSystem(null);
                 setInteractionHandler(null);
                 setPixiRenderApplication(null);
+                setPrevZFactor(undefined);
                 newInteractionHandler.destroy();
                 newEsvController.destroy();
             };
@@ -601,14 +615,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     );
 
     return (
-        <>
-            <div
-                ref={containerRef}
-                className={resolveClassNames({ "w-full h-full": props.size === undefined })}
-                style={{ ...props.size }}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-            ></div>
-        </>
+        <div
+            ref={containerRef}
+            className={resolveClassNames({ "w-full h-full": props.size === undefined })}
+            style={{ ...props.size }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        />
     );
 }

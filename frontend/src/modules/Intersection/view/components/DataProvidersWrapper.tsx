@@ -147,10 +147,6 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     // Assemble visualization of providers
     const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
 
-    // if (assemblerProduct === null) {
-    //     return null;
-    // }
-
     if (assemblerProduct.children.length === 0) {
         statusWriter.addWarning("Create intersection view to visualize");
     }
@@ -190,21 +186,15 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         return null;
     }
 
-    // TEMPORARY: For some reason, the DPF gives an empty view, without children a couple of renders while deserializing
-    let tempIntersectionViews = intersectionViews;
-    if (intersectionViews.length === 1 && intersectionViews[0].children.length === 0) {
-        tempIntersectionViews = [];
-    }
-
     return (
         <ViewLinkManager
-            intersectionViews={tempIntersectionViews}
+            intersectionViews={intersectionViews}
             linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
             initialViewLinks={persistedViewLinks}
             onViewLinksChange={handleViewLinksChange}
         >
-            <MultiViewLayout viewCount={tempIntersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
-                {tempIntersectionViews.map((view) => (
+            <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>
+                {intersectionViews.map((view) => (
                     <ViewDataProcessor
                         key={view.id}
                         view={view}

@@ -7,7 +7,6 @@ import type { Viewport } from "@framework/types/viewport";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
-import { FitInViewStatus } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 
 export type ViewLink = {
     id: string;
@@ -16,7 +15,6 @@ export type ViewLink = {
     viewport: Viewport | null;
     viewportSourceViewId: string | null;
     verticalScale: number;
-    fitInViewStatus: FitInViewStatus;
     bounds: Bounds | null;
 };
 
@@ -36,7 +34,6 @@ type ViewLinkManagerContextValue = {
     onLinkedViewportChange: (viewId: string, viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (viewId: string, scale: number) => void;
     onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
-    onLinkedFitInViewStatusChange: (viewId: string, status: FitInViewStatus) => void;
 };
 
 const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
@@ -171,7 +168,6 @@ export function ViewLinkManager({
                             viewport: initiatorViewport ?? null,
                             viewportSourceViewId: thisViewId,
                             verticalScale: 10.0,
-                            fitInViewStatus: FitInViewStatus.OFF,
                             bounds: null,
                         },
                     ];
@@ -194,7 +190,6 @@ export function ViewLinkManager({
                         viewport: initiatorViewport ?? null,
                         viewportSourceViewId: initiatorViewport ? thisViewId : null,
                         verticalScale: 10.0,
-                        fitInViewStatus: FitInViewStatus.OFF,
                         bounds: null,
                     },
                 ];
@@ -235,22 +230,6 @@ export function ViewLinkManager({
         });
     }, []);
 
-    const onLinkedFitInViewStatusChange = React.useCallback(function onLinkedFitInViewStatusChange(
-        viewId: string,
-        status: FitInViewStatus,
-    ) {
-        setViewLinks((prev) => {
-            let changed = false;
-            const next = prev.map((link) => {
-                if (!link.viewIds.includes(viewId)) return link;
-                if (link.fitInViewStatus === status) return link;
-                changed = true;
-                return { ...link, fitInViewStatus: status };
-            });
-            return changed ? next : prev;
-        });
-    }, []);
-
     const onLinkedBoundsChange = React.useCallback(function onLinkedBoundsChange(viewId: string, bounds: Bounds) {
         setViewLinks((prev) => {
             let changed = false;
@@ -286,7 +265,6 @@ export function ViewLinkManager({
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
             onLinkedBoundsChange,
-            onLinkedFitInViewStatusChange,
         }),
         [
             viewLinks,
@@ -296,7 +274,6 @@ export function ViewLinkManager({
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
             onLinkedBoundsChange,
-            onLinkedFitInViewStatusChange,
         ],
     );
 
@@ -319,8 +296,6 @@ export type ViewLinkResult = {
     onLinkedViewportChange: (viewport: Viewport) => void;
     onLinkedVerticalScaleChange: (scale: number) => void;
     onLinkedBoundsChange: (bounds: Bounds) => void;
-    onLinkedFitInViewStatusChange: (status: FitInViewStatus) => void;
-    fitInViewStatus: FitInViewStatus | null;
     bounds: Bounds | null;
 };
 
@@ -335,7 +310,6 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const onLinkedViewportChange = ctx?.onLinkedViewportChange;
     const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
     const onLinkedBoundsChange = ctx?.onLinkedBoundsChange;
-    const onLinkedFitInViewStatusChange = ctx?.onLinkedFitInViewStatusChange;
 
     const viewLink = viewLinks.find((l) => l.viewIds.includes(viewId));
     const isLinked = viewLink !== undefined;
@@ -367,13 +341,6 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
             onLinkedBoundsChange?.(viewId, bounds);
         },
         [viewId, onLinkedBoundsChange],
-    );
-
-    const onLinkedFitInViewStatusChangeForView = React.useCallback(
-        function onLinkedFitInViewStatusChangeForView(status: FitInViewStatus) {
-            onLinkedFitInViewStatusChange?.(viewId, status);
-        },
-        [viewId, onLinkedFitInViewStatusChange],
     );
 
     const onHoverViewLink = React.useCallback(
@@ -420,8 +387,6 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         onLinkedViewportChange: onLinkedViewportChangeForView,
         onLinkedVerticalScaleChange: onLinkedVerticalScaleChangeForView,
         onLinkedBoundsChange: onLinkedBoundsChangeForView,
-        onLinkedFitInViewStatusChange: onLinkedFitInViewStatusChangeForView,
-        fitInViewStatus: viewLink?.fitInViewStatus ?? null,
         bounds: viewLink?.bounds ?? null,
     };
 }

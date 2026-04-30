@@ -16,7 +16,6 @@ import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsCont
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type {
     VisualizationGroup,
     VisualizationTarget,
@@ -41,12 +40,6 @@ import {
 
 import { ViewportWrapper } from "./ViewportWrapper";
 
-// State for request of view refocus
-const enum RefocusRequestState {
-    NONE = "None",
-    AWAITING_PROVIDERS = "Awaiting providers",
-}
-
 export type ViewDataProcessorProps = {
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>;
     fieldIdentifier: string | null;
@@ -58,27 +51,13 @@ export type ViewDataProcessorProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
+/**
+ * Wrapper component compute intersection view information – like bounds and reference systems.
+ */
 export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNode {
-    const { view, fieldIdentifier, isLoading, wellboreHeadersQuery } = props;
-
-    const [prevReferenceSystem, setPrevReferenceSystem] = React.useState<IntersectionReferenceSystem | null>(null);
-    const [layersBounds, setLayersBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
-    const [previousIntersection, setPreviousIntersection] = React.useState<IntersectionSettingValue | null>(null);
-    const [previousExtensionLength, setPreviousExtensionLength] = React.useState<number | null>(null);
-    const [prevNumberOfProviders, setPrevNumberOfProviders] = React.useState<number>(0);
-
-    // Update of intersection/extension length should trigger refocus of viewport
-    const [refocusRequestState, setRefocusRequestState] = React.useState<RefocusRequestState>(RefocusRequestState.NONE);
-    const [viewportFocusTarget, setViewportFocusTarget] = React.useState<{
-        bounds: Bounds | null;
-        requestRefocus: boolean;
-    }>({
-        bounds: null,
-        requestRefocus: false,
-    });
+    const { view, fieldIdentifier, wellboreHeadersQuery } = props;
 
     const viewIntersection = view.customProps?.intersection ?? null;
-    const viewExtensionLength = view.customProps?.extensionLength ?? null;
 
     const wellboreUuid = viewIntersection?.type === IntersectionType.WELLBORE ? viewIntersection.uuid : null;
     const wellboreCasingsQuery = useWellboreCasingsQuery(wellboreUuid);
@@ -90,19 +69,9 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         props.workbenchSession,
     );
 
-    // If layers are loading, they are not placed in children array for the view
-    const numberOfProvidersToVisualize = (view.numLoadingDataProviders ?? 0) + (view.children.length ?? 0);
-    if (numberOfProvidersToVisualize !== prevNumberOfProviders) {
-        // Request refocus if no providers were visualized before, or if no providers are visualized now
-        if (
-            (numberOfProvidersToVisualize > 0 && prevNumberOfProviders === 0) ||
-            (numberOfProvidersToVisualize === 0 && prevNumberOfProviders > 0)
-        ) {
-            setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
-            setViewportFocusTarget({ bounds: null, requestRefocus: false });
-        }
-        setPrevNumberOfProviders(numberOfProvidersToVisualize);
-    }
+    const dataIsReady = useDataIsReady(view);
+    const dataBounds = useDataBounds(dataIsReady, view, intersectionReferenceSystem);
+    const focusBounds = useFocusBounds(dataIsReady, view, intersectionReferenceSystem);
 
     // Cache visualization layer items to prevent layers from popping in/out during transient loading states.
     // - The DataProviderFramework enters a loading state for all data providers in a view when shared
@@ -111,41 +80,6 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     //   resulting EsvIntersection to remove and re-add as new instances. Re-adding triggers expensive init
     //   that blocks the UI.
     const cachedVisualizationLayerItemsRef = React.useRef<LayerItem[]>([]);
-
-    // Update focus bounds if intersection or extension length changes
-    if (!isEqual(viewIntersection, previousIntersection)) {
-        // Clear cached layer items when intersection source changes
-        cachedVisualizationLayerItemsRef.current = [];
-
-        // Update states
-        setPreviousIntersection(viewIntersection);
-        setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
-        setViewportFocusTarget({ bounds: null, requestRefocus: false });
-    }
-    if (!isEqual(viewExtensionLength, previousExtensionLength)) {
-        setPreviousExtensionLength(viewExtensionLength);
-        setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
-        setViewportFocusTarget({ bounds: null, requestRefocus: false });
-    }
-
-    // Detect if intersection reference system has changed
-    if (intersectionReferenceSystem && !isEqual(intersectionReferenceSystem, prevReferenceSystem)) {
-        setPrevReferenceSystem(intersectionReferenceSystem);
-        setRefocusRequestState(RefocusRequestState.AWAITING_PROVIDERS);
-        setViewportFocusTarget({ bounds: null, requestRefocus: false });
-    }
-
-    const hasNoProvidersToVisualize = view && view.children.length === 0;
-    const isOneOrMoreProvidersReady =
-        view && view.children.length > 0 && view.numLoadingDataProviders < view.children.length;
-    if (
-        (hasNoProvidersToVisualize || isOneOrMoreProvidersReady) &&
-        refocusRequestState === RefocusRequestState.AWAITING_PROVIDERS
-    ) {
-        // Set bounds to null to ensure that bounds are recalculated/updated when requesting refocus
-        setViewportFocusTarget({ bounds: null, requestRefocus: true });
-        setRefocusRequestState(RefocusRequestState.NONE);
-    }
 
     // Make layer items for the view providers using intersection reference system
     const newVisualizationLayerItems: LayerItem[] = [];
@@ -170,7 +104,6 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     // Create elements based on intersection type
     // - LayerItems for intersection type
     // - Bounding box for wellbore path
-    let wellborePathBoundingBox: BBox | null = null;
     if (viewIntersection && intersectionReferenceSystem) {
         // Place layers on top of view provider layers
         const intersectionTypeLayerOrder = visualizationLayerItems.length + 1;
@@ -183,78 +116,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
                 wellboreCasingsQuery,
             ),
         );
-
-        // Bound box for wellbore path (uz-coordinates)
-        if (viewIntersection.type === IntersectionType.WELLBORE) {
-            wellborePathBoundingBox = createBBoxForWellborePath(
-                intersectionReferenceSystem.projectedPath,
-                viewExtensionLength ?? 0,
-            );
-        }
     }
-
-    // Only update bounding box, bounds, and focus bounds when no providers are loading
-    // to prevent transient loading states from causing jumpy bounds
-    if (!hasLoadingProviders) {
-        // Create data bounds for the layers, by use of bounding box for the visualization layers (per-view)
-        let layersBoundingBox = wellborePathBoundingBox;
-        if (layersBoundingBox && view.combinedBoundingBox) {
-            layersBoundingBox = combine(layersBoundingBox, view.combinedBoundingBox);
-        } else if (view.combinedBoundingBox) {
-            layersBoundingBox = view.combinedBoundingBox;
-        }
-
-        // Create bounds for the layers
-        const newLayersBounds = createBoundsForIntersectionView(
-            layersBoundingBox,
-            intersectionReferenceSystem,
-            layersBounds,
-        );
-        if (!isValidBounds(newLayersBounds)) {
-            newLayersBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
-            newLayersBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
-        }
-
-        // Check if bounds have changed
-        if (!isEqual(newLayersBounds, layersBounds)) {
-            setLayersBounds(newLayersBounds);
-        }
-
-        // Update focus bounds
-        // - Get bounds for the layers to focus on, neglect wellpath and wellpicks
-        // - If no layers are visible: focus on wellpath/reference system
-        let focusBoundsCandidate: Bounds | null = null;
-        const focusBoundingBox = view.combinedBoundingBox;
-        if (focusBoundingBox) {
-            focusBoundsCandidate = {
-                x: [focusBoundingBox.min.x, focusBoundingBox.max.x],
-                y: [focusBoundingBox.min.y, focusBoundingBox.max.y],
-            };
-        } else if (!focusBoundingBox && !isLoading && intersectionReferenceSystem) {
-            // Bounds are created from the intersection reference system if no layers are visible
-            focusBoundsCandidate = createBoundsForIntersectionReferenceSystem(intersectionReferenceSystem);
-        }
-
-        // Update focus bounds if they are valid, independent of the focus state
-        if (
-            focusBoundsCandidate &&
-            isValidBounds(focusBoundsCandidate) &&
-            !isEqual(focusBoundsCandidate, viewportFocusTarget.bounds)
-        ) {
-            setViewportFocusTarget((prev) => {
-                return { ...prev, bounds: focusBoundsCandidate };
-            });
-        }
-    }
-
-    const handleOnViewportRefocused = React.useCallback(function handleOnViewportRefocused(): void {
-        setViewportFocusTarget((prev) => {
-            return {
-                ...prev,
-                requestRefocus: false,
-            };
-        });
-    }, []);
 
     const layerIdToNameMap = Object.fromEntries(visualizationLayerItems.map((layer) => [layer.id, layer.name]));
     const colorScales = view.annotations.filter((elm) => isColorScaleWithId(elm)) ?? [];
@@ -267,15 +129,113 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
             referenceSystem={intersectionReferenceSystem ?? undefined}
             layerItems={visualizationLayerItems}
             layerItemIdToNameMap={layerIdToNameMap}
-            layerItemsBounds={layersBounds}
-            focusBounds={viewportFocusTarget.bounds}
-            doRefocus={viewportFocusTarget.requestRefocus}
+            layerItemsBounds={dataBounds}
+            focusBounds={focusBounds}
             colorScales={colorScales}
             workbenchServices={props.workbenchServices}
             hoverService={props.hoverService}
             viewContext={props.viewContext}
             intersectionSource={viewIntersection}
-            onViewportRefocused={handleOnViewportRefocused}
         />
     );
+}
+// Checks if the view's provider data is ready to be aggregated.
+function useDataIsReady(
+    view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
+) {
+    // TODO: This was bigger when I initially extracted it, but only this line seemed relevant. Should we check anything else?
+    const dataIsReady = (view.numLoadingDataProviders ?? 0) === 0;
+
+    return dataIsReady;
+}
+
+/** Computes the x/y bounds that contains all data in the view layers */
+function useDataBounds(
+    dataIsReady: boolean,
+    view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
+    intersectionReferenceSystem: IntersectionReferenceSystem | null,
+) {
+    const [dataBounds, setDataBounds] = React.useState<Bounds>(DEFAULT_INTERSECTION_VIEW_BOUNDS);
+
+    const viewIntersection = view.customProps?.intersection ?? null;
+    const viewExtensionLength = view.customProps?.extensionLength ?? 0;
+
+    if (dataIsReady) {
+        // Create data bounds for the layers, by use of bounding box for the visualization layers (per-view)
+        let combinedBbox: BBox | null = null;
+
+        if (viewIntersection && intersectionReferenceSystem) {
+            if (viewIntersection.type === IntersectionType.WELLBORE) {
+                const wellborePathBoundingBox = createBBoxForWellborePath(
+                    intersectionReferenceSystem.projectedPath,
+                    viewExtensionLength,
+                );
+
+                combinedBbox = combineNullableBBox(combinedBbox, wellborePathBoundingBox);
+            }
+        }
+
+        combinedBbox = combineNullableBBox(combinedBbox, view.combinedBoundingBox);
+
+        // Create bounds for the layers
+        const newDataBounds = createBoundsForIntersectionView(combinedBbox, intersectionReferenceSystem, dataBounds);
+
+        if (!isValidBounds(newDataBounds)) {
+            newDataBounds.x = DEFAULT_INTERSECTION_VIEW_BOUNDS.x;
+            newDataBounds.y = DEFAULT_INTERSECTION_VIEW_BOUNDS.y;
+        }
+
+        // Check if bounds have changed
+        if (!isEqual(newDataBounds, dataBounds)) {
+            setDataBounds(newDataBounds);
+        }
+    }
+
+    return dataBounds;
+}
+
+/**
+ * Computes the x/y bounds that contains only the data that'd be relevant when fitting the view
+ * In short, we exclude the wellbore path bounds when there is other data
+ */
+function useFocusBounds(
+    dataIsReady: boolean,
+    view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
+    intersectionReferenceSystem: IntersectionReferenceSystem | null,
+) {
+    const [focusBounds, setFocusBounds] = React.useState<Bounds | null>(null);
+
+    if (dataIsReady) {
+        // Update focus bounds
+        let focusBoundsCandidate: Bounds | null = null;
+
+        // - Get bounds for the layers to focus on, neglect well-path and well-picks
+        // - If no layers are visible: focus on well-path/reference system
+        if (view.combinedBoundingBox) {
+            focusBoundsCandidate = {
+                x: [view.combinedBoundingBox.min.x, view.combinedBoundingBox.max.x],
+                y: [view.combinedBoundingBox.min.y, view.combinedBoundingBox.max.y],
+            };
+        } else if (intersectionReferenceSystem) {
+            // Bounds are created from the intersection reference system if no layers are visible
+            focusBoundsCandidate = createBoundsForIntersectionReferenceSystem(intersectionReferenceSystem);
+        }
+
+        // Update focus bounds if they are valid, independent of the focus state
+        if (
+            focusBoundsCandidate &&
+            isValidBounds(focusBoundsCandidate) &&
+            !isEqual(focusBoundsCandidate, focusBounds)
+        ) {
+            setFocusBounds(focusBoundsCandidate);
+        }
+    }
+
+    return focusBounds;
+}
+
+function combineNullableBBox(bbox1: BBox | null, bbox2: BBox | null): BBox | null {
+    if (!bbox1) return bbox2;
+    if (!bbox2) return bbox1;
+    return combine(bbox1, bbox1);
 }

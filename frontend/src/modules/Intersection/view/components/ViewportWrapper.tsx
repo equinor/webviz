@@ -1,24 +1,24 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Viewport } from "@framework/types/viewport";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { fuzzyCompareArrays } from "@lib/utils/fuzzyCompare";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
 import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { FitInViewStatus, Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
+import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import { isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
-import { useViewportState } from "../hooks/useViewportState";
+import { useViewport, useViewportState } from "../hooks/useViewportState";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 import { useViewLinkResult } from "./ViewLinkManager";
@@ -33,12 +33,10 @@ export type ViewportWrapperProps = {
     layerItemIdToNameMap: Record<string, string>;
     layerItemsBounds: Bounds;
     focusBounds: Bounds | null;
-    doRefocus: boolean;
     colorScales: ColorScaleWithId[];
     workbenchServices: WorkbenchServices;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
-    onViewportRefocused?: () => void;
 };
 
 export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
@@ -49,30 +47,31 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     // View link state and handlers
     const viewLinkResult = useViewLinkResult(viewId);
+
+    const existingViewport = useViewport(viewId, viewLinkResult);
     const { isHoverHighlighted, highlightColor, onToggleViewLink, onHoverViewLink } = viewLinkResult;
+
+    // ! We enable auto-fitting initially on view without an established viewport
+    const [autoFitView, setAutoFitView] = React.useState(existingViewport === null);
+    const [showGrid, setShowGrid] = React.useState<boolean>(true);
 
     // Viewport, bounds, vertical scale, and all related handlers
     const {
         viewport,
         effectiveVerticalScale,
         effectiveLayerItemsBounds,
-        fitInViewStatus,
-        showGrid,
         updateViewport,
         updateVerticalScale,
-        setFitInViewStatus,
-        setShowGrid,
-        handleFitInViewToggle,
+        handleFitInView,
     } = useViewportState({
         viewId,
         viewLinkResult,
+        autofit: autoFitView,
         layerItemsBounds: props.layerItemsBounds,
         focusBounds: props.focusBounds,
-        doRefocus: props.doRefocus,
         containerSize: mainDivSize,
         workbenchServices: props.workbenchServices,
         viewContext: props.viewContext,
-        onViewportRefocused: props.onViewportRefocused,
     });
 
     const handleViewportChange = React.useCallback(
@@ -80,12 +79,13 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             if (!isValidViewport(newViewport)) {
                 throw new Error("Got invalid viewport: " + newViewport);
             }
-            if (!isEqual(newViewport, viewport)) {
-                setFitInViewStatus(FitInViewStatus.OFF);
+
+            if (!viewport || !fuzzyCompareArrays(newViewport, viewport, 0.000001)) {
+                setAutoFitView(false);
                 updateViewport(newViewport);
             }
         },
-        [viewport, setFitInViewStatus, updateViewport],
+        [viewport, updateViewport],
     );
 
     const handleVerticalScaleIncrease = React.useCallback(
@@ -131,16 +131,15 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     layerIdToNameMap={props.layerItemIdToNameMap}
                     bounds={effectiveLayerItemsBounds}
                     viewport={viewport ?? undefined}
-                    onViewportChange={handleViewportChange}
                     hoverService={props.hoverService}
                     viewContext={props.viewContext}
+                    onViewportChange={handleViewportChange}
                 />
                 <Toolbar
                     visible
                     zFactor={effectiveVerticalScale}
                     gridVisible={showGrid}
-                    fitInViewStatus={fitInViewStatus}
-                    onFitInViewStatusToggle={handleFitInViewToggle}
+                    onFitInView={handleFitInView}
                     onGridLinesToggle={handleShowGridToggle}
                     onVerticalScaleIncrease={handleVerticalScaleIncrease}
                     onVerticalScaleDecrease={handleVerticalScaleDecrease}
