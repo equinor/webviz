@@ -33,6 +33,7 @@ import {
     createBoundsForIntersectionView,
     DEFAULT_INTERSECTION_VIEW_BOUNDS,
 } from "../utils/boundsUtils";
+import { createIntersectionSourceKey } from "../utils/createIntersectionSourceKey";
 import {
     createLayerItemsForIntersectionType,
     makeViewProvidersVisualizationLayerItems,
@@ -80,6 +81,15 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     //   resulting EsvIntersection to remove and re-add as new instances. Re-adding triggers expensive init
     //   that blocks the UI.
     const cachedVisualizationLayerItemsRef = React.useRef<LayerItem[]>([]);
+
+    // Invalidate the cache when the intersection source changes so we don't keep showing
+    // layers computed for the previous source while new data is loading.
+    const intersectionSourceKey = createIntersectionSourceKey(viewIntersection);
+    const previousIntersectionSourceKeyRef = React.useRef<string | null>(intersectionSourceKey);
+    if (previousIntersectionSourceKeyRef.current !== intersectionSourceKey) {
+        previousIntersectionSourceKeyRef.current = intersectionSourceKey;
+        cachedVisualizationLayerItemsRef.current = [];
+    }
 
     // Make layer items for the view providers using intersection reference system
     const newVisualizationLayerItems: LayerItem[] = [];
