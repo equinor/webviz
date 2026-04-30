@@ -41,16 +41,15 @@ export type ViewLinkOption = {
 };
 
 export type ToolbarProps = {
+    viewLinks?: ViewLinkOption[];
+    unlinkedViews?: ViewOption[];
     visible: boolean;
     zFactor: number;
     gridVisible: boolean;
-    fitInViewStatus: FitInViewStatus;
-    onFitInViewStatusToggle: (status: FitInViewStatus) => void;
+    onFitInView?: () => void;
     onGridLinesToggle: (active: boolean) => void;
     onVerticalScaleIncrease: () => void;
     onVerticalScaleDecrease: () => void;
-    viewLinks?: ViewLinkOption[];
-    unlinkedViews?: ViewOption[];
     onToggleViewLink?: (viewId: string) => void;
     onHoverViewLink?: (viewIds: string[] | null) => void;
 };
@@ -58,8 +57,8 @@ export type ToolbarProps = {
 export function Toolbar(props: ToolbarProps): React.ReactNode {
     const [expanded, setExpanded] = React.useState<boolean>(false);
 
-    function handleFitInViewToggle(active: boolean) {
-        props.onFitInViewStatusToggle(active ? FitInViewStatus.ON : FitInViewStatus.OFF);
+    function handleFitInView() {
+        props.onFitInView?.();
     }
 
     function handleGridVisibilityToggle(active: boolean) {
@@ -88,12 +87,9 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         <GenericToolbar>
             <div className="flex items-center gap-1 justify-start">
                 <Tooltip title="Fit all data in view" placement="bottom">
-                    <ToggleButton
-                        onToggle={handleFitInViewToggle}
-                        active={props.fitInViewStatus === FitInViewStatus.ON}
-                    >
+                    <Button onClick={handleFitInView}>
                         <FilterCenterFocus fontSize="inherit" />
-                    </ToggleButton>
+                    </Button>
                 </Tooltip>
                 {showLinkButton && (
                     <Dropdown

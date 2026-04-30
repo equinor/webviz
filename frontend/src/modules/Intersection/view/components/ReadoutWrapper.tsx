@@ -35,11 +35,11 @@ export type ReadoutWrapperProps = {
     layers: LayerItem[];
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
-    onViewportChange: (viewport: Viewport) => void;
     bounds: Bounds;
     verticalScale: number;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
+    onViewportChange: (viewport: Viewport) => void;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -196,7 +196,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 onMousePositionChange={handleMousePositionChange}
                 onViewportChange={props.onViewportChange}
             />
-            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />
+            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} compact />
             <PositionReadout
                 coordinates={mouseCursorUtmCoordinate}
                 labels={{ z: "Depth" }}

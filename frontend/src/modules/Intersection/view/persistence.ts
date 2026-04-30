@@ -3,7 +3,6 @@ import type { JTDSchemaType } from "ajv/dist/jtd";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import type { Viewport } from "@framework/types/viewport";
 import { setIfDefined } from "@framework/utils/atomUtils";
-import { FitInViewStatus } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
 import type { UnlinkedViewState } from "../typesAndEnums";
@@ -34,7 +33,6 @@ const VIEW_LINK_SCHEMA = {
         viewport: NULLABLE_VIEWPORT_SCHEMA,
         viewportSourceViewId: { nullable: true, type: "string" as const },
         verticalScale: { type: "float64" as const },
-        fitInViewStatus: { enum: [FitInViewStatus.ON, FitInViewStatus.OFF] },
         bounds: {
             nullable: true,
             properties: {
@@ -76,7 +74,6 @@ export const serializeView: SerializeStateFunction<SerializedView> = (get) => {
 export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, set) => {
     const viewLinks = (raw.viewLinks ?? []).map((link) => ({
         ...link,
-        fitInViewStatus: link.fitInViewStatus ?? FitInViewStatus.OFF,
     }));
     setIfDefined(set, viewLinksAtom, viewLinks);
     setIfDefined(set, unlinkedViewStateMapAtom, raw.unlinkedViewStateMap ?? {});
