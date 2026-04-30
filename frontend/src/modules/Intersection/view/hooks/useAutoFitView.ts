@@ -25,18 +25,14 @@ export function useAutoFitView(
     const [autoFitView, setAutoFitView] = React.useState(!hasExistingViewport);
 
     const intersectionSourceKey = createIntersectionSourceKey(intersectionSource);
-    const previousIntersectionSourceKeyRef = React.useRef<string | null>(intersectionSourceKey);
-
-    React.useEffect(
-        function autoFitOnIntersectionSourceChange() {
-            if (previousIntersectionSourceKeyRef.current === intersectionSourceKey) {
-                return;
-            }
-            previousIntersectionSourceKeyRef.current = intersectionSourceKey;
-            setAutoFitView(true);
-        },
-        [intersectionSourceKey],
+    const [previousIntersectionSourceKey, setPreviousIntersectionSourceKey] = React.useState<string | null>(
+        intersectionSourceKey,
     );
+
+    if (previousIntersectionSourceKey !== intersectionSourceKey) {
+        setPreviousIntersectionSourceKey(intersectionSourceKey);
+        setAutoFitView(true);
+    }
 
     return { autoFitView, setAutoFitView };
 }
