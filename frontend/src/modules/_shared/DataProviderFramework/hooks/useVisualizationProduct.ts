@@ -24,7 +24,6 @@ export function useVisualizationAssemblerProduct<
     // such as objects or arrays, which would be considered different on every render if not memoized.
     options?: VisualizationAssemblerMakeOptions<TInjectedData, TAccumulatedData>,
 ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
-    // | null {
     const latestRevision = React.useSyncExternalStore(
         dataProviderManager
             .getPublishSubscribeDelegate()
@@ -34,12 +33,6 @@ export function useVisualizationAssemblerProduct<
 
     const memoizedProduct = React.useMemo(
         function memoizeVisualizationProduct() {
-            // if (dataProviderManager.isDeserializing()) {
-            //     // During deserialization, the data provider manager's state is being restored, and it may not be in a consistent state to create the visualization product.
-            //     // Returning null or a placeholder product here can prevent errors that would occur if we tried to create the product with an inconsistent data provider manager state.
-            //     return null;
-            // }
-
             return visualizationAssembler.make(dataProviderManager, options);
         },
         // ! "latestRevision" is included in the array to trigger recomputes
