@@ -1,9 +1,8 @@
 import React from "react";
 
-import { ConfirmActionColor, type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
-import { ButtonProps } from "@lib/components/Button/newButton";
+import { type ConfirmActionColor, type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
+import type { ButtonProps } from "@lib/components/Button/newButton";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export function GlobalConfirmationDialog(): React.ReactNode {
     const [visible, setVisible] = React.useState<boolean>(false);
@@ -26,30 +25,21 @@ export function GlobalConfirmationDialog(): React.ReactNode {
     }
 
     return (
-        <Dialog
+        <AlertDialog
             open
-            modal
-            showCloseCross={false}
+            primaryAction={{
+                label: options.actions[0].label,
+                tone: mapActionColorToButtonTone(options.actions[0].color),
+                onClick: () => handleAction(options.actions[0].id),
+            }}
+            secondaryActions={options.actions.slice(1).map((action) => ({
+                label: action.label,
+                tone: mapActionColorToButtonTone(action.color),
+                onClick: () => handleAction(action.id),
+            }))}
             title={options.title}
-            variant={options.variant}
-            actions={
-                <>
-                    {options.actions.map((action) => (
-                        <Button
-                            key={action.id}
-                            variant="text"
-                            tone={mapActionColorToButtonTone(action.color)}
-                            onClick={() => handleAction(action.id)}
-                        >
-                            {action.label}
-                        </Button>
-                    ))}
-                </>
-            }
-            zIndex={101}
-        >
-            {options.message}
-        </Dialog>
+            description={options.message}
+        />
     );
 }
 

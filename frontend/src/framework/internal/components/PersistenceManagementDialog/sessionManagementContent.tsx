@@ -23,16 +23,16 @@ import {
     type IsoStringRange,
 } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+import { Button } from "@lib/newComponents/Button";
+import { TextInput } from "@lib/newComponents/TextInput";
 import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
@@ -327,7 +327,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
         <>
             <div className="mb-4 flex gap-4">
                 <Label text="Title" wrapperClassName="grow">
-                    <Input
+                    <TextInput
                         startAdornment={<Search fontSize="small" />}
                         endAdornment={
                             <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
@@ -337,7 +337,6 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         value={titleInputValue}
                         placeholder="Search title"
                         onChange={handleTitleFilterValueChange}
-                        className="h-6"
                     />
                 </Label>
                 <Label text="Updated at" wrapperClassName="min-w-2xs">

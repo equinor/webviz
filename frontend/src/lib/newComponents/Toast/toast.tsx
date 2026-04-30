@@ -51,6 +51,7 @@ const TOAST_TYPE_TO_ICON: Record<ToastType, React.ReactNode> = {
 function ToastList() {
     const { toasts } = useToastManager();
 
+    // The "toast__*" classes can be found in the toast.css file in the styles/components folder
     return toasts.map((toast) => (
         <ToastBase.Root
             key={toast.id}

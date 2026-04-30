@@ -1,7 +1,9 @@
+import type React from "react";
+
 import type { DialogPopupProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
-import { AlertDialogProps } from "@lib/newComponents/AlertDialog";
-import React from "react";
+
+import type { AlertDialogProps } from "@lib/newComponents/AlertDialog";
 
 export type PopupProps = {
     children?: React.ReactNode;
@@ -33,6 +35,8 @@ const DEFAULT_PROPS = {
 
 export function Popup(props: PopupProps) {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
+
+    // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
         <DialogBase.Root
             open={defaultedProps.open}

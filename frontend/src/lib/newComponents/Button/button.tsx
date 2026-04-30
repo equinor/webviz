@@ -59,9 +59,9 @@ const VARIANT_TONE_CLASSES: Record<
 };
 
 const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
-    small: "button-sm",
-    default: "button-md",
-    large: "button-lg",
+    small: "h-selectable-sm text-body-sm",
+    default: "h-selectable-md text-body-md",
+    large: "h-selectable-lg text-body-lg",
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
@@ -74,11 +74,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             ref={ref}
             data-pressed={pressed ? "" : undefined}
             className={resolveClassNames(
-                "button",
+                "inline-flex cursor-pointer items-center rounded transition-colors duration-150",
                 {
-                    "rounded-full": round,
+                    "aspect-square rounded-full": round,
                     rounded: !round,
-                    "button__icon aspect-square justify-center": iconOnly,
+                    "text-body-2xl! aspect-square justify-center": iconOnly,
                 },
                 SIZE_CLASSES[defaultedProps.size],
                 VARIANT_TONE_CLASSES[defaultedProps.variant][
@@ -86,7 +86,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
                 ],
             )}
         >
-            {iconOnly ? props.children : <span className="button__label">{props.children}</span>}
+            {iconOnly ? (
+                props.children
+            ) : (
+                <span className="gap-x-horizontal-xs px-selectable-x inline-flex h-full w-full items-center">
+                    {props.children}
+                </span>
+            )}
         </ButtonBase>
     );
 });

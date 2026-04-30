@@ -1,6 +1,8 @@
 import { AlertDialog as AlertDialogBase, type AlertDialogRootProps } from "@base-ui/react";
+
+import type { ButtonProps } from "../Button";
+import { Button } from "../Button";
 import { Heading } from "../Heading";
-import { Button, ButtonProps } from "../Button";
 import { Paragraph } from "../Paragraph";
 
 export type AlertDialogAction = {
@@ -20,6 +22,7 @@ export type AlertDialogProps = AlertDialogRootProps & {
 export function AlertDialog(props: AlertDialogProps) {
     const { title, description, primaryAction, secondaryActions, ...rest } = props;
 
+    // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
         <AlertDialogBase.Root {...rest}>
             <AlertDialogBase.Portal>
@@ -37,7 +40,7 @@ export function AlertDialog(props: AlertDialogProps) {
                         className="dialog__popup__child"
                         render={(baseProps) => (
                             <Paragraph size="md" {...baseProps}>
-                                {props.description}
+                                {description}
                             </Paragraph>
                         )}
                     />

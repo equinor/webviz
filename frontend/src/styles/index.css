@@ -23,8 +23,6 @@
 @import "./utilities/z-index.css";
 
 /* Components */
-@import "./components/button.css";
-@import "./components/combobox.css";
 @import "./components/dialog.css";
 @import "./components/selectable.css";
 @import "./components/tabs.css";
