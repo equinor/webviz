@@ -173,18 +173,22 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
         const isAtMax = numViews >= MAX_INTERSECTION_VIEWS;
         const hasViews = numViews > 0;
 
-        if (group instanceof ContextBoundary) {
-            return isAtMax ? CONTEXT_BOUNDARY_ACTIONS_AT_MAX_VIEWS : CONTEXT_BOUNDARY_ACTIONS;
-        }
-
         if (group instanceof Group && group.getGroupType() === GroupType.INTERSECTION_VIEW) {
             return VIEW_ACTIONS;
         }
-
         if (!hasViews) {
-            return ROOT_ACTIONS_NO_VIEWS;
+            return [{ label: "Groups", children: [ENABLED_ADD_VIEW_ACTION, ADD_CONTEXT_BOUNDARY_ACTION] }];
         }
-        return isAtMax ? ROOT_ACTIONS_AT_MAX : ROOT_ACTIONS;
+
+        const addViewAction = isAtMax ? DISABLED_ADD_VIEW_ACTION : ENABLED_ADD_VIEW_ACTION;
+        if (group instanceof ContextBoundary) {
+            return [{ label: "Groups", children: [addViewAction] }, SHARED_SETTINGS_ACTION_GROUP];
+        }
+
+        return [
+            { label: "Groups", children: [addViewAction, ADD_CONTEXT_BOUNDARY_ACTION] },
+            SHARED_SETTINGS_ACTION_GROUP,
+        ];
     }
 
     return (
@@ -243,10 +247,17 @@ function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
     );
 }
 
-const ADD_VIEW_ACTION = {
+const ENABLED_ADD_VIEW_ACTION = {
     identifier: "view",
     icon: <Panorama fontSize="small" />,
     label: "View",
+};
+
+// Add of view can be disabled at max-views — see makeActionsForGroup for the dynamic action.
+const DISABLED_ADD_VIEW_ACTION = {
+    ...ENABLED_ADD_VIEW_ACTION,
+    disabled: true,
+    disabledReason: `Maximum number of views (${MAX_INTERSECTION_VIEWS}) reached`,
 };
 
 const ADD_CONTEXT_BOUNDARY_ACTION = {
@@ -293,32 +304,6 @@ const VIEW_SHARED_SETTINGS_ACTION_GROUP: ActionGroup = {
     label: "Shared Settings",
     children: SHARED_SETTINGS_CHILDREN.filter((c) => c.identifier !== "intersection-source"),
 };
-
-// Root level with no views: only View + Context Boundary
-const ROOT_ACTIONS_NO_VIEWS: ActionGroup[] = [
-    { label: "Groups", children: [ADD_VIEW_ACTION, ADD_CONTEXT_BOUNDARY_ACTION] },
-];
-
-// Root level: View + Context Boundary + Shared Settings
-const ROOT_ACTIONS: ActionGroup[] = [
-    { label: "Groups", children: [ADD_VIEW_ACTION, ADD_CONTEXT_BOUNDARY_ACTION] },
-    SHARED_SETTINGS_ACTION_GROUP,
-];
-
-// Root level at max views: Context Boundary only
-const ROOT_ACTIONS_AT_MAX: ActionGroup[] = [
-    { label: "Groups", children: [ADD_CONTEXT_BOUNDARY_ACTION] },
-    SHARED_SETTINGS_ACTION_GROUP,
-];
-
-// Context boundary: View + Shared Settings
-const CONTEXT_BOUNDARY_ACTIONS: ActionGroup[] = [
-    { label: "Groups", children: [ADD_VIEW_ACTION] },
-    SHARED_SETTINGS_ACTION_GROUP,
-];
-
-// Context boundary at max views: Shared Settings only
-const CONTEXT_BOUNDARY_ACTIONS_AT_MAX_VIEWS: ActionGroup[] = [SHARED_SETTINGS_ACTION_GROUP];
 
 // View: Context Boundary + all data layers + Shared Settings + Utilities
 const VIEW_ACTIONS: ActionGroup[] = [
