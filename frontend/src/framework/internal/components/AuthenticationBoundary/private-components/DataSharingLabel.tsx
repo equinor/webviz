@@ -1,5 +1,5 @@
 import { Banner } from "@lib/newComponents/Banner";
-import { Paragraph } from "@lib/newComponents/Typography/_compositions/Paragraph/paragraph";
+import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 export function DataSharingLabel() {
     return (

@@ -1,5 +1,5 @@
 import { Banner } from "@lib/newComponents/Banner/banner";
-import { Paragraph } from "@lib/newComponents/Typography/_compositions/Paragraph";
+import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 export function DevLabel() {
     return (

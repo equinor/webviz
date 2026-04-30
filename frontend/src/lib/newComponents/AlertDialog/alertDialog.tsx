@@ -2,8 +2,7 @@ import { AlertDialog as AlertDialogBase, type AlertDialogRootProps } from "@base
 
 import type { ButtonProps } from "../Button";
 import { Button } from "../Button";
-import { Heading } from "../Typography/_compositions/Heading";
-import { Paragraph } from "../Typography/_compositions/Paragraph";
+import { Paragraph, Heading } from "../Typography/compositions";
 
 export type AlertDialogAction = {
     label: string;

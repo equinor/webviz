@@ -1,6 +1,6 @@
 import { Dialog as DialogBase } from "@base-ui/react";
 
-import { Heading } from "@lib/newComponents/Typography/_compositions/Heading";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 
 export type TitleProps = {
     children?: React.ReactNode;

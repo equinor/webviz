@@ -1,4 +1,6 @@
-import { Typography, type TypographyProps } from "../..";
+import React from "react";
+
+import { Typography, type TypographyProps } from "../../typography";
 
 export type HeadingProps = {
     as: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
@@ -13,8 +15,10 @@ const COMPONENT_TO_SIZE_CLASSES: Record<HeadingProps["as"], TypographyProps["siz
     h6: "xl",
 };
 
-export function Heading(props: HeadingProps) {
+function HeadingComponent(props: HeadingProps, ref: React.ForwardedRef<HTMLHeadingElement>): React.ReactNode {
     const { as, ...rest } = props;
     const size = COMPONENT_TO_SIZE_CLASSES[as];
-    return <Typography {...rest} family="header" as={as} size={size} />;
+    return <Typography ref={ref} {...rest} family="header" as={as} size={size} />;
 }
+
+export const Heading = React.forwardRef<HTMLHeadingElement, HeadingProps>(HeadingComponent);

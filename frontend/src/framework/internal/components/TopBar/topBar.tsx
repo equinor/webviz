@@ -31,9 +31,9 @@ import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
-import { Heading } from "@lib/newComponents/Typography/_compositions/Heading";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

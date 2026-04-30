@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Paragraph } from "./paragraph";
 
 const meta: Meta<typeof Paragraph> = {
-    title: "Components/Paragraph",
+    title: "Components/Typography/Composision - Paragraph",
     component: Paragraph,
     parameters: {
         layout: "centered",
@@ -85,7 +85,6 @@ export const SquishedLineHeight: Story = {
     args: {
         size: "md",
         lineHeight: "squished",
-        children:
-            "This paragraph has squished line height.\nLines appear closer together than the default spacing.",
+        children: "This paragraph has squished line height.\nLines appear closer together than the default spacing.",
     },
 };
