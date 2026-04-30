@@ -28,10 +28,7 @@ export function makeSeismicBoundingBox({
 >): BBox | null {
     const data = getData();
     const polylineActualSectionLengths = getStoredData("sourcePolylineWithSectionLengths")?.actualSectionLengths;
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     if (!data || !polylineActualSectionLengths || isLoading) {
         return null;

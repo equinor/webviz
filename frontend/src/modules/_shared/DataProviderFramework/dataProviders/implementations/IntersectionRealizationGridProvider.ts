@@ -1,7 +1,6 @@
 import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -28,7 +27,6 @@ import {
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,
-    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.GRID_NAME,
@@ -47,10 +45,6 @@ export type IntersectionRealizationGridStoredData = {
 
 export type IntersectionRealizationGridData = PolylineIntersection_trans;
 
-export type IntersectionRealizationGridProviderArgs = {
-    enableWellboreExtensionLength: boolean;
-};
-
 export class IntersectionRealizationGridProvider implements CustomDataProviderImplementation<
     IntersectionRealizationGridSettings,
     IntersectionRealizationGridData,
@@ -58,15 +52,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
 > {
     settings = intersectionRealizationGridSettings;
 
-    private _isWellboreExtensionLengthEnabled = false;
-
-    constructor(args: IntersectionRealizationGridProviderArgs) {
-        this._isWellboreExtensionLengthEnabled = args.enableWellboreExtensionLength;
-    }
-
     getDefaultSettingsValues() {
         return {
-            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
             [Setting.SHOW_GRID_LINES]: false,
             [Setting.OPACITY_PERCENT]: 100,
         };
@@ -80,7 +67,6 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         return (
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
-            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.gridName, newSettings.gridName) ||
@@ -116,17 +102,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
     >): boolean {
-        let isValidExtensionLength = true;
-        if (this._isWellboreExtensionLengthEnabled) {
-            // Must have extension length for wellbore
-            isValidExtensionLength =
-                getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-                getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
-        }
-
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.GRID_NAME) !== null &&
@@ -140,23 +117,10 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
     defineDependencies({
         helperDependency,
         valueConstraintsUpdater,
-        settingAttributesUpdater,
         storedDataUpdater,
         queryClient,
         workbenchSession,
     }: DefineDependenciesArgs<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
-        const isWellboreExtensionLengthEnabled = this._isWellboreExtensionLengthEnabled;
-
-        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-            if (!isWellboreExtensionLengthEnabled) {
-                return { enabled: false, visible: false };
-            }
-
-            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled, visible: true };
-        });
-
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -268,12 +232,10 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const intersection = getLocalSetting(Setting.INTERSECTION);
-            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
 
             return createIntersectionPolylineWithSectionLengthsForField(
                 fieldIdentifier,
                 intersection,
-                wellboreExtensionLength,
                 workbenchSession,
                 queryClient,
             );

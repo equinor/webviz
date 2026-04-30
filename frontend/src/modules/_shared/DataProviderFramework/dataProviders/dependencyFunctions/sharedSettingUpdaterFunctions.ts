@@ -59,6 +59,7 @@ export function getAvailableIntersectionOptions(
             type: IntersectionType.WELLBORE,
             name: wellboreHeader.uniqueWellboreIdentifier,
             uuid: wellboreHeader.wellboreUuid,
+            extensionLength: 0,
         });
     }
 

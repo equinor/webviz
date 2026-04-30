@@ -12,7 +12,7 @@ export const makeEsvViewDataCollection: GroupCustomPropsCollector<
     TargetViewReturnTypes
 > = ({ getSetting }) => {
     const intersection = getSetting(Setting.INTERSECTION);
-    const extensionLength = createValidExtensionLength(intersection, getSetting(Setting.WELLBORE_EXTENSION_LENGTH));
+    const extensionLength = createValidExtensionLength(intersection);
 
     return {
         intersection: intersection,

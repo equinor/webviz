@@ -37,10 +37,7 @@ export function createGridLayerItemsMaker({
     const sourcePolylineWithSectionLengths = getStoredData("polylineWithSectionLengths");
     const valueRange = getDataValueRange();
 
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     if (!intersectionData || !sourcePolylineWithSectionLengths || !colorScale || isLoading || !valueRange) {
         return null;

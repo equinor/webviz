@@ -1,12 +1,9 @@
-import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
+import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 
-export function createValidExtensionLength(
-    intersection: Intersection | null,
-    wellboreExtensionLength: number | null,
-): number {
+export function createValidExtensionLength(intersection: IntersectionSettingValue | null): number {
     if (intersection?.type === IntersectionType.WELLBORE) {
-        return wellboreExtensionLength ?? 0;
+        return intersection.extensionLength ?? 0;
     }
     return 0;
 }
