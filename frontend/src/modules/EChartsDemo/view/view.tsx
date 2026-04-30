@@ -34,7 +34,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     // ── Zoom (shared across all chart types) ─────────────────────────────
     const [viewState, setViewState] = useAtom(chartZoomAtom);
-    const { appliedZoomState, handleDataZoom } = useChartZoomSync(viewState, setViewState);
+    const { appliedZoomState, handleDataZoom, handleRestore } = useChartZoomSync(viewState, setViewState);
 
     const instanceTitle = `${PLOT_TYPE_LABELS[plotType]} (Plots: ${numSubplots} Groups: ${numGroups} Members: ${numMembers} Steps: ${numTimesteps})`;
     React.useEffect(() => {
@@ -47,6 +47,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         numSubplots,
         appliedZoomState,
         handleDataZoom,
+        handleRestore,
     };
 
     return (

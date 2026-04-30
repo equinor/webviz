@@ -27,10 +27,17 @@ export function extractPointValue(value: unknown): [number, number] | null {
 
 export function buildCompactTooltipConfig<T extends object>(
     tooltip: T,
-): T & { padding: [number, number]; textStyle: { fontSize: number; lineHeight: number } } {
+): T & {
+    padding: [number, number];
+    textStyle: { fontSize: number; lineHeight: number };
+    transitionDuration: number;
+    confine: boolean;
+} {
     return {
         padding: COMPACT_TOOLTIP_PADDING,
         textStyle: COMPACT_TOOLTIP_TEXT_STYLE,
+        transitionDuration: 0,
+        confine: true,
         ...tooltip,
     };
 }

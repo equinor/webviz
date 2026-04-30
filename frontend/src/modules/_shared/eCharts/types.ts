@@ -1,4 +1,5 @@
 import type { ChartZoomState } from "./core/composeChartOption";
+import type { SubplotLayoutConfig } from "./layout/subplotGridLayout";
 
 export type StatisticKey = "mean" | "p10" | "p50" | "p90" | "min" | "max";
 
@@ -127,6 +128,8 @@ export enum HistogramType {
     Relative = "relative",
 }
 export interface BaseChartOptions {
+    /** Optional subplot grid layout controls (for example row/column limits). */
+    layoutConfig?: SubplotLayoutConfig;
     zoomState?: ChartZoomState;
     /** Enable mouse-wheel / pinch zoom. When true, the builder auto-creates inside dataZoom components. Defaults to false. */
     zoomable?: boolean;

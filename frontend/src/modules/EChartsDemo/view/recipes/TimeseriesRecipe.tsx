@@ -30,7 +30,7 @@ import { makeBaseOptions, type RecipeProps } from "./types";
 const MEMBER_LABEL = "Member";
 const ROW_HEIGHT_PX = 350;
 
-export function TimeseriesRecipe({ viewContext, scrollMode, numSubplots, appliedZoomState, handleDataZoom }: RecipeProps): React.ReactNode {
+export function TimeseriesRecipe({ viewContext, scrollMode, numSubplots, appliedZoomState, handleDataZoom, handleRestore }: RecipeProps): React.ReactNode {
     // ── Refs ──────────────────────────────────────────────────────────────
     const chartRef = React.useRef<ReactECharts>(null);
     const hoveredSeriesStore = React.useMemo(createHoveredSeriesStore, []);
@@ -113,7 +113,7 @@ export function TimeseriesRecipe({ viewContext, scrollMode, numSubplots, applied
                 <HoveredSeriesReadout store={hoveredSeriesStore} />
             </div>
             <div style={{ height: chartHeight, width: "100%", minHeight: ROW_HEIGHT_PX, minWidth: 100 }}>
-                <Chart chartRef={chartRef} option={echartsOptions} onDataZoom={handleDataZoom} onEvents={onChartEvents} />
+                <Chart chartRef={chartRef} option={echartsOptions} onDataZoom={handleDataZoom} onRestore={handleRestore} onEvents={onChartEvents} />
             </div>
         </>
     );

@@ -11,6 +11,8 @@ export type RecipeProps = {
     appliedZoomState: ChartZoomState | undefined;
     /** Wire to ReactECharts onEvents.datazoom. */
     handleDataZoom: (params: unknown) => void;
+    /** Wire to ReactECharts onEvents.restore. */
+    handleRestore: () => void;
 };
 
 export type BaseOptions = {

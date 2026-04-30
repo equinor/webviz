@@ -7,6 +7,7 @@ export interface ChartProps {
     option: EChartsOption;
     style?: React.CSSProperties;
     onDataZoom?: (params: unknown) => void;
+    onRestore?: () => void;
     /** Additional ECharts events beyond datazoom. */
     onEvents?: Record<string, (params: unknown) => void>;
     chartRef?: React.Ref<ReactECharts>;
@@ -14,14 +15,15 @@ export interface ChartProps {
 
 const DEFAULT_STYLE: React.CSSProperties = { height: "100%", width: "100%" };
 
-export function Chart({ option, style, onDataZoom, onEvents, chartRef }: ChartProps): React.ReactNode {
+export function Chart({ option, style, onDataZoom, onRestore, onEvents, chartRef }: ChartProps): React.ReactNode {
     const mergedEvents = React.useMemo(
         function mergeChartEvents() {
             const events: Record<string, (params: unknown) => void> = { ...onEvents };
             if (onDataZoom) events.datazoom = onDataZoom;
+            if (onRestore) events.restore = onRestore;
             return events;
         },
-        [onDataZoom, onEvents],
+        [onDataZoom, onRestore, onEvents],
     );
 
     return (

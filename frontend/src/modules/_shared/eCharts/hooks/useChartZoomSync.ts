@@ -38,6 +38,17 @@ export function useChartZoomSync(
         }, 150);
     }, [setZoomState]);
 
+    const handleRestore = useCallback(function handleRestoreEvent() {
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+            debounceTimer.current = null;
+        }
+
+        setZoomState(function clearZoomState(prev) {
+            return hasAnyZoomState(prev) ? {} : prev;
+        });
+    }, [setZoomState]);
+
     useEffect(
         function cleanupDebounceTimerEffect() {
             return function cleanupDebounceTimer() {
@@ -58,8 +69,8 @@ export function useChartZoomSync(
     );
 
     return useMemo(function buildZoomSyncResult() {
-        return { appliedZoomState, handleDataZoom };
-    }, [appliedZoomState, handleDataZoom]);
+        return { appliedZoomState, handleDataZoom, handleRestore };
+    }, [appliedZoomState, handleDataZoom, handleRestore]);
 }
 
 function hasAnyZoomState(zoomState: ChartZoomState | null | undefined): boolean {
@@ -98,17 +109,28 @@ function extractZoomUpdates(params: unknown): Array<{ axisKey: "x" | "y"; zoom: 
     return updates;
 }
 
-function mergeZoomUpdates(
+export function mergeZoomUpdatesForTesting(
     previousZoomState: ChartZoomState,
     updates: Array<{ axisKey: "x" | "y"; zoom: AxisZoomState }>,
 ): ChartZoomState {
     const nextZoomState: ChartZoomState = { ...previousZoomState };
 
     updates.forEach(function assignZoomUpdate(update) {
+        if (isFullRangeZoom(update.zoom)) {
+            delete nextZoomState[update.axisKey];
+            return;
+        }
+
         nextZoomState[update.axisKey] = update.zoom;
     });
 
     return nextZoomState;
+}
+
+const mergeZoomUpdates = mergeZoomUpdatesForTesting;
+
+function isFullRangeZoom(zoom: AxisZoomState): boolean {
+    return zoom.start === 0 && zoom.end === 100;
 }
 
 function areZoomStatesEqual(left: ChartZoomState | null | undefined, right: ChartZoomState | null | undefined): boolean {

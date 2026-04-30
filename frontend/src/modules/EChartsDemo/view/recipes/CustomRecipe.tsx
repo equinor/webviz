@@ -21,7 +21,7 @@ function buildSubplot(_group: SubplotGroup<unknown>, axisIndex: number): Cartesi
     };
 }
 
-export function CustomRecipe({ scrollMode, numSubplots, appliedZoomState, handleDataZoom }: RecipeProps): React.ReactNode {
+export function CustomRecipe({ scrollMode, numSubplots, appliedZoomState, handleDataZoom, handleRestore }: RecipeProps): React.ReactNode {
     const groups = React.useMemo(
         () => Array.from({ length: numSubplots }, (): SubplotGroup<unknown> => ({ title: "", traces: [null] })),
         [numSubplots],
@@ -39,7 +39,7 @@ export function CustomRecipe({ scrollMode, numSubplots, appliedZoomState, handle
 
     return (
         <div style={{ height: chartHeight, width: "100%", minHeight: ROW_HEIGHT_PX, minWidth: 100 }}>
-            <Chart option={echartsOptions} onDataZoom={handleDataZoom} />
+            <Chart option={echartsOptions} onDataZoom={handleDataZoom} onRestore={handleRestore} />
         </div>
     );
 }

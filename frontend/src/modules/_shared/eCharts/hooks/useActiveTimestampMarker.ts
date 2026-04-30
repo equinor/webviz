@@ -33,7 +33,9 @@ export function useActiveTimestampMarker(
         const instance = chartRef.current?.getEchartsInstance();
         if (!instance || instance.isDisposed()) return;
 
-        const opts = instance.getOption() as { series?: Array<{ xAxisIndex?: number; markLine?: unknown }> };
+        const opts = instance.getOption() as { series?: Array<{ xAxisIndex?: number; markLine?: unknown }> } | undefined;
+        if (!opts) return;
+
         const seriesArr = opts.series;
         if (!seriesArr || seriesArr.length === 0) return;
 

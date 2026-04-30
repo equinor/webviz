@@ -28,7 +28,7 @@ import { makeBaseOptions, type RecipeProps } from "./types";
 
 const ROW_HEIGHT_PX = 350;
 
-export function DistributionRecipe({ viewContext, scrollMode, numSubplots, appliedZoomState, handleDataZoom }: RecipeProps): React.ReactNode {
+export function DistributionRecipe({ viewContext, scrollMode, numSubplots, appliedZoomState, handleDataZoom, handleRestore }: RecipeProps): React.ReactNode {
 
     // ── Settings ─────────────────────────────────────────────────────────
     const dataConfig = viewContext.useSettingsToViewInterfaceValue("dataConfig");
@@ -54,7 +54,7 @@ export function DistributionRecipe({ viewContext, scrollMode, numSubplots, appli
 
     return (
         <div style={{ height: chartHeight, width: "100%", minHeight: ROW_HEIGHT_PX, minWidth: 100 }}>
-            <Chart option={echartsOptions} onDataZoom={handleDataZoom} />
+            <Chart option={echartsOptions} onDataZoom={handleDataZoom} onRestore={handleRestore} />
         </div>
     );
 }

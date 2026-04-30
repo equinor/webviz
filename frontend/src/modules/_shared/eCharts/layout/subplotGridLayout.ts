@@ -1,8 +1,14 @@
+export type SubplotLayoutDirection = "auto" | "columns" | "rows";
+export type SubplotAutoLayoutDirection = "columns" | "rows";
+
 export interface SubplotLayoutConfig {
     marginLeftPct?: number;
     marginRightPct?: number;
     bottomSpacePct?: number;
     topSpacePct?: number;
+    limitDirection?: SubplotLayoutDirection;
+    autoLayoutDirection?: SubplotAutoLayoutDirection;
+    maxDirectionElements?: number;
     maxCols?: number;
 }
 
@@ -11,6 +17,9 @@ export const DEFAULT_LAYOUT_CONFIG: Required<SubplotLayoutConfig> = {
     marginRightPct: 5,
     bottomSpacePct: 8,
     topSpacePct: 4,
+    limitDirection: "auto",
+    autoLayoutDirection: "columns",
+    maxDirectionElements: 4,
     maxCols: 4,
 };
 
@@ -74,8 +83,7 @@ export function computeSubplotGridLayout(numSubplots: number, config?: SubplotLa
  */
 function computeLayoutMetrics(numSubplots: number, cfg: Required<SubplotLayoutConfig>): LayoutMetrics {
     const isMultiGrid = numSubplots > 1;
-    const numCols = isMultiGrid ? Math.min(numSubplots, Math.ceil(Math.sqrt(numSubplots)), cfg.maxCols) : 1;
-    const numRows = Math.ceil(numSubplots / numCols);
+    const { numRows, numCols } = computeGridShape(numSubplots, cfg);
 
     const gapXPct = isMultiGrid ? Math.max(2, 6 / Math.sqrt(numCols)) : 0;
     const gapYPct = isMultiGrid ? Math.max(2, 8 / Math.sqrt(numRows)) : 0;
@@ -93,6 +101,35 @@ function computeLayoutMetrics(numSubplots: number, cfg: Required<SubplotLayoutCo
         cellWidth: availableWidth / numCols,
         cellHeight: availableHeight / numRows,
     };
+}
+
+function computeGridShape(
+    numSubplots: number,
+    cfg: Required<SubplotLayoutConfig>,
+): { numRows: number; numCols: number } {
+    if (numSubplots <= 1) {
+        return { numRows: 1, numCols: 1 };
+    }
+
+    const maxDirectionElements = Math.max(1, Math.floor(cfg.maxDirectionElements));
+
+    if (cfg.limitDirection === "rows") {
+        const numRows = Math.min(maxDirectionElements, numSubplots);
+        return { numRows, numCols: Math.ceil(numSubplots / numRows) };
+    }
+
+    if (cfg.limitDirection === "columns") {
+        const numCols = Math.min(maxDirectionElements, numSubplots);
+        return { numRows: Math.ceil(numSubplots / numCols), numCols };
+    }
+
+    if (cfg.autoLayoutDirection === "rows") {
+        const numRows = Math.ceil(Math.sqrt(numSubplots));
+        return { numRows, numCols: Math.ceil(numSubplots / numRows) };
+    }
+
+    const numCols = Math.min(numSubplots, Math.ceil(Math.sqrt(numSubplots)), cfg.maxCols);
+    return { numRows: Math.ceil(numSubplots / numCols), numCols };
 }
 
 function buildSubplotEntry(
