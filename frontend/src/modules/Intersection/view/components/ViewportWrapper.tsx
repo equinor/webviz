@@ -18,6 +18,7 @@ import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
+import { useAutoFitView } from "../hooks/useAutoFitView";
 import { useViewport, useViewportState } from "../hooks/useViewportState";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
@@ -51,8 +52,8 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const existingViewport = useViewport(viewId, viewLinkResult);
     const { isHoverHighlighted, highlightColor, onToggleViewLink, onHoverViewLink } = viewLinkResult;
 
-    // ! We enable auto-fitting initially on view without an established viewport
-    const [autoFitView, setAutoFitView] = React.useState(existingViewport === null);
+    // ! Auto-fit on initial render (when no viewport is established) and when the intersection source changes
+    const { autoFitView, setAutoFitView } = useAutoFitView(props.intersectionSource, existingViewport !== null);
     const [showGrid, setShowGrid] = React.useState<boolean>(true);
 
     // Viewport, bounds, vertical scale, and all related handlers
@@ -85,7 +86,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 updateViewport(newViewport);
             }
         },
-        [viewport, updateViewport],
+        [viewport, updateViewport, setAutoFitView],
     );
 
     const handleVerticalScaleIncrease = React.useCallback(
