@@ -64,10 +64,7 @@ export function createSeismicLayerItemsMaker({
     const attribute = getSetting(Setting.ATTRIBUTE);
     const valueRange = getDataValueRange();
 
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 

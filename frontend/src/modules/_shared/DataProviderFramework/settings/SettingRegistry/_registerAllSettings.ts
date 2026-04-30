@@ -104,7 +104,9 @@ SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetti
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", NumberRangeDropdownSetting);
 SettingRegistry.registerSetting(Setting.GRID_LAYER_RANGE, "Grid Ranges", GridLayerRangeSetting);
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting);
+SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
+    customConstructorParameters: [{ extensionLength: { min: 0, max: 5000, defaultValue: 500 } }],
+});
 SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity [%]", SliderNumberSetting, {
     customConstructorParameters: [{ minMax: { min: 0, max: 100 }, step: 1 }],
 });
@@ -127,9 +129,6 @@ SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", Ti
 SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_INTERVAL, "Time Interval", TimeOrIntervalSetting);
 
-SettingRegistry.registerSetting(Setting.WELLBORE_EXTENSION_LENGTH, "Wellbore Extension Length", InputNumberSetting, {
-    customConstructorParameters: [{ min: 0.0, max: 5000.0 }],
-});
 SettingRegistry.registerSetting(Setting.WELLBORE_PICKS, "Wellbore Picks", DrilledWellborePicksSetting);
 SettingRegistry.registerSetting(Setting.REPRESENTATION, "Representation", RepresentationSetting);
 SettingRegistry.registerSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE, "Depth Filter", RadioGroupSetting, {

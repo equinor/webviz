@@ -29,10 +29,7 @@ export function makeGridBoundingBox({
 >): BBox | null {
     const polylineIntersectionData = getData();
     const polylineActualSectionLengths = getStoredData("polylineWithSectionLengths")?.actualSectionLengths;
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     if (!polylineIntersectionData || !polylineActualSectionLengths || isLoading) {
         return null;
