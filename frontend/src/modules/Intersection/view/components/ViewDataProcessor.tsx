@@ -131,6 +131,10 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     const layerIdToNameMap = Object.fromEntries(visualizationLayerItems.map((layer) => [layer.id, layer.name]));
     const colorScales = view.annotations.filter((elm) => isColorScaleWithId(elm)) ?? [];
 
+    if (!viewIntersection) {
+        return null;
+    }
+
     return (
         <ViewportWrapper
             viewId={view.id}
