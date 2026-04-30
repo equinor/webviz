@@ -133,7 +133,7 @@ export const PopupOnly: Story = {
             },
         },
     },
-    render: () => {
+    render: function PopupOnlyStory() {
         const [open, setOpen] = React.useState(false);
         return (
             <>
