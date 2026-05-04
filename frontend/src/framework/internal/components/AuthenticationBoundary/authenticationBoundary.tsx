@@ -3,8 +3,8 @@ import FmuLogoAnimated from "@assets/fmuAnimated.svg";
 
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
-import { Heading } from "@lib/newComponents/Heading";
-import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
+import { Heading } from "@lib/newComponents/Typography/_compositions/Heading";
+import { Paragraph } from "@lib/newComponents/Typography/_compositions/Paragraph/paragraph";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DataSharingLabel } from "./private-components/DataSharingLabel";

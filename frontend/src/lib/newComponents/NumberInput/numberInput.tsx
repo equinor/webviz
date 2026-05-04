@@ -46,12 +46,13 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
     return (
         <NumberFieldBase.Root
             className={resolveClassNames(
-                "bg-canvas text-body-lg",
+                "form-element",
+                "bg-canvas text-body-md",
                 "gap-vertical-xs flex items-center pr-0",
                 "data-invalid:outline-danger data-invalid:bg-danger-surface",
                 {
-                    "form-element outline-neutral text-neutral outline -outline-offset-1": !defaultedProps.disabled,
-                    "text-disabled cursor-not-allowed outline-transparent": defaultedProps.disabled,
+                    "outline-neutral text-neutral outline -outline-offset-1": !defaultedProps.disabled,
+                    "outline-transparent": defaultedProps.disabled,
                 },
             )}
             {...baseRootProps}
@@ -70,10 +71,10 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 {defaultedProps.endAdornment}
 
                 <div className="text-body-xs max-h-full flex-col">
-                    <NumberFieldBase.Increment className="size-icon-xs not-disabled:hover:bg-accent-hover disabled:text-disabled text-accent-subtle block shrink">
+                    <NumberFieldBase.Increment className="size-icon-xs not-disabled:hover:bg-accent-hover disabled:text-disabled text-accent-subtle block shrink not-disabled:cursor-pointer">
                         <Add fontSize="inherit" className="h-1/2" />
                     </NumberFieldBase.Increment>
-                    <NumberFieldBase.Decrement className="size-icon-xs not-disabled:hover:bg-accent-hover text-accent-subtle disabled:text-disabled block shrink">
+                    <NumberFieldBase.Decrement className="size-icon-xs not-disabled:hover:bg-accent-hover text-accent-subtle disabled:text-disabled block shrink not-disabled:cursor-pointer">
                         <Remove fontSize="inherit" className="h-1/2" />
                     </NumberFieldBase.Decrement>
                 </div>

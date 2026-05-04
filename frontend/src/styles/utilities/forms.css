@@ -1,8 +1,16 @@
 @utility form-element {
-    @apply outline-neutral outline-1;
+    @apply bg-canvas outline-neutral rounded outline-1;
 
     &:hover {
         @apply outline-neutral-strong outline-1;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled cursor-not-allowed outline-transparent;
+    }
+
+    &[data-invalid] {
+        @apply outline-danger-subtle hover:outline-danger bg-danger-canvas outline-1;
     }
 
     &:focus-within {

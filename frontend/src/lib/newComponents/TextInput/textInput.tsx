@@ -43,15 +43,12 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                 <div
                     {...extractDataProps(p)}
                     className={resolveClassNames(
-                        "py-vertical-3xs px-vertical-xs text-body-lg",
+                        "form-element",
+                        "py-vertical-xs px-horizontal-sm text-body-md",
                         "gap-vertical-xs flex items-center -outline-offset-2",
                         "bg-canvas",
                         "outline-neutral outline",
-                        "text-neutral not-data-disabled:form-element",
-                        // Disabled
-                        "data-disabled:bg-disabled data-disabled:text-disabled data-disabled:outline-hidden",
-                        // Invalid
-                        "data-invalid:outline-danger data-invalid:bg-danger-canvas",
+                        "text-neutral",
                     )}
                 >
                     {makeStartAdornment(state)}

@@ -1,6 +1,6 @@
 import { Field as FieldBase } from "@base-ui/react";
 
-import { Paragraph } from "@lib/newComponents/Paragraph";
+import { Paragraph } from "@lib/newComponents/Typography/_compositions/Paragraph";
 
 export type DescriptionProps = {
     children?: React.ReactNode;

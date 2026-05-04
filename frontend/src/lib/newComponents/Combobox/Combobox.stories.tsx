@@ -50,6 +50,10 @@ const COUNTRIES_BY_CONTINENT = [
             { value: "nz", label: "New Zealand" },
         ],
     },
+    {
+        value: "disabled",
+        items: [{ value: "dis", label: "Disabled", disabled: true }],
+    },
 ];
 
 const COUNTRIES = COUNTRIES_BY_CONTINENT.flatMap((group) => group.items);
@@ -309,8 +313,7 @@ export const AsyncFetchOnOpen: Story = {
     parameters: {
         docs: {
             description: {
-                story:
-                    "Items are fetched once when the dropdown first opens. While the request is in flight the combobox shows a loading indicator; on success the list is populated.",
+                story: "Items are fetched once when the dropdown first opens. While the request is in flight the combobox shows a loading indicator; on success the list is populated.",
             },
         },
     },
@@ -355,8 +358,7 @@ export const AsyncSearchAsYouType: Story = {
     parameters: {
         docs: {
             description: {
-                story:
-                    "Items are re-fetched on every keystroke, simulating a server-side search API. A 600 ms debounce limits requests; the combobox shows a spinner while the request is in flight. Internal filtering is disabled via `filter={null}` so the server-returned list is rendered as-is.",
+                story: "Items are re-fetched on every keystroke, simulating a server-side search API. A 600 ms debounce limits requests; the combobox shows a spinner while the request is in flight. Internal filtering is disabled via `filter={null}` so the server-returned list is rendered as-is.",
             },
         },
     },

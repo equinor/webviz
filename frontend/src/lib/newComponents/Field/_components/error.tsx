@@ -1,6 +1,6 @@
 import { Field as FieldBase, type FieldErrorProps } from "@base-ui/react";
 
-import { Paragraph } from "@lib/newComponents/Paragraph";
+import { Paragraph } from "@lib/newComponents/Typography/_compositions/Paragraph";
 
 export type ErrorProps = Omit<FieldErrorProps, "className">;
 

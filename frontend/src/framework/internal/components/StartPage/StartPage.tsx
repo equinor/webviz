@@ -6,7 +6,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Combobox } from "@lib/newComponents/Combobox";
-import { Heading } from "@lib/newComponents/Heading";
+import { Heading } from "@lib/newComponents/Typography/_compositions/Heading";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";

@@ -11,7 +11,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Heading } from "@lib/newComponents/Heading";
+import { Heading } from "@lib/newComponents/Typography/_compositions/Heading";
 import { Typography } from "@lib/newComponents/Typography";
 
 Icon.add({ folder_open });

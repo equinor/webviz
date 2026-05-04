@@ -1,6 +1,6 @@
 import { Dialog as DialogBase } from "@base-ui/react";
 
-import { Paragraph } from "@lib/newComponents/Paragraph/paragraph";
+import { Paragraph } from "@lib/newComponents/Typography/_compositions/Paragraph/paragraph";
 
 export type DescriptionProps = {
     children?: React.ReactNode;

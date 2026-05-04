@@ -1,4 +1,4 @@
-import { Typography, type TypographyProps } from "../Typography";
+import { Typography, type TypographyProps } from "../..";
 
 export type ParagraphProps = Omit<TypographyProps, "family" | "as">;
 

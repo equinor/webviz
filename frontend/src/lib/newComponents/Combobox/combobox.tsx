@@ -82,17 +82,32 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         [items],
     );
 
+    const baseItems = React.useMemo(() => {
+        if (isGroupedItems(items)) {
+            return items.map((group) => ({
+                ...group,
+                items: group.items.map((item) => item.value),
+            }));
+        }
+
+        return items.map((item) => item.value);
+    }, [items]);
+
+    const itemByValue = React.useMemo(() => {
+        return new Map(flatItems.map((item) => [item.value, item]));
+    }, [flatItems]);
+
     function getLabelForValue(value: TValue): string {
         return flatItems.find((item) => item.value === value)?.label ?? String(value);
     }
 
     return (
         <ComboboxBase.Root
-            items={items}
+            items={baseItems}
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
             {...rootProps}
         >
-            <ComboboxBase.InputGroup className="form-element outline-neutral bg-canvas text-body-sm gap-horizontal-sm py-vertical-2xs pl-selectable-x flex cursor-text items-center outline -outline-offset-2">
+            <ComboboxBase.InputGroup className="form-element outline-neutral bg-canvas text-body-md gap-horizontal-sm py-vertical-xs pl-horizontal-sm flex cursor-text items-center outline -outline-offset-2">
                 {defaultedProps.multiple ? (
                     <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex grow flex-wrap items-center">
                         <ComboboxBase.Value>
@@ -106,14 +121,14 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                                 <ComboboxBase.Chip
                                                     key={key}
                                                     aria-label={label}
-                                                    className="gap-horizontal-xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover focus-within:bg-accent-hover flex items-center overflow-hidden rounded whitespace-nowrap"
+                                                    className="gap-horizontal-3xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover focus-within:bg-accent-hover flex items-center overflow-hidden rounded whitespace-nowrap"
                                                 >
                                                     {renderItemAdornment && (
                                                         <div className="pl-horizontal-xs flex shrink-0 items-center">
                                                             {renderItemAdornment(item)}
                                                         </div>
                                                     )}
-                                                    <span className="px-horizontal-xs py-vertical-xs">{label}</span>
+                                                    <span className="px-horizontal-3xs flex items-center">{label}</span>
                                                     <ComboboxBase.ChipRemove
                                                         aria-label={`Remove ${label}`}
                                                         render={(subProps) => (
@@ -136,7 +151,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                     <ComboboxBase.Input
                                         ref={ref}
                                         placeholder={defaultedProps.multiple ? "" : placeholder}
-                                        className="py-vertical-xs box-border min-w-8 flex-1 border-0 bg-transparent focus:outline-0"
+                                        className="box-border min-w-8 flex-1 border-0 bg-transparent focus:outline-0"
                                     />
                                 </React.Fragment>
                             )}
@@ -158,7 +173,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                         <ComboboxBase.Input
                             ref={ref}
                             placeholder={placeholder}
-                            className="py-vertical-xs box-border min-w-0 flex-1 border-0 bg-transparent focus:outline-0"
+                            className="box-border min-w-0 flex-1 border-0 bg-transparent focus:outline-0"
                         />
                     </>
                 )}
@@ -205,7 +220,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                 </ComboboxBase.Empty>
 
                                 <ComboboxBase.List
-                                    className={`gap-y-vertical-xs gap-x-horizontal-xs box-border grid max-h-[min(var(--available-height),24rem)] scroll-p-px overflow-y-auto overscroll-contain outline-0 data-empty:p-0 ${listCols}`}
+                                    className={`gap-x-horizontal-xs box-border grid max-h-[min(var(--available-height),24rem)] scroll-p-px overflow-y-auto overscroll-contain outline-0 data-empty:p-0 ${listCols}`}
                                 >
                                     {hasGroups
                                         ? (group) => (
@@ -218,42 +233,56 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                                   <ComboboxBase.GroupLabel
                                                       render={(subProps) => (
                                                           <span
-                                                              {...subProps}
-                                                              className={`col-start-2 uppercase ${renderItemAdornment ? "col-span-2" : ""}`}
+                                                              className={`bg-floating z-elevated pt-vertical-sm sticky top-0 col-span-2 col-start-1 grid grid-cols-subgrid uppercase ${renderItemAdornment ? "col-span-3" : ""}`}
                                                           >
-                                                              <Typography
-                                                                  family="body"
-                                                                  as="span"
-                                                                  size="sm"
-                                                                  lineHeight="squished"
-                                                                  weight="bolder"
+                                                              <span
+                                                                  {...subProps}
+                                                                  className={`col-start-2 ${renderItemAdornment ? "col-span-2" : ""}`}
                                                               >
-                                                                  {group.value}
-                                                              </Typography>
+                                                                  <Typography
+                                                                      family="body"
+                                                                      as="span"
+                                                                      size="sm"
+                                                                      lineHeight="squished"
+                                                                      weight="bolder"
+                                                                  >
+                                                                      {group.value}
+                                                                  </Typography>
+                                                              </span>
                                                           </span>
                                                       )}
                                                   />
 
                                                   <ComboboxBase.Collection>
-                                                      {(item) => (
-                                                          <ComboboxItem
-                                                              key={getItemValueKey(item)}
-                                                              item={item}
-                                                              itemColSpan={itemColSpan}
-                                                              renderItemAdornment={renderItemAdornment}
-                                                          />
-                                                      )}
+                                                      {(value) => {
+                                                          const item = itemByValue.get(value as TValue);
+                                                          if (!item) return null;
+
+                                                          return (
+                                                              <ComboboxItem
+                                                                  key={getItemValueKey(item)}
+                                                                  item={item}
+                                                                  itemColSpan={itemColSpan}
+                                                                  renderItemAdornment={renderItemAdornment}
+                                                              />
+                                                          );
+                                                      }}
                                                   </ComboboxBase.Collection>
                                               </ComboboxBase.Group>
                                           )
-                                        : (item) => (
-                                              <ComboboxItem
-                                                  key={getItemValueKey(item)}
-                                                  item={item}
-                                                  itemColSpan={itemColSpan}
-                                                  renderItemAdornment={renderItemAdornment}
-                                              />
-                                          )}
+                                        : (value) => {
+                                              const item = itemByValue.get(value as TValue);
+                                              if (!item) return null;
+
+                                              return (
+                                                  <ComboboxItem
+                                                      key={getItemValueKey(item)}
+                                                      item={item}
+                                                      itemColSpan={itemColSpan}
+                                                      renderItemAdornment={renderItemAdornment}
+                                                  />
+                                              );
+                                          }}
                                 </ComboboxBase.List>
                             </React.Fragment>
                         )}
@@ -277,7 +306,7 @@ function ComboboxItem<TValue>({
         <ComboboxBase.Item
             value={item.value}
             disabled={item.disabled}
-            className={`user-select-none py-selectable-y pr-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent-hover ${itemColSpan} box-border grid grid-cols-subgrid items-center outline-0 data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']`}
+            className={`user-select-none py-selectable-y pr-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent-hover ${itemColSpan} data-disabled:text-disabled box-border grid grid-cols-subgrid items-center outline-0 data-disabled:cursor-not-allowed data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']`}
         >
             <ComboboxBase.ItemIndicator className="pl-selectable-x text-accent-subtle text-body-lg col-start-1 flex items-center">
                 <Check fontSize="inherit" />
