@@ -365,7 +365,7 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const focusBounds = viewLink ? computeViewLinkFocusBounds(viewLink.viewIds, intersectionViews) : null;
     const isHoverHighlighted = hoveredViewIds.has(viewId);
 
-    // Use the link's color when highlighted via a link group, otherwise null (default blue for unlinked hover)
+    // Use the link's color when highlighted via a link group, otherwise null
     const hoveredLink = isHoverHighlighted
         ? viewLinks.find((l) => l.viewIds.includes(viewId) || l.viewIds.some((id) => hoveredViewIds.has(id)))
         : null;

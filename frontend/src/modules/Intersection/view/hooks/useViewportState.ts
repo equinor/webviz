@@ -267,7 +267,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     // --- Refocus logic ---
 
-    // Only automatically focus when focusbounds changes
+    // Only automatically focus when focus bounds changes
     React.useEffect(() => {
         if (effectiveFocusBounds && autofit) {
             handleFitInView();

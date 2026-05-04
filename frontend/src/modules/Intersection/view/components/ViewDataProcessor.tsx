@@ -153,17 +153,22 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         />
     );
 }
-// Checks if the view's provider data is ready to be aggregated.
+
+/**
+ * Checks if the view's provider data is ready to be aggregated.
+ */
 function useDataIsReady(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
 ) {
-    // TODO: This was bigger when I initially extracted it, but only this line seemed relevant. Should we check anything else?
+    // Consider if we should check anything else to define "data is ready"
     const dataIsReady = (view.numLoadingDataProviders ?? 0) === 0;
 
     return dataIsReady;
 }
 
-/** Computes the x/y bounds that contains all data in the view layers */
+/**
+ * Computes the x/y bounds that contains all data in the view layers
+ */
 function useDataBounds(
     dataIsReady: boolean,
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
