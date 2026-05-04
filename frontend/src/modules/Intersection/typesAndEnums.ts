@@ -8,7 +8,9 @@ export enum PreferredViewLayout {
     VERTICAL = "vertical",
 }
 
-export type UnlinkedViewState = {
-    viewport: Viewport;
+export type ViewState = {
+    viewport: Viewport | null;
     verticalScale: number;
 };
+
+export type ViewStateMap = Record<string, ViewState>;

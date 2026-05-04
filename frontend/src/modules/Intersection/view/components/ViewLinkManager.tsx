@@ -3,18 +3,29 @@ import React from "react";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import type { Viewport } from "@framework/types/viewport";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
+
+/**
+ * Ref-stable callback used by the ViewLinkManager to propagate the source view's viewport to
+ * the given target view ids. The host owns the storage and is responsible for reading the
+ * source's current viewport from its own state.
+ */
+export type PropagateLinkViewportFn = (targetViewIds: string[], sourceViewId: string) => void;
+
+/**
+ * Ref-stable callback used by the ViewLinkManager to propagate the source view's vertical
+ * scale to the given target view ids. The host owns the storage and is responsible for
+ * reading the source's current vertical scale from its own state.
+ */
+export type PropagateLinkVerticalScaleFn = (targetViewIds: string[], sourceViewId: string) => void;
 
 export type ViewLink = {
     id: string;
     color: string;
     viewIds: string[];
-    viewport: Viewport | null;
     viewportSourceViewId: string | null;
-    verticalScale: number;
     bounds: Bounds | null;
 };
 
@@ -30,9 +41,9 @@ type ViewLinkManagerContextValue = {
     intersectionViews: IntersectionViewInfo[];
     hoveredViewIds: ReadonlySet<string>;
     setHoveredViewIds: (viewIds: ReadonlySet<string>) => void;
-    toggleViewLink: (thisViewId: string, otherViewId: string, initiatorViewport?: Viewport | null) => void;
-    onLinkedViewportChange: (viewId: string, viewport: Viewport) => void;
-    onLinkedVerticalScaleChange: (viewId: string, scale: number) => void;
+    toggleViewLink: (thisViewId: string, otherViewId: string) => void;
+    onLinkedViewportChange: (viewId: string) => void;
+    onLinkedVerticalScaleChange: (viewId: string) => void;
     onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
 };
 
@@ -54,6 +65,8 @@ export type ViewLinkManagerProps = {
     intersectionViews: IntersectionViewInfo[];
     linkColors: string[];
     initialViewLinks: ViewLink[] | null;
+    propagateLinkViewport: PropagateLinkViewportFn;
+    propagateLinkVerticalScale: PropagateLinkVerticalScaleFn;
     onViewLinksChange?: (viewLinks: ViewLink[]) => void;
     children: React.ReactNode;
 };
@@ -69,6 +82,8 @@ export function ViewLinkManager({
     intersectionViews,
     linkColors,
     initialViewLinks,
+    propagateLinkViewport,
+    propagateLinkVerticalScale,
     onViewLinksChange,
     children,
 }: ViewLinkManagerProps): React.ReactNode {
@@ -77,6 +92,8 @@ export function ViewLinkManager({
 
     const prevViewIdsRef = React.useRef<string[]>([]);
     const hasAppliedInitialRef = React.useRef(false);
+    const viewLinksRef = React.useRef<ViewLink[]>(viewLinks);
+    viewLinksRef.current = viewLinks;
 
     // TEMPORARY SOLUTION:
     // - Apply initial view links once they become defined. As DPF uses a couple of renders, without loading state
@@ -125,110 +142,124 @@ export function ViewLinkManager({
         [intersectionViews],
     );
 
-    // Stable callbacks — use functional state updates so no external deps are needed
+    // Stable callbacks — read latest viewLinks via ref so deps stay minimal
     const toggleViewLink = React.useCallback(
-        function toggleViewLink(thisViewId: string, otherViewId: string, initiatorViewport?: Viewport | null) {
+        function toggleViewLink(thisViewId: string, otherViewId: string) {
             // User-initiated action — mark initialization complete so persistence effects run
             hasAppliedInitialRef.current = true;
 
-            setViewLinks((prev) => {
-                const thisLinkIdx = prev.findIndex((l) => l.viewIds.includes(thisViewId));
-                const otherLinkIdx = prev.findIndex((l) => l.viewIds.includes(otherViewId));
+            const prev = viewLinksRef.current;
+            const thisLinkIdx = prev.findIndex((l) => l.viewIds.includes(thisViewId));
+            const otherLinkIdx = prev.findIndex((l) => l.viewIds.includes(otherViewId));
 
-                // Already in the same ViewLink → remove thisView
-                if (thisLinkIdx !== -1 && thisLinkIdx === otherLinkIdx) {
-                    const updatedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
-                    if (updatedViewIds.length <= 1) {
-                        return prev.filter((_, i) => i !== thisLinkIdx);
-                    }
-                    return prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: updatedViewIds } : link));
-                }
+            let next: ViewLink[];
+            // When joining an existing link, the joiner adopts that link's existing state
+            // (read from a member already in it). When creating a new link, the initiator
+            // is the source and its state is propagated to the new pair.
+            let joinSourceViewId: string | null = null;
+            let createdLink: ViewLink | null = null;
 
-                if (thisLinkIdx !== -1) {
-                    // This view is already in a different link → leave it first
-                    const prunedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
-                    const newLinks =
-                        prunedViewIds.length <= 1
-                            ? prev.filter((_, i) => i !== thisLinkIdx)
-                            : prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: prunedViewIds } : link));
+            // Already in the same ViewLink → remove thisView
+            if (thisLinkIdx !== -1 && thisLinkIdx === otherLinkIdx) {
+                const updatedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
+                next =
+                    updatedViewIds.length <= 1
+                        ? prev.filter((_, i) => i !== thisLinkIdx)
+                        : prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: updatedViewIds } : link));
+            } else if (thisLinkIdx !== -1) {
+                // This view is already in a different link → leave it first
+                const prunedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
+                const newLinks =
+                    prunedViewIds.length <= 1
+                        ? prev.filter((_, i) => i !== thisLinkIdx)
+                        : prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: prunedViewIds } : link));
 
-                    // Now join otherView's link (if it has one) or create a new link
-                    const updatedOtherLinkIdx = newLinks.findIndex((l) => l.viewIds.includes(otherViewId));
-                    if (updatedOtherLinkIdx !== -1) {
-                        return newLinks.map((link, i) =>
-                            i === updatedOtherLinkIdx ? { ...link, viewIds: [...link.viewIds, thisViewId] } : link,
-                        );
-                    }
-                    return [
-                        ...newLinks,
-                        {
-                            id: `view-link-${v4()}`,
-                            color: pickNextLinkColor(newLinks, linkColors),
-                            viewIds: [thisViewId, otherViewId],
-                            viewport: initiatorViewport ?? null,
-                            viewportSourceViewId: thisViewId,
-                            verticalScale: 10.0,
-                            bounds: null,
-                        },
-                    ];
-                }
-
-                if (otherLinkIdx !== -1) {
-                    // Other view is in a link → join it
-                    return prev.map((link, i) =>
-                        i === otherLinkIdx ? { ...link, viewIds: [...link.viewIds, thisViewId] } : link,
+                const updatedOtherLinkIdx = newLinks.findIndex((l) => l.viewIds.includes(otherViewId));
+                if (updatedOtherLinkIdx !== -1) {
+                    const targetLink = newLinks[updatedOtherLinkIdx];
+                    next = newLinks.map((link, i) =>
+                        i === updatedOtherLinkIdx ? { ...link, viewIds: [...link.viewIds, thisViewId] } : link,
                     );
-                }
-
-                // Neither in a group → create new ViewLink
-                return [
-                    ...prev,
-                    {
+                    joinSourceViewId = targetLink.viewportSourceViewId ?? targetLink.viewIds[0];
+                } else {
+                    const newLink: ViewLink = {
                         id: `view-link-${v4()}`,
-                        color: pickNextLinkColor(prev, linkColors),
+                        color: pickNextLinkColor(newLinks, linkColors),
                         viewIds: [thisViewId, otherViewId],
-                        viewport: initiatorViewport ?? null,
-                        viewportSourceViewId: initiatorViewport ? thisViewId : null,
-                        verticalScale: 10.0,
+                        viewportSourceViewId: thisViewId,
                         bounds: null,
-                    },
-                ];
-            });
+                    };
+                    next = [...newLinks, newLink];
+                    createdLink = newLink;
+                }
+            } else if (otherLinkIdx !== -1) {
+                // Other view is in a link → join it
+                const targetLink = prev[otherLinkIdx];
+                next = prev.map((link, i) =>
+                    i === otherLinkIdx ? { ...link, viewIds: [...link.viewIds, thisViewId] } : link,
+                );
+                joinSourceViewId = targetLink.viewportSourceViewId ?? targetLink.viewIds[0];
+            } else {
+                // Neither in a group → create new ViewLink
+                const newLink: ViewLink = {
+                    id: `view-link-${v4()}`,
+                    color: pickNextLinkColor(prev, linkColors),
+                    viewIds: [thisViewId, otherViewId],
+                    viewportSourceViewId: thisViewId,
+                    bounds: null,
+                };
+                next = [...prev, newLink];
+                createdLink = newLink;
+            }
+
+            setViewLinks(next);
+
+            if (joinSourceViewId) {
+                // Joining an existing link — propagate the link's current viewport/scale
+                // (from an existing member) only to the joiner.
+                propagateLinkViewport([thisViewId], joinSourceViewId);
+                propagateLinkVerticalScale([thisViewId], joinSourceViewId);
+            } else if (createdLink) {
+                // New link — propagate the initiator's viewport/scale to the other members.
+                const targets = createdLink.viewIds.filter((id) => id !== thisViewId);
+                propagateLinkViewport(targets, thisViewId);
+                propagateLinkVerticalScale(targets, thisViewId);
+            }
         },
-        [linkColors],
+        [linkColors, propagateLinkViewport, propagateLinkVerticalScale],
     );
 
-    const onLinkedViewportChange = React.useCallback(function onLinkedViewportChange(
-        viewId: string,
-        viewport: Viewport,
-    ) {
-        setViewLinks((prev) => {
-            let changed = false;
-            const next = prev.map((link) => {
-                if (!link.viewIds.includes(viewId)) return link;
-                if (isEqual(link.viewport, viewport)) return link;
-                changed = true;
-                return { ...link, viewport: viewport, viewportSourceViewId: viewId };
-            });
-            return changed ? next : prev;
-        });
-    }, []);
+    const onLinkedViewportChange = React.useCallback(
+        function onLinkedViewportChange(viewId: string) {
+            const link = viewLinksRef.current.find((l) => l.viewIds.includes(viewId));
+            if (!link) return;
 
-    const onLinkedVerticalScaleChange = React.useCallback(function onLinkedVerticalScaleChange(
-        viewId: string,
-        scale: number,
-    ) {
-        setViewLinks((prev) => {
-            let changed = false;
-            const next = prev.map((link) => {
-                if (!link.viewIds.includes(viewId)) return link;
-                if (link.verticalScale === scale) return link;
-                changed = true;
-                return { ...link, verticalScale: scale };
+            const targets = link.viewIds.filter((id) => id !== viewId);
+            propagateLinkViewport(targets, viewId);
+
+            setViewLinks((prev) => {
+                let changed = false;
+                const next = prev.map((l) => {
+                    if (!l.viewIds.includes(viewId)) return l;
+                    if (l.viewportSourceViewId === viewId) return l;
+                    changed = true;
+                    return { ...l, viewportSourceViewId: viewId };
+                });
+                return changed ? next : prev;
             });
-            return changed ? next : prev;
-        });
-    }, []);
+        },
+        [propagateLinkViewport],
+    );
+
+    const onLinkedVerticalScaleChange = React.useCallback(
+        function onLinkedVerticalScaleChange(viewId: string) {
+            const link = viewLinksRef.current.find((l) => l.viewIds.includes(viewId));
+            if (!link) return;
+            const targets = link.viewIds.filter((id) => id !== viewId);
+            propagateLinkVerticalScale(targets, viewId);
+        },
+        [propagateLinkVerticalScale],
+    );
 
     const onLinkedBoundsChange = React.useCallback(function onLinkedBoundsChange(viewId: string, bounds: Bounds) {
         setViewLinks((prev) => {
@@ -287,14 +318,12 @@ export type ViewLinkResult = {
     isLinked: boolean;
     isHoverHighlighted: boolean;
     highlightColor: string | null;
-    viewport: Viewport | null;
     viewportSourceViewId: string | null;
-    verticalScale: number | null;
     focusBounds: Bounds | null;
-    onToggleViewLink: (otherViewId: string, initiatorViewport?: Viewport | null) => void;
+    onToggleViewLink: (otherViewId: string) => void;
     onHoverViewLink: (viewIds: string[] | null) => void;
-    onLinkedViewportChange: (viewport: Viewport) => void;
-    onLinkedVerticalScaleChange: (scale: number) => void;
+    onLinkedViewportChange: () => void;
+    onLinkedVerticalScaleChange: () => void;
     onLinkedBoundsChange: (bounds: Bounds) => void;
     bounds: Bounds | null;
 };
@@ -316,22 +345,22 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const multipleViews = intersectionViews.length > 1;
 
     const onToggleViewLink = React.useCallback(
-        function onToggleViewLink(otherViewId: string, initiatorViewport?: Viewport | null) {
-            toggleViewLink?.(viewId, otherViewId, initiatorViewport);
+        function onToggleViewLink(otherViewId: string) {
+            toggleViewLink?.(viewId, otherViewId);
         },
         [viewId, toggleViewLink],
     );
 
     const onLinkedViewportChangeForView = React.useCallback(
-        function onLinkedViewportChangeForView(viewport: Viewport) {
-            onLinkedViewportChange?.(viewId, viewport);
+        function onLinkedViewportChangeForView() {
+            onLinkedViewportChange?.(viewId);
         },
         [viewId, onLinkedViewportChange],
     );
 
     const onLinkedVerticalScaleChangeForView = React.useCallback(
-        function onLinkedVerticalScaleChangeForView(scale: number) {
-            onLinkedVerticalScaleChange?.(viewId, scale);
+        function onLinkedVerticalScaleChangeForView() {
+            onLinkedVerticalScaleChange?.(viewId);
         },
         [viewId, onLinkedVerticalScaleChange],
     );
@@ -378,9 +407,7 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         isLinked,
         isHoverHighlighted,
         highlightColor,
-        viewport: viewLink?.viewport ?? null,
         viewportSourceViewId: viewLink?.viewportSourceViewId ?? null,
-        verticalScale: viewLink?.verticalScale ?? null,
         focusBounds,
         onToggleViewLink,
         onHoverViewLink,

@@ -1,6 +1,7 @@
 import React from "react";
 
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
+import { isEqual } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -48,11 +49,16 @@ import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
-import { viewLinksAtom } from "../atoms/baseAtoms";
+import { viewStateMapAtom, viewLinksAtom } from "../atoms/baseAtoms";
 
 import { MultiViewLayout } from "./MultiViewLayout";
 import { ViewDataProcessor } from "./ViewDataProcessor";
-import { ViewLinkManager, type ViewLink } from "./ViewLinkManager";
+import {
+    ViewLinkManager,
+    type PropagateLinkVerticalScaleFn,
+    type PropagateLinkViewportFn,
+    type ViewLink,
+} from "./ViewLinkManager";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -143,6 +149,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     const fieldIdentifier = props.dataProviderManager.getGlobalSetting("fieldId");
 
     const [persistedViewLinks, setPersistedViewLinks] = useAtom(viewLinksAtom);
+    const setViewStateMap = useSetAtom(viewStateMapAtom);
 
     // Assemble visualization of providers
     const assemblerProduct = useVisualizationAssemblerProduct(props.dataProviderManager, VISUALIZATION_ASSEMBLER);
@@ -182,6 +189,58 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         [setPersistedViewLinks],
     );
 
+    // Propagate the source view's viewport (read from the per-view state map) to the
+    // given target view ids.
+    const propagateLinkViewport = React.useCallback<PropagateLinkViewportFn>(
+        function propagateLinkViewport(targetViewIds, sourceViewId) {
+            setViewStateMap((prev) => {
+                const source = prev?.[sourceViewId];
+                if (!source?.viewport) return prev;
+                const sourceViewport = source.viewport;
+                const next = { ...prev };
+                let changed = false;
+                for (const id of targetViewIds) {
+                    if (id === sourceViewId) continue;
+                    const existing = next[id];
+                    if (existing && isEqual(existing.viewport, sourceViewport)) continue;
+                    next[id] = {
+                        viewport: sourceViewport,
+                        verticalScale: existing?.verticalScale ?? 10.0,
+                    };
+                    changed = true;
+                }
+                return changed ? next : prev;
+            });
+        },
+        [setViewStateMap],
+    );
+
+    // Propagate the source view's vertical scale (read from the per-view state map) to
+    // the given target view ids.
+    const propagateLinkVerticalScale = React.useCallback<PropagateLinkVerticalScaleFn>(
+        function propagateLinkVerticalScale(targetViewIds, sourceViewId) {
+            setViewStateMap((prev) => {
+                const source = prev?.[sourceViewId];
+                if (!source) return prev;
+                const sourceScale = source.verticalScale;
+                const next = { ...prev };
+                let changed = false;
+                for (const id of targetViewIds) {
+                    if (id === sourceViewId) continue;
+                    const existing = next[id];
+                    if (existing && existing.verticalScale === sourceScale) continue;
+                    next[id] = {
+                        viewport: existing?.viewport ?? null,
+                        verticalScale: sourceScale,
+                    };
+                    changed = true;
+                }
+                return changed ? next : prev;
+            });
+        },
+        [setViewStateMap],
+    );
+
     if (intersectionViews.length === 0) {
         return null;
     }
@@ -191,6 +250,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
             intersectionViews={intersectionViews}
             linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
             initialViewLinks={persistedViewLinks}
+            propagateLinkViewport={propagateLinkViewport}
+            propagateLinkVerticalScale={propagateLinkVerticalScale}
             onViewLinksChange={handleViewLinksChange}
         >
             <MultiViewLayout viewCount={intersectionViews.length} preferredViewLayout={props.preferredViewLayout}>

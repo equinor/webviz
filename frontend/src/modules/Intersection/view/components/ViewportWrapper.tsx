@@ -19,7 +19,7 @@ import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFram
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { useAutoFitView } from "../hooks/useAutoFitView";
-import { useViewport, useViewportState } from "../hooks/useViewportState";
+import { useViewportState, useViewState } from "../hooks/useViewportState";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 import { useViewLinkResult } from "./ViewLinkManager";
@@ -48,8 +48,8 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     // View link state and handlers
     const viewLinkResult = useViewLinkResult(viewId);
+    const existingViewport = useViewState(viewId)?.viewport ?? null;
 
-    const existingViewport = useViewport(viewId, viewLinkResult);
     const { isHoverHighlighted, highlightColor, onToggleViewLink, onHoverViewLink } = viewLinkResult;
 
     // ! Auto-fit on initial render (when no viewport is established) and when the intersection source changes
@@ -57,23 +57,17 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const [showGrid, setShowGrid] = React.useState<boolean>(true);
 
     // Viewport, bounds, vertical scale, and all related handlers
-    const {
-        viewport,
-        effectiveVerticalScale,
-        effectiveLayerItemsBounds,
-        updateViewport,
-        updateVerticalScale,
-        handleFitInView,
-    } = useViewportState({
-        viewId,
-        viewLinkResult,
-        autofit: autoFitView,
-        layerItemsBounds: props.layerItemsBounds,
-        focusBounds: props.focusBounds,
-        containerSize: mainDivSize,
-        workbenchServices: props.workbenchServices,
-        viewContext: props.viewContext,
-    });
+    const { viewport, verticalScale, effectiveLayerItemsBounds, updateViewport, updateVerticalScale, handleFitInView } =
+        useViewportState({
+            viewId,
+            viewLinkResult,
+            autofit: autoFitView,
+            layerItemsBounds: props.layerItemsBounds,
+            focusBounds: props.focusBounds,
+            containerSize: mainDivSize,
+            workbenchServices: props.workbenchServices,
+            viewContext: props.viewContext,
+        });
 
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
@@ -89,18 +83,29 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         [viewport, updateViewport, setAutoFitView],
     );
 
+    const handleToggleViewLink = React.useCallback(
+        function handleToggleViewLink(otherViewId: string) {
+            // Toggling a link membership is user-initiated; disable autofit so the
+            // refocus effect doesn't overwrite the (now changed) viewport when the
+            // effective focus bounds change as a result of join/leave.
+            setAutoFitView(false);
+            onToggleViewLink(otherViewId);
+        },
+        [onToggleViewLink, setAutoFitView],
+    );
+
     const handleVerticalScaleIncrease = React.useCallback(
         function handleVerticalScaleIncrease() {
-            updateVerticalScale(Math.floor(effectiveVerticalScale + 1.0));
+            updateVerticalScale(Math.floor(verticalScale + 1.0));
         },
-        [effectiveVerticalScale, updateVerticalScale],
+        [verticalScale, updateVerticalScale],
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
         function handleVerticalScaleDecrease() {
-            updateVerticalScale(Math.max(1.0, Math.ceil(effectiveVerticalScale - 1.0)));
+            updateVerticalScale(Math.max(1.0, Math.ceil(verticalScale - 1.0)));
         },
-        [effectiveVerticalScale, updateVerticalScale],
+        [verticalScale, updateVerticalScale],
     );
 
     const handleShowGridToggle = React.useCallback(
@@ -126,7 +131,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 <ReadoutWrapper
                     intersectionSource={props.intersectionSource}
                     showGrid={showGrid}
-                    verticalScale={effectiveVerticalScale}
+                    verticalScale={verticalScale}
                     referenceSystem={props.referenceSystem ?? undefined}
                     layers={props.layerItems}
                     layerIdToNameMap={props.layerItemIdToNameMap}
@@ -138,7 +143,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 />
                 <Toolbar
                     visible
-                    zFactor={effectiveVerticalScale}
+                    zFactor={verticalScale}
                     gridVisible={showGrid}
                     onFitInView={handleFitInView}
                     onGridLinesToggle={handleShowGridToggle}
@@ -157,7 +162,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                         };
                     })}
                     unlinkedViews={viewLinkResult.unlinkedViews}
-                    onToggleViewLink={(otherViewId) => onToggleViewLink(otherViewId, viewport)}
+                    onToggleViewLink={handleToggleViewLink}
                     onHoverViewLink={onHoverViewLink}
                 />
                 <ColorLegendsContainer colorScales={props.colorScales} height={mainDivSize.height / 2 - 50} />
