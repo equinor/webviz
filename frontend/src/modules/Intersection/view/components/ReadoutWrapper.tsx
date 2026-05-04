@@ -35,11 +35,11 @@ export type ReadoutWrapperProps = {
     layers: LayerItem[];
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
-    onViewportChange: (viewport: Viewport) => void;
     bounds: Bounds;
     verticalScale: number;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
+    onViewportChange: (viewport: Viewport) => void;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
@@ -47,8 +47,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
     const [mouseCursorUtmCoordinate, setMouseCursorUtmCoordinate] = React.useState<PositionCoordinates | null>(null);
 
+    // Track if hovering is from this view, or externally:
+    const isLocallyHoveringRef = React.useRef(false);
+
     // Hover synchronization
-    const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
     const [polylineHoverData, setPolylineHoverData] = useHover(
@@ -85,6 +87,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const handleMousePositionChange = React.useCallback(
         function handleMousePositionChange(position: { x: number; y: number } | null): void {
+            isLocallyHoveringRef.current = position !== null;
+
             const viewportSpanY = props.viewport
                 ? props.viewport[2] / props.verticalScale
                 : props.bounds.y[1] - props.bounds.y[0];
@@ -140,7 +144,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // External hover on wellbore path
     // - red point at the hovered MD position
-    if (props.referenceSystem && !hoverIsLocal && hoveredMd && hoveredMd.wellboreUuid === wellboreUuid) {
+    if (
+        props.referenceSystem &&
+        !isLocallyHoveringRef.current &&
+        hoveredMd &&
+        hoveredMd.wellboreUuid === wellboreUuid
+    ) {
         const point = props.referenceSystem.project(hoveredMd.md);
         highlightItems.push({
             point: [point[0], point[1]],
@@ -152,7 +161,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // External hover on polyline
     // - vertical red line at the length-along position
-    if (polylineId && !hoverIsLocal && polylineHoverData?.polylineId === polylineId) {
+    if (polylineId && !isLocallyHoveringRef.current && polylineHoverData?.polylineId === polylineId) {
         const yExtension = Math.abs(props.bounds.y[1] - props.bounds.y[0]) * 0.1;
         highlightItems.push({
             shape: HighlightItemShape.LINE,
@@ -172,6 +181,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 zFactor={props.verticalScale}
                 intersectionReferenceSystem={props.referenceSystem ?? undefined}
                 showAxes
+                showAxesLabels
                 axesOptions={{
                     xLabel: AXES_LABELS.xLabel,
                     yLabel: AXES_LABELS.yLabel,
@@ -186,7 +196,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 onMousePositionChange={handleMousePositionChange}
                 onViewportChange={props.onViewportChange}
             />
-            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />
+            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} compact />
             <PositionReadout
                 coordinates={mouseCursorUtmCoordinate}
                 labels={{ z: "Depth" }}

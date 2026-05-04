@@ -1,27 +1,64 @@
-import { Add, FilterCenterFocus, GridOn, Remove } from "@mui/icons-material";
+import React from "react";
 
+import { Dropdown } from "@mui/base";
+import { MenuButton as MuiMenuButton } from "@mui/base/MenuButton";
+import {
+    Add,
+    AddToQueue,
+    FilterCenterFocus,
+    GridOn,
+    KeyboardDoubleArrowLeft,
+    KeyboardDoubleArrowRight,
+    Remove,
+    Tv,
+} from "@mui/icons-material";
+
+import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
+import { Menu } from "@lib/components/Menu";
+import { MenuItem } from "@lib/components/MenuItem";
 import { ToggleButton } from "@lib/components/ToggleButton";
+import { Tooltip } from "@lib/components/Tooltip";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 
 export enum FitInViewStatus {
     ON = "ON",
     OFF = "OFF",
 }
 
+export type ViewOption = {
+    id: string;
+    name: string;
+    color: string | null;
+};
+
+export type ViewLinkOption = {
+    id: string;
+    color: string;
+    views: ViewOption[];
+    containsThisView: boolean;
+};
+
 export type ToolbarProps = {
+    viewLinks?: ViewLinkOption[];
+    unlinkedViews?: ViewOption[];
     visible: boolean;
     zFactor: number;
     gridVisible: boolean;
-    fitInViewStatus: FitInViewStatus;
-    onFitInViewStatusToggle: (status: FitInViewStatus) => void;
+    onFitInView?: () => void;
     onGridLinesToggle: (active: boolean) => void;
     onVerticalScaleIncrease: () => void;
     onVerticalScaleDecrease: () => void;
+    onToggleViewLink?: (viewId: string) => void;
+    onHoverViewLink?: (viewIds: string[] | null) => void;
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
-    function handleFitInViewToggle(active: boolean) {
-        props.onFitInViewStatusToggle(active ? FitInViewStatus.ON : FitInViewStatus.OFF);
+    const [expanded, setExpanded] = React.useState<boolean>(false);
+
+    function handleFitInView() {
+        props.onFitInView?.();
     }
 
     function handleGridVisibilityToggle(active: boolean) {
@@ -36,44 +73,130 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         props.onVerticalScaleDecrease();
     }
 
+    const viewLinks = props.viewLinks ?? [];
+    const unlinkedViews = props.unlinkedViews ?? [];
+    const activeLink = viewLinks.find((l) => l.containsThisView);
+    const isAnyLinked = activeLink !== undefined;
+    const showLinkButton = (viewLinks.length > 0 || unlinkedViews.length > 0) && props.onToggleViewLink;
+
     if (!props.visible) {
         return null;
     }
 
     return (
-        <div className="absolute left-0 top-0 bg-white p-1 rounded-sm border-gray-300 border shadow-sm z-30 text-sm flex flex-col gap-1 items-center">
-            <ToggleButton
-                onToggle={handleFitInViewToggle}
-                title="Fit in view"
-                active={props.fitInViewStatus === FitInViewStatus.ON}
-            >
-                <FilterCenterFocus fontSize="inherit" />
-            </ToggleButton>
-            <ToggleButton
-                onToggle={handleGridVisibilityToggle}
-                title="Toggle grid visibility"
-                active={props.gridVisible}
-            >
-                <GridOn fontSize="inherit" />
-            </ToggleButton>
-            <ToolBarDivider />
-            <HoldPressedIntervalCallbackButton
-                onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
-                title="Increase vertical scale"
-            >
-                <Add fontSize="inherit" />
-            </HoldPressedIntervalCallbackButton>
-            <span title="Vertical scale">{props.zFactor}</span>
-            <HoldPressedIntervalCallbackButton
-                onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
-                title="Decrease vertical scale"
-            >
-                <Remove fontSize="inherit" />
-            </HoldPressedIntervalCallbackButton>
-        </div>
+        <GenericToolbar>
+            <div className="flex items-center gap-1 justify-start">
+                <Tooltip title="Fit all data in view" placement="bottom">
+                    <Button onClick={handleFitInView}>
+                        <FilterCenterFocus fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+                {showLinkButton && (
+                    <Dropdown
+                        onOpenChange={(_event, open) => {
+                            if (!open) {
+                                props.onHoverViewLink?.(null);
+                            }
+                        }}
+                    >
+                        <Tooltip title="Link this view with others" placement="bottom">
+                            <MuiMenuButton
+                                className={resolveClassNames(
+                                    "inline-flex items-center px-4 py-2 font-medium rounded-md",
+                                    isAnyLinked ? "text-white" : "bg-transparent text-indigo-600 hover:bg-indigo-100",
+                                )}
+                                slotProps={{
+                                    root: {
+                                        style: isAnyLinked ? { backgroundColor: activeLink.color } : undefined,
+                                    },
+                                }}
+                            >
+                                {isAnyLinked ? <Tv fontSize="inherit" /> : <AddToQueue fontSize="inherit" />}
+                            </MuiMenuButton>
+                        </Tooltip>
+                        <Menu anchorOrigin="bottom-start" className="text-sm p-1 min-w-40">
+                            {viewLinks.map((viewLink) => (
+                                <MenuItem
+                                    key={viewLink.id}
+                                    className={resolveClassNames(
+                                        "flex items-center gap-2 overflow-hidden",
+                                        viewLink.containsThisView ? "bg-indigo-50" : "",
+                                    )}
+                                    title={viewLink.views.map((v) => v.name).join(", ")}
+                                    onClick={() => props.onToggleViewLink!(viewLink.views[0].id)}
+                                    onMouseEnter={() => props.onHoverViewLink?.(viewLink.views.map((v) => v.id))}
+                                    onMouseLeave={() => props.onHoverViewLink?.(null)}
+                                >
+                                    <Tv fontSize="inherit" className="shrink-0" style={{ color: viewLink.color }} />
+                                    {viewLink.views.map((v) => (
+                                        <span
+                                            key={v.id}
+                                            className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                                            style={{ backgroundColor: v.color ?? "#888" }}
+                                        />
+                                    ))}
+                                    <span className="truncate min-w-0">
+                                        {viewLink.views.map((v) => v.name).join(", ")}
+                                    </span>
+                                </MenuItem>
+                            ))}
+                            {viewLinks.length > 0 && unlinkedViews.length > 0 && (
+                                <div className="border-t border-gray-200 my-1 mx-1" />
+                            )}
+                            {unlinkedViews.map((view) => (
+                                <MenuItem
+                                    key={view.id}
+                                    className="flex items-center gap-2"
+                                    onClick={() => props.onToggleViewLink!(view.id)}
+                                    onMouseEnter={() => props.onHoverViewLink?.([view.id])}
+                                    onMouseLeave={() => props.onHoverViewLink?.(null)}
+                                >
+                                    <span
+                                        className="inline-block w-3 h-3 rounded-full shrink-0"
+                                        style={{ backgroundColor: view.color ?? "#888" }}
+                                    />
+                                    <span>{view.name}</span>
+                                </MenuItem>
+                            ))}
+                        </Menu>
+                    </Dropdown>
+                )}
+                {expanded && (
+                    <>
+                        <Tooltip title="Toggle grid visibility" placement="bottom">
+                            <ToggleButton onToggle={handleGridVisibilityToggle} active={props.gridVisible}>
+                                <GridOn fontSize="inherit" />
+                            </ToggleButton>
+                        </Tooltip>
+                        <ToolBarDivider />
+                        <Tooltip title="Increase vertical scale" placement="bottom">
+                            <HoldPressedIntervalCallbackButton
+                                onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
+                            >
+                                <Add fontSize="inherit" />
+                            </HoldPressedIntervalCallbackButton>
+                        </Tooltip>
+                        <span title="Vertical scale">{props.zFactor}</span>
+                        <Tooltip title="Decrease vertical scale" placement="bottom">
+                            <HoldPressedIntervalCallbackButton
+                                onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
+                            >
+                                <Remove fontSize="inherit" />
+                            </HoldPressedIntervalCallbackButton>
+                        </Tooltip>
+                    </>
+                )}
+                <ToolBarDivider />
+                <Tooltip title={expanded ? "Collapse toolbar" : "Expand toolbar"} placement="bottom">
+                    <Button onClick={() => setExpanded(!expanded)}>
+                        {expanded ? (
+                            <KeyboardDoubleArrowLeft fontSize="inherit" />
+                        ) : (
+                            <KeyboardDoubleArrowRight fontSize="inherit" />
+                        )}
+                    </Button>
+                </Tooltip>
+            </div>
+        </GenericToolbar>
     );
-}
-
-function ToolBarDivider(): React.ReactNode {
-    return <div className="w-full h-px bg-gray-300" />;
 }

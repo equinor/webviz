@@ -212,7 +212,7 @@ function isPixiLayer(layer: Layer<unknown>): boolean {
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    const { onReadout, onViewportChange, onMousePositionChange } = props;
+    const { onReadout, onMousePositionChange, onViewportChange } = props;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
     const [prevIntersectionReferenceSystem, setPrevIntersectionReferenceSystem] = React.useState<
@@ -232,10 +232,17 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     const [esvController, setEsvController] = React.useState<Controller | null>(null);
     const [interactionHandler, setInteractionHandler] = React.useState<InteractionHandler | null>(null);
     const [pixiRenderApplication, setPixiRenderApplication] = React.useState<PixiRenderApplication | null>(null);
-    const [currentViewport, setCurrentViewport] = React.useState<Viewport | null>(null);
+
+    // Viewport originating from user interaction (drag/pan/zoom).
+    // - Only this state triggers onViewportChange propagation — external (prop-driven) viewport applications never touch it.
+    const [internalViewport, setInternalViewport] = React.useState<Viewport | null>(null);
+
+    // Tracks what is currently applied to the canvas (both user and prop-driven)
+    // - Used as the guard in the render body to avoid redundant esvController.setViewport() calls.
+    const canvasViewportRef = React.useRef<Viewport | null>(null);
 
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const automaticChanges = React.useRef<boolean>(false);
+    const automaticChanges = React.useRef<boolean>(true);
     const isMountedRef = useIsMountedRef();
 
     const containerSize = useElementSize(containerRef);
@@ -245,9 +252,9 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             !isEqual(prevIntersectionReferenceSystem, props.intersectionReferenceSystem) &&
             props.intersectionReferenceSystem
         ) {
+            automaticChanges.current = true;
             esvController.setReferenceSystem(props.intersectionReferenceSystem);
             setPrevIntersectionReferenceSystem(props.intersectionReferenceSystem);
-            automaticChanges.current = true;
         }
 
         if (!isEqual(prevAxesOptions, props.axesOptions)) {
@@ -292,6 +299,13 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
         if (!isEqual(prevZFactor, props.zFactor)) {
             esvController.zoomPanHandler.zFactor = props.zFactor ?? 1;
+
+            // At zFactor 10, showing a full wellbore path would hit the default 0.1 limit
+            automaticChanges.current = true;
+            esvController.zoomPanHandler.setMinZoomLevel(0.1 / (props.zFactor ?? 1));
+            esvController.zoomPanHandler.setMaxZoomLevel(256 / (props.zFactor ?? 1));
+            esvController.zoomPanHandler.updateTranslateExtent();
+
             setPrevZFactor(props.zFactor);
         }
 
@@ -302,6 +316,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
 
         if (!isEqual(prevBounds, props.bounds)) {
             if (props.bounds && isValidBounds(props.bounds)) {
+                automaticChanges.current = true;
                 esvController.setBounds(props.bounds.x, props.bounds.y);
             }
             setPrevBounds(props.bounds);
@@ -316,15 +331,16 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     !fuzzyCompare(prevViewport[2], props.viewport[2], 0.0001)))
         ) {
             if (props.viewport) {
+                const canvas = canvasViewportRef.current;
                 if (
-                    !currentViewport ||
-                    !fuzzyCompare(currentViewport[0], props.viewport[0], 0.0001) ||
-                    !fuzzyCompare(currentViewport[1], props.viewport[1], 0.0001) ||
-                    !fuzzyCompare(currentViewport[2], props.viewport[2], 0.0001)
+                    !canvas ||
+                    !fuzzyCompare(canvas[0], props.viewport[0], 0.0001) ||
+                    !fuzzyCompare(canvas[1], props.viewport[1], 0.0001) ||
+                    !fuzzyCompare(canvas[2], props.viewport[2], 0.0001)
                 ) {
                     automaticChanges.current = true;
+                    canvasViewportRef.current = props.viewport;
                     esvController.setViewport(...props.viewport);
-                    setCurrentViewport(props.viewport);
                 }
             }
             setPrevViewport(props.viewport);
@@ -425,6 +441,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     );
 
     React.useEffect(
+        // ! HMR causes the viewport to reset, since this re-triggers. Shouldn't matter in production,
+        // ! and a fix would need some larger re-structuring, so we're leaving it as is for now...
         function handleMount() {
             if (!containerRef.current) {
                 return;
@@ -442,7 +460,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             const oldOnRescaleFunction = newEsvController.zoomPanHandler.onRescale;
 
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
-                if (!automaticChanges.current) {
+                if (!automaticChanges.current && canvasViewportRef.current !== null) {
                     const k = event.transform.k;
 
                     // Prevent division by zero
@@ -464,7 +482,9 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                     if (!isValidViewport(candidateViewport)) {
                         return;
                     }
-                    setCurrentViewport(candidateViewport);
+
+                    canvasViewportRef.current = candidateViewport;
+                    setInternalViewport(candidateViewport);
                 }
                 automaticChanges.current = false;
                 oldOnRescaleFunction(event);
@@ -473,8 +493,10 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             const gridLayer = new GridLayer("grid", {
                 order: 1,
             });
+
             newEsvController.addLayer(gridLayer);
             newEsvController.hideLayer("grid");
+            newEsvController.hideAxisLabels();
 
             initializePixiApplication();
             setEsvController(newEsvController);
@@ -498,8 +520,10 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 setPrevViewport(undefined);
                 setPrevShowAxesLabels(undefined);
                 setPrevShowAxes(undefined);
+                setPrevIntersectionReferenceSystem(null);
                 setInteractionHandler(null);
                 setPixiRenderApplication(null);
+                setPrevZFactor(undefined);
                 newInteractionHandler.destroy();
                 newEsvController.destroy();
             };
@@ -557,19 +581,22 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         [onMousePositionChange],
     );
 
+    const onViewportChangeRef = React.useRef(onViewportChange);
+    onViewportChangeRef.current = onViewportChange;
     React.useEffect(
         function propagateViewportChange() {
-            if (onViewportChange && currentViewport) {
-                onViewportChange(currentViewport);
-                setPrevViewport(currentViewport);
+            if (onViewportChangeRef.current && internalViewport) {
+                onViewportChangeRef.current(internalViewport);
+                setPrevViewport(internalViewport);
             }
         },
-        [currentViewport, onViewportChange],
+        [internalViewport],
     );
 
     React.useEffect(
         function handleResize() {
             if (esvController && containerSize.width && containerSize.height) {
+                automaticChanges.current = true;
                 esvController.adjustToSize(containerSize.width, containerSize.height);
                 const size = {
                     width: esvController.currentStateAsEvent.width,
@@ -588,14 +615,12 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     );
 
     return (
-        <>
-            <div
-                ref={containerRef}
-                className={resolveClassNames({ "w-full h-full": props.size === undefined })}
-                style={{ ...props.size }}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-            ></div>
-        </>
+        <div
+            ref={containerRef}
+            className={resolveClassNames({ "w-full h-full": props.size === undefined })}
+            style={{ ...props.size }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        />
     );
 }

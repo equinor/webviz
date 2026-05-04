@@ -6,7 +6,6 @@ import {
     getRealizationSurfacesMetadataOptions,
     postGetSurfaceIntersectionOptions,
 } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -35,7 +34,6 @@ import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
 const realizationSurfacesSettings = [
     Setting.INTERSECTION,
-    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
@@ -63,16 +61,13 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
     }
 
     getDefaultSettingsValues() {
-        return {
-            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-        };
+        return {};
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return (
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
-            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
@@ -87,14 +82,8 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         RealizationSurfacesData,
         RealizationSurfacesStoredData
     >): boolean {
-        // Extension has to be set if intersection is wellbore
-        const isValidExtensionLength =
-            getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
-
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
@@ -105,18 +94,10 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
     defineDependencies({
         helperDependency,
         valueConstraintsUpdater,
-        settingAttributesUpdater,
         queryClient,
         workbenchSession,
         storedDataUpdater,
     }: DefineDependenciesArgs<RealizationSurfacesSettings, RealizationSurfacesStoredData>): void {
-        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-
-            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled };
-        });
-
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -203,12 +184,10 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const intersection = getLocalSetting(Setting.INTERSECTION);
-            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
 
             return createIntersectionPolylineWithSectionLengthsForField(
                 fieldIdentifier,
                 intersection,
-                wellboreExtensionLength,
                 workbenchSession,
                 queryClient,
             );
@@ -251,10 +230,7 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
             getStoredData("polylineWithSectionLengths"),
             "No polyline and actual section lengths found in stored data",
         );
-        const extensionLength = createValidExtensionLength(
-            getSetting(Setting.INTERSECTION),
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-        );
+        const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
         if (polylineWithSectionLengths.polylineUtmXy.length < 4) {
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");

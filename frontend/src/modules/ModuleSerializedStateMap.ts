@@ -11,6 +11,7 @@ import type { SerializedSettings as InplaceVolumesNewSettings } from "@modules/I
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
+import type { SerializedView as IntersectionView } from "@modules/Intersection/view/persistence";
 import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
@@ -59,7 +60,7 @@ export type ModuleSerializedStateMap = {
   },
   "Intersection": {
     settings?: Partial<IntersectionSettings>,
-    view?: never,
+    view?: Partial<IntersectionView>,
   },
   "Map": {
     settings?: never,

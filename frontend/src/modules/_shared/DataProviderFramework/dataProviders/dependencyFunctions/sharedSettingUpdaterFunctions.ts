@@ -5,7 +5,7 @@ import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 
-import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
+import type { IntersectionSettingOption } from "../../settings/implementations/IntersectionSetting";
 
 /**
  * Create list of available ensembles for the given field identifier.
@@ -52,8 +52,8 @@ export function getAvailableRealizationsForEnsembleIdent(
 export function getAvailableIntersectionOptions(
     wellboreHeaders: WellboreHeader_api[],
     intersectionPolylines: IntersectionPolyline[],
-): IntersectionSettingValue[] {
-    const intersectionOptions: IntersectionSettingValue[] = [];
+): IntersectionSettingOption[] {
+    const intersectionOptions: IntersectionSettingOption[] = [];
     for (const wellboreHeader of wellboreHeaders) {
         intersectionOptions.push({
             type: IntersectionType.WELLBORE,
