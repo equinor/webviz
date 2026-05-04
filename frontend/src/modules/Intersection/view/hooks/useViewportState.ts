@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { ViewContext } from "@framework/ModuleContext";
@@ -10,8 +10,9 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
 import { isValidNumber, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
+import type { ViewState } from "@modules/Intersection/typesAndEnums";
 
-import { unlinkedViewStateMapAtom } from "../atoms/baseAtoms";
+import { viewStateMapAtom } from "../atoms/baseAtoms";
 import type { ViewLinkResult } from "../components/ViewLinkManager";
 
 const DISPLACEMENT_FACTOR = 1.4;
@@ -36,7 +37,7 @@ export type UseViewportStateProps = {
 
 export type ViewportState = {
     viewport: Viewport | null;
-    effectiveVerticalScale: number;
+    verticalScale: number;
     effectiveLayerItemsBounds: Bounds;
     updateViewport: (newViewport: Viewport) => void;
     updateVerticalScale: (newScale: number) => void;
@@ -60,9 +61,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     const {
         isLinked,
-        viewport: linkedViewport,
         viewportSourceViewId: linkedViewportSourceViewId,
-        verticalScale: linkedVerticalScale,
         focusBounds: linkedFocusBounds,
         bounds: linkedBounds,
         onLinkedViewportChange,
@@ -71,15 +70,14 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
     } = viewLinkResult;
 
     // --- Source of truth for viewport ---
-    const [unlinkedViewStateMap, setUnlinkedViewStateMap] = useAtom(unlinkedViewStateMapAtom);
-    const unlinkedViewState = unlinkedViewStateMap?.[viewId] ?? null;
-
-    const viewport = useViewport(viewId, viewLinkResult);
+    const setViewStateMap = useSetAtom(viewStateMapAtom);
+    const viewState = useViewState(viewId);
+    const viewport = viewState ? viewState.viewport : null;
 
     const lastPublishedViewportRef = React.useRef<Viewport | null>(null);
     const lastAppliedSyncedViewportRef = React.useRef<Viewport | null>(null);
 
-    const [verticalScale, setVerticalScale] = React.useState<number>(unlinkedViewState?.verticalScale ?? 10.0);
+    const verticalScale = viewState?.verticalScale ?? 10.0;
     const lastAppliedSyncedVerticalScaleRef = React.useRef<number | null>(null);
 
     // --- Sync settings ---
@@ -93,9 +91,6 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
         "global.syncValue.cameraPositionIntersection",
     );
     const syncedVerticalScale = syncHelper.useValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale");
-
-    // --- Effective values (linked vs unlinked) ---
-    const effectiveVerticalScale = isLinked && linkedVerticalScale !== null ? linkedVerticalScale : verticalScale;
 
     const candidateFocusBounds = isLinked && linkedFocusBounds ? linkedFocusBounds : focusBounds;
     const effectiveFocusBoundsRef = React.useRef<Bounds | null>(candidateFocusBounds);
@@ -115,31 +110,44 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
     const verticalScalingFactor = React.useMemo(() => {
         let widthHeightRatio = containerSize.width / containerSize.height;
         widthHeightRatio = isValidNumber(widthHeightRatio) ? widthHeightRatio : 1.0;
-        return widthHeightRatio * effectiveVerticalScale;
-    }, [containerSize, effectiveVerticalScale]);
+        return widthHeightRatio * verticalScale;
+    }, [containerSize, verticalScale]);
 
     // --- Viewport write helper ---
     const updateViewport = React.useCallback(
         function updateViewport(newViewport: Viewport) {
-            if (isLinked) {
-                onLinkedViewportChange(newViewport);
-            }
-            setUnlinkedViewStateMap((prev) => {
+            // Write to atom first so a linked propagation reads the fresh source value.
+            setViewStateMap((prev) => {
                 const existing = prev?.[viewId];
-                if (existing && isEqual(existing.viewport, newViewport) && existing.verticalScale === verticalScale) {
+                if (existing && isEqual(existing.viewport, newViewport)) {
                     return prev;
                 }
-                return { ...prev, [viewId]: { viewport: newViewport, verticalScale } };
+                return {
+                    ...prev,
+                    [viewId]: { viewport: newViewport, verticalScale: existing?.verticalScale ?? 10.0 },
+                };
             });
+            if (isLinked) {
+                onLinkedViewportChange();
+            }
         },
-        [isLinked, viewId, verticalScale, onLinkedViewportChange, setUnlinkedViewStateMap],
+        [isLinked, viewId, onLinkedViewportChange, setViewStateMap],
     );
 
     const updateVerticalScale = React.useCallback(
         function updateVerticalScale(newScale: number): void {
-            setVerticalScale(newScale);
+            setViewStateMap((prev) => {
+                const existing = prev?.[viewId];
+                if (existing && existing.verticalScale === newScale) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    [viewId]: { viewport: existing?.viewport ?? null, verticalScale: newScale },
+                };
+            });
             if (isLinked) {
-                onLinkedVerticalScaleChange(newScale);
+                onLinkedVerticalScaleChange();
             }
             workbenchServices.publishGlobalData(
                 "global.syncValue.verticalScale",
@@ -147,7 +155,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
                 viewContext.getInstanceIdString(),
             );
         },
-        [isLinked, onLinkedVerticalScaleChange, viewContext, workbenchServices],
+        [isLinked, viewId, onLinkedVerticalScaleChange, setViewStateMap, viewContext, workbenchServices],
     );
 
     const handleFitInView = React.useCallback(
@@ -175,22 +183,6 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
     );
 
     // --- Effects ---
-
-    // Push viewport to link when a new link is created with no shared viewport yet
-    React.useEffect(
-        function syncViewportOnNewLink() {
-            if (
-                isLinked &&
-                !linkedViewport &&
-                linkedViewportSourceViewId === viewId &&
-                viewport &&
-                isValidViewport(viewport)
-            ) {
-                onLinkedViewportChange(viewport);
-            }
-        },
-        [isLinked, linkedViewport, linkedViewportSourceViewId, viewId, viewport, onLinkedViewportChange],
-    );
 
     // Report bounds to link
     React.useEffect(
@@ -235,9 +227,18 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
                 return;
             }
             lastAppliedSyncedVerticalScaleRef.current = syncedVerticalScale;
-            setVerticalScale((prev) => (prev === syncedVerticalScale ? prev : syncedVerticalScale));
+            setViewStateMap((prev) => {
+                const existing = prev?.[viewId];
+                if (existing && existing.verticalScale === syncedVerticalScale) {
+                    return prev;
+                }
+                return {
+                    ...prev,
+                    [viewId]: { viewport: existing?.viewport ?? null, verticalScale: syncedVerticalScale },
+                };
+            });
         },
-        [syncedVerticalScale],
+        [syncedVerticalScale, viewId, setViewStateMap],
     );
 
     // Publish viewport to global sync setting.
@@ -276,7 +277,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     return {
         viewport,
-        effectiveVerticalScale,
+        verticalScale,
         effectiveLayerItemsBounds,
         updateViewport,
         updateVerticalScale,
@@ -285,25 +286,12 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 }
 
 /**
- * Gets a view's active viewport (either the view's own viewport, or the one shared for linked views )
+ * Gets a view's active state from the per-view state map.
+ * Linked views are kept in sync via the ViewLinkManager so reading the atom is sufficient.
  * @param viewId Intersection view id
- * @param viewLinkResult View link information for this view
- * @returns The currently relevant viewport for the view
+ * @returns The currently relevant state for the view
  */
-export function useViewport(viewId: string, viewLinkResult: ViewLinkResult): Viewport | null {
-    const unlinkedViewStateMap = useAtomValue(unlinkedViewStateMapAtom);
-
-    // TODO: If we simplify the link logic to write linked viewports to their atoms directly, this hook would only need to check the atom
-    const unlinkedViewState = unlinkedViewStateMap?.[viewId] ?? null;
-    const { isLinked, viewport: linkedViewport } = viewLinkResult;
-
-    if (isLinked && linkedViewport) {
-        return linkedViewport;
-    }
-
-    if (unlinkedViewState) {
-        return unlinkedViewState.viewport;
-    }
-
-    return null;
+export function useViewState(viewId: string): ViewState | null {
+    const viewStateMap = useAtomValue(viewStateMapAtom);
+    return viewStateMap?.[viewId] ?? null;
 }
