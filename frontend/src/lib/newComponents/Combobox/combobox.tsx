@@ -6,6 +6,7 @@ import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
 import { Button } from "../Button";
 import { Typography } from "../Typography";
+import { CircularProgress } from "../CircularProgress";
 
 export type ComboboxItem<TValue> = {
     value: TValue;
@@ -46,7 +47,12 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
 const DEFAULT_PROPS = {
     placeholder: "Select an option",
     noMatchesText: "No matches found",
-    loadingText: "Loading options",
+    loadingText: (
+        <span className="gap-horizontal-sm flex items-center">
+            <CircularProgress size={16} />
+            Loading options
+        </span>
+    ),
     errorText: undefined,
     clearable: false,
 } satisfies Partial<ComboboxProps<any>>;

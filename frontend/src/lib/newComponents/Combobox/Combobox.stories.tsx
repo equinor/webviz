@@ -285,7 +285,6 @@ export const AsyncLoading: Story = {
     args: {
         items: [],
         loading: true,
-        loadingText: "Loading options…",
         placeholder: "Select a country",
     },
 };
