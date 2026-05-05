@@ -241,9 +241,15 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     // - Used as the guard in the render body to avoid redundant esvController.setViewport() calls.
     const canvasViewportRef = React.useRef<Viewport | null>(null);
 
+    const isMountedRef = useIsMountedRef();
+
+    // True while a container resize is being applied. A single resize can produce
+    // multiple onRescale callbacks, so a one-shot `automaticChanges` flag is not enough
+    // to keep all of them from being emitted as user-driven viewport changes.
+    const resizeInProgressRef = React.useRef<boolean>(false);
+
     const containerRef = React.useRef<HTMLDivElement>(null);
     const automaticChanges = React.useRef<boolean>(true);
-    const isMountedRef = useIsMountedRef();
 
     const containerSize = useElementSize(containerRef);
 
@@ -460,7 +466,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             const oldOnRescaleFunction = newEsvController.zoomPanHandler.onRescale;
 
             newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
-                if (!automaticChanges.current && canvasViewportRef.current !== null) {
+                if (!automaticChanges.current && !resizeInProgressRef.current && canvasViewportRef.current !== null) {
                     const k = event.transform.k;
 
                     // Prevent division by zero
@@ -597,6 +603,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         function handleResize() {
             if (esvController && containerSize.width && containerSize.height) {
                 automaticChanges.current = true;
+                resizeInProgressRef.current = true;
                 esvController.adjustToSize(containerSize.width, containerSize.height);
                 const size = {
                     width: esvController.currentStateAsEvent.width,
@@ -609,7 +616,15 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
                 const gridLayer = esvController.getLayer("grid");
                 gridLayer?.element?.setAttribute("width", size.width.toString());
                 gridLayer?.element?.setAttribute("height", size.height.toString());
+
+                // Clear after the browser paints so any rescale callbacks scheduled
+                // by the resize have settled before user-driven emissions resume.
+                const handle = requestAnimationFrame(() => {
+                    resizeInProgressRef.current = false;
+                });
+                return () => cancelAnimationFrame(handle);
             }
+            return undefined;
         },
         [containerSize.width, containerSize.height, esvController, pixiRenderApplication],
     );

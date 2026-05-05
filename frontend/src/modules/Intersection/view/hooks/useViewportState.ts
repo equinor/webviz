@@ -107,11 +107,12 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
     }
     const effectiveLayerItemsBounds = effectiveLayerItemsBoundsRef.current;
 
-    const verticalScalingFactor = React.useMemo(() => {
-        let widthHeightRatio = containerSize.width / containerSize.height;
-        widthHeightRatio = isValidNumber(widthHeightRatio) ? widthHeightRatio : 1.0;
-        return widthHeightRatio * verticalScale;
-    }, [containerSize, verticalScale]);
+    const widthHeightRatio = React.useMemo(() => {
+        const ratio = containerSize.width / containerSize.height;
+        return isValidNumber(ratio) ? ratio : 1.0;
+    }, [containerSize.width, containerSize.height]);
+
+    const verticalScalingFactor = widthHeightRatio * verticalScale;
 
     // --- Viewport write helper ---
     const updateViewport = React.useCallback(
@@ -268,17 +269,16 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     // --- Refocus logic ---
 
-    // Only automatically focus when focus bounds or the autofit flag changes.
-    // - Read `handleFitInView` through a ref so changes to vertical scale do not retrigger
-    //   this effect and cause a refocus.
+    // Refit when focus bounds, container size, or the autofit flag changes.
+    // `handleFitInView` is read through a ref so its identity changes (driven by
+    // vertical scale) don't retrigger the effect.
     const handleFitInViewRef = React.useRef(handleFitInView);
     handleFitInViewRef.current = handleFitInView;
-
     React.useEffect(() => {
         if (effectiveFocusBounds && autofit) {
             handleFitInViewRef.current();
         }
-    }, [autofit, effectiveFocusBounds]);
+    }, [autofit, effectiveFocusBounds, widthHeightRatio]);
 
     return {
         viewport,
