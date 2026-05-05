@@ -14,7 +14,6 @@ from webviz_services.service_exceptions import (
 from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client
 
-
 LOGGER = logging.getLogger(__name__)
 
 
@@ -98,6 +97,16 @@ class CaseInspector:
                 f"Multiple stratigraphic column identifiers found for {case.name}", Service.SUMO
             )
         return strat_identifier[0]
+
+    async def get_asset_name_async(self) -> str:
+        """Retrieve the asset name for a case"""
+        case = await self._get_or_create_case_context_async()
+        asset_names = await case.asset_names_async
+        if len(asset_names) == 0:
+            raise NoDataError(f"No asset name found for {case.name}", Service.SUMO)
+        if len(asset_names) > 1:
+            raise MultipleDataMatchesError(f"Multiple asset names found for {case.name}", Service.SUMO)
+        return asset_names[0]
 
     async def get_field_identifiers_async(self) -> list[str]:
         """Retrieve the field identifiers for a case"""

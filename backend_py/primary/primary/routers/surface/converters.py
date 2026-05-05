@@ -9,9 +9,13 @@ from webviz_services.smda_access.types import StratigraphicSurface
 from webviz_services.sumo_access.surface_types import SurfaceMetaSet
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
-from webviz_services.utils.surface_helpers import surface_to_float32_numpy_array, get_min_max_surface_values
+from webviz_services.utils.surface_helpers import (
+    surface_to_float32_numpy_array,
+    get_min_max_surface_values,
+    WellTrajectory,
+)
 from webviz_services.utils.surface_to_png import surface_to_png_bytes_optimized
-from webviz_services.smda_access import StratigraphicUnit
+from webviz_services.utils.surfaces_well_trajectory_formation_segments import FormationSegment
 
 from . import schemas
 
@@ -185,20 +189,74 @@ def to_api_surface_intersection(
     )
 
 
-def to_api_stratigraphic_unit(
-    stratigraphic_unit: StratigraphicUnit,
-) -> schemas.StratigraphicUnit:
-    return schemas.StratigraphicUnit(
-        identifier=stratigraphic_unit.identifier,
-        top=stratigraphic_unit.top,
-        base=stratigraphic_unit.base,
-        stratUnitLevel=stratigraphic_unit.strat_unit_level,
-        stratUnitType=stratigraphic_unit.strat_unit_type,
-        topAge=stratigraphic_unit.top_age,
-        baseAge=stratigraphic_unit.base_age,
-        stratUnitParent=stratigraphic_unit.strat_unit_parent,
-        colorR=stratigraphic_unit.color_r,
-        colorG=stratigraphic_unit.color_g,
-        colorB=stratigraphic_unit.color_b,
-        lithologyType=stratigraphic_unit.lithology_type,
+def from_api_well_trajectory(
+    api_well_trajectory: schemas.WellTrajectory,
+) -> WellTrajectory:
+    """
+    Convert API well trajectory to service layer well trajectory
+    """
+    return WellTrajectory(
+        x_points=api_well_trajectory.xPoints,
+        y_points=api_well_trajectory.yPoints,
+        z_points=api_well_trajectory.zPoints,
+        md_points=api_well_trajectory.mdPoints,
+        unique_wellbore_identifier=api_well_trajectory.uwi,
+    )
+
+
+def to_api_well_trajectory_formation_segments(
+    unique_wellbore_identifier: str,
+    well_trajectory_formation_segments: list[FormationSegment] | None,
+    error_message: str | None,
+) -> schemas.WellTrajectoryFormationSegmentsSuccess | schemas.WellTrajectoryFormationSegmentsError:
+    """
+    Convert service layer well trajectory formation segments to API well trajectory
+    formation segments
+    """
+
+    if error_message is not None:
+        return schemas.WellTrajectoryFormationSegmentsError(
+            uwi=unique_wellbore_identifier,
+            errorMessage=error_message,
+        )
+
+    formation_segments = (
+        [schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit) for fs in well_trajectory_formation_segments]
+        if well_trajectory_formation_segments is not None
+        else []
+    )
+    return schemas.WellTrajectoryFormationSegmentsSuccess(
+        uwi=unique_wellbore_identifier,
+        formationSegments=formation_segments,
+    )
+
+
+def to_api_formation_segments(
+    unique_wellbore_identifier: str,
+    well_trajectory_formation_segments: list[FormationSegment],
+) -> schemas.WellTrajectoryFormationSegmentsSuccess:
+    """
+    Convert service layer well trajectory formation segments to API well trajectory
+    formation segments
+    """
+
+    formation_segments = [
+        schemas.FormationSegment(mdEnter=fs.md_enter, mdExit=fs.md_exit) for fs in well_trajectory_formation_segments
+    ]
+    return schemas.WellTrajectoryFormationSegmentsSuccess(
+        uwi=unique_wellbore_identifier,
+        formationSegments=formation_segments,
+    )
+
+
+def to_api_error_segments(
+    unique_wellbore_identifier: str,
+    error_message: str,
+) -> schemas.WellTrajectoryFormationSegmentsError:
+    """
+    Convert service layer error message to API well trajectory formation segments error
+    """
+    return schemas.WellTrajectoryFormationSegmentsError(
+        uwi=unique_wellbore_identifier,
+        errorMessage=error_message,
     )

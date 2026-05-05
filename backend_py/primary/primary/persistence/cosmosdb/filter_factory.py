@@ -12,7 +12,6 @@ from pydantic import BaseModel
 
 from primary.persistence.cosmosdb.query_collation_options import Filter, FilterOperator
 
-
 LOGGER = logging.getLogger(__name__)
 
 

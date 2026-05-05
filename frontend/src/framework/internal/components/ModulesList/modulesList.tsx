@@ -2,7 +2,6 @@ import React from "react";
 
 import {
     Close,
-    CloudDone,
     CloudOff,
     ExpandLess,
     ExpandMore,
@@ -217,15 +216,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     >
                         {makeDevStateIcon(props.devState)}
                     </span>
-                    <span
-                        className={resolveClassNames({
-                            "text-green-600": props.isSerializable,
-                            "text-gray-400": !props.isSerializable,
-                        })}
-                        title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
-                    >
-                        {props.isSerializable ? <CloudDone fontSize="inherit" /> : <CloudOff fontSize="inherit" />}
-                    </span>
+                    <span className="text-gray-400">{makePersistenceIcon(props.isSerializable)}</span>
                     <span className="cursor-pointer text-blue-800" title="Show details" onClick={handleShowDetails}>
                         <Help fontSize="inherit" />
                     </span>
@@ -294,6 +285,17 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     return null;
 }
 
+function makePersistenceIcon(isSerializable: boolean): React.ReactNode {
+    if (!isSerializable) {
+        return (
+            <span title="Module settings won't be saved" className="inline-block align-middle text-base">
+                <CloudOff fontSize="inherit" />
+            </span>
+        );
+    }
+    return null;
+}
+
 type DetailsPopupProps = {
     module: Module<any, any>;
     right: number;
@@ -323,17 +325,12 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     function makePersistenceState(isSerializable: boolean): React.ReactNode {
         if (isSerializable) {
-            return (
-                <div className="flex gap-2 text-green-600 text-xs items-center">
-                    <CloudDone fontSize="inherit" />
-                    <span className="mt-[0.2rem]">Module is persistable</span>
-                </div>
-            );
+            return null;
         }
         return (
             <div className="flex gap-2 text-gray-400 text-xs items-center">
-                <CloudOff fontSize="inherit" />
-                <span className="mt-[0.2rem]">Module is not persistable</span>
+                {makePersistenceIcon(isSerializable)}
+                <span className="mt-[0.2rem]">Module settings won&apos;t be saved</span>
             </div>
         );
     }
@@ -377,7 +374,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                         <Close fontSize="inherit" />
                     </div>
                 </div>
-                <span className="flex flex-row gap-4">
+                <span className="flex flex-col">
                     {makeDevState(props.module.getDevState())}
                     {makePersistenceState(props.module.canBeSerialized())}
                 </span>

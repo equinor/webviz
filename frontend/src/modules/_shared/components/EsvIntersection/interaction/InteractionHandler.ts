@@ -1,9 +1,8 @@
 import type { Controller, Layer, SchematicData, SchematicLayer } from "@equinor/esv-intersection";
 
-
 import type { HighlightItem, LayerDataItem, ReadoutItem } from "../types/types";
 import {
-    makeHighlightItemFromIntersectionResult,
+    makeHighlightItemsFromIntersectionResult,
     makeReadoutItemFromIntersectionResult,
 } from "../utils/intersectionConversion";
 import { makeLayerDataItems } from "../utils/layerDataItems";
@@ -120,12 +119,13 @@ export class InteractionHandler {
                 (layerDataObject) => layerDataObject.id === intersection.id,
             );
             if (layerDataObject) {
-                const highlightItem = makeHighlightItemFromIntersectionResult(
-                    intersection.item,
-                    layerDataObject.layer,
-                    layerDataObject.index,
+                highlightItems.push(
+                    ...makeHighlightItemsFromIntersectionResult(
+                        intersection.item,
+                        layerDataObject.layer,
+                        layerDataObject.index,
+                    ),
                 );
-                highlightItems.push(highlightItem);
 
                 const readoutItem = makeReadoutItemFromIntersectionResult(
                     intersection.item,

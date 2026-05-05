@@ -8,26 +8,41 @@ import { DenseIconButton } from "../DenseIconButton";
 export type PopoverProps = {
     /** Controls the popover open/close state */
     open?: boolean;
-    /** The content of the popover */
+    /** The body of the popover message */
     content?: React.ReactNode;
-    /** Utility ref that can be used to programmatically control the popover */
+    /** The content of the popover trigger */
+    children?: React.ReactNode;
+
+    /**
+     * A ref to imperative actions.
+     *
+     * - `unmount`: When specified, the popover will not be unmounted when closed. Instead, the unmount function must be called to unmount the popover manually. Useful when the popover's animation is controlled by an external library.
+     * - `close`: Closes the dialog imperatively when called.
+     */ // -- copied from base type
     actionsRef?: PopoverRootProps["actionsRef"];
-    /** Overrides the triggers default rendering. If a node is given, props will be merged  */
+
+    /**
+     * Allows you to replace the component’s HTML element
+     * with a different tag, or compose it with another component.
+     *
+     * Accepts a `ReactElement` or a function that returns the element to render.
+     */ // -- copied from base type
     renderTrigger?: PopoverTriggerProps["render"];
 
     /** Callback for open/close control state */
     onOpenChange?: (isOpen: boolean) => void;
-
-    children?: React.ReactNode;
 };
 
 /** Show a rich Popover element attached to a trigger element. For simple string tooltips, use Tooltip instead. For larger interactive menus, use Menu */
 export function Popover(props: PopoverProps): React.ReactNode {
+    const triggerRenderOrDefault = props.renderTrigger ?? <DenseIconButton>{props.children}</DenseIconButton>;
+
     return (
-        <BasePopover.Root open={props.open} onOpenChange={props.onOpenChange} actionsRef={props.actionsRef}>
-            <BasePopover.Trigger render={<DenseIconButton>{props.children}</DenseIconButton>} />
+        <BasePopover.Root open={props.open} actionsRef={props.actionsRef} onOpenChange={props.onOpenChange}>
+            <BasePopover.Trigger render={triggerRenderOrDefault} />
 
             <BasePopover.Portal>
+                {/* Note the z-index class here. Base-ui assumes a different stacking context, so we need to manually ensure floating elements stay on top */}
                 <BasePopover.Positioner className="z-9999" sideOffset={4} align="end" side="bottom">
                     <BasePopover.Popup className="bg-white shadow-md border border-gray-200 rounded-sm transition-opacity">
                         <BasePopover.Arrow

@@ -48,14 +48,14 @@ async def pdm_get_request_async(access_token: str, endpoint: str, params: Option
     elif response.status_code == 404:
         LOGGER.debug(f"Endpoint {endpoint} not found: {response.text}")
         raise InvalidDataError(
-            f"Endpoint {endpoint} either does not exists or can not be found",
+            f"Endpoint {endpoint} either does not exist or cannot be found",
             Service.PDM,
         )
 
     # Capture other errors
     else:
         LOGGER.debug(f"Error fetching from PDM endpoint {endpoint} (status {response.status_code}): {response.text}")
-        raise InvalidParameterError(f"Can not fetch data from endpoint {endpoint}", Service.PDM)
+        raise InvalidParameterError(f"Cannot fetch data from endpoint {endpoint}", Service.PDM)
 
     LOGGER.debug(f"TIME PDM fetch {endpoint} took {timer.lap_s():.2f} seconds")
     return results

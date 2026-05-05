@@ -15,12 +15,13 @@ export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
     function handleSelectionChanged(fieldIdentifier: string) {
         onChange(fieldIdentifier);
     }
-
     const fieldIdents = new Set<string>();
 
     if (ensembleSet.getRegularEnsembleArray().length) {
         for (const ens of ensembleSet.getRegularEnsembleArray()) {
-            fieldIdents.add(ens.getFieldIdentifier());
+            for (const fieldIdentifier of ens.getFieldIdentifiers()) {
+                fieldIdents.add(fieldIdentifier);
+            }
         }
     } else if (fallbackFieldList) {
         for (const field of fallbackFieldList) {

@@ -13,7 +13,6 @@ from .sumo_client_factory import create_sumo_client
 
 from .inplace_volumes_table_types import InplaceVolumes, VolumeColumnsAndIndexUniqueValues
 
-
 LOGGER = logging.getLogger(__name__)
 
 # Index column values to ignore, i.e. remove from the inplace volume tables

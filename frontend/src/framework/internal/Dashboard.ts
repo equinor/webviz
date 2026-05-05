@@ -390,7 +390,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
                         );
                     }
 
-                    receiver.subscribeToChannel(channel, "All");
+                    receiver.connectToChannel(channel, "all");
                 }
             }
         }

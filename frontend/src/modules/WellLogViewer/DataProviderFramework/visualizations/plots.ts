@@ -1,4 +1,4 @@
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 import { maxBy, minBy } from "lodash";
 
 import type { WellboreLogCurveData_api } from "@api";
@@ -29,7 +29,7 @@ export const COLOR_MAP_ACC_KEY = "COLOR_MAP_FUNCTIONS";
 export type FactoryAccResult = {
     [DATA_ACC_KEY]: WellboreLogCurveData_api[];
     [DUPLICATE_NAMES_ACC_KEY]: Set<string>;
-    [COLOR_MAP_ACC_KEY]: ColorMapFunction[];
+    [COLOR_MAP_ACC_KEY]: ColormapFunction[];
 };
 
 type PlotVisualizationArgs<PlotSettings extends Settings> = TransformerArgs<PlotSettings, WellboreLogCurveData_api>;

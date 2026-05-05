@@ -7,6 +7,10 @@ export function vec2FromArray(array: ArrayLike<number> | [number, number]): Vec2
     return { x: array[0], y: array[1] };
 }
 
+export function vec2ToArray(vector: Vec2): [number, number] {
+    return [vector.x, vector.y];
+}
+
 export function vec2FromPointerEvent(event: PointerEvent): Vec2 {
     return { x: event.pageX, y: event.pageY };
 }

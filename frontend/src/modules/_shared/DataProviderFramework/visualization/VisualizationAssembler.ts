@@ -222,6 +222,18 @@ type DataProviderObjects<TTarget extends VisualizationTarget, TAccumulatedData e
     accumulatedData: TAccumulatedData | null;
 };
 
+export type VisualizationAssemblerMakeOptions<
+    TInjectedData extends Record<string, any>,
+    TAccumulatedData extends Record<string, any>,
+> = {
+    injectedData?: TInjectedData;
+    initialAccumulatedData?: TAccumulatedData;
+    /**
+     * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
+     */
+    disableCache?: boolean;
+};
+
 export class VisualizationAssembler<
     TTarget extends VisualizationTarget,
     TCustomGroupProps extends CustomGroupPropsMap = Record<GroupType, never>,
@@ -278,14 +290,7 @@ export class VisualizationAssembler<
 
     make(
         dataProviderManager: DataProviderManager,
-        options?: {
-            injectedData?: TInjectedData;
-            initialAccumulatedData?: TAccumulatedData;
-            /**
-             * @deprecated - Exposed for a hotfix, avoid usage. See issue #1272
-             */
-            disableCache?: boolean;
-        },
+        options?: VisualizationAssemblerMakeOptions<TInjectedData, TAccumulatedData>,
     ): AssemblerProduct<TTarget, TCustomGroupProps, TAccumulatedData> {
         return this.makeRecursively(
             dataProviderManager.getGroupDelegate(),
