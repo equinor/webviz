@@ -414,20 +414,24 @@ type TopBarButtonProps = {
 
 function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const { active, title, onClick, disabled, ...baseProps } = props;
+
     return (
         <Tooltip title={title} placement="bottom">
-            <Button
-                {...baseProps}
-                ref={ref}
-                className={resolveClassNames("w-full h-10 text-center px-3!", {
-                    "text-cyan-600": active,
-                    "text-slate-800!": props.variant === "text" || props.variant === undefined,
-                })}
-                onClick={onClick}
-                disabled={disabled}
-            >
-                {props.children}
-            </Button>
+            {/* ! Workaround required to deal with EDS tooltip overwriting refs */}
+            <span>
+                <Button
+                    {...baseProps}
+                    ref={ref}
+                    className={resolveClassNames("w-full h-10 text-center px-3!", {
+                        "text-cyan-600": active,
+                        "text-slate-800!": props.variant === "text" || props.variant === undefined,
+                    })}
+                    onClick={onClick}
+                    disabled={disabled}
+                >
+                    {props.children}
+                </Button>
+            </span>
         </Tooltip>
     );
 }
