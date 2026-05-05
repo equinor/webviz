@@ -44,20 +44,29 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
+    function handleLayerAction(
+        identifier: string,
+        groupDelegate: GroupDelegate,
+        requestOpenMenuForId: (id: string) => void,
+    ) {
         switch (identifier) {
-            case "view":
-                groupDelegate.appendChild(
-                    GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, colorSet.getNextColor()),
-                    true,
-                );
+            case "view": {
+                const color = colorSet.getNextColor();
+                const view = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, color);
+                groupDelegate.appendChild(view);
+                requestOpenMenuForId(view.getItemDelegate().getId());
                 return;
+            }
             case "delta-surface":
                 groupDelegate.prependChild(new DeltaSurface("Delta surface", props.dataProviderManager));
                 return;
-            case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager), true);
+            case "context-boundary": {
+                const ctxBoundary = new ContextBoundary("Context boundary", props.dataProviderManager);
+                groupDelegate.prependChild(ctxBoundary);
+                requestOpenMenuForId(ctxBoundary.getItemDelegate().getId());
+
                 return;
+            }
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;

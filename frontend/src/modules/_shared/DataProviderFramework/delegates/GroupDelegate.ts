@@ -53,9 +53,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         this.incrementTreeRevisionNumber();
     }
 
-    prependChild(child: Item, initWithOpenMenu?: boolean) {
-        child.getItemDelegate().setInitializeWithOpenMenu(initWithOpenMenu);
-
+    prependChild(child: Item) {
         const childOrder = child.getItemDelegate().getOrder();
         const [startIndex] = this.getRangeOfChildrenWithOrder(childOrder);
         if (startIndex === -1) {
@@ -65,9 +63,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
     }
 
-    appendChild(child: Item, initWithOpenMenu?: boolean) {
-        child.getItemDelegate().setInitializeWithOpenMenu(initWithOpenMenu);
-
+    appendChild(child: Item) {
         const childOrder = child.getItemDelegate().getOrder();
         const [, endIndex] = this.getRangeOfChildrenWithOrder(childOrder);
         this.insertChild(child, endIndex + 1);

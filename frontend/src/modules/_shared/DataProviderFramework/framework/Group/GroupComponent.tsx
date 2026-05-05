@@ -11,6 +11,7 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import { SharedSettingsDelegateTopic } from "../../delegates/SharedSettingsDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
+import { DataProviderManagerUIContext } from "../DataProviderManager/DataProviderManagerUIContext";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
@@ -34,13 +35,15 @@ export type GroupComponentProps = {
 export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     const { makeActionsForGroup, onActionClick } = props;
 
+    const { pendingOpenMenuItemId, clearPendingOpenMenuItemId } = React.useContext(DataProviderManagerUIContext);
+
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.COLOR);
 
     const sharedSettingsDelegate = props.group.getSharedSettingsDelegate();
-    const startOpen = props.group.getItemDelegate().getInitializeWithOpenMenu();
 
+    const startOpen = pendingOpenMenuItemId === props.group.getItemDelegate().getId();
     const actions = React.useMemo(() => {
         return makeActionsForGroup(props.group);
     }, [props.group, makeActionsForGroup]);
@@ -97,6 +100,11 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     }
 
     const emptyContentMessage = props.group.getEmptyContentMessage?.() ?? "Drag an item inside to add it.";
+
+    React.useEffect(function clearOpenMenuId() {
+        if (startOpen) clearPendingOpenMenuItemId();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- Mount only effect
+    }, []);
 
     return (
         <SortableListGroup
