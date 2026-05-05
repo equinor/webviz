@@ -22,7 +22,15 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
             nullable: true,
         },
         preferredViewLayout: {
-            enum: [ViewLayout.VERTICAL, ViewLayout.HORIZONTAL],
+            enum: [
+                ViewLayout.VERTICAL,
+                ViewLayout.HORIZONTAL,
+
+                // ! Legacy workaround
+                // ! Allow de-serializing the previous PreferredViewLayout enum
+                ViewLayout.VERTICAL.toUpperCase() as ViewLayout,
+                ViewLayout.HORIZONTAL.toUpperCase() as ViewLayout,
+            ],
         },
     },
 }));
@@ -43,5 +51,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     setIfDefined(set, dataProviderStateAtom, raw.dataProviderData);
     setIfDefined(set, fieldIdentifierAtom, raw.fieldIdentifier);
-    setIfDefined(set, preferredViewLayoutAtom, raw.preferredViewLayout);
+
+    // ! Allow de-serializing the previous PreferredViewLayout enum
+    setIfDefined(set, preferredViewLayoutAtom, raw.preferredViewLayout?.toLowerCase() as ViewLayout);
 };
