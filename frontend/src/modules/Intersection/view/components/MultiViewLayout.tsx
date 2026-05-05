@@ -12,33 +12,34 @@ export type MultiViewLayoutProps = {
 export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
     const { viewCount, preferredViewLayout, children } = props;
 
-    if (viewCount <= 1) {
+    if (viewCount === 0) {
         return <div className="w-full h-full">{children}</div>;
     }
 
-    const isHorizontal = preferredViewLayout === PreferredViewLayout.HORIZONTAL;
-    const isVertical = preferredViewLayout === PreferredViewLayout.VERTICAL;
-    const isGrid = preferredViewLayout === PreferredViewLayout.GRID;
+    const isSingleView = viewCount === 1;
+    const showHorizontal = isSingleView || preferredViewLayout === PreferredViewLayout.HORIZONTAL;
+    const showVertical = !isSingleView && preferredViewLayout === PreferredViewLayout.VERTICAL;
+    const showGrid = !isSingleView && preferredViewLayout === PreferredViewLayout.GRID;
 
     const numCols = Math.ceil(Math.sqrt(viewCount));
     const numRows = Math.ceil(viewCount / numCols);
-    const gridStyle: React.CSSProperties | undefined = isGrid
+    const gridStyle: React.CSSProperties | undefined = showGrid
         ? { gridTemplateColumns: `repeat(${numCols}, 1fr)`, gridTemplateRows: `repeat(${numRows}, 1fr)` }
         : undefined;
 
     const containerClasses = {
-        "flex flex-row": isHorizontal,
-        "flex flex-col": isVertical,
-        grid: isGrid,
+        "flex flex-row gap-4": showHorizontal,
+        "flex flex-col gap-4": showVertical,
+        "grid gap-4": showGrid,
     };
     const childClasses = {
-        "flex-1 shrink-0 min-w-0": isHorizontal,
-        "flex-1 shrink-0 min-h-0": isVertical,
-        "min-h-0 min-w-0": isGrid,
+        "flex-1 shrink-0 min-w-0": showHorizontal,
+        "flex-1 shrink-0 min-h-0": showVertical,
+        "min-h-0 min-w-0": showGrid,
     };
 
     return (
-        <div className={resolveClassNames("w-full h-full gap-4", containerClasses)} style={gridStyle}>
+        <div className={resolveClassNames("w-full h-full", containerClasses)} style={gridStyle}>
             {React.Children.map(children, (child) => (
                 <div className={resolveClassNames("overflow-hidden", childClasses)}>{child}</div>
             ))}
