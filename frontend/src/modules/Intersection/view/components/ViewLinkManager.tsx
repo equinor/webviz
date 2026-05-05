@@ -12,14 +12,14 @@ import type { Bounds } from "@modules/_shared/components/EsvIntersection";
  * the given target view ids. The host owns the storage and is responsible for reading the
  * source's current viewport from its own state.
  */
-export type PropagateLinkViewportFn = (targetViewIds: string[], sourceViewId: string) => void;
+export type PropagateLinkViewportFn = (sourceViewId: string, targetViewIds: string[]) => void;
 
 /**
  * Ref-stable callback used by the ViewLinkManager to propagate the source view's vertical
  * scale to the given target view ids. The host owns the storage and is responsible for
  * reading the source's current vertical scale from its own state.
  */
-export type PropagateLinkVerticalScaleFn = (targetViewIds: string[], sourceViewId: string) => void;
+export type PropagateLinkVerticalScaleFn = (sourceViewId: string, targetViewIds: string[]) => void;
 
 export type ViewLink = {
     id: string;
@@ -217,13 +217,13 @@ export function ViewLinkManager({
             if (joinSourceViewId) {
                 // Joining an existing link — propagate the link's current viewport/scale
                 // (from an existing member) only to the joiner.
-                propagateLinkViewport([thisViewId], joinSourceViewId);
-                propagateLinkVerticalScale([thisViewId], joinSourceViewId);
+                propagateLinkViewport(joinSourceViewId, [thisViewId]);
+                propagateLinkVerticalScale(joinSourceViewId, [thisViewId]);
             } else if (createdLink) {
                 // New link — propagate the initiator's viewport/scale to the other members.
                 const targets = createdLink.viewIds.filter((id) => id !== thisViewId);
-                propagateLinkViewport(targets, thisViewId);
-                propagateLinkVerticalScale(targets, thisViewId);
+                propagateLinkViewport(thisViewId, targets);
+                propagateLinkVerticalScale(thisViewId, targets);
             }
         },
         [linkColors, propagateLinkViewport, propagateLinkVerticalScale],
@@ -235,7 +235,7 @@ export function ViewLinkManager({
             if (!link) return;
 
             const targets = link.viewIds.filter((id) => id !== viewId);
-            propagateLinkViewport(targets, viewId);
+            propagateLinkViewport(viewId, targets);
 
             setViewLinks((prev) => {
                 let changed = false;
@@ -256,7 +256,7 @@ export function ViewLinkManager({
             const link = viewLinksRef.current.find((l) => l.viewIds.includes(viewId));
             if (!link) return;
             const targets = link.viewIds.filter((id) => id !== viewId);
-            propagateLinkVerticalScale(targets, viewId);
+            propagateLinkVerticalScale(viewId, targets);
         },
         [propagateLinkVerticalScale],
     );

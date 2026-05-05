@@ -1,7 +1,6 @@
 import React from "react";
 
 import { useAtom, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -51,6 +50,7 @@ import "../../DataProviderFramework/customDataProviderImplementations/registerAl
 
 import { viewStateMapAtom, viewLinksAtom } from "../atoms/baseAtoms";
 import { useSyncViewStateMap } from "../hooks/useSyncViewStateMap";
+import { propagateVerticalScaleInMap, propagateViewportInMap } from "../utils/viewStateMapUtils";
 
 import { MultiViewLayout } from "./MultiViewLayout";
 import { ViewDataProcessor } from "./ViewDataProcessor";
@@ -192,54 +192,17 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         [setPersistedViewLinks],
     );
 
-    // Propagate the source view's viewport (read from the per-view state map) to the
-    // given target view ids.
     const propagateLinkViewport = React.useCallback<PropagateLinkViewportFn>(
-        function propagateLinkViewport(targetViewIds, sourceViewId) {
-            setViewStateMap((prev) => {
-                const source = prev?.[sourceViewId];
-                if (!source?.viewport) return prev;
-                const sourceViewport = source.viewport;
-                const next = { ...prev };
-                let changed = false;
-                for (const id of targetViewIds) {
-                    if (id === sourceViewId) continue;
-                    const existing = next[id];
-                    if (existing && isEqual(existing.viewport, sourceViewport)) continue;
-                    next[id] = {
-                        viewport: sourceViewport,
-                        verticalScale: existing?.verticalScale ?? 10.0,
-                    };
-                    changed = true;
-                }
-                return changed ? next : prev;
-            });
+        function propagateLinkViewport(sourceViewId, targetViewIds) {
+            setViewStateMap((prev) => propagateViewportInMap(prev, sourceViewId, targetViewIds));
         },
         [setViewStateMap],
     );
 
-    // Propagate the source view's vertical scale (read from the per-view state map) to
-    // the given target view ids.
+    // Propagate the source view's vertical scale to the given target view ids.
     const propagateLinkVerticalScale = React.useCallback<PropagateLinkVerticalScaleFn>(
-        function propagateLinkVerticalScale(targetViewIds, sourceViewId) {
-            setViewStateMap((prev) => {
-                const source = prev?.[sourceViewId];
-                if (!source) return prev;
-                const sourceScale = source.verticalScale;
-                const next = { ...prev };
-                let changed = false;
-                for (const id of targetViewIds) {
-                    if (id === sourceViewId) continue;
-                    const existing = next[id];
-                    if (existing && existing.verticalScale === sourceScale) continue;
-                    next[id] = {
-                        viewport: existing?.viewport ?? null,
-                        verticalScale: sourceScale,
-                    };
-                    changed = true;
-                }
-                return changed ? next : prev;
-            });
+        function propagateLinkVerticalScale(sourceViewId, targetViewIds) {
+            setViewStateMap((prev) => propagateVerticalScaleInMap(prev, sourceViewId, targetViewIds));
         },
         [setViewStateMap],
     );
