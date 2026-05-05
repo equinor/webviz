@@ -5167,6 +5167,43 @@ export type GetDrilledWellboreHeadersResponses_api = {
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
+export type GetPlannedWellboreHeadersData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Field Identifier
+         *
+         * Official field identifier
+         */
+        field_identifier: string;
+        zCacheBust?: string;
+    };
+    url: "/well/planned_wellbore_headers/";
+};
+
+export type GetPlannedWellboreHeadersErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetPlannedWellboreHeadersError_api =
+    GetPlannedWellboreHeadersErrors_api[keyof GetPlannedWellboreHeadersErrors_api];
+
+export type GetPlannedWellboreHeadersResponses_api = {
+    /**
+     * Response Get Planned Wellbore Headers
+     *
+     * Successful Response
+     */
+    200: Array<WellboreHeader_api>;
+};
+
+export type GetPlannedWellboreHeadersResponse_api =
+    GetPlannedWellboreHeadersResponses_api[keyof GetPlannedWellboreHeadersResponses_api];
+
 export type GetFieldPerforationsData_api = {
     body?: never;
     path?: never;
@@ -5278,6 +5315,49 @@ export type GetWellTrajectoriesResponses_api = {
 };
 
 export type GetWellTrajectoriesResponse_api = GetWellTrajectoriesResponses_api[keyof GetWellTrajectoriesResponses_api];
+
+export type GetPlannedWellTrajectoriesData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Field Identifier
+         *
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Wellbore Uuids
+         *
+         * Optional subset of planned wellbore uuids
+         */
+        wellbore_uuids?: Array<string> | null;
+        zCacheBust?: string;
+    };
+    url: "/well/planned_well_trajectories/";
+};
+
+export type GetPlannedWellTrajectoriesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetPlannedWellTrajectoriesError_api =
+    GetPlannedWellTrajectoriesErrors_api[keyof GetPlannedWellTrajectoriesErrors_api];
+
+export type GetPlannedWellTrajectoriesResponses_api = {
+    /**
+     * Response Get Planned Well Trajectories
+     *
+     * Successful Response
+     */
+    200: Array<WellboreTrajectory_api>;
+};
+
+export type GetPlannedWellTrajectoriesResponse_api =
+    GetPlannedWellTrajectoriesResponses_api[keyof GetPlannedWellTrajectoriesResponses_api];
 
 export type GetWellborePickIdentifiersData_api = {
     body?: never;

@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { WellboreHeader_api } from "@api";
-import { getDrilledWellboreHeadersOptions } from "@api";
+import { getDrilledWellboreHeadersOptions, getPlannedWellboreHeadersOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
@@ -11,7 +11,10 @@ import type {
     WellboreIntersectionSpecification,
 } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 
-import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
+import {
+    getWellboreIntersectionSource,
+    type IntersectionSettingValue,
+} from "../../settings/implementations/IntersectionSetting";
 
 /**
  * Fetch wellbore headers for the provided field identifier.
@@ -27,6 +30,26 @@ export async function fetchWellboreHeaders(
 
     return await queryClient.fetchQuery({
         ...getDrilledWellboreHeadersOptions({
+            query: { field_identifier: fieldIdentifier },
+            signal: abortSignal,
+        }),
+    });
+}
+
+/**
+ * Fetch planned wellbore headers for the provided field identifier.
+ */
+export async function fetchPlannedWellboreHeaders(
+    fieldIdentifier: string | null,
+    abortSignal: AbortSignal,
+    queryClient: QueryClient,
+): Promise<WellboreHeader_api[] | null> {
+    if (!fieldIdentifier) {
+        return null;
+    }
+
+    return await queryClient.fetchQuery({
+        ...getPlannedWellboreHeadersOptions({
             query: { field_identifier: fieldIdentifier },
             signal: abortSignal,
         }),
@@ -69,6 +92,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
         const intersectionSpecification: WellboreIntersectionSpecification = {
             type: IntersectionType.WELLBORE,
             wellboreUuid: intersection.uuid,
+            wellboreSource: getWellboreIntersectionSource(intersection) ?? "drilled",
             extensionLength: wellboreExtensionLength,
             fieldIdentifier: fieldIdentifier,
             queryClient,

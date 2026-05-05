@@ -5,6 +5,7 @@ import type { WellboreCasing_api, WellboreHeader_api } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
+import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import {
     VisualizationItemType,
     type VisualizationGroup,
@@ -56,23 +57,26 @@ export function makeViewProvidersVisualizationLayerItems(
  * This function creates reference lines, and wellbore layers if the intersection type is wellbore.
  */
 export function createLayerItemsForIntersectionType(
-    intersectionType: IntersectionType,
+    intersectionSource: IntersectionSettingValue,
     intersectionReferenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
     wellboreHeadersQuery: UseQueryResult<WellboreHeader_api[]>,
     wellboreCasingsQuery: UseQueryResult<WellboreCasing_api[]>,
 ): LayerItem[] {
-    if (intersectionType === IntersectionType.CUSTOM_POLYLINE) {
+    if (intersectionSource.type === IntersectionType.CUSTOM_POLYLINE) {
         const layerItem = createReferenceLinesLayerItem();
         return [layerItem];
     }
-    if (intersectionType === IntersectionType.WELLBORE) {
+    if (intersectionSource.type === IntersectionType.WELLBORE) {
         const layerItems: LayerItem[] = [];
-        if (wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
+        const wellboreHeader = wellboreHeadersQuery.data?.find(
+            (header) => header.wellboreUuid === intersectionSource.uuid,
+        );
+        if (wellboreHeader) {
             layerItems.push(
                 createReferenceLinesLayerItem({
-                    depthReferenceElevation: wellboreHeadersQuery.data[0].depthReferenceElevation,
-                    depthReferencePoint: wellboreHeadersQuery.data[0].depthReferencePoint,
+                    depthReferenceElevation: wellboreHeader.depthReferenceElevation,
+                    depthReferencePoint: wellboreHeader.depthReferencePoint,
                 }),
             );
         }

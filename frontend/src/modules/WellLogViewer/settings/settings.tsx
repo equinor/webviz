@@ -40,7 +40,7 @@ function useSyncedWellboreSetting(
     if (!isEqual(prevGlobalIntersection, globalIntersection)) {
         setPrevGlobalIntersection(globalIntersection);
 
-        if (globalIntersection?.type === IntersectionType.WELLBORE) {
+        if (globalIntersection?.type === IntersectionType.WELLBORE && globalIntersection.wellboreSource !== "planned") {
             localSetSelectedWellboreHeader(globalIntersection.uuid);
         }
     }
@@ -51,6 +51,7 @@ function useSyncedWellboreSetting(
         syncHelper.publishValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection", {
             type: IntersectionType.WELLBORE,
             uuid: wellboreUuid ?? "",
+            wellboreSource: "drilled",
         });
     }
     // Leave AFTER checking global, othwise the select menu will highlight the wrong value

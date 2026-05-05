@@ -12,6 +12,7 @@ import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
+    fetchPlannedWellboreHeaders,
     fetchWellboreHeaders,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedHelperDependencyFunctions";
 import {
@@ -138,8 +139,14 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
+        const plannedWellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            return fetchPlannedWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+        });
+
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
+            const plannedWellboreHeaders = getHelperDependency(plannedWellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
 
@@ -147,7 +154,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
                 (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
             );
 
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines, plannedWellboreHeaders);
         });
 
         const surfaceMetadataSetDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {

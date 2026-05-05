@@ -2,7 +2,10 @@ import { groupBy, isEqual, keys } from "lodash";
 
 import { type WellborePick_api, getWellborePicksInStratColumnOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
-import { fetchWellboreHeaders } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedHelperDependencyFunctions";
+import {
+    fetchPlannedWellboreHeaders,
+    fetchWellboreHeaders,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedHelperDependencyFunctions";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableIntersectionOptions,
@@ -13,6 +16,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { getWellboreIntersectionSource } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 const ensembleWellborePicksSettings = [
@@ -58,7 +62,13 @@ export class EnsembleWellborePicksProvider
             return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
+        const plannedWellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            return fetchPlannedWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+        });
+
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+            const plannedWellboreHeaders = getHelperDependency(plannedWellboreHeadersDep) ?? [];
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -67,20 +77,21 @@ export class EnsembleWellborePicksProvider
                 (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
             );
 
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines, plannedWellboreHeaders);
         });
 
         const wellborePicksDep = helperDependency(({ getGlobalSetting, getLocalSetting, abortSignal }) => {
             const ensembles = getGlobalSetting("ensembles");
             const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const intersection = getLocalSetting(Setting.INTERSECTION);
+            const wellboreSource = getWellboreIntersectionSource(intersection);
 
             const wellboreUuid = intersection?.type === IntersectionType.WELLBORE ? intersection.uuid : null;
             const stratColumn = ensembles
                 .find((ensemble) => ensemble.getIdent().equals(ensembleIdent))
                 ?.getStratigraphicColumnIdentifier();
 
-            if (!wellboreUuid || !stratColumn) {
+            if (!wellboreUuid || !stratColumn || wellboreSource === "planned") {
                 return null;
             }
 

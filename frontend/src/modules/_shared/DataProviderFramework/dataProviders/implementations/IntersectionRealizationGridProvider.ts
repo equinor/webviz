@@ -18,6 +18,7 @@ import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSett
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
+    fetchPlannedWellboreHeaders,
     fetchWellboreHeaders,
 } from "../dependencyFunctions/sharedHelperDependencyFunctions";
 import {
@@ -225,8 +226,14 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
+        const plannedWellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            return fetchPlannedWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+        });
+
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
+            const plannedWellboreHeaders = getHelperDependency(plannedWellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
 
@@ -234,7 +241,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                 (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
             );
 
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines, plannedWellboreHeaders);
         });
 
         valueConstraintsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {

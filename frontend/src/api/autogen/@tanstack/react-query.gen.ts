@@ -42,6 +42,8 @@ import {
     getObservations,
     getObservedSurfacesMetadata,
     getParametersAndSensitivities,
+    getPlannedWellboreHeaders,
+    getPlannedWellTrajectories,
     getPolygonsData,
     getPolygonsDirectory,
     getProductionData,
@@ -177,6 +179,12 @@ import type {
     GetParametersAndSensitivitiesData_api,
     GetParametersAndSensitivitiesError_api,
     GetParametersAndSensitivitiesResponse_api,
+    GetPlannedWellboreHeadersData_api,
+    GetPlannedWellboreHeadersError_api,
+    GetPlannedWellboreHeadersResponse_api,
+    GetPlannedWellTrajectoriesData_api,
+    GetPlannedWellTrajectoriesError_api,
+    GetPlannedWellTrajectoriesResponse_api,
     GetPolygonsDataData_api,
     GetPolygonsDataError_api,
     GetPolygonsDataResponse_api,
@@ -1614,6 +1622,33 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
         queryKey: getDrilledWellboreHeadersQueryKey(options),
     });
 
+export const getPlannedWellboreHeadersQueryKey = (options: Options<GetPlannedWellboreHeadersData_api>) =>
+    createQueryKey("getPlannedWellboreHeaders", options);
+
+/**
+ * Get Planned Wellbore Headers
+ *
+ * Get planned wellbore headers for all planned wells in a given field
+ */
+export const getPlannedWellboreHeadersOptions = (options: Options<GetPlannedWellboreHeadersData_api>) =>
+    queryOptions<
+        GetPlannedWellboreHeadersResponse_api,
+        AxiosError<GetPlannedWellboreHeadersError_api>,
+        GetPlannedWellboreHeadersResponse_api,
+        ReturnType<typeof getPlannedWellboreHeadersQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getPlannedWellboreHeaders({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getPlannedWellboreHeadersQueryKey(options),
+    });
+
 export const getFieldPerforationsQueryKey = (options: Options<GetFieldPerforationsData_api>) =>
     createQueryKey("getFieldPerforations", options);
 
@@ -1694,6 +1729,33 @@ export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesD
             return data;
         },
         queryKey: getWellTrajectoriesQueryKey(options),
+    });
+
+export const getPlannedWellTrajectoriesQueryKey = (options: Options<GetPlannedWellTrajectoriesData_api>) =>
+    createQueryKey("getPlannedWellTrajectories", options);
+
+/**
+ * Get Planned Well Trajectories
+ *
+ * Get planned trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
+ */
+export const getPlannedWellTrajectoriesOptions = (options: Options<GetPlannedWellTrajectoriesData_api>) =>
+    queryOptions<
+        GetPlannedWellTrajectoriesResponse_api,
+        AxiosError<GetPlannedWellTrajectoriesError_api>,
+        GetPlannedWellTrajectoriesResponse_api,
+        ReturnType<typeof getPlannedWellTrajectoriesQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getPlannedWellTrajectories({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getPlannedWellTrajectoriesQueryKey(options),
     });
 
 export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellborePickIdentifiersData_api>) =>

@@ -5,14 +5,17 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import {
+    getWellboreIntersectionSource,
+    type IntersectionSettingValue,
+} from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 
 import {
     createIntersectionReferenceSystemFromIntersectionPolyline,
     createIntersectionReferenceSystemFromWellTrajectory,
 } from "../utils/createIntersectionReferenceSystem";
 
-import { useWellboreTrajectoriesQuery } from "./queryHooks";
+import { usePlannedWellboreTrajectoriesQuery, useWellboreTrajectoriesQuery } from "./queryHooks";
 
 /**
  * Create intersection reference system based on selected intersection setting
@@ -25,6 +28,7 @@ export function useCreateIntersectionReferenceSystem(
     // Always call hooks unconditionally
     const isCustomPolyline = intersectionSetting?.type === IntersectionType.CUSTOM_POLYLINE;
     const isWellbore = intersectionSetting?.type === IntersectionType.WELLBORE;
+    const wellboreSource = intersectionSetting ? getWellboreIntersectionSource(intersectionSetting) : null;
 
     // Polyline intersection
     const availableIntersectionPolylines = useIntersectionPolylines(workbenchSession);
@@ -34,7 +38,12 @@ export function useCreateIntersectionReferenceSystem(
     const wellTrajectoriesQuery = useWellboreTrajectoriesQuery(
         fieldIdentifier,
         isWellbore ? [wellboreUuid] : [],
-        isWellbore,
+        isWellbore && wellboreSource === "drilled",
+    );
+    const plannedWellTrajectoriesQuery = usePlannedWellboreTrajectoriesQuery(
+        fieldIdentifier,
+        isWellbore ? [wellboreUuid] : [],
+        isWellbore && wellboreSource === "planned",
     );
 
     // Memoize the reference system to prevent creating a new instance on every render
@@ -45,8 +54,10 @@ export function useCreateIntersectionReferenceSystem(
         }
 
         // Process the results
-        if (isWellbore && wellTrajectoriesQuery.data && wellTrajectoriesQuery.data.length > 0) {
-            return createIntersectionReferenceSystemFromWellTrajectory(wellTrajectoriesQuery.data[0]);
+        const wellTrajectoryData =
+            wellboreSource === "planned" ? plannedWellTrajectoriesQuery.data : wellTrajectoriesQuery.data;
+        if (isWellbore && wellTrajectoryData && wellTrajectoryData.length > 0) {
+            return createIntersectionReferenceSystemFromWellTrajectory(wellTrajectoryData[0]);
         }
 
         if (isCustomPolyline) {
@@ -57,7 +68,15 @@ export function useCreateIntersectionReferenceSystem(
         }
 
         return null;
-    }, [intersectionSetting, isWellbore, isCustomPolyline, wellTrajectoriesQuery.data, availableIntersectionPolylines]);
+    }, [
+        intersectionSetting,
+        isWellbore,
+        isCustomPolyline,
+        wellboreSource,
+        wellTrajectoriesQuery.data,
+        plannedWellTrajectoriesQuery.data,
+        availableIntersectionPolylines,
+    ]);
 
     // Return the reference system
     return referenceSystem;

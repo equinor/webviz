@@ -52,13 +52,24 @@ export function getAvailableRealizationsForEnsembleIdent(
 export function getAvailableIntersectionOptions(
     wellboreHeaders: WellboreHeader_api[],
     intersectionPolylines: IntersectionPolyline[],
+    plannedWellboreHeaders: WellboreHeader_api[] = [],
 ): IntersectionSettingValue[] {
     const intersectionOptions: IntersectionSettingValue[] = [];
     for (const wellboreHeader of wellboreHeaders) {
         intersectionOptions.push({
             type: IntersectionType.WELLBORE,
-            name: wellboreHeader.uniqueWellboreIdentifier,
+            name: `${wellboreHeader.uniqueWellboreIdentifier} (Official)`,
             uuid: wellboreHeader.wellboreUuid,
+            wellboreSource: "drilled",
+        });
+    }
+
+    for (const wellboreHeader of plannedWellboreHeaders) {
+        intersectionOptions.push({
+            type: IntersectionType.WELLBORE,
+            name: `${wellboreHeader.uniqueWellboreIdentifier} (Planned)`,
+            uuid: wellboreHeader.wellboreUuid,
+            wellboreSource: "planned",
         });
     }
 

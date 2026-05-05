@@ -8,11 +8,9 @@ import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 import { DEFAULT_WELLS_LAYER_PROPS } from "@modules/_shared/constants/wellsLayer";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import type {
-    DrilledWellboreTrajectoriesData,
-    DrilledWellboreTrajectoriesSettings,
-    DrilledWellboreTrajectoriesStoredData,
-    DrilledWellboreTrajectoryData,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
+    WellboreTrajectoriesData,
+    WellboreTrajectoryData,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/wellboreTrajectoryTypes";
 import type { SettingTypeDefinitions } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -23,19 +21,20 @@ const SIMPLIFICATION_RADIAL_DIST = 1.5;
 const FORMATION_FILTER_NAME = "WITHIN FILTER";
 
 export function makeRichWellTrajectoriesLayer(
-    args: TransformerArgs<
-        DrilledWellboreTrajectoriesSettings,
-        DrilledWellboreTrajectoriesData,
-        DrilledWellboreTrajectoriesStoredData
-    >,
+    args: TransformerArgs<any, WellboreTrajectoriesData, any>,
 ): WellsLayer | null {
     const { id, isLoading, getData, getSetting } = args;
 
     const wellboreTrajectoriesData = getData();
-    const depthFilterType = getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) ?? "none";
-    const flowFilterType = getSetting(Setting.FLOW_FILTER_TYPE) ?? "none";
-    const flowFilterSettings = getSetting(Setting.FLOW_FILTER);
-    const mdRangeSetting = getSetting(Setting.MD_RANGE);
+    const getOptionalSetting = makeOptionalSettingGetter(getSetting);
+    const depthFilterType =
+        (getOptionalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) as SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FILTER_TYPE]["externalValue"]) ??
+        "none";
+    const flowFilterType =
+        (getOptionalSetting(Setting.FLOW_FILTER_TYPE) as SettingTypeDefinitions[Setting.FLOW_FILTER_TYPE]["externalValue"]) ??
+        "none";
+    const flowFilterSettings = getOptionalSetting(Setting.FLOW_FILTER) as SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"];
+    const mdRangeSetting = getOptionalSetting(Setting.MD_RANGE) as SettingTypeDefinitions[Setting.MD_RANGE]["externalValue"];
 
     if (isLoading) {
         return null;
@@ -125,8 +124,22 @@ export function makeRichWellTrajectoriesLayer(
     return wellsLayer;
 }
 
+function makeOptionalSettingGetter(getSetting: TransformerArgs<any, WellboreTrajectoriesData, any>["getSetting"]) {
+    return function getOptionalSetting(setting: Setting): unknown {
+        try {
+            return getSetting(setting);
+        } catch (error) {
+            if (error instanceof TypeError && error.message.includes("getValue")) {
+                return null;
+            }
+
+            throw error;
+        }
+    };
+}
+
 function wellDataToGeoJson(
-    wellboreTrajectoriesData: DrilledWellboreTrajectoriesData,
+    wellboreTrajectoriesData: WellboreTrajectoriesData,
 ): FeatureCollection<GeometryCollection, ExtendedWellFeatureProperties> {
     const wellboreFeatures: ExtendedWellFeature[] = [];
 
@@ -137,19 +150,19 @@ function wellDataToGeoJson(
         // ! The data structure in the subsurface package is not final, so this might change in a future update
         wellboreFeature.properties = {
             ...wellboreFeature.properties,
-            formations: wt.formationSegments.map((wtf) => ({
+            formations: (wt.formationSegments ?? []).map((wtf) => ({
                 mdEnter: wtf.mdEnter,
                 mdExit: wtf.mdExit,
                 name: FORMATION_FILTER_NAME,
             })),
-            screens: wt.screens.map<ScreenProperties>((wts) => ({
+            screens: (wt.screens ?? []).map<ScreenProperties>((wts) => ({
                 // Screen readout is shown as [wellbore.name :: name]
                 name: wts.symbolName ?? "Screen", // This is what's shown in the readout
                 description: wts.description ?? undefined,
                 mdStart: wts.mdTop,
                 mdEnd: wts.mdBottom,
             })),
-            perforations: wt.perforations.map<PerforationProperties>((wtp) => ({
+            perforations: (wt.perforations ?? []).map<PerforationProperties>((wtp) => ({
                 // Perforation readout is shown as [name :: status]
                 name: "Perforation",
                 md: (wtp.mdTop + wtp.mdBottom) / 2,
@@ -174,7 +187,7 @@ function wellDataToGeoJson(
     };
 }
 
-function createSimplifiedTrajectory(trajectory: DrilledWellboreTrajectoryData) {
+function createSimplifiedTrajectory(trajectory: WellboreTrajectoryData) {
     return simplifyWellTrajectoryRadialDist(trajectory, SIMPLIFICATION_RADIAL_DIST, (point1, point2) => {
         const vecPoint1 = vec2FromArray([point1.easting, point1.northing]);
         const vecPoint2 = vec2FromArray([point2.easting, point2.northing]);

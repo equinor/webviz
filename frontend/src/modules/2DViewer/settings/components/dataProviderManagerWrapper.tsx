@@ -140,6 +140,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     ),
                 );
                 return;
+            case "planned-wellbore-trajectories":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.PLANNED_WELL_TRAJECTORIES,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
             case "drilled-wellbore-picks":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -378,6 +386,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Trajectories (Official)",
+                    },
+                    {
+                        identifier: "planned-wellbore-trajectories",
+                        icon: <Icon data={wellbore} fontSize="small" />,
+                        label: "Trajectories (Planned)",
                     },
                     {
                         identifier: "drilled-wellbore-picks",

@@ -10,6 +10,7 @@ import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataPro
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
+import { PlannedWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/PlannedWellboreTrajectoriesProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import {
     AttributeSurfaceProvider,
@@ -143,6 +144,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellboreTrajectoriesProvider,
+    {
+        transformToVisualization: makeRichWellTrajectoriesLayer,
+        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.PLANNED_WELL_TRAJECTORIES,
+    PlannedWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeRichWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,

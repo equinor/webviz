@@ -20,9 +20,36 @@ export type IntersectionSettingValue = {
     type: IntersectionType;
     name: string;
     uuid: string;
+    wellboreSource?: WellboreIntersectionSource;
 };
+export type WellboreIntersectionSource = "drilled" | "planned";
 type ValueType = IntersectionSettingValue | null;
 type ValueConstraintsType = IntersectionSettingValue[];
+
+export function getWellboreIntersectionSource(
+    value: IntersectionSettingValue | null | undefined,
+): WellboreIntersectionSource | null {
+    if (!value || value.type !== IntersectionType.WELLBORE) {
+        return null;
+    }
+
+    return value.wellboreSource ?? "drilled";
+}
+
+export function makeIntersectionSettingOptionValue(value: IntersectionSettingValue): string {
+    return `${value.type}:${getWellboreIntersectionSource(value) ?? "custom"}:${value.uuid}`;
+}
+
+export function areIntersectionSettingValuesEqual(
+    a: IntersectionSettingValue | null | undefined,
+    b: IntersectionSettingValue | null | undefined,
+): boolean {
+    return (
+        a?.type === b?.type &&
+        a?.uuid === b?.uuid &&
+        getWellboreIntersectionSource(a) === getWellboreIntersectionSource(b)
+    );
+}
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _activeIntersectionType = IntersectionType.WELLBORE;
@@ -33,7 +60,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
 
     valueConstraintsIntersectionReducerDefinition =
         makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
-            (a, b) => a.type === b.type && a.uuid === b.uuid,
+            (a, b) => areIntersectionSettingValuesEqual(a, b),
         );
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
@@ -60,7 +87,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             throw new Error("Expected object with string properties: type, name, uuid");
         }
 
-        return parsed as ValueType;
+        const value = parsed as IntersectionSettingValue;
+        return value.type === IntersectionType.WELLBORE ? { ...value, wellboreSource: value.wellboreSource ?? "drilled" } : value;
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
@@ -68,7 +96,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             value,
             valueConstraints,
             (v) => v,
-            (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
+            areIntersectionSettingValuesEqual,
         );
     }
 
@@ -79,7 +107,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 currentValue,
                 valueConstraintsForActiveType,
                 (v) => v,
-                (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
+                areIntersectionSettingValuesEqual,
             );
         }
 
@@ -123,7 +151,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             );
 
             function handleSelectionChange(selectedValue: string) {
-                const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
+                const newValue = availableValues.find((v) => makeIntersectionSettingOptionValue(v) === selectedValue) ?? null;
                 setCachedValueForIntersectionType(type, newValue);
                 props.onValueChange(newValue);
             }
@@ -149,9 +177,17 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 .map((value) => {
                     return {
                         label: value.name,
-                        value: value.uuid,
+                        value: makeIntersectionSettingOptionValue(value),
                     };
                 });
+
+            const selectedOptionValue = props.isOverridden
+                ? props.overriddenValue
+                    ? makeIntersectionSettingOptionValue(props.overriddenValue)
+                    : undefined
+                : props.value
+                  ? makeIntersectionSettingOptionValue(props.value)
+                  : undefined;
 
             return (
                 <div className="flex flex-col gap-2 my-1">
@@ -175,7 +211,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         placeholder={
                             type === IntersectionType.CUSTOM_POLYLINE ? "Select polyline..." : "Select wellbore..."
                         }
-                        value={!props.isOverridden ? props.value?.uuid : props.overriddenValue?.uuid}
+                        value={selectedOptionValue}
                         onChange={handleSelectionChange}
                         disabled={props.isOverridden}
                         showArrows
