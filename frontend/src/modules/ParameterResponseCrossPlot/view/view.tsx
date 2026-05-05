@@ -12,6 +12,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { isVaryingNumericParameter } from "@modules/_shared/parameterUtils";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
@@ -121,6 +122,10 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                     setContent(
                         <ContentWarning>Parameter not found. Please select a parameter to plot.</ContentWarning>,
                     );
+                    return;
+                }
+                if (!isVaryingNumericParameter(parameter)) {
+                    setContent(<ContentWarning>Please select a varying numeric parameter to plot.</ContentWarning>);
                     return;
                 }
                 ensembleParametersMap.set(ensembleIdentString, parameter);
