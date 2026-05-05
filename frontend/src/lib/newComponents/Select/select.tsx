@@ -451,7 +451,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         renderItem={(option: SelectOption<TValue>, index: number) => {
                             return (
                                 <div
-                                    key={option.value}
+                                    key={String(option.value)}
                                     className={resolveClassNames(
                                         "cursor-pointer",
                                         "pl-2",
