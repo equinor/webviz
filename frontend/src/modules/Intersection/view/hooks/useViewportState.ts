@@ -268,12 +268,17 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     // --- Refocus logic ---
 
-    // Only automatically focus when focus bounds changes
+    // Only automatically focus when focus bounds or the autofit flag changes.
+    // - Read `handleFitInView` through a ref so changes to vertical scale do not retrigger
+    //   this effect and cause a refocus.
+    const handleFitInViewRef = React.useRef(handleFitInView);
+    handleFitInViewRef.current = handleFitInView;
+
     React.useEffect(() => {
         if (effectiveFocusBounds && autofit) {
-            handleFitInView();
+            handleFitInViewRef.current();
         }
-    }, [autofit, effectiveFocusBounds, handleFitInView]);
+    }, [autofit, effectiveFocusBounds]);
 
     return {
         viewport,
