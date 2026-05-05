@@ -1,11 +1,23 @@
-export type ScrollAreaProps = {
+import React from "react";
+
+import type { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type ScrollAreaProps = LayoutClassProps & {
     children?: React.ReactNode;
 };
 
-export function ScrollArea(props: ScrollAreaProps) {
+export const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea(props, ref) {
     return (
-        <div data-collapsible-scroll-area className="group relative h-full min-h-0 w-full overflow-auto pb-12">
+        <div
+            ref={ref}
+            data-collapsible-scroll-area
+            className={resolveClassNames(
+                props.layoutClassName,
+                "group relative h-full min-h-0 w-full overflow-auto pb-12",
+            )}
+        >
             {props.children}
         </div>
     );
-}
+});

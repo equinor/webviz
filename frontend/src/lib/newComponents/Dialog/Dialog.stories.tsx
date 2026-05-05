@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Dialog as DialogBase } from "@base-ui/react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "../Button";
@@ -58,8 +59,15 @@ type Story = StoryObj;
 
 // ─── Sub-component stories ────────────────────────────────────────────────────
 
+const withDialogRoot = (Story: React.ComponentType) => (
+    <DialogBase.Root open>
+        <Story />
+    </DialogBase.Root>
+);
+
 export const SubTitle: Story = {
     name: "Sub-component: Title",
+    decorators: [withDialogRoot],
     parameters: {
         docs: {
             description: { story: "The `Dialog.Title` renders a styled heading. Used inside `Dialog.Header`." },
@@ -70,6 +78,7 @@ export const SubTitle: Story = {
 
 export const SubHeader: Story = {
     name: "Sub-component: Header",
+    decorators: [withDialogRoot],
     parameters: {
         docs: {
             description: {
@@ -86,6 +95,7 @@ export const SubHeader: Story = {
 
 export const SubBody: Story = {
     name: "Sub-component: Body",
+    decorators: [withDialogRoot],
     parameters: {
         docs: {
             description: {

@@ -6,6 +6,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { PixelSize } from "../_shared/size";
+import { type LayoutClassProps } from "../_shared/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
 
 export type AvatarUserData = {
@@ -15,13 +16,13 @@ export type AvatarUserData = {
     alt?: string;
 };
 
-export type AvatarProps = {
+export type AvatarProps = LayoutClassProps & {
     userData?: AvatarUserData | (() => Promise<AvatarUserData>);
     size?: PixelSize;
     disabled?: boolean;
 };
 
-type UserDataState =
+type UserDataWithStatus =
     | { status: "direct"; data: AvatarUserData }
     | { status: "loading" }
     | { status: "loaded"; data: AvatarUserData }
@@ -35,44 +36,43 @@ const SIZE_CLASSES: Record<NonNullable<AvatarProps["size"]>, string> = {
     48: "h-12 aspect-square text-body-2xl tracking-body-2xl-tight",
 };
 
-const DEFAULT_PROPS = {
-    size: 48,
-} satisfies Partial<AvatarProps>;
+export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function Avatar(props, ref): React.ReactNode {
+    const { userData, size = 48 } = props;
 
-export function Avatar(props: AvatarProps): React.ReactNode {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
-    const { userData: image } = defaultedProps;
-
-    const [userDataState, setUserDataState] = React.useState<UserDataState>(() => {
-        if (image && typeof image !== "function") return { status: "direct", data: image };
-        if (typeof image === "function") return { status: "loading" };
+    const [userDataWithStatus, setUserDataWithStatus] = React.useState<UserDataWithStatus>(() => {
+        if (userData && typeof userData !== "function") {
+            return { status: "direct", data: userData };
+        }
+        if (typeof userData === "function") {
+            return { status: "loading" };
+        }
         return { status: "rejected" };
     });
     const [imageLoadingStatus, setImageLoadingStatus] = React.useState<ImageLoadingStatus>("idle");
 
     React.useEffect(
         function loadImageEffect() {
-            if (image && typeof image !== "function") {
-                setUserDataState({ status: "direct", data: image });
+            if (userData && typeof userData !== "function") {
+                setUserDataWithStatus({ status: "direct", data: userData });
                 return;
             }
-            if (typeof image === "function") {
+            if (typeof userData === "function") {
                 let isMounted = true;
-                setUserDataState({ status: "loading" });
-                image()
+                setUserDataWithStatus({ status: "loading" });
+                userData()
                     .then((data) => {
-                        if (isMounted) setUserDataState({ status: "loaded", data });
+                        if (isMounted) setUserDataWithStatus({ status: "loaded", data });
                     })
                     .catch(() => {
-                        if (isMounted) setUserDataState({ status: "rejected" });
+                        if (isMounted) setUserDataWithStatus({ status: "rejected" });
                     });
                 return () => {
                     isMounted = false;
                 };
             }
-            setUserDataState({ status: "rejected" });
+            setUserDataWithStatus({ status: "rejected" });
         },
-        [image],
+        [userData],
     );
 
     const handleImageLoadingStatusChange = React.useCallback(function handleImageLoadingStatusChange(
@@ -82,21 +82,26 @@ export function Avatar(props: AvatarProps): React.ReactNode {
     }, []);
 
     const imageData =
-        userDataState.status === "direct" || userDataState.status === "loaded" ? userDataState.data : undefined;
+        userDataWithStatus.status === "direct" || userDataWithStatus.status === "loaded"
+            ? userDataWithStatus.data
+            : undefined;
 
     const showImage = imageData !== undefined;
 
     return (
         <span className="relative inline-flex align-middle">
             <AvatarBase.Root
+                ref={ref}
                 className={resolveClassNames(
+                    props.layoutClassName,
                     "inline-flex items-center justify-center overflow-hidden rounded-full",
-                    SIZE_CLASSES[defaultedProps.size],
+                    SIZE_CLASSES[size],
                     {
-                        "opacity-50": defaultedProps.disabled,
+                        "opacity-50": props.disabled,
                     },
                 )}
                 render={<span />}
+                aria-disabled={props.disabled}
             >
                 {showImage && (
                     <AvatarBase.Image
@@ -114,7 +119,7 @@ export function Avatar(props: AvatarProps): React.ReactNode {
                     )}
                     render={<span />}
                 >
-                    {userDataState.status === "rejected" ? (
+                    {userDataWithStatus.status === "rejected" ? (
                         <PersonIcon fontSize="inherit" />
                     ) : (
                         (imageData?.initials ?? <PersonIcon fontSize="inherit" />)
@@ -125,13 +130,13 @@ export function Avatar(props: AvatarProps): React.ReactNode {
                 className={resolveClassNames(
                     "pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
                     {
-                        "opacity-0": userDataState.status !== "loading" || imageLoadingStatus === "loaded",
-                        "opacity-100": userDataState.status === "loading" && imageLoadingStatus !== "loaded",
+                        "opacity-0": userDataWithStatus.status !== "loading" || imageLoadingStatus === "loaded",
+                        "opacity-100": userDataWithStatus.status === "loading" && imageLoadingStatus !== "loaded",
                     },
                 )}
             >
-                <CircularProgress size={defaultedProps.size} />
+                <CircularProgress size={size} />
             </span>
         </span>
     );
-}
+});

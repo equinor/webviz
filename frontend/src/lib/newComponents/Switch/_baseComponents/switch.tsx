@@ -1,17 +1,22 @@
-import { Switch as SwitchBase, SwitchRootProps } from "@base-ui/react";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
 
-export type SwitchProps = Omit<SwitchRootProps, "className" | "style" | "ref">;
+import type { SwitchRootProps } from "@base-ui/react";
+import { Switch as SwitchBase } from "@base-ui/react";
 
-export const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(function Switch(props, ref) {
-    const defaultedProps = { ...props };
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type SwitchProps = ComponentWrapperProps<Omit<SwitchRootProps, "ref">>;
+
+export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Switch(props, ref) {
+    const baseProps = resolveWrapperProps(props);
 
     return (
         <SwitchBase.Root
-            {...defaultedProps}
+            {...baseProps}
             ref={ref}
             className={resolveClassNames(
+                props.layoutClassName,
                 "group p-selectable-y selectable relative box-border flex aspect-square appearance-none rounded-full border-0",
             )}
         >

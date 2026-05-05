@@ -3,17 +3,13 @@ export type LinearProgressProps = {
     value?: number;
 };
 
-const DEFAULT_PROPS = {
-    variant: "indeterminate",
-} satisfies Partial<LinearProgressProps>;
-
 export function LinearProgress(props: LinearProgressProps) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const { variant = "indeterminate" } = props;
 
-    if (defaultedProps.variant === "indeterminate") {
+    if (variant === "indeterminate") {
         return <IndefiniteLinearProgress />;
     } else {
-        return <DeterminateLinearProgress value={defaultedProps.value ?? 0} />;
+        return <DeterminateLinearProgress value={props.value ?? 0} />;
     }
 }
 

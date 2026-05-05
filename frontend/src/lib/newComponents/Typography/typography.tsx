@@ -283,13 +283,6 @@ const WEIGHT_CLASSES: Record<Required<TypographyProps>["weight"], string> = {
     bolder: "font-bolder",
 };
 
-const DEFAULT_PROPS = {
-    as: "span",
-    lineHeight: "default",
-    weight: "normal",
-    tracking: "normal",
-} satisfies Partial<TypographyProps>;
-
 function TypographyComponent<Element extends HTMLElement>(
     props: TypographyProps,
     ref: React.ForwardedRef<Element>,
@@ -298,10 +291,10 @@ function TypographyComponent<Element extends HTMLElement>(
         family,
         size,
         tone,
-        as = DEFAULT_PROPS.as,
-        lineHeight = DEFAULT_PROPS.lineHeight,
-        weight = DEFAULT_PROPS.weight,
-        tracking = DEFAULT_PROPS.tracking,
+        as = "span",
+        lineHeight = "default",
+        weight = "normal",
+        tracking = "normal",
         className,
         children,
         ...htmlProps

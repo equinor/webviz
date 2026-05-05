@@ -1,24 +1,27 @@
+import React from "react";
+
 import { Tabs as TabsBase, type TabsListProps as TabsListBaseProps } from "@base-ui/react";
 
-export type ListProps = Omit<TabsListBaseProps, "className" | "style"> & {
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type ListProps = ComponentWrapperProps<TabsListBaseProps> & {
     indicatorPosition?: "start" | "end";
 };
 
-const DEFAULT_PROPS = {
-    indicatorPosition: "end",
-} satisfies Partial<ListProps>;
-
-export function List(props: ListProps) {
-    const { indicatorPosition = DEFAULT_PROPS.indicatorPosition, ...restProps } = props;
+export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(props, ref) {
+    const { indicatorPosition = "end", ...rest } = props;
+    const baseProps = resolveWrapperProps(rest);
 
     return (
         <TabsBase.List
+            {...baseProps}
+            ref={ref}
             data-position={indicatorPosition}
-            {...restProps}
-            className="relative flex data-[orientation=vertical]:flex-col"
+            className={resolveClassNames(props.layoutClassName, "relative flex data-[orientation=vertical]:flex-col")}
         >
             {props.children}
             <TabsBase.Indicator className="tabs__indicator bg-accent-strong" />
         </TabsBase.List>
     );
-}
+});

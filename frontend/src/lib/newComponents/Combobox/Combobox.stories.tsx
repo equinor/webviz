@@ -230,7 +230,7 @@ export const WithField: Story = {
         <div className="w-64">
             <Field.Root>
                 <Field.Label>Country</Field.Label>
-                <Field.Details>Select your country of residence.</Field.Details>
+                <Field.Description>Select your country of residence.</Field.Description>
                 <Combobox items={COUNTRIES} clearable placeholder="Select a country" />
             </Field.Root>
         </div>

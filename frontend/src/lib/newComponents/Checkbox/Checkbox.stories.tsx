@@ -66,6 +66,7 @@ so a sibling \`<label htmlFor>\` targets it directly.
     tags: ["autodocs"],
     argTypes: {
         disabled: { control: "boolean" },
+        readOnly: { control: "boolean" },
         required: { control: "boolean" },
         indeterminate: { control: "boolean" },
         defaultChecked: { control: "boolean" },
@@ -128,6 +129,34 @@ export const Disabled: Story = {
     },
 };
 
+export const ReadOnly: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Read-only state (`data-readonly`) — value is visible but cannot be changed by the user. " +
+                    "Unlike `disabled`, read-only checkboxes are still submitted with forms.",
+            },
+        },
+    },
+    render: () => (
+        <div className="flex flex-col gap-3">
+            {(
+                [
+                    { label: "Read-only unchecked", props: { readOnly: true, defaultChecked: false } },
+                    { label: "Read-only checked", props: { readOnly: true, defaultChecked: true } },
+                    { label: "Read-only indeterminate", props: { readOnly: true, indeterminate: true } },
+                ] as const
+            ).map(({ label, props }) => (
+                <label key={label} className="flex cursor-pointer items-center gap-2 select-none">
+                    <Checkbox {...props} />
+                    <span>{label}</span>
+                </label>
+            ))}
+        </div>
+    ),
+};
+
 export const AllStates: Story = {
     parameters: {
         docs: { description: { story: "All visual states side-by-side for quick comparison." } },
@@ -142,6 +171,9 @@ export const AllStates: Story = {
                     { label: "Disabled", props: { disabled: true } },
                     { label: "Disabled + checked", props: { disabled: true, defaultChecked: true } },
                     { label: "Disabled + indeterminate", props: { disabled: true, indeterminate: true } },
+                    { label: "Read-only", props: { readOnly: true } },
+                    { label: "Read-only + checked", props: { readOnly: true, defaultChecked: true } },
+                    { label: "Read-only + indeterminate", props: { readOnly: true, indeterminate: true } },
                 ] as const
             ).map(({ label, props }) => (
                 <label key={label} className="flex cursor-pointer items-center gap-2 select-none">
@@ -275,7 +307,7 @@ export const GroupWithField: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Notify me about</Field.Label>
-            <Field.Details>Choose which events trigger a notification.</Field.Details>
+            <Field.Description>Choose which events trigger a notification.</Field.Description>
             <CheckboxGroup defaultValue={["comments"]}>
                 <div className="mt-1 flex flex-col gap-1">
                     {(

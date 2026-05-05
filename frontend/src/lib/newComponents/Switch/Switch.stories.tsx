@@ -65,6 +65,9 @@ boilerplate for the common case of a switch with a plain text label.
         disabled: {
             control: "boolean",
         },
+        readOnly: {
+            control: "boolean",
+        },
         defaultChecked: {
             control: "boolean",
         },
@@ -179,7 +182,7 @@ export const WithField: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Dark mode</Field.Label>
-            <Field.Details>Use a dark color theme across the application.</Field.Details>
+            <Field.Description>Use a dark color theme across the application.</Field.Description>
             <Switch defaultChecked />
         </Field.Root>
     ),

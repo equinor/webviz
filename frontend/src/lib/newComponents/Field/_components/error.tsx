@@ -2,13 +2,13 @@ import React from "react";
 
 import { Field as FieldBase, type FieldErrorProps } from "@base-ui/react";
 
-import { useWrappedBaseUIProps, type WrappedBaseUIProps } from "@lib/newComponents/_shared/useWrappedBaseUIProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
-export type ErrorProps = WrappedBaseUIProps<FieldErrorProps>;
+export type ErrorProps = ComponentWrapperProps<FieldErrorProps>;
 
 function ErrorComponent(props: ErrorProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const baseProps = useWrappedBaseUIProps(props);
+    const baseProps = resolveWrapperProps(props);
     return <FieldBase.Error {...baseProps} ref={ref} render={<Paragraph size="sm" />} />;
 }
 

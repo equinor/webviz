@@ -1,7 +1,14 @@
+import React from "react";
+
 import { Tabs as TabsBase, type TabsPanelProps as TabsPanelBaseProps } from "@base-ui/react";
 
-export type PanelProps = Omit<TabsPanelBaseProps, "className" | "style">;
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export function Panel(props: PanelProps) {
-    return <TabsBase.Panel {...props} className="tabs" />;
-}
+export type PanelProps = ComponentWrapperProps<Omit<TabsPanelBaseProps, "ref">>;
+
+export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel(props, ref) {
+    const baseProps = resolveWrapperProps(props) as Omit<TabsPanelBaseProps, "ref">;
+
+    return <TabsBase.Panel {...baseProps} ref={ref} className={resolveClassNames(props.layoutClassName, "tabs")} />;
+});

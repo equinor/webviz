@@ -1,7 +1,14 @@
-import { CheckboxGroup as CheckboxGroupBase, CheckboxGroupProps as CheckboxGroupBaseProps } from "@base-ui/react";
+import React from "react";
 
-export type CheckboxGroupProps = Omit<CheckboxGroupBaseProps, "className" | "style">;
+import type { CheckboxGroupProps as CheckboxGroupBaseProps } from "@base-ui/react";
+import { CheckboxGroup as CheckboxGroupBase } from "@base-ui/react";
 
-export function CheckboxGroup(props: CheckboxGroupProps) {
-    return <CheckboxGroupBase {...props} />;
-}
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+
+export type CheckboxGroupProps = ComponentWrapperProps<CheckboxGroupBaseProps>;
+
+export const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(function CheckboxGroup(props, ref) {
+    const baseProps = resolveWrapperProps(props);
+
+    return <CheckboxGroupBase {...baseProps} ref={ref} className={props.layoutClassName} />;
+});

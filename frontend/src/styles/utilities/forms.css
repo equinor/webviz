@@ -7,6 +7,10 @@
 
     &[data-disabled] {
         @apply text-disabled cursor-not-allowed outline-transparent;
+
+        & * {
+            cursor: not-allowed;
+        }
     }
 
     &[data-invalid] {

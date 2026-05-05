@@ -1,15 +1,15 @@
 import type { FieldLabelProps as FieldLabelBaseProps } from "@base-ui/react";
 import { Field as FieldBase } from "@base-ui/react";
 
-import { useWrappedBaseUIProps, type WrappedBaseUIProps } from "@lib/newComponents/_shared/useWrappedBaseUIProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 
-export type LabelProps = WrappedBaseUIProps<FieldLabelBaseProps> & {
+export type LabelProps = ComponentWrapperProps<FieldLabelBaseProps> & {
     required?: boolean;
 };
 
 export function Label(props: LabelProps) {
-    const baseProps = useWrappedBaseUIProps(props, "required", "aria-required");
+    const baseProps = resolveWrapperProps(props, "required", "aria-required");
 
     return (
         <FieldBase.Label

@@ -11,11 +11,6 @@ export type BadgeProps = {
     invisible?: boolean;
 };
 
-const DEFAULT_PROPS = {
-    tone: "accent",
-    invisible: false,
-} satisfies Partial<BadgeProps>;
-
 const TONE_TO_CLASSNAMES: Record<NonNullable<BadgeProps["tone"]>, string> = {
     accent: "bg-accent-strong text-accent-strong-on-emphasis",
     warning: "bg-warning-strong text-warning-strong-on-emphasis",
@@ -25,21 +20,21 @@ const TONE_TO_CLASSNAMES: Record<NonNullable<BadgeProps["tone"]>, string> = {
 };
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badge(props, ref) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const { tone = "accent", invisible = false } = props;
 
     return (
         <span ref={ref} className="relative">
-            {defaultedProps.children}
+            {props.children}
             <span
                 className={resolveClassNames(
                     "text-body-xs z-elevated px-horizontal-3xs py-vertical-2xs absolute top-0 right-0 box-border flex h-4 min-w-4 translate-x-1/3 -translate-y-1/3 items-center justify-center rounded-full leading-none whitespace-nowrap",
-                    TONE_TO_CLASSNAMES[defaultedProps.tone ?? DEFAULT_PROPS.tone],
+                    TONE_TO_CLASSNAMES[tone],
                     {
-                        invisible: defaultedProps.invisible,
+                        invisible,
                     },
                 )}
             >
-                {defaultedProps.badgeContent}
+                {props.badgeContent}
             </span>
         </span>
     );

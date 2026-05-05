@@ -1,5 +1,9 @@
+import React from "react";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Checkbox, CheckboxProps } from "../_baseComponents/checkbox";
+
+import type { CheckboxProps } from "../_baseComponents/checkbox";
+import { Checkbox } from "../_baseComponents/checkbox";
 
 export type CheckboxItemProps = CheckboxProps & {
     label?: string;
@@ -7,17 +11,15 @@ export type CheckboxItemProps = CheckboxProps & {
     direction?: "horizontal" | "vertical";
 };
 
-const DEFAULT_PROPS = {
-    direction: "horizontal",
-} satisfies Partial<CheckboxItemProps>;
-
-export function CheckboxItem(props: CheckboxItemProps) {
-    const { label, children, direction, ...checkboxProps } = { ...DEFAULT_PROPS, ...props };
+export const CheckboxItem = React.forwardRef<HTMLLabelElement, CheckboxItemProps>(function CheckboxItem(props, ref) {
+    const { label, children, direction = "horizontal", layoutClassName, ...checkboxProps } = props;
 
     return (
         <label
+            ref={ref}
             data-disabled={checkboxProps.disabled || undefined}
-            className={resolveClassNames("selectable gap-horizontal-xs flex items-center", {
+            data-readonly={checkboxProps.readOnly || undefined}
+            className={resolveClassNames(layoutClassName, "selectable gap-horizontal-xs flex items-center", {
                 "flex-col": direction === "vertical",
             })}
             data-selectable-wrapper
@@ -26,4 +28,4 @@ export function CheckboxItem(props: CheckboxItemProps) {
             {children ?? label}
         </label>
     );
-}
+});

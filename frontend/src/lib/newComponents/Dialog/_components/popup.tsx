@@ -1,59 +1,41 @@
 import type React from "react";
 
-import type { DialogPopupProps } from "@base-ui/react";
+import type { DialogPopupProps, DialogRootProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
 
 import type { AlertDialogProps } from "@lib/newComponents/AlertDialog";
 
 export type PopupProps = {
     children?: React.ReactNode;
-    /** If `open` is provided, the component operates in a controlled manner, and the open state is determined by the parent component.*/
-    open?: boolean;
-    /** If `defaultOpen` is provided without `open`, the component operates in an uncontrolled manner, and the initial open state is determined by `defaultOpen`. */
-    defaultOpen?: boolean;
-    /** Callback fired when the open state of the dialog changes. Receives the new open state as an argument. */
-    onOpenChange?: (open: boolean) => void;
     /** Width of the dialog. Can be a number (pixels) or a string (e.g., "50%"). */
     width?: number | string;
     /** Height of the dialog. Can be a number (pixels) or a string (e.g., "50%"). */
     height?: number | string;
-    /** If `modal` is true, the dialog will block interaction with the rest of the application until it is closed. */
-    modal?: boolean;
     /** Keeps the dialog mounted in the DOM even when it's closed. Useful for maintaining state or avoiding re-renders. */
     keepMounted?: boolean;
-    /** Initial focus element when the dialog opens. False to disable initial focus. True to use default. */
-    initialFocus?: DialogPopupProps["initialFocus"];
     /** Array of alert dialogs to be rendered within the popup. */
     alertDialogs?: React.ReactElement<AlertDialogProps>[];
-};
-
-const DEFAULT_PROPS = {
-    open: false,
-    defaultOpen: false,
-    keepMounted: false,
-} satisfies Partial<PopupProps>;
+} & Pick<DialogRootProps, "defaultOpen" | "open" | "onOpenChange" | "modal"> &
+    Pick<DialogPopupProps, "initialFocus" | "finalFocus">;
 
 export function Popup(props: PopupProps) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const { open = false, defaultOpen = false, keepMounted = false } = props;
 
     // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
-        <DialogBase.Root
-            open={defaultedProps.open}
-            onOpenChange={defaultedProps.onOpenChange}
-            modal={defaultedProps.modal}
-            defaultOpen={defaultedProps.defaultOpen}
-        >
-            <DialogBase.Portal keepMounted={defaultedProps.keepMounted}>
+        <DialogBase.Root open={open} onOpenChange={props.onOpenChange} modal={props.modal} defaultOpen={defaultOpen}>
+            <DialogBase.Portal keepMounted={keepMounted}>
                 <DialogBase.Backdrop className="dialog__backdrop" />
                 <DialogBase.Popup
                     className="dialog__popup z-modal"
-                    style={{ width: defaultedProps.width, height: defaultedProps.height }}
+                    style={{ width: props.width, height: props.height }}
+                    initialFocus={props.initialFocus}
+                    finalFocus={props.finalFocus}
                 >
-                    {defaultedProps.children}
+                    {props.children}
                 </DialogBase.Popup>
             </DialogBase.Portal>
-            {defaultedProps.alertDialogs}
+            {props.alertDialogs}
         </DialogBase.Root>
     );
 }

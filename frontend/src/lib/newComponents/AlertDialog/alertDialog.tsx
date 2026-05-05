@@ -1,3 +1,5 @@
+import React from "react";
+
 import { AlertDialog as AlertDialogBase, type AlertDialogRootProps } from "@base-ui/react";
 
 import type { ButtonProps } from "../Button";
@@ -11,14 +13,14 @@ export type AlertDialogAction = {
     closesDialog?: boolean;
 };
 
-export type AlertDialogProps = AlertDialogRootProps & {
+export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render" | "style"> & {
     title: string;
     description: string;
     primaryAction: AlertDialogAction;
     secondaryActions?: AlertDialogAction[];
 };
 
-export function AlertDialog(props: AlertDialogProps) {
+export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(function AlertDialog(props, ref) {
     const { title, description, primaryAction, secondaryActions, ...rest } = props;
 
     // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
@@ -26,7 +28,7 @@ export function AlertDialog(props: AlertDialogProps) {
         <AlertDialogBase.Root {...rest}>
             <AlertDialogBase.Portal>
                 <AlertDialogBase.Backdrop className="dialog__backdrop" />
-                <AlertDialogBase.Popup className="dialog__popup z-toast">
+                <AlertDialogBase.Popup className="dialog__popup z-toast" ref={ref}>
                     <AlertDialogBase.Title
                         className="dialog__popup__child"
                         render={(baseProps) => (
@@ -80,4 +82,4 @@ export function AlertDialog(props: AlertDialogProps) {
             </AlertDialogBase.Portal>
         </AlertDialogBase.Root>
     );
-}
+});

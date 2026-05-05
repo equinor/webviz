@@ -1,13 +1,25 @@
-import { Radio as RadioBase, type RadioRootProps } from "@base-ui/react";
-import { RadioButtonChecked, RadioButtonUnchecked, RadioButtonUncheckedOutlined } from "@mui/icons-material";
+import React from "react";
 
-export type RadioProps = Omit<RadioRootProps, "className" | "style" | "render">;
+import { Radio as RadioBase, type RadioRootProps as RadioRootBaseProps } from "@base-ui/react";
+import { RadioButtonChecked, RadioButtonUnchecked } from "@mui/icons-material";
 
-export function Radio(props: RadioProps) {
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type RadioProps = ComponentWrapperProps<Omit<RadioRootBaseProps, "ref">>;
+
+export const Radio = React.forwardRef<HTMLSpanElement, RadioProps>(function Radio(props, ref) {
+    const baseProps = resolveWrapperProps(props);
+
     return (
         <RadioBase.Root
-            {...props}
-            className="group selectable text-body-2xl text-accent-subtle data-disabled:text-disabled box-border flex aspect-square appearance-none items-center justify-center rounded-full"
+            {...baseProps}
+            ref={ref}
+            value={props.value}
+            className={resolveClassNames(
+                props.layoutClassName,
+                "group selectable text-body-3xl text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
+            )}
         >
             <RadioBase.Indicator className="flex items-center justify-center data-unchecked:hidden">
                 <RadioButtonChecked fontSize="inherit" />
@@ -17,4 +29,4 @@ export function Radio(props: RadioProps) {
             </span>
         </RadioBase.Root>
     );
-}
+});

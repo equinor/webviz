@@ -1,13 +1,20 @@
 @layer components {
     .selectable {
-        @apply hover:bg-accent-hover active:bg-accent-active py-vertical-xs px-horizontal-sm cursor-pointer rounded group-data-selectable-wrapped:p-0 focus:outline-0;
+        @apply hover:bg-accent-hover active:bg-accent-active py-vertical-2xs px-horizontal-3xs cursor-pointer rounded focus:outline-0;
+
+        &[data-selectable-wrapper] {
+            @apply px-horizontal-sm;
+        }
+        .group[data-selectable-wrapper] & {
+            @apply p-0;
+        }
 
         &[data-disabled] {
-            @apply text-disabled cursor-not-allowed bg-transparent;
+            @apply text-disabled! text-fill-disabled! cursor-not-allowed bg-transparent;
         }
 
         &[data-readonly] {
-            @apply cursor-not-allowed bg-transparent;
+            @apply text-neutral! cursor-not-allowed bg-transparent;
         }
 
         & .selectable {

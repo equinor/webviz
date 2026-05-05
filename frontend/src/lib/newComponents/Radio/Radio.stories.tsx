@@ -154,7 +154,7 @@ export const WithField: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Notification frequency</Field.Label>
-            <Field.Details>Choose how often you receive email updates.</Field.Details>
+            <Field.Description>Choose how often you receive email updates.</Field.Description>
             <RadioGroup defaultValue="weekly">
                 <div className="mt-1 flex flex-col gap-1">
                     {(

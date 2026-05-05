@@ -3,15 +3,15 @@ import React from "react";
 import type { FieldRootProps as FieldRootBaseProps } from "@base-ui/react";
 import { Field as FieldBase } from "@base-ui/react";
 
-import { useWrappedBaseUIProps, type WrappedBaseUIProps } from "@lib/newComponents/_shared/useWrappedBaseUIProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type RootProps = WrappedBaseUIProps<FieldRootBaseProps> & {
+export type RootProps = ComponentWrapperProps<FieldRootBaseProps> & {
     inline?: boolean;
 };
 
 function RootComponent(props: RootProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const baseProps = useWrappedBaseUIProps(props, "inline");
+    const baseProps = resolveWrapperProps(props, "inline");
 
     return (
         <FieldBase.Root

@@ -1,23 +1,28 @@
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
 
-import { Switch, SwitchProps } from "../_baseComponents/switch";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type SwitchItemProps = SwitchProps & {
+import type { SwitchProps } from "../_baseComponents/switch";
+import { Switch } from "../_baseComponents/switch";
+
+export type SwitchItemProps = Omit<SwitchProps, "ref"> & {
     label?: string;
     children?: React.ReactNode;
 };
 
-export function SwitchItem(props: SwitchItemProps) {
-    const { label, children, ...switchProps } = props;
+export const SwitchItem = React.forwardRef<HTMLLabelElement, SwitchItemProps>(function SwitchItem(props, ref) {
+    const { label, children, layoutClassName, ...switchProps } = props;
+
     return (
         <label
+            ref={ref}
             data-disabled={switchProps.disabled || undefined}
-            className={resolveClassNames("selectable gap-horizontal-xs flex items-center")}
+            data-readonly={switchProps.readOnly || undefined}
+            className={resolveClassNames(layoutClassName, "selectable gap-horizontal-xs flex items-center")}
             data-selectable-wrapper
         >
             <Switch {...switchProps} />
             {children ?? label}
         </label>
     );
-}
+});

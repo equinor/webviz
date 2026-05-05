@@ -1,3 +1,5 @@
+import React from "react";
+
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Banner } from "./banner";
@@ -26,6 +28,7 @@ A contextual inline message used to communicate status or feedback to the user.
             control: "select",
             options: ["warning", "danger", "success", "info"],
         },
+        dismissable: { control: "boolean" },
     },
 };
 
@@ -85,5 +88,34 @@ export const Danger: Story = {
     args: {
         children: "Failed to save. Please try again.",
         tone: "danger",
+    },
+};
+
+export const Dismissable: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Pass `dismissable` to show a close button. The banner does not manage its own " +
+                    "visibility — the parent is responsible for unmounting it when dismissed.",
+            },
+        },
+    },
+    args: {
+        tone: "info",
+        dismissable: true,
+        children: "This banner can be dismissed.",
+    },
+    render: (args) => {
+        const [visible, setVisible] = React.useState(true);
+        return visible ? (
+            <Banner {...args} onDismiss={() => setVisible(false)}>
+                {args.children}
+            </Banner>
+        ) : (
+            <button className="text-sm underline" onClick={() => setVisible(true)}>
+                Show banner again
+            </button>
+        );
     },
 };

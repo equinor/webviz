@@ -1,13 +1,18 @@
+import React from "react";
+
+import { Close } from "@mui/icons-material";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type BannerProps = {
+import type { LayoutClassProps } from "../_shared/wrapperProps";
+import { Button } from "../Button";
+
+export type BannerProps = LayoutClassProps & {
     tone?: "warning" | "danger" | "success" | "info";
+    dismissable?: boolean;
+    onDismiss?: () => void;
     children?: React.ReactNode;
 };
-
-const DEFAULT_PROPS = {
-    tone: "info",
-} satisfies Partial<BannerProps>;
 
 const TONE_TO_CLASSNAMES: Record<NonNullable<Exclude<BannerProps["tone"], "default">>, string> = {
     warning: "bg-warning-surface border-warning-strong",
@@ -16,12 +21,24 @@ const TONE_TO_CLASSNAMES: Record<NonNullable<Exclude<BannerProps["tone"], "defau
     info: "bg-info-surface border-info-strong",
 };
 
-export function Banner(props: BannerProps) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(function Banner(props, ref) {
+    const { tone = "info", dismissable = false } = props;
 
     return (
-        <div className={resolveClassNames("p-vertical-md rounded border", TONE_TO_CLASSNAMES[defaultedProps.tone])}>
-            {props.children}
+        <div
+            ref={ref}
+            className={resolveClassNames(
+                props.layoutClassName,
+                "p-vertical-md gap-x-horizontal-sm flex items-center rounded border",
+                TONE_TO_CLASSNAMES[tone],
+            )}
+        >
+            <span className="grow">{props.children}</span>
+            {dismissable && (
+                <Button variant="text" tone="neutral" size="small" onClick={props.onDismiss}>
+                    <Close fontSize="inherit" />
+                </Button>
+            )}
         </div>
     );
-}
+});

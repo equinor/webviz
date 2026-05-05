@@ -3,17 +3,18 @@ import React from "react";
 import type { HTMLProps, InputProps as InputBaseProps, InputState } from "@base-ui/react";
 import { Input } from "@base-ui/react";
 import { Error } from "@mui/icons-material";
-import { omit } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type TextInputProps = Omit<InputBaseProps, "className" | "render"> & {
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+
+export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref">> & {
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
 };
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
-    const baseProps = omit(props, ["startAdornment", "endAdornment"]);
+    const baseProps = resolveWrapperProps(props, "startAdornment", "endAdornment");
 
     function makeStartAdornment(state: InputState) {
         // state.valid is explicitly null when no validity is applied
@@ -43,6 +44,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                 <div
                     {...extractDataProps(p)}
                     className={resolveClassNames(
+                        props.layoutClassName,
                         "form-element",
                         "py-vertical-xs px-horizontal-sm text-body-md",
                         "gap-vertical-xs flex items-center -outline-offset-2",

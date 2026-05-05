@@ -4,9 +4,10 @@ import { Combobox as ComboboxBase } from "@base-ui/react";
 import type { ComboboxRootProps } from "@base-ui/react";
 import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 import { Button } from "../Button";
-import { Typography } from "../Typography";
 import { CircularProgress } from "../CircularProgress";
+import { Typography } from "../Typography";
 
 export type ComboboxItem<TValue> = {
     value: TValue;
@@ -32,9 +33,11 @@ export type AsyncState = {
     errorText?: React.ReactNode;
 };
 
-export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false> = Omit<
-    ComboboxRootProps<TValue, TMultiple>,
-    "items" | "itemToStringLabel" | "itemToStringValue" | "isItemEqualToValue"
+export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false> = ComponentWrapperProps<
+    Omit<
+        ComboboxRootProps<TValue, TMultiple>,
+        "items" | "itemToStringLabel" | "itemToStringValue" | "isItemEqualToValue"
+    >
 > &
     AsyncState & {
         items: ComboboxItems<TValue>;
@@ -44,19 +47,6 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         renderItemAdornment?: (item: TValue) => React.ReactNode;
     };
 
-const DEFAULT_PROPS = {
-    placeholder: "Select an option",
-    noMatchesText: "No matches found",
-    loadingText: (
-        <span className="gap-horizontal-sm flex items-center">
-            <CircularProgress size={16} />
-            Loading options
-        </span>
-    ),
-    errorText: undefined,
-    clearable: false,
-} satisfies Partial<ComboboxProps<any>>;
-
 function getItemValueKey<TValue>(item: TValue): React.Key {
     return (item as any).value ?? String(item);
 }
@@ -65,39 +55,41 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     props: ComboboxProps<TValue, TMultiple>,
     ref: React.ForwardedRef<HTMLInputElement>,
 ) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
-
     const {
-        placeholder,
-        loading,
-        loadingText,
-        errorText,
-        clearable,
-        noMatchesText,
-        items,
+        placeholder = "Select an option",
+        noMatchesText = "No matches found",
+        loadingText = (
+            <span className="gap-horizontal-sm flex items-center">
+                <CircularProgress size={16} />
+                Loading options
+            </span>
+        ),
+        clearable = false,
         renderItemAdornment,
-        ...rootProps
-    } = defaultedProps;
+        ...rest
+    } = props;
+    const baseProps = resolveWrapperProps(rest, "items", "loading", "errorText");
 
-    const hasGroups = isGroupedItems(items);
+    const hasGroups = isGroupedItems(props.items);
     const listCols = renderItemAdornment ? "grid-cols-[1.5rem_auto_1fr]" : "grid-cols-[1.5rem_1fr]";
     const itemColSpan = renderItemAdornment ? "col-span-3" : "col-span-2";
 
     const flatItems = React.useMemo(
-        () => (isGroupedItems(items) ? items.flatMap((g) => g.items) : (items as ComboboxItem<TValue>[])),
-        [items],
+        () =>
+            isGroupedItems(props.items) ? props.items.flatMap((g) => g.items) : (props.items as ComboboxItem<TValue>[]),
+        [props.items],
     );
 
     const baseItems = React.useMemo(() => {
-        if (isGroupedItems(items)) {
-            return items.map((group) => ({
+        if (isGroupedItems(props.items)) {
+            return props.items.map((group) => ({
                 ...group,
                 items: group.items.map((item) => item.value),
             }));
         }
 
-        return items.map((item) => item.value);
-    }, [items]);
+        return props.items.map((item) => item.value);
+    }, [props.items]);
 
     const itemByValue = React.useMemo(() => {
         return new Map(flatItems.map((item) => [item.value, item]));
@@ -111,10 +103,10 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         <ComboboxBase.Root
             items={baseItems}
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
-            {...rootProps}
+            {...baseProps}
         >
             <ComboboxBase.InputGroup className="form-element outline-neutral bg-canvas text-body-md gap-horizontal-sm py-vertical-xs pl-horizontal-sm flex cursor-text items-center outline -outline-offset-2">
-                {defaultedProps.multiple ? (
+                {props.multiple ? (
                     <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex grow flex-wrap items-center">
                         <ComboboxBase.Value>
                             {(value) => (
@@ -156,7 +148,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                         })}
                                     <ComboboxBase.Input
                                         ref={ref}
-                                        placeholder={defaultedProps.multiple ? "" : placeholder}
+                                        placeholder={props.multiple && value.length > 0 ? "" : placeholder}
                                         className="box-border min-w-8 flex-1 border-0 bg-transparent focus:outline-0"
                                     />
                                 </React.Fragment>
@@ -212,16 +204,16 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 <ComboboxBase.Positioner className="outline-0" sideOffset={4}>
                     <ComboboxBase.Popup className="bg-floating shadow-elevation-floating box-border max-h-96 max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) rounded transition-transform data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
                         <ComboboxBase.Status className="sr-only">
-                            {loading ? loadingText : errorText}
+                            {props.loading ? loadingText : props.errorText}
                         </ComboboxBase.Status>
 
-                        {errorText ? (
-                            <div className="py-selectable-y px-selectable-x italic">{errorText}</div>
+                        {props.errorText ? (
+                            <div className="py-selectable-y px-selectable-x italic">{props.errorText}</div>
                         ) : (
                             <React.Fragment>
                                 <ComboboxBase.Empty>
                                     <div className="py-selectable-y px-selectable-x italic">
-                                        {loading ? loadingText : noMatchesText}
+                                        {props.loading ? loadingText : noMatchesText}
                                     </div>
                                 </ComboboxBase.Empty>
 

@@ -1,5 +1,9 @@
+import React from "react";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Radio, RadioProps } from "../_baseComponents/radio";
+
+import type { RadioProps } from "../_baseComponents/radio";
+import { Radio } from "../_baseComponents/radio";
 
 export type RadioItemProps = RadioProps & {
     label?: string;
@@ -11,13 +15,14 @@ const DEFAULT_PROPS = {
     direction: "horizontal",
 } satisfies Partial<RadioItemProps>;
 
-export function RadioItem(props: RadioItemProps) {
-    const { label, children, direction, ...radioProps } = { ...DEFAULT_PROPS, ...props };
+export const RadioItem = React.forwardRef<HTMLLabelElement, RadioItemProps>(function RadioItem(props, ref) {
+    const { label, children, direction, layoutClassName, ...radioProps } = { ...DEFAULT_PROPS, ...props };
 
     return (
         <label
+            ref={ref}
             data-disabled={radioProps.disabled || undefined}
-            className={resolveClassNames("selectable gap-horizontal-xs flex items-center", {
+            className={resolveClassNames(layoutClassName, "selectable gap-horizontal-xs flex items-center", {
                 "flex-col": direction === "vertical",
             })}
             data-selectable-wrapper
@@ -26,4 +31,4 @@ export function RadioItem(props: RadioItemProps) {
             {children ?? label}
         </label>
     );
-}
+});

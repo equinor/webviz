@@ -1,21 +1,27 @@
-import type React from "react";
+import React from "react";
 
 import { Tabs as TabsBase, type TabsTabProps as TabsTabBaseProps } from "@base-ui/react";
 
-export type TabProps = Omit<TabsTabBaseProps, "className" | "style" | "children"> & {
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type TabProps = ComponentWrapperProps<Omit<TabsTabBaseProps, "children" | "ref">> & {
     children?: React.ReactNode | ((props: { isActive: boolean }) => React.ReactNode);
 };
 
-export function Tab({ children, ...props }: TabProps) {
+export const Tab = React.forwardRef<HTMLButtonElement, TabProps>(function Tab(props, ref) {
+    const baseProps = resolveWrapperProps(props) as Omit<TabsTabBaseProps, "children" | "ref">;
+
     return (
         <TabsBase.Tab
-            {...props}
-            className="tabs__tab"
+            {...baseProps}
+            ref={ref}
+            className={resolveClassNames(props.layoutClassName, "tabs__tab")}
             render={(htmlProps, state) => (
-                <button {...htmlProps}>
-                    {typeof children === "function" ? children({ isActive: state.active }) : children}
+                <button {...htmlProps} ref={ref}>
+                    {typeof props.children === "function" ? props.children({ isActive: state.active }) : props.children}
                 </button>
             )}
         />
     );
-}
+});

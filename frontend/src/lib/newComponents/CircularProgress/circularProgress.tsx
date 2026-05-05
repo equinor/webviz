@@ -9,12 +9,6 @@ export type CircularProgressProps = {
     value?: number;
 };
 
-const DEFAULT_PROPS = {
-    size: 48,
-    tone: "default",
-    variant: "indeterminate",
-} satisfies Partial<CircularProgressProps>;
-
 const TONE_CLASSNAMES: Record<NonNullable<CircularProgressProps["tone"]>, { track: string; progress: string }> = {
     default: { track: "stroke-accent", progress: "stroke-accent-strong" },
     "on-emphasis": { track: "stroke-neutral", progress: "stroke-surface" },
@@ -24,10 +18,11 @@ const TONE_CLASSNAMES: Record<NonNullable<CircularProgressProps["tone"]>, { trac
 const CIRCUMFERENCE = 2 * Math.PI * 22;
 
 export function CircularProgress(props: CircularProgressProps) {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
-    const toneClasses = TONE_CLASSNAMES[defaultedProps.tone];
-    const isIndeterminate = defaultedProps.variant === "indeterminate";
-    const clampedValue = Math.min(100, Math.max(0, defaultedProps.value ?? 0));
+    const { size = 48, tone = "default", variant = "indeterminate" } = props;
+
+    const toneClasses = TONE_CLASSNAMES[tone];
+    const isIndeterminate = variant === "indeterminate";
+    const clampedValue = Math.min(100, Math.max(0, props.value ?? 0));
     const strokeDashoffset = CIRCUMFERENCE * (1 - clampedValue / 100);
 
     return (
@@ -39,7 +34,7 @@ export function CircularProgress(props: CircularProgressProps) {
             aria-valuemax={isIndeterminate ? undefined : 100}
             className={resolveClassNames(
                 { "animate-spin [animation-duration:1.4s]": isIndeterminate },
-                PIXEL_SIZES_CLASSNAMES[defaultedProps.size],
+                PIXEL_SIZES_CLASSNAMES[size],
             )}
             /* Avoid using viewBox="0 0 100 100" to prevent blurriness */
             viewBox="22 22 52 52"

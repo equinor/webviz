@@ -1,3 +1,5 @@
+import React from "react";
+
 import type { ToastProviderProps } from "@base-ui/react";
 import { Toast as ToastBase } from "@base-ui/react";
 import { CheckCircle, Error, Warning } from "@mui/icons-material";
@@ -20,17 +22,22 @@ export type ToastViewportProps = Omit<ToastProviderProps, "toastManager"> & {
  * EDS is using "--eds-color-text-strong" as the background color for both snackbars and tooltips, which seems a bit odd, but we are following their lead in order to maintain visual consistency.
  */
 
-export function ToastViewport({ toastManager, ...rest }: ToastViewportProps) {
+export const ToastViewport = React.forwardRef<HTMLDivElement, ToastViewportProps>(function ToastViewport(props, ref) {
+    const { toastManager, ...rest } = props;
+
     return (
         <ToastBase.Provider toastManager={toastManager as ToastProviderProps["toastManager"]} {...rest}>
             <ToastBase.Portal>
-                <ToastBase.Viewport className="z-toast fixed top-auto right-auto bottom-0 left-1/2 w-60 -translate-1/2">
+                <ToastBase.Viewport
+                    ref={ref}
+                    className="z-toast fixed top-auto right-auto bottom-0 left-1/2 w-60 -translate-1/2"
+                >
                     <ToastList />
                 </ToastBase.Viewport>
             </ToastBase.Portal>
         </ToastBase.Provider>
     );
-}
+});
 
 const TOAST_TYPE_TO_TONE_CLASSNAME: Record<ToastType, string> = {
     default: "",
@@ -84,7 +91,7 @@ function ToastList() {
                                 variant="text"
                                 tone="accent"
                                 {...subProps}
-                                className={resolveClassNames(subProps.className, "ml-auto")}
+                                layoutClassName={resolveClassNames(subProps.className, "ml-auto")}
                             />
                         )}
                     />

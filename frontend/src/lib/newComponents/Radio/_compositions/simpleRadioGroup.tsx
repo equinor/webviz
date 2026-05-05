@@ -1,4 +1,9 @@
-import { RadioGroup as RadioGroupBase, type RadioGroupProps as RadioGroupBaseProps } from "@base-ui/react";
+import React from "react";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { RadioGroup, type RadioGroupProps } from "../_baseComponents/group";
+
 import { RadioItem } from "./radioItem";
 
 export type RadioOption = {
@@ -10,13 +15,22 @@ export type RadioOption = {
 export type SimpleRadioGroupProps = {
     options: RadioOption[];
     layout?: "vertical" | "horizontal";
-} & Omit<RadioGroupBaseProps, "className" | "style" | "render">;
+} & RadioGroupProps;
 
-export const SimpleRadioGroup = function SimpleRadioGroup(props: SimpleRadioGroupProps) {
-    const { options, layout = "vertical", ...groupProps } = props;
-    return (
-        <RadioGroupBase {...groupProps}>
-            <div className={layout === "horizontal" ? "flex flex-row gap-4" : "flex flex-col gap-1"}>
+export const SimpleRadioGroup = React.forwardRef<HTMLDivElement, SimpleRadioGroupProps>(
+    function SimpleRadioGroup(props, ref) {
+        const { options, layout = "vertical", layoutClassName, ...groupProps } = props;
+
+        return (
+            <RadioGroup
+                {...groupProps}
+                ref={ref}
+                layoutClassName={resolveClassNames(
+                    layoutClassName,
+                    "flex gap-x-horizontal-sm gap-y-vertical-sm",
+                    layout === "horizontal" ? "flex-row" : "flex-col",
+                )}
+            >
                 {options.map((option) => (
                     <RadioItem
                         key={option.value}
@@ -25,7 +39,7 @@ export const SimpleRadioGroup = function SimpleRadioGroup(props: SimpleRadioGrou
                         disabled={option.disabled ?? groupProps.disabled}
                     />
                 ))}
-            </div>
-        </RadioGroupBase>
-    );
-};
+            </RadioGroup>
+        );
+    },
+);

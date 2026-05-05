@@ -1,18 +1,18 @@
-import type React from "react";
+import React from "react";
 
 import { Separator as SeparatorBase, type SeparatorProps as SeparatorBaseProps } from "@base-ui/react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type SeparatorProps = Pick<SeparatorBaseProps, "orientation"> & {
-    className?: React.HTMLAttributes<HTMLDivElement>["className"];
-};
+import type { LayoutClassProps } from "../_shared/wrapperProps";
 
-export function Separator(props: SeparatorProps) {
+export type SeparatorProps = Pick<SeparatorBaseProps, "orientation"> & LayoutClassProps;
+
+export const Separator = React.forwardRef<HTMLDivElement, SeparatorProps>(function Separator(props, ref) {
     const resolvedClassNames = resolveClassNames(
-        props.className,
+        props.layoutClassName,
         "bg-neutral [:where(&+&)]:hidden shrink-0 self-stretch",
         props.orientation === "vertical" ? "w-px  mx-horizontal-3xs" : "h-px my-vertical-3xs",
     );
-    return <SeparatorBase {...props} className={resolvedClassNames} />;
-}
+    return <SeparatorBase {...props} className={resolvedClassNames} ref={ref} />;
+});

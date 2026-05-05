@@ -1,4 +1,9 @@
-import { CheckboxGroup as CheckboxGroupBase, type CheckboxGroupProps as CheckboxGroupBaseProps } from "@base-ui/react";
+import React from "react";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { CheckboxGroup, type CheckboxGroupProps } from "../_baseComponents/checkboxGroup";
+
 import { CheckboxItem } from "./checkboxItem";
 
 export type CheckboxOption = {
@@ -10,13 +15,20 @@ export type CheckboxOption = {
 export type SimpleCheckboxGroupProps = {
     options: CheckboxOption[];
     layout?: "vertical" | "horizontal";
-} & Omit<CheckboxGroupBaseProps, "className" | "style" | "render">;
+} & CheckboxGroupProps;
 
-export const SimpleCheckboxGroup = function SimpleCheckboxGroup(props: SimpleCheckboxGroupProps) {
-    const { options, layout = "vertical", ...groupProps } = props;
-    return (
-        <CheckboxGroupBase {...groupProps}>
-            <div className={layout === "horizontal" ? "flex flex-row gap-4" : "flex flex-col gap-1"}>
+export const SimpleCheckboxGroup = React.forwardRef<HTMLDivElement, SimpleCheckboxGroupProps>(
+    function SimpleCheckboxGroup(props, ref) {
+        const { options, layout = "vertical", ...groupProps } = props;
+        return (
+            <CheckboxGroup
+                {...groupProps}
+                ref={ref}
+                layoutClassName={resolveClassNames("gap-x-horizontal-sm gap-y-vertical-sm flex", {
+                    "flex-row": layout === "horizontal",
+                    "flex-col": layout === "vertical",
+                })}
+            >
                 {options.map((option) => (
                     <CheckboxItem
                         key={option.value}
@@ -25,7 +37,7 @@ export const SimpleCheckboxGroup = function SimpleCheckboxGroup(props: SimpleChe
                         disabled={option.disabled ?? groupProps.disabled}
                     />
                 ))}
-            </div>
-        </CheckboxGroupBase>
-    );
-};
+            </CheckboxGroup>
+        );
+    },
+);
