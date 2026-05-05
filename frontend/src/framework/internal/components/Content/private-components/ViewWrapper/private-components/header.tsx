@@ -425,7 +425,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <div className="flex flex-col p-2 gap-2">
+            <ul className="flex flex-col p-2 gap-2">
                 {hotStatusMessages.map((entry, i) => (
                     <li key={`${entry.message}-${i}`} className="text-xs text-gray-500 tracking-wider px-3 py-1">
                         {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
@@ -438,7 +438,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                         </span>
                     </li>
                 ))}
-            </div>
+            </ul>
         );
     }
 

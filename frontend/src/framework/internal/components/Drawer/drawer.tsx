@@ -44,8 +44,9 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
             setSelectedFilterItems((prevSelectedItems) => {
                 let newSelectedItems: T[];
 
+                // ! The incoming value will always be a string, but the external values **might** be numerical, so we cast them here
                 if (prevSelectedItems.some((i) => itemValue === String(i))) {
-                    newSelectedItems = prevSelectedItems.filter((value) => value !== itemValue);
+                    newSelectedItems = prevSelectedItems.filter((value) => String(value) !== itemValue);
                 } else {
                     const item = props.filterItems?.find((i) => String(i.value) === itemValue);
                     newSelectedItems = [...prevSelectedItems, item!.value];

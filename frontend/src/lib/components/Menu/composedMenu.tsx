@@ -96,9 +96,9 @@ function TextItem(props: { item: Text }) {
     const textSizeClass = props.item.size && getTextSizeClassName(props.item.size);
 
     return (
-        <Parts.Separator className={resolveClassNames(textSizeClass, "text-gray-500 tracking-wider px-3 py-1")}>
+        <div className={resolveClassNames(textSizeClass, "text-gray-500 tracking-wider px-3 py-1")}>
             {props.item.text}
-        </Parts.Separator>
+        </div>
     );
 }
 function ActionItem(props: { action: Action }) {
