@@ -39,7 +39,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleAction(identifier: string, groupDelegate: GroupDelegate) {
+    function handleAction(
+        identifier: string,
+        groupDelegate: GroupDelegate,
+        requestOpenMenuForId: (id: string) => void,
+    ) {
         switch (identifier) {
             case "intersection-view": {
                 const hasIntersectionView =
@@ -47,20 +51,22 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                         (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
                     ).length > 0;
                 if (!hasIntersectionView) {
-                    groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(
-                            GroupType.INTERSECTION_VIEW,
-                            props.dataProviderManager,
-                            colorSet.getNextColor(),
-                        ),
-                        true,
+                    const view = GroupRegistry.makeGroup(
+                        GroupType.INTERSECTION_VIEW,
+                        props.dataProviderManager,
+                        colorSet.getNextColor(),
                     );
+                    groupDelegate.appendChild(view);
+                    requestOpenMenuForId(view.getItemDelegate().getId());
                 }
                 return;
             }
-            case "context-boundary":
-                groupDelegate.prependChild(new ContextBoundary("Context boundary", props.dataProviderManager), true);
+            case "context-boundary": {
+                const ctxBoundary = new ContextBoundary("Context boundary", props.dataProviderManager);
+                groupDelegate.prependChild(ctxBoundary);
+                requestOpenMenuForId(ctxBoundary.getItemDelegate().getId());
                 return;
+            }
             case "color-scale":
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;
