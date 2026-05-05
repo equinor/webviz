@@ -83,7 +83,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             {props.iconOnly ? (
                 props.children
             ) : (
-                <span className="gap-x-horizontal-xs px-selectable-x inline-flex h-full w-full items-center">
+                <span className="gap-x-horizontal-xs px-selectable-x inline-flex h-full w-full items-center justify-center">
                     {props.children}
                 </span>
             )}

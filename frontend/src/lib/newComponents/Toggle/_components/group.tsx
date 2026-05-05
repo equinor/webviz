@@ -33,7 +33,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps<string>>(functi
                     "[&>*:last-child:not(:first-child)]:rounded-l-none!": !vertical,
 
                     // ── Vertical ─────────────────────────────────────────────
-                    "flex-col": vertical,
+                    "flex-col *:w-full": vertical,
                     "[&>*:not(:first-child)]:-mt-px": vertical,
                     "[&>*:first-child:not(:last-child)]:rounded-b-none!": vertical,
                     "[&>*:last-child:not(:first-child)]:rounded-t-none!": vertical,
