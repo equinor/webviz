@@ -50,6 +50,7 @@ import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 
 import { viewStateMapAtom, viewLinksAtom } from "../atoms/baseAtoms";
+import { useSyncViewStateMap } from "../hooks/useSyncViewStateMap";
 
 import { MultiViewLayout } from "./MultiViewLayout";
 import { ViewDataProcessor } from "./ViewDataProcessor";
@@ -181,6 +182,8 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     }
 
     const intersectionViews = allIntersectionViews.slice(0, MAX_INTERSECTION_VIEWS);
+
+    useSyncViewStateMap(intersectionViews.map((v) => v.id));
 
     const handleViewLinksChange = React.useCallback(
         function handleViewLinksChange(viewLinks: ViewLink[]) {
