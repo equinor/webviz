@@ -31,11 +31,18 @@ export type PopoverProps = {
 
     /** Callback for open/close control state */
     onOpenChange?: (isOpen: boolean) => void;
+
+    /**
+     * Trigger tooltip (Not applied if trigger is manually rendered)
+     */
+    triggerTitle?: string;
 };
 
 /** Show a rich Popover element attached to a trigger element. For simple string tooltips, use Tooltip instead. For larger interactive menus, use Menu */
 export function Popover(props: PopoverProps): React.ReactNode {
-    const triggerRenderOrDefault = props.renderTrigger ?? <DenseIconButton>{props.children}</DenseIconButton>;
+    const triggerRenderOrDefault = props.renderTrigger ?? (
+        <DenseIconButton title={props.triggerTitle}>{props.children}</DenseIconButton>
+    );
 
     return (
         <BasePopover.Root open={props.open} actionsRef={props.actionsRef} onOpenChange={props.onOpenChange}>

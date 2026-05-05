@@ -469,6 +469,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         stateIndicators.push(
             <Popover
                 actionsRef={popoverActionRef}
+                triggerTitle="Show status messages"
                 content={
                     <>
                         {makeHotStatusMessages()}
