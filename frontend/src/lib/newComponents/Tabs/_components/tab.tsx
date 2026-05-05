@@ -18,7 +18,7 @@ export const Tab = React.forwardRef<HTMLButtonElement, TabProps>(function Tab(pr
             ref={ref}
             className={resolveClassNames(props.layoutClassName, "tabs__tab")}
             render={(htmlProps, state) => (
-                <button {...htmlProps} ref={ref}>
+                <button {...htmlProps}>
                     {typeof props.children === "function" ? props.children({ isActive: state.active }) : props.children}
                 </button>
             )}

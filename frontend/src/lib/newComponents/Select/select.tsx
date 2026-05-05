@@ -390,9 +390,9 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     }
 
     return (
-        <div ref={ref} className="flex flex-col gap-2 text-sm">
+        <div ref={ref} className="gap-vertical-xs flex flex-col text-sm">
             {props.showQuickSelectButtons && (
-                <div className="flex items-center gap-2">
+                <div className="gap-horizontal-3xs flex items-center">
                     <Button
                         onClick={handleSelectAll}
                         variant="text"
@@ -416,11 +416,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             )}
             <div
                 id={props.wrapperId}
-                className={resolveClassNames("relative", {
-                    "no-select": props.disabled,
-                    "pointer-events-none": props.disabled,
-                    "opacity-30": props.disabled,
-                })}
+                className={resolveClassNames("relative", { "cursor-not-allowed": !!props.disabled })}
                 style={{ width: props.width, minWidth: props.width }}
             >
                 {filterWithDefault && (
@@ -430,16 +426,20 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         value={filterString}
                         onChange={handleFilterChange}
                         placeholder="Filter options..."
+                        disabled={props.disabled}
                     />
                 )}
                 <div
-                    className="input-comp w-full overflow-y-auto rounded-md border border-gray-300 bg-white"
+                    className={resolveClassNames("form-element group w-full overflow-y-auto -outline-offset-2", {
+                        "text-disabled! pointer-events-none overflow-hidden!": !!props.disabled,
+                    })}
+                    data-disabled={props.disabled === true ? true : undefined}
                     style={{ height: sizeWithDefault * (props.optionHeight ?? 24) + 2 }}
                     ref={virtualizationRef}
-                    tabIndex={0}
+                    tabIndex={props.disabled ? -1 : 0}
                 >
                     {filteredOptions.length === 0 && (
-                        <div className="flex items-center p-1 text-gray-400 select-none">
+                        <div className="px-horizontal-xs flex items-center select-none">
                             {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}
@@ -453,20 +453,18 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                 <div
                                     key={String(option.value)}
                                     className={resolveClassNames(
-                                        "cursor-pointer",
-                                        "pl-2",
-                                        "pr-2",
-                                        "flex",
-                                        "gap-2",
-                                        "items-center",
-                                        "select-none",
+                                        "px-horizontal-xs py-vertical-xs group-data-disabled:text-disabled! gap-horizontal-2xs flex items-center select-none",
                                         {
                                             "hover:bg-accent-hover": !selectedOptionValues.includes(option.value),
-                                            "bg-accent-strong text-accent-strong-on-emphasis hover:bg-accent-strong-hover box-border":
+                                            "bg-accent-strong text-accent-strong-on-emphasis hover:bg-accent-strong-hover group-data-disabled:bg-disabled! box-border":
                                                 selectedOptionValues.includes(option.value),
-                                            "pointer-events-none": option.disabled,
-                                            "text-gray-400": option.disabled,
-                                            outline: index === currentFocusIndex && hasFocus,
+                                            "cursor-pointer": !option.disabled,
+                                            "text-disabled bg-neutral-canvas cursor-not-allowed": option.disabled,
+                                            outline:
+                                                index === currentFocusIndex &&
+                                                hasFocus &&
+                                                !option.disabled &&
+                                                !props.disabled,
                                         },
                                     )}
                                     onClick={(e) => handleOptionClick(e, option, index)}

@@ -3,7 +3,7 @@ import { category, dashboard, folder_open, github, external_link, add } from "@e
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { Heading } from "@lib/newComponents/Typography/compositions";
@@ -91,12 +91,6 @@ export function StartPage(props: StartPageProps) {
                             Webviz on GitHub
                             <Icon name="external_link" className="h-4" />
                         </a>
-                        <Combobox
-                            items={["User guide", "API reference"]}
-                            placeholder="Documentation"
-                            itemToStringLabel={(item: string) => item}
-                            itemToStringValue={(item: string) => item}
-                        />
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>
