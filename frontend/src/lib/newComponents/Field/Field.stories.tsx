@@ -5,12 +5,21 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { Combobox } from "@lib/newComponents/Combobox";
 import { TextInput } from "@lib/newComponents/TextInput";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import type { FieldCompositionsDefaultProps } from "./compositions";
+import { FieldCompositions } from "./compositions";
 
 import { Field } from "./index";
 
 const meta: Meta<typeof Field.Root> = {
     title: "Components/Field",
     component: Field.Root,
+    argTypes: {
+        inline: {
+            control: "boolean",
+        },
+    },
     parameters: {
         layout: "centered",
     },
@@ -51,7 +60,7 @@ export const WithDetails: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Password</Field.Label>
-            <Field.Details>Must be at least 8 characters.</Field.Details>
+            <Field.Description>Must be at least 8 characters.</Field.Description>
             <TextInput placeholder="••••••••" />
         </Field.Root>
     ),
@@ -61,8 +70,8 @@ export const WithDescription: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Email</Field.Label>
-            <TextInput placeholder="you@example.com" />
             <Field.Description>We will never share your email with anyone.</Field.Description>
+            <TextInput placeholder="you@example.com" />
         </Field.Root>
     ),
 };
@@ -75,7 +84,7 @@ export const WithInfo: Story = {
                 <Field.Info>Your secret API key. Keep this safe and never share it.</Field.Info>
             </div>
 
-            <Field.Details>Found in your account settings.</Field.Details>
+            <Field.Description>Found in your account settings.</Field.Description>
             <TextInput placeholder="sk-..." />
         </Field.Root>
     ),
@@ -92,7 +101,7 @@ export const WithError: Story = {
         return (
             <Field.Root actionsRef={actionRef} validationMode="onChange" dirty touched>
                 <Field.Label required>Username</Field.Label>
-                <Field.Details>Maximum 10 characters.</Field.Details>
+                <Field.Description>Maximum 10 characters.</Field.Description>
                 <TextInput required maxLength={10} />
                 <Field.Error match="valueMissing">Value is required.</Field.Error>
                 <Field.Error match="tooLong">Must be 10 characters or fewer.</Field.Error>
@@ -105,7 +114,7 @@ export const WithCombobox: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Country</Field.Label>
-            <Field.Details>Select your country of residence.</Field.Details>
+            <Field.Description>Select your country of residence.</Field.Description>
             <Combobox
                 items={[
                     { value: "no", label: "Norway" },
@@ -122,7 +131,7 @@ export const Disabled: Story = {
     render: () => (
         <Field.Root>
             <Field.Label>Read-only field</Field.Label>
-            <Field.Details>This field cannot be edited.</Field.Details>
+            <Field.Description>This field cannot be edited.</Field.Description>
             <TextInput defaultValue="Locked value" disabled />
         </Field.Root>
     ),
@@ -164,7 +173,7 @@ export const Inline: Story = {
             <Field.Root inline>
                 <div>
                     <Field.Label>Team</Field.Label>
-                    <Field.Details>You can change this later.</Field.Details>
+                    <Field.Description>You can change this later.</Field.Description>
                 </div>
                 <Combobox
                     items={[
@@ -178,6 +187,58 @@ export const Inline: Story = {
     ),
 };
 
+export const DefaultComposition: StoryObj<FieldCompositionsDefaultProps> = {
+    args: {
+        gridLayout: false,
+        singleError: true,
+    },
+    render: (args) => (
+        <div
+            className={resolveClassNames("gap-x-vertical-md gap-y-horizontal-sm w-sm", {
+                "**:[.--errorWrapper]:-mt-horizontal-xs grid grid-cols-2 items-center": args.gridLayout,
+                "flex flex-col": !args.gridLayout,
+            })}
+        >
+            <FieldCompositions.Default {...args} required label="Full name">
+                <TextInput required placeholder="Jane Doe" />
+            </FieldCompositions.Default>
+
+            <FieldCompositions.Default
+                {...args}
+                required
+                label="Password"
+                validationMode="onChange"
+                info={
+                    <>
+                        The password should:
+                        <ul className="list-inside list-disc">
+                            <li>Be at least 8 characters long</li>
+                            <li>Contain both letters and numbers</li>
+                        </ul>
+                    </>
+                }
+            >
+                <TextInput
+                    defaultValue={"a"}
+                    minLength={8}
+                    required
+                    type="password"
+                    placeholder="••••••••"
+                    pattern="^(?=.*[a-zA-Z])(?=.*\d).+$"
+                />
+            </FieldCompositions.Default>
+
+            <FieldCompositions.Default
+                {...args}
+                label="Email"
+                description="Used for login and notifications. We will never share your email."
+            >
+                <TextInput placeholder="jane@example.com" />
+            </FieldCompositions.Default>
+        </div>
+    ),
+};
+
 export const FullForm: Story = {
     render: () => (
         <div className="gap-vertical-lg flex flex-col">
@@ -187,13 +248,24 @@ export const FullForm: Story = {
             </Field.Root>
             <Field.Root>
                 <Field.Label>Email</Field.Label>
-                <Field.Details>Used for login and notifications.</Field.Details>
+                <Field.Description>Used for login and notifications. We will never share your email.</Field.Description>
                 <TextInput placeholder="jane@example.com" />
-                <Field.Description>We will never share your email.</Field.Description>
             </Field.Root>
 
             <div className="gap-x-horizontal-sm gap-y-vertical-xs grid w-sm grid-cols-2 items-center">
-                <Field.Root inline validationMode="onChange">
+                <Field.Root
+                    inline
+                    validationMode="onChange"
+                    validate={(v) => {
+                        if (typeof v !== "string") return null;
+
+                        if (v.toLowerCase().match(/password|pass\d+|12345|qwerty|admin/)) {
+                            return "Password is too common or weak";
+                        }
+
+                        return null;
+                    }}
+                >
                     <Field.Label required>Password</Field.Label>
                     <div className="gap-horizontal-2xs flex items-center">
                         <TextInput
@@ -211,15 +283,13 @@ export const FullForm: Story = {
                             </ul>
                         </Field.Info>
                     </div>
-                    <div className="col-span-2 flex">
-                        <Field.Error />
-                    </div>
+                    <FieldCompositions.GenericErrors layoutClassName="col-span-2" single />
                 </Field.Root>
 
                 <Field.Root inline>
                     <div>
                         <Field.Label>Team</Field.Label>
-                        <Field.Details>You can change this later.</Field.Details>
+                        <Field.Description>You can change this later.</Field.Description>
                     </div>
                     <Combobox
                         items={[

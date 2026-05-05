@@ -2,22 +2,23 @@ import React from "react";
 
 import type { FieldRootProps as FieldRootBaseProps } from "@base-ui/react";
 import { Field as FieldBase } from "@base-ui/react";
-import { omit } from "lodash";
 
-export type RootProps = {
+import { useWrappedBaseUIProps, type WrappedBaseUIProps } from "@lib/newComponents/_shared/useWrappedBaseUIProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+export type RootProps = WrappedBaseUIProps<FieldRootBaseProps> & {
     inline?: boolean;
-    children?: React.ReactNode;
-} & Omit<FieldRootBaseProps, "render" | "className">;
+};
 
 function RootComponent(props: RootProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const baseProps = omit(props, ["inline"]);
+    const baseProps = useWrappedBaseUIProps(props, "inline");
 
     return (
         <FieldBase.Root
             {...baseProps}
             ref={ref}
             render={props.inline ? <></> : undefined}
-            className="gap-vertical-xs flex flex-col items-start"
+            className={resolveClassNames("gap-vertical-xs flex flex-col items-start", props.layoutClassName)}
         >
             {props.children}
         </FieldBase.Root>
