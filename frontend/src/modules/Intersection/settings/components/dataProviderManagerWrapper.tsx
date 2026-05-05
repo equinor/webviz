@@ -20,7 +20,7 @@ import { GroupRegistry } from "@modules/_shared/DataProviderFramework/groups/Gro
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewLayoutMenu";
+import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewportLayoutMenu";
 import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";

@@ -27,7 +27,7 @@ import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTy
 import type { Item, ItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { instanceofItemGroup } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/entities";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewLayoutMenu";
+import { ViewportLayoutMenu } from "@modules/_shared/DataProviderFramework/ViewportLayoutMenu";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
