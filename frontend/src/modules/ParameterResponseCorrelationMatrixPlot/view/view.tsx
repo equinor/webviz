@@ -16,7 +16,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
-import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
+import { getVaryingNumericParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import type { CorrelationDataItem } from "@modules/_shared/utils/math/correlationMatrix";
 import {
@@ -151,7 +151,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                     <ContentWarning>
                         <Warning fontSize="large" className="mb-2" />
                         No parameters selected or available. Please select parameters in the settings pane. If no
-                        parameters are available, ensure that the connected ensembles have continuous and varying
+                        parameters are available, ensure that the connected ensembles have numeric and varying
                         parameters.
                     </ContentWarning>,
                 );
@@ -210,8 +210,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                     <ContentWarning>
                         <Warning fontSize="large" className="mb-2" />
                         No parameters selected or available. Please select parameters in the settings pane. If
-                        parameters are selected but not available, ensure that the connected ensembles have continuous
-                        and varying parameters.
+                        parameters are selected but not available, ensure that the connected ensembles have numeric and
+                        varying parameters.
                     </ContentWarning>,
                 );
                 return;
@@ -307,7 +307,7 @@ function fillParameterCorrelationMatrixFigure(
             if (!ensemble) {
                 continue;
             }
-            const fullParameterArr = getVaryingContinuousParameters(ensemble);
+            const fullParameterArr = getVaryingNumericParameters(ensemble);
             if (!fullParameterArr) {
                 continue;
             }
