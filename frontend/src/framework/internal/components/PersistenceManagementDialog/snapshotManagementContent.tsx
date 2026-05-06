@@ -15,6 +15,7 @@ import type {
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import {
     edsDateRangeToIsoStringRange,
@@ -23,18 +24,19 @@ import {
     type IsoStringRange,
 } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { Switch } from "@lib/newComponents/Switch";
 import { Table } from "@lib/components/Table";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+import { Avatar } from "@lib/newComponents/Avatar";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Field } from "@lib/newComponents/Field";
+import { SwitchItem } from "@lib/newComponents/Switch";
+import { TextInput } from "@lib/newComponents/TextInput";
 import { formatDate } from "@lib/utils/dates";
 
 import {
@@ -45,9 +47,6 @@ import {
     TABLE_HEIGHT,
     USE_ALTERNATING_COLUMN_COLORS,
 } from "./constants";
-import { Avatar } from "@lib/newComponents/Avatar";
-import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
-import { TextInput } from "@lib/newComponents/TextInput";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -154,8 +153,8 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             const ownerInfo = useUserGraphInfo(userId);
             const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
             return (
-                <div className="flex gap-1" style={style}>
-                    <Avatar userData={fetchUserAvatar(name ?? "", ownerInfo?.display_name)} size="small" />
+                <div className="gap-horizontal-xs flex items-center" style={style}>
+                    <Avatar userData={fetchUserAvatar(name ?? "", ownerInfo?.display_name)} size={24} />
                     {name}
                 </div>
             );
@@ -396,9 +395,10 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             : "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
     }
     return (
-        <>
-            <div className="mb-4 flex gap-4">
-                <Label text="Title" wrapperClassName="grow">
+        <div className="gap-vertical-sm flex flex-col">
+            <div className="gap-horizontal-sm mb-4 flex">
+                <Field.Root layoutClassName="grow">
+                    <Field.Label>Filter by Title</Field.Label>
                     <TextInput
                         startAdornment={<Search fontSize="inherit" />}
                         endAdornment={
@@ -410,30 +410,28 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         placeholder="Search title"
                         onChange={handleTitleFilterValueChange}
                     />
-                </Label>
-                <Label text="Last visited at" wrapperClassName="min-w-2xs">
+                </Field.Root>
+                <Field.Root>
+                    <Field.Label>Last visited</Field.Label>
                     <DateRangePicker
                         className="webviz-eds-date-range-picker --compact rounded border border-gray-300 focus-within:outline-0"
                         value={isoRangeToEdsDateRange(tableFilter.visitedAt ?? null)}
                         onChange={handleDateFilterRangeChange}
                     />
-                </Label>
+                </Field.Root>
             </div>
-            <div className="gap-horizontal-sm mb-2 flex items-center">
-                <Label text="Show my snapshots only" wrapperClassName="flex items-center" position="right">
-                    <Switch
-                        checked={tableFilter.ownerId === userId}
-                        onCheckedChange={handleShowMySnapshotsOnlyChange}
-                        size="small"
-                    />
-                </Label>
-                <Label text="Hide deleted snapshots" wrapperClassName="flex items-center" position="right">
-                    <Switch
-                        checked={tableFilter.snapshotDeleted === false}
-                        onCheckedChange={handleHideDeletedSnapshotsChange}
-                        size="small"
-                    />
-                </Label>
+            <div className="gap-horizontal-xs flex items-center">
+                <SwitchItem
+                    checked={tableFilter.ownerId === userId}
+                    onCheckedChange={handleShowMySnapshotsOnlyChange}
+                    label="Show my snapshots only"
+                />
+
+                <SwitchItem
+                    checked={tableFilter.snapshotDeleted === false}
+                    onCheckedChange={handleHideDeletedSnapshotsChange}
+                    label="Hide deleted snapshots"
+                />
                 <span className="grow" />
                 <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
                     <Button
@@ -441,7 +439,6 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         tone="accent"
                         disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
                         onClick={handleOpenSnapshotClick}
-                        size="small"
                     >
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
@@ -452,15 +449,14 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         tone="danger"
                         disabled={!selectedSnapshotId || deletePending || !userId}
                         onClick={handleDeleteClick}
-                        size="small"
                     >
-                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />}{" "}
+                        {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
                         {deleteButtonText}
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button variant="text" tone="accent" onClick={refresh} size="small">
-                        {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
+                    <Button variant="text" tone="accent" onClick={refresh}>
+                        {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>
             </div>
@@ -480,6 +476,6 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 onVisibleRowRangeChange={handleTableScrollIndexChange}
                 onSelectedRowsChange={(selection) => setSelectedSnapshotId(selection[0])}
             />
-        </>
+        </div>
     );
 }

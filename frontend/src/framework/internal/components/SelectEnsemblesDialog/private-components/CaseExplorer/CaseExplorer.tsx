@@ -10,18 +10,18 @@ import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { Switch } from "@lib/newComponents/Switch";
 import { Table } from "@lib/components/Table";
 import { SortDirection, type TableSorting, type TableFilters } from "@lib/components/Table/types";
-import { TagPicker } from "@lib/components/TagPicker";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { Switch } from "@lib/newComponents/Switch";
 
 import {
     makeCaseRowData,
@@ -229,7 +229,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     }, [currentCaseSelection, onCaseSelectionChange, prevCaseSelection]);
 
     // --- Handlers ---
-    function handleFieldChanged(fieldIdentifier: string) {
+    function handleFieldChanged(fieldIdentifier: string | null) {
+        if (!fieldIdentifier) {
+            return;
+        }
         storeStateInLocalStorage("selectedField", fieldIdentifier);
         setSelectedField(fieldIdentifier);
     }
@@ -270,20 +273,20 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
 
     return (
         <div className="flex h-full min-h-0 flex-col gap-4">
-            <div className="flex flex-row gap-4">
-                <Label text="Field" position="left">
+            <div className="gap-horizontal-xs flex flex-row">
+                <FieldCompositions.Default gridLayout={true} label="Field">
                     <PendingWrapper
                         isPending={fieldsQuery.isFetching && !fieldsQuery.isRefetching}
                         errorMessage={fieldsQuery.error ? "Error loading fields" : undefined}
                     >
-                        <Dropdown
-                            options={fieldOptions}
+                        <Combobox
+                            items={fieldOptions}
                             value={selectedField}
-                            onChange={handleFieldChanged}
+                            onValueChange={handleFieldChanged}
                             disabled={fieldOptions.length === 0}
                         />
                     </PendingWrapper>
-                </Label>
+                </FieldCompositions.Default>
                 <div className="flex grow flex-row items-center gap-4">
                     <Label position="left" text="Only my cases">
                         <Tooltip title="Show only cases authored by me" enterDelay="medium">
@@ -301,12 +304,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         className="h-full min-h-0 min-w-56 flex-1"
                     >
                         <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
-                            <TagPicker
-                                className="bg-white"
+                            <Combobox
+                                value={selectedStandardResults}
                                 placeholder="Filter cases by Standard Results..."
-                                selection={selectedStandardResults}
-                                tagOptions={casesStandardResults.map((elm) => ({ label: elm, value: elm }))}
-                                onChange={(value) => setSelectedStandardResults([...value])}
+                                multiple
+                                items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
+                                disabled={casesStandardResults.length === 0}
+                                onValueChange={(value) => value && setSelectedStandardResults([...value])}
+                                clearable
                             />
                         </Tooltip>
                     </PendingWrapper>

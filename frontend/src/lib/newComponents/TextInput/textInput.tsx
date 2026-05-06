@@ -46,6 +46,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                     className={resolveClassNames(
                         props.layoutClassName,
                         "form-element",
+                        "w-full",
                         "py-vertical-xs px-horizontal-sm text-body-md",
                         "gap-vertical-xs flex items-center",
                         "text-neutral",

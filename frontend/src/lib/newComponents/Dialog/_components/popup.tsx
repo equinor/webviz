@@ -1,9 +1,10 @@
-import type React from "react";
+import React from "react";
 
 import type { DialogPopupProps, DialogRootProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
 
 import type { AlertDialogProps } from "@lib/newComponents/AlertDialog";
+import { PortalContainerContext } from "../../_shared/portalContainerContext";
 
 export type PopupProps = {
     children?: React.ReactNode;
@@ -20,6 +21,7 @@ export type PopupProps = {
 
 export function Popup(props: PopupProps) {
     const { open = false, defaultOpen = false, keepMounted = false } = props;
+    const [popupContainer, setPopupContainer] = React.useState<HTMLElement | null>(null);
 
     // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
@@ -27,12 +29,15 @@ export function Popup(props: PopupProps) {
             <DialogBase.Portal keepMounted={keepMounted}>
                 <DialogBase.Backdrop className="dialog__backdrop" />
                 <DialogBase.Popup
+                    ref={setPopupContainer}
                     className="dialog__popup z-modal"
                     style={{ width: props.width, height: props.height }}
                     initialFocus={props.initialFocus}
                     finalFocus={props.finalFocus}
                 >
-                    {props.children}
+                    <PortalContainerContext.Provider value={popupContainer}>
+                        {props.children}
+                    </PortalContainerContext.Provider>
                 </DialogBase.Popup>
             </DialogBase.Portal>
             {props.alertDialogs}

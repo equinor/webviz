@@ -1,7 +1,9 @@
-import type React from "react";
+import React from "react";
 
 import type { PopoverPositionerProps as PopoverPositionerBaseProps } from "@base-ui/react/popover";
 import { Popover as PopoverBase } from "@base-ui/react/popover";
+
+import { PortalContainerContext } from "../../_shared/portalContainerContext";
 
 export type PopupProps = {
     children?: React.ReactNode;
@@ -18,12 +20,13 @@ const DEFAULT_PROPS = {
 
 export function Popup(props: PopupProps): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const portalContainer = React.useContext(PortalContainerContext);
 
     return (
-        <PopoverBase.Portal>
+        <PopoverBase.Portal container={portalContainer}>
             {/* Note the z-index class here. Base-ui assumes a different stacking context, so we need to manually ensure floating elements stay on top */}
             <PopoverBase.Positioner
-                className="z-elevated"
+                className="z-modal"
                 sideOffset={12}
                 arrowPadding={16}
                 align={defaultedProps.align}

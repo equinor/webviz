@@ -38,7 +38,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
         content = (
             <>
                 <img src={FmuLogoAnimated} alt="FMU Analysis animated logo" className="h-32 w-32" />
-                <Paragraph size="xl">Checking if user is signed in...</Paragraph>
+                <Paragraph size="lg">Checking if user is signed in...</Paragraph>
             </>
         );
     }
@@ -47,7 +47,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
         <div className="relative">
             <div
                 className={resolveClassNames(
-                    "absolute inset-0 z-1 flex h-screen w-screen flex-col items-center justify-center gap-8 transition-opacity duration-1000 ease-in-out",
+                    "gap-vertical-lg absolute inset-0 z-1 flex h-screen w-screen flex-col items-center justify-center transition-opacity duration-1000 ease-in-out",
                     {
                         "pointer-events-none opacity-0": authState === AuthState.LoggedIn,
                         "opacity-100": authState !== AuthState.LoggedIn,

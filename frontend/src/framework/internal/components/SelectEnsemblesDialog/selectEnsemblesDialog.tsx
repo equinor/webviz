@@ -167,71 +167,73 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 height={`${dialogSizePercent.height}%`}
                 modal
             >
-                <Dialog.Header closeIconVisible>
-                    <ExplorerTitle
-                        showExplorer={showEnsembleExplorer}
-                        explorerMode={ensembleExplorerMode}
-                        onClose={handleCloseEnsembleExplorer}
-                    />
-                </Dialog.Header>
-                <Dialog.Body>
-                    <div className="relative flex h-full w-full flex-col">
-                        {hasExplorerBeenOpened ? (
-                            <EnsembleExplorer
-                                disableQueries={!showEnsembleExplorer}
-                                nextEnsembleColor={nextEnsembleColor}
-                                selectedEnsembles={
-                                    ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                        ? selectedRegularEnsembles
-                                        : []
-                                }
-                                onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                                selectButtonLabel={
-                                    ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                        ? "Add Ensemble"
-                                        : "Select Ensemble"
-                                }
-                                onRequestClose={handleCloseEnsembleExplorer}
-                            />
-                        ) : (
-                            <EnsembleTables
-                                nextEnsembleColor={nextEnsembleColor}
-                                selectedRegularEnsembles={selectedRegularEnsembles}
-                                selectedDeltaEnsembles={selectedDeltaEnsembles}
-                                selectableEnsemblesForDelta={selectableEnsemblesForDelta}
-                                onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
-                                onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
-                                onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsemble}
-                                onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
-                                onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
-                                onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}
-                                onRemoveDeltaEnsemble={selectionHandlers.handleRemoveDeltaEnsemble}
-                                onMoveDeltaEnsemble={selectionHandlers.handleMoveDeltaEnsemble}
-                                onRequestOtherComparisonEnsemble={
-                                    selectionHandlers.handleOnRequestOtherComparisonEnsemble
-                                }
-                                onRequestOtherReferenceEnsemble={
-                                    selectionHandlers.handleOnRequestOtherReferenceEnsemble
-                                }
-                            />
-                        )}
-                    </div>
-                </Dialog.Body>
-                <Dialog.Actions>
-                    <DialogActions
-                        isLoading={isEnsembleSetLoading}
-                        disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
-                        disableApply={
-                            isEnsembleSetLoading ||
-                            hasInvalidDeltaEnsembles() ||
-                            hasDuplicateDeltaEnsembles() ||
-                            !hasUnappliedChanges
-                        }
-                        hasDuplicatedDeltaEnsembles={hasDuplicateDeltaEnsembles()}
-                        onDiscard={handleClose}
-                        onApply={handleApplyEnsembleSelection}
-                    />
-                </Dialog.Actions>
+                <div className="flex h-full flex-col">
+                    <Dialog.Header closeIconVisible>
+                        <ExplorerTitle
+                            showExplorer={showEnsembleExplorer}
+                            explorerMode={ensembleExplorerMode}
+                            onClose={handleCloseEnsembleExplorer}
+                        />
+                    </Dialog.Header>
+                    <Dialog.Body layoutClassName="grow min-h-0">
+                        <div className="relative flex h-full w-full flex-col">
+                            {showEnsembleExplorer ? (
+                                <EnsembleExplorer
+                                    disableQueries={!showEnsembleExplorer}
+                                    nextEnsembleColor={nextEnsembleColor}
+                                    selectedEnsembles={
+                                        ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
+                                            ? selectedRegularEnsembles
+                                            : []
+                                    }
+                                    onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
+                                    selectButtonLabel={
+                                        ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
+                                            ? "Add Ensemble"
+                                            : "Select Ensemble"
+                                    }
+                                    onRequestClose={handleCloseEnsembleExplorer}
+                                />
+                            ) : (
+                                <EnsembleTables
+                                    nextEnsembleColor={nextEnsembleColor}
+                                    selectedRegularEnsembles={selectedRegularEnsembles}
+                                    selectedDeltaEnsembles={selectedDeltaEnsembles}
+                                    selectableEnsemblesForDelta={selectableEnsemblesForDelta}
+                                    onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
+                                    onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
+                                    onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsemble}
+                                    onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
+                                    onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
+                                    onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}
+                                    onRemoveDeltaEnsemble={selectionHandlers.handleRemoveDeltaEnsemble}
+                                    onMoveDeltaEnsemble={selectionHandlers.handleMoveDeltaEnsemble}
+                                    onRequestOtherComparisonEnsemble={
+                                        selectionHandlers.handleOnRequestOtherComparisonEnsemble
+                                    }
+                                    onRequestOtherReferenceEnsemble={
+                                        selectionHandlers.handleOnRequestOtherReferenceEnsemble
+                                    }
+                                />
+                            )}
+                        </div>
+                    </Dialog.Body>
+                    <Dialog.Actions>
+                        <DialogActions
+                            isLoading={isEnsembleSetLoading}
+                            disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
+                            disableApply={
+                                isEnsembleSetLoading ||
+                                hasInvalidDeltaEnsembles() ||
+                                hasDuplicateDeltaEnsembles() ||
+                                !hasUnappliedChanges
+                            }
+                            hasDuplicatedDeltaEnsembles={hasDuplicateDeltaEnsembles()}
+                            onDiscard={handleClose}
+                            onApply={handleApplyEnsembleSelection}
+                        />
+                    </Dialog.Actions>
+                </div>
             </Dialog.Popup>
             <SelectEnsemblesConfirmationDialogs
                 ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}

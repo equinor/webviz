@@ -23,15 +23,15 @@ import {
     type IsoStringRange,
 } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Label } from "@lib/components/Label";
 import { Table } from "@lib/components/Table";
 import type { TableColumns, TableSorting } from "@lib/components/Table/types";
 import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Field } from "@lib/newComponents/Field";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { formatDate } from "@lib/utils/dates";
 
@@ -324,9 +324,10 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     }
 
     return (
-        <>
-            <div className="mb-4 flex gap-4">
-                <Label text="Title" wrapperClassName="grow">
+        <div className="gap-vertical-sm flex flex-col">
+            <div className="gap-horizontal-sm flex">
+                <Field.Root layoutClassName="grow">
+                    <Field.Label>Filter by Title</Field.Label>
                     <TextInput
                         startAdornment={<Search fontSize="small" />}
                         endAdornment={
@@ -338,41 +339,30 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         placeholder="Search title"
                         onChange={handleTitleFilterValueChange}
                     />
-                </Label>
-                <Label text="Updated at" wrapperClassName="min-w-2xs">
+                </Field.Root>
+                <Field.Root>
+                    <Field.Label>Updated at</Field.Label>
                     <DateRangePicker
                         className="webviz-eds-date-range-picker --compact rounded border border-gray-300 focus-within:outline-0"
                         value={isoRangeToEdsDateRange(tableFilter.updatedAt ?? null)}
                         onChange={handleDateFilterRangeChange}
                     />
-                </Label>
+                </Field.Root>
             </div>
-            <div className="mb-2 flex gap-2">
+            <div className="gap-horizontal-xs flex items-center">
                 <Tooltip title="Start and open new session" placement="bottom" enterDelay="medium">
-                    <Button tone="accent" onClick={handleNewSessionClick} variant="contained" size="small">
+                    <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
                         <Add fontSize="inherit" /> New session
                     </Button>
                 </Tooltip>
                 <span className="grow" />
                 <Tooltip title="Edit the selected session" placement="bottom" enterDelay="medium">
-                    <Button
-                        tone="accent"
-                        variant="text"
-                        disabled={!selectedSessionId}
-                        onClick={handleEditClick}
-                        size="small"
-                    >
+                    <Button tone="accent" variant="text" disabled={!selectedSessionId} onClick={handleEditClick}>
                         <Edit fontSize="inherit" /> Edit
                     </Button>
                 </Tooltip>
                 <Tooltip title="Open the selected session" placement="bottom" enterDelay="medium">
-                    <Button
-                        tone="accent"
-                        variant="text"
-                        disabled={!selectedSessionId}
-                        onClick={handleOpenSessionClick}
-                        size="small"
-                    >
+                    <Button tone="accent" variant="text" disabled={!selectedSessionId} onClick={handleOpenSessionClick}>
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
                 </Tooltip>
@@ -381,15 +371,14 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         tone="danger"
                         disabled={!selectedSessionId || deletePending}
                         onClick={handleDeleteClick}
-                        size="small"
                         variant="text"
                     >
-                        {deletePending ? <CircularProgress size="small" /> : <Delete fontSize="inherit" />} Delete
+                        {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button tone="accent" onClick={refresh} size="small" variant="text">
-                        {isRefreshing ? <CircularProgress size="small" /> : <Refresh fontSize="inherit" />} Refresh
+                    <Button tone="accent" onClick={refresh} variant="text">
+                        {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>
             </div>
@@ -419,6 +408,6 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 description={selectedSession?.description || ""}
                 onClose={() => setEditSessionDialogOpen(false)}
             />
-        </>
+        </div>
     );
 }

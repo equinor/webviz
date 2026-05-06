@@ -4,6 +4,7 @@ import { Combobox as ComboboxBase } from "@base-ui/react";
 import type { ComboboxRootProps } from "@base-ui/react";
 import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
+import { PortalContainerContext } from "../_shared/portalContainerContext";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 import { Button } from "../Button";
 import { CircularProgress } from "../CircularProgress";
@@ -55,6 +56,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     props: ComboboxProps<TValue, TMultiple>,
     ref: React.ForwardedRef<HTMLInputElement>,
 ) {
+    const portalContainer = React.useContext(PortalContainerContext);
+
     const {
         placeholder = "Select an option",
         noMatchesText = "No matches found",
@@ -200,8 +203,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 </div>
             </ComboboxBase.InputGroup>
 
-            <ComboboxBase.Portal>
-                <ComboboxBase.Positioner className="outline-0" sideOffset={4}>
+            <ComboboxBase.Portal container={portalContainer}>
+                <ComboboxBase.Positioner className="z-tooltip outline-0" sideOffset={4}>
                     <ComboboxBase.Popup className="bg-floating shadow-elevation-floating box-border max-h-96 max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) rounded transition-transform data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
                         <ComboboxBase.Status className="sr-only">
                             {props.loading ? loadingText : props.errorText}

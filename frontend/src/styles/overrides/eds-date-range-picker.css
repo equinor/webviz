@@ -1,19 +1,24 @@
 .webviz-eds-date-range-picker {
-    @apply form-element bg-canvas border-neutral px-horizontal-sm py-vertical-xs rounded-none;
+    @apply form-element bg-canvas px-horizontal-sm py-vertical-xs box-border rounded border-none;
     &.--compact [class*="Icon"] {
         /* Adjust size of icon for compact view*/
-        @apply h-3.5;
+        @apply h-4;
     }
+
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-3 shadow-none!;
+        @apply h-5 rounded bg-transparent p-0 shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
         @apply outline-0!;
     }
 
+    & [class*="Segment"] {
+        @apply text-body-sm text-neutral data-placeholder:text-neutral-subtle h-3;
+    }
+
     & [class*="Segment"]:focus-visible {
-        @apply rounded-xs outline-1!;
+        @apply focusable;
     }
 
     & [class*="Toggle__StyledButton"]:focus-visible {

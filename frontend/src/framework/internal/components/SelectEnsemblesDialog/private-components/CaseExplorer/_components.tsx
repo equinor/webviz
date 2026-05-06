@@ -69,8 +69,8 @@ export function AuthorCell(props: AuthorCellProps): React.ReactNode {
     const avatarSrc = React.useCallback(fetchUserAvatar(`${props.author}@equinor.com`, props.author), [props.author]);
 
     return (
-        <div className="flex justify-center gap-1">
-            <Avatar key={props.author} size="small" userData={avatarSrc} />
+        <div className="gap-horizontal-xs flex items-center">
+            <Avatar key={props.author} size={24} userData={avatarSrc} />
             <span className="block w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={props.author}>
                 {props.author}
             </span>

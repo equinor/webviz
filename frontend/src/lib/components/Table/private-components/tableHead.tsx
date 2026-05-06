@@ -44,7 +44,7 @@ function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSort
         >
             <div
                 className={resolveClassNames(
-                    "flex aspect-square h-5 items-center justify-center rounded-full bg-slate-300 text-center align-middle text-xs text-white",
+                    "bg-neutral text-body-xs flex aspect-square h-5 items-center justify-center rounded-full text-center align-middle text-white",
                     {
                         invisible: columnSortSettings.length < 2,
                     },
@@ -53,7 +53,7 @@ function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSort
                 {columnSortIndex + 1}
             </div>
 
-            <div className="text-lg text-slate-500">
+            <div className="text-body-lg text-neutral-strong">
                 {!columnSort?.direction && <Square fontSize="small" />}
                 {columnSort?.direction === SortDirection.ASC && <ExpandLess fontSize="small" />}
                 {columnSort?.direction === SortDirection.DESC && <ExpandMore fontSize="small" />}
@@ -95,7 +95,7 @@ function HeaderCell(props: HeaderCellProps) {
 
     return (
         <th
-            className={resolveClassNames(headerColorClass, "border-neutral-subtle border-b-2 px-2", {
+            className={resolveClassNames(headerColorClass, "border-neutral-subtle px-horizontal-xs border-b-2", {
                 "cursor-pointer hover:brightness-95": props.sortable,
             })}
             rowSpan={props.rowSpan}
@@ -185,7 +185,6 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
                     })}
                 </tr>
             ))}
-
             {hasFilters && (
                 <tr className="bg-neutral" style={{ height: props.headerHeight }}>
                     {props.filterCellDefinitions.map((filterDef) => {

@@ -3,9 +3,12 @@ import React from "react";
 import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
 
-import { Button } from "@lib/components/Button";
 import { ColorTile } from "@lib/components/ColorTile";
 import { SortableList } from "@lib/components/SortableList";
+import { Tag } from "@lib/components/Tag";
+import { Button } from "@lib/newComponents/Button";
+import { Popover } from "@lib/newComponents/Popover";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 
 import type {
     EnsembleIdentWithCaseName,
@@ -117,21 +120,17 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     }
 
     return (
-        <div className="flex flex-col h-full gap-2">
+        <div className="gap-vertical-sm flex h-full flex-col">
             {/* Regular ensemble table */}
-            <div className="flex flex-1 flex-col min-h-0">
-                <div className="flex justify-between items-center shrink-0 pt-1 pb-1">
-                    <div className="font-medium text-ui-lg">Regular Ensembles</div>
-                    <Button
-                        variant="text"
-                        onClick={handleAddRegularEnsemble}
-                        size="small"
-                    >
+            <div className="gap-vertical-2xs flex min-h-0 flex-1 flex-col">
+                <div className="flex shrink-0 items-center justify-between">
+                    <Heading as="h6">Regular Ensembles</Heading>
+                    <Button variant="text" onClick={handleAddRegularEnsemble}>
                         <Add fontSize="inherit" />
                         Add Ensemble
                     </Button>
                 </div>
-                <div className="flex-1 overflow-auto relative">
+                <div className="relative flex-1 overflow-auto">
                     <SortableList
                         isMoveAllowed={() => true}
                         onItemMoved={(movedItemId, _originId, _destinationId, position) =>
@@ -140,16 +139,16 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     >
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
-                                <table className="w-full border border-collapse table-fixed text-ui-sm">
+                                <table className="text-ui-sm w-full table-fixed border-collapse border">
                                     <SortableList.NoDropZone>
                                         <thead className="sticky top-0 z-10">
                                             <tr>
-                                                <th className="w-5 p-2 bg-slate-300">{/* For drag handle column */}</th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Color</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">Case</th>
-                                                <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble</th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
+                                                <th className="w-5 bg-slate-300 p-2">{/* For drag handle column */}</th>
+                                                <th className="w-20 bg-slate-300 p-2 text-left">Color</th>
+                                                <th className="min-w-1/3 bg-slate-300 p-2 text-left">Custom name</th>
+                                                <th className="min-w-1/3 bg-slate-300 p-2 text-left">Case</th>
+                                                <th className="min-w-1/4 bg-slate-300 p-2 text-left">Ensemble</th>
+                                                <th className="w-20 bg-slate-300 p-2 text-left">Actions</th>
                                             </tr>
                                         </thead>
                                     </SortableList.NoDropZone>
@@ -170,7 +169,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         </SortableList.ScrollContainer>
                     </SortableList>
                     {props.selectedRegularEnsembles.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-ui-md">
+                        <div className="text-ui-md text-neutral-subtle absolute inset-0 flex items-center justify-center">
                             No regular ensembles selected.
                         </div>
                     )}
@@ -178,28 +177,32 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             </div>
 
             {/* Delta-ensemble table */}
-            <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex justify-between items-center shrink-0 pt-1 pb-1">
-                    <div className="flex items-center">
-                        <div className="font-medium text-ui-lg">Delta Ensembles</div>
+            <div className="gap-vertical-xs flex min-h-0 flex-1 flex-col">
+                <div className="gap-horizontal-2xs flex shrink-0 items-center justify-between">
+                    <div className="gap-horizontal-sm flex items-center">
+                        <Heading as="h6">Delta Ensembles</Heading>
                         <div className="fill-indigo-600">
-                            <InfoOutlined
-                                fontSize="medium"
-                                titleAccess={`Create delta ensemble:\n\n"Delta Ensemble" = "Comparison Ensemble" - "Reference Ensemble"`}
-                                className="text-indigo-600 cursor-help ml-2"
-                            />
+                            <Popover.Root>
+                                <Popover.Trigger variant="text">
+                                    <InfoOutlined fontSize="medium" className="cursor-help" />
+                                </Popover.Trigger>
+                                <Popover.Popup>
+                                    <Popover.Content>
+                                        Create delta ensemble:
+                                        <br />
+                                        <Tag label="Delta Ensemble" /> = <Tag label="Comparison Ensemble" /> -{" "}
+                                        <Tag label="Reference Ensemble" />
+                                    </Popover.Content>
+                                </Popover.Popup>
+                            </Popover.Root>
                         </div>
                     </div>
-                    <Button
-                        variant="text"
-                        size="small"
-                        onClick={handleCreateDeltaEnsemble}
-                    >
+                    <Button variant="text" onClick={handleCreateDeltaEnsemble}>
                         <Add fontSize="inherit" />
                         Create Delta Ensemble
                     </Button>
                 </div>
-                <div className="flex-1 overflow-auto relative">
+                <div className="relative flex-1 overflow-auto">
                     <SortableList
                         isMoveAllowed={() => true}
                         onItemMoved={(movedItemId, _originId, _destinationId, position) =>
@@ -208,25 +211,25 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     >
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
-                                <table className="w-full border border-collapse table-fixed text-ui-sm">
+                                <table className="text-ui-sm w-full table-fixed border-collapse border">
                                     <SortableList.NoDropZone>
                                         <thead className="sticky top-0 z-10">
                                             <tr>
-                                                <th className="w-5 p-2 bg-slate-300">{/* For drag handle column */}</th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Color</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">
+                                                <th className="w-5 bg-slate-300 p-2">{/* For drag handle column */}</th>
+                                                <th className="w-20 bg-slate-300 p-2 text-left">Color</th>
+                                                <th className="min-w-1/3 bg-slate-300 p-2 text-left">Custom name</th>
+                                                <th className="min-w-1/3 bg-slate-300 p-2 text-left">
                                                     Comparison Ensemble
                                                 </th>
-                                                <th className="min-w-1/4 text-left p-2 bg-slate-300">
+                                                <th className="min-w-1/4 bg-slate-300 p-2 text-left">
                                                     Reference Ensemble
                                                 </th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
+                                                <th className="w-20 bg-slate-300 p-2 text-left">Actions</th>
                                             </tr>
                                         </thead>
                                     </SortableList.NoDropZone>
                                     <SortableList.Content>
-                                        <tbody className="overflow-y-auto w-full">
+                                        <tbody className="w-full overflow-y-auto">
                                             {props.selectedDeltaEnsembles.map((deltaItem) => {
                                                 return (
                                                     <DeltaEnsembleRow
@@ -252,7 +255,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         </SortableList.ScrollContainer>
                     </SortableList>
                     {props.selectedDeltaEnsembles.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-ui-md">
+                        <div className="text-ui-md absolute inset-0 flex items-center justify-center text-gray-500">
                             No delta ensembles created.
                         </div>
                     )}
