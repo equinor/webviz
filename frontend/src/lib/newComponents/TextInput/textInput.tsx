@@ -47,9 +47,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                         props.layoutClassName,
                         "form-element",
                         "py-vertical-xs px-horizontal-sm text-body-md",
-                        "gap-vertical-xs flex items-center -outline-offset-2",
-                        "bg-canvas",
-                        "outline-neutral outline",
+                        "gap-vertical-xs flex items-center",
                         "text-neutral",
                     )}
                 >

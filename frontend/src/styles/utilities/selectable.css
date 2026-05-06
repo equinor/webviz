@@ -1,0 +1,28 @@
+@utility selectable {
+    @apply focusable focus-visible:outline-0 hover:bg-accent-hover active:bg-accent-active py-vertical-2xs px-horizontal-3xs cursor-pointer rounded;
+
+    &[data-selectable-wrapper] {
+        @apply px-horizontal-sm;
+    }
+    .group[data-selectable-wrapper] & {
+        @apply p-0 focus:shadow-none! focus:outline-0;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled! text-fill-disabled! cursor-not-allowed bg-transparent;
+    }
+
+    &[data-readonly] {
+        @apply text-neutral! cursor-not-allowed bg-transparent;
+    }
+
+    & .selectable {
+        @apply p-0!;
+
+        &:focus-visible,
+        &:has(:focus-visible),
+        &:focus-within {
+            box-shadow: none;
+        }
+    }
+}

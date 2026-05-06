@@ -42,7 +42,7 @@ export function Group(props: GroupProps) {
                     { "pointer-events-none cursor-not-allowed": disabled },
                 )}
             >
-                <Collapsible.Trigger className="gap-vertical-xs px-selectable-x py-selectable-y flex grow cursor-pointer items-center">
+                <Collapsible.Trigger className="focusable gap-vertical-xs px-selectable-x py-selectable-y flex grow cursor-pointer items-center">
                     <ExpandMore className="transition-transform group-data-closed:-rotate-90" fontSize="inherit" />
                     <Typography family="body" as="span" size="sm" weight="bolder">
                         {props.title}

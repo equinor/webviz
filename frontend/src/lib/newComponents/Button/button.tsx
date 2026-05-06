@@ -76,7 +76,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             data-pressed={props.pressed ? "" : undefined}
             className={resolveClassNames(
                 props.layoutClassName,
-                "inline-flex cursor-pointer items-center rounded transition-colors duration-150",
+                "focusable focus-visible:outline-0 inline-flex cursor-pointer items-center rounded transition-colors duration-150",
                 {
                     "aspect-square rounded-full": props.round,
                     rounded: !props.round,

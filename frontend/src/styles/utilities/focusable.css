@@ -1,0 +1,15 @@
+@utility focusable {
+    &:focus-visible,
+    &:has(:focus-visible) {
+        box-shadow:
+            0 0 0 1px var(--eds-color-bg-neutral-canvas),
+            0 0 0 3px var(--eds-color-border-focus);
+    }
+}
+
+@layer utilities {
+    .focusable :focus-visible {
+        outline: none;
+        box-shadow: none;
+    }
+}

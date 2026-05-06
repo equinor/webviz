@@ -13,6 +13,7 @@ export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(pr
     const { indicatorPosition = "end", ...rest } = props;
     const baseProps = resolveWrapperProps(rest);
 
+    // The "tabs__*" classes can be found in the tabs.css file in the styles/components folder
     return (
         <TabsBase.List
             {...baseProps}

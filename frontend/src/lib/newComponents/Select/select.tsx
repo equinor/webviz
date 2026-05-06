@@ -430,7 +430,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     />
                 )}
                 <div
-                    className={resolveClassNames("form-element group w-full overflow-y-auto -outline-offset-2", {
+                    className={resolveClassNames("form-element group w-full overflow-y-auto", {
                         "text-disabled! pointer-events-none overflow-hidden!": !!props.disabled,
                     })}
                     data-disabled={props.disabled === true ? true : undefined}

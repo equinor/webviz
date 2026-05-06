@@ -1,6 +1,6 @@
 @layer components {
     .tabs__tab {
-        @apply font-bolder p-vertical-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center;
+        @apply focusable font-bolder p-vertical-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center outline-0;
         min-height: var(--size-selectable-md);
         font-size: var(--text-body-md);
 

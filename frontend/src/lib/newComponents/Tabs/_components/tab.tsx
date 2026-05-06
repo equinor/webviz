@@ -12,6 +12,7 @@ export type TabProps = ComponentWrapperProps<Omit<TabsTabBaseProps, "children" |
 export const Tab = React.forwardRef<HTMLButtonElement, TabProps>(function Tab(props, ref) {
     const baseProps = resolveWrapperProps(props) as Omit<TabsTabBaseProps, "children" | "ref">;
 
+    // The "tabs__*" classes can be found in the tabs.css file in the styles/components folder
     return (
         <TabsBase.Tab
             {...baseProps}

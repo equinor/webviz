@@ -2,7 +2,7 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { Tone } from "../_shared/colors";
+import type { Tone } from "../_shared/tones";
 
 export type BadgeProps = {
     tone?: Tone;
@@ -14,9 +14,10 @@ export type BadgeProps = {
 const TONE_TO_CLASSNAMES: Record<NonNullable<BadgeProps["tone"]>, string> = {
     accent: "bg-accent-strong text-accent-strong-on-emphasis",
     warning: "bg-warning-strong text-warning-strong-on-emphasis",
-    error: "bg-danger-strong text-danger-strong-on-emphasis",
+    danger: "bg-danger-strong text-danger-strong-on-emphasis",
     success: "bg-success-strong text-success-strong-on-emphasis",
     neutral: "bg-neutral-strong text-neutral-strong-on-emphasis",
+    info: "bg-info-strong text-info-strong-on-emphasis",
 };
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badge(props, ref) {
