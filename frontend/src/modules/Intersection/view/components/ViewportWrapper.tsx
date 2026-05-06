@@ -46,15 +46,20 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
 
+    const [showGrid, setShowGrid] = React.useState<boolean>(true);
+
     // View link state and handlers
     const viewLinkResult = useViewLinkResult(viewId);
     const existingViewport = useViewState(viewId)?.viewport ?? null;
 
     const { isHoverHighlighted, highlightColor, onToggleViewLink, onHoverViewLink } = viewLinkResult;
 
-    // ! Auto-fit on initial render (when no viewport is established) and when the intersection source changes
-    const { autoFitView, setAutoFitView } = useAutoFitView(props.intersectionSource, existingViewport !== null);
-    const [showGrid, setShowGrid] = React.useState<boolean>(true);
+    // Auto-fit for view
+    const { autoFitView, setAutoFitView } = useAutoFitView(
+        props.intersectionSource,
+        existingViewport !== null,
+        viewLinkResult,
+    );
 
     // Viewport, bounds, vertical scale, and all related handlers
     const { viewport, verticalScale, effectiveLayerItemsBounds, updateViewport, updateVerticalScale, handleFitInView } =
@@ -85,13 +90,12 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const handleToggleViewLink = React.useCallback(
         function handleToggleViewLink(otherViewId: string) {
-            // Toggling a link membership is user-initiated; disable autofit so the
-            // refocus effect doesn't overwrite the (now changed) viewport when the
-            // effective focus bounds change as a result of join/leave.
-            setAutoFitView(false);
-            onToggleViewLink(otherViewId);
+            // Pass the initiator's current effective auto-fit state so a newly
+            // created link inherits it. (Joining an existing link adopts that
+            // link's state regardless.)
+            onToggleViewLink(otherViewId, autoFitView);
         },
-        [onToggleViewLink, setAutoFitView],
+        [onToggleViewLink, autoFitView],
     );
 
     const handleVerticalScaleIncrease = React.useCallback(

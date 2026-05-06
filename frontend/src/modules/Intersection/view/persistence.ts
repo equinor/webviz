@@ -34,6 +34,7 @@ const VIEW_LINK_SCHEMA = {
                 y: { elements: { type: "float64" as const } },
             },
         },
+        autoFitView: { type: "boolean" as const },
     },
 } as unknown as JTDSchemaType<ViewLink>;
 

@@ -27,6 +27,7 @@ export type ViewLink = {
     viewIds: string[];
     viewportSourceViewId: string | null;
     bounds: Bounds | null;
+    autoFitView: boolean;
 };
 
 export type IntersectionViewInfo = {
@@ -41,10 +42,11 @@ type ViewLinkManagerContextValue = {
     intersectionViews: IntersectionViewInfo[];
     hoveredViewIds: ReadonlySet<string>;
     setHoveredViewIds: (viewIds: ReadonlySet<string>) => void;
-    toggleViewLink: (thisViewId: string, otherViewId: string) => void;
+    toggleViewLink: (thisViewId: string, otherViewId: string, initiatorAutoFitView: boolean) => void;
     onLinkedViewportChange: (viewId: string) => void;
     onLinkedVerticalScaleChange: (viewId: string) => void;
     onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
+    onLinkedAutoFitViewChange: (viewId: string, value: boolean) => void;
 };
 
 const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
@@ -144,7 +146,7 @@ export function ViewLinkManager({
 
     // Stable callbacks — read latest viewLinks via ref so deps stay minimal
     const toggleViewLink = React.useCallback(
-        function toggleViewLink(thisViewId: string, otherViewId: string) {
+        function toggleViewLink(thisViewId: string, otherViewId: string, initiatorAutoFitView: boolean) {
             // User-initiated action — mark initialization complete so persistence effects run
             hasAppliedInitialRef.current = true;
 
@@ -188,6 +190,7 @@ export function ViewLinkManager({
                         viewIds: [thisViewId, otherViewId],
                         viewportSourceViewId: thisViewId,
                         bounds: null,
+                        autoFitView: initiatorAutoFitView,
                     };
                     next = [...newLinks, newLink];
                     createdLink = newLink;
@@ -207,6 +210,7 @@ export function ViewLinkManager({
                     viewIds: [thisViewId, otherViewId],
                     viewportSourceViewId: thisViewId,
                     bounds: null,
+                    autoFitView: initiatorAutoFitView,
                 };
                 next = [...prev, newLink];
                 createdLink = newLink;
@@ -261,6 +265,22 @@ export function ViewLinkManager({
         [propagateLinkVerticalScale],
     );
 
+    const onLinkedAutoFitViewChange = React.useCallback(function onLinkedAutoFitViewChange(
+        viewId: string,
+        value: boolean,
+    ) {
+        setViewLinks((prev) => {
+            let changed = false;
+            const next = prev.map((link) => {
+                if (!link.viewIds.includes(viewId)) return link;
+                if (link.autoFitView === value) return link;
+                changed = true;
+                return { ...link, autoFitView: value };
+            });
+            return changed ? next : prev;
+        });
+    }, []);
+
     const onLinkedBoundsChange = React.useCallback(function onLinkedBoundsChange(viewId: string, bounds: Bounds) {
         setViewLinks((prev) => {
             let changed = false;
@@ -296,6 +316,7 @@ export function ViewLinkManager({
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
             onLinkedBoundsChange,
+            onLinkedAutoFitViewChange,
         }),
         [
             viewLinks,
@@ -305,6 +326,7 @@ export function ViewLinkManager({
             onLinkedViewportChange,
             onLinkedVerticalScaleChange,
             onLinkedBoundsChange,
+            onLinkedAutoFitViewChange,
         ],
     );
 
@@ -320,11 +342,13 @@ export type ViewLinkResult = {
     highlightColor: string | null;
     viewportSourceViewId: string | null;
     focusBounds: Bounds | null;
-    onToggleViewLink: (otherViewId: string) => void;
+    linkAutoFitView: boolean | null;
+    onToggleViewLink: (otherViewId: string, initiatorAutoFitView: boolean) => void;
     onHoverViewLink: (viewIds: string[] | null) => void;
     onLinkedViewportChange: () => void;
     onLinkedVerticalScaleChange: () => void;
     onLinkedBoundsChange: (bounds: Bounds) => void;
+    onLinkedAutoFitViewChange: (value: boolean) => void;
     bounds: Bounds | null;
 };
 
@@ -339,14 +363,15 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
     const onLinkedViewportChange = ctx?.onLinkedViewportChange;
     const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
     const onLinkedBoundsChange = ctx?.onLinkedBoundsChange;
+    const onLinkedAutoFitViewChangeFn = ctx?.onLinkedAutoFitViewChange;
 
     const viewLink = viewLinks.find((l) => l.viewIds.includes(viewId));
     const isLinked = viewLink !== undefined;
     const multipleViews = intersectionViews.length > 1;
 
     const onToggleViewLink = React.useCallback(
-        function onToggleViewLink(otherViewId: string) {
-            toggleViewLink?.(viewId, otherViewId);
+        function onToggleViewLink(otherViewId: string, initiatorAutoFitView: boolean) {
+            toggleViewLink?.(viewId, otherViewId, initiatorAutoFitView);
         },
         [viewId, toggleViewLink],
     );
@@ -370,6 +395,13 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
             onLinkedBoundsChange?.(viewId, bounds);
         },
         [viewId, onLinkedBoundsChange],
+    );
+
+    const onLinkedAutoFitViewChangeForView = React.useCallback(
+        function onLinkedAutoFitViewChangeForView(value: boolean) {
+            onLinkedAutoFitViewChangeFn?.(viewId, value);
+        },
+        [viewId, onLinkedAutoFitViewChangeFn],
     );
 
     const onHoverViewLink = React.useCallback(
@@ -409,11 +441,13 @@ export function useViewLinkResult(viewId: string): ViewLinkResult {
         highlightColor,
         viewportSourceViewId: viewLink?.viewportSourceViewId ?? null,
         focusBounds,
+        linkAutoFitView: viewLink?.autoFitView ?? null,
         onToggleViewLink,
         onHoverViewLink,
         onLinkedViewportChange: onLinkedViewportChangeForView,
         onLinkedVerticalScaleChange: onLinkedVerticalScaleChangeForView,
         onLinkedBoundsChange: onLinkedBoundsChangeForView,
+        onLinkedAutoFitViewChange: onLinkedAutoFitViewChangeForView,
         bounds: viewLink?.bounds ?? null,
     };
 }
