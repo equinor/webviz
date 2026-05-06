@@ -31,7 +31,7 @@ describe("computeSensitivitiesForResponse", () => {
         expect(dataset.sensitivityResponses[0].highCaseAverage).toBe(76);
     });
 
-    test("does not add sensitivity average for scenario sensitivities", () => {
+    test("adds sensitivity average across all cases for scenario sensitivities", () => {
         const sensitivities = new EnsembleSensitivities([
             {
                 name: "porosity",
@@ -55,6 +55,6 @@ describe("computeSensitivitiesForResponse", () => {
             false,
         );
 
-        expect(dataset.sensitivityResponses[0].sensitivityAverage).toBeUndefined();
+        expect(dataset.sensitivityResponses[0].sensitivityAverage).toBe(25);
     });
 });

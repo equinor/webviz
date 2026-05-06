@@ -23,7 +23,7 @@ import {
     hideZeroYAtom,
     referenceSensitivityNameAtom,
     showLabelsAtom,
-    showSensitivityMeanLabelsAtom,
+    showSensitivityMeanPointsAtom,
     showRealizationPointsAtom,
     sensitivityScalingAtom,
     colorByAtom,
@@ -33,7 +33,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
-    const [showSensitivityMeanLabels, setShowSensitivityMeanLabels] = useAtom(showSensitivityMeanLabelsAtom);
+    const [showSensitivityMeanPoints, setShowSensitivityMeanPoints] = useAtom(showSensitivityMeanPointsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
     const [sensitivitySortBy, setSensitivitySortBy] = useAtom(sensitivitySortByAtom);
@@ -104,8 +104,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setShowLabels(event.target.checked);
     }
 
-    function handleShowSensitivityMeanLabelsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowSensitivityMeanLabels(event.target.checked);
+    function handleShowSensitivityMeanPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowSensitivityMeanPoints(event.target.checked);
     }
 
     function handleShowRealizationPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -190,25 +190,24 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 label="Show realization points"
                             />
                             <Checkbox checked={showLabels} onChange={handleShowLabelsChange} label="Show labels" />
-                            {showLabels && (
-                                <div className="flex flex-row gap-2">
-                                    <Checkbox
-                                        checked={showSensitivityMeanLabels}
-                                        onChange={handleShowSensitivityMeanLabelsChange}
-                                        label="Use mean labels for Monte Carlo"
-                                    />
-                                    <ContextHelp
-                                        title="Use mean labels for Monte Carlo"
-                                        content={
-                                            <>
-                                                When active, Monte Carlo sensitivities show the mean across all
-                                                realizations at the reference line instead of P10/P90 bar labels.
-                                                Scenario sensitivities still show their low and high case labels.
-                                            </>
-                                        }
-                                    />
-                                </div>
-                            )}
+                            <div className="flex flex-row gap-2">
+                                <Checkbox
+                                    checked={showSensitivityMeanPoints}
+                                    onChange={handleShowSensitivityMeanPointsChange}
+                                    label="Show mean points"
+                                />
+                                <ContextHelp
+                                    title="Show mean points"
+                                    content={
+                                        <>
+                                            Shows one marker per sensitivity at the mean response value across all
+                                            realizations belonging to that sensitivity. For scenario sensitivities,
+                                            realizations from all cases are included, so the marker is a combined
+                                            scenario mean rather than a separate case mean.
+                                        </>
+                                    }
+                                />
+                            </div>
                             <Label text="Color by">
                                 <Dropdown
                                     value={colorBy}

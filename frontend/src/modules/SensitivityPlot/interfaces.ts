@@ -9,7 +9,7 @@ import {
     referenceSensitivityNameAtom,
     responseChannelNameAtom,
     showLabelsAtom,
-    showSensitivityMeanLabelsAtom,
+    showSensitivityMeanPointsAtom,
     showRealizationPointsAtom,
     sensitivityScalingAtom,
 } from "./settings/atoms/baseAtoms";
@@ -21,7 +21,7 @@ type SettingsToViewInterface = {
     referenceSensitivityName: string | null;
     responseChannelName: string | null;
     showLabels: boolean;
-    showSensitivityMeanLabels: boolean;
+    showSensitivityMeanPoints: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
     sensitivitySortBy: SensitivitySortBy;
@@ -47,8 +47,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showLabels: (get) => {
         return get(showLabelsAtom);
     },
-    showSensitivityMeanLabels: (get) => {
-        return get(showSensitivityMeanLabelsAtom);
+    showSensitivityMeanPoints: (get) => {
+        return get(showSensitivityMeanPointsAtom);
     },
     hideZeroY: (get) => {
         return get(hideZeroYAtom);

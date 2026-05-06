@@ -15,7 +15,7 @@ import {
     sensitivityScalingAtom,
     sensitivitySortByAtom,
     showLabelsAtom,
-    showSensitivityMeanLabelsAtom,
+    showSensitivityMeanPointsAtom,
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
@@ -24,7 +24,7 @@ export type SerializedSettings = {
     referenceSensitivityName: string | null;
     responseChannelName: string | null;
     showLabels: boolean;
-    showSensitivityMeanLabels?: boolean;
+    showSensitivityMeanPoints?: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
     sensitivitySortBy: SensitivitySortBy;
@@ -47,7 +47,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         colorBy: { enum: Object.values(ColorBy) },
     },
     optionalProperties: {
-        showSensitivityMeanLabels: { type: "boolean" },
+        showSensitivityMeanPoints: { type: "boolean" },
     },
 }));
 
@@ -59,7 +59,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         referenceSensitivityName: get(referenceSensitivityNameAtom),
         responseChannelName: get(responseChannelNameAtom),
         showLabels: get(showLabelsAtom),
-        showSensitivityMeanLabels: get(showSensitivityMeanLabelsAtom),
+        showSensitivityMeanPoints: get(showSensitivityMeanPointsAtom),
         hideZeroY: get(hideZeroYAtom),
         showRealizationPoints: get(showRealizationPointsAtom),
         sensitivitySortBy: get(sensitivitySortByAtom),
@@ -73,7 +73,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, referenceSensitivityNameAtom, raw.referenceSensitivityName);
     setIfDefined(set, responseChannelNameAtom, raw.responseChannelName);
     setIfDefined(set, showLabelsAtom, raw.showLabels);
-    setIfDefined(set, showSensitivityMeanLabelsAtom, raw.showSensitivityMeanLabels);
+    setIfDefined(set, showSensitivityMeanPointsAtom, raw.showSensitivityMeanPoints);
     setIfDefined(set, hideZeroYAtom, raw.hideZeroY);
     setIfDefined(set, showRealizationPointsAtom, raw.showRealizationPoints);
     setIfDefined(set, sensitivitySortByAtom, raw.sensitivitySortBy);
