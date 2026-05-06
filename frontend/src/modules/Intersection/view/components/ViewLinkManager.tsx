@@ -103,6 +103,7 @@ export function ViewLinkManager({
     // - Apply initial view links once they become defined. As DPF uses a couple of renders, without loading state
     // when deserializing the settings. We cannot utilize the initial intersectionView attribute as intersectionViews
     // is null from DPF - so we have to wait.
+    // - GitHub: https://github.com/equinor/webviz/issues/1634
     if (!hasAppliedInitialRef.current && initialViewLinks !== null) {
         hasAppliedInitialRef.current = true;
         if (initialViewLinks.length > 0) {
@@ -113,6 +114,7 @@ export function ViewLinkManager({
     // TEMPORARY SOLUTION:
     // - Notify parent of view link changes for persistence (only after initialization)
     // - If initial intersectionViews is fixed, this should be removed
+    // - GitHub: https://github.com/equinor/webviz/issues/1634
     React.useEffect(() => {
         if (!hasAppliedInitialRef.current) return;
         onViewLinksChange?.(viewLinks);
