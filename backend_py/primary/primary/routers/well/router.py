@@ -62,8 +62,7 @@ async def get_planned_wellbore_headers(
     planned_wellbore_headers = await well_access.get_planned_wellbore_headers_async(field_identifier)
 
     return [
-        converters.convert_wellbore_header_to_schema(wellbore_header)
-        for wellbore_header in planned_wellbore_headers
+        converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in planned_wellbore_headers
     ]
 
 
