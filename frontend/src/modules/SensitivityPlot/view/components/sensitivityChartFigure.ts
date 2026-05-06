@@ -39,6 +39,7 @@ export class SensitivityChartFigure {
         maximumFractionDigits: 2,
     });
     private _colorBy: ColorBy;
+    private _showMeanAnnotations: boolean;
     private readonly _lowBarOrMonteCarloColor = "#1f77b4";
     private readonly _highBarColor = "#ff7f0e";
 
@@ -51,6 +52,7 @@ export class SensitivityChartFigure {
         options: {
             selectedBar?: SelectedBar | null;
             colorBy: ColorBy;
+            showMeanAnnotations: boolean;
         },
     ) {
         // Calculate dynamic left margin based on y-axis labels
@@ -83,6 +85,36 @@ export class SensitivityChartFigure {
         this._scaler = sensitivityDataScaler;
         this._selectedBar = options.selectedBar || null;
         this._colorBy = options.colorBy;
+        this._showMeanAnnotations = options.showMeanAnnotations;
+        if (this._showMeanAnnotations) {
+            this._addMeanAnnotations();
+        }
+    }
+
+    private _addMeanAnnotations() {
+        const referencePosition = this._scaler.getXAxisReferencePosition();
+
+        this._sensitivityResponses.forEach((sensitivity) => {
+            if (sensitivity.sensitivityAverage === undefined) {
+                return;
+            }
+
+            this._figure.addAnnotation(
+                {
+                    x: referencePosition,
+                    y: sensitivity.sensitivityName,
+                    text: `Mean ${this._formatter.format(sensitivity.sensitivityAverage)}`,
+                    showarrow: false,
+                    align: "center",
+                    bgcolor: "rgba(255,255,255,0.85)",
+                    bordercolor: "lightgrey",
+                    borderwidth: 1,
+                    font: { size: 10 },
+                },
+                1,
+                1,
+            );
+        });
     }
 
     private _updateLayout() {
@@ -264,6 +296,10 @@ export class SensitivityChartFigure {
     }
 
     private _computeLowLabel(sensitivity: SensitivityResponse): string {
+        if (this._showMeanAnnotations && sensitivity.sensitivityAverage !== undefined) {
+            return "";
+        }
+
         const lowValue = this._scaler.calculateLowLabelValue(sensitivity);
         if (this._scaler.isAbsolute) {
             return this._numFormat(lowValue);
@@ -278,6 +314,10 @@ export class SensitivityChartFigure {
     }
 
     private _computeHighLabel(sensitivity: SensitivityResponse): string {
+        if (this._showMeanAnnotations && sensitivity.sensitivityAverage !== undefined) {
+            return "";
+        }
+
         const highValue = this._scaler.calculateHighLabelValue(sensitivity);
         if (this._scaler.isAbsolute) {
             return this._numFormat(highValue);

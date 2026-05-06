@@ -15,6 +15,7 @@ import {
     sensitivityScalingAtom,
     sensitivitySortByAtom,
     showLabelsAtom,
+    showSensitivityMeanLabelsAtom,
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
@@ -23,6 +24,7 @@ export type SerializedSettings = {
     referenceSensitivityName: string | null;
     responseChannelName: string | null;
     showLabels: boolean;
+    showSensitivityMeanLabels?: boolean;
     hideZeroY: boolean;
     showRealizationPoints: boolean;
     sensitivitySortBy: SensitivitySortBy;
@@ -44,6 +46,9 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         sensitivityScaling: { enum: Object.values(SensitivityScaling) },
         colorBy: { enum: Object.values(ColorBy) },
     },
+    optionalProperties: {
+        showSensitivityMeanLabels: { type: "boolean" },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -54,6 +59,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         referenceSensitivityName: get(referenceSensitivityNameAtom),
         responseChannelName: get(responseChannelNameAtom),
         showLabels: get(showLabelsAtom),
+        showSensitivityMeanLabels: get(showSensitivityMeanLabelsAtom),
         hideZeroY: get(hideZeroYAtom),
         showRealizationPoints: get(showRealizationPointsAtom),
         sensitivitySortBy: get(sensitivitySortByAtom),
@@ -67,6 +73,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, referenceSensitivityNameAtom, raw.referenceSensitivityName);
     setIfDefined(set, responseChannelNameAtom, raw.responseChannelName);
     setIfDefined(set, showLabelsAtom, raw.showLabels);
+    setIfDefined(set, showSensitivityMeanLabelsAtom, raw.showSensitivityMeanLabels);
     setIfDefined(set, hideZeroYAtom, raw.hideZeroY);
     setIfDefined(set, showRealizationPointsAtom, raw.showRealizationPoints);
     setIfDefined(set, sensitivitySortByAtom, raw.sensitivitySortBy);

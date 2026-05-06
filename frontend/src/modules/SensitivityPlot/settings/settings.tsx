@@ -7,6 +7,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { ContextHelp } from "@lib/components/ContextHelp";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
@@ -22,6 +23,7 @@ import {
     hideZeroYAtom,
     referenceSensitivityNameAtom,
     showLabelsAtom,
+    showSensitivityMeanLabelsAtom,
     showRealizationPointsAtom,
     sensitivityScalingAtom,
     colorByAtom,
@@ -31,6 +33,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
+    const [showSensitivityMeanLabels, setShowSensitivityMeanLabels] = useAtom(showSensitivityMeanLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
     const [sensitivitySortBy, setSensitivitySortBy] = useAtom(sensitivitySortByAtom);
@@ -99,6 +102,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     function handleShowLabelsChange(event: React.ChangeEvent<HTMLInputElement>) {
         setShowLabels(event.target.checked);
+    }
+
+    function handleShowSensitivityMeanLabelsChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setShowSensitivityMeanLabels(event.target.checked);
     }
 
     function handleShowRealizationPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -183,6 +190,25 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 label="Show realization points"
                             />
                             <Checkbox checked={showLabels} onChange={handleShowLabelsChange} label="Show labels" />
+                            {showLabels && (
+                                <div className="flex flex-row gap-2">
+                                    <Checkbox
+                                        checked={showSensitivityMeanLabels}
+                                        onChange={handleShowSensitivityMeanLabelsChange}
+                                        label="Use mean labels for Monte Carlo"
+                                    />
+                                    <ContextHelp
+                                        title="Use mean labels for Monte Carlo"
+                                        content={
+                                            <>
+                                                When active, Monte Carlo sensitivities show the mean across all
+                                                realizations at the reference line instead of P10/P90 bar labels.
+                                                Scenario sensitivities still show their low and high case labels.
+                                            </>
+                                        }
+                                    />
+                                </div>
+                            )}
                             <Label text="Color by">
                                 <Dropdown
                                     value={colorBy}

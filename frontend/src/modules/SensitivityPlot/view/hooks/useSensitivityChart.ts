@@ -15,6 +15,7 @@ export function useSensitivityChart(
     sensitivityDataScaler: SensitivityDataScaler,
 ): SensitivityChartFigure | null {
     const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
+    const showSensitivityMeanLabels = viewContext.useSettingsToViewInterfaceValue("showSensitivityMeanLabels");
     const colorBy = viewContext.useSettingsToViewInterfaceValue("colorBy");
     const showRealizationPoints = viewContext.useSettingsToViewInterfaceValue("showRealizationPoints");
 
@@ -29,6 +30,7 @@ export function useSensitivityChart(
         sensitivityColorMap,
         {
             colorBy: colorBy,
+            showMeanAnnotations: showLabels && showSensitivityMeanLabels && !showRealizationPoints,
         },
     );
 
