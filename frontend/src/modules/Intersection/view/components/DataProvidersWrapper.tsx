@@ -183,7 +183,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     const intersectionViews = allIntersectionViews.slice(0, MAX_INTERSECTION_VIEWS);
 
-    useSyncViewStateMap(intersectionViews.map((v) => v.id));
+    const viewIds = intersectionViews.map((v) => v.id);
+    const allItemIds = assemblerProduct.allItemIds;
+
+    useSyncViewStateMap(viewIds, allItemIds);
 
     const handleViewLinksChange = React.useCallback(
         function handleViewLinksChange(viewLinks: ViewLink[]) {
@@ -214,6 +217,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     return (
         <ViewLinkManager
             intersectionViews={intersectionViews}
+            allItemIds={allItemIds}
             linkColors={props.workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical).getColors()}
             initialViewLinks={persistedViewLinks}
             propagateLinkViewport={propagateLinkViewport}

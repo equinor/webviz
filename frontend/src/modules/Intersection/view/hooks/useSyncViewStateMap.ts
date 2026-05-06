@@ -6,18 +6,23 @@ import { isEqual } from "lodash";
 import { viewStateMapAtom } from "../atoms/baseAtoms";
 
 /**
- * Keeps the per-view `viewStateMapAtom` in sync with the current set of view ids.
+ * Keeps the per-view `viewStateMapAtom` in sync with the views known to DPF.
  *
- * On each change to the set of ids, rebuilds the map so that:
- * - Existing entries for still-active views are preserved by reference (no churn).
- * - Newly added views are seeded with default state, so `useViewState` returns a
- *   populated slot on the first render instead of null.
- * - Removed views are pruned, so they don't leave behind stale viewport / vertical
- *   scale state.
+ * `viewIds` is the set of currently visible views to visualize. `allItemIds` is the
+ * full set of items DPF knows about (views, layers, etc.); a view that is in
+ * `allItemIds` but not in `viewIds` is hidden, not deleted.
  *
- * Tracked via a ref so we only act when the set of active view ids actually changes.
+ * On each change to `viewIds`, rebuilds the map so that:
+ * - Existing entries for visible views are preserved by reference (no churn).
+ * - Existing entries for hidden views (still in `allItemIds`) are preserved so their
+ *   viewport / vertical scale is restored when toggled visible again.
+ * - Newly added visible views are seeded with default state, so `useViewState`
+ *   returns a populated slot on the first render instead of null.
+ * - Entries for views no longer in `allItemIds` (deleted) are pruned.
+ *
+ * Tracked via a ref so we only act when the set of visible view ids actually changes.
  */
-export function useSyncViewStateMap(viewIds: string[]): void {
+export function useSyncViewStateMap(viewIds: string[], allItemIds: Set<string>): void {
     const setViewStateMap = useSetAtom(viewStateMapAtom);
 
     const prevViewIdsRef = React.useRef<string[]>([]);
@@ -28,9 +33,22 @@ export function useSyncViewStateMap(viewIds: string[]): void {
 
     setViewStateMap((prev) => {
         const next: NonNullable<typeof prev> = {};
-        for (const id of viewIds) {
-            next[id] = prev?.[id] ?? { viewport: null, verticalScale: 10.0 };
+
+        // Preserve entries for any view still known to DPF (visible or hidden).
+        if (prev) {
+            for (const id of Object.keys(prev)) {
+                if (allItemIds.has(id)) {
+                    next[id] = prev[id];
+                }
+            }
         }
+
+        // Seed default state for newly added visible views.
+        for (const id of viewIds) {
+            if (next[id]) continue;
+            next[id] = { viewport: null, verticalScale: 10.0 };
+        }
+
         return isEqual(prev, next) ? prev : next;
     });
 }

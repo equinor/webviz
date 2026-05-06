@@ -65,6 +65,7 @@ function computeViewLinkFocusBounds(viewIds: string[], intersectionViews: Inters
 
 export type ViewLinkManagerProps = {
     intersectionViews: IntersectionViewInfo[];
+    allItemIds: Set<string>;
     linkColors: string[];
     initialViewLinks: ViewLink[] | null;
     propagateLinkViewport: PropagateLinkViewportFn;
@@ -82,6 +83,7 @@ function pickNextLinkColor(existingLinks: ViewLink[], colors: string[]): string 
 
 export function ViewLinkManager({
     intersectionViews,
+    allItemIds,
     linkColors,
     initialViewLinks,
     propagateLinkViewport,
@@ -92,7 +94,7 @@ export function ViewLinkManager({
     const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
     const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(EMPTY_HOVERED_VIEW_IDS);
 
-    const prevViewIdsRef = React.useRef<string[]>([]);
+    const prevAllItemIdsRef = React.useRef<Set<string> | null>(null);
     const hasAppliedInitialRef = React.useRef(false);
     const viewLinksRef = React.useRef<ViewLink[]>(viewLinks);
     viewLinksRef.current = viewLinks;
@@ -116,32 +118,37 @@ export function ViewLinkManager({
         onViewLinksChange?.(viewLinks);
     }, [viewLinks, onViewLinksChange]);
 
-    // Clean up ViewLinks when views are added or removed
+    // Clean up ViewLinks when views are deleted/removed (not toggled visibility).
+    // - Hidden views are still in `allItemIds`, until they are deleted/removed.
     React.useEffect(
-        function handleIntersectionViewsChange() {
+        function handleAllItemIdsChange() {
             if (!hasAppliedInitialRef.current) {
                 return;
             }
-            const currentViewIds = intersectionViews.map((v) => v.id);
-            if (isEqual(currentViewIds, prevViewIdsRef.current)) {
+            if (prevAllItemIdsRef.current && isEqual(prevAllItemIdsRef.current, allItemIds)) {
                 return;
             }
+            prevAllItemIdsRef.current = allItemIds;
 
-            prevViewIdsRef.current = currentViewIds;
-            const currentIdSet = new Set(currentViewIds);
             setViewLinks((prev) => {
                 const cleanedLinks = prev
-                    .map((link) => ({
-                        ...link,
-                        viewIds: link.viewIds.filter((id) => currentIdSet.has(id)),
-                        // Reset bounds when membership changes so remaining views re-report fresh bounds
-                        bounds: link.viewIds.some((id) => !currentIdSet.has(id)) ? null : link.bounds,
-                    }))
+                    .map((link) => {
+                        const keptViewIds = link.viewIds.filter((id) => allItemIds.has(id));
+                        if (keptViewIds.length === link.viewIds.length) {
+                            return link;
+                        }
+
+                        return {
+                            ...link,
+                            viewIds: keptViewIds,
+                            bounds: null, // Reset bounds when membership changes so remaining views re-report fresh bounds
+                        };
+                    })
                     .filter((link) => link.viewIds.length > 1);
                 return isEqual(cleanedLinks, prev) ? prev : cleanedLinks;
             });
         },
-        [intersectionViews],
+        [allItemIds],
     );
 
     // Stable callbacks — read latest viewLinks via ref so deps stay minimal
