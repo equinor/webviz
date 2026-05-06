@@ -59,6 +59,12 @@ const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
     large: "h-selectable-lg text-body-lg",
 };
 
+const LABEL_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
+    small: "px-horizontal-2xs",
+    default: "px-horizontal-xs",
+    large: "px-horizontal-sm",
+};
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
     const { variant = "contained", size = "default", tone = "accent", ...rest } = props;
     const baseProps = resolveWrapperProps(rest, "round", "iconOnly", "pressed");
@@ -83,7 +89,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             {props.iconOnly ? (
                 props.children
             ) : (
-                <span className="gap-x-horizontal-xs px-selectable-x inline-flex h-full w-full items-center">
+                <span
+                    className={resolveClassNames(
+                        "gap-x-horizontal-2xs inline-flex h-full w-full items-center",
+                        LABEL_SIZE_CLASSES[size],
+                    )}
+                >
                     {props.children}
                 </span>
             )}
