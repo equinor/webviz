@@ -1047,22 +1047,6 @@ export enum NodeType_api {
 }
 
 /**
- * Observations
- *
- * A collection of observations associated with a field/case/ensemble
- */
-export type Observations_api = {
-    /**
-     * Summary
-     */
-    summary?: Array<SummaryVectorObservations_api>;
-    /**
-     * Rft
-     */
-    rft?: Array<RftObservations_api>;
-};
-
-/**
  * Page[SessionMetadata]
  */
 export type PageSessionMetadata_api = {
@@ -1295,86 +1279,6 @@ export type RepeatedTableColumnData_api = {
      * Indices
      */
     indices: Array<number>;
-};
-
-/**
- * RftObservation
- *
- * A specific RFT (Repeat Formation Tester) observation.
- *
- * Attributes:
- * value (float): The measured value of the observation.
- * comment (Optional[str]): An optional comment associated with the observation.
- * error (float): The measurement error associated with the observation.
- * zone (str): The zone or region associated with the observation.
- * md_msl (float): Measured depth from mean sea level.
- * x (float): X utm coordinate of the observation.
- * y (float): Y utm coordinate of the observation.
- * z (float): Z utm coordinate of the observation.
- */
-export type RftObservation_api = {
-    /**
-     * Value
-     */
-    value: number;
-    /**
-     * Comment
-     */
-    comment?: string | null;
-    /**
-     * Error
-     */
-    error: number;
-    /**
-     * Zone
-     */
-    zone: string;
-    /**
-     * Md Msl
-     */
-    md_msl: number;
-    /**
-     * X
-     */
-    x: number;
-    /**
-     * Y
-     */
-    y: number;
-    /**
-     * Z
-     */
-    z: number;
-};
-
-/**
- * RftObservations
- *
- * A collection of RFT (Repeat Formation Tester) observations for a specific well at a specific date.
- *
- * Attributes:
- * well (str): Unique well identifier
- * date (str): Observation date
- * comment (Optional[str]): An optional comment associated with the collection of observations.
- * observations (List[RftObservation]): A list of RFT observations associated with this collection.
- */
-export type RftObservations_api = {
-    /**
-     * Well
-     */
-    well: string;
-    /**
-     * Date
-     */
-    date: string;
-    /**
-     * Comment
-     */
-    comment?: string | null;
-    /**
-     * Observations
-     */
-    observations: Array<RftObservation_api>;
 };
 
 /**
@@ -5993,7 +5897,7 @@ export type GetUserPhotoResponses_api = {
 
 export type GetUserPhotoResponse_api = GetUserPhotoResponses_api[keyof GetUserPhotoResponses_api];
 
-export type GetObservationsData_api = {
+export type GetSummaryObservationsData_api = {
     body?: never;
     path?: never;
     query: {
@@ -6003,28 +5907,37 @@ export type GetObservationsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/observations/observations/";
+    url: "/observations/summary";
 };
 
-export type GetObservationsErrors_api = {
+export type GetSummaryObservationsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetObservationsError_api = GetObservationsErrors_api[keyof GetObservationsErrors_api];
+export type GetSummaryObservationsError_api = GetSummaryObservationsErrors_api[keyof GetSummaryObservationsErrors_api];
 
-export type GetObservationsResponses_api = {
+export type GetSummaryObservationsResponses_api = {
     /**
+     * Response Get Summary Observations
+     *
      * Successful Response
      */
-    200: Observations_api;
+    200: Array<SummaryVectorObservations_api>;
 };
 
-export type GetObservationsResponse_api = GetObservationsResponses_api[keyof GetObservationsResponses_api];
+export type GetSummaryObservationsResponse_api =
+    GetSummaryObservationsResponses_api[keyof GetSummaryObservationsResponses_api];
 
 export type GetRftTableDefinitionData_api = {
     body?: never;
