@@ -24,7 +24,7 @@ export type ItemCardProps = {
 };
 
 export function ItemCard(props: ItemCardProps): React.ReactNode {
-    const showOwnerRow = props.ownerId;
+    const showOwnerRow = props.ownerId !== undefined;
 
     const ownerInfo = useUserGraphInfo(props.ownerId);
 
@@ -54,20 +54,22 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         >
             <a
                 className={resolveClassNames(
-                    "gap-vertical-xs px-selectable-x py-selectable-y h-selectable-md text-accent-subtle text-body-md flex items-center rounded",
+                    "gap-vertical-xs px-selectable-x py-selectable-y h-selectable-md text-accent-subtle text-body-md grid w-full min-w-0 grid-cols-subgrid items-center rounded",
                     {
                         "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
                         "hover:bg-accent-hover": !props.isDeleted,
+                        "col-span-2": !showOwnerRow,
+                        "col-span-3": showOwnerRow,
                     },
                 )}
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="w-60 grow truncate overflow-hidden">
+                <div className="min-w-0 truncate overflow-hidden">
                     <span>{props.title}</span>
                 </div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="ml-auto w-20 text-xs whitespace-nowrap">
+                <span className="min-w-0 truncate overflow-hidden text-xs whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
@@ -81,7 +83,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     return (
         <div className="gap-vertical-xs text-body-sm flex items-center italic">
             <Avatar
-                size={24}
+                size={16}
                 userData={
                     name
                         ? fetchUserAvatar(name, props.owner?.display_name ?? "")

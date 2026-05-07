@@ -21,6 +21,7 @@ export type RecentListProps<TItemType, TQueryData = unknown> = {
     useQueryOptions: UseQueryOptions<TQueryData, any, any, any>;
     transformData: (data: TQueryData) => TItemType[];
     refetchIntervalMs?: number;
+    gridTemplate: string;
     renderItem: (item: TItemType) => React.ReactNode;
     makeItemKey: (item: TItemType) => string;
     onDialogIconClick?: () => void;
@@ -75,9 +76,13 @@ export function RecentList<TItemType, TQueryData = unknown>(
             }
             return (
                 <>
-                    <ul>
+                    <ul className="contents">
                         {transformedData.map(function renderListItem(item) {
-                            return <li key={props.makeItemKey(item)}>{props.renderItem(item)}</li>;
+                            return (
+                                <li className="contents" key={props.makeItemKey(item)}>
+                                    {props.renderItem(item)}
+                                </li>
+                            );
                         })}
                     </ul>
                 </>
@@ -106,7 +111,11 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>
-            <div className="mt-vertical-xs gap-vertical-xs flex min-h-16 flex-col">{makeContent()}</div>
+            <div
+                className={`mt-vertical-xs gap-vertical-xs gap-x-horizontal-xs gap-y-vertical-xs w-max-full grid min-h-16 grid-cols-[${props.gridTemplate}]`}
+            >
+                {makeContent()}
+            </div>
         </section>
     );
 }

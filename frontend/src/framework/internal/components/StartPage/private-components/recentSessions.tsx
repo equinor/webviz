@@ -34,7 +34,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     }
 
     return (
-        <div className="min-w-64 w-96 h-56">
+        <div className="h-56 w-96 min-w-64">
             <RecentList
                 title="Recent sessions"
                 useQueryOptions={{
@@ -48,6 +48,7 @@ export function RecentSessions(props: RecentSessionsProps) {
                 }}
                 onDialogIconClick={handleMoreClick}
                 transformData={(data) => data.items}
+                gridTemplate="minmax(0,1fr)_100px"
                 renderItem={(item: SessionMetadata_api) => (
                     <ItemCard
                         href={buildSessionUrl(item.id)}
