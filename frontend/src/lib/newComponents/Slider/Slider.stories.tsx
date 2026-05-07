@@ -42,6 +42,15 @@ export const Default: Story = {
     ),
 };
 
+export const Disabled: Story = {
+    args: { disabled: true },
+    render: (args) => (
+        <div className="gap-y-vertical-lg flex flex-col">
+            <Slider defaultValue={25} {...args} />
+        </div>
+    ),
+};
+
 export const SnapRangeLimit: Story = {
     args: { min: 0, max: 100 },
     render: (args) => (

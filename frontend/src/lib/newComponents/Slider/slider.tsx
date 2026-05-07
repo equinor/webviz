@@ -252,7 +252,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     return (
         <SliderBase.Root
             {...baseProps}
-            className="gap-horizontal-2xs flex items-center"
+            className="gap-horizontal-2xs flex items-center data-disabled:cursor-not-allowed"
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}
@@ -269,7 +269,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
             }}
             render={(rootProps, state) => (
                 <div {...rootProps}>
-                    {showMinLock && <LimitLockSwitch isLocked={minLocked} onSetLocked={toggleMinLock} />}
+                    {showMinLock && (
+                        <LimitLockSwitch disabled={state.disabled} isLocked={minLocked} onSetLocked={toggleMinLock} />
+                    )}
 
                     <SliderBase.Control
                         ref={ref}
@@ -295,17 +297,18 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             />
                         )}
 
-                        <SliderBase.Track className="group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas shadow-elevation-floating h-1 w-full rounded-lg">
+                        <SliderBase.Track className="not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas shadow-elevation-floating h-1 w-full rounded-lg">
                             {/* Only show start dot for dual sliders */}
                             <Dot placement="start" />
 
-                            <SliderBase.Indicator className="bg-accent-strong rounded-lg" />
+                            <SliderBase.Indicator className="bg-accent-strong data-disabled:bg-disabled rounded-lg" />
 
                             <Thumb
                                 index={0}
                                 showValue={showThumbValueLabels}
                                 sliderValue={internalValue}
                                 inputRefs={inputRefs}
+                                disabled={state.disabled}
                                 min={defaultedProps.min}
                                 max={defaultedProps.max}
                                 lockedToMin={minLocked}
@@ -321,6 +324,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                                 showValue={showThumbValueLabels}
                                 sliderValue={internalValue}
                                 inputRefs={inputRefs}
+                                disabled={state.disabled}
                                 min={defaultedProps.min}
                                 max={defaultedProps.max}
                                 lockedToMin={false}
@@ -344,7 +348,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             />
                         )}
                     </SliderBase.Control>
-                    {showMaxLock && <LimitLockSwitch isLocked={maxLocked} onSetLocked={toggleMaxLock} />}
+                    {showMaxLock && (
+                        <LimitLockSwitch disabled={state.disabled} isLocked={maxLocked} onSetLocked={toggleMaxLock} />
+                    )}
                 </div>
             )}
         />
@@ -360,6 +366,7 @@ function Thumb(props: {
     max: number;
     lockedToMin: boolean;
     lockedToMax: boolean;
+    disabled: boolean;
 
     valueLabelFormat: undefined | ((value: number, thumbIndex: number) => React.ReactNode);
     getAriaLabel?: (index: number) => string;
@@ -415,7 +422,7 @@ function Thumb(props: {
                         // Hiding via style to keep refs stable
                         hidden={thumbHidden}
                         disabled={thumbHidden}
-                        className="border-accent-strong bg-surface hover:outline-focus focus-within:outline-focus z-2 box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                        className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2 box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
                         index={props.index}
                         inputRef={props.inputRefs[1]}
                         getAriaLabel={props.getAriaLabel}
@@ -426,7 +433,10 @@ function Thumb(props: {
             />
             <Tooltip.Portal>
                 <Tooltip.Positioner sideOffset={5}>
-                    <Tooltip.Popup className="bg-accent-strong text-info-strong-on-emphasis px-horizontal-2xs py-vertical-4xs text-body-sm pointer-events-none rounded">
+                    <Tooltip.Popup
+                        data-slider-disabled={props.disabled ? "" : undefined}
+                        className="bg-accent-strong data-slider-disabled:bg-disabled text-info-strong-on-emphasis px-horizontal-2xs py-vertical-4xs text-body-sm pointer-events-none rounded"
+                    >
                         {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
                     </Tooltip.Popup>
                 </Tooltip.Positioner>
@@ -435,7 +445,7 @@ function Thumb(props: {
     );
 }
 
-function LimitLockSwitch(props: { isLocked: boolean; onSetLocked: (newValue: boolean) => void }) {
+function LimitLockSwitch(props: { disabled: boolean; isLocked: boolean; onSetLocked: (newValue: boolean) => void }) {
     const ButtonIcon = props.isLocked ? Lock : LockOpen;
 
     return (
@@ -444,6 +454,7 @@ function LimitLockSwitch(props: { isLocked: boolean; onSetLocked: (newValue: boo
             tone="accent"
             size="small"
             pressed={props.isLocked}
+            disabled={props.disabled}
             onClick={() => props.onSetLocked(!props.isLocked)}
         >
             <ButtonIcon className="text-accent-subtle text" fontSize="inherit" />
@@ -457,7 +468,23 @@ function SliderLockGutter(props: {
     sliderState: SliderRootState;
     onSetLocked: (locked: boolean) => void;
 }) {
-    const isColored = props.inverse !== props.locked;
+    const isFilled = props.inverse !== props.locked;
+
+    function resolveGutterColorClassnames() {
+        // The gutter tracks are mimicking the look of the slider track, except using a border to show the line as dashed.
+        // The background colors used in the track are not normally exposed for borders, so we have to manually refer to them here
+        if (props.sliderState.disabled && isFilled) {
+            return "border-(--eds-color-bg-fill-emphasis-disabled)";
+        } else if (props.sliderState.disabled) {
+            return "border-(--eds-color-bg-neutral-canvas)";
+        } else if (isFilled) {
+            return "border-(--eds-color-bg-accent-fill-emphasis-default)";
+        } else if (props.sliderState.dragging) {
+            return "border-(--eds-color-bg-neutral-fill-muted-hover)";
+        }
+
+        return "border-(--eds-color-bg-neutral-canvas) group-hover:border-(--eds-color-bg-neutral-fill-muted-hover)";
+    }
 
     return (
         <div
@@ -468,25 +495,19 @@ function SliderLockGutter(props: {
             })}
         >
             <div
-                className={resolveClassNames("absolute -inset-y-(--eds-spacing-horizontal-xs) w-(--thumb-size)", {
+                className={resolveClassNames("-inset-y-horizontal-xs absolute w-(--thumb-size)", {
                     "left-0": props.placement === "start",
                     "right-0": props.placement === "end",
                 })}
-                onPointerOver={() => props.sliderState.dragging && props.onSetLocked(true)}
+                onPointerOver={() =>
+                    !props.sliderState.disabled && props.sliderState.dragging && props.onSetLocked(true)
+                }
                 // Using pointer-down to avoid the slider jumping to end pos, *then* locking
-                onPointerDownCapture={() => props.onSetLocked(true)}
+                onPointerDownCapture={() => !props.sliderState.disabled && props.onSetLocked(true)}
             />
             <div className="border-neutral bg-surface m-(--mark-thumb-diff) box-content size-(--mark-size) shrink-0 rounded-full border" />
 
-            <div
-                // When allowing min/max locks, we're mimicking the slider's gutter, but using a border instead to show a dashed line. These colors are not normally exposed for borders, so we have to manually refer to them here
-                className={resolveClassNames("h-0 w-full border-2 border-dotted", {
-                    "border-(--eds-color-bg-neutral-fill-muted-hover)": !isColored && props.sliderState.dragging,
-                    "border-(--eds-color-bg-neutral-canvas) group-hover:border-(--eds-color-bg-neutral-fill-muted-hover)":
-                        !isColored,
-                    "border-(--eds-color-bg-accent-fill-emphasis-default)": isColored,
-                })}
-            />
+            <div className={resolveClassNames("h-0 w-full border-2 border-dotted", resolveGutterColorClassnames())} />
         </div>
     );
 }
