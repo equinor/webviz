@@ -9,20 +9,35 @@ import { Button } from "@lib/newComponents/Button";
 
 const BUTTON_PROPS = ["iconOnly", "variant", "size", "tone", "round"] as const;
 
-type WrappedTriggerProps = ComponentWrapperProps<TooltipTriggerBaseProps>;
+type WrappedTriggerProps = Omit<ComponentWrapperProps<TooltipTriggerBaseProps>, "delay">;
 type InheritedButtonProps = Pick<ButtonProps, (typeof BUTTON_PROPS)[number]>;
 
-export type TriggerProps = {
-    children: React.ReactNode;
-} & WrappedTriggerProps &
-    InheritedButtonProps;
+const DELAY_MS_MAP = {
+    short: 500,
+    medium: 800,
+    long: 1500,
+} as const;
+
+const DEFAULT_PROPS = {
+    delay: "short",
+} satisfies Partial<TriggerProps>;
+
+export type TriggerProps = WrappedTriggerProps &
+    InheritedButtonProps & {
+        children: React.ReactNode;
+        delay?: keyof typeof DELAY_MS_MAP;
+    };
 
 export function Trigger(props: TriggerProps): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, ...BUTTON_PROPS);
+    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const baseProps = resolveWrapperProps(defaultedProps, ...BUTTON_PROPS, "delay");
+
+    const delayMs = DELAY_MS_MAP[defaultedProps.delay];
 
     return (
         <TooltipBase.Trigger
             {...baseProps}
+            delay={delayMs}
             render={(p, state) => (
                 <Button
                     {...p}

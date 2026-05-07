@@ -49,6 +49,27 @@ export const Positioning: Story = {
     ),
 };
 
+export const Delay: Story = {
+    render: () => (
+        <div className="gap-horizontal-xs grid grid-cols-3 text-center">
+            <Tooltip.Root>
+                <Tooltip.Trigger delay="short">Short</Tooltip.Trigger>
+                <Tooltip.Popup>Tooltip with a short delay</Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root>
+                <Tooltip.Trigger delay="medium">Medium</Tooltip.Trigger>
+                <Tooltip.Popup>Tooltip with a medium delay</Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root>
+                <Tooltip.Trigger delay="long">Long</Tooltip.Trigger>
+                <Tooltip.Popup>Tooltip with a long delay</Tooltip.Popup>
+            </Tooltip.Root>
+        </div>
+    ),
+};
+
 export const MultipleTooltips: Story = {
     render: () => (
         <Tooltip.Provider>
