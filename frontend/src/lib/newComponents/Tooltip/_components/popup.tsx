@@ -6,14 +6,14 @@ import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
 import { PortalContainerContext } from "@lib/newComponents/_shared/portalContainerContext";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
-export type ContentProps = {
+export type PopupProps = {
     side?: TooltipPositionerBaseProps["side"];
     align?: TooltipPositionerBaseProps["align"];
 
     children?: React.ReactNode;
 };
 
-export function Content(props: ContentProps): React.ReactNode {
+export function Popup(props: PopupProps): React.ReactNode {
     const portalContainer = React.useContext(PortalContainerContext);
 
     return (
