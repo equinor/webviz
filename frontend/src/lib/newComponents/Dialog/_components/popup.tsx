@@ -4,6 +4,7 @@ import type { DialogPopupProps, DialogRootProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
 
 import type { AlertDialogProps } from "@lib/newComponents/AlertDialog";
+
 import { PortalContainerContext } from "../../_shared/portalContainerContext";
 
 export type PopupProps = {
@@ -35,7 +36,7 @@ export function Popup(props: PopupProps) {
                     initialFocus={props.initialFocus}
                     finalFocus={props.finalFocus}
                 >
-                    <PortalContainerContext.Provider value={popupContainer}>
+                    <PortalContainerContext.Provider value={popupContainer ?? undefined}>
                         {props.children}
                     </PortalContainerContext.Provider>
                 </DialogBase.Popup>
