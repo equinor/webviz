@@ -28,6 +28,7 @@
 @import "./components/dialog.css";
 @import "./components/tabs.css";
 @import "./components/toast.css";
+@import "./components/arrow.css";
 
 /* Base styles */
 @import "./base/app.css";
