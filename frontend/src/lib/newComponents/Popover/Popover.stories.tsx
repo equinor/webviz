@@ -89,7 +89,7 @@ export const PersistentPopover: Story = {
                     />
 
                     <div className="mt-vertical-md flex">
-                        <Button className="w-full" onClick={() => setPopoverOpen(false)}>
+                        <Button layoutClassName="w-full" onClick={() => setPopoverOpen(false)}>
                             Ok
                         </Button>
                     </div>

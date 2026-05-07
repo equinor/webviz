@@ -33,7 +33,7 @@ export function Title(props: TitleProps): React.ReactNode {
                 )}
             </div>
 
-            <Separator className="-mx-horizontal-sm" />
+            <Separator layoutClassName="-mx-horizontal-sm" />
         </>
     );
 }

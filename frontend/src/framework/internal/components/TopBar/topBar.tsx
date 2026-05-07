@@ -375,6 +375,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             ) : (
                 <Dropdown>
                     <Tooltip title="Save session options">
+                        {/* @ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
                         <Button variant="text" tone="accent" render={<MenuButton />}>
                             <Save fontSize="small" />
                             <ArrowDropDown fontSize="small" />

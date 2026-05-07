@@ -1,8 +1,8 @@
 import type React from "react";
 
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { Button } from "@lib/newComponents/Button";
 
 import { EnsemblesLoadingErrorInfoDialog } from "../../EnsemblesLoadingErrorInfoDialog";
 import type { StateTuple } from "../_hooks";

@@ -1,5 +1,6 @@
+import React from "react";
+
 import type { Meta, StoryObj } from "@storybook/react";
-import React, { useState } from "react";
 
 import { Tabs } from "./index";
 
@@ -212,7 +213,7 @@ export const Vertical: Story = {
         },
     },
     render: () => (
-        <Tabs.Root defaultValue="a" orientation="vertical" className="flex gap-4">
+        <Tabs.Root defaultValue="a" orientation="vertical" layoutClassName="flex gap-4">
             <Tabs.List>
                 <Tabs.Tab value="a">Tab A</Tabs.Tab>
                 <Tabs.Tab value="b">Tab B</Tabs.Tab>
@@ -239,7 +240,7 @@ export const WithoutPanels: Story = {
         },
     },
     render: function WithoutPanelsStory() {
-        const [active, setActive] = useState("map");
+        const [active, setActive] = React.useState("map");
         return (
             <div className="flex flex-col gap-4">
                 <Tabs.Root value={active} onValueChange={setActive}>
@@ -269,7 +270,7 @@ export const Controlled: Story = {
         },
     },
     render: function ControlledStory() {
-        const [active, setActive] = useState("b");
+        const [active, setActive] = React.useState("b");
         return (
             <Tabs.Root value={active} onValueChange={setActive}>
                 <Tabs.List>

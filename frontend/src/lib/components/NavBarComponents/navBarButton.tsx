@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Tooltip } from "@lib/components/Tooltip";
-import { Tabs, type TabsProps } from "@lib/newComponents/Tabs";
+import { Tabs, type TabsTabProps } from "@lib/newComponents/Tabs";
 
 export type NavBarButtonProps<TValue extends string> = {
     value: TValue;
@@ -33,7 +33,7 @@ function resolveTabIcon(
 }
 
 function NavBarButtonComponent<TValue extends string>(
-    props: NavBarButtonProps<TValue> & TabsProps["Tab"],
+    props: NavBarButtonProps<TValue> & TabsTabProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
     const { icon, activeIcon, disabledTooltip, tooltip, ...baseProps } = props;

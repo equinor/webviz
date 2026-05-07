@@ -45,7 +45,7 @@ export const Tones: Story = {
             <Badge tone="warning" badgeContent={4}>
                 <div className="bg-neutral rounded w-12 h-12" />
             </Badge>
-            <Badge tone="error" badgeContent={5}>
+            <Badge tone="danger" badgeContent={5}>
                 <div className="bg-neutral rounded w-12 h-12" />
             </Badge>
         </div>

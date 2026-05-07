@@ -156,7 +156,7 @@ export const Group: Story = {
         },
     },
     render: () => (
-        <Toggle.Group defaultValue="week">
+        <Toggle.Group defaultValue={["week"]}>
             <Toggle.Button value="day">Day</Toggle.Button>
             <Toggle.Button value="week">Week</Toggle.Button>
             <Toggle.Button value="month">Month</Toggle.Button>
@@ -173,14 +173,14 @@ export const GroupControlled: Story = {
             },
         },
     },
-    render: () => {
+    render: function GroupControlled() {
         const views = ["day", "week", "month"] as const;
         const [value, setValue] = React.useState<string>("week");
         return (
             <div className="flex flex-col items-center gap-3">
-                <Toggle.Group value={value} onValueChange={(v) => v && setValue(v)}>
+                <Toggle.Group value={[value]} onValueChange={([v]) => v && setValue(v)}>
                     {views.map((view) => (
-                        <Toggle.Button key={view} value={view} className="capitalize">
+                        <Toggle.Button key={view} value={view} layoutClassName="capitalize">
                             {view}
                         </Toggle.Button>
                     ))}
@@ -200,11 +200,11 @@ export const GroupMultiple: Story = {
             },
         },
     },
-    render: () => {
+    render: function GroupMultiple () {
         const [value, setValue] = React.useState<string[]>(["bold", "italic"]);
         return (
             <div className="flex flex-col items-center gap-3">
-                <Toggle.Group toggleMultiple value={value} onValueChange={setValue}>
+                <Toggle.Group multiple value={value} onValueChange={setValue}>
                     <Toggle.Button value="bold">
                         <strong>B</strong>
                     </Toggle.Button>
@@ -230,7 +230,7 @@ export const GroupVertical: Story = {
         },
     },
     render: () => (
-        <Toggle.Group defaultValue="list" orientation="vertical">
+        <Toggle.Group defaultValue={["list"]} orientation="vertical">
             <Toggle.Button value="list">List</Toggle.Button>
             <Toggle.Button value="grid">Grid</Toggle.Button>
             <Toggle.Button value="table">Table</Toggle.Button>
@@ -247,7 +247,7 @@ export const GroupDisabled: Story = {
         },
     },
     render: () => (
-        <Toggle.Group defaultValue="week" disabled>
+        <Toggle.Group defaultValue={["week"]} disabled>
             <Toggle.Button value="day">Day</Toggle.Button>
             <Toggle.Button value="week">Week</Toggle.Button>
             <Toggle.Button value="month">Month</Toggle.Button>

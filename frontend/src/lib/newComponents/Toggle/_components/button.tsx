@@ -11,7 +11,7 @@ export type ButtonProps<TValue extends string> = ComponentWrapperProps<Omit<Togg
     buttonProps?: Omit<ButtonProps_, "ref">;
     children?:
         | React.ReactNode
-        | ((props: React.ComponentPropsWithoutRef<typeof ToggleBase>, state: { pressed: boolean }) => React.ReactNode);
+        | ((props: Omit<React.ComponentPropsWithoutRef<typeof ToggleBase>, "children">, state: { pressed: boolean }) => React.ReactNode);
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps<string>>(function ToggleButton(props, ref) {

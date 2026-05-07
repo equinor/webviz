@@ -3,6 +3,7 @@ import React from "react";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { Combobox } from "@lib/newComponents/Combobox";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/combobox";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export enum ColorPaletteSelectorType {
@@ -39,6 +40,10 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
         props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0],
     );
 
+    const comboboxItems = React.useMemo(() => 
+    props.colorPalettes.map<ComboboxItem<ColorPalette>>((palette) => ({value: palette, label: palette.getName() }))
+    ,[props.colorPalettes])
+
     function handleValueChange(colorPalette: ColorPalette | null) {
         if (!colorPalette) {
             return;
@@ -49,11 +54,9 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
 
     return (
         <Combobox
-            items={props.colorPalettes}
+            items={comboboxItems}
             value={selectedColorPalette}
             onValueChange={handleValueChange}
-            itemToStringLabel={(palette) => palette.getName()}
-            itemToStringValue={(palette) => palette.getId()}
             filter={null}
             renderItemAdornment={(palette) => (
                 <span className="min-w-32">{makeColorPalettePreview(palette, props.type, props.steps)}</span>

@@ -9,8 +9,8 @@ import {
 } from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { Button } from "@lib/newComponents/Button";
 
 import { ModulesList } from "../ModulesList";
 
