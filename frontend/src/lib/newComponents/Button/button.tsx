@@ -65,6 +65,12 @@ const LABEL_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
     large: "px-horizontal-sm",
 };
 
+const ICON_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
+    small: "text-body-md!",
+    default: "text-body-xl!",
+    large: "text-body-2xl!",
+};
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
     const { variant = "contained", size = "default", tone = "accent", ...rest } = props;
     const baseProps = resolveWrapperProps(rest, "round", "iconOnly", "pressed");
@@ -76,11 +82,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             data-pressed={props.pressed ? "" : undefined}
             className={resolveClassNames(
                 props.layoutClassName,
-                "focusable focus-visible:outline-0 inline-flex cursor-pointer items-center rounded transition-colors duration-150",
+                "focusable inline-flex cursor-pointer items-center rounded transition-colors duration-150 focus-visible:outline-0",
                 {
                     "aspect-square rounded-full": props.round,
                     rounded: !props.round,
-                    "text-body-2xl! aspect-square justify-center": props.iconOnly,
+                    "aspect-square justify-center": props.iconOnly,
+                    [ICON_SIZE_CLASSES[size]]: props.iconOnly,
                 },
                 SIZE_CLASSES[size],
                 VARIANT_TONE_CLASSES[variant][props.disabled ? "disabled" : tone],

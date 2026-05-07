@@ -154,9 +154,9 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
             }
             zIndex={60}
         >
-            <form id={formId} className="flex gap-4 items-center" onSubmit={handleSave}>
+            <form id={formId} className="flex items-center gap-4" onSubmit={handleSave}>
                 <DashboardPreview height={100} width={100} layout={layout} />
-                <div className="flex flex-col gap-2 grow min-w-0">
+                <div className="flex min-w-0 grow flex-col gap-2">
                     <CharLimitedInput
                         label="Title"
                         onControlledValueChange={(value) => setTitle(value)}
@@ -169,7 +169,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         autoFocus
                         required
                     />
-                    <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
+                    <div className="mb-1 h-4 text-sm text-red-600">{inputFeedback.title}</div>
                     <CharLimitedInput
                         label="Description (optional)"
                         maxLength={MAX_DESCRIPTION_LENGTH}

@@ -2,10 +2,9 @@ import React from "react";
 
 import { AssignmentTurnedIn, ContentPaste, ContentPasteOff } from "@mui/icons-material";
 
-import { IconButton } from "@lib/components/IconButton";
-import type { IconButtonProps } from "@lib/components/IconButton/iconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type CopyCellValueProps = {
@@ -15,9 +14,9 @@ export type CopyCellValueProps = {
 
 type CopyStatus = "idle" | "success" | "error";
 
-const COLORSCHEME_BY_STATUS: Record<CopyStatus, IconButtonProps["color"]> = {
-    idle: "primary",
-    success: "success",
+const TONE_BY_STATUS: Record<CopyStatus, ButtonProps["tone"]> = {
+    idle: "neutral",
+    success: "accent",
     error: "danger",
 };
 
@@ -71,16 +70,16 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
         <div className="relative h-full w-full" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <div
                 className={resolveClassNames(
-                    "bg-neutral absolute top-1/2 right-1 z-10 -translate-y-1/2 transform rounded-full transition-transform duration-200",
+                    "bg-neutral z-elevated absolute top-1/2 right-1 -translate-y-1/2 transform rounded-full transition-transform duration-200",
                     { "scale-100": isHovered || status !== "idle", "scale-0": !isHovered && status === "idle" },
                 )}
             >
                 <Tooltip title={TOOLTIP_BY_STATUS[status]}>
-                    <IconButton onClick={handleCopyClick} color={COLORSCHEME_BY_STATUS[status]}>
+                    <Button onClick={handleCopyClick} tone={TONE_BY_STATUS[status]} iconOnly size="small" round>
                         {status === "idle" && <ContentPaste fontSize="inherit" />}
                         {status === "success" && <AssignmentTurnedIn fontSize="inherit" />}
                         {status === "error" && <ContentPasteOff fontSize="inherit" />}
-                    </IconButton>
+                    </Button>
                 </Tooltip>
             </div>
             {props.children}
