@@ -7,7 +7,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 
 import { Button as Button_, type ButtonProps as ButtonProps_ } from "../../Button";
 
-export type ButtonProps<TValue extends string> = ComponentWrapperProps<Omit<ToggleBaseProps<TValue>, "ref">> & {
+export type ButtonProps<TValue extends string> = ComponentWrapperProps<Omit<ToggleBaseProps<TValue>, "ref" | "children">> & {
     buttonProps?: Omit<ButtonProps_, "ref">;
     children?:
         | React.ReactNode
