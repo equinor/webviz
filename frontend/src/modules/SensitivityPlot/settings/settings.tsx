@@ -200,10 +200,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                     title="Show mean points"
                                     content={
                                         <>
-                                            Shows one marker per sensitivity at the mean response value across all
-                                            realizations belonging to that sensitivity. For scenario sensitivities,
-                                            realizations from all cases are included, so the marker is a combined
-                                            scenario mean rather than a separate case mean.
+                                            Shows one marker per Monte Carlo sensitivity at the mean response value
+                                            across all realizations in the sensitivity. Scenario sensitivities do not
+                                            get mean points because their low and high case averages are shown
+                                            separately.
                                         </>
                                     }
                                 />

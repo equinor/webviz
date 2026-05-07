@@ -1,6 +1,6 @@
 import { SensitivityType, type Sensitivity } from "@framework/EnsembleSensitivities";
 
-import { computeAverage, extractResponseValues, extractSensitivityRealizations } from "./_helpers";
+import { computeAverage, extractResponseValues } from "./_helpers";
 import type { EnsemblePerRealizationResponse, SensitivityResponse } from "./types";
 
 // Scenario sensitivity processor
@@ -13,10 +13,6 @@ export const processScenarioSensitivity = (
         throw new Error(`Scenario sensitivity ${sensitivity.name} has more than 2 cases`);
     }
 
-    const sensitivityAverage = computeAverage(
-        extractResponseValues(ensemblePerRealResponse, extractSensitivityRealizations(sensitivity)),
-    );
-
     // Single case scenario
     if (sensitivity.cases.length === 1) {
         const sensitivityCase = sensitivity.cases[0];
@@ -26,7 +22,6 @@ export const processScenarioSensitivity = (
         return {
             sensitivityName: sensitivity.name,
             sensitivityType: SensitivityType.SCENARIO,
-            sensitivityAverage,
             lowCaseName: sensitivityCase.name,
             lowCaseAverage: average,
             lowCaseReferenceDifference: average - referenceAverage,
@@ -55,7 +50,6 @@ export const processScenarioSensitivity = (
     return {
         sensitivityName: sensitivity.name,
         sensitivityType: SensitivityType.SCENARIO,
-        sensitivityAverage,
         lowCaseName: lowCase.case.name,
         lowCaseAverage: lowCase.average,
         lowCaseReferenceDifference: lowCase.average - referenceAverage,
