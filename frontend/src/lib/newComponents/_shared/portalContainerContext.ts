@@ -7,4 +7,4 @@ import React from "react";
  * This is primarily used by Dialog.Body to prevent focus-trap conflicts between a modal
  * dialog and any portal-based component rendered inside it.
  */
-export const PortalContainerContext = React.createContext<HTMLElement | null>(null);
+export const PortalContainerContext = React.createContext<HTMLElement | undefined>(undefined);

@@ -8,9 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Typography } from "@lib/newComponents/Typography";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 
@@ -54,8 +54,8 @@ export function RecentList<TItemType, TQueryData = unknown>(
         if (isFirstTimeFetching) {
             if (itemsQuery.status === "pending") {
                 return (
-                    <span className="gap-selectable-x flex text-gray-500">
-                        <CircularProgress size="extra-small" /> Loading recent items...
+                    <span className="gap-selectable-x text-neutral-subtle flex items-center">
+                        <CircularProgress size={24} /> Loading recent items...
                     </span>
                 );
             }
@@ -69,7 +69,9 @@ export function RecentList<TItemType, TQueryData = unknown>(
             const transformedData = props.transformData(itemsQuery.data);
 
             if (transformedData.length === 0) {
-                return <span className="flex h-full flex-col justify-center text-gray-400 italic">None found.</span>;
+                return (
+                    <span className="text-neutral-subtle flex h-full flex-col justify-center italic">None found.</span>
+                );
             }
             return (
                 <>
@@ -90,17 +92,13 @@ export function RecentList<TItemType, TQueryData = unknown>(
                     {props.title}
                 </Heading>
                 <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
-                    <Button size="small" tone="neutral" variant="text" iconOnly onClick={refresh}>
-                        {isRefreshing ? (
-                            <CircularProgress size="medium-small" color="fill-indigo-800" />
-                        ) : (
-                            <Refresh fontSize="small" className="text-indigo-800" />
-                        )}
+                    <Button size="small" variant="text" iconOnly onClick={refresh}>
+                        {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="small" />}
                     </Button>
                 </Tooltip>
                 <Tooltip title="Show all" placement="bottom" enterDelay="medium">
-                    <Button size="small" tone="neutral" variant="text" iconOnly onClick={props.onDialogIconClick}>
-                        <Icon name="folder_open" className="h-5 text-indigo-800" />
+                    <Button size="small" variant="text" iconOnly onClick={props.onDialogIconClick}>
+                        <Icon name="folder_open" />
                     </Button>
                 </Tooltip>
             </div>

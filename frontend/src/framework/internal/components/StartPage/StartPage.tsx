@@ -3,9 +3,8 @@ import { category, dashboard, folder_open, github, external_link, add } from "@e
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Combobox } from "@lib/newComponents/Combobox";
+import { Button } from "@lib/newComponents/Button";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 
 import { RecentSessions } from "./private-components/recentSessions";
@@ -48,7 +47,7 @@ export function StartPage(props: StartPageProps) {
     return (
         <>
             <div className="flex h-full min-h-0 w-full items-center justify-center p-57">
-                <div className="px-selectable-horizontal gap-x-horizontal-3xl gap-y-vertical-sm grid grid-cols-2">
+                <div className="px-selectable-horizontal gap-x-horizontal-3xl gap-y-vertical-lg grid grid-cols-2">
                     <section className="gap-vertical-xs flex flex-col">
                         <Heading as="h3">Start</Heading>
                         <Tooltip
@@ -57,13 +56,13 @@ export function StartPage(props: StartPageProps) {
                             enterDelay="medium"
                         >
                             <Button variant="text" onClick={handleNewSession}>
-                                <Icon name="category" />
+                                <Icon name="category" fontSize="inherit" />
                                 New session
                             </Button>
                         </Tooltip>
                         <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
                             <Button variant="text" onClick={openOverviewDialogOnSessions}>
-                                <Icon name="folder_open" />
+                                <Icon name="folder_open" fontSize="inherit" />
                                 Open session or snapshot...
                             </Button>
                         </Tooltip>
@@ -73,7 +72,7 @@ export function StartPage(props: StartPageProps) {
                             enterDelay="medium"
                         >
                             <Button variant="text" onClick={handleOpenTemplatesDialog}>
-                                <Icon name="dashboard" />
+                                <Icon name="dashboard" fontSize="inherit" />
                                 Start from template...
                             </Button>
                         </Tooltip>
