@@ -1,0 +1,29 @@
+import React from "react";
+
+import type { TooltipPositionerProps as TooltipPositionerBaseProps } from "@base-ui/react/tooltip";
+import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
+
+import { PortalContainerContext } from "@lib/newComponents/_shared/portalContainerContext";
+import { Paragraph } from "@lib/newComponents/Typography/compositions";
+
+export type PopupProps = {
+    side?: TooltipPositionerBaseProps["side"];
+    align?: TooltipPositionerBaseProps["align"];
+
+    children?: React.ReactNode;
+};
+
+export function Popup(props: PopupProps): React.ReactNode {
+    const portalContainer = React.useContext(PortalContainerContext);
+
+    return (
+        <TooltipBase.Portal container={portalContainer}>
+            <TooltipBase.Positioner side={props.side} align={props.align} sideOffset={8}>
+                <TooltipBase.Popup className="bg-floating-inverted text-neutral-strong-on-emphasis px-horizontal-sm py-vertical-xs relative rounded-sm">
+                    <TooltipBase.Arrow className="floating__arrow" />
+                    <Paragraph size="sm">{props.children}</Paragraph>
+                </TooltipBase.Popup>
+            </TooltipBase.Positioner>
+        </TooltipBase.Portal>
+    );
+}
