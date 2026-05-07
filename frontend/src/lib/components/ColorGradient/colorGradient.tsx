@@ -15,7 +15,7 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
         samples.push(
             <div
                 key={`${color}-${i}`}
-                className="border border-slate-600 h-5 w-full"
+                className="border-neutral h-5 w-full"
                 style={{
                     backgroundColor: color,
                 }}
@@ -28,7 +28,7 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
 export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
     if (props.steps) {
         return (
-            <div className="flex gap-0.5 flex-row justify-between">
+            <div className="border-neutral flex flex-row justify-between gap-0.5 rounded border">
                 {makeColorSamples(props.steps, props.colorPalette)}
             </div>
         );
@@ -36,7 +36,7 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
 
     return (
         <div
-            className="rounded-sm border border-slate-600 h-5 w-full"
+            className="border-neutral h-5 w-full rounded border"
             style={{
                 backgroundImage: props.colorPalette.getGradient(),
             }}

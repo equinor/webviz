@@ -16,6 +16,7 @@ import type {
     TableFilters,
 } from "../types";
 import { SortDirection } from "../types";
+import { TextInput } from "@lib/newComponents/TextInput";
 
 function getSortingForColumn(
     columnId: string,
@@ -238,14 +239,13 @@ function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
         throw Error(`Default filter expects string value, but received type '${typeof value}'`);
 
     return (
-        <Input
-            type="text"
+        <TextInput
             value={value}
             placeholder="Filter ..."
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}
             endAdornment={
                 <div
-                    className="cursor-pointer text-sm text-gray-600 hover:text-gray-500"
+                    className="text-neutral-subtle hover:text-neutral-hover cursor-pointer text-sm"
                     onClick={() => props.onFilterChange(null)}
                 >
                     <Close fontSize="inherit" />

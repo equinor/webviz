@@ -48,7 +48,6 @@ export function RecentSessions(props: RecentSessionsProps) {
                 }}
                 onDialogIconClick={handleMoreClick}
                 transformData={(data) => data.items}
-                gridTemplate="minmax(0,1fr)_100px"
                 renderItem={(item: SessionMetadata_api) => (
                     <ItemCard
                         href={buildSessionUrl(item.id)}

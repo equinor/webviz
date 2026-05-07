@@ -2,12 +2,14 @@ import type React from "react";
 
 import { DragIndicator, Remove } from "@mui/icons-material";
 
-import { ColorSelect } from "@lib/components/ColorSelect";
 import { IconButton } from "@lib/components/IconButton";
-import { Input } from "@lib/components/Input";
 import { SortableList } from "@lib/components/SortableList";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type RegularEnsembleRowProps = {
     ensembleSetting: InternalRegularEnsembleSetting;
@@ -39,36 +41,38 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
             key={props.ensembleSetting.ensembleIdent.toString()}
             id={props.ensembleSetting.ensembleIdent.toString()}
         >
-            <tr className="hover:bg-slate-100 odd:bg-slate-50 align-center">
+            <tr className="align-center odd:bg-neutral-canvas hover:bg-accent-hover">
                 <td>
-                    <SortableList.DragHandle className="flex justify-center items-center">
+                    <SortableList.DragHandle className="flex items-center justify-center">
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </SortableList.DragHandle>
                 </td>
-                <td className="p-2">
+                <td className="px-horizontal-xs py-vertical-xs">
                     <ColorSelect value={props.ensembleSetting.color} onChange={onColorChange} />
                 </td>
-                <td className="p-2">
-                    <Input
+                <td className="px-horizontal-xs py-vertical-xs">
+                    <TextInput
                         value={props.ensembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
                         onValueChange={onNameChange}
                     />
                 </td>
-                <td className="p-2">
+                <td className="px-horizontal-xs py-vertical-xs">
                     <div className="truncate" title={props.ensembleSetting.caseName}>
                         {props.ensembleSetting.caseName}
                     </div>
                 </td>
-                <td className="p-2">
+                <td className="px-horizontal-xs py-vertical-xs">
                     <div className="truncate" title={props.ensembleSetting.ensembleIdent.getEnsembleName()}>
                         {props.ensembleSetting.ensembleIdent.getEnsembleName()}
                     </div>
                 </td>
-                <td className="p-2">
-                    <IconButton title="Remove ensemble from selection" color="danger" onClick={onDelete}>
-                        <Remove fontSize="small" />
-                    </IconButton>
+                <td className="px-horizontal-xs py-vertical-xs">
+                    <Tooltip title="Remove this ensemble from the list" enterDelay="medium">
+                        <Button variant="text" tone="danger" onClick={onDelete} size="small" iconOnly>
+                            <Remove fontSize="inherit" />
+                        </Button>
+                    </Tooltip>
                 </td>
             </tr>
         </SortableList.Item>

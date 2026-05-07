@@ -10,6 +10,7 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { makeInitials } from "@lib/utils/userNames";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 
 export type ItemCardProps = {
     id: string;
@@ -54,22 +55,18 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         >
             <a
                 className={resolveClassNames(
-                    "gap-vertical-xs px-selectable-x py-selectable-y h-selectable-md text-accent-subtle text-body-md grid w-full min-w-0 grid-cols-subgrid items-center rounded",
+                    "gap-vertical-xs px-selectable-x py-selectable-y h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
                     {
                         "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
                         "hover:bg-accent-hover": !props.isDeleted,
-                        "col-span-2": !showOwnerRow,
-                        "col-span-3": showOwnerRow,
                     },
                 )}
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="min-w-0 truncate overflow-hidden">
-                    <span>{props.title}</span>
-                </div>
+                <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="min-w-0 truncate overflow-hidden text-xs whitespace-nowrap">
+                <span className="w-24 shrink-0 text-right text-xs whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
@@ -81,7 +78,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
 
     return (
-        <div className="gap-vertical-xs text-body-sm flex items-center italic">
+        <div className="gap-vertical-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
             <Avatar
                 size={16}
                 userData={
@@ -93,7 +90,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
                           }
                 }
             />
-            <span className="truncate">{name}</span>
+            <span className="min-w-0 flex-1 truncate">{name}</span>
         </div>
     );
 }
@@ -115,11 +112,11 @@ function TooltipContent(
     }
     return (
         <div className="w-2xs text-base whitespace-normal">
-            <h3 className="text-lg">{props.title}</h3>
-            <hr className="mb-2 h-px bg-white/25" />
+            <Heading as="h6">{props.title}</Heading>
+            <hr className="mb-vertical-xs bg-floating h-px" />
             {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-6 truncate text-sm">
+                <ul className="mt-vertical-sm truncate text-sm">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -127,7 +124,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-neutral-subtle mt-4 block text-sm italic">Click to open</span>
+            <span className="text-neutral mt-vertical-xs text-body-sm block italic">Click to open</span>
         </div>
     );
 }

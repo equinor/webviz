@@ -72,9 +72,9 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     return (
         <div className={`bg-surface flex h-full min-h-0 flex-col ${props.visible ? "" : "hidden"}`}>
             {showHeader && (
-                <div className="bg-surface p-vertical-xs border-neutral-subtle flex items-center justify-center border-b">
-                    {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
-                    <span className="grow p-0 text-sm font-bold">{props.title}</span>
+                <div className="bg-neutral py-vertical-3xs px-horizontal-2xs border-neutral-subtle gap-horizontal-xs flex items-center justify-center border-b">
+                    {props.icon && React.cloneElement(props.icon, { fontSize: "small" })}
+                    <span className="text-header-xs font-bolder grow p-0">{props.title}</span>
                     {props.actions}
                     {props.onClose && (
                         <Tooltip title="Close">
@@ -87,7 +87,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
             )}
             <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="bg-neutral flex gap-2 p-2">
+                    <div className="bg-surface p-vertical-3xs flex gap-2">
                         {props.showSearch && (
                             <div className="grow">
                                 <TextInput

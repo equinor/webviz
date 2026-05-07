@@ -15,6 +15,7 @@ export function Label(props: LabelProps) {
         <FieldBase.Label
             {...baseProps}
             aria-required={props.required}
+            className="gap-horizontal-3xs flex items-center"
             render={<Typography as="label" family="body" size="md" tone="neutral" />}
         >
             {props.children}

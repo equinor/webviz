@@ -52,7 +52,6 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
                 }}
                 onDialogIconClick={handleMoreClick}
                 transformData={(data) => data.items}
-                gridTemplate="minmax(0,1fr)_70px_100px"
                 renderItem={(item: SnapshotAccessLog_api) => (
                     <ItemCard
                         href={`/snapshot/${item.snapshotId}`}

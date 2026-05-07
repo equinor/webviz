@@ -42,7 +42,7 @@ export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>
     return (
         <>
             <Button {...buttonProps} ref={ref} onClick={handleButtonClick} variant={variant} tone="neutral">
-                <ColorTile color={selectedColor} size={props.size} />
+                <ColorTile.Tile color={selectedColor} size={props.size} />
                 <ExpandMore fontSize="inherit" />
             </Button>
             <input

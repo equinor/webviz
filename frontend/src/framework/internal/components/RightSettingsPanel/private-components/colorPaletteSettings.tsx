@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Palette } from "@mui/icons-material";
+import { Numbers, Palette } from "@mui/icons-material";
 
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
@@ -11,6 +11,9 @@ import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 
 export type ColorPaletteSettingsProps = {
     workbench: Workbench;
@@ -43,7 +46,8 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
         });
     }
 
-    function handleColorPaletteStepsChanged(newSteps: number, type: ColorScaleDiscreteSteps) {
+    function handleColorPaletteStepsChanged(newSteps: number | null, type: ColorScaleDiscreteSteps) {
+        if (newSteps === null) return;
         props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings().setStepsForType(type, newSteps);
         setSteps({
             ...steps,
@@ -58,86 +62,104 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             visible={drawerContent === RightDrawerContent.ColorPaletteSettings}
             onClose={props.onClose}
         >
-            <div className="flex flex-col gap-2 m-2">
-                <Label text="Categorical colors">
-                    <ColorPaletteSelector
-                        selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}
-                        colorPalettes={colorPalettes[ColorPaletteSelectorType.Categorical]}
-                        type={ColorPaletteSelectorType.Categorical}
-                        onChange={(palette) => handleColorPaletteSelected(palette, ColorPaletteType.Categorical)}
-                    />
-                </Label>
-                <Label text="Sequential colors" wrapperClassName="mb-4 mt-4">
-                    <div className="flex flex-col gap-4">
-                        <ColorPaletteSelector
-                            selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]}
-                            colorPalettes={colorPalettes[ColorPaletteType.ContinuousSequential]}
-                            type={ColorPaletteSelectorType.Continuous}
-                            onChange={(palette) =>
-                                handleColorPaletteSelected(palette, ColorPaletteType.ContinuousSequential)
-                            }
-                        />
-                        <ColorGradient
-                            colorPalette={
-                                colorPalettes[ColorPaletteType.ContinuousSequential].find(
-                                    (el) =>
-                                        el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousSequential],
-                                ) || colorPalettes[ColorPaletteType.ContinuousSequential][0]
-                            }
-                            steps={steps[ColorScaleDiscreteSteps.Sequential]}
-                        />
-                        <Label text="Discrete steps" position="left">
-                            <Input
-                                type="number"
-                                min={2}
-                                max={100}
-                                defaultValue={steps[ColorScaleDiscreteSteps.Sequential]}
-                                onChange={(e) =>
-                                    handleColorPaletteStepsChanged(
-                                        parseInt(e.target.value),
-                                        ColorScaleDiscreteSteps.Sequential,
-                                    )
+            <Collapsible.ScrollArea>
+                <Collapsible.Group title="Categorical colors" defaultOpen>
+                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-horizontal-xs gap-y-vertical-xs">
+                        <FieldCompositions.Default label="Palette" gridLayout>
+                            <ColorPaletteSelector
+                                selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}
+                                colorPalettes={colorPalettes[ColorPaletteSelectorType.Categorical]}
+                                type={ColorPaletteSelectorType.Categorical}
+                                onChange={(palette) =>
+                                    handleColorPaletteSelected(palette, ColorPaletteType.Categorical)
                                 }
                             />
-                        </Label>
-                    </div>
-                </Label>
-                <Label text="Diverging colors" wrapperClassName="mb-4 mt-4">
-                    <div className="flex flex-col gap-4">
-                        <ColorPaletteSelector
-                            selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]}
-                            colorPalettes={colorPalettes[ColorPaletteType.ContinuousDiverging]}
-                            type={ColorPaletteSelectorType.Continuous}
-                            onChange={(palette) =>
-                                handleColorPaletteSelected(palette, ColorPaletteType.ContinuousDiverging)
-                            }
-                        />
-                        <ColorGradient
-                            colorPalette={
-                                colorPalettes[ColorPaletteType.ContinuousDiverging].find(
-                                    (el) =>
-                                        el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging],
-                                ) || colorPalettes[ColorPaletteType.ContinuousDiverging][0]
-                            }
-                            steps={steps[ColorScaleDiscreteSteps.Diverging]}
-                        />
-                        <Label text="Discrete steps" position="left">
-                            <Input
-                                type="number"
-                                min={2}
-                                max={100}
-                                defaultValue={steps[ColorScaleDiscreteSteps.Diverging]}
-                                onChange={(e) =>
-                                    handleColorPaletteStepsChanged(
-                                        parseInt(e.target.value),
-                                        ColorScaleDiscreteSteps.Diverging,
-                                    )
+                        </FieldCompositions.Default>
+                    </Collapsible.Content>
+                </Collapsible.Group>
+                <Collapsible.Group title="Sequential colors" defaultOpen>
+                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-horizontal-xs gap-y-vertical-xs">
+                        <FieldCompositions.Default label="Gradient" gridLayout>
+                            <ColorPaletteSelector
+                                selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]}
+                                colorPalettes={colorPalettes[ColorPaletteType.ContinuousSequential]}
+                                type={ColorPaletteSelectorType.Continuous}
+                                onChange={(palette) =>
+                                    handleColorPaletteSelected(palette, ColorPaletteType.ContinuousSequential)
                                 }
                             />
-                        </Label>
-                    </div>
-                </Label>
-            </div>
+                        </FieldCompositions.Default>
+                        <FieldCompositions.Default label="Discrete steps" gridLayout>
+                            <div className="gap-horizontal-xs flex w-full items-center">
+                                <span className="min-w-40 grow">
+                                    <ColorGradient
+                                        colorPalette={
+                                            colorPalettes[ColorPaletteType.ContinuousSequential].find(
+                                                (el) =>
+                                                    el.getId() ===
+                                                    selectedColorPaletteIds[ColorPaletteType.ContinuousSequential],
+                                            ) || colorPalettes[ColorPaletteType.ContinuousSequential][0]
+                                        }
+                                        steps={steps[ColorScaleDiscreteSteps.Sequential]}
+                                    />
+                                </span>
+                                <span className="w-24 shrink">
+                                    <NumberInput
+                                        min={2}
+                                        max={100}
+                                        value={steps[ColorScaleDiscreteSteps.Sequential]}
+                                        onValueChange={(value) =>
+                                            handleColorPaletteStepsChanged(value, ColorScaleDiscreteSteps.Sequential)
+                                        }
+                                        unitIcon={<Numbers fontSize="inherit" />}
+                                    />
+                                </span>
+                            </div>
+                        </FieldCompositions.Default>
+                    </Collapsible.Content>
+                </Collapsible.Group>
+                <Collapsible.Group title="Diverging colors" defaultOpen>
+                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-horizontal-2xs gap-y-vertical-xs">
+                        <FieldCompositions.Default label="Gradient" gridLayout>
+                            <ColorPaletteSelector
+                                selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]}
+                                colorPalettes={colorPalettes[ColorPaletteType.ContinuousDiverging]}
+                                type={ColorPaletteSelectorType.Continuous}
+                                onChange={(palette) =>
+                                    handleColorPaletteSelected(palette, ColorPaletteType.ContinuousDiverging)
+                                }
+                            />
+                        </FieldCompositions.Default>
+                        <FieldCompositions.Default label="Discrete steps" gridLayout>
+                            <div className="gap-horizontal-xs flex w-full items-center">
+                                <span className="min-w-40 grow">
+                                    <ColorGradient
+                                        colorPalette={
+                                            colorPalettes[ColorPaletteType.ContinuousDiverging].find(
+                                                (el) =>
+                                                    el.getId() ===
+                                                    selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging],
+                                            ) || colorPalettes[ColorPaletteType.ContinuousDiverging][0]
+                                        }
+                                        steps={steps[ColorScaleDiscreteSteps.Diverging]}
+                                    />
+                                </span>
+                                <span className="w-24 shrink">
+                                    <NumberInput
+                                        min={2}
+                                        max={100}
+                                        value={steps[ColorScaleDiscreteSteps.Diverging]}
+                                        onValueChange={(value) =>
+                                            handleColorPaletteStepsChanged(value, ColorScaleDiscreteSteps.Diverging)
+                                        }
+                                        unitIcon={<Numbers fontSize="inherit" />}
+                                    />
+                                </span>
+                            </div>
+                        </FieldCompositions.Default>
+                    </Collapsible.Content>
+                </Collapsible.Group>
+            </Collapsible.ScrollArea>
         </Drawer>
     );
 };

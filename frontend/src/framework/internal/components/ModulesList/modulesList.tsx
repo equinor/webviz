@@ -202,21 +202,26 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div className="flex h-full items-center gap-2 px-2 text-sm" title={props.displayName}>
-                    <div className="h-12 w-12 min-w-12 shrink-0 overflow-hidden p-1">{makePreviewImage()}</div>
+                <div
+                    className="px-horizontal-xs gap-horizontal-xs flex h-full items-center text-sm"
+                    title={props.displayName}
+                >
+                    <div className="p-vertical-3xs h-12 w-12 min-w-12 shrink-0 overflow-hidden">
+                        {makePreviewImage()}
+                    </div>
                     <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
                     <span
                         className={resolveClassNames({
-                            "text-warning-strong": props.devState === ModuleDevState.DEV,
-                            "text-danger-strong": props.devState === ModuleDevState.DEPRECATED,
+                            "text-warning-subtle": props.devState === ModuleDevState.DEV,
+                            "text-danger-subtle": props.devState === ModuleDevState.DEPRECATED,
                         })}
                     >
                         {makeDevStateIcon(props.devState)}
                     </span>
                     <span
                         className={resolveClassNames({
-                            "text-success-strong": props.isSerializable,
-                            "text-neutral-strong": !props.isSerializable,
+                            "text-success-subtle": props.isSerializable,
+                            "text-neutral-subtle": !props.isSerializable,
                         })}
                         title={props.isSerializable ? "This module is persistable" : "This module is not persistable"}
                     >

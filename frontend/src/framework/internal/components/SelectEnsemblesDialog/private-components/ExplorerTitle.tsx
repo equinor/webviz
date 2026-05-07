@@ -3,6 +3,8 @@ import type React from "react";
 import { ChevronRight } from "@mui/icons-material";
 
 import { EnsembleExplorerMode } from "../_hooks";
+import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/newComponents/Button";
 
 export type ExplorerTitleProps = {
     showExplorer: boolean;
@@ -11,10 +13,6 @@ export type ExplorerTitleProps = {
 };
 
 export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, explorerMode, onClose }) => {
-    if (!showExplorer) {
-        return <div className="pl-2 text-xl">Selected Ensembles</div>;
-    }
-
     let explorerTitle = "Add Ensemble";
     if (explorerMode === EnsembleExplorerMode.SELECT_OTHER_REFERENCE_ENSEMBLE) {
         explorerTitle = "Select Reference Ensemble";
@@ -23,15 +21,18 @@ export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, expl
     }
 
     return (
-        <div className="flex items-center space-x-1">
-            <span
-                className="pl-2 text-slate-400 text-xl hover:bg-gray-100 hover:text-slate-500 rounded-md cursor-pointer"
-                onClick={onClose}
-            >
-                Selected Ensembles
-                <ChevronRight />
-            </span>
-            <span className="text-black text-xl"> {explorerTitle}</span>
+        <div className="gap-horizontal-xs flex items-center">
+            {showExplorer ? (
+                <>
+                    <button className="selectable text-header-md" onClick={onClose}>
+                        Selected Ensembles
+                    </button>
+                    <ChevronRight />
+                    <span className="text-header-md py-vertical-2xs px-horizontal-3xs">{explorerTitle}</span>
+                </>
+            ) : (
+                <span className="text-header-md py-vertical-2xs px-horizontal-3xs">Selected Ensembles</span>
+            )}
         </div>
     );
 };

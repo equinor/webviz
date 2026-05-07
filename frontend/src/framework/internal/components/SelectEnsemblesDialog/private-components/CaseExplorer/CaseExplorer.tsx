@@ -21,7 +21,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { Switch } from "@lib/newComponents/Switch";
+import { Switch, SwitchItem } from "@lib/newComponents/Switch";
 
 import {
     makeCaseRowData,
@@ -272,7 +272,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="gap-vertical-xs flex h-full min-h-0 flex-col">
             <div className="gap-horizontal-xs flex flex-row">
                 <FieldCompositions.Default gridLayout={true} label="Field">
                     <PendingWrapper
@@ -287,67 +287,66 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </PendingWrapper>
                 </FieldCompositions.Default>
-                <div className="flex grow flex-row items-center gap-4">
-                    <Label position="left" text="Only my cases">
-                        <Tooltip title="Show only cases authored by me" enterDelay="medium">
-                            <Switch checked={showOnlyMyCases} onCheckedChange={handleCasesByMeChange} />
-                        </Tooltip>
-                    </Label>
-                    <Label position="left" text="Only official cases">
-                        <Tooltip title="Show only cases marked as official" enterDelay="medium">
-                            <Switch checked={showOnlyOfficialCases} onCheckedChange={handleOfficialCasesSwitchChange} />
-                        </Tooltip>
-                    </Label>
-                    <PendingWrapper
-                        isPending={casesQuery.isFetching && !casesQuery.isRefetching}
-                        errorMessage={casesQuery.error ? "Error loading cases" : undefined}
-                        className="h-full min-h-0 min-w-56 flex-1"
-                    >
-                        <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
-                            <Combobox
-                                value={selectedStandardResults}
-                                placeholder="Filter cases by Standard Results..."
-                                multiple
-                                items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
-                                disabled={casesStandardResults.length === 0}
-                                onValueChange={(value) => value && setSelectedStandardResults([...value])}
-                                clearable
-                            />
-                        </Tooltip>
-                    </PendingWrapper>
-                </div>
+                <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                    <SwitchItem
+                        checked={showOnlyMyCases}
+                        onCheckedChange={handleCasesByMeChange}
+                        label="Only my cases"
+                    />
+                </Tooltip>
+                <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                    <SwitchItem
+                        checked={showOnlyOfficialCases}
+                        onCheckedChange={handleOfficialCasesSwitchChange}
+                        label="Only official cases"
+                    />
+                </Tooltip>
+                <PendingWrapper
+                    isPending={casesQuery.isFetching && !casesQuery.isRefetching}
+                    errorMessage={casesQuery.error ? "Error loading cases" : undefined}
+                    className="h-full min-h-0 min-w-56 flex-1"
+                >
+                    <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
+                        <Combobox
+                            value={selectedStandardResults}
+                            placeholder="Filter cases by Standard Results..."
+                            multiple
+                            items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
+                            disabled={casesStandardResults.length === 0}
+                            onValueChange={(value) => value && setSelectedStandardResults([...value])}
+                            clearable
+                        />
+                    </Tooltip>
+                </PendingWrapper>
             </div>
             <StatusWrapper
                 className="min-h-0 grow"
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
-                <div className="flex h-full flex-col">
-                    <div className="mb-1 flex items-center justify-end gap-4">
-                        <div className="flex grow flex-col">
-                            <span className="text-sm text-slate-500">Select from {numberOfCases} cases</span>
-                            <span className="text-xs text-slate-400 italic">
-                                Last updated:{" "}
-                                {lastUpdatedMs ? (
-                                    <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} />
-                                ) : casesQuery.isFetching ? (
-                                    "Loading..."
+                <div className="gap-vertical-xs flex h-full flex-col">
+                    <div className="gap-horizontal-sm flex items-center">
+                        <span className="text-neutral-subtle text-body-sm">Select from {numberOfCases} cases</span>
+                        <span className="grow" />
+                        <span className="text-body-xs text-neutral-subtle italic">
+                            Last updated:{" "}
+                            {lastUpdatedMs ? (
+                                <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} />
+                            ) : casesQuery.isFetching ? (
+                                "Loading..."
+                            ) : (
+                                "Never"
+                            )}
+                        </span>
+                        <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
+                            <Button tone="accent" onClick={handleManualRefetch} variant="text">
+                                {isFieldsQueryRefreshing || isCasesQueryRefreshing ? (
+                                    <CircularProgress size="small" />
                                 ) : (
-                                    "Never"
+                                    <Refresh fontSize="inherit" />
                                 )}
-                            </span>
-                        </div>
-                        <div className="flex flex-col items-center">
-                            <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
-                                <Button tone="accent" onClick={handleManualRefetch} size="small" variant="text">
-                                    {isFieldsQueryRefreshing || isCasesQueryRefreshing ? (
-                                        <CircularProgress size="small" />
-                                    ) : (
-                                        <Refresh fontSize="inherit" />
-                                    )}
-                                    Refresh
-                                </Button>
-                            </Tooltip>
-                        </div>
+                                Refresh
+                            </Button>
+                        </Tooltip>
                     </div>
                     <div className="min-h-0 grow">
                         <Table

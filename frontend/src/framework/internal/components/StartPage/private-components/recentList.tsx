@@ -21,7 +21,6 @@ export type RecentListProps<TItemType, TQueryData = unknown> = {
     useQueryOptions: UseQueryOptions<TQueryData, any, any, any>;
     transformData: (data: TQueryData) => TItemType[];
     refetchIntervalMs?: number;
-    gridTemplate: string;
     renderItem: (item: TItemType) => React.ReactNode;
     makeItemKey: (item: TItemType) => string;
     onDialogIconClick?: () => void;
@@ -76,10 +75,10 @@ export function RecentList<TItemType, TQueryData = unknown>(
             }
             return (
                 <>
-                    <ul className="contents">
+                    <ul className="min-w-0">
                         {transformedData.map(function renderListItem(item) {
                             return (
-                                <li className="contents" key={props.makeItemKey(item)}>
+                                <li className="min-w-0" key={props.makeItemKey(item)}>
                                     {props.renderItem(item)}
                                 </li>
                             );
@@ -91,7 +90,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="gap-horizontal-xs flex flex-col">
+        <section className="gap-horizontal-xs flex min-w-0 flex-col">
             <div className="gap-vertical-xs flex items-center">
                 <Heading as="h4" className="grow">
                     {props.title}
@@ -111,9 +110,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>
-            <div
-                className={`mt-vertical-xs gap-vertical-xs gap-x-horizontal-xs gap-y-vertical-xs w-max-full grid min-h-16 grid-cols-[${props.gridTemplate}]`}
-            >
+            <div className="mt-vertical-xs gap-vertical-xs gap-x-horizontal-xs gap-y-vertical-xs min-h-16 min-w-0">
                 {makeContent()}
             </div>
         </section>

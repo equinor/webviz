@@ -139,9 +139,9 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     >
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
-                                <table className="text-ui-sm w-full table-fixed border-collapse border">
+                                <table className="text-body-sm bg-neutral w-full table-fixed">
                                     <SortableList.NoDropZone>
-                                        <thead className="sticky top-0 z-10">
+                                        <thead className="z-elevated px-horizontal-xs py-vertical-xs sticky top-0">
                                             <tr>
                                                 <th className="w-5 bg-slate-300 p-2">{/* For drag handle column */}</th>
                                                 <th className="w-20 bg-slate-300 p-2 text-left">Color</th>
@@ -211,9 +211,9 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     >
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
-                                <table className="text-ui-sm w-full table-fixed border-collapse border">
+                                <table className="text-body-sm bg-neutral w-full table-fixed">
                                     <SortableList.NoDropZone>
-                                        <thead className="sticky top-0 z-10">
+                                        <thead className="z-elevated px-horizontal-xs py-vertical-xs sticky top-0">
                                             <tr>
                                                 <th className="w-5 bg-slate-300 p-2">{/* For drag handle column */}</th>
                                                 <th className="w-20 bg-slate-300 p-2 text-left">Color</th>

@@ -46,6 +46,8 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         noMatchesText?: React.ReactNode;
         clearable?: boolean;
         renderItemAdornment?: (item: TValue) => React.ReactNode;
+        /** Only applies when `multiple` is true. "chips" (default) renders a chip per selection; "count" renders "X/N selected". */
+        selectionMode?: "chips" | "count";
     };
 
 function getItemValueKey<TValue>(item: TValue): React.Key {
@@ -69,6 +71,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         ),
         clearable = false,
         renderItemAdornment,
+        selectionMode = "chips",
         ...rest
     } = props;
     const baseProps = resolveWrapperProps(rest, "items", "loading", "errorText");
@@ -109,8 +112,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             {...baseProps}
         >
             <ComboboxBase.InputGroup className="form-element text-body-md gap-horizontal-sm py-vertical-xs pl-horizontal-sm flex cursor-text items-center -outline-offset-2">
-                {props.multiple ? (
-                    <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex grow flex-wrap items-center">
+                {props.multiple && selectionMode === "chips" ? (
+                    <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex w-full grow flex-wrap items-center">
                         <ComboboxBase.Value>
                             {(value) => (
                                 <React.Fragment>
@@ -132,20 +135,10 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                                     <span className="px-horizontal-3xs flex items-center">{label}</span>
                                                     <ComboboxBase.ChipRemove
                                                         aria-label={`Remove ${label}`}
-                                                        render={(subProps) => (
-                                                            <Button
-                                                                variant="text"
-                                                                tone="neutral"
-                                                                size="small"
-                                                                iconOnly
-                                                                {...subProps}
-                                                            >
-                                                                <span className="text-body-sm flex items-center">
-                                                                    <Clear fontSize="inherit" />
-                                                                </span>
-                                                            </Button>
-                                                        )}
-                                                    />
+                                                        className="selectable text-body-xs py-0"
+                                                    >
+                                                        <Clear fontSize="inherit" />
+                                                    </ComboboxBase.ChipRemove>
                                                 </ComboboxBase.Chip>
                                             );
                                         })}
@@ -158,6 +151,23 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                             )}
                         </ComboboxBase.Value>
                     </ComboboxBase.Chips>
+                ) : props.multiple && selectionMode === "count" ? (
+                    <>
+                        <div className="min-w-0 grow">
+                            <ComboboxBase.Value>
+                                {(value) =>
+                                    Array.isArray(value) && value.length > 0 ? (
+                                        <span className="text-neutral block truncate">
+                                            {`${value.length}/${flatItems.length} selected`}
+                                        </span>
+                                    ) : (
+                                        <span className="text-neutral-subtle block truncate">{placeholder}</span>
+                                    )
+                                }
+                            </ComboboxBase.Value>
+                        </div>
+                        <ComboboxBase.Input ref={ref} className="sr-only" />
+                    </>
                 ) : (
                     <>
                         {renderItemAdornment && (
@@ -178,21 +188,16 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                         />
                     </>
                 )}
-                <div className="pr-horizontal-xs gap-selectable-x box-border flex h-full items-center justify-center">
+                <div className="pr-horizontal-xs gap-selectable-x box-border flex h-full shrink-0 items-center justify-center">
                     {clearable && (
                         <ComboboxBase.Clear
-                            className="Clear box-border flex items-center justify-center"
+                            className="Clear selectable text-body-sm py-vertical-3xs! box-border flex items-center justify-center"
                             aria-label="Clear selection"
-                            render={(subProps) => (
-                                <Button variant="text" tone="neutral" size="small" iconOnly {...subProps}>
-                                    <span className="text-body-sm flex items-center">
-                                        <Clear fontSize="inherit" />
-                                    </span>
-                                </Button>
-                            )}
-                        />
+                        >
+                            <Clear fontSize="inherit" />
+                        </ComboboxBase.Clear>
                     )}
-                    {!props.multiple && (
+                    {(!props.multiple || selectionMode === "count") && (
                         <ComboboxBase.Trigger
                             className="box-border flex items-center justify-center"
                             aria-label="Open options"

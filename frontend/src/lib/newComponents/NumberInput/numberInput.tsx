@@ -57,12 +57,12 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
             )}
             {...baseRootProps}
         >
-            <NumberFieldBase.Group className="gap-vertical-3xs pl-vertical-xs flex grow items-center">
+            <NumberFieldBase.Group className="gap-vertical-3xs pl-vertical-xs flex min-w-0 grow items-center">
                 {defaultedProps.startAdornment}
                 {defaultedProps.unitPlacement === "start" && wrappedUnitIcon}
 
                 <NumberFieldBase.Input
-                    className="py-vertical-3xs grow outline-0 data-disabled:cursor-not-allowed"
+                    className="py-vertical-3xs min-w-0 grow outline-0 data-disabled:cursor-not-allowed"
                     ref={ref}
                     placeholder={defaultedProps.placeholder}
                 />
@@ -70,7 +70,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 {defaultedProps.unitPlacement === "end" && wrappedUnitIcon}
                 {defaultedProps.endAdornment}
 
-                <div className="text-body-xs max-h-full flex-col">
+                <div className="text-body-xs max-h-full shrink-0 flex-col">
                     <NumberFieldBase.Increment className="size-icon-xs not-disabled:hover:bg-accent-hover disabled:text-disabled text-accent-subtle block shrink not-disabled:cursor-pointer">
                         <Add fontSize="inherit" className="h-1/2" />
                     </NumberFieldBase.Increment>

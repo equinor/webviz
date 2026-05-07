@@ -13,6 +13,9 @@ import { formatDate } from "@lib/utils/dates";
 
 import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
 import type { CaseRowData } from "./_types";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Button } from "@lib/newComponents/Button";
+import { Combobox } from "@lib/newComponents/Combobox";
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
     localStorage.setItem(stateName, value);
@@ -76,12 +79,13 @@ export function makeCaseTableColumns(
             sizeInPercent: 10,
             filter: {
                 render: (props) => (
-                    <TagPicker
-                        selection={(props.value as string[]) ?? []}
-                        showListAsSelectionCount={true}
-                        tagOptions={statusOptions.map((elm) => ({ label: elm, value: elm }))}
+                    <Combobox
+                        multiple
+                        selectionMode="count"
+                        value={(props.value as string[]) ?? []}
+                        items={statusOptions.map((elm) => ({ label: elm, value: elm }))}
                         disabled={disabledFilterComponents.disableStatusComponent}
-                        onChange={(selectedItems) => props.onFilterChange(selectedItems)}
+                        onValueChange={(selectedItems) => props.onFilterChange(selectedItems)}
                     />
                 ),
                 predicate: (selectedItems: string[], dataValue) => predicateStatusSelection(selectedItems, dataValue),
@@ -96,7 +100,7 @@ export function makeCaseTableColumns(
             filter: {
                 render: (props) => (
                     <DateRangePicker
-                        className="overflow-hidden border border-gray-300 rounded focus-within:border-indigo-500 webviz-eds-date-range-picker --compact"
+                        className="overflow-hidden"
                         value={props.value ?? { from: null, to: null }}
                         onChange={props.onFilterChange}
                     />
@@ -168,20 +172,22 @@ function filterInput(props: ColumnFilterImplementationProps<string>, disableFilt
         throw Error(`Default filter expects string value, but received type '${typeof value}'`);
 
     return (
-        <Input
-            type="text"
+        <TextInput
             value={value}
             disabled={disableFilter}
             placeholder="Filter ..."
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}
             endAdornment={
-                <IconButton
-                    className="align-middle focus:outline-2 outline-blue-300"
+                <Button
                     title="Clear filter"
                     onClick={() => props.onFilterChange(null)}
+                    iconOnly
+                    variant="text"
+                    tone="neutral"
+                    size="small"
                 >
                     <Close fontSize="inherit" />
-                </IconButton>
+                </Button>
             }
         />
     );

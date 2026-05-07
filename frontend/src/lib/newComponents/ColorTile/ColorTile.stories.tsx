@@ -1,17 +1,28 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
+import { ColorPalette } from "@lib/utils/ColorPalette";
+
 import { ColorTile } from "./index";
 
-const meta: Meta<typeof ColorTile> = {
-    title: "Components/ColorTile",
-    component: ColorTile,
+const { Tile, Group: TileGroup } = ColorTile;
+
+const SAMPLE_PALETTE = new ColorPalette({
+    id: "sample",
+    name: "Sample",
+    colors: ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"],
+});
+
+// ─── Tile ────────────────────────────────────────────────────────────────────
+
+const tileMeta: Meta<typeof Tile> = {
+    title: "Components/ColorTile/Tile",
+    component: Tile,
     parameters: {
         layout: "centered",
         docs: {
             description: {
                 component: `
-A small colored square used to represent a color value inline — e.g. inside a
-\`ColorSelect\` button or a legend row.
+A small colored square used to represent a color value inline.
 
 - **\`size\`** controls the tile height (\`small\` = 16px, \`default\` = 20px, \`large\` = 24px).
 - **\`interactive\`** adds a hover outline and brightness effect for clickable tiles.
@@ -35,25 +46,25 @@ A small colored square used to represent a color value inline — e.g. inside a
     },
 };
 
-export default meta;
-type Story = StoryObj<typeof ColorTile>;
+export default tileMeta;
+type TileStory = StoryObj<typeof Tile>;
 
-export const Default: Story = {};
+export const Default: TileStory = {};
 
-export const Sizes: Story = {
+export const Sizes: TileStory = {
     parameters: {
         docs: { description: { story: "All three size variants side by side." } },
     },
     render: () => (
         <div className="flex items-center gap-3">
-            <ColorTile color="#3b82f6" size="small" />
-            <ColorTile color="#3b82f6" size="default" />
-            <ColorTile color="#3b82f6" size="large" />
+            <Tile color="#3b82f6" size="small" />
+            <Tile color="#3b82f6" size="default" />
+            <Tile color="#3b82f6" size="large" />
         </div>
     ),
 };
 
-export const Interactive: Story = {
+export const Interactive: TileStory = {
     parameters: {
         docs: {
             description: { story: "`interactive` adds a hover outline and brightness lift — hover to see the effect." },
@@ -64,7 +75,7 @@ export const Interactive: Story = {
     },
 };
 
-export const Grouped: Story = {
+export const Grouped: TileStory = {
     parameters: {
         docs: {
             description: {
@@ -77,34 +88,26 @@ export const Grouped: Story = {
     render: () => (
         <div className="flex">
             {["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"].map((color) => (
-                <ColorTile key={color} color={color} grouped />
+                <Tile key={color} color={color} grouped />
             ))}
         </div>
     ),
 };
 
-export const Palette: Story = {
+// ─── Group ───────────────────────────────────────────────────────────────────
+
+export const Group: StoryObj<typeof TileGroup> = {
     parameters: {
         docs: {
-            description: { story: "A grid of swatches across multiple rows." },
+            description: {
+                story: "Renders all colors of a `ColorPalette` as a flush swatch row (`gap=false`) or a spaced row (`gap=true`).",
+            },
         },
     },
-    render: () => {
-        const rows = [
-            ["#fecaca", "#fed7aa", "#fef08a", "#bbf7d0", "#bfdbfe", "#ddd6fe"],
-            ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6"],
-            ["#991b1b", "#9a3412", "#854d0e", "#166534", "#1e40af", "#5b21b6"],
-        ];
-        return (
-            <div className="flex flex-col">
-                {rows.map((row, i) => (
-                    <div key={i} className="flex">
-                        {row.map((color) => (
-                            <ColorTile key={color} color={color} size="large" grouped interactive />
-                        ))}
-                    </div>
-                ))}
-            </div>
-        );
-    },
+    render: () => (
+        <div className="flex w-64 flex-col gap-4">
+            <TileGroup colorPalette={SAMPLE_PALETTE} />
+            <TileGroup colorPalette={SAMPLE_PALETTE} gap />
+        </div>
+    ),
 };
