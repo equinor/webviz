@@ -376,14 +376,14 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     function createEnsembleRealizationFilterList() {
         if (!ensembleSet.hasAnyEnsembles()) {
             return (
-                <div className="flex flex-col items-center justify-center h-full p-4 text-center text-gray-400">
+                <div className="flex h-full flex-col items-center justify-center p-4 text-center text-gray-400">
                     No ensembles available. Please add ensembles to the session to enable realization filtering.
                 </div>
             );
         }
 
         return (
-            <div className="flex flex-col p-2 gap-2 overflow-y-auto">
+            <div className="px-horizontal-xs py-vertical-2xs flex flex-col gap-2 overflow-y-auto">
                 <div className="grow space-y-4">
                     {ensembleSet.getEnsembleArray().map((ensemble) => {
                         const ensembleIdent = ensemble.getIdent();

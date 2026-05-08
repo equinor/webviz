@@ -1,5 +1,6 @@
 import React from "react";
 
+import { ExpandMore, MoreVert, Save, Share } from "@mui/icons-material";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "./index";
@@ -12,7 +13,8 @@ const meta: Meta<typeof Button> = {
         docs: {
             description: {
                 component: `
-A general-purpose button that triggers an action or event.
+A general-purpose button that triggers an action or event. Use \`Button.Group\` to compose
+multiple buttons into a unified control — including split buttons with a dropdown trigger.
 
 ## Props
 
@@ -35,9 +37,13 @@ import { Button } from "@lib/newComponents/Button";
   Save
 </Button>
 
-<Button variant="outlined" tone="danger" onClick={() => remove()}>
-  Delete
-</Button>
+// Split button
+<Button.Group>
+  <Button variant="contained" tone="accent" onClick={() => save()}>Save</Button>
+  <Button variant="contained" tone="accent" iconOnly aria-label="More options">
+    <ExpandMore fontSize="inherit" />
+  </Button>
+</Button.Group>
 \`\`\`
                 `.trim(),
             },
@@ -71,7 +77,9 @@ type Story = StoryObj<typeof Button>;
 
 export const Playground: Story = {
     parameters: {
-        docs: { description: { story: "Fully interactive — use the controls panel to explore every prop combination." } },
+        docs: {
+            description: { story: "Fully interactive — use the controls panel to explore every prop combination." },
+        },
     },
     args: {
         children: "Button",
@@ -104,62 +112,30 @@ export const Outlined: Story = {
 export const TextVariant: Story = {
     name: "Text",
     parameters: {
-        docs: { description: { story: "No border or background — lowest visual weight. Use for tertiary or inline actions." } },
+        docs: {
+            description: {
+                story: "No border or background — lowest visual weight. Use for tertiary or inline actions.",
+            },
+        },
     },
     args: { children: "Learn more", variant: "text", tone: "accent" },
 };
 
 // ─── Tones ────────────────────────────────────────────────────────────────────
 
-export const AccentTone: Story = {
-    name: "Tone / Accent",
+export const AllTones: Story = {
+    name: "Tones",
     parameters: {
-        docs: { description: { story: "Default accent colour — use for primary, confirmatory actions." } },
-    },
-    args: { children: "Confirm", variant: "contained", tone: "accent" },
-};
-
-export const NeutralTone: Story = {
-    name: "Tone / Neutral",
-    parameters: {
-        docs: { description: { story: "Neutral colour — use for secondary or dismiss actions." } },
-    },
-    args: { children: "Cancel", variant: "contained", tone: "neutral" },
-};
-
-export const DangerTone: Story = {
-    name: "Tone / Danger",
-    parameters: {
-        docs: { description: { story: "Red danger colour — use for destructive actions like delete or remove." } },
-    },
-    args: { children: "Delete", variant: "contained", tone: "danger" },
-};
-
-// ─── Sizes ────────────────────────────────────────────────────────────────────
-
-export const AllSizes: Story = {
-    parameters: {
-        docs: { description: { story: "Three sizes side-by-side. Heights map to the `selectable-sm/md/lg` design tokens." } },
-    },
-    render: () => (
-        <div className="flex items-center gap-3">
-            <Button size="small" variant="contained" tone="accent">Small</Button>
-            <Button size="default" variant="contained" tone="accent">Default</Button>
-            <Button size="large" variant="contained" tone="accent">Large</Button>
-        </div>
-    ),
-};
-
-// ─── Variants × Tones matrix ──────────────────────────────────────────────────
-
-export const AllVariants: Story = {
-    parameters: {
-        docs: { description: { story: "Every variant and tone combination at a glance." } },
+        docs: {
+            description: {
+                story: "Accent (primary/confirmatory), Neutral (secondary/dismiss), and Danger (destructive) — shown across all three variants.",
+            },
+        },
     },
     render: () => {
         const variants = ["contained", "outlined", "text"] as const;
         const tones = ["accent", "neutral", "danger"] as const;
-        const labels: Record<typeof tones[number], string> = {
+        const labels: Record<(typeof tones)[number], string> = {
             accent: "Confirm",
             neutral: "Cancel",
             danger: "Delete",
@@ -169,7 +145,7 @@ export const AllVariants: Story = {
             <div className="flex flex-col gap-4">
                 {variants.map((variant) => (
                     <div key={variant} className="flex items-center gap-3">
-                        <span className="w-24 text-sm text-right capitalize opacity-50">{variant}</span>
+                        <span className="w-24 text-right text-sm capitalize opacity-50">{variant}</span>
                         {tones.map((tone) => (
                             <Button key={tone} variant={variant} tone={tone}>
                                 {labels[tone]}
@@ -182,17 +158,51 @@ export const AllVariants: Story = {
     },
 };
 
+// ─── Sizes ────────────────────────────────────────────────────────────────────
+
+export const AllSizes: Story = {
+    name: "Sizes",
+    parameters: {
+        docs: {
+            description: { story: "Three sizes side-by-side. Heights map to the `selectable-sm/md/lg` design tokens." },
+        },
+    },
+    render: () => (
+        <div className="flex items-center gap-3">
+            <Button size="small" variant="contained" tone="accent">
+                Small
+            </Button>
+            <Button size="default" variant="contained" tone="accent">
+                Default
+            </Button>
+            <Button size="large" variant="contained" tone="accent">
+                Large
+            </Button>
+        </div>
+    ),
+};
+
 // ─── Disabled ─────────────────────────────────────────────────────────────────
 
 export const Disabled: Story = {
     parameters: {
-        docs: { description: { story: "Disabled state across all variants — interaction is blocked and the button appears muted." } },
+        docs: {
+            description: {
+                story: "Disabled state across all variants — interaction is blocked and the button appears muted.",
+            },
+        },
     },
     render: () => (
         <div className="flex items-center gap-3">
-            <Button variant="contained" tone="accent" disabled>Contained</Button>
-            <Button variant="outlined" tone="accent" disabled>Outlined</Button>
-            <Button variant="text" tone="accent" disabled>Text</Button>
+            <Button variant="contained" tone="accent" disabled>
+                Contained
+            </Button>
+            <Button variant="outlined" tone="accent" disabled>
+                Outlined
+            </Button>
+            <Button variant="text" tone="accent" disabled>
+                Text
+            </Button>
         </div>
     ),
 };
@@ -223,13 +233,21 @@ export const Pressed: Story = {
 
 export const Round: Story = {
     parameters: {
-        docs: { description: { story: "Pass `round` for a pill shape — useful for tags, chips, or compact controls." } },
+        docs: {
+            description: { story: "Pass `round` for a pill shape — useful for tags, chips, or compact controls." },
+        },
     },
     render: () => (
         <div className="flex items-center gap-3">
-            <Button variant="contained" tone="accent" round>Pill</Button>
-            <Button variant="outlined" tone="neutral" round>Pill</Button>
-            <Button variant="text" tone="accent" round>Pill</Button>
+            <Button variant="contained" tone="accent" round>
+                Pill
+            </Button>
+            <Button variant="outlined" tone="neutral" round>
+                Pill
+            </Button>
+            <Button variant="text" tone="accent" round>
+                Pill
+            </Button>
         </div>
     ),
 };
@@ -248,9 +266,105 @@ export const IconOnly: Story = {
     },
     render: () => (
         <div className="flex items-center gap-3">
-            <Button variant="contained" tone="accent" iconOnly aria-label="Add" size="small">+</Button>
-            <Button variant="contained" tone="accent" iconOnly aria-label="Add">+</Button>
-            <Button variant="contained" tone="accent" iconOnly aria-label="Add" size="large">+</Button>
+            <Button variant="contained" tone="accent" iconOnly aria-label="More" size="small">
+                <MoreVert fontSize="inherit" />
+            </Button>
+            <Button variant="contained" tone="accent" iconOnly aria-label="More">
+                <MoreVert fontSize="inherit" />
+            </Button>
+            <Button variant="contained" tone="accent" iconOnly aria-label="More" size="large">
+                <MoreVert fontSize="inherit" />
+            </Button>
         </div>
     ),
+};
+
+// ─── Button.Group ─────────────────────────────────────────────────────────────
+
+export const GroupBasic: Story = {
+    name: "Group / Basic",
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Wrap buttons in `Button.Group` to align them as a unified toolbar. " +
+                    "Use the `outlined` variant so adjacent borders form a natural divider.",
+            },
+        },
+    },
+    render: () => (
+        <Button.Group>
+            <Button variant="outlined" tone="neutral">
+                Copy
+            </Button>
+            <Button variant="outlined" tone="neutral">
+                <Share fontSize="inherit" />
+                Share
+            </Button>
+            <Button variant="outlined" tone="danger">
+                Delete
+            </Button>
+        </Button.Group>
+    ),
+};
+
+export const GroupSplit: Story = {
+    name: "Group / Split button",
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "A split button combines a primary action with a dropdown trigger for secondary options. " +
+                    "The chevron-down button should open a menu — wire it to your preferred popover/menu component.",
+            },
+        },
+    },
+    render: () => {
+        const [saved, setSaved] = React.useState(false);
+
+        return (
+            <div className="flex flex-col items-center gap-6">
+                {/* Accent / contained */}
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs opacity-40">contained · accent</span>
+                    <Button.Group split>
+                        <Button variant="contained" tone="accent" onClick={() => setSaved((v) => !v)}>
+                            <Save fontSize="inherit" />
+                            {saved ? "Saved" : "Save"}
+                        </Button>
+                        <Button variant="contained" tone="accent" iconOnly aria-label="More save options">
+                            <ExpandMore fontSize="inherit" />
+                        </Button>
+                    </Button.Group>
+                </div>
+
+                {/* Outlined / neutral */}
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs opacity-40">outlined · neutral</span>
+                    <Button.Group split>
+                        <Button variant="outlined" tone="neutral">
+                            <Share fontSize="inherit" />
+                            Share
+                        </Button>
+                        <Button variant="outlined" tone="neutral" iconOnly aria-label="More share options">
+                            <ExpandMore fontSize="inherit" />
+                        </Button>
+                    </Button.Group>
+                </div>
+
+                {/* Small size */}
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs opacity-40">contained · accent · small</span>
+                    <Button.Group split>
+                        <Button variant="contained" tone="accent" size="small">
+                            Save
+                        </Button>
+                        <Button variant="contained" tone="accent" size="small" iconOnly aria-label="More save options">
+                            <ExpandMore fontSize="inherit" />
+                        </Button>
+                    </Button.Group>
+                </div>
+            </div>
+        );
+    },
 };

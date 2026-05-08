@@ -4,14 +4,14 @@ import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { Dialog } from "@lib/newComponents/Dialog";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -136,25 +136,11 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
     );
 
     return (
-        <Dialog
-            open={props.open}
-            onClose={handleCancel}
-            title="Edit session metadata"
-            modal
-            showCloseCross
-            actions={
-                <>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
-                        Cancel
-                    </Button>
-                    <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
-                        {isSaving && <CircularProgress size="small" />} Save
-                    </Button>
-                </>
-            }
-            zIndex={60}
-        >
-            <form id={formId} className="flex items-center gap-4" onSubmit={handleSave}>
+        <Dialog.Popup open={props.open} onOpenChange={handleCancel} modal width={600}>
+            <Dialog.Header closeIconVisible>
+                <Dialog.Title>Edit session metadata</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body layoutClassName="flex items-center gap-4">
                 <DashboardPreview height={100} width={100} layout={layout} />
                 <div className="flex min-w-0 grow flex-col gap-2">
                     <CharLimitedInput
@@ -179,7 +165,15 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         multiline
                     />
                 </div>
-            </form>
-        </Dialog>
+            </Dialog.Body>
+            <Dialog.Actions>
+                <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                    Cancel
+                </Button>
+                <Button variant="contained" disabled={isSaving} type="submit" form={formId}>
+                    {isSaving && <CircularProgress size="small" />} Save
+                </Button>
+            </Dialog.Actions>
+        </Dialog.Popup>
     );
 }

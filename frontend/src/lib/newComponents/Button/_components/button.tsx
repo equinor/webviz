@@ -5,7 +5,7 @@ import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/wrapperProps";
 
 export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & {
     variant?: "contained" | "outlined" | "text";
@@ -82,7 +82,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             data-pressed={props.pressed ? "" : undefined}
             className={resolveClassNames(
                 props.layoutClassName,
-                "focusable inline-flex cursor-pointer items-center rounded transition-colors duration-150 focus-visible:outline-0",
+                "focusable inline-flex cursor-pointer items-center rounded transition-colors duration-150 focus-visible:outline-0 [[data-group]_&:not(:first-child)]:rounded-l-none [[data-group]_&:not(:last-child)]:rounded-r-none",
                 {
                     "aspect-square rounded-full": props.round,
                     rounded: !props.round,

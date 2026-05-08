@@ -369,29 +369,33 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const saveEnabled = persistenceInfo.hasChanges && isPersisted;
 
     return (
-        <div className={resolveClassNames("flex w-14 items-center justify-center gap-4 p-2 text-sm")}>
+        <div className={resolveClassNames("gap-horizontal-xs flex items-center justify-center p-2 text-sm")}>
             {isSaving ? (
                 <CircularProgress size="medium-small" className="text-amber-600" />
             ) : (
-                <Dropdown>
-                    <Tooltip title="Save session options">
-                        {/* @ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
-                        <Button variant="text" tone="accent" render={<MenuButton />}>
-                            <Save fontSize="small" />
-                            <ArrowDropDown fontSize="small" />
-                        </Button>
-                    </Tooltip>
-                    <Menu anchorOrigin="bottom-start">
-                        <MenuItem onClick={handleSaveClick} disabled={!saveEnabled}>
-                            <Save fontSize="small" className="mr-2" />
-                            Save session
-                        </MenuItem>
-                        <MenuItem onClick={handleSaveAsClick}>
-                            <SaveAs fontSize="small" className="mr-2" />
-                            Save session as ...
-                        </MenuItem>
-                    </Menu>
-                </Dropdown>
+                <Button.Group split>
+                    <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
+                        <Save fontSize="small" />
+                    </Button>
+                    <Dropdown>
+                        <Tooltip title="Save session options">
+                            {/* @ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
+                            <Button variant="contained" tone="accent" render={<MenuButton />}>
+                                <ArrowDropDown fontSize="small" />
+                            </Button>
+                        </Tooltip>
+                        <Menu anchorOrigin="bottom-start">
+                            <MenuItem onClick={handleSaveClick} disabled={!saveEnabled}>
+                                <Save fontSize="small" className="mr-2" />
+                                Save session
+                            </MenuItem>
+                            <MenuItem onClick={handleSaveAsClick}>
+                                <SaveAs fontSize="small" className="mr-2" />
+                                Save session as ...
+                            </MenuItem>
+                        </Menu>
+                    </Dropdown>
+                </Button.Group>
             )}
         </div>
     );

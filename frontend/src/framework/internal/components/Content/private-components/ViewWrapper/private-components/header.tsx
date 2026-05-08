@@ -35,6 +35,8 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Separator } from "@lib/newComponents/Separator";
+import { Button } from "@lib/newComponents/Button";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -125,11 +127,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "relative flex touch-none items-center gap-0.5 px-1 text-lg shadow-sm select-none",
+                "px-horizontal-xs gap-horizontal-xs shadow-elevation-raised py-vertical-4xs relative flex touch-none items-center text-lg select-none",
                 {
-                    "bg-red-100": hasErrors || invalidPersistedState,
-                    "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
-                    "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState,
+                    "bg-danger-canvas": hasErrors || invalidPersistedState,
+                    "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
+                    "bg-neutral-canvas": !hasErrors && !props.isMinimized && !invalidPersistedState,
                 },
             )}
             onDoubleClick={handleDoubleClick}
@@ -146,7 +148,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
 
-            <HeaderSeparator />
+            <Separator orientation="vertical" />
 
             <StatusIndicator
                 workbench={props.workbench}
@@ -154,7 +156,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isMinimized={props.isMinimized}
             />
 
-            <HeaderSeparator />
+            <Separator orientation="vertical" />
 
             <DataChannelButtons
                 workbench={props.workbench}
@@ -164,27 +166,50 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isSnapshotMode={isSnapshot}
             />
 
-            <HeaderSeparator />
+            <Separator orientation="vertical" />
 
             {props.isMaximized ? (
-                <DenseIconButton onPointerDown={handleRestoreClick} onPointerUp={handlePointerUp} title="Restore">
-                    <CloseFullscreen fontSize="inherit" />
-                </DenseIconButton>
+                <Tooltip title="Restore">
+                    <Button
+                        onPointerDown={handleRestoreClick}
+                        onPointerUp={handlePointerUp}
+                        title="Restore"
+                        variant="text"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <CloseFullscreen fontSize="inherit" />
+                    </Button>
+                </Tooltip>
             ) : (
-                <DenseIconButton onPointerDown={handleMaximizeClick} onPointerUp={handlePointerUp} title="Maximize">
-                    <OpenInFull fontSize="inherit" />
-                </DenseIconButton>
+                <Tooltip title="Maximize">
+                    <Button
+                        onPointerDown={handleMaximizeClick}
+                        onPointerUp={handlePointerUp}
+                        title="Maximize"
+                        variant="text"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <OpenInFull fontSize="inherit" />
+                    </Button>
+                </Tooltip>
             )}
-
-            <DenseIconButton
-                onPointerDown={handleRemoveClick}
-                onPointerUp={handlePointerUp}
-                disabled={isSnapshot}
-                title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}
-                colorScheme={DenseIconButtonColorScheme.DANGER}
-            >
-                <Close fontSize="inherit" />
-            </DenseIconButton>
+            <Tooltip title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
+                <Button
+                    onPointerDown={handleRemoveClick}
+                    onPointerUp={handlePointerUp}
+                    disabled={isSnapshot}
+                    tone="danger"
+                    variant="text"
+                    size="small"
+                    iconOnly
+                >
+                    <Close fontSize="inherit" />
+                </Button>
+            </Tooltip>
         </div>
     );
 };
@@ -232,10 +257,13 @@ function ModuleTitle(props: ModuleTitleProps) {
 
     return (
         <div
-            className={resolveClassNames("flex min-w-0 grow items-center p-1.5 text-sm font-bold", {
-                "cursor-grabbing": props.isDragged,
-                "cursor-move": !props.isDragged && !props.isSnapshotMode,
-            })}
+            className={resolveClassNames(
+                "py-vertical-3xs text-body-sm font-bolder gap-horizontal-sm flex min-w-0 grow items-center",
+                {
+                    "cursor-grabbing": props.isDragged,
+                    "cursor-move": !props.isDragged && !props.isSnapshotMode,
+                },
+            )}
             onPointerDown={handlePointerDown}
         >
             <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>
@@ -244,7 +272,7 @@ function ModuleTitle(props: ModuleTitleProps) {
             {devToolsVisible && (
                 <span
                     title={props.moduleInstance.getId()}
-                    className="mr-1 ml-2 min-w-0 overflow-hidden text-xs font-light text-ellipsis whitespace-nowrap"
+                    className="text-body-xs min-w-0 overflow-hidden font-light text-ellipsis whitespace-nowrap"
                 >
                     {props.moduleInstance.getId()}
                 </span>
@@ -511,13 +539,18 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (stateIndicators.length === 0) {
         stateIndicators.push(
-            <DenseIconButton
-                key="header-module-log"
-                onPointerDown={handleShowLogClick}
-                title="Show complete log for this module"
-            >
-                <History fontSize="inherit" />
-            </DenseIconButton>,
+            <Tooltip title="Show complete log for this module" key="header-module-log">
+                <Button
+                    key="header-module-log"
+                    onPointerDown={handleShowLogClick}
+                    variant="text"
+                    tone="neutral"
+                    size="small"
+                    iconOnly
+                >
+                    <History fontSize="inherit" />
+                </Button>
+            </Tooltip>,
         );
     }
 
