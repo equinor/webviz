@@ -272,7 +272,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <div className="gap-vertical-xs flex h-full min-h-0 flex-col">
+        <div className="gap-vertical-3xs flex h-full min-h-0 flex-col">
             <div className="gap-horizontal-xs flex flex-row">
                 <FieldCompositions.Default gridLayout={true} label="Field">
                     <PendingWrapper
@@ -323,7 +323,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 className="min-h-0 grow"
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
             >
-                <div className="gap-vertical-xs flex h-full flex-col">
+                <div className="gap-vertical-3xs flex h-full flex-col">
                     <div className="gap-horizontal-sm flex items-center">
                         <span className="text-neutral-subtle text-body-sm">Select from {numberOfCases} cases</span>
                         <span className="grow" />

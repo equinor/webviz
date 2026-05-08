@@ -17,6 +17,12 @@ const meta: Meta<typeof NumberInput> = {
         readOnly: {
             control: "boolean",
         },
+        min: {
+            control: "number",
+        },
+        max: {
+            control: "number",
+        },
         step: {
             control: "number",
         },

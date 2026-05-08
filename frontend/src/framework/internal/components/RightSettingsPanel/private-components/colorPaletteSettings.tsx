@@ -47,6 +47,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     }
 
     function handleColorPaletteStepsChanged(newSteps: number | null, type: ColorScaleDiscreteSteps) {
+        console.debug(newSteps);
         if (newSteps === null) return;
         props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings().setStepsForType(type, newSteps);
         setSteps({

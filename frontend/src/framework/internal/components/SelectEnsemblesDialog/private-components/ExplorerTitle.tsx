@@ -5,6 +5,7 @@ import { ChevronRight } from "@mui/icons-material";
 import { EnsembleExplorerMode } from "../_hooks";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type ExplorerTitleProps = {
     showExplorer: boolean;
@@ -24,9 +25,11 @@ export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, expl
         <div className="gap-horizontal-xs flex items-center">
             {showExplorer ? (
                 <>
-                    <button className="selectable text-header-md" onClick={onClose}>
-                        Selected Ensembles
-                    </button>
+                    <Tooltip title="Back to selected ensembles" placement="bottom">
+                        <button className="selectable text-header-md" onClick={onClose}>
+                            Selected Ensembles
+                        </button>
+                    </Tooltip>
                     <ChevronRight />
                     <span className="text-header-md py-vertical-2xs px-horizontal-3xs">{explorerTitle}</span>
                 </>

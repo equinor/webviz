@@ -14,6 +14,8 @@ import { Select, type SelectOption } from "@lib/newComponents/Select";
 import type { InternalRegularEnsembleSetting } from "../types";
 
 import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 
 export type EnsembleExplorerProps = {
     disableQueries: boolean;
@@ -112,28 +114,32 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     }
 
     return (
-        <div className="bg-surface gap-vertical-sm flex h-full flex-col">
-            <CaseExplorer
-                disableQueries={props.disableQueries}
-                onCaseSelectionChange={handleCaseSelectedChange}
-            />
-            <Label text="Ensemble">
-                <StatusWrapper
-                    className={!selectedCaseUuid ? "text-gray-400" : undefined}
-                    infoMessage={!selectedCaseUuid ? "No case selected" : undefined}
-                >
-                    <Select
-                        options={ensembleOptions}
-                        value={activeEnsembleName ? [activeEnsembleName] : []}
-                        onChange={handleRegularEnsembleChanged}
-                        disabled={!selectedCaseUuid}
-                        size={5}
-                        width="100%"
-                        placeholder="No ensembles available..."
+        <>
+            <Dialog.Body layoutClassName="grow min-h-0">
+                <div className="gap-vertical-sm relative flex h-full w-full flex-col">
+                    <CaseExplorer
+                        disableQueries={props.disableQueries}
+                        onCaseSelectionChange={handleCaseSelectedChange}
                     />
-                </StatusWrapper>
-            </Label>
-            <div className="flex justify-end gap-4">
+                    <FieldCompositions.Default label="Ensemble" layoutClassName="w-full">
+                        <StatusWrapper
+                            className={`w-full ${!selectedCaseUuid ? "text-neutral-subtle" : ""}`}
+                            infoMessage={!selectedCaseUuid ? "No case selected" : undefined}
+                        >
+                            <Select
+                                options={ensembleOptions}
+                                value={activeEnsembleName ? [activeEnsembleName] : []}
+                                onChange={handleRegularEnsembleChanged}
+                                disabled={!selectedCaseUuid}
+                                size={5}
+                                width="100%"
+                                placeholder="No ensembles available..."
+                            />
+                        </StatusWrapper>
+                    </FieldCompositions.Default>
+                </div>
+            </Dialog.Body>
+            <Dialog.Actions>
                 <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="text">
                     Close
                 </Button>
@@ -154,7 +160,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                         </>
                     )}
                 </Button>
-            </div>
-        </div>
+            </Dialog.Actions>
+        </>
     );
 }
