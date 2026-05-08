@@ -16,7 +16,7 @@ type Story = StoryObj<typeof Tooltip.Root>;
 
 export const Default: Story = {
     render: () => (
-        <Tooltip.Root open>
+        <Tooltip.Root>
             <Tooltip.Trigger>Hover me</Tooltip.Trigger>
             <Tooltip.Popup>This is a tooltip</Tooltip.Popup>
         </Tooltip.Root>
