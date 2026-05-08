@@ -24,7 +24,7 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/components/Badge";
+import { Badge } from "@lib/newComponents/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
@@ -397,7 +397,7 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
                     disabled={props.isSnapshotMode}
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >
-                    <Badge badgeContent={numOutgoingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                    <Badge badgeContent={numOutgoingConnections} invisible={props.isMinimized}>
                         <Output fontSize="inherit" />
                     </Badge>
                 </DenseIconButton>
@@ -408,7 +408,7 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
                     onPointerDown={handleReceiverPointerDown}
                     onPointerUp={handleReceiversPointerUp}
                 >
-                    <Badge badgeContent={numIncomingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                    <Badge badgeContent={numIncomingConnections} invisible={props.isMinimized}>
                         <Input fontSize="inherit" />
                     </Badge>
                 </DenseIconButton>
@@ -498,28 +498,25 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
             <Dropdown key="header-status-messages">
                 <Tooltip title="Show status messages" placement="bottom">
                     <MenuButton className="flex items-center justify-center rounded-sm p-1 text-sm hover:bg-blue-200">
-                        <Badge
-                            badgeContent={numErrors + numWarnings}
-                            className="flex p-0.5"
-                            invisible={props.isMinimized}
-                            title={badgeTitle}
-                        >
-                            <Error
-                                fontSize="inherit"
-                                color="error"
-                                style={{ display: numErrors === 0 ? "none" : "block" }}
-                            />
-                            <div className="overflow-hidden">
-                                <Warning
+                        <Tooltip title={badgeTitle} placement="bottom">
+                            <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
+                                <Error
                                     fontSize="inherit"
-                                    color="warning"
-                                    style={{ display: numWarnings === 0 ? "none" : "block" }}
-                                    className={resolveClassNames({
-                                        "-ml-3": numErrors > 0,
-                                    })}
+                                    color="error"
+                                    style={{ display: numErrors === 0 ? "none" : "block" }}
                                 />
-                            </div>
-                        </Badge>
+                                <div className="overflow-hidden">
+                                    <Warning
+                                        fontSize="inherit"
+                                        color="warning"
+                                        style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                        className={resolveClassNames({
+                                            "-ml-3": numErrors > 0,
+                                        })}
+                                    />
+                                </div>
+                            </Badge>
+                        </Tooltip>
                     </MenuButton>
                 </Tooltip>
                 <Menu anchorOrigin="bottom-end">
