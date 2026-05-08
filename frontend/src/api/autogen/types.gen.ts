@@ -1299,17 +1299,27 @@ export type RelpermRealizationData_api = {
      */
     satnum: number;
     /**
+     * Curve Data
+     */
+    curve_data: Array<RelpermCurveData_api>;
+};
+
+/**
+ * RelpermRealizationDataResponse
+ */
+export type RelpermRealizationDataResponse_api = {
+    /**
      * Saturation Name
      */
     saturation_name: string;
     /**
-     * Saturation Values
+     * Saturation Values By Satnum
      */
-    saturation_values: Array<number>;
+    saturation_values_by_satnum: Array<RelpermSaturationValues_api>;
     /**
-     * Curve Data
+     * Realization Data
      */
-    curve_data: Array<RelpermCurveData_api>;
+    realization_data: Array<RelpermRealizationData_api>;
 };
 
 /**
@@ -1328,6 +1338,20 @@ export type RelpermSaturationAxis_api = {
      * Capillary Pressure Curve Names
      */
     capillary_pressure_curve_names: Array<string>;
+};
+
+/**
+ * RelpermSaturationValues
+ */
+export type RelpermSaturationValues_api = {
+    /**
+     * Satnum
+     */
+    satnum: number;
+    /**
+     * Saturation Values
+     */
+    saturation_values: Array<number>;
 };
 
 /**
@@ -6258,11 +6282,9 @@ export type GetRelpermRealizationDataError_api =
 
 export type GetRelpermRealizationDataResponses_api = {
     /**
-     * Response Get Relperm Realization Data
-     *
      * Successful Response
      */
-    200: Array<RelpermRealizationData_api>;
+    200: RelpermRealizationDataResponse_api;
 };
 
 export type GetRelpermRealizationDataResponse_api =

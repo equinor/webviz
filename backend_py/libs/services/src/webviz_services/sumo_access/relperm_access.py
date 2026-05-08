@@ -1,4 +1,5 @@
 import logging
+from bisect import bisect_left
 from enum import Enum
 from typing import Sequence, cast
 
@@ -282,12 +283,24 @@ def create_relperm_realization_data(
     if filtered_dataframe.is_empty():
         raise NoDataError(f"No relperm data found for SATNUMs {selected_satnums}", Service.SUMO)
 
+    partitions = filtered_dataframe.partition_by(["REAL", "SATNUM"], maintain_order=True)
+    shared_saturation_values_by_satnum = create_shared_saturation_values_by_satnum(partitions, saturation_axis_name)
+
     ret_arr: list[RelpermRealizationData] = []
-    for partition in filtered_dataframe.partition_by(["REAL", "SATNUM"], maintain_order=True):
+    for partition in partitions:
         realization = int(partition["REAL"][0])
         satnum = int(partition["SATNUM"][0])
+        source_saturation_values = partition[saturation_axis_name].to_list()
+        target_saturation_values = shared_saturation_values_by_satnum[satnum]
         curve_data = [
-            RelpermCurveData(curve_name=curve_name, curve_values=partition[curve_name].to_list())
+            RelpermCurveData(
+                curve_name=curve_name,
+                curve_values=interpolate_curve_values(
+                    source_saturation_values,
+                    partition[curve_name].to_list(),
+                    target_saturation_values,
+                ),
+            )
             for curve_name in curve_names
         ]
         ret_arr.append(
@@ -295,12 +308,83 @@ def create_relperm_realization_data(
                 realization=realization,
                 satnum=satnum,
                 saturation_name=saturation_axis_name,
-                saturation_values=partition[saturation_axis_name].to_list(),
+                saturation_values=target_saturation_values,
                 curve_data=curve_data,
             )
         )
 
     return ret_arr
+
+
+def create_shared_saturation_values_by_satnum(
+    partitions: Sequence[pl.DataFrame], saturation_axis_name: str
+) -> dict[int, list[float]]:
+    saturation_values_by_satnum: dict[int, list[list[float]]] = {}
+
+    for partition in partitions:
+        satnum = int(partition["SATNUM"][0])
+        saturation_values_by_satnum.setdefault(satnum, []).append(partition[saturation_axis_name].to_list())
+
+    shared_saturation_values_by_satnum: dict[int, list[float]] = {}
+    for satnum, saturation_values_arr in saturation_values_by_satnum.items():
+        min_common_saturation = max(min(saturation_values) for saturation_values in saturation_values_arr)
+        max_common_saturation = min(max(saturation_values) for saturation_values in saturation_values_arr)
+        shared_saturation_values = sorted(
+            {
+                value
+                for saturation_values in saturation_values_arr
+                for value in saturation_values
+                if min_common_saturation <= value <= max_common_saturation
+            }
+        )
+        if not shared_saturation_values:
+            raise NoDataError(f"No common saturation interval found for SATNUM {satnum}", Service.SUMO)
+        shared_saturation_values_by_satnum[satnum] = shared_saturation_values
+
+    return shared_saturation_values_by_satnum
+
+
+def interpolate_curve_values(
+    source_saturation_values: Sequence[float],
+    source_curve_values: Sequence[float],
+    target_saturation_values: Sequence[float],
+) -> list[float]:
+    source_points = sorted(zip(source_saturation_values, source_curve_values, strict=True))
+    source_saturation_values = [point[0] for point in source_points]
+    source_curve_values = [point[1] for point in source_points]
+
+    return [
+        interpolate_single_value(source_saturation_values, source_curve_values, target_saturation_value)
+        for target_saturation_value in target_saturation_values
+    ]
+
+
+def interpolate_single_value(
+    source_saturation_values: Sequence[float],
+    source_curve_values: Sequence[float],
+    target_saturation_value: float,
+) -> float:
+    insertion_index = bisect_left(source_saturation_values, target_saturation_value)
+    if (
+        insertion_index < len(source_saturation_values)
+        and source_saturation_values[insertion_index] == target_saturation_value
+    ):
+        return float(source_curve_values[insertion_index])
+
+    if insertion_index == 0:
+        return float(source_curve_values[0])
+    if insertion_index >= len(source_saturation_values):
+        return float(source_curve_values[-1])
+
+    lower_saturation_value = source_saturation_values[insertion_index - 1]
+    upper_saturation_value = source_saturation_values[insertion_index]
+    lower_curve_value = source_curve_values[insertion_index - 1]
+    upper_curve_value = source_curve_values[insertion_index]
+    interpolation_fraction = (target_saturation_value - lower_saturation_value) / (
+        upper_saturation_value - lower_saturation_value
+    )
+
+    return float(lower_curve_value + interpolation_fraction * (upper_curve_value - lower_curve_value))
 
 
 def _make_saturation_axis_if_present(

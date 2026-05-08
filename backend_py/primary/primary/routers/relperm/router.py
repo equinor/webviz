@@ -57,7 +57,7 @@ async def get_relperm_realization_data(
             description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included."
         ),
     ] = None,
-) -> list[schemas.RelpermRealizationData]:
+) -> schemas.RelpermRealizationDataResponse:
     realizations: list[int] | None = None
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
@@ -71,4 +71,4 @@ async def get_relperm_realization_data(
         realizations=realizations,
     )
 
-    return [converters.to_api_realization_data(item) for item in realization_data]
+    return converters.to_api_realization_data_response(realization_data)

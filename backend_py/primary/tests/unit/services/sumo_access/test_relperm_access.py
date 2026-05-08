@@ -1,7 +1,10 @@
 import polars as pl
+import pyarrow as pa
 import pytest
 
 from webviz_services.service_exceptions import InvalidDataError, NoDataError
+from webviz_services.sumo_access import _arrow_table_loader
+from webviz_services.sumo_access._arrow_table_loader import ArrowTableLoader
 from webviz_services.sumo_access.relperm_access import (
     RelpermFamily,
     create_relperm_realization_data,
@@ -108,6 +111,24 @@ def test_create_relperm_realization_data_groups_by_realization_and_satnum() -> N
     assert realization_data[1].curve_data[0].curve_values == [0.0, 0.9]
 
 
+def test_create_relperm_realization_data_interpolates_to_shared_saturation_axis() -> None:
+    dataframe = pl.DataFrame(
+        {
+            "REAL": [0, 0, 1, 1, 1],
+            "SATNUM": [1, 1, 1, 1, 1],
+            "SW": [0.0, 1.0, 0.0, 0.5, 1.0],
+            "KRW": [0.0, 1.0, 0.0, 0.25, 1.0],
+        }
+    )
+
+    realization_data = create_relperm_realization_data(dataframe, "SW", ["KRW"], [1])
+
+    assert realization_data[0].saturation_values == [0.0, 0.5, 1.0]
+    assert realization_data[0].curve_data[0].curve_values == [0.0, 0.5, 1.0]
+    assert realization_data[1].saturation_values == [0.0, 0.5, 1.0]
+    assert realization_data[1].curve_data[0].curve_values == [0.0, 0.25, 1.0]
+
+
 def test_create_relperm_realization_data_raises_when_filtered_data_is_empty() -> None:
     dataframe = pl.DataFrame(
         {
@@ -120,3 +141,37 @@ def test_create_relperm_realization_data_raises_when_filtered_data_is_empty() ->
 
     with pytest.raises(NoDataError):
         create_relperm_realization_data(dataframe, "SW", ["KRW"], [2])
+
+
+async def test_arrow_table_loader_single_realization_uses_standard_result(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_filter_kwargs: dict[str, object] = {}
+
+    class FakeTable:
+        async def to_arrow_async(self) -> pa.Table:
+            return pa.table({"A": [1]})
+
+    class FakeTableSearchContext:
+        async def length_async(self) -> int:
+            return 1
+
+        async def getitem_async(self, index: int) -> FakeTable:
+            assert index == 0
+            return FakeTable()
+
+    class FakeSearchContext:
+        def __init__(self, sumo: object) -> None:
+            self.tables = self
+
+        def filter(self, **kwargs: object) -> FakeTableSearchContext:
+            captured_filter_kwargs.update(kwargs)
+            return FakeTableSearchContext()
+
+    monkeypatch.setattr(_arrow_table_loader, "SearchContext", FakeSearchContext)
+
+    table_loader = ArrowTableLoader(sumo_client=object(), case_uuid="case", ensemble_name="ensemble")  # type: ignore[arg-type]
+    table_loader.require_standard_result("relperm")
+    table_loader.require_table_name("relperm")
+
+    await table_loader.get_single_realization_async(3)
+
+    assert captured_filter_kwargs["standard_result"] == "relperm"

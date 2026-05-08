@@ -197,6 +197,7 @@ class ArrowTableLoader:
             name=self._req_table_name,
             content=self._req_content_types,
             tagname=self._req_tagname,
+            standard_result=self._req_standard_result,
         )
 
         table_count = await sc_tables.length_async()
@@ -221,7 +222,10 @@ class ArrowTableLoader:
         return arrow_table
 
     def _make_req_info_str(self) -> str:
-        info_str = f"table_name={self._req_table_name}, content_type={self._req_content_types}"
+        info_str = (
+            f"table_name={self._req_table_name}, content_type={self._req_content_types}, "
+            f"standard_result={self._req_standard_result}"
+        )
         if self._req_tagname is not None:
             info_str += f", tagname={self._req_tagname}"
         return info_str

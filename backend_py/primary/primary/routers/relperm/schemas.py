@@ -19,9 +19,18 @@ class RelpermCurveData(BaseModel):
     curve_values: list[float]
 
 
+class RelpermSaturationValues(BaseModel):
+    satnum: int
+    saturation_values: list[float]
+
+
 class RelpermRealizationData(BaseModel):
     realization: int
     satnum: int
-    saturation_name: str
-    saturation_values: list[float]
     curve_data: list[RelpermCurveData]
+
+
+class RelpermRealizationDataResponse(BaseModel):
+    saturation_name: str
+    saturation_values_by_satnum: list[RelpermSaturationValues]
+    realization_data: list[RelpermRealizationData]

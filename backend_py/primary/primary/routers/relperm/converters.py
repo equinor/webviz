@@ -23,10 +23,28 @@ def to_api_realization_data(realization_data: RelpermRealizationData) -> schemas
     return schemas.RelpermRealizationData(
         realization=realization_data.realization,
         satnum=realization_data.satnum,
-        saturation_name=realization_data.saturation_name,
-        saturation_values=realization_data.saturation_values,
         curve_data=[
             schemas.RelpermCurveData(curve_name=curve.curve_name, curve_values=curve.curve_values)
             for curve in realization_data.curve_data
         ],
+    )
+
+
+def to_api_realization_data_response(
+    realization_data_arr: list[RelpermRealizationData],
+) -> schemas.RelpermRealizationDataResponse:
+    saturation_name = realization_data_arr[0].saturation_name if realization_data_arr else ""
+    saturation_values_by_satnum: dict[int, list[float]] = {}
+
+    for realization_data in realization_data_arr:
+        if realization_data.satnum not in saturation_values_by_satnum:
+            saturation_values_by_satnum[realization_data.satnum] = realization_data.saturation_values
+
+    return schemas.RelpermRealizationDataResponse(
+        saturation_name=saturation_name,
+        saturation_values_by_satnum=[
+            schemas.RelpermSaturationValues(satnum=satnum, saturation_values=saturation_values)
+            for satnum, saturation_values in sorted(saturation_values_by_satnum.items())
+        ],
+        realization_data=[to_api_realization_data(item) for item in realization_data_arr],
     )
