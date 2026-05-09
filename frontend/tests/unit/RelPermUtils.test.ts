@@ -15,6 +15,7 @@ import {
     CurveType,
     GroupBy,
     RelPermMetric,
+    RelPermStatistic,
     YAxisScale,
     type RelPermCurveEntry,
     type RelPermEnsembleRealizationData,
@@ -107,6 +108,7 @@ describe("RelPerm fanchart statistics", () => {
             minValues: [0, 10, 20],
             p90Values: [2, 12, 22],
             p50Values: [10, 20, 30],
+            meanValues: [10, 20, 30],
             p10Values: [18, 28, 38],
             maxValues: [20, 30, 40],
         });
@@ -184,10 +186,73 @@ describe("RelPerm layout", () => {
             { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
         );
 
-        const traces = builder.makeTraces(ColorBy.ENSEMBLE, GroupBy.NONE);
+        const traces = builder.makeIndividualRealizationTraces(ColorBy.ENSEMBLE, GroupBy.NONE);
 
         expect(traces[0].line).toMatchObject({ color: "#123456" });
+        expect(traces[0].line).toMatchObject({ width: 0.75 });
+        expect(traces[0].opacity).toBe(0.35);
         expect(traces[1].line).toMatchObject({ color: "#abcdef" });
+    });
+
+    it("can render statistic lines without a fan", () => {
+        const builder = new RelPermPlotBuilder(
+            {
+                getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), realization: 1 }],
+                getMetricValues: () => [],
+            },
+            [],
+            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+        );
+
+        const traces = builder.makeStatisticLineTraces(ColorBy.CURVE, GroupBy.NONE, [
+            RelPermStatistic.P50,
+            RelPermStatistic.MEAN,
+        ]);
+
+        expect(traces).toHaveLength(2);
+        expect(traces[0]).toMatchObject({ name: "KRW", y: [0, 0.75, 1], showlegend: true });
+        expect(traces[1]).toMatchObject({ name: "KRW", y: [0, 0.75, 1], showlegend: false });
+        expect(traces[1].line).toMatchObject({ width: 3 });
+    });
+
+    it("uses one legend item per color group across visualization layers", () => {
+        const builder = new RelPermPlotBuilder(
+            {
+                getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), realization: 1 }],
+                getMetricValues: () => [],
+            },
+            [],
+            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+        );
+        const shownLegendColorByValues = new Set<string>();
+        const traces = [
+            ...builder.makeStatisticFanTraces(ColorBy.CURVE, GroupBy.NONE, shownLegendColorByValues),
+            ...builder.makeStatisticLineTraces(ColorBy.CURVE, GroupBy.NONE, [RelPermStatistic.P50], shownLegendColorByValues),
+            ...builder.makeIndividualRealizationTraces(ColorBy.CURVE, GroupBy.NONE, shownLegendColorByValues),
+        ];
+
+        expect(traces.filter((trace) => trace.showlegend)).toHaveLength(1);
+        expect(traces.filter((trace) => trace.showlegend)[0]).toMatchObject({ name: "KRW", legendgroup: "KRW" });
+        expect(new Set(traces.map((trace) => trace.legendgroup))).toEqual(new Set(["KRW"]));
+    });
+
+    it("uses stable legend proxy traces for color groups", () => {
+        const builder = new RelPermPlotBuilder(
+            {
+                getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), curveName: "KROW" }],
+                getMetricValues: () => [],
+            },
+            [],
+            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+        );
+        const shownLegendColorByValues = new Set<string>();
+        const legendTraces = builder.makeLegendTraces(ColorBy.CURVE, shownLegendColorByValues);
+        const statisticTraces = builder.makeStatisticLineTraces(ColorBy.CURVE, GroupBy.NONE, [RelPermStatistic.P50], shownLegendColorByValues);
+
+        expect(legendTraces).toHaveLength(2);
+        expect(legendTraces[0]).toMatchObject({ name: "KRW", legendgroup: "KRW", showlegend: true });
+        expect(legendTraces[0].line).toMatchObject({ width: 2.5 });
+        expect(statisticTraces.every((trace) => trace.showlegend === false)).toBe(true);
     });
 
     it("uses the same color keys for traces and data channels", () => {

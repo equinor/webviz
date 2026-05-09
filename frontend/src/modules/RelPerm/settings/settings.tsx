@@ -9,6 +9,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
@@ -23,9 +24,10 @@ import {
     CurveType,
     GroupBy,
     REL_PERM_METRIC_LABELS,
-    VisualizationType,
+    REL_PERM_STATISTIC_LABELS,
     YAxisScale,
     type RelPermMetric,
+    type RelPermStatistic,
 } from "../typesAndEnums";
 
 import {
@@ -33,8 +35,11 @@ import {
     selectedCurveTypeAtom,
     selectedGroupByAtom,
     selectedMetricAtom,
-    selectedVisualizationTypeAtom,
+    selectedStatisticsAtom,
     selectedYAxisScaleAtom,
+    showIndividualRealizationsAtom,
+    showStatisticalFanAtom,
+    showStatisticalLinesAtom,
     userSelectedCurveNamesAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedSaturationAxisNameAtom,
@@ -58,11 +63,6 @@ import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from 
 const CURVE_TYPE_LABELS: Record<CurveType, string> = {
     [CurveType.RELPERM]: "Relative permeability",
     [CurveType.CAPILLARY_PRESSURE]: "Capillary pressure",
-};
-
-const VISUALIZATION_TYPE_LABELS: Record<VisualizationType, string> = {
-    [VisualizationType.INDIVIDUAL_REALIZATIONS]: "Individual realizations",
-    [VisualizationType.STATISTICAL_FANCHART]: "Statistical fanchart",
 };
 
 const COLOR_BY_LABELS: Record<ColorBy, string> = {
@@ -132,7 +132,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const setValidRealizationNumbers = useSetAtom(validRealizationNumbersAtom);
 
     const [selectedCurveType, setSelectedCurveType] = useAtom(selectedCurveTypeAtom);
-    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
+    const [showIndividualRealizations, setShowIndividualRealizations] = useAtom(showIndividualRealizationsAtom);
+    const [showStatisticalLines, setShowStatisticalLines] = useAtom(showStatisticalLinesAtom);
+    const [showStatisticalFan, setShowStatisticalFan] = useAtom(showStatisticalFanAtom);
+    const [selectedStatistics, setSelectedStatistics] = useAtom(selectedStatisticsAtom);
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedYAxisScale, setSelectedYAxisScale] = useAtom(selectedYAxisScaleAtom);
@@ -197,17 +200,20 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
     }
 
-    function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, colorBy: string) {
+    function handleColorByChange(colorBy: ColorBy) {
         const shouldForceSatnumColor = selectedSatnums.length > 1 && selectedGroupBy !== GroupBy.SATNUM;
-        setSelectedColorBy(shouldForceSatnumColor ? ColorBy.SATNUM : (colorBy as ColorBy));
+        setSelectedColorBy(shouldForceSatnumColor ? ColorBy.SATNUM : colorBy);
     }
 
-    function handleGroupByChange(_: React.ChangeEvent<HTMLInputElement>, groupBy: string) {
-        const nextGroupBy = groupBy as GroupBy;
+    function handleGroupByChange(nextGroupBy: GroupBy) {
         setSelectedGroupBy(nextGroupBy);
         if (selectedSatnums.length > 1 && nextGroupBy !== GroupBy.SATNUM) {
             setSelectedColorBy(ColorBy.SATNUM);
         }
+    }
+
+    function handleStatisticsChange(statistics: string[]) {
+        setSelectedStatistics(statistics as RelPermStatistic[]);
     }
 
     const tableNamesArePending = tableNameQueries.some((query) => query.isFetching);
@@ -306,23 +312,43 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </SettingWrapper>
                 </CollapsibleGroup>
                 <CollapsibleGroup expanded={true} title="Plot" contentClassName="flex flex-col gap-2">
-                    <SettingWrapper label="Visualization">
-                        <RadioGroup
-                            options={makeEnumOptions(VISUALIZATION_TYPE_LABELS)}
-                            value={selectedVisualizationType}
-                            onChange={(_, value) => setSelectedVisualizationType(value as VisualizationType)}
+                    <SettingWrapper label="Display">
+                        <div className="flex flex-col gap-1">
+                            <Checkbox
+                                label="Individual realizations"
+                                checked={showIndividualRealizations}
+                                onChange={(_, checked) => setShowIndividualRealizations(checked)}
+                            />
+                            <Checkbox
+                                label="Statistic lines"
+                                checked={showStatisticalLines}
+                                onChange={(_, checked) => setShowStatisticalLines(checked)}
+                            />
+                            <Checkbox
+                                label="Statistic fan"
+                                checked={showStatisticalFan}
+                                onChange={(_, checked) => setShowStatisticalFan(checked)}
+                            />
+                        </div>
+                    </SettingWrapper>
+                    <SettingWrapper label="Statistic lines">
+                        <TagPicker
+                            tagOptions={makeEnumOptions(REL_PERM_STATISTIC_LABELS)}
+                            selection={selectedStatistics}
+                            onChange={handleStatisticsChange}
+                            placeholder="Select statistics..."
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Color by">
-                        <RadioGroup
-                            options={makeEnumOptions(COLOR_BY_LABELS)}
+                        <Dropdown<ColorBy>
+                            options={makeEnumDropdownOptions(COLOR_BY_LABELS)}
                             value={selectedColorBy}
                             onChange={handleColorByChange}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Subplot by">
-                        <RadioGroup
-                            options={makeEnumOptions(GROUP_BY_LABELS)}
+                        <Dropdown<GroupBy>
+                            options={makeEnumDropdownOptions(GROUP_BY_LABELS)}
                             value={selectedGroupBy}
                             onChange={handleGroupByChange}
                         />
@@ -367,4 +393,8 @@ function makeStringTagOptions(values: string[]): TagOption[] {
 
 function makeEnumOptions<T extends string>(labels: Record<T, string>): SelectOption[] {
     return Object.entries(labels).map(([value, label]) => ({ label: label as string, value }));
+}
+
+function makeEnumDropdownOptions<T extends string>(labels: Record<T, string>): DropdownOption<T>[] {
+    return Object.entries(labels).map(([value, label]) => ({ label: label as string, value: value as T }));
 }

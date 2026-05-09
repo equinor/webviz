@@ -3,15 +3,18 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { ColorBy, CurveType, GroupBy, RelPermMetric, VisualizationType, YAxisScale } from "../typesAndEnums";
+import { ColorBy, CurveType, GroupBy, RelPermMetric, RelPermStatistic, YAxisScale } from "../typesAndEnums";
 
 import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
     selectedGroupByAtom,
     selectedMetricAtom,
-    selectedVisualizationTypeAtom,
+    selectedStatisticsAtom,
     selectedYAxisScaleAtom,
+    showIndividualRealizationsAtom,
+    showStatisticalFanAtom,
+    showStatisticalLinesAtom,
     userSelectedCurveNamesAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedSaturationAxisNameAtom,
@@ -26,7 +29,10 @@ export type SerializedSettings = {
     selectedCurveNames: string[];
     selectedSatnums: number[];
     selectedCurveType: CurveType;
-    selectedVisualizationType: VisualizationType;
+    showIndividualRealizations: boolean;
+    showStatisticalLines: boolean;
+    showStatisticalFan: boolean;
+    selectedStatistics: RelPermStatistic[];
     selectedColorBy: ColorBy;
     selectedGroupBy: GroupBy;
     selectedYAxisScale: YAxisScale;
@@ -41,7 +47,10 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         selectedCurveNames: { elements: { type: "string" } },
         selectedSatnums: { elements: { type: "int16" } },
         selectedCurveType: { enum: Object.values(CurveType) },
-        selectedVisualizationType: { enum: Object.values(VisualizationType) },
+        showIndividualRealizations: { type: "boolean" },
+        showStatisticalLines: { type: "boolean" },
+        showStatisticalFan: { type: "boolean" },
+        selectedStatistics: { elements: { enum: Object.values(RelPermStatistic) } },
         selectedColorBy: { enum: Object.values(ColorBy) },
         selectedGroupBy: { enum: Object.values(GroupBy) },
         selectedYAxisScale: { enum: Object.values(YAxisScale) },
@@ -58,7 +67,10 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     selectedCurveNames: get(userSelectedCurveNamesAtom),
     selectedSatnums: get(userSelectedSatnumsAtom),
     selectedCurveType: get(selectedCurveTypeAtom),
-    selectedVisualizationType: get(selectedVisualizationTypeAtom),
+    showIndividualRealizations: get(showIndividualRealizationsAtom),
+    showStatisticalLines: get(showStatisticalLinesAtom),
+    showStatisticalFan: get(showStatisticalFanAtom),
+    selectedStatistics: get(selectedStatisticsAtom),
     selectedColorBy: get(selectedColorByAtom),
     selectedGroupBy: get(selectedGroupByAtom),
     selectedYAxisScale: get(selectedYAxisScaleAtom),
@@ -78,7 +90,10 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, userSelectedCurveNamesAtom, raw.selectedCurveNames);
     setIfDefined(set, userSelectedSatnumsAtom, raw.selectedSatnums);
     setIfDefined(set, selectedCurveTypeAtom, raw.selectedCurveType);
-    setIfDefined(set, selectedVisualizationTypeAtom, raw.selectedVisualizationType);
+    setIfDefined(set, showIndividualRealizationsAtom, raw.showIndividualRealizations);
+    setIfDefined(set, showStatisticalLinesAtom, raw.showStatisticalLines);
+    setIfDefined(set, showStatisticalFanAtom, raw.showStatisticalFan);
+    setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
     setIfDefined(set, selectedColorByAtom, raw.selectedColorBy);
     setIfDefined(set, selectedGroupByAtom, raw.selectedGroupBy);
     setIfDefined(set, selectedYAxisScaleAtom, raw.selectedYAxisScale);

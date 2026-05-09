@@ -11,8 +11,11 @@ import {
     selectedCurveTypeAtom,
     selectedGroupByAtom,
     selectedMetricAtom,
-    selectedVisualizationTypeAtom,
+    selectedStatisticsAtom,
     selectedYAxisScaleAtom,
+    showIndividualRealizationsAtom,
+    showStatisticalFanAtom,
+    showStatisticalLinesAtom,
     userSelectedCurveNamesAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedSaturationAxisNameAtom,
@@ -143,7 +146,10 @@ export const visualizationSettingsAtom = atom((get) => {
     const shouldForceSatnumColor = get(selectedSatnumsAtom).length > 1 && selectedGroupBy !== GroupBy.SATNUM;
 
     return {
-        visualizationType: get(selectedVisualizationTypeAtom),
+        showIndividualRealizations: get(showIndividualRealizationsAtom),
+        showStatisticalLines: get(showStatisticalLinesAtom),
+        showStatisticalFan: get(showStatisticalFanAtom),
+        selectedStatistics: get(selectedStatisticsAtom),
         colorBy: shouldForceSatnumColor ? ColorBy.SATNUM : get(selectedColorByAtom),
         groupBy: selectedGroupBy,
         yAxisScale: get(selectedYAxisScaleAtom),

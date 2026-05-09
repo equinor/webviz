@@ -11,7 +11,6 @@ import { Plot } from "@modules/_shared/components/Plot";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
-import { VisualizationType } from "../typesAndEnums";
 
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { makeRelPermPlotTitle } from "./utils/createTitle";
@@ -87,10 +86,36 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             return ensemble ? [ensemble] : [];
         });
         const plotBuilder = new RelPermPlotBuilder(relPermDataAccessorStatus.dataAccessor, selectedEnsembles, colorSet);
-        const plotData =
-            visualizationSettings.visualizationType === VisualizationType.STATISTICAL_FANCHART
-                ? plotBuilder.makeFanchartTraces(visualizationSettings.colorBy, visualizationSettings.groupBy)
-                : plotBuilder.makeTraces(visualizationSettings.colorBy, visualizationSettings.groupBy);
+        const shownLegendColorByValues = new Set<string>();
+        const plotData = [
+            ...plotBuilder.makeLegendTraces(visualizationSettings.colorBy, shownLegendColorByValues),
+            ...(visualizationSettings.showStatisticalFan
+                ? plotBuilder.makeStatisticFanTraces(
+                      visualizationSettings.colorBy,
+                      visualizationSettings.groupBy,
+                      shownLegendColorByValues,
+                  )
+                : []),
+            ...(visualizationSettings.showStatisticalLines
+                ? plotBuilder.makeStatisticLineTraces(
+                      visualizationSettings.colorBy,
+                      visualizationSettings.groupBy,
+                      visualizationSettings.selectedStatistics,
+                      shownLegendColorByValues,
+                  )
+                : []),
+            ...(visualizationSettings.showIndividualRealizations
+                ? plotBuilder.makeIndividualRealizationTraces(
+                      visualizationSettings.colorBy,
+                      visualizationSettings.groupBy,
+                      shownLegendColorByValues,
+                  )
+                : []),
+        ];
+
+        if (plotData.length === 0) {
+            return <ContentMessage type={ContentMessageType.INFO}>No relperm plot layers selected.</ContentMessage>;
+        }
 
         return (
             <Plot

@@ -6,14 +6,15 @@ import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import {
     ColorBy,
     CurveType,
     GroupBy,
+    REL_PERM_STATISTIC_LABELS,
     type RelPermCurveEntry,
     type RelPermDataAccessorLike,
+    RelPermStatistic,
     YAxisScale,
 } from "../../typesAndEnums";
 
@@ -35,6 +36,7 @@ export type RelPermFanchartStatistics = {
     minValues: number[];
     p90Values: number[];
     p50Values: number[];
+    meanValues: number[];
     p10Values: number[];
     maxValues: number[];
 };
@@ -50,18 +52,47 @@ export class RelPermPlotBuilder {
         this._colorSet = colorSet;
     }
 
-    makeTraces(colorBy: ColorBy, groupBy: GroupBy): Partial<PlotData>[] {
+    makeLegendTraces(colorBy: ColorBy, shownLegendColorByValues = new Set<string>()): Partial<PlotData>[] {
+        const colorByValueMap = this.makeColorByValueMap(colorBy);
+        const firstEntryByColorByValue = new Map<string, RelPermCurveEntry>();
+
+        for (const entry of this._dataAccessor.getEntries()) {
+            const colorByValue = this.makeColorByValue(entry, colorBy);
+            if (!firstEntryByColorByValue.has(colorByValue)) {
+                firstEntryByColorByValue.set(colorByValue, entry);
+            }
+        }
+
+        return Array.from(firstEntryByColorByValue.entries()).map(([colorByValue, entry]) => {
+            shownLegendColorByValues.add(colorByValue);
+            return {
+                x: [null],
+                y: [null],
+                type: "scatter",
+                mode: "lines",
+                name: this.makeColorByDisplayName(entry, colorBy),
+                legendgroup: colorByValue,
+                showlegend: true,
+                line: { color: colorByValueMap.get(colorByValue) ?? this._colorSet.getFirstColor(), width: 2.5 },
+                hoverinfo: "skip",
+            };
+        });
+    }
+
+    makeIndividualRealizationTraces(
+        colorBy: ColorBy,
+        groupBy: GroupBy,
+        shownLegendColorByValues = new Set<string>(),
+    ): Partial<PlotData>[] {
         const colorByValueMap = this.makeColorByValueMap(colorBy);
         const subplotIndexMap = this.makeSubplotIndexMap(groupBy);
-        const seenLegendGroups = new Set<string>();
 
         return this._dataAccessor.getEntries().map((entry) => {
             const colorByValue = this.makeColorByValue(entry, colorBy);
             const color = colorByValueMap.get(colorByValue) ?? this._colorSet.getFirstColor();
             const ensembleDisplayName = this.makeEnsembleDisplayName(entry.ensembleIdent);
             const axisReferences = makeAxisReferences(subplotIndexMap.get(this.makeSubplotValue(entry, groupBy)) ?? 0);
-            const showLegend = !seenLegendGroups.has(colorByValue);
-            seenLegendGroups.add(colorByValue);
+            const showLegend = shouldShowLegend(colorByValue, shownLegendColorByValues);
 
             return {
                 x: entry.saturationValues,
@@ -73,7 +104,8 @@ export class RelPermPlotBuilder {
                 name: this.makeColorByDisplayName(entry, colorBy),
                 legendgroup: colorByValue,
                 showlegend: showLegend,
-                line: { color, width: 1 },
+                opacity: 0.35,
+                line: { color, width: 0.75 },
                 hovertemplate:
                     `<b>${entry.curveName}</b>` +
                     `<br>Ensemble: ${ensembleDisplayName}` +
@@ -85,12 +117,65 @@ export class RelPermPlotBuilder {
         });
     }
 
-    makeFanchartTraces(colorBy: ColorBy, groupBy: GroupBy): Partial<PlotData>[] {
+    makeStatisticLineTraces(
+        colorBy: ColorBy,
+        groupBy: GroupBy,
+        selectedStatistics: RelPermStatistic[],
+        shownLegendColorByValues = new Set<string>(),
+    ): Partial<PlotData>[] {
         const traces: Partial<PlotData>[] = [];
-        const groups = this.makeFanchartGroups(colorBy, groupBy);
+        const groups = this.makeStatisticGroups(colorBy, groupBy);
         const colorByValueMap = this.makeColorByValueMap(colorBy);
         const subplotIndexMap = this.makeSubplotIndexMap(groupBy);
-        const seenLegendGroups = new Set<string>();
+
+        for (const group of groups) {
+            const compatibleEntries = filterEntriesWithSharedSaturationValues(group.entries);
+            const statistics = calculateFanchartStatistics(compatibleEntries);
+            if (!statistics) {
+                continue;
+            }
+
+            const color = colorByValueMap.get(group.colorByValue) ?? this._colorSet.getFirstColor();
+            const axisReferences = makeAxisReferences(subplotIndexMap.get(group.subplotValue) ?? 0);
+            const showLegend = shouldShowLegend(group.colorByValue, shownLegendColorByValues);
+            selectedStatistics.forEach((statistic, index) => {
+                traces.push({
+                    x: statistics.saturationValues,
+                    y: getStatisticValues(statistics, statistic),
+                    xaxis: axisReferences.xaxis,
+                    yaxis: axisReferences.yaxis,
+                    type: "scatter",
+                    mode: "lines",
+                    name: this.makeStatisticLegendName(group, colorBy),
+                    line: {
+                        color,
+                        width: statistic === RelPermStatistic.MEAN ? 3 : 2.25,
+                        dash: getStatisticLineDash(statistic),
+                    },
+                    legendgroup: group.colorByValue,
+                    showlegend: index === 0 && showLegend,
+                    customdata: statistics.saturationValues.map(() => REL_PERM_STATISTIC_LABELS[statistic]),
+                    hovertemplate:
+                        `<b>${group.name}</b>` +
+                        "<br>Statistic: %{customdata}" +
+                        "<br>Saturation: %{x}" +
+                        "<br>Value: %{y}<extra></extra>",
+                });
+            });
+        }
+
+        return traces;
+    }
+
+    makeStatisticFanTraces(
+        colorBy: ColorBy,
+        groupBy: GroupBy,
+        shownLegendColorByValues = new Set<string>(),
+    ): Partial<PlotData>[] {
+        const traces: Partial<PlotData>[] = [];
+        const groups = this.makeStatisticGroups(colorBy, groupBy);
+        const colorByValueMap = this.makeColorByValueMap(colorBy);
+        const subplotIndexMap = this.makeSubplotIndexMap(groupBy);
 
         for (const group of groups) {
             const compatibleEntries = filterEntriesWithSharedSaturationValues(group.entries);
@@ -104,8 +189,7 @@ export class RelPermPlotBuilder {
             if (!statistics) {
                 continue;
             }
-            const showLegend = !seenLegendGroups.has(group.colorByValue);
-            seenLegendGroups.add(group.colorByValue);
+            const showLegend = shouldShowLegend(group.colorByValue, shownLegendColorByValues);
 
             traces.push({
                 x: statistics.saturationValues,
@@ -117,7 +201,7 @@ export class RelPermPlotBuilder {
                 line: { color, width: 0 },
                 hoverinfo: "skip",
                 showlegend: false,
-                legendgroup: group.key,
+                legendgroup: group.colorByValue,
             });
             traces.push({
                 x: statistics.saturationValues,
@@ -131,7 +215,7 @@ export class RelPermPlotBuilder {
                 line: { color, width: 0 },
                 hoverinfo: "skip",
                 showlegend: false,
-                legendgroup: group.key,
+                legendgroup: group.colorByValue,
             });
             traces.push({
                 x: statistics.saturationValues,
@@ -145,7 +229,7 @@ export class RelPermPlotBuilder {
                 line: { color, width: 0 },
                 hoverinfo: "skip",
                 showlegend: false,
-                legendgroup: group.key,
+                legendgroup: group.colorByValue,
             });
             traces.push({
                 x: statistics.saturationValues,
@@ -158,36 +242,16 @@ export class RelPermPlotBuilder {
                 fillcolor: makeTransparentColor(color, 0.12),
                 line: { color, width: 0 },
                 hoverinfo: "skip",
-                showlegend: false,
-                legendgroup: group.key,
-            });
-            traces.push({
-                x: statistics.saturationValues,
-                y: statistics.p50Values,
-                xaxis: axisReferences.xaxis,
-                yaxis: axisReferences.yaxis,
-                type: "scatter",
-                mode: "lines",
-                name: this.makeFanchartLegendName(group, colorBy),
-                line: { color, width: 2 },
-                legendgroup: group.key,
+                name: this.makeStatisticLegendName(group, colorBy),
                 showlegend: showLegend,
-                customdata: makeFanchartCustomData(statistics),
-                hovertemplate:
-                    `<b>${group.name}</b>` +
-                    "<br>Saturation: %{x}" +
-                    "<br>Min: %{customdata[0]}" +
-                    "<br>P90: %{customdata[1]}" +
-                    "<br>P50: %{customdata[2]}" +
-                    "<br>P10: %{customdata[3]}" +
-                    "<br>Max: %{customdata[4]}<extra></extra>",
+                legendgroup: group.colorByValue,
             });
         }
 
         return traces;
     }
 
-    private makeFanchartLegendName(group: FanchartGroup, colorBy: ColorBy): string {
+    private makeStatisticLegendName(group: FanchartGroup, colorBy: ColorBy): string {
         if (colorBy === ColorBy.CURVE) {
             return group.colorByValue;
         }
@@ -285,7 +349,7 @@ export class RelPermPlotBuilder {
         return this.makeEnsembleDisplayName(entry.ensembleIdent);
     }
 
-    private makeFanchartGroups(colorBy: ColorBy, groupBy: GroupBy): FanchartGroup[] {
+    private makeStatisticGroups(colorBy: ColorBy, groupBy: GroupBy): FanchartGroup[] {
         const groups = new Map<string, FanchartGroup>();
 
         for (const entry of this._dataAccessor.getEntries()) {
@@ -392,6 +456,15 @@ function makeAxisReferences(subplotIndex: number): { xaxis: string; yaxis: strin
     return { xaxis: `x${subplotIndex + 1}`, yaxis: `y${subplotIndex + 1}` };
 }
 
+function shouldShowLegend(colorByValue: string, shownLegendColorByValues: Set<string>): boolean {
+    if (shownLegendColorByValues.has(colorByValue)) {
+        return false;
+    }
+
+    shownLegendColorByValues.add(colorByValue);
+    return true;
+}
+
 function filterEntriesWithSharedSaturationValues(entries: RelPermCurveEntry[]): RelPermCurveEntry[] {
     const referenceSaturationValues = entries[0]?.saturationValues;
     if (!referenceSaturationValues) {
@@ -411,6 +484,7 @@ export function calculateFanchartStatistics(entries: RelPermCurveEntry[]): RelPe
         minValues: calculateStatisticValues(entries, (values) => Math.min(...values)),
         p90Values: calculateStatisticValues(entries, computeReservesP90),
         p50Values: calculateStatisticValues(entries, computeP50),
+        meanValues: calculateStatisticValues(entries, calculateMean),
         p10Values: calculateStatisticValues(entries, computeReservesP10),
         maxValues: calculateStatisticValues(entries, (values) => Math.max(...values)),
     };
@@ -430,14 +504,24 @@ export function calculateStatisticValues(
     return values;
 }
 
-function makeFanchartCustomData(statistics: RelPermFanchartStatistics): string[][] {
-    return statistics.saturationValues.map((_, index) => [
-        formatNumber(statistics.minValues[index]),
-        formatNumber(statistics.p90Values[index]),
-        formatNumber(statistics.p50Values[index]),
-        formatNumber(statistics.p10Values[index]),
-        formatNumber(statistics.maxValues[index]),
-    ]);
+function calculateMean(values: number[]): number {
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function getStatisticValues(statistics: RelPermFanchartStatistics, statistic: RelPermStatistic): number[] {
+    if (statistic === RelPermStatistic.MIN) return statistics.minValues;
+    if (statistic === RelPermStatistic.P90) return statistics.p90Values;
+    if (statistic === RelPermStatistic.P50) return statistics.p50Values;
+    if (statistic === RelPermStatistic.MEAN) return statistics.meanValues;
+    if (statistic === RelPermStatistic.P10) return statistics.p10Values;
+    return statistics.maxValues;
+}
+
+function getStatisticLineDash(statistic: RelPermStatistic): PlotData["line"]["dash"] {
+    if (statistic === RelPermStatistic.MEAN) return "solid";
+    if (statistic === RelPermStatistic.P50) return "dot";
+    if (statistic === RelPermStatistic.MIN || statistic === RelPermStatistic.MAX) return "dash";
+    return "dashdot";
 }
 
 function arraysAreEqual(left: number[], right: number[]): boolean {

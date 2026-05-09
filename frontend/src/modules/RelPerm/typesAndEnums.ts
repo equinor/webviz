@@ -6,11 +6,6 @@ export enum CurveType {
     CAPILLARY_PRESSURE = "capillary_pressure",
 }
 
-export enum VisualizationType {
-    INDIVIDUAL_REALIZATIONS = "individual_realizations",
-    STATISTICAL_FANCHART = "statistical_fanchart",
-}
-
 export enum ColorBy {
     ENSEMBLE = "ensemble",
     CURVE = "curve",
@@ -34,6 +29,24 @@ export enum RelPermMetric {
     ENDPOINT_MAX = "endpoint_max",
     ENDPOINT_MIN = "endpoint_min",
 }
+
+export enum RelPermStatistic {
+    MIN = "min",
+    P90 = "p90",
+    P50 = "p50",
+    MEAN = "mean",
+    P10 = "p10",
+    MAX = "max",
+}
+
+export const REL_PERM_STATISTIC_LABELS: Record<RelPermStatistic, string> = {
+    [RelPermStatistic.MIN]: "Min",
+    [RelPermStatistic.P90]: "P90",
+    [RelPermStatistic.P50]: "P50",
+    [RelPermStatistic.MEAN]: "Mean",
+    [RelPermStatistic.P10]: "P10",
+    [RelPermStatistic.MAX]: "Max",
+};
 
 export const REL_PERM_METRIC_LABELS: Record<RelPermMetric, string> = {
     [RelPermMetric.MEAN_CURVE_VALUE]: "Mean curve value",
@@ -83,7 +96,10 @@ export type RelPermMetricValue = {
 };
 
 export type VisualizationSettings = {
-    visualizationType: VisualizationType;
+    showIndividualRealizations: boolean;
+    showStatisticalLines: boolean;
+    showStatisticalFan: boolean;
+    selectedStatistics: RelPermStatistic[];
     colorBy: ColorBy;
     groupBy: GroupBy;
     yAxisScale: YAxisScale;
