@@ -41,6 +41,21 @@ def test_extract_relperm_family_rejects_mixed_sgof_and_slgof() -> None:
         extract_relperm_family(["SWOF", "SGOF", "SLGOF"])
 
 
+def test_create_relperm_table_definition_strips_keyword_whitespace() -> None:
+    dataframe = pl.DataFrame(
+        {
+            "KEYWORD": [" SWOF "],
+            "SATNUM": [1],
+            "SW": [0.0],
+            "KRW": [0.0],
+        }
+    )
+
+    table_definition = create_relperm_table_definition("relperm", dataframe, [0])
+
+    assert table_definition.saturation_axes[0].saturation_name == "SW"
+
+
 def test_extract_saturation_axes_for_family_1() -> None:
     saturation_axes = extract_saturation_axes(
         ["KEYWORD", "SATNUM", "SW", "SG", "KRW", "KROW", "PCOW", "KRG", "KROG", "PCOG"],
@@ -140,6 +155,34 @@ def test_create_relperm_realization_data_rejects_duplicate_saturation_values() -
     )
 
     with pytest.raises(InvalidDataError):
+        create_relperm_realization_data(dataframe, "SW", ["KRW"], [1])
+
+
+def test_create_relperm_realization_data_rejects_non_finite_saturation_values() -> None:
+    dataframe = pl.DataFrame(
+        {
+            "REAL": [0, 0],
+            "SATNUM": [1, 1],
+            "SW": [0.0, float("nan")],
+            "KRW": [0.0, 0.1],
+        }
+    )
+
+    with pytest.raises(InvalidDataError):
+        create_relperm_realization_data(dataframe, "SW", ["KRW"], [1])
+
+
+def test_create_relperm_realization_data_rejects_non_overlapping_saturation_ranges() -> None:
+    dataframe = pl.DataFrame(
+        {
+            "REAL": [0, 0, 1, 1],
+            "SATNUM": [1, 1, 1, 1],
+            "SW": [0.2, 0.5, 0.6, 0.8],
+            "KRW": [0.0, 0.3, 0.4, 0.6],
+        }
+    )
+
+    with pytest.raises(NoDataError, match="no overlapping saturation range"):
         create_relperm_realization_data(dataframe, "SW", ["KRW"], [1])
 
 

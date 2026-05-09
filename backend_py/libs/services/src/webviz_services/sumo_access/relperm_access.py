@@ -208,7 +208,7 @@ def validate_required_relperm_columns(column_names: Sequence[str]) -> None:
 def extract_keywords(dataframe: pl.DataFrame) -> list[str]:
     if "KEYWORD" not in dataframe.columns:
         raise InvalidDataError("Missing required relperm column: KEYWORD", Service.SUMO)
-    return sorted(str(keyword).upper() for keyword in dataframe["KEYWORD"].drop_nulls().unique().to_list())
+    return sorted(str(keyword).strip().upper() for keyword in dataframe["KEYWORD"].drop_nulls().unique().to_list())
 
 
 def extract_satnums(dataframe: pl.DataFrame) -> list[int]:
@@ -313,7 +313,6 @@ def create_relperm_realization_data(
         realization = int(partition["REAL"][0])
         satnum = int(partition["SATNUM"][0])
         source_saturation_values = partition[saturation_axis_name].to_list()
-        validate_saturation_values(source_saturation_values, realization, satnum, saturation_axis_name)
         target_saturation_values = shared_saturation_values_by_satnum[satnum]
         curve_data = [
             RelpermCurveData(
@@ -379,12 +378,17 @@ def create_shared_saturation_values_by_satnum(
 
     for partition in partitions:
         satnum = int(partition["SATNUM"][0])
-        saturation_values_by_satnum.setdefault(satnum, []).append(partition[saturation_axis_name].to_list())
+        realization = int(partition["REAL"][0])
+        saturation_values = partition[saturation_axis_name].to_list()
+        validate_saturation_values(saturation_values, realization, satnum, saturation_axis_name)
+        saturation_values_by_satnum.setdefault(satnum, []).append(saturation_values)
 
     shared_saturation_values_by_satnum: dict[int, list[float]] = {}
     for satnum, saturation_values_arr in saturation_values_by_satnum.items():
         min_common_saturation = max(min(saturation_values) for saturation_values in saturation_values_arr)
         max_common_saturation = min(max(saturation_values) for saturation_values in saturation_values_arr)
+        if min_common_saturation > max_common_saturation:
+            raise NoDataError(f"Realizations have no overlapping saturation range for SATNUM {satnum}", Service.SUMO)
         shared_saturation_values = sorted(
             {
                 value
