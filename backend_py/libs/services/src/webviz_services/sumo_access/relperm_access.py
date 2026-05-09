@@ -1,4 +1,5 @@
 import logging
+import math
 from bisect import bisect_left
 from enum import Enum
 from typing import Sequence, cast
@@ -166,6 +167,7 @@ def normalize_column_names(column_names: Sequence[str]) -> list[str]:
 
 
 def normalize_relperm_table(dataframe: pl.DataFrame) -> pl.DataFrame:
+    """Normalize Sumo relperm tables to the column names expected by the service layer."""
     rename_map = {column_name: column_name.upper() for column_name in dataframe.columns}
     dataframe = dataframe.rename(rename_map)
     if "TYPE" in dataframe.columns and "KEYWORD" not in dataframe.columns:
@@ -176,6 +178,7 @@ def normalize_relperm_table(dataframe: pl.DataFrame) -> pl.DataFrame:
 def create_relperm_table_definition(
     table_name: str, dataframe: pl.DataFrame, realizations: Sequence[int]
 ) -> RelpermTableDefinition:
+    """Inspect one realization table and expose the table-wide RelPerm options available to the frontend."""
     validate_required_relperm_columns(dataframe.columns)
     keywords = extract_keywords(dataframe)
     relperm_family = extract_relperm_family(keywords)
@@ -215,6 +218,7 @@ def extract_satnums(dataframe: pl.DataFrame) -> list[int]:
 
 
 def extract_relperm_family(keywords: Sequence[str]) -> RelpermFamily:
+    """Classify supported Eclipse relperm table families and reject ambiguous keyword mixes."""
     has_family_1 = any(keyword in RELPERM_FAMILY_1_KEYWORDS for keyword in keywords)
     has_family_2 = any(keyword in RELPERM_FAMILY_2_KEYWORDS for keyword in keywords)
 
@@ -233,6 +237,7 @@ def extract_relperm_family(keywords: Sequence[str]) -> RelpermFamily:
 
 
 def extract_saturation_axes(column_names: Sequence[str], relperm_family: RelpermFamily) -> list[RelpermSaturationAxis]:
+    """Map supported saturation columns to the curve columns that can be plotted against them."""
     column_name_set = set(column_names)
     saturation_axes: list[RelpermSaturationAxis] = []
 
@@ -251,8 +256,11 @@ def extract_saturation_axes(column_names: Sequence[str], relperm_family: Relperm
 def get_required_columns_for_realization_data(
     available_column_names: Sequence[str], saturation_axis_name: str, curve_names: Sequence[str]
 ) -> list[str]:
+    """Return the normalized Sumo columns needed to fetch realization data for the selected curves."""
     available_column_name_set = set(available_column_names)
-    selected_column_names = [saturation_axis_name.upper(), *[curve_name.upper() for curve_name in curve_names]]
+    selected_column_names = unique_preserve_order(
+        [saturation_axis_name.upper(), *[curve_name.upper() for curve_name in curve_names]]
+    )
     missing_column_names = [
         column_name for column_name in selected_column_names if column_name not in available_column_name_set
     ]
@@ -263,14 +271,24 @@ def get_required_columns_for_realization_data(
     return selected_column_names
 
 
+def unique_preserve_order(values: Sequence[str]) -> list[str]:
+    return list(dict.fromkeys(values))
+
+
 def create_relperm_realization_data(
     dataframe: pl.DataFrame,
     saturation_axis_name: str,
     curve_names: Sequence[str],
     satnums: Sequence[int],
 ) -> list[RelpermRealizationData]:
+    """Shape aggregated Sumo rows into realization curves on one shared saturation grid per SATNUM.
+
+    Curves for different realizations often have different saturation sampling. The returned data is interpolated onto
+    the union of samples inside the common saturation interval for each SATNUM, making fancharts and data channels
+    compare realization values at the same saturation points.
+    """
     saturation_axis_name = saturation_axis_name.upper()
-    curve_names = [curve_name.upper() for curve_name in curve_names]
+    curve_names = unique_preserve_order([curve_name.upper() for curve_name in curve_names])
     selected_satnums = sorted(set(satnums))
     required_columns = ["REAL", "SATNUM", saturation_axis_name, *curve_names]
     missing_column_names = [column_name for column_name in required_columns if column_name not in dataframe.columns]
@@ -295,13 +313,14 @@ def create_relperm_realization_data(
         realization = int(partition["REAL"][0])
         satnum = int(partition["SATNUM"][0])
         source_saturation_values = partition[saturation_axis_name].to_list()
+        validate_saturation_values(source_saturation_values, realization, satnum, saturation_axis_name)
         target_saturation_values = shared_saturation_values_by_satnum[satnum]
         curve_data = [
             RelpermCurveData(
                 curve_name=curve_name,
                 curve_values=interpolate_curve_values(
                     source_saturation_values,
-                    partition[curve_name].to_list(),
+                    get_valid_curve_values(partition, curve_name, realization, satnum),
                     target_saturation_values,
                 ),
             )
@@ -320,9 +339,42 @@ def create_relperm_realization_data(
     return ret_arr
 
 
+def validate_saturation_values(
+    saturation_values: Sequence[float], realization: int, satnum: int, saturation_axis_name: str
+) -> None:
+    """Reject saturation axes that would make interpolation ambiguous or numerically invalid."""
+    if any(not math.isfinite(float(value)) for value in saturation_values):
+        raise InvalidDataError(
+            f"Non-finite saturation values found for realization={realization}, SATNUM={satnum}, saturation_axis={saturation_axis_name}",
+            Service.SUMO,
+        )
+
+    if len(set(saturation_values)) != len(saturation_values):
+        raise InvalidDataError(
+            f"Duplicate saturation values found for realization={realization}, SATNUM={satnum}, saturation_axis={saturation_axis_name}",
+            Service.SUMO,
+        )
+
+
+def get_valid_curve_values(partition: pl.DataFrame, curve_name: str, realization: int, satnum: int) -> list[float]:
+    """Return curve values for one realization/SATNUM partition after rejecting non-finite values."""
+    curve_values = partition[curve_name].to_list()
+    if any(not math.isfinite(float(value)) for value in curve_values):
+        raise InvalidDataError(
+            f"Non-finite curve values found for realization={realization}, SATNUM={satnum}, curve={curve_name}",
+            Service.SUMO,
+        )
+    return curve_values
+
+
 def create_shared_saturation_values_by_satnum(
     partitions: Sequence[pl.DataFrame], saturation_axis_name: str
 ) -> dict[int, list[float]]:
+    """Build a common interpolation target grid for each SATNUM.
+
+    The grid uses all observed saturation samples that fall inside the overlap between selected realizations. Values
+    outside the overlap are intentionally excluded to avoid extrapolating curves beyond their sampled range.
+    """
     saturation_values_by_satnum: dict[int, list[list[float]]] = {}
 
     for partition in partitions:
@@ -353,6 +405,7 @@ def interpolate_curve_values(
     source_curve_values: Sequence[float],
     target_saturation_values: Sequence[float],
 ) -> list[float]:
+    """Interpolate one curve onto the target saturation grid using sorted source samples."""
     source_points = sorted(zip(source_saturation_values, source_curve_values, strict=True))
     source_saturation_values = [point[0] for point in source_points]
     source_curve_values = [point[1] for point in source_points]
@@ -368,6 +421,7 @@ def interpolate_single_value(
     source_curve_values: Sequence[float],
     target_saturation_value: float,
 ) -> float:
+    """Linearly interpolate one curve value, clamping only for defensive out-of-range calls."""
     insertion_index = bisect_left(source_saturation_values, target_saturation_value)
     if (
         insertion_index < len(source_saturation_values)

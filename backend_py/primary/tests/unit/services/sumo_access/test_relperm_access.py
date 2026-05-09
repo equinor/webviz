@@ -79,7 +79,7 @@ def test_create_relperm_table_definition_for_family_2() -> None:
 
 
 def test_get_required_columns_for_realization_data_uppercases_and_validates() -> None:
-    required_columns = get_required_columns_for_realization_data(["REAL", "SATNUM", "SW", "KRW"], "sw", ["krw"])
+    required_columns = get_required_columns_for_realization_data(["REAL", "SATNUM", "SW", "KRW"], "sw", ["krw", "KRW"])
 
     assert required_columns == ["SW", "KRW"]
 
@@ -127,6 +127,34 @@ def test_create_relperm_realization_data_interpolates_to_shared_saturation_axis(
     assert realization_data[0].curve_data[0].curve_values == [0.0, 0.5, 1.0]
     assert realization_data[1].saturation_values == [0.0, 0.5, 1.0]
     assert realization_data[1].curve_data[0].curve_values == [0.0, 0.25, 1.0]
+
+
+def test_create_relperm_realization_data_rejects_duplicate_saturation_values() -> None:
+    dataframe = pl.DataFrame(
+        {
+            "REAL": [0, 0],
+            "SATNUM": [1, 1],
+            "SW": [0.0, 0.0],
+            "KRW": [0.0, 0.1],
+        }
+    )
+
+    with pytest.raises(InvalidDataError):
+        create_relperm_realization_data(dataframe, "SW", ["KRW"], [1])
+
+
+def test_create_relperm_realization_data_rejects_non_finite_curve_values() -> None:
+    dataframe = pl.DataFrame(
+        {
+            "REAL": [0, 0],
+            "SATNUM": [1, 1],
+            "SW": [0.0, 1.0],
+            "KRW": [0.0, float("nan")],
+        }
+    )
+
+    with pytest.raises(InvalidDataError):
+        create_relperm_realization_data(dataframe, "SW", ["KRW"], [1])
 
 
 def test_create_relperm_realization_data_raises_when_filtered_data_is_empty() -> None:
