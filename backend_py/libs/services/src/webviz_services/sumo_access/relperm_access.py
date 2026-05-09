@@ -51,6 +51,10 @@ class RelpermAccess:
     async def get_table_names_async(self) -> list[str]:
         table_context = self._ensemble_context.tables.filter(standard_result=StandardResultName.relperm)
         table_names = await table_context.names_async
+        if not table_names:
+            raise NoDataError(
+                f"No relperm tables found for case={self._case_uuid}, ensemble={self._ensemble_name}", Service.SUMO
+            )
         return sorted(table_names)
 
     async def get_table_definition_async(self, table_name: str) -> RelpermTableDefinition:

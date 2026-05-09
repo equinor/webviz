@@ -14,8 +14,8 @@ export const userSelectedCurveNamesAtom = atom<string[]>([]);
 export const userSelectedSatnumsAtom = atom<number[]>([]);
 
 export const selectedCurveTypeAtom = atom<CurveType>(CurveType.RELPERM);
-export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.INDIVIDUAL_REALIZATIONS);
-export const selectedColorByAtom = atom<ColorBy>(ColorBy.ENSEMBLE);
+export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);
+export const selectedColorByAtom = atom<ColorBy>(ColorBy.CURVE);
 export const selectedGroupByAtom = atom<GroupBy>(GroupBy.NONE);
 export const selectedYAxisScaleAtom = atom<YAxisScale>(YAxisScale.LINEAR);
-export const selectedMetricAtom = atom<RelPermMetric>(RelPermMetric.ENDPOINT_MAX);
+export const selectedMetricAtom = atom<RelPermMetric>(RelPermMetric.MEAN_CURVE_VALUE);

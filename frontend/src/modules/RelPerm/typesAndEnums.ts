@@ -29,10 +29,18 @@ export enum YAxisScale {
 }
 
 export enum RelPermMetric {
+    MEAN_CURVE_VALUE = "mean_curve_value",
+    AREA_UNDER_CURVE = "area_under_curve",
     ENDPOINT_MAX = "endpoint_max",
     ENDPOINT_MIN = "endpoint_min",
-    AREA_UNDER_CURVE = "area_under_curve",
 }
+
+export const REL_PERM_METRIC_LABELS: Record<RelPermMetric, string> = {
+    [RelPermMetric.MEAN_CURVE_VALUE]: "Mean curve value",
+    [RelPermMetric.AREA_UNDER_CURVE]: "Area under curve",
+    [RelPermMetric.ENDPOINT_MAX]: "Maximum curve value",
+    [RelPermMetric.ENDPOINT_MIN]: "Minimum curve value",
+};
 
 export type RelPermEnsembleTableDefinition = {
     ensembleIdent: RegularEnsembleIdent;

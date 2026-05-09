@@ -5,6 +5,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -14,9 +15,18 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
-import { ColorBy, CurveType, GroupBy, RelPermMetric, VisualizationType, YAxisScale } from "../typesAndEnums";
+import {
+    ColorBy,
+    CurveType,
+    GroupBy,
+    REL_PERM_METRIC_LABELS,
+    VisualizationType,
+    YAxisScale,
+    type RelPermMetric,
+} from "../typesAndEnums";
 
 import {
     selectedColorByAtom,
@@ -67,12 +77,6 @@ const GROUP_BY_LABELS: Record<GroupBy, string> = {
     [GroupBy.SATNUM]: "SATNUM",
 };
 
-const METRIC_LABELS: Record<RelPermMetric, string> = {
-    [RelPermMetric.ENDPOINT_MAX]: "Endpoint max",
-    [RelPermMetric.ENDPOINT_MIN]: "Endpoint min",
-    [RelPermMetric.AREA_UNDER_CURVE]: "Area under curve",
-};
-
 const SATURATION_AXIS_HELP = {
     title: "Saturation axes",
     content: (
@@ -94,13 +98,19 @@ const METRIC_HELP = {
     content: (
         <div className="flex flex-col gap-2">
             <p>
-                The selected metric is used when publishing RelPerm data channels. It produces one value per realization
-                for each ensemble, curve, and SATNUM combination.
+                Data channels need a single number for each realization. This setting decides how each selected curve is
+                reduced to that number for every ensemble, curve, and SATNUM combination.
             </p>
-            <p>Area under curve is calculated from the selected saturation axis using trapezoidal integration.</p>
+            <p>
+                Mean curve value is the average height of the curve across the selected saturation range. Maximum and
+                minimum curve value use the highest or lowest sampled point. Area under curve summarizes the total space
+                below the curve, so it also depends on how wide the selected saturation range is.
+            </p>
         </div>
     ),
 };
+
+const SATNUM_QUERY_DEBOUNCE_MS = 500;
 
 function arraysHaveSameValues(left: string[], right: string[]): boolean {
     if (left.length !== right.length) {
@@ -112,8 +122,9 @@ function arraysHaveSameValues(left: string[], right: string[]): boolean {
     return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
-export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
@@ -129,6 +140,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
     const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
+    usePropagateQueryErrorsToStatusWriter(tableNameQueries, statusWriter);
+    usePropagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
 
     const availableTableNames = useAtomValue(availableTableNamesAtom);
     const selectedTableName = useAtomValue(selectedTableNameAtom);
@@ -209,6 +222,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         selectedEnsembleIdents.length > 0 && loadedTableNameSets.length === selectedEnsembleIdents.length;
     const commonTableNamesAreMissing = allTableNameQueriesLoaded && availableTableNames.length === 0;
     const showTableSelector = availableTableNames.length > 1 || commonTableNamesAreMissing;
+    const showTableSetting = showTableSelector || Boolean(tableNamesErrorMessage);
     const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
     const tableDefinitionsErrorMessage = tableDefinitionQueries.every((query) => query.isError)
         ? "Could not load table definitions"
@@ -227,7 +241,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     />
                 </SettingWrapper>
                 <PendingWrapper isPending={tableNamesArePending} errorMessage={tableNamesErrorMessage}>
-                    {showTableSelector && (
+                    {showTableSetting && (
                         <SettingWrapper
                             label="Table"
                             errorAnnotation={
@@ -241,13 +255,17 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     : undefined
                             }
                         >
-                            <Select
-                                options={makeStringOptions(availableTableNames)}
-                                value={selectedTableName ? [selectedTableName] : []}
-                                onChange={handleTableNameChange}
-                                filter={availableTableNames.length > 6}
-                                size={1}
-                            />
+                            {showTableSelector ? (
+                                <Select
+                                    options={makeStringOptions(availableTableNames)}
+                                    value={selectedTableName ? [selectedTableName] : []}
+                                    onChange={handleTableNameChange}
+                                    filter={availableTableNames.length > 6}
+                                    size={1}
+                                />
+                            ) : (
+                                <div className="h-9" />
+                            )}
                         </SettingWrapper>
                     )}
                 </PendingWrapper>
@@ -282,6 +300,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             tagOptions={makeNumberTagOptions(availableSatnums)}
                             selection={selectedSatnums.map((satnum) => satnum.toString())}
                             onChange={handleSatnumsChange}
+                            debounceTimeMs={SATNUM_QUERY_DEBOUNCE_MS}
                             placeholder="Select SATNUMs..."
                         />
                     </SettingWrapper>
@@ -323,7 +342,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                 <CollapsibleGroup expanded={true} title="Data channel metric" contentClassName="flex flex-col gap-2">
                     <SettingWrapper label="Data channel metric" help={METRIC_HELP}>
                         <RadioGroup
-                            options={makeEnumOptions(METRIC_LABELS)}
+                            options={makeEnumOptions(REL_PERM_METRIC_LABELS)}
                             value={selectedMetric}
                             onChange={(_, value) => setSelectedMetric(value as RelPermMetric)}
                         />

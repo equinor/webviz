@@ -217,7 +217,7 @@ export class RelPermPlotBuilder {
         const axisType = curveType === CurveType.RELPERM && yAxisScale === YAxisScale.LOG ? "log" : "linear";
 
         if (subplotDefinitions.length === 1) {
-            layout.xaxis = { title: saturationAxisName ?? "Saturation" };
+            layout.xaxis = { title: saturationAxisName ?? "Saturation", range: [0, 1] };
             layout.yaxis = { title: yAxisTitle, type: axisType };
             return layout;
         }
@@ -235,6 +235,7 @@ export class RelPermPlotBuilder {
 
             layoutWithDynamicAxes[`xaxis${suffix}`] = {
                 title: index === subplotDefinitions.length - 1 ? saturationAxisName ?? "Saturation" : undefined,
+                range: [0, 1],
                 domain: [0, 1],
                 anchor: `y${axisReferenceSuffix}`,
             };
@@ -262,26 +263,16 @@ export class RelPermPlotBuilder {
     }
 
     private makeColorByValueMap(colorBy: ColorBy): Map<string, string> {
-        const values = Array.from(new Set(this._dataAccessor.getEntries().map((entry) => this.makeColorByValue(entry, colorBy))));
-        const colorByValueMap = new Map<string, string>();
-        let color = this._colorSet.getFirstColor();
-
-        values.forEach((value, index) => {
-            colorByValueMap.set(value, color);
-            color = index === 0 ? this._colorSet.getNextColor() : this._colorSet.getNextColor();
-        });
-
-        return colorByValueMap;
+        return makeRelPermColorByValueMap(
+            this._dataAccessor.getEntries(),
+            this._selectedEnsembles,
+            colorBy,
+            this._colorSet,
+        );
     }
 
     private makeColorByValue(entry: RelPermCurveEntry, colorBy: ColorBy): string {
-        if (colorBy === ColorBy.CURVE) {
-            return entry.curveName;
-        }
-        if (colorBy === ColorBy.SATNUM) {
-            return entry.satnum.toString();
-        }
-        return entry.ensembleIdent.toString();
+        return makeRelPermColorByValue(entry, colorBy);
     }
 
     private makeColorByDisplayName(entry: RelPermCurveEntry, colorBy: ColorBy): string {
@@ -355,6 +346,42 @@ export class RelPermPlotBuilder {
     private makeEnsembleDisplayName(ensembleIdent: RegularEnsembleIdent): string {
         return makeDistinguishableEnsembleDisplayName(ensembleIdent, this._selectedEnsembles);
     }
+}
+
+export function makeRelPermColorByValueMap(
+    entries: RelPermCurveEntry[],
+    selectedEnsembles: RegularEnsemble[],
+    colorBy: ColorBy,
+    colorSet: ColorSet,
+): Map<string, string> {
+    const values = Array.from(new Set(entries.map((entry) => makeRelPermColorByValue(entry, colorBy))));
+    const colorByValueMap = new Map<string, string>();
+    let color = colorSet.getFirstColor();
+
+    values.forEach((value) => {
+        if (colorBy === ColorBy.ENSEMBLE) {
+            const ensemble = selectedEnsembles.find((candidate) => candidate.getIdent().toString() === value);
+            if (ensemble) {
+                colorByValueMap.set(value, ensemble.getColor());
+                return;
+            }
+        }
+
+        colorByValueMap.set(value, color);
+        color = colorSet.getNextColor();
+    });
+
+    return colorByValueMap;
+}
+
+export function makeRelPermColorByValue(entry: RelPermCurveEntry, colorBy: ColorBy): string {
+    if (colorBy === ColorBy.CURVE) {
+        return entry.curveName;
+    }
+    if (colorBy === ColorBy.SATNUM) {
+        return entry.satnum.toString();
+    }
+    return entry.ensembleIdent.toString();
 }
 
 function makeAxisReferences(subplotIndex: number): { xaxis: string; yaxis: string } {

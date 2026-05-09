@@ -2,14 +2,21 @@ import React from "react";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewContext } from "@framework/ModuleContext";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { ChannelIds } from "../../channelDefs";
 import type { Interfaces } from "../../interfaces";
-import type { RelPermDataAccessorLike, RelPermMetric, RelPermMetricValue } from "../../typesAndEnums";
+import {
+    REL_PERM_METRIC_LABELS,
+    type ColorBy,
+    type RelPermDataAccessorLike,
+    type RelPermMetric,
+    type RelPermMetricValue,
+} from "../../typesAndEnums";
+import { makeRelPermColorByValue, makeRelPermColorByValueMap } from "../utils/RelPermPlotBuilder";
 
 type MetricValueGroup = {
     ensembleIdent: RegularEnsembleIdent;
@@ -24,21 +31,31 @@ export function usePublishToDataChannels(
     colorSet: ColorSet,
     dataAccessor: RelPermDataAccessorLike | null,
     selectedMetric: RelPermMetric,
+    colorBy: ColorBy,
 ) {
     const contents = React.useMemo(() => {
         if (!dataAccessor) {
             return [];
         }
 
-        const colorByEnsembleMap = makeColorByEnsembleMap(dataAccessor, ensembleSet, colorSet);
-        return groupMetricValues(dataAccessor.getMetricValues(selectedMetric)).map((metricValueGroup) => {
-            return createChannelContent(metricValueGroup, selectedMetric, ensembleSet, colorByEnsembleMap);
+        const selectedEnsembles = dataAccessor.getEntries().flatMap((entry) => {
+            const ensemble = ensembleSet.findEnsemble(entry.ensembleIdent);
+            return ensemble ? [ensemble] : [];
         });
-    }, [colorSet, dataAccessor, ensembleSet, selectedMetric]);
+        const colorByValueMap = makeRelPermColorByValueMap(
+            dataAccessor.getEntries(),
+            selectedEnsembles,
+            colorBy,
+            colorSet,
+        );
+        return groupMetricValues(dataAccessor.getMetricValues(selectedMetric)).map((metricValueGroup) => {
+            return createChannelContent(metricValueGroup, selectedMetric, ensembleSet, colorByValueMap, colorBy);
+        });
+    }, [colorBy, colorSet, dataAccessor, ensembleSet, selectedMetric]);
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.METRIC_PER_REALIZATION,
-        dependencies: [dataAccessor, ensembleSet, selectedMetric, colorSet],
+        dependencies: [dataAccessor, ensembleSet, selectedMetric, colorBy, colorSet],
         enabled: Boolean(dataAccessor),
         contents,
     });
@@ -48,13 +65,14 @@ function createChannelContent(
     metricValueGroup: MetricValueGroup,
     selectedMetric: RelPermMetric,
     ensembleSet: EnsembleSet,
-    colorByEnsembleMap: Map<string, string>,
+    colorByValueMap: Map<string, string>,
+    colorBy: ColorBy,
 ): ChannelContentDefinition {
     const ensembleDisplayName = makeDistinguishableEnsembleDisplayName(
         metricValueGroup.ensembleIdent,
         ensembleSet.getRegularEnsembleArray(),
     );
-    const displayName = `${selectedMetric}: ${ensembleDisplayName}, ${metricValueGroup.curveName}, SATNUM ${metricValueGroup.satnum}`;
+    const displayName = `${REL_PERM_METRIC_LABELS[selectedMetric]}: ${ensembleDisplayName}, ${metricValueGroup.curveName}, SATNUM ${metricValueGroup.satnum}`;
 
     return {
         contentIdString: [
@@ -64,20 +82,21 @@ function createChannelContent(
             metricValueGroup.satnum,
         ].join("-"),
         displayName,
-        dataGenerator: makeMetricDataGenerator(metricValueGroup, displayName, colorByEnsembleMap),
+        dataGenerator: makeMetricDataGenerator(metricValueGroup, displayName, colorByValueMap, colorBy),
     };
 }
 
 function makeMetricDataGenerator(
     metricValueGroup: MetricValueGroup,
     displayName: string,
-    colorByEnsembleMap: Map<string, string>,
+    colorByValueMap: Map<string, string>,
+    colorBy: ColorBy,
 ): DataGenerator {
     return () => {
         const metaData: ChannelContentMetaData = {
             ensembleIdentString: metricValueGroup.ensembleIdent.toString(),
             displayString: displayName,
-            preferredColor: colorByEnsembleMap.get(metricValueGroup.ensembleIdent.toString()),
+            preferredColor: colorByValueMap.get(makeMetricValueGroupColorByValue(metricValueGroup, colorBy)),
         };
 
         return {
@@ -88,6 +107,21 @@ function makeMetricDataGenerator(
             metaData,
         };
     };
+}
+
+function makeMetricValueGroupColorByValue(metricValueGroup: MetricValueGroup, colorBy: ColorBy): string {
+    return makeRelPermColorByValue(
+        {
+            ensembleIdent: metricValueGroup.ensembleIdent,
+            realization: metricValueGroup.values[0]?.realization ?? 0,
+            satnum: metricValueGroup.satnum,
+            saturationName: "",
+            saturationValues: [],
+            curveName: metricValueGroup.curveName,
+            curveValues: [],
+        },
+        colorBy,
+    );
 }
 
 function groupMetricValues(metricValues: RelPermMetricValue[]): MetricValueGroup[] {
@@ -112,24 +146,3 @@ function groupMetricValues(metricValues: RelPermMetricValue[]): MetricValueGroup
     return Array.from(groups.values());
 }
 
-function makeColorByEnsembleMap(
-    dataAccessor: RelPermDataAccessorLike,
-    ensembleSet: EnsembleSet,
-    colorSet: ColorSet,
-): Map<string, string> {
-    const colorByEnsembleMap = new Map<string, string>();
-    let color = colorSet.getFirstColor();
-
-    for (const entry of dataAccessor.getEntries()) {
-        const ensembleIdentString = entry.ensembleIdent.toString();
-        if (colorByEnsembleMap.has(ensembleIdentString)) {
-            continue;
-        }
-
-        const ensemble = ensembleSet.findEnsemble(RegularEnsembleIdent.fromString(ensembleIdentString));
-        colorByEnsembleMap.set(ensembleIdentString, ensemble?.getColor() ?? color);
-        color = colorSet.getNextColor();
-    }
-
-    return colorByEnsembleMap;
-}

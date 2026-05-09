@@ -8,6 +8,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { VisualizationType } from "../typesAndEnums";
@@ -30,11 +31,13 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const curveType = viewContext.useSettingsToViewInterfaceValue("curveType");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
     const relPermDataAccessorStatus = viewContext.useSettingsToViewInterfaceValue("relPermDataAccessorStatus");
+    const propagatedErrorMessages = usePropagateAllApiErrorsToStatusWriter(
+        relPermDataAccessorStatus.errors,
+        statusWriter,
+    );
+    const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
 
     statusWriter.setLoading(relPermDataAccessorStatus.isFetching);
-    for (const error of relPermDataAccessorStatus.errors) {
-        statusWriter.addError(error.message);
-    }
 
     usePublishToDataChannels(
         viewContext,
@@ -42,6 +45,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         colorSet,
         relPermDataAccessorStatus.dataAccessor,
         visualizationSettings.selectedMetric,
+        visualizationSettings.colorBy,
     );
 
     viewContext.setInstanceTitle(makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy));
@@ -64,7 +68,11 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         }
 
         if (relPermDataAccessorStatus.isError) {
-            return <ContentMessage type={ContentMessageType.ERROR}>Could not load relperm data.</ContentMessage>;
+            return (
+                <ContentMessage type={ContentMessageType.ERROR}>
+                    {propagatedErrorMessage ?? "Could not load relperm data."}
+                </ContentMessage>
+            );
         }
 
         if (
