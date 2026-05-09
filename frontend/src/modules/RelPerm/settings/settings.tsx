@@ -73,6 +73,35 @@ const METRIC_LABELS: Record<RelPermMetric, string> = {
     [RelPermMetric.AREA_UNDER_CURVE]: "Area under curve",
 };
 
+const SATURATION_AXIS_HELP = {
+    title: "Saturation axes",
+    content: (
+        <div className="flex flex-col gap-2">
+            <p>
+                Each selected SATNUM is plotted on its own shared saturation axis. When realization curves have
+                different saturation samples, they are interpolated onto the common saturation interval for that SATNUM.
+            </p>
+            <p>
+                Selecting several SATNUMs keeps their axes separate. The plot either colors by SATNUM or uses SATNUM
+                subplots so the curves remain distinguishable.
+            </p>
+        </div>
+    ),
+};
+
+const METRIC_HELP = {
+    title: "Data channel metric",
+    content: (
+        <div className="flex flex-col gap-2">
+            <p>
+                The selected metric is used when publishing RelPerm data channels. It produces one value per realization
+                for each ensemble, curve, and SATNUM combination.
+            </p>
+            <p>Area under curve is calculated from the selected saturation axis using trapezoidal integration.</p>
+        </div>
+    ),
+};
+
 function arraysHaveSameValues(left: string[], right: string[]): boolean {
     if (left.length !== right.length) {
         return false;
@@ -232,14 +261,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             onChange={(_, value) => setSelectedCurveType(value as CurveType)}
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Saturation axis">
-                        <RadioGroup
-                            options={makeStringOptions(availableSaturationAxisNames)}
-                            value={selectedSaturationAxisName ?? ""}
-                            onChange={handleSaturationAxisChange}
-                            direction="horizontal"
-                        />
-                    </SettingWrapper>
                     <SettingWrapper label="Curves">
                         <TagPicker
                             tagOptions={makeStringTagOptions(availableCurveNames)}
@@ -248,7 +269,15 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             placeholder="Select curves..."
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="SATNUM">
+                    <SettingWrapper label="Saturation axis">
+                        <RadioGroup
+                            options={makeStringOptions(availableSaturationAxisNames)}
+                            value={selectedSaturationAxisName ?? ""}
+                            onChange={handleSaturationAxisChange}
+                            direction="horizontal"
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="SATNUM" help={SATURATION_AXIS_HELP}>
                         <TagPicker
                             tagOptions={makeNumberTagOptions(availableSatnums)}
                             selection={selectedSatnums.map((satnum) => satnum.toString())}
@@ -291,8 +320,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                         </SettingWrapper>
                     )}
                 </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Metric channel" contentClassName="flex flex-col gap-2">
-                    <SettingWrapper label="Metric">
+                <CollapsibleGroup expanded={true} title="Data channel metric" contentClassName="flex flex-col gap-2">
+                    <SettingWrapper label="Data channel metric" help={METRIC_HELP}>
                         <RadioGroup
                             options={makeEnumOptions(METRIC_LABELS)}
                             value={selectedMetric}
