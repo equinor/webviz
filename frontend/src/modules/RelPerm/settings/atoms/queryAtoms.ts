@@ -83,12 +83,21 @@ export const relPermRealizationDataQueriesAtom = atomWithQueries<
     const selectedCurveNames = get(selectedCurveNamesAtom);
     const selectedSatnums = get(selectedSatnumsAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom);
-    const realizationsEncodedAsUintListStr = validRealizationNumbers ? encodeAsUintListStr(validRealizationNumbers) : null;
+    const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
-    const queryContexts = selectedEnsembleIdents.map((ensembleIdent) => ({ ensembleIdent }));
+    const queryContexts = selectedEnsembleIdents.map((ensembleIdent, index) => {
+        const tableRealizations = tableDefinitionQueries[index]?.data?.realizations ?? [];
+        const filteredRealizations = validRealizationNumbers
+            ? validRealizationNumbers.filter((realization) => tableRealizations.includes(realization))
+            : null;
+        return { ensembleIdent, filteredRealizations, tableDefinitionIsLoaded: Boolean(tableDefinitionQueries[index]?.data) };
+    });
 
     return {
-        queries: queryContexts.map(({ ensembleIdent }) => {
+        queries: queryContexts.map(({ ensembleIdent, filteredRealizations, tableDefinitionIsLoaded }) => {
+            const realizationsEncodedAsUintListStr = filteredRealizations
+                ? encodeAsUintListStr(filteredRealizations)
+                : null;
             const options = getRelpermRealizationDataOptions({
                 query: {
                     case_uuid: ensembleIdent.getCaseUuid(),
@@ -108,7 +117,9 @@ export const relPermRealizationDataQueriesAtom = atomWithQueries<
                     selectedTableName &&
                     selectedSaturationAxisName &&
                     selectedCurveNames.length > 0 &&
-                    selectedSatnums.length > 0,
+                    selectedSatnums.length > 0 &&
+                    tableDefinitionIsLoaded &&
+                    (filteredRealizations === null || filteredRealizations.length > 0),
                 ),
             });
         }),

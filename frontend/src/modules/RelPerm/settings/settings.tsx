@@ -257,6 +257,27 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         ? "Could not load table definitions"
         : undefined;
 
+    tableDefinitionQueries.forEach((query, index) => {
+        const tableDefinition = query.data;
+        const ensembleIdent = selectedEnsembleIdents[index];
+        if (!tableDefinition || !ensembleIdent) {
+            return;
+        }
+
+        const tableRealizations = new Set(tableDefinition.realizations);
+        const missingRealizations = filterEnsembleRealizationsFunc(ensembleIdent).filter(
+            (realization) => !tableRealizations.has(realization),
+        );
+        if (missingRealizations.length === 0) {
+            return;
+        }
+
+        const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
+        statusWriter.addWarning(
+            `RelPerm table ${selectedTableName ?? ""} has no data for ${missingRealizations.length} filtered realizations in ${ensembleName}: ${formatRealizationList(missingRealizations)}.`,
+        );
+    });
+
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup expanded={true} title="Data source" contentClassName="flex flex-col gap-2">
@@ -408,4 +429,12 @@ function makeEnumOptions<T extends string>(labels: Record<T, string>): SelectOpt
 
 function makeEnumDropdownOptions<T extends string>(labels: Record<T, string>): DropdownOption<T>[] {
     return Object.entries(labels).map(([value, label]) => ({ label: label as string, value: value as T }));
+}
+
+function formatRealizationList(realizations: number[]): string {
+    const sortedRealizations = [...realizations].sort((left, right) => left - right);
+    const visibleRealizations = sortedRealizations.slice(0, 20);
+    const suffix = sortedRealizations.length > visibleRealizations.length ? ", ..." : "";
+
+    return `${visibleRealizations.join(", ")}${suffix}`;
 }
