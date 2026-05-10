@@ -1,14 +1,19 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
+import type { Getter } from "jotai";
 
 import {
     getRelpermRealizationDataOptions,
+    type getRelpermRealizationDataQueryKey,
     getRelpermTableDefinitionOptions,
+    type getRelpermTableDefinitionQueryKey,
     getRelpermTableNamesOptions,
+    type getRelpermTableNamesQueryKey,
     type HTTPValidationError_api,
     type RelpermRealizationDataResponse_api,
     type RelpermTableDefinition_api,
 } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
@@ -26,12 +31,39 @@ import {
 } from "./derivedAtoms";
 
 type RelPermApiError = AxiosError<HTTPValidationError_api>;
+type RelPermTableNamesQueryKey = ReturnType<typeof getRelpermTableNamesQueryKey>;
+type RelPermTableDefinitionQueryKey = ReturnType<typeof getRelpermTableDefinitionQueryKey>;
+type RelPermRealizationDataQueryKey = ReturnType<typeof getRelpermRealizationDataQueryKey>;
+type RelPermRealizationDataQueryContext = {
+    ensembleIdent: RegularEnsembleIdent;
+    filteredRealizations: number[] | null;
+    tableDefinitionIsLoaded: boolean;
+};
 
-export const relPermTableNamesQueriesAtom = atomWithQueries<string[], RelPermApiError, string[], any>((get) => {
+export const relPermTableNamesQueriesAtom = atomWithQueries<string[], RelPermApiError, string[], RelPermTableNamesQueryKey>(
+    makeRelPermTableNamesQueryOptions,
+);
+
+export const relPermTableDefinitionQueriesAtom = atomWithQueries<
+    RelpermTableDefinition_api,
+    RelPermApiError,
+    RelpermTableDefinition_api,
+    RelPermTableDefinitionQueryKey
+>(makeRelPermTableDefinitionQueryOptions);
+
+export const relPermRealizationDataQueriesAtom = atomWithQueries<
+    RelpermRealizationDataResponse_api,
+    RelPermApiError,
+    RelpermRealizationDataResponse_api,
+    RelPermRealizationDataQueryKey,
+    RelPermDataAccessorStatus
+>(makeRelPermRealizationDataQueryOptions);
+
+function makeRelPermTableNamesQueryOptions(get: Getter) {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
     return {
-        queries: selectedEnsembleIdents.map((ensembleIdent) => {
+        queries: selectedEnsembleIdents.map(function makeRelPermTableNamesQuery(ensembleIdent) {
             const options = getRelpermTableNamesOptions({
                 query: {
                     case_uuid: ensembleIdent.getCaseUuid(),
@@ -40,22 +72,19 @@ export const relPermTableNamesQueriesAtom = atomWithQueries<string[], RelPermApi
                 },
             });
 
-            return () => ({ ...options, enabled: Boolean(ensembleIdent) });
+            return function getRelPermTableNamesQueryOptions() {
+                return { ...options, enabled: Boolean(ensembleIdent) };
+            };
         }),
     };
-});
+}
 
-export const relPermTableDefinitionQueriesAtom = atomWithQueries<
-    RelpermTableDefinition_api,
-    RelPermApiError,
-    RelpermTableDefinition_api,
-    any
->((get) => {
+function makeRelPermTableDefinitionQueryOptions(get: Getter) {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableName = get(selectedTableNameAtom);
 
     return {
-        queries: selectedEnsembleIdents.map((ensembleIdent) => {
+        queries: selectedEnsembleIdents.map(function makeRelPermTableDefinitionQuery(ensembleIdent) {
             const options = getRelpermTableDefinitionOptions({
                 query: {
                     case_uuid: ensembleIdent.getCaseUuid(),
@@ -65,18 +94,14 @@ export const relPermTableDefinitionQueriesAtom = atomWithQueries<
                 },
             });
 
-            return () => ({ ...options, enabled: Boolean(selectedTableName) });
+            return function getRelPermTableDefinitionQueryOptions() {
+                return { ...options, enabled: Boolean(selectedTableName) };
+            };
         }),
     };
-});
+}
 
-export const relPermRealizationDataQueriesAtom = atomWithQueries<
-    RelpermRealizationDataResponse_api,
-    RelPermApiError,
-    RelpermRealizationDataResponse_api,
-    any,
-    RelPermDataAccessorStatus
->((get) => {
+function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedTableName = get(selectedTableNameAtom);
     const selectedSaturationAxisName = get(selectedSaturationAxisNameAtom);
@@ -85,16 +110,28 @@ export const relPermRealizationDataQueriesAtom = atomWithQueries<
     const validRealizationNumbers = get(validRealizationNumbersAtom);
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
-    const queryContexts = selectedEnsembleIdents.map((ensembleIdent, index) => {
+    function makeQueryContext(
+        ensembleIdent: RegularEnsembleIdent,
+        index: number,
+    ): RelPermRealizationDataQueryContext {
         const tableRealizations = tableDefinitionQueries[index]?.data?.realizations ?? [];
-        const filteredRealizations = validRealizationNumbers
-            ? validRealizationNumbers.filter((realization) => tableRealizations.includes(realization))
-            : null;
-        return { ensembleIdent, filteredRealizations, tableDefinitionIsLoaded: Boolean(tableDefinitionQueries[index]?.data) };
-    });
+        const filteredRealizations = filterRealizationsByTable(validRealizationNumbers, tableRealizations);
+
+        return {
+            ensembleIdent,
+            filteredRealizations,
+            tableDefinitionIsLoaded: Boolean(tableDefinitionQueries[index]?.data),
+        };
+    }
+
+    const queryContexts = selectedEnsembleIdents.map(makeQueryContext);
 
     return {
-        queries: queryContexts.map(({ ensembleIdent, filteredRealizations, tableDefinitionIsLoaded }) => {
+        queries: queryContexts.map(function makeRelPermRealizationDataQuery({
+            ensembleIdent,
+            filteredRealizations,
+            tableDefinitionIsLoaded,
+        }) {
             const realizationsEncodedAsUintListStr = filteredRealizations
                 ? encodeAsUintListStr(filteredRealizations)
                 : null;
@@ -111,22 +148,26 @@ export const relPermRealizationDataQueriesAtom = atomWithQueries<
                 },
             });
 
-            return () => ({
-                ...options,
-                enabled: Boolean(
-                    selectedTableName &&
-                    selectedSaturationAxisName &&
-                    selectedCurveNames.length > 0 &&
-                    selectedSatnums.length > 0 &&
-                    tableDefinitionIsLoaded &&
-                    (filteredRealizations === null || filteredRealizations.length > 0),
-                ),
-            });
+            return function getRelPermRealizationDataQueryOptions() {
+                return {
+                    ...options,
+                    enabled: Boolean(
+                        selectedTableName &&
+                        selectedSaturationAxisName &&
+                        selectedCurveNames.length > 0 &&
+                        selectedSatnums.length > 0 &&
+                        tableDefinitionIsLoaded &&
+                        (filteredRealizations === null || filteredRealizations.length > 0),
+                    ),
+                };
+            };
         }),
-        combine: (results: UseQueryResult<RelpermRealizationDataResponse_api, RelPermApiError>[]): RelPermDataAccessorStatus => {
+        combine: function combineRelPermRealizationDataQueryResults(
+            results: UseQueryResult<RelpermRealizationDataResponse_api, RelPermApiError>[],
+        ): RelPermDataAccessorStatus {
             const ensembleData: RelPermEnsembleRealizationData[] = [];
 
-            results.forEach((result, index) => {
+            results.forEach(function collectEnsembleData(result, index) {
                 const data = result.data;
                 if (!data) {
                     return;
@@ -136,11 +177,32 @@ export const relPermRealizationDataQueriesAtom = atomWithQueries<
 
             return {
                 dataAccessor: ensembleData.length > 0 ? new RelPermDataAccessor(ensembleData) : null,
-                isFetching: results.some((result) => result.isFetching),
-                isError: results.some((result) => result.isError),
-                errors: results.map((result) => result.error).filter((error) => error !== null) as Error[],
+                isFetching: results.some(function isResultFetching(result) {
+                    return result.isFetching;
+                }),
+                isError: results.some(function isResultError(result) {
+                    return result.isError;
+                }),
+                errors: results
+                    .map(function getResultError(result) {
+                        return result.error;
+                    })
+                    .filter(function isNonNullError(error) {
+                        return error !== null;
+                    }) as Error[],
             };
         },
     };
-});
+}
+
+function filterRealizationsByTable(validRealizationNumbers: number[] | null, tableRealizations: number[]): number[] | null {
+    if (!validRealizationNumbers) {
+        return null;
+    }
+
+    const tableRealizationSet = new Set(tableRealizations);
+    return validRealizationNumbers.filter(function isRealizationInTable(realization) {
+        return tableRealizationSet.has(realization);
+    });
+}
 

@@ -31,6 +31,12 @@ type SubplotDefinition = {
     title: string;
 };
 
+type DynamicAxisLayout = Partial<Layout> & {
+    [axisName: `xaxis${string}` | `yaxis${string}`]: NonNullable<Layout["xaxis"]> | NonNullable<Layout["yaxis"]> | undefined;
+};
+type XAxisAnchor = NonNullable<NonNullable<Layout["xaxis"]>["anchor"]>;
+type YAxisAnchor = NonNullable<NonNullable<Layout["yaxis"]>["anchor"]>;
+
 export type RelPermFanchartStatistics = {
     saturationValues: number[];
     minValues: number[];
@@ -286,7 +292,7 @@ export class RelPermPlotBuilder {
             return layout;
         }
 
-        const layoutWithDynamicAxes = layout as Partial<Layout> & Record<string, unknown>;
+        const layoutWithDynamicAxes = layout as DynamicAxisLayout;
         const subplotSpacing = 0.045;
         const subplotHeight = (1 - subplotSpacing * (subplotDefinitions.length - 1)) / subplotDefinitions.length;
         const annotations: NonNullable<Layout["annotations"]> = [];
@@ -301,13 +307,13 @@ export class RelPermPlotBuilder {
                 title: index === subplotDefinitions.length - 1 ? saturationAxisName ?? "Saturation" : undefined,
                 range: [0, 1],
                 domain: [0, 1],
-                anchor: `y${axisReferenceSuffix}`,
+                anchor: makeYAxisAnchor(axisReferenceSuffix),
             };
             layoutWithDynamicAxes[`yaxis${suffix}`] = {
                 title: yAxisTitle,
                 type: axisType,
                 domain: [domainBottom, domainTop],
-                anchor: `x${axisReferenceSuffix}`,
+                anchor: makeXAxisAnchor(axisReferenceSuffix),
             };
             annotations.push({
                 text: subplotDefinition.title,
@@ -410,6 +416,14 @@ export class RelPermPlotBuilder {
     private makeEnsembleDisplayName(ensembleIdent: RegularEnsembleIdent): string {
         return makeDistinguishableEnsembleDisplayName(ensembleIdent, this._selectedEnsembles);
     }
+}
+
+function makeXAxisAnchor(axisReferenceSuffix: string): XAxisAnchor {
+    return `x${axisReferenceSuffix}` as XAxisAnchor;
+}
+
+function makeYAxisAnchor(axisReferenceSuffix: string): YAxisAnchor {
+    return `y${axisReferenceSuffix}` as YAxisAnchor;
 }
 
 export function makeRelPermColorByValueMap(

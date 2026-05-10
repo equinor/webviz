@@ -257,26 +257,28 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         ? "Could not load table definitions"
         : undefined;
 
-    tableDefinitionQueries.forEach((query, index) => {
+    for (const [index, query] of tableDefinitionQueries.entries()) {
         const tableDefinition = query.data;
         const ensembleIdent = selectedEnsembleIdents[index];
         if (!tableDefinition || !ensembleIdent) {
-            return;
+            continue;
         }
 
         const tableRealizations = new Set(tableDefinition.realizations);
-        const missingRealizations = filterEnsembleRealizationsFunc(ensembleIdent).filter(
-            (realization) => !tableRealizations.has(realization),
-        );
+        const missingRealizations = filterEnsembleRealizationsFunc(ensembleIdent).filter(function isMissingFromTable(
+            realization,
+        ) {
+            return !tableRealizations.has(realization);
+        });
         if (missingRealizations.length === 0) {
-            return;
+            continue;
         }
 
         const ensembleName = ensembleSet.findEnsemble(ensembleIdent)?.getDisplayName() ?? ensembleIdent.toString();
         statusWriter.addWarning(
             `RelPerm table ${selectedTableName ?? ""} has no data for ${missingRealizations.length} filtered realizations in ${ensembleName}: ${formatRealizationList(missingRealizations)}.`,
         );
-    });
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -412,23 +414,33 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 }
 
 function makeStringOptions(values: string[]): SelectOption[] {
-    return values.map((value) => ({ label: value, value }));
+    return values.map(function makeStringOption(value) {
+        return { label: value, value };
+    });
 }
 
 function makeNumberTagOptions(values: number[]): TagOption[] {
-    return values.map((value) => ({ label: value.toString(), value: value.toString() }));
+    return values.map(function makeNumberTagOption(value) {
+        return { label: value.toString(), value: value.toString() };
+    });
 }
 
 function makeStringTagOptions(values: string[]): TagOption[] {
-    return values.map((value) => ({ label: value, value }));
+    return values.map(function makeStringTagOption(value) {
+        return { label: value, value };
+    });
 }
 
 function makeEnumOptions<T extends string>(labels: Record<T, string>): SelectOption[] {
-    return Object.entries(labels).map(([value, label]) => ({ label: label as string, value }));
+    return Object.entries(labels).map(function makeEnumOption([value, label]) {
+        return { label: label as string, value };
+    });
 }
 
 function makeEnumDropdownOptions<T extends string>(labels: Record<T, string>): DropdownOption<T>[] {
-    return Object.entries(labels).map(([value, label]) => ({ label: label as string, value: value as T }));
+    return Object.entries(labels).map(function makeEnumDropdownOption([value, label]) {
+        return { label: label as string, value: value as T };
+    });
 }
 
 function formatRealizationList(realizations: number[]): string {

@@ -1,3 +1,4 @@
+import type { Getter } from "jotai";
 import { isEqual } from "lodash";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
@@ -83,7 +84,7 @@ export const userSelectedSatnumsAtom = persistableFixableAtom<number[], number[]
     },
 });
 
-function computeTableNamesQueryDependenciesState({ get }: { get: (atom: any) => any }): "error" | "loading" | "loaded" {
+function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
     const tableNameQueries = get(relPermTableNamesQueriesAtom);
 
     if (tableNameQueries.some((query: { isFetching: boolean }) => query.isFetching)) {
@@ -99,7 +100,7 @@ function computeTableNamesQueryDependenciesState({ get }: { get: (atom: any) => 
 function computeTableDefinitionsQueryDependenciesState({
     get,
 }: {
-    get: (atom: any) => any;
+    get: Getter;
 }): "error" | "loading" | "loaded" {
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 

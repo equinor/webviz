@@ -1,6 +1,10 @@
+import type { Layout } from "plotly.js";
 import { describe, expect, it } from "vitest";
 
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { ColorPalette } from "@lib/utils/ColorPalette";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { RelPermDataAccessor } from "@modules/RelPerm/utils/RelPermDataAccessor";
 import { calculateRelPermMetric } from "@modules/RelPerm/utils/RelPermMetrics";
 import { makeRelPermPlotTitle } from "@modules/RelPerm/view/utils/createTitle";
@@ -34,6 +38,29 @@ function makeCurveEntry(curveValues: number[]): RelPermCurveEntry {
         curveName: "KRW",
         curveValues,
     };
+}
+
+function makeColorSet(colors: string[]): ColorSet {
+    return new ColorSet(new ColorPalette({ id: colors.join("-"), name: "Test colors", colors }));
+}
+
+function makeDefaultColorSet(): ColorSet {
+    return makeColorSet(["#111111", "#222222"]);
+}
+
+function makeRegularEnsemble(ensembleIdent: RegularEnsembleIdent, color: string): RegularEnsemble {
+    return new RegularEnsemble(
+        "asset",
+        [],
+        ensembleIdent.getCaseUuid(),
+        ensembleIdent.getEnsembleName(),
+        ensembleIdent.getEnsembleName(),
+        "stratigraphy",
+        [],
+        [],
+        null,
+        color,
+    );
 }
 
 describe("RelPerm metrics", () => {
@@ -135,7 +162,7 @@ describe("RelPerm layout", () => {
                 getMetricValues: () => [],
             },
             [],
-            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+            makeDefaultColorSet(),
         );
 
         const singleLayout = builder.makeLayout(
@@ -151,7 +178,7 @@ describe("RelPerm layout", () => {
             "SW",
             GroupBy.SATNUM,
             YAxisScale.LINEAR,
-        ) as Record<string, any>;
+        ) as Partial<Layout> & { xaxis2?: NonNullable<Layout["xaxis"]> };
 
         expect(singleLayout.xaxis).toMatchObject({ range: [0, 1] });
         expect(subplotLayout.xaxis).toMatchObject({ range: [0, 1] });
@@ -167,23 +194,8 @@ describe("RelPerm layout", () => {
                 ],
                 getMetricValues: () => [],
             },
-            [
-                {
-                    getIdent: () => ENSEMBLE_IDENT,
-                    getCustomName: () => null,
-                    getEnsembleName: () => ENSEMBLE_IDENT.getEnsembleName(),
-                    getDisplayName: () => ENSEMBLE_IDENT.getEnsembleName(),
-                    getColor: () => "#123456",
-                },
-                {
-                    getIdent: () => SECOND_ENSEMBLE_IDENT,
-                    getCustomName: () => null,
-                    getEnsembleName: () => SECOND_ENSEMBLE_IDENT.getEnsembleName(),
-                    getDisplayName: () => SECOND_ENSEMBLE_IDENT.getEnsembleName(),
-                    getColor: () => "#abcdef",
-                },
-            ] as any,
-            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+            [makeRegularEnsemble(ENSEMBLE_IDENT, "#123456"), makeRegularEnsemble(SECOND_ENSEMBLE_IDENT, "#abcdef")],
+            makeDefaultColorSet(),
         );
 
         const traces = builder.makeIndividualRealizationTraces(ColorBy.ENSEMBLE, GroupBy.NONE);
@@ -201,7 +213,7 @@ describe("RelPerm layout", () => {
                 getMetricValues: () => [],
             },
             [],
-            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+            makeDefaultColorSet(),
         );
 
         const traces = builder.makeStatisticLineTraces(ColorBy.CURVE, GroupBy.NONE, [
@@ -222,7 +234,7 @@ describe("RelPerm layout", () => {
                 getMetricValues: () => [],
             },
             [],
-            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+            makeDefaultColorSet(),
         );
         const shownLegendColorByValues = new Set<string>();
         const traces = [
@@ -243,7 +255,7 @@ describe("RelPerm layout", () => {
                 getMetricValues: () => [],
             },
             [],
-            { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any,
+            makeDefaultColorSet(),
         );
         const shownLegendColorByValues = new Set<string>();
         const legendTraces = builder.makeLegendTraces(ColorBy.CURVE, shownLegendColorByValues);
@@ -260,7 +272,7 @@ describe("RelPerm layout", () => {
             makeCurveEntry([0, 1, 1]),
             { ...makeCurveEntry([0, 1, 1]), curveName: "KROW", satnum: 2 },
         ];
-        const colorSet = { getFirstColor: () => "#111111", getNextColor: () => "#222222" } as any;
+        const colorSet = makeColorSet(["#111111", "#222222"]);
 
         expect(makeRelPermColorByValueMap(entries, [], ColorBy.CURVE, colorSet)).toEqual(
             new Map([
