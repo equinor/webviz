@@ -5,12 +5,13 @@ import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
+import { isVaryingNumericParameter } from "@modules/_shared/parameterUtils";
 import { simulationVectorDefinition } from "@modules/_shared/reservoirSimulationStringUtils";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
@@ -66,7 +67,7 @@ export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
     return selectedDeltaEnsembles;
 });
 
-export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
+export const numericAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value ?? [];
 
@@ -76,7 +77,7 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
         return [];
     }
 
-    const continuousAndNonConstantParametersUnion: Parameter[] = [];
+    const numericAndNonConstantParametersUnion: Parameter[] = [];
     const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
     for (const ensembleIdent of regularEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
@@ -84,24 +85,24 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
             continue;
         }
 
-        const continuousAndNonConstantParameters = ensemble
+        const numericAndNonConstantParameters = ensemble
             .getParameters()
             .getParameterArr()
-            .filter((parameter) => parameter.type === ParameterType.CONTINUOUS && !parameter.isConstant);
+            .filter(isVaryingNumericParameter);
 
         // Add non-duplicate parameters to list - verified by ParameterIdent
-        for (const parameter of continuousAndNonConstantParameters) {
+        for (const parameter of numericAndNonConstantParameters) {
             const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
-            const isParameterInUnion = continuousAndNonConstantParametersUnion.some((elm) =>
+            const isParameterInUnion = numericAndNonConstantParametersUnion.some((elm) =>
                 parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)),
             );
 
             if (isParameterInUnion) continue;
-            continuousAndNonConstantParametersUnion.push(parameter);
+            numericAndNonConstantParametersUnion.push(parameter);
         }
     }
 
-    return continuousAndNonConstantParametersUnion;
+    return numericAndNonConstantParametersUnion;
 });
 
 export const isVectorListQueriesFetchingAtom = atom<boolean>((get) => {
