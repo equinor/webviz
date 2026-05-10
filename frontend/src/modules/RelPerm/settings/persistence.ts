@@ -15,12 +15,14 @@ import {
     showIndividualRealizationsAtom,
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
+} from "./atoms/baseAtoms";
+import {
     userSelectedCurveNamesAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedSaturationAxisNameAtom,
     userSelectedSatnumsAtom,
     userSelectedTableNameAtom,
-} from "./atoms/baseAtoms";
+} from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
     selectedEnsembleIdentStrings: string[];
@@ -61,11 +63,13 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => ({
-    selectedEnsembleIdentStrings: get(userSelectedEnsembleIdentsAtom).map((ensembleIdent) => ensembleIdent.toString()),
-    selectedTableName: get(userSelectedTableNameAtom),
-    selectedSaturationAxisName: get(userSelectedSaturationAxisNameAtom),
-    selectedCurveNames: get(userSelectedCurveNamesAtom),
-    selectedSatnums: get(userSelectedSatnumsAtom),
+    selectedEnsembleIdentStrings: get(userSelectedEnsembleIdentsAtom).value.map((ensembleIdent) =>
+        ensembleIdent.toString(),
+    ),
+    selectedTableName: get(userSelectedTableNameAtom).value,
+    selectedSaturationAxisName: get(userSelectedSaturationAxisNameAtom).value,
+    selectedCurveNames: get(userSelectedCurveNamesAtom).value,
+    selectedSatnums: get(userSelectedSatnumsAtom).value,
     selectedCurveType: get(selectedCurveTypeAtom),
     showIndividualRealizations: get(showIndividualRealizationsAtom),
     showStatisticalLines: get(showStatisticalLinesAtom),

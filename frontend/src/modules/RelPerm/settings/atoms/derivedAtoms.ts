@@ -16,12 +16,14 @@ import {
     showIndividualRealizationsAtom,
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
+} from "./baseAtoms";
+import {
     userSelectedCurveNamesAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedSaturationAxisNameAtom,
     userSelectedSatnumsAtom,
     userSelectedTableNameAtom,
-} from "./baseAtoms";
+} from "./persistableFixableAtoms";
 import {
     relPermRealizationDataQueriesAtom,
     relPermTableDefinitionQueriesAtom,
@@ -48,7 +50,7 @@ function intersectArrays<T>(arrays: T[][]): T[] {
 
 export const selectedEnsembleIdentsAtom = atom<RegularEnsembleIdent[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
+    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom).value;
 
     return fixupRegularEnsembleIdents(userSelectedEnsembleIdents, ensembleSet) ?? [];
 });
@@ -61,7 +63,7 @@ export const availableTableNamesAtom = atom<string[]>((get) => {
 });
 
 export const selectedTableNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(get(userSelectedTableNameAtom), get(availableTableNamesAtom));
+    return fixupSelectedOrFirstValue(get(userSelectedTableNameAtom).value, get(availableTableNamesAtom));
 });
 
 export const ensembleTableDefinitionsAtom = atom<RelPermEnsembleTableDefinition[]>((get) => {
@@ -87,7 +89,7 @@ export const availableSaturationAxisNamesAtom = atom<string[]>((get) => {
 });
 
 export const selectedSaturationAxisNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(get(userSelectedSaturationAxisNameAtom), get(availableSaturationAxisNamesAtom));
+    return fixupSelectedOrFirstValue(get(userSelectedSaturationAxisNameAtom).value, get(availableSaturationAxisNamesAtom));
 });
 
 export const availableCurveNamesAtom = atom<string[]>((get) => {
@@ -118,7 +120,7 @@ export const availableCurveNamesAtom = atom<string[]>((get) => {
 
 export const selectedCurveNamesAtom = atom<string[]>((get) => {
     const availableCurveNames = get(availableCurveNamesAtom);
-    const userSelectedCurveNames = get(userSelectedCurveNamesAtom);
+    const userSelectedCurveNames = get(userSelectedCurveNamesAtom).value;
     const selectedCurveNames = userSelectedCurveNames.filter((curveName) => availableCurveNames.includes(curveName));
 
     return selectedCurveNames.length > 0 ? selectedCurveNames : availableCurveNames;
@@ -133,7 +135,7 @@ export const availableSatnumsAtom = atom<number[]>((get) => {
 
 export const selectedSatnumsAtom = atom<number[]>((get) => {
     const availableSatnums = get(availableSatnumsAtom);
-    const userSelectedSatnums = get(userSelectedSatnumsAtom);
+    const userSelectedSatnums = get(userSelectedSatnumsAtom).value;
     const selectedSatnums = userSelectedSatnums.filter((satnum) => availableSatnums.includes(satnum));
 
     return selectedSatnums.length > 0 ? selectedSatnums : availableSatnums.slice(0, 1);

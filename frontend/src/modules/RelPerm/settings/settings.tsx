@@ -14,8 +14,9 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper, type SettingAnnotation } from "@lib/components/SettingWrapper";
 import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
@@ -40,11 +41,6 @@ import {
     showIndividualRealizationsAtom,
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
-    userSelectedCurveNamesAtom,
-    userSelectedEnsembleIdentsAtom,
-    userSelectedSaturationAxisNameAtom,
-    userSelectedSatnumsAtom,
-    userSelectedTableNameAtom,
     validRealizationNumbersAtom,
 } from "./atoms/baseAtoms";
 import {
@@ -58,6 +54,13 @@ import {
     selectedSatnumsAtom,
     selectedTableNameAtom,
 } from "./atoms/derivedAtoms";
+import {
+    userSelectedCurveNamesAtom,
+    userSelectedEnsembleIdentsAtom,
+    userSelectedSaturationAxisNameAtom,
+    userSelectedSatnumsAtom,
+    userSelectedTableNameAtom,
+} from "./atoms/persistableFixableAtoms";
 import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
 
 const CURVE_TYPE_LABELS: Record<CurveType, string> = {
@@ -140,6 +143,14 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedYAxisScale, setSelectedYAxisScale] = useAtom(selectedYAxisScaleAtom);
     const [selectedMetric, setSelectedMetric] = useAtom(selectedMetricAtom);
+
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedEnsembleIdentsAtom);
+    const selectedTableNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedTableNameAtom);
+    const selectedSaturationAxisNameAnnotations = useMakePersistableFixableAtomAnnotations(
+        userSelectedSaturationAxisNameAtom,
+    );
+    const selectedCurveNamesAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedCurveNamesAtom);
+    const selectedSatnumsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedSatnumsAtom);
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
     const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
@@ -229,6 +240,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const commonTableNamesAreMissing = allTableNameQueriesLoaded && availableTableNames.length === 0;
     const showTableSelector = availableTableNames.length > 1 || commonTableNamesAreMissing;
     const showTableSetting = showTableSelector || Boolean(tableNamesErrorMessage);
+    const tableNameAnnotations = [
+        ...selectedTableNameAnnotations,
+        commonTableNamesAreMissing && {
+            type: "error" as const,
+            message: "Selected ensembles have no common relperm table names.",
+        },
+        tableNameSetsDiffer &&
+            !commonTableNamesAreMissing && {
+                type: "warning" as const,
+                message: "Selected ensembles have different relperm table names. Only common names are available.",
+            },
+    ].filter(Boolean) as SettingAnnotation[];
     const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
     const tableDefinitionsErrorMessage = tableDefinitionQueries.every((query) => query.isError)
         ? "Could not load table definitions"
@@ -237,7 +260,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup expanded={true} title="Data source" contentClassName="flex flex-col gap-2">
-                <SettingWrapper label="Ensembles">
+                <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations}>
                     <EnsemblePicker
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={selectedEnsembleIdents}
@@ -248,19 +271,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 </SettingWrapper>
                 <PendingWrapper isPending={tableNamesArePending} errorMessage={tableNamesErrorMessage}>
                     {showTableSetting && (
-                        <SettingWrapper
-                            label="Table"
-                            errorAnnotation={
-                                commonTableNamesAreMissing
-                                    ? "Selected ensembles have no common relperm table names."
-                                    : undefined
-                            }
-                            warningAnnotation={
-                                tableNameSetsDiffer && !commonTableNamesAreMissing
-                                    ? "Selected ensembles have different relperm table names. Only common names are available."
-                                    : undefined
-                            }
-                        >
+                        <SettingWrapper label="Table" annotations={tableNameAnnotations}>
                             {showTableSelector ? (
                                 <Select
                                     options={makeStringOptions(availableTableNames)}
@@ -285,7 +296,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onChange={(_, value) => setSelectedCurveType(value as CurveType)}
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Curves">
+                    <SettingWrapper label="Curves" annotations={selectedCurveNamesAnnotations}>
                         <TagPicker
                             tagOptions={makeStringTagOptions(availableCurveNames)}
                             selection={selectedCurveNames}
@@ -293,7 +304,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             placeholder="Select curves..."
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Saturation axis">
+                    <SettingWrapper label="Saturation axis" annotations={selectedSaturationAxisNameAnnotations}>
                         <RadioGroup
                             options={makeStringOptions(availableSaturationAxisNames)}
                             value={selectedSaturationAxisName ?? ""}
@@ -301,7 +312,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             direction="horizontal"
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="SATNUM" help={SATURATION_AXIS_HELP}>
+                    <SettingWrapper label="SATNUM" help={SATURATION_AXIS_HELP} annotations={selectedSatnumsAnnotations}>
                         <TagPicker
                             tagOptions={makeNumberTagOptions(availableSatnums)}
                             selection={selectedSatnums.map((satnum) => satnum.toString())}
