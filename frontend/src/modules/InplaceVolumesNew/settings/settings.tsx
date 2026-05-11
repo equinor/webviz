@@ -83,7 +83,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const resultNameOptions: DropdownOption<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => {
+            const isFaciesFractionWithoutFaciesIndex =
+                name === "FACIES_FRACTION" &&
+                !tableDefinitionsAccessor
+                    .getCommonIndicesWithValues()
+                    .some((idx) => idx.indexColumn === "FACIES");
+            return {
+                label: name,
+                value: name,
+                hoverText: isFaciesFractionWithoutFaciesIndex
+                    ? "FACIES_FRACTION requires a FACIES index column; not available for the selected table(s)."
+                    : createHoverTextForVolume(name),
+                disabled: isFaciesFractionWithoutFaciesIndex,
+            };
+        });
 
     // Create selector options
     const selectorOptions: DropdownOption<string>[] = [
