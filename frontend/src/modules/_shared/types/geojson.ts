@@ -3,7 +3,7 @@ import type {
     GeoJsonWellProperties as BaseWellProperties,
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 
-import type { DrilledWellboreTrajectoryData } from "../DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
+import type { WellboreTrajectoryData } from "../DataProviderFramework/dataProviders/implementations/wellboreTrajectoryTypes";
 
 export type ExtendedWellFeatureProperties = BaseWellProperties & {
     uuid: string;
@@ -14,10 +14,10 @@ export type ExtendedWellFeatureProperties = BaseWellProperties & {
     wellHeadSize: number;
 
     // "Rich" info
-    status?: DrilledWellboreTrajectoryData["wellboreStatus"];
-    purpose?: DrilledWellboreTrajectoryData["wellborePurpose"];
-    injectionData?: DrilledWellboreTrajectoryData["injectionData"];
-    productionData?: DrilledWellboreTrajectoryData["productionData"];
+    status?: WellboreTrajectoryData["wellboreStatus"];
+    purpose?: WellboreTrajectoryData["wellborePurpose"];
+    injectionData?: WellboreTrajectoryData["injectionData"];
+    productionData?: WellboreTrajectoryData["productionData"];
 };
 
 export type ExtendedWellFeature = BaseWellFeature & { properties: ExtendedWellFeatureProperties };

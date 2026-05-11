@@ -23,6 +23,7 @@ import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFrame
 import { DrilledWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
+import { PlannedWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/PlannedWellboreTrajectoriesProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import { IntersectionSeismicProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { SeismicSlicesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/SeismicSlicesProvider";
@@ -98,6 +99,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellboreTrajectoriesProvider,
+    {
+        transformToVisualization: makeDrilledWellTrajectoriesLayer,
+        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.PLANNED_WELL_TRAJECTORIES,
+    PlannedWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,

@@ -1,11 +1,6 @@
 import { isEqual } from "lodash";
 
 import type {
-    FormationSegment_api,
-    WellboreCompletion_api,
-    WellboreHeader_api,
-    WellborePerforation_api,
-    WellboreTrajectory_api,
     WellInjectionData_api,
     WellProductionData_api,
     WellTrajectory_api,
@@ -41,6 +36,8 @@ import type {
 import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
+import type { WellboreTrajectoryData, WellboreTrajectoriesData } from "./wellboreTrajectoryTypes";
+
 const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
     Setting.WELLBORES,
@@ -56,16 +53,8 @@ const drilledWellboreTrajectoriesSettings = [
 export type DrilledWellboreTrajectoriesSettings = typeof drilledWellboreTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellboreTrajectoriesSettings>;
 
-export type DrilledWellboreTrajectoryData = WellboreHeader_api &
-    Omit<WellboreTrajectory_api, "wellboreUuid" | "wellboreUwi"> & {
-        formationSegments: FormationSegment_api[];
-        productionData: Omit<WellProductionData_api, "wellboreUuid" | "wellboreUwi"> | null;
-        injectionData: Omit<WellInjectionData_api, "wellboreUuid" | "wellboreUwi"> | null;
-        perforations: WellborePerforation_api[];
-        screens: WellboreCompletion_api[];
-    };
-
-export type DrilledWellboreTrajectoriesData = DrilledWellboreTrajectoryData[];
+export type DrilledWellboreTrajectoryData = WellboreTrajectoryData;
+export type DrilledWellboreTrajectoriesData = WellboreTrajectoriesData;
 
 export type DrilledWellboreTrajectoriesStoredData = {
     productionData: WellProductionData_api[];

@@ -1,4 +1,4 @@
-import { getDrilledWellboreHeadersOptions } from "@api";
+import { getDrilledWellboreHeadersOptions, getPlannedWellboreHeadersOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 
 import { Setting } from "../..//settings/settingsDefinitions";
@@ -46,8 +46,24 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
             });
         });
 
+        const plannedWellboreHeadersDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+
+            if (!fieldIdentifier) {
+                return null;
+            }
+
+            return await queryClient.fetchQuery({
+                ...getPlannedWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
         valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
+            const plannedWellboreHeaders = getHelperDependency(plannedWellboreHeadersDep) ?? [];
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
             const fieldIdentifier = getGlobalSetting("fieldId");
 
@@ -55,7 +71,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
                 (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
             );
 
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines, plannedWellboreHeaders);
         });
     }
 

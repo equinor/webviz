@@ -6,4 +6,5 @@ export enum IntersectionType {
 export type Intersection = {
     type: IntersectionType;
     uuid: string;
+    wellboreSource?: "drilled" | "planned";
 };

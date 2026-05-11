@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import { getWellTrajectoriesOptions } from "@api";
+import { getPlannedWellTrajectoriesOptions, getWellTrajectoriesOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -20,6 +20,7 @@ export type PolylineIntersectionSpecification = {
 export type WellboreIntersectionSpecification = {
     type: IntersectionType.WELLBORE;
     wellboreUuid: string;
+    wellboreSource?: "drilled" | "planned";
     extensionLength: number;
     fieldIdentifier: string;
     queryClient: QueryClient;
@@ -55,15 +56,25 @@ export function makeIntersectionPolylineWithSectionLengthsPromise(
     }
 
     // Wellbore intersection
-    const { extensionLength, wellboreUuid, fieldIdentifier, queryClient } = intersectionSpecification;
+    const { extensionLength, wellboreUuid, fieldIdentifier, queryClient, wellboreSource = "drilled" } =
+        intersectionSpecification;
+    const wellTrajectoriesOptions =
+        wellboreSource === "planned"
+            ? getPlannedWellTrajectoriesOptions({
+                  query: {
+                      field_identifier: fieldIdentifier ?? "",
+                      wellbore_uuids: [wellboreUuid],
+                  },
+              })
+            : getWellTrajectoriesOptions({
+                  query: {
+                      field_identifier: fieldIdentifier ?? "",
+                      wellbore_uuids: [wellboreUuid],
+                  },
+              });
     const makePolylineAndActualSectionLengthsPromise = queryClient
         .fetchQuery({
-            ...getWellTrajectoriesOptions({
-                query: {
-                    field_identifier: fieldIdentifier ?? "",
-                    wellbore_uuids: [wellboreUuid],
-                },
-            }),
+            ...wellTrajectoriesOptions,
         })
         .then((wellTrajectoryData) => {
             const wellTrajectoryPath: number[][] = [];

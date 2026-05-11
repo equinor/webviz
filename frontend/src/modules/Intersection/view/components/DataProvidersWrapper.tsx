@@ -22,13 +22,16 @@ import { type DataProviderManager } from "@modules/_shared/DataProviderFramework
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import { IntersectionView } from "@modules/_shared/DataProviderFramework/groups/implementations/IntersectionView";
 import { useVisualizationAssemblerProduct } from "@modules/_shared/DataProviderFramework/hooks/useVisualizationProduct";
-import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import {
+    getWellboreIntersectionSource,
+    type IntersectionSettingValue,
+} from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 import {
     VisualizationAssembler,
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
+import { useDrilledWellboreHeadersQuery, usePlannedWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import {
     makeGridColorScaleAnnotation,
     makeSeismicColorScaleAnnotation,
@@ -203,8 +206,12 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     // Additional visualization for wellbore
     const wellboreHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? undefined);
+    const plannedWellboreHeadersQuery = usePlannedWellboreHeadersQuery(fieldIdentifier ?? undefined);
+    const wellboreSource = intersectionSource ? getWellboreIntersectionSource(intersectionSource) : null;
     const wellboreUuid = intersectionSource?.type === IntersectionType.WELLBORE ? intersectionSource.uuid : null;
-    const wellboreCasingsQuery = useWellboreCasingsQuery(wellboreUuid);
+    const wellboreCasingsQuery = useWellboreCasingsQuery(wellboreSource === "planned" ? null : wellboreUuid);
+    const intersectionWellboreHeadersQuery =
+        wellboreSource === "planned" ? plannedWellboreHeadersQuery : wellboreHeadersQuery;
 
     // Create intersection reference system for view
     const intersectionReferenceSystem: IntersectionReferenceSystem | null = useCreateIntersectionReferenceSystem(
@@ -274,10 +281,10 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
         const intersectionTypeLayerOrder = visualizationLayerItems.length + 1;
         visualizationLayerItems.push(
             ...createLayerItemsForIntersectionType(
-                intersectionSource.type,
+                intersectionSource,
                 intersectionReferenceSystem,
                 intersectionTypeLayerOrder,
-                wellboreHeadersQuery,
+                intersectionWellboreHeadersQuery,
                 wellboreCasingsQuery,
             ),
         );
