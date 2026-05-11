@@ -29,7 +29,7 @@ import { Button } from "@lib/components/Button";
 import type { ButtonProps } from "@lib/components/Button/button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { Menu } from "@lib/components/Menu";
+import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -379,7 +379,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
             {isSaving ? (
                 <CircularProgress size="medium-small" className="text-amber-600" />
             ) : (
-                <Menu
+                <ComposedMenu
                     onActionClicked={handleSaveMenuAction}
                     renderTrigger={<TopBarButton title={"Save session options"} />}
                     items={[
@@ -398,7 +398,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                 >
                     <Save fontSize="small" />
                     <ArrowDropDown fontSize="small" />
-                </Menu>
+                </ComposedMenu>
             )}
         </div>
     );

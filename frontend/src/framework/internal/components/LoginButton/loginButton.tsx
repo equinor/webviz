@@ -5,7 +5,7 @@ import { AccountCircle, Login, Logout } from "@mui/icons-material";
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Menu } from "@lib/components/Menu";
+import { ComposedMenu } from "@lib/components/Menu";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 
 import { TopBarButton } from "../TopBar/topBar";
@@ -95,7 +95,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <Menu
+        <ComposedMenu
             onActionClicked={(id) => id === "logout" && handleLogout()}
             renderTrigger={<TopBarButton title={text} />}
             items={[
@@ -105,6 +105,6 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
             ]}
         >
             {makeIcon()}
-        </Menu>
+        </ComposedMenu>
     );
 };

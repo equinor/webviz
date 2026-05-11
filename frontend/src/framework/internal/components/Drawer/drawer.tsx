@@ -4,7 +4,7 @@ import { Close, MoreVert, Search } from "@mui/icons-material";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Input } from "@lib/components/Input";
-import { Menu } from "@lib/components/Menu";
+import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
 
 export type DrawerFilterItem<T extends string | number> = {
@@ -91,7 +91,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                             </div>
                         )}
                         {showFilter && props.filterItems?.length && (
-                            <Menu
+                            <ComposedMenu
                                 open={open}
                                 onOpenChange={handleOpenChange}
                                 closeOnClick={false}
@@ -103,7 +103,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                 }))}
                             >
                                 <MoreVert fontSize="small" />
-                            </Menu>
+                            </ComposedMenu>
                         )}
                     </div>
                 )}
