@@ -39,11 +39,7 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleAction(
-        identifier: string,
-        groupDelegate: GroupDelegate,
-        requestOpenMenuForId: (id: string) => void,
-    ) {
+    function handleAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "intersection-view": {
                 const hasIntersectionView =
@@ -57,14 +53,12 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                         colorSet.getNextColor(),
                     );
                     groupDelegate.appendChild(view);
-                    requestOpenMenuForId(view.getItemDelegate().getId());
                 }
                 return;
             }
             case "context-boundary": {
                 const ctxBoundary = new ContextBoundary("Context boundary", props.dataProviderManager);
                 groupDelegate.prependChild(ctxBoundary);
-                requestOpenMenuForId(ctxBoundary.getItemDelegate().getId());
                 return;
             }
             case "color-scale":

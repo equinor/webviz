@@ -10,7 +10,6 @@ import { SortableListGroup } from "../../components/group";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item, ItemGroup } from "../../interfacesAndTypes/entities";
-import { DataProviderManagerUIContext } from "../DataProviderManager/DataProviderManagerUIContext";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { GroupErrorBadge } from "../utilityComponents/GroupErrorBadge";
@@ -25,10 +24,6 @@ export type ContextBoundaryComponentProps = {
 
 export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): React.ReactNode {
     const { makeActionsForGroup, onActionClick } = props;
-
-    const { pendingOpenMenuItemId, clearPendingOpenMenuItemId } = React.useContext(DataProviderManagerUIContext);
-
-    const startOpen = pendingOpenMenuItemId === props.group.getItemDelegate().getId();
 
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
@@ -55,18 +50,11 @@ export function ContextBoundaryComponent(props: ContextBoundaryComponentProps): 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
         adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
-        adornments.push(
-            <Actions key="actions" startOpen={startOpen} actionGroups={actions} onActionClick={handleActionClick} />,
-        );
+        adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
         adornments.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornments;
     }
-
-    React.useEffect(function clearOpenMenuId() {
-        if (startOpen) clearPendingOpenMenuItemId();
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- Mount only effect
-    }, []);
 
     return (
         <SortableListGroup

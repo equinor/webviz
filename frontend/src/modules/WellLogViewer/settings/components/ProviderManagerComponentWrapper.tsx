@@ -183,11 +183,7 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
     });
 
     const groupActionCallback = React.useCallback(
-        function groupActionCallback(
-            identifier: string,
-            groupDelegate: GroupDelegate,
-            requestOpenMenuForId: (id: string) => void,
-        ) {
+        function groupActionCallback(identifier: string, groupDelegate: GroupDelegate) {
             if (!dataProviderManager) return;
 
             switch (identifier) {
@@ -202,14 +198,12 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                 case RootActionIdents.CONTINUOUS_TRACK: {
                     const track = GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, dataProviderManager);
                     groupDelegate.appendChild(track);
-                    requestOpenMenuForId(track.getItemDelegate().getId());
                     return;
                 }
 
                 case RootActionIdents.DISCRETE_TRACK: {
                     const track = GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, dataProviderManager);
                     groupDelegate.appendChild(track);
-                    requestOpenMenuForId(track.getItemDelegate().getId());
                     return;
                 }
 

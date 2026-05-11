@@ -20,14 +20,13 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 import type { DataProviderManager } from "./DataProviderManager";
-import { DataProviderManagerUIContext } from "./DataProviderManagerUIContext";
 
 export type DataProviderManagerComponentProps = {
     title: string;
     dataProviderManager: DataProviderManager;
     additionalHeaderComponents: React.ReactNode;
     groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
-    onAction: (identifier: string, groupDelegate: GroupDelegate, requestOpenMenuForId: (id: string) => void) => void;
+    onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
@@ -40,15 +39,13 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    const [pendingOpenMenuItemId, setPendingOpenMenuItemId] = React.useState<string | null>(null);
-
     function handleActionClick(identifier: string, group?: ItemGroup) {
         let groupDelegate = props.dataProviderManager.getGroupDelegate();
         if (group) {
             groupDelegate = group.getGroupDelegate();
         }
 
-        props.onAction(identifier, groupDelegate, setPendingOpenMenuItemId);
+        props.onAction(identifier, groupDelegate);
     }
 
     function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {
@@ -150,44 +147,40 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
     };
 
     return (
-        <DataProviderManagerUIContext.Provider
-            value={{ pendingOpenMenuItemId, clearPendingOpenMenuItemId: () => setPendingOpenMenuItemId(null) }}
-        >
-            <div className="grow flex flex-col min-h-0">
-                <div className="w-full grow flex flex-col min-h-0" ref={listRef}>
-                    <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
-                        <div className="grow font-bold text-sm">{props.title}</div>
-                        <Actions actionGroups={actions} onActionClick={handleActionClick} />
-                        <ExpandCollapseAllButton group={props.dataProviderManager} />
-                        {props.additionalHeaderComponents}
-                    </div>
-                    <div
-                        className="w-full grow flex flex-col relative"
-                        style={{ height: listSize.height - convertRemToPixels(12) }}
+        <div className="grow flex flex-col min-h-0">
+            <div className="w-full grow flex flex-col min-h-0" ref={listRef}>
+                <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
+                    <div className="grow font-bold text-sm">{props.title}</div>
+                    <Actions actionGroups={actions} onActionClick={handleActionClick} />
+                    <ExpandCollapseAllButton group={props.dataProviderManager} />
+                    {props.additionalHeaderComponents}
+                </div>
+                <div
+                    className="w-full grow flex flex-col relative"
+                    style={{ height: listSize.height - convertRemToPixels(12) }}
+                >
+                    <SortableList
+                        onItemMoved={handleItemMoved}
+                        isMoveAllowed={checkIfItemMoveAllowed}
+                        className="h-full"
                     >
-                        <SortableList
-                            onItemMoved={handleItemMoved}
-                            isMoveAllowed={checkIfItemMoveAllowed}
-                            className="h-full"
-                        >
-                            <SortableList.Content>
-                                <SortableList.ScrollContainer>
-                                    <div className="grow overflow-auto min-h-0 bg-slate-200 relative h-full">
-                                        {items.length === 0 && (
-                                            <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
-                                                Click on <Add fontSize="inherit" /> to add an item.
-                                            </div>
-                                        )}
-                                        {items.map((item: Item) =>
-                                            makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
-                                        )}
-                                    </div>
-                                </SortableList.ScrollContainer>
-                            </SortableList.Content>
-                        </SortableList>
-                    </div>
+                        <SortableList.Content>
+                            <SortableList.ScrollContainer>
+                                <div className="grow overflow-auto min-h-0 bg-slate-200 relative h-full">
+                                    {items.length === 0 && (
+                                        <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
+                                            Click on <Add fontSize="inherit" /> to add an item.
+                                        </div>
+                                    )}
+                                    {items.map((item: Item) =>
+                                        makeSortableListItemComponent(item, makeActionsForGroup, handleActionClick),
+                                    )}
+                                </div>
+                            </SortableList.ScrollContainer>
+                        </SortableList.Content>
+                    </SortableList>
                 </div>
             </div>
-        </DataProviderManagerUIContext.Provider>
+        </div>
     );
 }
