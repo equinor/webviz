@@ -12,7 +12,6 @@ import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/u
 
 import type { Interfaces } from "../interfaces";
 
-import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { makeRelPermPlotTitle } from "./utils/createTitle";
 import { RelPermPlotBuilder } from "./utils/RelPermPlotBuilder";
 
@@ -37,15 +36,6 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
 
     statusWriter.setLoading(relPermDataAccessorStatus.isFetching);
-
-    usePublishToDataChannels(
-        viewContext,
-        ensembleSet,
-        colorSet,
-        relPermDataAccessorStatus.dataAccessor,
-        visualizationSettings.selectedMetric,
-        visualizationSettings.colorBy,
-    );
 
     viewContext.setInstanceTitle(makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy));
 

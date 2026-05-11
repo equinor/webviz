@@ -23,13 +23,6 @@ export enum YAxisScale {
     LOG = "log",
 }
 
-export enum RelPermMetric {
-    MEAN_CURVE_VALUE = "mean_curve_value",
-    AREA_UNDER_CURVE = "area_under_curve",
-    ENDPOINT_MAX = "endpoint_max",
-    ENDPOINT_MIN = "endpoint_min",
-}
-
 export enum RelPermStatistic {
     MIN = "min",
     P90 = "p90",
@@ -46,13 +39,6 @@ export const REL_PERM_STATISTIC_LABELS: Record<RelPermStatistic, string> = {
     [RelPermStatistic.MEAN]: "Mean",
     [RelPermStatistic.P10]: "P10",
     [RelPermStatistic.MAX]: "Max",
-};
-
-export const REL_PERM_METRIC_LABELS: Record<RelPermMetric, string> = {
-    [RelPermMetric.MEAN_CURVE_VALUE]: "Mean curve value",
-    [RelPermMetric.AREA_UNDER_CURVE]: "Area under curve",
-    [RelPermMetric.ENDPOINT_MAX]: "Maximum curve value",
-    [RelPermMetric.ENDPOINT_MIN]: "Minimum curve value",
 };
 
 export type RelPermEnsembleTableDefinition = {
@@ -74,7 +60,6 @@ export type RelPermDataAccessorStatus = {
 
 export type RelPermDataAccessorLike = {
     getEntries: () => RelPermCurveEntry[];
-    getMetricValues: (metric: RelPermMetric) => RelPermMetricValue[];
 };
 
 export type RelPermCurveEntry = {
@@ -87,14 +72,6 @@ export type RelPermCurveEntry = {
     curveValues: number[];
 };
 
-export type RelPermMetricValue = {
-    ensembleIdent: RegularEnsembleIdent;
-    realization: number;
-    satnum: number;
-    curveName: string;
-    value: number;
-};
-
 export type VisualizationSettings = {
     showIndividualRealizations: boolean;
     showStatisticalLines: boolean;
@@ -103,5 +80,4 @@ export type VisualizationSettings = {
     colorBy: ColorBy;
     groupBy: GroupBy;
     yAxisScale: YAxisScale;
-    selectedMetric: RelPermMetric;
 };

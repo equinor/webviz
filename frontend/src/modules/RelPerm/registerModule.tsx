@@ -2,7 +2,6 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { channelDefs } from "./channelDefs";
 import type { Interfaces } from "./interfaces";
 import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
@@ -17,7 +16,6 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
     dataTagIds: [ModuleDataTagId.RELPERM],
-    channelDefinitions: channelDefs,
     serializedStateSchema: SERIALIZED_STATE_SCHEMA,
     preview,
     description,

@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import { ColorBy, CurveType, GroupBy, RelPermMetric, RelPermStatistic, YAxisScale } from "../../typesAndEnums";
+import { ColorBy, CurveType, GroupBy, RelPermStatistic, YAxisScale } from "../../typesAndEnums";
 
 export const validRealizationNumbersAtom = atom<number[] | null>(null);
 
@@ -12,4 +12,3 @@ export const selectedStatisticsAtom = atom<RelPermStatistic[]>([RelPermStatistic
 export const selectedColorByAtom = atom<ColorBy>(ColorBy.CURVE);
 export const selectedGroupByAtom = atom<GroupBy>(GroupBy.NONE);
 export const selectedYAxisScaleAtom = atom<YAxisScale>(YAxisScale.LINEAR);
-export const selectedMetricAtom = atom<RelPermMetric>(RelPermMetric.MEAN_CURVE_VALUE);

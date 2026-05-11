@@ -24,10 +24,8 @@ import {
     ColorBy,
     CurveType,
     GroupBy,
-    REL_PERM_METRIC_LABELS,
     REL_PERM_STATISTIC_LABELS,
     YAxisScale,
-    type RelPermMetric,
     type RelPermStatistic,
 } from "../typesAndEnums";
 
@@ -35,7 +33,6 @@ import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
     selectedGroupByAtom,
-    selectedMetricAtom,
     selectedStatisticsAtom,
     selectedYAxisScaleAtom,
     showIndividualRealizationsAtom,
@@ -96,23 +93,6 @@ const SATURATION_AXIS_HELP = {
     ),
 };
 
-const METRIC_HELP = {
-    title: "Data channel metric",
-    content: (
-        <div className="flex flex-col gap-2">
-            <p>
-                Data channels need a single number for each realization. This setting decides how each selected curve is
-                reduced to that number for every ensemble, curve, and SATNUM combination.
-            </p>
-            <p>
-                Mean curve value is the average height of the curve across the selected saturation range. Maximum and
-                minimum curve value use the highest or lowest sampled point. Area under curve summarizes the total space
-                below the curve, so it also depends on how wide the selected saturation range is.
-            </p>
-        </div>
-    ),
-};
-
 const SATNUM_QUERY_DEBOUNCE_MS = 500;
 
 function arraysHaveSameValues(left: string[], right: string[]): boolean {
@@ -142,7 +122,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
     const [selectedGroupBy, setSelectedGroupBy] = useAtom(selectedGroupByAtom);
     const [selectedYAxisScale, setSelectedYAxisScale] = useAtom(selectedYAxisScaleAtom);
-    const [selectedMetric, setSelectedMetric] = useAtom(selectedMetricAtom);
 
     const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedEnsembleIdentsAtom);
     const selectedTableNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedTableNameAtom);
@@ -265,11 +244,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
 
         const tableRealizations = new Set(tableDefinition.realizations);
-        const missingRealizations = filterEnsembleRealizationsFunc(ensembleIdent).filter(function isMissingFromTable(
-            realization,
-        ) {
-            return !tableRealizations.has(realization);
-        });
+        const missingRealizations = filterEnsembleRealizationsFunc(ensembleIdent).filter(
+            function isMissingFromTable(realization) {
+                return !tableRealizations.has(realization);
+            },
+        );
         if (missingRealizations.length === 0) {
             continue;
         }
@@ -398,15 +377,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             />
                         </SettingWrapper>
                     )}
-                </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Data channel metric" contentClassName="flex flex-col gap-2">
-                    <SettingWrapper label="Data channel metric" help={METRIC_HELP}>
-                        <RadioGroup
-                            options={makeEnumOptions(REL_PERM_METRIC_LABELS)}
-                            value={selectedMetric}
-                            onChange={(_, value) => setSelectedMetric(value as RelPermMetric)}
-                        />
-                    </SettingWrapper>
                 </CollapsibleGroup>
             </PendingWrapper>
         </div>

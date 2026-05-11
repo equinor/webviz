@@ -10,7 +10,6 @@ import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
     selectedGroupByAtom,
-    selectedMetricAtom,
     selectedStatisticsAtom,
     selectedYAxisScaleAtom,
     showIndividualRealizationsAtom,
@@ -155,6 +154,5 @@ export const visualizationSettingsAtom = atom((get) => {
         colorBy: shouldForceSatnumColor ? ColorBy.SATNUM : get(selectedColorByAtom),
         groupBy: selectedGroupBy,
         yAxisScale: get(selectedYAxisScaleAtom),
-        selectedMetric: get(selectedMetricAtom),
     };
 });

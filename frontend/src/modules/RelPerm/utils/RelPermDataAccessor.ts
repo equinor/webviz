@@ -1,13 +1,6 @@
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import type {
-    RelPermCurveEntry,
-    RelPermEnsembleRealizationData,
-    RelPermMetric,
-    RelPermMetricValue,
-} from "../typesAndEnums";
-
-import { calculateRelPermMetric } from "./RelPermMetrics";
+import type { RelPermCurveEntry, RelPermEnsembleRealizationData } from "../typesAndEnums";
 
 export class RelPermDataAccessor {
     private _entries: RelPermCurveEntry[];
@@ -18,27 +11,6 @@ export class RelPermDataAccessor {
 
     getEntries(): RelPermCurveEntry[] {
         return this._entries;
-    }
-
-    getMetricValues(metric: RelPermMetric): RelPermMetricValue[] {
-        const values: RelPermMetricValue[] = [];
-
-        for (const entry of this._entries) {
-            const value = calculateRelPermMetric(entry, metric);
-            if (value === null || Number.isNaN(value)) {
-                continue;
-            }
-
-            values.push({
-                ensembleIdent: entry.ensembleIdent,
-                realization: entry.realization,
-                satnum: entry.satnum,
-                curveName: entry.curveName,
-                value,
-            });
-        }
-
-        return values;
     }
 }
 

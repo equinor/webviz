@@ -3,13 +3,12 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { ColorBy, CurveType, GroupBy, RelPermMetric, RelPermStatistic, YAxisScale } from "../typesAndEnums";
+import { ColorBy, CurveType, GroupBy, RelPermStatistic, YAxisScale } from "../typesAndEnums";
 
 import {
     selectedColorByAtom,
     selectedCurveTypeAtom,
     selectedGroupByAtom,
-    selectedMetricAtom,
     selectedStatisticsAtom,
     selectedYAxisScaleAtom,
     showIndividualRealizationsAtom,
@@ -38,7 +37,6 @@ export type SerializedSettings = {
     selectedColorBy: ColorBy;
     selectedGroupBy: GroupBy;
     selectedYAxisScale: YAxisScale;
-    selectedMetric: RelPermMetric;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -56,7 +54,6 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         selectedColorBy: { enum: Object.values(ColorBy) },
         selectedGroupBy: { enum: Object.values(GroupBy) },
         selectedYAxisScale: { enum: Object.values(YAxisScale) },
-        selectedMetric: { enum: Object.values(RelPermMetric) },
     },
 }));
 
@@ -78,7 +75,6 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     selectedColorBy: get(selectedColorByAtom),
     selectedGroupBy: get(selectedGroupByAtom),
     selectedYAxisScale: get(selectedYAxisScaleAtom),
-    selectedMetric: get(selectedMetricAtom),
 });
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
@@ -101,5 +97,4 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedColorByAtom, raw.selectedColorBy);
     setIfDefined(set, selectedGroupByAtom, raw.selectedGroupBy);
     setIfDefined(set, selectedYAxisScaleAtom, raw.selectedYAxisScale);
-    setIfDefined(set, selectedMetricAtom, raw.selectedMetric);
 };

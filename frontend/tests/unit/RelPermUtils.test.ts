@@ -6,7 +6,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { RelPermDataAccessor } from "@modules/RelPerm/utils/RelPermDataAccessor";
-import { calculateRelPermMetric } from "@modules/RelPerm/utils/RelPermMetrics";
 import { makeRelPermPlotTitle } from "@modules/RelPerm/view/utils/createTitle";
 import {
     calculateFanchartStatistics,
@@ -18,7 +17,6 @@ import {
     ColorBy,
     CurveType,
     GroupBy,
-    RelPermMetric,
     RelPermStatistic,
     YAxisScale,
     type RelPermCurveEntry,
@@ -63,38 +61,8 @@ function makeRegularEnsemble(ensembleIdent: RegularEnsembleIdent, color: string)
     );
 }
 
-describe("RelPerm metrics", () => {
-    it("calculates extrema and area metrics", () => {
-        const entry = makeCurveEntry([0, 1, 1]);
-
-        expect(calculateRelPermMetric(entry, RelPermMetric.ENDPOINT_MAX)).toBe(1);
-        expect(calculateRelPermMetric(entry, RelPermMetric.ENDPOINT_MIN)).toBe(0);
-        expect(calculateRelPermMetric(entry, RelPermMetric.AREA_UNDER_CURVE)).toBe(0.75);
-        expect(calculateRelPermMetric(entry, RelPermMetric.MEAN_CURVE_VALUE)).toBe(0.75);
-    });
-
-    it("calculates integral metrics over the full saturation range", () => {
-        const entry = { ...makeCurveEntry([1, 0, 1]), saturationValues: [0.5, 0, 1] };
-
-        expect(calculateRelPermMetric(entry, RelPermMetric.AREA_UNDER_CURVE)).toBe(0.75);
-        expect(calculateRelPermMetric(entry, RelPermMetric.MEAN_CURVE_VALUE)).toBe(0.75);
-    });
-
-    it("returns null for invalid integral metrics", () => {
-        expect(
-            calculateRelPermMetric({ ...makeCurveEntry([0, 1]), saturationValues: [0] }, RelPermMetric.AREA_UNDER_CURVE),
-        ).toBeNull();
-        expect(
-            calculateRelPermMetric(
-                { ...makeCurveEntry([0, 1]), saturationValues: [0, 0] },
-                RelPermMetric.MEAN_CURVE_VALUE,
-            ),
-        ).toBeNull();
-    });
-});
-
 describe("RelPermDataAccessor", () => {
-    it("expands realization data into curve entries and metric values", () => {
+    it("expands realization data into curve entries", () => {
         const ensembleData: RelPermEnsembleRealizationData[] = [
             {
                 ensembleIdent: ENSEMBLE_IDENT,
@@ -119,10 +87,7 @@ describe("RelPermDataAccessor", () => {
 
         expect(accessor.getEntries()).toHaveLength(2);
         expect(accessor.getEntries()[0]).toMatchObject({ realization: 3, satnum: 2, curveName: "KRW" });
-        expect(accessor.getMetricValues(RelPermMetric.ENDPOINT_MAX)).toEqual([
-            { ensembleIdent: ENSEMBLE_IDENT, realization: 3, satnum: 2, curveName: "KRW", value: 0.8 },
-            { ensembleIdent: ENSEMBLE_IDENT, realization: 3, satnum: 2, curveName: "KROW", value: 1 },
-        ]);
+        expect(accessor.getEntries()[1]).toMatchObject({ realization: 3, satnum: 2, curveName: "KROW" });
     });
 });
 
@@ -159,7 +124,6 @@ describe("RelPerm layout", () => {
         const builder = new RelPermPlotBuilder(
             {
                 getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 1, 1]), satnum: 2 }],
-                getMetricValues: () => [],
             },
             [],
             makeDefaultColorSet(),
@@ -192,7 +156,6 @@ describe("RelPerm layout", () => {
                     makeCurveEntry([0, 1, 1]),
                     { ...makeCurveEntry([0, 1, 1]), ensembleIdent: SECOND_ENSEMBLE_IDENT },
                 ],
-                getMetricValues: () => [],
             },
             [makeRegularEnsemble(ENSEMBLE_IDENT, "#123456"), makeRegularEnsemble(SECOND_ENSEMBLE_IDENT, "#abcdef")],
             makeDefaultColorSet(),
@@ -210,7 +173,6 @@ describe("RelPerm layout", () => {
         const builder = new RelPermPlotBuilder(
             {
                 getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), realization: 1 }],
-                getMetricValues: () => [],
             },
             [],
             makeDefaultColorSet(),
@@ -231,7 +193,6 @@ describe("RelPerm layout", () => {
         const builder = new RelPermPlotBuilder(
             {
                 getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), realization: 1 }],
-                getMetricValues: () => [],
             },
             [],
             makeDefaultColorSet(),
@@ -252,7 +213,6 @@ describe("RelPerm layout", () => {
         const builder = new RelPermPlotBuilder(
             {
                 getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), curveName: "KROW" }],
-                getMetricValues: () => [],
             },
             [],
             makeDefaultColorSet(),
@@ -267,7 +227,7 @@ describe("RelPerm layout", () => {
         expect(statisticTraces.every((trace) => trace.showlegend === false)).toBe(true);
     });
 
-    it("uses the same color keys for traces and data channels", () => {
+    it("uses stable color keys for traces", () => {
         const entries = [
             makeCurveEntry([0, 1, 1]),
             { ...makeCurveEntry([0, 1, 1]), curveName: "KROW", satnum: 2 },
