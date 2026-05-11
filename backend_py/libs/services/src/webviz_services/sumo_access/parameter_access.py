@@ -71,7 +71,7 @@ class ParameterAccess:
             InvalidDataError: If data format is unexpected
         """
 
-        parameter_context = self._ensemble_context.filter(standard_result="parameters")
+        parameter_context = self._ensemble_context.filter(standard_result=StandardResultName.parameters)
         table_count = await parameter_context.length_async()
         if table_count > 1:
             raise MultipleDataMatchesError(
