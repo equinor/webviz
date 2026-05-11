@@ -43,6 +43,7 @@ export function useBuildPlotAndTable(
         sharedYAxis,
         hideConstants,
         showPercentageInHistogram,
+        showStatisticalLabels,
     }: InplaceVolumesPlotOptions = { ...viewContext.useSettingsToViewInterfaceValue("plotOptions") };
 
     // Return null if there is no data to plot
@@ -84,6 +85,7 @@ export function useBuildPlotAndTable(
         showStatisticalMarkers,
         showRealizationPoints,
         showPercentageInBar: showPercentageInHistogram,
+        showStatisticalLabels,
     };
 
     const plotBuilder = new PlotBuilder(groupedData, makePlotData(plotDataOptions));

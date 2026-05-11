@@ -7,7 +7,6 @@ from webviz_services.summary_delta_vectors import (
     RealizationDeltaVector,
 )
 
-
 VECTOR_TABLE_FIELDS: list[tuple[str, pa.DataType]] = [
     ("DATE", pa.timestamp("ms")),
     ("REAL", pa.int16()),

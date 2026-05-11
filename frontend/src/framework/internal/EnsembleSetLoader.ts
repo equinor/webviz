@@ -135,7 +135,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
         outEnsembleArray.push(
             new RegularEnsemble(
-                ensembleApiData.ensembleDetails.fieldIdentifier,
+                ensembleApiData.ensembleDetails.assetName,
+                ensembleApiData.ensembleDetails.fieldIdentifiers,
                 ensembleApiData.ensembleDetails.caseUuid,
                 ensembleApiData.ensembleDetails.caseName,
                 ensembleApiData.ensembleDetails.name,
@@ -204,7 +205,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifier,
+                  comparisonEnsembleApiData.ensembleDetails.assetName,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
                   comparisonEnsembleApiData.ensembleDetails.caseUuid,
                   comparisonEnsembleApiData.ensembleDetails.caseName,
                   comparisonEnsembleApiData.ensembleDetails.name,
@@ -219,11 +221,12 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                  referenceEnsembleApiData.ensembleDetails.fieldIdentifier,
+                  referenceEnsembleApiData.ensembleDetails.assetName,
+                  referenceEnsembleApiData.ensembleDetails.fieldIdentifiers,
                   referenceEnsembleApiData.ensembleDetails.caseUuid,
                   referenceEnsembleApiData.ensembleDetails.caseName,
                   referenceEnsembleApiData.ensembleDetails.name,
-                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                  referenceEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
                   referenceEnsembleApiData.ensembleDetails.realizations,
                   emptyParameterArray,
                   nullSensitivityArray,

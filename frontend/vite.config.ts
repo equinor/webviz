@@ -2,8 +2,8 @@ import path from "path";
 
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
-import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
+import jotaiDebugLabel from "jotai-babel/plugin-debug-label";
+import jotaiReactRefresh from "jotai-babel/plugin-react-refresh";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
 import glsl from "vite-plugin-glsl";

@@ -19,6 +19,7 @@ import {
     deleteSnapshotAccessLog,
     getAlive,
     getAliveProtected,
+    getAssetInfos,
     getCases,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
@@ -26,8 +27,8 @@ import {
     getDeltaSurfaceData,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
+    getFieldIdentifiers,
     getFieldPerforations,
-    getFields,
     getFieldScreens,
     getGridModelsInfo,
     getGridParameter,
@@ -85,6 +86,7 @@ import {
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
+    postGetWellTrajectoriesFormationSegments,
     postLogout,
     postRefreshFingerprintsForEnsembles,
     root,
@@ -108,6 +110,8 @@ import type {
     GetAliveProtectedData_api,
     GetAliveProtectedResponse_api,
     GetAliveResponse_api,
+    GetAssetInfosData_api,
+    GetAssetInfosResponse_api,
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
@@ -129,14 +133,14 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsError_api,
     GetEnsembleDetailsResponse_api,
+    GetFieldIdentifiersData_api,
+    GetFieldIdentifiersResponse_api,
     GetFieldPerforationsData_api,
     GetFieldPerforationsError_api,
     GetFieldPerforationsResponse_api,
     GetFieldScreensData_api,
     GetFieldScreensError_api,
     GetFieldScreensResponse_api,
-    GetFieldsData_api,
-    GetFieldsResponse_api,
     GetGridModelsInfoData_api,
     GetGridModelsInfoError_api,
     GetGridModelsInfoResponse_api,
@@ -301,6 +305,9 @@ import type {
     PostGetSurfaceIntersectionData_api,
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
+    PostGetWellTrajectoriesFormationSegmentsData_api,
+    PostGetWellTrajectoriesFormationSegmentsError_api,
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -352,22 +359,23 @@ const createQueryKey = <TOptions extends Options>(
     return [params];
 };
 
-export const getFieldsQueryKey = (options?: Options<GetFieldsData_api>) => createQueryKey("getFields", options);
+export const getAssetInfosQueryKey = (options?: Options<GetAssetInfosData_api>) =>
+    createQueryKey("getAssetInfos", options);
 
 /**
- * Get Fields
+ * Get Asset Infos
  *
- * Get list of fields
+ * Get list of asset infos
  */
-export const getFieldsOptions = (options?: Options<GetFieldsData_api>) =>
+export const getAssetInfosOptions = (options?: Options<GetAssetInfosData_api>) =>
     queryOptions<
-        GetFieldsResponse_api,
+        GetAssetInfosResponse_api,
         AxiosError<DefaultError>,
-        GetFieldsResponse_api,
-        ReturnType<typeof getFieldsQueryKey>
+        GetAssetInfosResponse_api,
+        ReturnType<typeof getAssetInfosQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getFields({
+            const { data } = await getAssetInfos({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -375,7 +383,34 @@ export const getFieldsOptions = (options?: Options<GetFieldsData_api>) =>
             });
             return data;
         },
-        queryKey: getFieldsQueryKey(options),
+        queryKey: getAssetInfosQueryKey(options),
+    });
+
+export const getFieldIdentifiersQueryKey = (options?: Options<GetFieldIdentifiersData_api>) =>
+    createQueryKey("getFieldIdentifiers", options);
+
+/**
+ * Get Field Identifiers
+ *
+ * Get list of field identifiers
+ */
+export const getFieldIdentifiersOptions = (options?: Options<GetFieldIdentifiersData_api>) =>
+    queryOptions<
+        GetFieldIdentifiersResponse_api,
+        AxiosError<DefaultError>,
+        GetFieldIdentifiersResponse_api,
+        ReturnType<typeof getFieldIdentifiersQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getFieldIdentifiers({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getFieldIdentifiersQueryKey(options),
     });
 
 export const getCasesQueryKey = (options: Options<GetCasesData_api>) => createQueryKey("getCases", options);
@@ -383,7 +418,7 @@ export const getCasesQueryKey = (options: Options<GetCasesData_api>) => createQu
 /**
  * Get Cases
  *
- * Get list of cases for specified field
+ * Get list of cases for specified asset
  */
 export const getCasesOptions = (options: Options<GetCasesData_api>) =>
     queryOptions<
@@ -984,6 +1019,89 @@ export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) 
         },
         queryKey: getSurfaceDataQueryKey(options),
     });
+
+export const postGetWellTrajectoriesFormationSegmentsQueryKey = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) => createQueryKey("postGetWellTrajectoriesFormationSegments", options);
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegmentsOptions = (
+    options: Options<PostGetWellTrajectoriesFormationSegmentsData_api>,
+) =>
+    queryOptions<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        ReturnType<typeof postGetWellTrajectoriesFormationSegmentsQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetWellTrajectoriesFormationSegmentsQueryKey(options),
+    });
+
+/**
+ * Post Get Well Trajectories Formation Segments
+ *
+ * Get well trajectory formation segments.
+ *
+ * Provide a top bounding depth surface and an optional bottom bounding depth surface to define a
+ * formation (area between two surfaces in depth). If bottom surface is not provided, the formation
+ * is considered to extend down to the end of the well trajectory, i.e. end of well trajectory is
+ * used as lower bound for formation.
+ *
+ * For each well trajectory, the segments where the well is within the formation are calculated and
+ * returned. Each segment contains the measured depth (md) values where the well enters and exits
+ * the formation.
+ *
+ * NOTE: Expecting depth surfaces, no verification is done to ensure that the surfaces are indeed
+ * depth surfaces.
+ */
+export const postGetWellTrajectoriesFormationSegmentsMutation = (
+    options?: Partial<Options<PostGetWellTrajectoriesFormationSegmentsData_api>>,
+): UseMutationOptions<
+    PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+    Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetWellTrajectoriesFormationSegmentsResponse_api,
+        AxiosError<PostGetWellTrajectoriesFormationSegmentsError_api>,
+        Options<PostGetWellTrajectoriesFormationSegmentsData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetWellTrajectoriesFormationSegments({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
 
 export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStatisticalSurfaceDataHybridData_api>) =>
     createQueryKey("getStatisticalSurfaceDataHybrid", options);

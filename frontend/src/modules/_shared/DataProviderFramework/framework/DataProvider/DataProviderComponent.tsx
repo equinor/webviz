@@ -14,6 +14,8 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
+import { ErrorBadge } from "../utilityComponents/ErrorBadge";
+import { ErrorOverlay } from "../utilityComponents/ErrorOverlay";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -55,15 +57,18 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
-            <div
-                className={resolveClassNames(
-                    "grid grid-cols-[auto_1fr] items-stretch text-xs border [&>*:nth-child(4n-3)]:bg-slate-50 [&>*:nth-child(4n-2)]:bg-slate-50",
-                    {
-                        hidden: !isExpanded,
-                    },
-                )}
-            >
-                {makeSettings(props.dataProvider.getSettingsContextDelegate().getSettings())}
+            <div className="relative">
+                <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
+                <div
+                    className={resolveClassNames(
+                        "grid grid-cols-[auto_1fr] items-stretch text-xs border [&>*:nth-child(4n-3)]:bg-slate-50 [&>*:nth-child(4n-2)]:bg-slate-50",
+                        {
+                            hidden: !isExpanded,
+                        },
+                    )}
+                >
+                    {makeSettings(props.dataProvider.getSettingsContextDelegate().getSettings())}
+                </div>
             </div>
         </SortableListItem>
     );
@@ -98,6 +103,10 @@ function EndActions(props: EndActionProps): React.ReactNode {
     const statusMessages = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.STATUS_MESSAGES);
     const progressMessage = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.PROGRESS_MESSAGE);
     const isSubordinated = usePublishSubscribeTopicValue(props.dataProvider, DataProviderTopic.SUBORDINATED);
+    const deserializationErrors = usePublishSubscribeTopicValue(
+        props.dataProvider.getItemDelegate(),
+        ItemDelegateTopic.DESERIALIZATION_ERRORS,
+    );
 
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
@@ -173,8 +182,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
         return null;
     }
 
+    let deserializationErrorBadge: React.ReactNode = null;
+    if (deserializationErrors.length > 0) {
+        deserializationErrorBadge = <ErrorBadge numErrors={deserializationErrors.length} />;
+    }
+
     return (
         <>
+            {deserializationErrorBadge}
             <StatusMessages statusMessages={statusMessages} />
             {makeStatus()}
             <RemoveItemButton item={props.dataProvider} />

@@ -3,7 +3,6 @@ from typing import Any, TypeVar, cast
 
 from azure.core.async_paging import AsyncPageIterator, AsyncItemPaged
 
-
 T = TypeVar("T")
 
 

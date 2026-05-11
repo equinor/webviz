@@ -17,7 +17,6 @@ from .exceptions import (
     DatabaseAccessTransportError,
 )
 
-
 LOGGER = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)

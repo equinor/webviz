@@ -111,7 +111,7 @@ async def main() -> None:  # pylint: disable=async-suffix
     sumo_inspector = SumoInspector(access_token=access_token)
     # case_list = await sumo_inspector.get_cases(field_identifier="DROGON")
     # case_list = await sumo_inspector.get_cases(field_identifier="JOHAN SVERDRUP")
-    case_list = await sumo_inspector.get_cases_async(field_identifier="SNORRE")
+    case_list = await sumo_inspector.get_cases_async(asset_name="SNORRE")
     # for case_info in case_list:
     #     print(case_info)
 

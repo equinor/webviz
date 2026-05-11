@@ -12,6 +12,7 @@ export type ExpandCollapseAllButtonProps = {
 
 export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): React.ReactNode {
     function expandAllChildren() {
+        props.group.getItemDelegate().setExpanded(true);
         const descendants = props.group.getGroupDelegate().getDescendantItems(() => true);
         for (const child of descendants) {
             child.getItemDelegate().setExpanded(true);

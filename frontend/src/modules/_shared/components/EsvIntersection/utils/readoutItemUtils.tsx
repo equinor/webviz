@@ -464,11 +464,12 @@ export function esvReadoutToGenericReadout(
     readout: ReadoutItem,
     index: number,
     layerIdToNameMap: Record<string, string>,
+    axesLabels?: { xLabel?: string; yLabel?: string },
 ): GenericReadoutItem {
     return {
         label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
         color: getColorFromLayerData(readout.layer, readout.index),
-        info: esvReadoutToInfoItems(readout),
+        info: esvReadoutToInfoItems(readout, axesLabels),
     };
 }
 
@@ -476,14 +477,20 @@ function makeLabelFromLayer(layer: Layer<any>, layerIdToNameMap: Record<string, 
     return layerIdToNameMap[layer.id];
 }
 
-function esvReadoutToInfoItems(item: ReadoutItem): InfoItem[] {
+function esvReadoutToInfoItems(item: ReadoutItem, axesLabels?: { xLabel?: string; yLabel?: string }): InfoItem[] {
     const additionalInformation = getAdditionalInformationItemsFromReadoutItem(item);
 
     return additionalInformation
         .filter((el) => !(el.type === AdditionalInformationType.SCHEMATIC_INFO && el.label === "ID"))
         .map((el) => {
+            let name = el.label;
+            if (el.type === AdditionalInformationType.X && axesLabels?.xLabel) {
+                name = axesLabels.xLabel;
+            } else if (el.type === AdditionalInformationType.Z && axesLabels?.yLabel) {
+                name = axesLabels.yLabel;
+            }
             return {
-                name: el.label,
+                name,
                 unit: el.unit,
                 adornment: makeAdornment(el),
                 value: el.value,

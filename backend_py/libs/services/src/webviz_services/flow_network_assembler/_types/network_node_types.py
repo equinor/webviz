@@ -7,7 +7,6 @@ and their string representations or Eclipse summary vector names.
 
 from webviz_services.flow_network_assembler.flow_network_types import DataType, NodeType, TreeType
 
-
 NODE_TYPE_ENUM_TO_STRING_MAPPING = {
     NodeType.INJ: "Injector",
     NodeType.PROD: "Producer",

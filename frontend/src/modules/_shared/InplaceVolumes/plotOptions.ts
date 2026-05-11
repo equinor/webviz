@@ -21,4 +21,5 @@ export type InplaceVolumesPlotOptions = {
     sharedYAxis: boolean;
     hideConstants: boolean;
     showPercentageInHistogram: boolean;
+    showStatisticalLabels: boolean;
 };

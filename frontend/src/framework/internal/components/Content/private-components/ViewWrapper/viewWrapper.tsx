@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiEvent, GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
@@ -49,8 +49,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         guiMessageBroker,
         GuiState.DataChannelConnectionLayerVisible,
     );
-
-    const setEditDataChannelConnections = useSetGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
 
     const timeRef = React.useRef<number | null>(null);
     const pointerDown = React.useRef<boolean>(false);
@@ -108,14 +106,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         handleModuleClick();
     }
 
-    function handleReceiversClick(e: React.PointerEvent<HTMLButtonElement>): void {
-        guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
-            moduleInstanceId: props.moduleInstance.getId(),
-        });
-        setEditDataChannelConnections(true);
-        e.stopPropagation();
-    }
-
     function makeHeader() {
         return (
             <Header
@@ -125,7 +115,6 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 moduleInstance={props.moduleInstance}
                 isDragged={props.isDragged}
                 onPointerDown={handleHeaderPointerDown}
-                onReceiversClick={handleReceiversClick}
             />
         );
     }

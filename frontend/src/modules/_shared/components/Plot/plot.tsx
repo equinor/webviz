@@ -9,7 +9,18 @@ export type PlotProps = {
      * Informs if data/layout changes are ready to be applied
      */
     plotUpdateReady?: boolean;
+    /**
+     * Optional click handler for a download button in the modebar.
+     * When provided, a download icon is added to the Plotly modebar.
+     */
+    onDownloadClick?: () => void;
 } & PlotParams;
+
+const DOWNLOAD_ICON: Plotly.Icon = {
+    width: 24,
+    height: 24,
+    path: "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z",
+};
 
 const DEFAULT_CONFIG: Partial<Plotly.Config> = {
     modeBarButtonsToRemove: [
@@ -51,7 +62,7 @@ const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
  * ! times in succession. Try to keep property references as stable as possible
  */
 export function Plot(props: PlotProps): React.ReactNode {
-    const { plotUpdateReady, layout, data, config, ...otherProps } = props;
+    const { plotUpdateReady, onDownloadClick, layout, data, config, ...otherProps } = props;
 
     // Default to true if not defined
     const shouldApplyPlotUpdate = plotUpdateReady ?? true;
@@ -68,6 +79,10 @@ export function Plot(props: PlotProps): React.ReactNode {
     const [stableConfig, setStableConfig] = React.useState<PlotParams["config"]>(config);
 
     const [stableOtherProps, setStableOtherProps] = React.useState<typeof otherProps>(otherProps);
+
+    // Use ref for download click handler so Plotly's cached modebar always calls the latest callback
+    const onDownloadClickRef = React.useRef(onDownloadClick);
+    onDownloadClickRef.current = onDownloadClick;
 
     if (shouldApplyPlotUpdate && !_.isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
@@ -90,7 +105,17 @@ export function Plot(props: PlotProps): React.ReactNode {
 
     return React.useMemo(() => {
         const layoutWithDefaults = _.merge({}, DEFAULT_LAYOUT, stableLayout);
-        const configWithDefaults = _.merge({}, DEFAULT_CONFIG, stableConfig);
+
+        const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
+        if (onDownloadClickRef.current) {
+            modeBarButtonsToAdd.push({
+                name: "download",
+                title: "Download data",
+                icon: DOWNLOAD_ICON,
+                click: () => onDownloadClickRef.current?.(),
+            });
+        }
+        const configWithDefaults = { ..._.merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
 
         return (
             <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />

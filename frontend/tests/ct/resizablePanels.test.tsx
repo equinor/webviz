@@ -5,7 +5,8 @@ import { ResizablePanels } from "@lib/components/ResizablePanels";
 import type { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
-import { compareWithTolerance } from "tests/utils/compare";
+
+import { compareWithTolerance } from "../utils/compare";
 
 const viewPortSize = { width: 1920, height: 1080 };
 

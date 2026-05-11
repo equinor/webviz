@@ -6,7 +6,6 @@ import pyarrow as pa
 
 from .schemas import PvtData
 
-
 OIL_KEYWORDS = {"PVTO": "Oil (PVTO)", "PVDO": "Dry Oil (PVDO)", "PVCDO": "Dry Oil (PVCDO)"}
 
 GAS_KEYWORDS = {

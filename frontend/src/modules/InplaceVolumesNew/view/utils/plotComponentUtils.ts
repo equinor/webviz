@@ -19,6 +19,7 @@ export type MakePlotDataOptions = {
     showStatisticalMarkers: boolean;
     showRealizationPoints: boolean;
     showPercentageInBar: boolean;
+    showStatisticalLabels: boolean;
 };
 
 /**
@@ -34,6 +35,7 @@ export function makePlotData({
     showStatisticalMarkers,
     showRealizationPoints,
     showPercentageInBar,
+    showStatisticalLabels,
 }: MakePlotDataOptions): (colorEntries: ColorEntry[]) => Partial<PlotData>[] {
     return (colorEntries: ColorEntry[]): Partial<PlotData>[] => {
         const data: Partial<PlotData>[] = [];
@@ -53,12 +55,23 @@ export function makePlotData({
                         showStatisticalMarkers,
                         showRealizationPoints,
                         showPercentageInBar,
+                        showStatisticalLabels,
                     ),
                 );
             } else if (plotType === PlotType.CONVERGENCE) {
                 data.push(...makeConvergencePlot(title, table, firstResultName, color));
             } else if (plotType === PlotType.DISTRIBUTION) {
-                data.push(...makeDensityPlot(title, table, firstResultName, color, showRealizationPoints));
+                data.push(
+                    ...makeDensityPlot(
+                        title,
+                        table,
+                        firstResultName,
+                        color,
+                        showRealizationPoints,
+                        showStatisticalMarkers,
+                        showStatisticalLabels,
+                    ),
+                );
             } else if (plotType === PlotType.BOX) {
                 let yAxisPosition = boxPlotKeyToPositionMap.get(entry.colorKey);
                 if (yAxisPosition === undefined) {
@@ -149,7 +162,8 @@ function makeHistogram(
     numBins: number,
     showStatisticalMarkers: boolean,
     showRealizationPoints: boolean,
-    showLabels: boolean,
+    showPercentageInBar: boolean,
+    showStatisticalLabels: boolean,
 ): Partial<PlotData>[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -164,8 +178,8 @@ function makeHistogram(
         numBins,
         showStatisticalMarkers,
         showRealizationPoints,
-        showStatisticalLabels: showLabels,
-        showPercentageInBar: showLabels,
+        showStatisticalLabels,
+        showPercentageInBar,
     });
 }
 
@@ -175,6 +189,8 @@ function makeDensityPlot(
     resultName: string,
     color: string,
     showRealizationPoints: boolean,
+    showStatisticalMarkers: boolean,
+    showStatisticalLabels: boolean,
 ): Partial<PlotData>[] {
     const resultColumn = table.getColumn(resultName);
     if (!resultColumn) {
@@ -187,7 +203,10 @@ function makeDensityPlot(
         title,
         values: xValues,
         color,
+        resultName,
         showRealizationPoints,
+        showStatisticalMarkers,
+        showStatisticalLabels,
     });
 }
 

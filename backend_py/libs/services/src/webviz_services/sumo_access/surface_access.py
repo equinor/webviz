@@ -33,7 +33,6 @@ from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInte
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
 from .sumo_client_factory import create_sumo_client
 
-
 LOGGER = logging.getLogger(__name__)
 
 

@@ -6,7 +6,6 @@ import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore"
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { StatusMessageStoreTopic, type StatusMessage as GenericStatusMessage } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { isDevMode } from "@lib/utils/devMode";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
@@ -56,22 +55,12 @@ export type DataProviderPayloads<TData> = {
     [DataProviderTopic.STATUS_MESSAGES]: readonly GenericStatusMessage[];
 };
 
+// Using a unique brand to identify DataProvider objects, since instanceof checks won't work due to potential multiple versions of the module.
+// Using Symbol.for to ensure that even if there are multiple versions of the module, they will all reference the same symbol for the brand.
+const DATA_PROVIDER_BRAND = Symbol.for("dpf/data-provider");
+
 export function isDataProvider(obj: any): obj is DataProvider<any, any> {
-    if (!isDevMode()) {
-        return obj instanceof DataProvider;
-    }
-
-    if (typeof obj !== "object" || obj === null) {
-        return false;
-    }
-
-    return (
-        Boolean(obj.getType) &&
-        Boolean(obj.getSettingsContextDelegate) &&
-        Boolean(obj.getStatus) &&
-        Boolean(obj.getData) &&
-        Boolean(obj.getError)
-    );
+    return typeof obj === "object" && obj !== null && DATA_PROVIDER_BRAND in obj;
 }
 
 export type DataProviderParams<
@@ -99,14 +88,16 @@ export type DataProviderParams<
  * It also manages the status of the provider (loading, success, error).
  */
 export class DataProvider<
-    TSettings extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
->
+        TSettings extends Settings,
+        TData,
+        TStoredData extends StoredData = Record<string, never>,
+        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+    >
     implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
+    private readonly [DATA_PROVIDER_BRAND] = true;
+
     private _type: string;
     private _customDataProviderImpl: CustomDataProviderImplementation<
         TSettings,
@@ -493,7 +484,10 @@ export class DataProvider<
 
     deserializeState(serializedDataProvider: SerializedDataProvider<TSettings, TSettingKey>): void {
         this.getItemDelegate().deserializeState(serializedDataProvider);
-        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings);
+        const reportError = (errorMsg: string) => {
+            this.getItemDelegate().reportDeserializationError(errorMsg);
+        };
+        this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings, reportError);
     }
 
     beforeDestroy(): void {

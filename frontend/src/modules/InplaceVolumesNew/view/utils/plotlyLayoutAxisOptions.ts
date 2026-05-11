@@ -31,7 +31,14 @@ export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, op
         configureHistogramPlot(plotBuilder, histogramType);
     } else if (plotType === PlotType.BAR) {
         configureBarPlot(plotBuilder, barSelectorColumn, colorBy, barSelectorLength);
+    } else if (plotType === PlotType.DISTRIBUTION) {
+        configureDistributionPlot(plotBuilder);
     }
+}
+
+function configureDistributionPlot(plotBuilder: PlotBuilder): void {
+    plotBuilder.setYAxisOptions({ visible: false });
+    plotBuilder.setXAxisOptions({ zeroline: false });
 }
 
 function configureConvergencePlot(plotBuilder: PlotBuilder, resultName: string): void {

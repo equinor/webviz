@@ -78,3 +78,8 @@ export interface SerializedDeltaSurface extends SerializedItem {
     type: SerializedType.DELTA_SURFACE;
     children: SerializedItem[];
 }
+
+export interface SerializedPlaceholder extends SerializedItem {
+    type: SerializedType;
+    [key: string]: any;
+}

@@ -20,7 +20,7 @@ export type CategorizedItem<T> = {
  *
  * As not all vectors have historical data, thereby the vector specification and historical data must be paired.
  */
-export type VectorWithHistoricalData = { vectorSpecification: VectorSpec; data: VectorHistoricalData_api };
+export type VectorWithHistoricalData = VectorSpecWithData<VectorHistoricalData_api>;
 
 /**
  * Definition of historical vector queries result for combined queries
@@ -41,7 +41,7 @@ export type VectorHistoricalQueriesResult = {
  */
 export type EnsembleVectorObservationData = {
     hasSummaryObservations: boolean;
-    vectorsObservationData: { vectorSpecification: VectorSpec; data: SummaryVectorObservations_api }[];
+    vectorsObservationData: VectorSpecWithData<SummaryVectorObservations_api>[];
 };
 
 /**
@@ -66,6 +66,11 @@ export interface VectorSpec {
     vectorName: string;
     hasHistoricalVector: boolean;
 }
+
+export type VectorSpecWithData<T> = {
+    vectorSpecification: VectorSpec;
+    data: T;
+};
 
 export enum VisualizationMode {
     INDIVIDUAL_REALIZATIONS = "IndividualRealizations",

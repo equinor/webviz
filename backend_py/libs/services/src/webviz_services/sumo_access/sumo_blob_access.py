@@ -16,7 +16,9 @@ async def get_sas_token_and_blob_base_uri_for_case_async(sumo_access_token: str,
     """
 
     services_config = get_services_config()
-    sumo_base_uri = f"https://main-sumo-{services_config.sumo_env}.radix.equinor.com/api/v1"
+    sumo_base_uri = "https://api.sumo.equinor.com/api/v1"
+    if services_config.sumo_env == "dev":
+        sumo_base_uri = "https://main-sumo-core-dev.c3.radix.equinor.com/api/v1"
 
     req_url = f"{sumo_base_uri}/objects('{case_uuid}')/authtoken"
     req_headers = {"Authorization": f"Bearer {sumo_access_token}"}

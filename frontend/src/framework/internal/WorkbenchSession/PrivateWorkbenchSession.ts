@@ -109,7 +109,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
         this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
-        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._realizationFilterSet);
+        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._wrappedRealizationFilterSet);
         this._isSnapshot = isSnapshot;
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -264,6 +264,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         // This has to be done after loading the ensemble set
         // in order to guarantee that all realization filters for the ensembles exist
         this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
+        this.notifyAboutEnsembleRealizationFilterChange();
 
         // --- Now that the ensemble set is loaded, we can deserialize dashboards and modules ---
 

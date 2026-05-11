@@ -9,7 +9,6 @@ from fastapi import Query
 
 from .inactivity_shutdown import InactivityShutdown
 
-
 logging.basicConfig(format="%(asctime)s %(levelname)-7s [%(name)s]: %(message)s", datefmt="%H:%M:%S")
 logging.getLogger().setLevel(logging.DEBUG)
 

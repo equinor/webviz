@@ -18,7 +18,6 @@ from webviz_services.flow_network_assembler.flow_network_types import (
 
 from webviz_services.flow_network_assembler._types import network_node_types
 
-
 LOGGER = logging.getLogger(__name__)
 
 

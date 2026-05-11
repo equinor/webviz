@@ -17,11 +17,7 @@ export function makeDrilledWellTrajectoriesLayer(
         return null;
     }
 
-    const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH",
-    );
-
-    const wellLayerDataFeatures = tempWorkingWellsData.map((well) => wellTrajectoryToGeojson(well));
+    const wellLayerDataFeatures = fieldWellboreTrajectoriesData.map((well) => wellTrajectoryToGeojson(well));
 
     function getLineStyleWidth(object: Feature): number {
         if (object.properties && "lineWidth" in object.properties) {

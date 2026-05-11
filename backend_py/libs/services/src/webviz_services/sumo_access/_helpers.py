@@ -6,7 +6,6 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 
 from webviz_services.service_exceptions import Service, NoDataError
 
-
 LOGGER = logging.getLogger(__name__)
 
 

@@ -2,7 +2,6 @@ from typing import Generic, TypeVar, Literal
 
 from pydantic import BaseModel
 
-
 ResultT = TypeVar("ResultT")
 
 

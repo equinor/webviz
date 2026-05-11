@@ -5,7 +5,6 @@ from sumo.wrapper import SumoClient
 
 from webviz_core_utils.perf_metrics import PerfMetrics
 
-
 LOGGER = logging.getLogger(__name__)
 
 

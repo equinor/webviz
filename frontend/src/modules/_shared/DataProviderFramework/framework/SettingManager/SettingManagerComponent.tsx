@@ -7,6 +7,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
+import { isEnabledObject, isSettingEnabled } from "../../interfacesAndTypes/customSettingsHandler";
 import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import { type DataProviderManager, DataProviderManagerTopic } from "../DataProviderManager/DataProviderManager";
 
@@ -21,8 +22,8 @@ export type SettingComponentProps<TSetting extends Setting> = {
 
 export function SettingManagerComponent<
     TSetting extends Setting,
-    TValue extends
-        SettingTypeDefinitions[TSetting]["internalValue"] = SettingTypeDefinitions[TSetting]["internalValue"],
+    TValue extends SettingTypeDefinitions[TSetting]["internalValue"] =
+        SettingTypeDefinitions[TSetting]["internalValue"],
 >(props: SettingComponentProps<TSetting>): React.ReactNode {
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<any, any>) => React.ReactNode>(
         props.setting.makeComponent(),
@@ -63,7 +64,7 @@ export function SettingManagerComponent<
         return null;
     }
 
-    if (props.sharedSetting && isInitialized && valueConstraints === null && !props.setting.isStatic()) {
+    if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
@@ -104,11 +105,16 @@ export function SettingManagerComponent<
                 <PendingWrapper isPending={actuallyLoading}>
                     <div className="flex flex-col gap-1 min-w-0">
                         <div
-                            className={resolveClassNames({
+                            className={resolveClassNames("relative", {
                                 "outline outline-red-500": !isValid && !actuallyLoading,
-                                "pointer-events-none opacity-50": !attributes.enabled,
+                                "pointer-events-none opacity-50": !isSettingEnabled(attributes.enabled),
                             })}
                         >
+                            {isEnabledObject(attributes.enabled) && !attributes.enabled.enabled && (
+                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 text-center p-2">
+                                    {attributes.enabled.reason}
+                                </div>
+                            )}
                             <componentRef.current
                                 onValueChange={handleValueChanged}
                                 value={value}

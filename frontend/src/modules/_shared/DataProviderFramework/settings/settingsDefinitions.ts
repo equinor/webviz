@@ -29,6 +29,7 @@ export enum Setting {
     DEPTH_ATTRIBUTE = "depthAttribute",
     SEISMIC_ATTRIBUTE = "seismicAttribute",
     ATTRIBUTE = "attribute",
+    WELLBORE_DEPTH_FILTER_ATTRIBUTE = "wellboreDepthFilterAttribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
     DEPTH_COLOR_SCALE = "depthColorScale",
@@ -40,6 +41,7 @@ export enum Setting {
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
     INTERSECTION = "intersection",
+    MD_RANGE = "mdRange",
     OPACITY_PERCENT = "opacityPercent",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
@@ -51,7 +53,8 @@ export enum Setting {
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
     SMDA_INTERPRETER = "smdaInterpreter",
-    SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
+    WELLBORES = "wellbores",
+    SMDA_WELLBORE_HEADERS = "smdaWellboresHeaders",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
     FORMATION_NAME = "formationName",
@@ -59,10 +62,27 @@ export enum Setting {
     TIME_OR_INTERVAL = "timeOrInterval",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
+    TIME_RANGE_WITH_POINTS = "timeRangeWithPoints",
+    TVD_RANGE = "tvdRange",
+    WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
+    WELLBORE_DEPTH_FILTER_TYPE = "wellboreDepthFilterType",
     WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     REPRESENTATION = "representation",
+    FLOW_FILTER_TYPE = "flowFilterType",
+    FLOW_FILTER = "flowFilter",
+}
+
+enum ProductionPhase {
+    OIL = "oil",
+    GAS = "gas",
+    WATER = "water",
+}
+
+enum InjectionPhase {
+    WATER = "water",
+    GAS = "gas",
 }
 
 /**
@@ -123,10 +143,21 @@ export type SettingTypeDefinitions = {
         valueConstraints: [number, number, number];
     };
 
+    // Range settings (RANGE category) - valueConstraints is [min, max, step]
+    [Setting.MD_RANGE]: {
+        internalValue: [number | "min", number | "max"] | null;
+        externalValue: [number, number] | null;
+        valueConstraints: [number, number, number];
+    };
+    [Setting.TVD_RANGE]: {
+        internalValue: [number | "min", number | "max"] | null;
+        externalValue: [number, number] | null;
+        valueConstraints: [number, number, number];
+    };
     // Single select string settings (SINGLE_SELECT category)
     [Setting.SCALE]: {
         internalValue: "linear" | "log" | null;
-        externalValue: "linear" | "log" | null;
+        externalValue: SettingTypeDefinitions[Setting.SCALE]["internalValue"];
         valueConstraints: ("linear" | "log")[];
     };
     [Setting.ATTRIBUTE]: {
@@ -140,6 +171,11 @@ export type SettingTypeDefinitions = {
         valueConstraints: string[];
     };
     [Setting.SEISMIC_ATTRIBUTE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueConstraints: string[];
+    };
+    [Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
@@ -194,12 +230,27 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
+    [Setting.TIME_RANGE_WITH_POINTS]: {
+        internalValue: string[] | null;
+        externalValue: string[] | null;
+        valueConstraints: string[];
+    };
     [Setting.WELLBORE_PICK_IDENTIFIER]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
     };
 
+    [Setting.WELLBORE_DEPTH_FILTER_TYPE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueConstraints: { value: string; label: string }[] | null;
+    };
+    [Setting.FLOW_FILTER_TYPE]: {
+        internalValue: string | null;
+        externalValue: string | null;
+        valueConstraints: { value: string; label: string }[] | null;
+    };
     // Single select complex object settings (SINGLE_SELECT category)
     [Setting.REPRESENTATION]: {
         internalValue: Representation | null;
@@ -249,6 +300,11 @@ export type SettingTypeDefinitions = {
         internalValue: number[] | null;
         externalValue: number[] | null;
         valueConstraints: number[];
+    };
+    [Setting.WELLBORES]: {
+        internalValue: string[] | null;
+        externalValue: WellboreHeader_api[] | null;
+        valueConstraints: WellboreHeader_api[];
     };
     [Setting.SMDA_WELLBORE_HEADERS]: {
         internalValue: string[] | null;
@@ -301,7 +357,7 @@ export type SettingTypeDefinitions = {
     // Boolean + Number settings (BOOLEAN_NUMBER category)
     [Setting.CONTOURS]: {
         internalValue: { enabled: boolean; value: number } | null;
-        externalValue: { enabled: boolean; value: number } | null;
+        externalValue: SettingTypeDefinitions[Setting.CONTOURS]["internalValue"];
         valueConstraints: [number, number] | null;
     };
 
@@ -326,12 +382,47 @@ export type SettingTypeDefinitions = {
             visible: [boolean, boolean, boolean];
             applied: boolean;
         } | null;
-        externalValue: {
-            value: [number, number, number];
-            visible: [boolean, boolean, boolean];
-            applied: boolean;
-        } | null;
+        externalValue: SettingTypeDefinitions[Setting.SEISMIC_SLICES]["internalValue"];
         valueConstraints: [[number, number, number], [number, number, number], [number, number, number]];
+    };
+
+    [Setting.WELLBORE_DEPTH_FORMATION_FILTER]: {
+        internalValue: {
+            realizationNum: number;
+            topSurfaceName: string | null;
+            baseSurfaceName: string | null;
+        } | null;
+        externalValue: SettingTypeDefinitions[Setting.WELLBORE_DEPTH_FORMATION_FILTER]["internalValue"];
+        valueConstraints: {
+            realizationNums: number[];
+            surfaceNamesInStratOrder: string[];
+        } | null;
+    };
+
+    [Setting.FLOW_FILTER]: {
+        internalValue: {
+            production: {
+                [key in ProductionPhase]: {
+                    value: number;
+                    color: string;
+                };
+            };
+            injection: {
+                [key in InjectionPhase]: {
+                    value: number;
+                    color: string;
+                };
+            };
+        } | null;
+        externalValue: SettingTypeDefinitions[Setting.FLOW_FILTER]["internalValue"];
+        valueConstraints: {
+            production: {
+                [key in ProductionPhase]: number;
+            };
+            injection: {
+                [key in InjectionPhase]: number;
+            };
+        } | null;
     };
 };
 

@@ -73,12 +73,18 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     fixupValue(currentValue: ValueType, valueConstraints: ValueConstraintsType): ValueType {
-        return fixupValue<ValueType, IntersectionSettingValue>(
-            currentValue,
-            valueConstraints,
-            (v) => v,
-            (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
-        );
+        const valueConstraintsForActiveType = valueConstraints.filter((v) => v.type === this._activeIntersectionType);
+        if (valueConstraintsForActiveType.length > 0) {
+            return fixupValue<ValueType, IntersectionSettingValue>(
+                currentValue,
+                valueConstraintsForActiveType,
+                (v) => v,
+                (a, b) => a?.type === b?.type && a?.uuid === b?.uuid,
+            );
+        }
+
+        // No items of preferred type available yet — defer fixup
+        return null;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {

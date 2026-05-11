@@ -13,7 +13,7 @@ export const selectedFieldIdentAtom = persistableFixableAtom<string | null>({
         if (value === null) return false;
 
         if (ensembleSet.getEnsembleArray().length) {
-            return regularEnsembles.some((ens) => ens.getFieldIdentifier() === value);
+            return regularEnsembles.some((ens) => ens.getFieldIdentifiers().includes(value));
         }
 
         return allFields.some((field) => field.fieldIdentifier === value);
@@ -21,11 +21,10 @@ export const selectedFieldIdentAtom = persistableFixableAtom<string | null>({
     fixupFunction: ({ get }) => {
         const ensembleSet = get(EnsembleSetAtom);
         const allFields = get(availableFieldsQueryAtom)?.data ?? [];
-
         const regularEnsembles = ensembleSet.getRegularEnsembleArray();
 
         if (ensembleSet.getEnsembleArray().length) {
-            return regularEnsembles[0]?.getFieldIdentifier() ?? null;
+            return regularEnsembles[0]?.getFieldIdentifiers()[0] ?? null;
         }
 
         return allFields[0]?.fieldIdentifier ?? null;

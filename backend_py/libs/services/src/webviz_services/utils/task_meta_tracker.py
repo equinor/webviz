@@ -7,7 +7,6 @@ import redis.asyncio as redis
 
 from .authenticated_user import AuthenticatedUser
 
-
 _REDIS_KEY_PREFIX = "task_meta_tracker"
 
 

@@ -3,7 +3,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { VectorStatisticData_api } from "@api";
 import { StatisticFunction_api } from "@api";
 
-import type { VectorSpec } from "../../typesAndEnums";
+import type { VectorSpec, VectorSpecWithData } from "../../typesAndEnums";
 import { FanchartStatisticOption } from "../../typesAndEnums";
 
 /**
@@ -17,7 +17,7 @@ import { FanchartStatisticOption } from "../../typesAndEnums";
 export function createLoadedVectorSpecificationAndDataArray<T>(
     vectorSpecifications: VectorSpec[],
     queryResults: UseQueryResult<T | null | undefined>[],
-): { vectorSpecification: VectorSpec; data: T }[] {
+): VectorSpecWithData<T>[] {
     if (vectorSpecifications.length !== queryResults.length) {
         throw new Error(
             "Number of vector specifications and query results must be equal. Got vector specifications: " +
@@ -28,7 +28,7 @@ export function createLoadedVectorSpecificationAndDataArray<T>(
         );
     }
 
-    const output: { vectorSpecification: VectorSpec; data: T }[] = [];
+    const output: VectorSpecWithData<T>[] = [];
     for (let i = 0; i < queryResults.length; ++i) {
         const result = queryResults[i];
         if (!result.data) continue;
@@ -43,9 +43,9 @@ export function createLoadedVectorSpecificationAndDataArray<T>(
     Helper function to filter out the selected individual statistic options from the vector specification and statistics data array
  */
 export function filterVectorSpecificationAndIndividualStatisticsDataArray(
-    vectorSpecificationAndStatisticsData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
+    vectorSpecificationAndStatisticsData: VectorSpecWithData<VectorStatisticData_api>[],
     selectedIndividualStatisticOptions: StatisticFunction_api[],
-): { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[] {
+): VectorSpecWithData<VectorStatisticData_api>[] {
     if (selectedIndividualStatisticOptions.length === 0) return [];
 
     const output = vectorSpecificationAndStatisticsData.map((v) => {
@@ -61,9 +61,9 @@ export function filterVectorSpecificationAndIndividualStatisticsDataArray(
     Helper function to filter out the selected fanchart statistic options from the vector specification and statistics data array
  */
 export function filterVectorSpecificationAndFanchartStatisticsDataArray(
-    vectorSpecificationAndStatisticsData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
+    vectorSpecificationAndStatisticsData: VectorSpecWithData<VectorStatisticData_api>[],
     selectedFanchartStatisticOptions: FanchartStatisticOption[],
-): { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[] {
+): VectorSpecWithData<VectorStatisticData_api>[] {
     const includeStatisticFunctions: StatisticFunction_api[] = [];
     if (selectedFanchartStatisticOptions.includes(FanchartStatisticOption.MEAN))
         includeStatisticFunctions.push(StatisticFunction_api.MEAN);

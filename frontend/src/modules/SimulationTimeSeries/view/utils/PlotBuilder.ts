@@ -15,7 +15,7 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import type { Figure } from "@modules/_shared/Figure";
 import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
-import type { VectorHexColorMap, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { VectorHexColorMap, VectorSpec, VectorSpecWithData } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
@@ -278,7 +278,7 @@ export class PlotBuilder {
     }
 
     addRealizationTracesColoredByParameter(
-        vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[],
+        vectorsRealizationData: VectorSpecWithData<VectorRealizationData_api[]>[],
     ): void {
         if (!this._ensemblesParameterColoring) {
             throw new Error(
@@ -350,7 +350,7 @@ export class PlotBuilder {
     }
 
     addRealizationsTraces(
-        vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[],
+        vectorsRealizationData: VectorSpecWithData<VectorRealizationData_api[]>[],
         useIncreasedBrightness: boolean,
     ): void {
         // Only allow selected vectors
@@ -406,9 +406,7 @@ export class PlotBuilder {
         }
     }
 
-    addFanchartTraces(
-        vectorsStatisticData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
-    ): void {
+    addFanchartTraces(vectorsStatisticData: VectorSpecWithData<VectorStatisticData_api>[]): void {
         // Only allow selected vectors
         const selectedVectorsStatisticData = vectorsStatisticData.filter((vec) =>
             this._selectedVectorSpecifications.some(
@@ -453,7 +451,7 @@ export class PlotBuilder {
     }
 
     addStatisticsTraces(
-        vectorsStatisticData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
+        vectorsStatisticData: VectorSpecWithData<VectorStatisticData_api>[],
         highlightStatisticTraces: boolean,
     ): void {
         // Only allow selected vectors

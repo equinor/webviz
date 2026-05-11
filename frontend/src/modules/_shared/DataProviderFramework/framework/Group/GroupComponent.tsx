@@ -15,7 +15,9 @@ import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingManagerComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
+import { ErrorOverlay } from "../utilityComponents/ErrorOverlay";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
+import { GroupErrorBadge } from "../utilityComponents/GroupErrorBadge";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { StatusMessages } from "../utilityComponents/StatusWriterMessages";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -30,7 +32,7 @@ export type GroupComponentProps = {
 };
 
 export function GroupComponent(props: GroupComponentProps): React.ReactNode {
-    const { makeActionsForGroup } = props;
+    const { makeActionsForGroup, onActionClick } = props;
 
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
@@ -42,11 +44,18 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         return makeActionsForGroup(props.group);
     }, [props.group, makeActionsForGroup]);
 
-    function handleActionClick(actionIdentifier: string) {
-        if (props.onActionClick) {
-            props.onActionClick(actionIdentifier, props.group);
-        }
-    }
+    const handleActionClick = React.useCallback(
+        function handleActionClick(actionIdentifier: string) {
+            onActionClick?.(actionIdentifier, props.group);
+        },
+        [props.group, onActionClick],
+    );
+    const handleToggleExpanded = React.useCallback(
+        function handleToggleExpanded(expanded: boolean) {
+            props.group.getItemDelegate().setExpanded(expanded);
+        },
+        [props.group],
+    );
 
     function makeSetting(setting: SettingManager<any>) {
         const manager = props.group.getItemDelegate().getDataProviderManager();
@@ -68,6 +77,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
 
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
+        adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
 
         if (sharedSettingsDelegate) {
             adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
@@ -101,13 +111,17 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                 backgroundColor: color ?? undefined,
             }}
             expanded={isExpanded}
+            onToggleExpanded={handleToggleExpanded}
             startAdornment={<VisibilityToggle item={props.group} />}
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>{emptyContentMessage}</EmptyContent>}
             content={
-                props.group.getSharedSettingsDelegate() ? (
-                    <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
-                        {makeSettings(Object.values(props.group.getWrappedSettings()))}
+                sharedSettingsDelegate ? (
+                    <div className="relative">
+                        <ErrorOverlay itemDelegate={props.group.getItemDelegate()} isExpanded={isExpanded} />
+                        <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                            {makeSettings(Object.values(props.group.getWrappedSettings()))}
+                        </div>
                     </div>
                 ) : undefined
             }

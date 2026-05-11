@@ -14,7 +14,10 @@ export function getAvailableEnsemblesForField(
     fieldIdentifier: string | null,
     ensembles: readonly RegularEnsemble[],
 ): RegularEnsemble[] {
-    return ensembles.filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier);
+    if (!fieldIdentifier) {
+        return [];
+    }
+    return ensembles.filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier));
 }
 
 /**
