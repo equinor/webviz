@@ -1,20 +1,11 @@
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 
 // Re-export base parts
-export const Arrow = BaseMenu.Arrow;
 export const Backdrop = BaseMenu.Backdrop;
-export const CheckboxItemIndicator = BaseMenu.CheckboxItemIndicator;
 export const Group = BaseMenu.Group;
-export const GroupLabel = BaseMenu.GroupLabel;
 export const LinkItem = BaseMenu.LinkItem;
-export const Portal = BaseMenu.Portal;
-export const Positioner = BaseMenu.Positioner;
 export const RadioGroup = BaseMenu.RadioGroup;
-export const RadioItem = BaseMenu.RadioItem;
-export const RadioItemIndicator = BaseMenu.RadioItemIndicator;
-export const Root = BaseMenu.Root;
 export const SubmenuRoot = BaseMenu.SubmenuRoot;
-export const Separator = BaseMenu.Separator;
 export const Handle = BaseMenu.Handle;
 export const createHandle = BaseMenu.createHandle;
 
@@ -24,3 +15,9 @@ export { MenuPopup as Popup } from "./custom_parts/MenuPopup";
 export { MenuTrigger as Trigger } from "./custom_parts/MenuTrigger";
 export { SubmenuTrigger as SubmenuTrigger } from "./custom_parts/SubmenuTrigger";
 export { MenuCheckBoxItem as CheckBoxItem } from "./custom_parts/CheckboxItem";
+export { MenuRadioItem as RadioItem } from "./custom_parts/RadioItem";
+export { MenuGroupLabel as GroupLabel } from "./custom_parts/GroupLabel";
+export { MenuSeparator as Separator } from "./custom_parts/Separator";
+export { MenuItemContent as ItemContent } from "./custom_parts/ItemContent";
+export { MenuTextItem as TextItem } from "./custom_parts/TextItem";
+export { MenuRoot as Root } from "./custom_parts/Root";

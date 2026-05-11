@@ -55,6 +55,7 @@ function ComposedMenuComponent(props: ComposedMenuProps, ref: React.ForwardedRef
     return (
         <RootPropsContext.Provider value={propsWithDefaults}>
             <Parts.Root
+                itemSize={propsWithDefaults.itemSize}
                 disabled={!propsWithDefaults.items.length}
                 open={propsWithDefaults.open}
                 onOpenChange={propsWithDefaults.onOpenChange}
@@ -66,15 +67,15 @@ function ComposedMenuComponent(props: ComposedMenuProps, ref: React.ForwardedRef
                 >
                     {propsWithDefaults.children}
                 </Parts.Trigger>
-                <Parts.Portal>
-                    <Parts.Positioner className="z-9999" side={propsWithDefaults.side} align={propsWithDefaults.align}>
-                        <Parts.Popup className={getTextSizeClassName(propsWithDefaults.itemSize)}>
-                            {propsWithDefaults.items.map((item, i) => (
-                                <MenuItem key={makeKey(item, i)} item={item} />
-                            ))}
-                        </Parts.Popup>
-                    </Parts.Positioner>
-                </Parts.Portal>
+                <Parts.Popup
+                    side={propsWithDefaults.side}
+                    align={propsWithDefaults.align}
+                    className={getTextSizeClassName(propsWithDefaults.itemSize)}
+                >
+                    {propsWithDefaults.items.map((item, i) => (
+                        <MenuItem key={makeKey(item, i)} item={item} />
+                    ))}
+                </Parts.Popup>
             </Parts.Root>
         </RootPropsContext.Provider>
     );
@@ -84,7 +85,7 @@ function MenuItem(props: { item: MenuItem }) {
     if (isItemGroup(props.item)) {
         return <SubmenuItem group={props.item} />;
     } else if (isDivider(props.item)) {
-        return <Parts.Separator className="h-px bg-gray-200 my-1" />;
+        return <Parts.Separator />;
     } else if (isText(props.item)) {
         return <TextItem item={props.item} />;
     } else {
@@ -110,27 +111,6 @@ function ActionItem(props: { action: Action }) {
         rootProps?.onActionClicked?.(props.action.id);
     }
 
-    function makeContent() {
-        if (props.action.description) {
-            return (
-                <>
-                    {props.action.icon && <span>{props.action.icon}</span>}
-                    <div>
-                        <p className="font-bold">{props.action.label}</p>
-                        <p className={getTextSizeClassName(rootProps.itemSize, -1)}>{props.action.description}</p>
-                    </div>
-                </>
-            );
-        } else {
-            return (
-                <>
-                    {props.action.icon}
-                    {props.action.label}
-                </>
-            );
-        }
-    }
-
     return (
         <ItemComp
             closeOnClick={rootProps?.closeOnClick}
@@ -138,7 +118,11 @@ function ActionItem(props: { action: Action }) {
             checked={props.action.checked}
             disabled={props.action.disabled}
         >
-            {makeContent()}
+            <Parts.ItemContent
+                label={props.action.label}
+                icon={props.action.icon}
+                description={props.action.description}
+            />
         </ItemComp>
     );
 }
@@ -153,16 +137,8 @@ function SubmenuItem(props: { group: SubMenu }) {
 
     if (rootProps.flat) {
         return (
-            <Parts.Group
-                className={getTextSizeClassName(rootProps.itemSize)}
-                style={{ paddingLeft: `${groupDepth}rem` }}
-            >
-                <Parts.GroupLabel
-                    className={resolveClassNames(
-                        getTextSizeClassName(rootProps.itemSize, -1),
-                        "text-gray-500 uppercase font-semibold tracking-wider px-3 py-1",
-                    )}
-                >
+            <Parts.Group style={{ paddingLeft: `${groupDepth}rem` }}>
+                <Parts.GroupLabel>
                     {props.group.label} {props.group.icon}
                 </Parts.GroupLabel>
                 <GroupDepthContext.Provider value={groupDepth + 1}>{subMenuContent}</GroupDepthContext.Provider>
@@ -178,11 +154,9 @@ function SubmenuItem(props: { group: SubMenu }) {
 
                 <ChevronRight fontSize="inherit" />
             </Parts.SubmenuTrigger>
-            <Parts.Portal>
-                <Parts.Positioner className="z-9999" side="right" align="start">
-                    <Parts.Popup className={getTextSizeClassName(rootProps.itemSize)}>{subMenuContent}</Parts.Popup>
-                </Parts.Positioner>
-            </Parts.Portal>
+            <Parts.Popup side="right" align="start">
+                {subMenuContent}
+            </Parts.Popup>
         </Parts.SubmenuRoot>
     );
 }
