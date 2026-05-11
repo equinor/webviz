@@ -119,14 +119,22 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
         (item) => item.itemType === VisualizationItemType.GROUP && item.groupType === GroupType.VIEW,
     ).length;
 
+    // Grid should flow row-first
     if (numViews) {
-        const numCols = Math.ceil(Math.sqrt(numViews));
-        const numRows = Math.ceil(numViews / numCols);
-        views.layout = [numCols, numRows];
-    }
+        if (props.preferredViewLayout === ViewLayout.GRID) {
+            const numRows = Math.ceil(Math.sqrt(numViews));
+            const numCols = Math.ceil(numViews / numRows);
 
-    if (props.preferredViewLayout === ViewLayout.HORIZONTAL) {
-        views.layout = [views.layout[1], views.layout[0]];
+            views.layout = [numCols, numRows];
+        }
+
+        if (props.preferredViewLayout === ViewLayout.HORIZONTAL) {
+            views.layout = [1, numViews];
+        }
+
+        if (props.preferredViewLayout === ViewLayout.VERTICAL) {
+            views.layout = [numViews, 1];
+        }
     }
 
     statusWriter.setLoading(props.visualizationAssemblerProduct.numLoadingDataProviders > 0);

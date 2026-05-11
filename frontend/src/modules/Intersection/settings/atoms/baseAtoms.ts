@@ -4,5 +4,5 @@ import type { DataProviderManager } from "@modules/_shared/DataProviderFramework
 import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 
 export const dataProviderManagerAtom = atom<DataProviderManager | null>(null);
-export const preferredViewLayoutAtom = atom<ViewLayout>(ViewLayout.VERTICAL);
+export const preferredViewLayoutAtom = atom<ViewLayout>(ViewLayout.GRID);
 export const dataProviderSerializedStateAtom = atom<string>("");

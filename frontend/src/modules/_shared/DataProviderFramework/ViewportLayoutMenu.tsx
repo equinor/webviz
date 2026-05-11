@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Settings, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
+import { GridView, Settings, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Parts as Menu } from "@lib/components/Menu";
@@ -26,12 +26,16 @@ export function ViewportLayoutMenu(props: ViewportLayoutMenuProps): React.ReactN
                 <Menu.Group>
                     <Menu.GroupLabel>Preferred view layout</Menu.GroupLabel>
                     <Menu.RadioGroup value={props.value} onValueChange={props.onValueChange}>
+                        <Menu.RadioItem value={ViewLayout.GRID}>
+                            <Menu.ItemContent icon={<GridView fontSize="inherit" />} label="Grid" />
+                        </Menu.RadioItem>
+
                         <Menu.RadioItem value={ViewLayout.HORIZONTAL}>
-                            <Menu.ItemContent icon={<TableRowsOutlined fontSize="inherit" />} label="Horizontal" />
+                            <Menu.ItemContent icon={<ViewColumnOutlined fontSize="inherit" />} label="Horizontal" />
                         </Menu.RadioItem>
 
                         <Menu.RadioItem value={ViewLayout.VERTICAL}>
-                            <Menu.ItemContent icon={<ViewColumnOutlined fontSize="inherit" />} label="Vertical" />
+                            <Menu.ItemContent icon={<TableRowsOutlined fontSize="inherit" />} label="Vertical" />
                         </Menu.RadioItem>
                     </Menu.RadioGroup>
                 </Menu.Group>
