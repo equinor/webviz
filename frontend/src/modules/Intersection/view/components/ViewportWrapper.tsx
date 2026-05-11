@@ -19,10 +19,10 @@ import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFram
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { useAutoFitView } from "../hooks/useAutoFitView";
+import { useViewLinkResult } from "../hooks/useViewLinkResult";
 import { useViewportState, useViewState } from "../hooks/useViewportState";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
-import { useViewLinkResult } from "./ViewLinkManager";
 
 export type ViewportWrapperProps = {
     viewId: string;

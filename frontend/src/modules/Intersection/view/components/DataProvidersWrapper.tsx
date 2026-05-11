@@ -50,16 +50,12 @@ import "../../DataProviderFramework/customDataProviderImplementations/registerAl
 
 import { viewStateMapAtom, viewLinksAtom } from "../atoms/baseAtoms";
 import { useSyncViewStateMap } from "../hooks/useSyncViewStateMap";
+import type { PropagateLinkVerticalScaleFn, PropagateLinkViewportFn, ViewLink } from "../typesAndEnums";
 import { propagateVerticalScaleInMap, propagateViewportInMap } from "../utils/viewStateMapUtils";
 
 import { MultiViewLayout } from "./MultiViewLayout";
 import { ViewDataProcessor } from "./ViewDataProcessor";
-import {
-    ViewLinkManager,
-    type PropagateLinkVerticalScaleFn,
-    type PropagateLinkViewportFn,
-    type ViewLink,
-} from "./ViewLinkManager";
+import { ViewLinkManager } from "./ViewLinkManager";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -211,7 +207,11 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
     );
 
     if (intersectionViews.length === 0) {
-        return null;
+        return (
+            <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
+                Please add views and layers in the settings panel.
+            </div>
+        );
     }
 
     return (

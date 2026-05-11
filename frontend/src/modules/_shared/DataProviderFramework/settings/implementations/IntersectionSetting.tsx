@@ -5,7 +5,7 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Tooltip } from "@lib/components/Tooltip";
+import { createValidExtensionLength } from "@modules/Intersection/DataProviderFramework/utils/extensionLengthUtils";
 
 import type {
     CustomSettingImplementation,
@@ -53,8 +53,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     };
     private _extensionLengthConfig: ExtensionLengthConfig | null;
 
-    constructor(options?: { extensionLength?: ExtensionLengthConfig }) {
-        this._extensionLengthConfig = options?.extensionLength ?? null;
+    constructor(options?: { extensionLengthConfig?: ExtensionLengthConfig }) {
+        this._extensionLengthConfig = options?.extensionLengthConfig ?? null;
     }
 
     valueConstraintsIntersectionReducerDefinition =
@@ -185,10 +185,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                               type: IntersectionType.WELLBORE,
                               name: selected.name,
                               uuid: selected.uuid,
-                              extensionLength:
-                                  (props.value?.type === IntersectionType.WELLBORE
-                                      ? props.value.extensionLength
-                                      : null) ?? defaultExtensionLength,
+                              extensionLength: createValidExtensionLength(props.value, defaultExtensionLength),
                           }
                         : {
                               type: IntersectionType.CUSTOM_POLYLINE,
@@ -252,7 +249,10 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     };
                 });
 
-            const disableExtensionLength = extensionLengthConfig === null || type !== IntersectionType.WELLBORE;
+            const enableExtensionLength = extensionLengthConfig !== null && type === IntersectionType.WELLBORE;
+            const validExtensionLength = !props.isOverridden
+                ? createValidExtensionLength(props.value, defaultExtensionLength)
+                : createValidExtensionLength(props.overriddenValue, defaultExtensionLength);
 
             return (
                 <div className="flex flex-col gap-2 my-1">
@@ -291,34 +291,20 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                             />
                         </div>
                     </div>
-                    <Tooltip
-                        title={
-                            disableExtensionLength
-                                ? "Extension length is only applicable for wellbore intersections"
-                                : ""
-                        }
-                    >
+                    {enableExtensionLength && (
                         <div className="flex items-center gap-2">
                             <span className="w-12 flex flex-col items-start">Extension</span>
                             <Input
-                                disabled={disableExtensionLength || props.isOverridden}
+                                disabled={!enableExtensionLength || props.isOverridden}
                                 type="number"
-                                value={
-                                    !props.isOverridden
-                                        ? props.value?.type === IntersectionType.WELLBORE
-                                            ? props.value.extensionLength
-                                            : defaultExtensionLength
-                                        : props.overriddenValue?.type === IntersectionType.WELLBORE
-                                          ? props.overriddenValue.extensionLength
-                                          : defaultExtensionLength
-                                }
+                                value={validExtensionLength}
                                 min={extensionLengthConfig?.min}
                                 max={extensionLengthConfig?.max}
                                 debounceTimeMs={200}
                                 onValueChange={handleExtensionLengthChange}
                             />
                         </div>
-                    </Tooltip>
+                    )}
                 </div>
             );
         };

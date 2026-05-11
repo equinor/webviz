@@ -160,7 +160,6 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
 function useDataIsReady(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
 ) {
-    // Consider if we should check anything else to define "data is ready"
     const dataIsReady = (view.numLoadingDataProviders ?? 0) === 0;
 
     return dataIsReady;

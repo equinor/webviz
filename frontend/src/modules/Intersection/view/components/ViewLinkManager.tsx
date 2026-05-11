@@ -3,65 +3,22 @@ import React from "react";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import type { BBox } from "@lib/utils/bbox";
-import { combine } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
 
-/**
- * Ref-stable callback used by the ViewLinkManager to propagate the source view's viewport to
- * the given target view ids. The host owns the storage and is responsible for reading the
- * source's current viewport from its own state.
- */
-export type PropagateLinkViewportFn = (sourceViewId: string, targetViewIds: string[]) => void;
+import type {
+    IntersectionViewInfo,
+    PropagateLinkVerticalScaleFn,
+    PropagateLinkViewportFn,
+    ViewLink,
+    ViewLinkManagerContextValue,
+} from "../typesAndEnums";
 
-/**
- * Ref-stable callback used by the ViewLinkManager to propagate the source view's vertical
- * scale to the given target view ids. The host owns the storage and is responsible for
- * reading the source's current vertical scale from its own state.
- */
-export type PropagateLinkVerticalScaleFn = (sourceViewId: string, targetViewIds: string[]) => void;
-
-export type ViewLink = {
-    id: string;
-    color: string;
-    viewIds: string[];
-    viewportSourceViewId: string | null;
-    bounds: Bounds | null;
-    autoFitView: boolean;
-};
-
-export type IntersectionViewInfo = {
-    id: string;
-    name: string;
-    color: string | null;
-    combinedBoundingBox?: BBox | null;
-};
-
-type ViewLinkManagerContextValue = {
-    viewLinks: ViewLink[];
-    intersectionViews: IntersectionViewInfo[];
-    hoveredViewIds: ReadonlySet<string>;
-    setHoveredViewIds: (viewIds: ReadonlySet<string>) => void;
-    toggleViewLink: (thisViewId: string, otherViewId: string, initiatorAutoFitView: boolean) => void;
-    onLinkedViewportChange: (viewId: string) => void;
-    onLinkedVerticalScaleChange: (viewId: string) => void;
-    onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
-    onLinkedAutoFitViewChange: (viewId: string, value: boolean) => void;
-};
-
-const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
-
-const EMPTY_VIEW_LINKS: ViewLink[] = [];
-const EMPTY_INTERSECTION_VIEWS: IntersectionViewInfo[] = [];
-
-function computeViewLinkFocusBounds(viewIds: string[], intersectionViews: IntersectionViewInfo[]): Bounds | null {
-    const views = viewIds.map((id) => intersectionViews.find((v) => v.id === id)).filter(Boolean);
-    const unionBBox = views.reduce<BBox | null>((acc, view) => {
-        if (!view?.combinedBoundingBox) return acc;
-        return acc ? combine(acc, view.combinedBoundingBox) : view.combinedBoundingBox;
-    }, null);
-    return unionBBox ? { x: [unionBBox.min.x, unionBBox.max.x], y: [unionBBox.min.y, unionBBox.max.y] } : null;
+function pickNextLinkColor(existingLinks: ViewLink[], colors: string[]): string {
+    const usedColors = new Set(existingLinks.map((l) => l.color));
+    return colors.find((c) => !usedColors.has(c)) ?? colors[existingLinks.length % colors.length];
 }
+
+export const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
 
 export type ViewLinkManagerProps = {
     intersectionViews: IntersectionViewInfo[];
@@ -74,13 +31,6 @@ export type ViewLinkManagerProps = {
     children: React.ReactNode;
 };
 
-const EMPTY_HOVERED_VIEW_IDS: ReadonlySet<string> = new Set<string>();
-
-function pickNextLinkColor(existingLinks: ViewLink[], colors: string[]): string {
-    const usedColors = new Set(existingLinks.map((l) => l.color));
-    return colors.find((c) => !usedColors.has(c)) ?? colors[existingLinks.length % colors.length];
-}
-
 export function ViewLinkManager({
     intersectionViews,
     allItemIds,
@@ -92,7 +42,7 @@ export function ViewLinkManager({
     children,
 }: ViewLinkManagerProps): React.ReactNode {
     const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
-    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(EMPTY_HOVERED_VIEW_IDS);
+    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(new Set<string>());
 
     const prevAllItemIdsRef = React.useRef<Set<string> | null>(null);
     const hasAppliedInitialRef = React.useRef(false);
@@ -100,10 +50,10 @@ export function ViewLinkManager({
     viewLinksRef.current = viewLinks;
 
     // TEMPORARY SOLUTION:
+    // - GitHub Issue:  https://github.com/equinor/webviz/issues/1658
     // - Apply initial view links once they become defined. As DPF uses a couple of renders, without loading state
     // when deserializing the settings. We cannot utilize the initial intersectionView attribute as intersectionViews
     // is null from DPF - so we have to wait.
-    // - GitHub: https://github.com/equinor/webviz/issues/1634
     if (!hasAppliedInitialRef.current && initialViewLinks !== null) {
         hasAppliedInitialRef.current = true;
         if (initialViewLinks.length > 0) {
@@ -112,9 +62,9 @@ export function ViewLinkManager({
     }
 
     // TEMPORARY SOLUTION:
+    // - GitHub Issue:  https://github.com/equinor/webviz/issues/1658
     // - Notify parent of view link changes for persistence (only after initialization)
-    // - If initial intersectionViews is fixed, this should be removed
-    // - GitHub: https://github.com/equinor/webviz/issues/1634
+    // - If initial loading state during initialization/deserialization is fixed, this should be removed
     React.useEffect(() => {
         if (!hasAppliedInitialRef.current) return;
         onViewLinksChange?.(viewLinks);
@@ -170,7 +120,7 @@ export function ViewLinkManager({
             let joinSourceViewId: string | null = null;
             let createdLink: ViewLink | null = null;
 
-            // Already in the same ViewLink → remove thisView
+            // Already in the same ViewLink → remove thisViewId
             if (thisLinkIdx !== -1 && thisLinkIdx === otherLinkIdx) {
                 const updatedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
                 next =
@@ -340,123 +290,4 @@ export function ViewLinkManager({
     );
 
     return <ViewLinkManagerContext.Provider value={contextValue}>{children}</ViewLinkManagerContext.Provider>;
-}
-
-export type ViewLinkResult = {
-    availableViewLinks: ViewLink[];
-    intersectionViews: IntersectionViewInfo[];
-    unlinkedViews: IntersectionViewInfo[];
-    isLinked: boolean;
-    isHoverHighlighted: boolean;
-    highlightColor: string | null;
-    viewportSourceViewId: string | null;
-    focusBounds: Bounds | null;
-    linkAutoFitView: boolean | null;
-    onToggleViewLink: (otherViewId: string, initiatorAutoFitView: boolean) => void;
-    onHoverViewLink: (viewIds: string[] | null) => void;
-    onLinkedViewportChange: () => void;
-    onLinkedVerticalScaleChange: () => void;
-    onLinkedBoundsChange: (bounds: Bounds) => void;
-    onLinkedAutoFitViewChange: (value: boolean) => void;
-    bounds: Bounds | null;
-};
-
-export function useViewLinkResult(viewId: string): ViewLinkResult {
-    const ctx = React.useContext(ViewLinkManagerContext);
-
-    const viewLinks = ctx?.viewLinks ?? EMPTY_VIEW_LINKS;
-    const intersectionViews = ctx?.intersectionViews ?? EMPTY_INTERSECTION_VIEWS;
-    const hoveredViewIds = ctx?.hoveredViewIds ?? EMPTY_HOVERED_VIEW_IDS;
-    const setHoveredViewIds = ctx?.setHoveredViewIds;
-    const toggleViewLink = ctx?.toggleViewLink;
-    const onLinkedViewportChange = ctx?.onLinkedViewportChange;
-    const onLinkedVerticalScaleChange = ctx?.onLinkedVerticalScaleChange;
-    const onLinkedBoundsChange = ctx?.onLinkedBoundsChange;
-    const onLinkedAutoFitViewChangeFn = ctx?.onLinkedAutoFitViewChange;
-
-    const viewLink = viewLinks.find((l) => l.viewIds.includes(viewId));
-    const isLinked = viewLink !== undefined;
-    const multipleViews = intersectionViews.length > 1;
-
-    const onToggleViewLink = React.useCallback(
-        function onToggleViewLink(otherViewId: string, initiatorAutoFitView: boolean) {
-            toggleViewLink?.(viewId, otherViewId, initiatorAutoFitView);
-        },
-        [viewId, toggleViewLink],
-    );
-
-    const onLinkedViewportChangeForView = React.useCallback(
-        function onLinkedViewportChangeForView() {
-            onLinkedViewportChange?.(viewId);
-        },
-        [viewId, onLinkedViewportChange],
-    );
-
-    const onLinkedVerticalScaleChangeForView = React.useCallback(
-        function onLinkedVerticalScaleChangeForView() {
-            onLinkedVerticalScaleChange?.(viewId);
-        },
-        [viewId, onLinkedVerticalScaleChange],
-    );
-
-    const onLinkedBoundsChangeForView = React.useCallback(
-        function onLinkedBoundsChangeForView(bounds: Bounds) {
-            onLinkedBoundsChange?.(viewId, bounds);
-        },
-        [viewId, onLinkedBoundsChange],
-    );
-
-    const onLinkedAutoFitViewChangeForView = React.useCallback(
-        function onLinkedAutoFitViewChangeForView(value: boolean) {
-            onLinkedAutoFitViewChangeFn?.(viewId, value);
-        },
-        [viewId, onLinkedAutoFitViewChangeFn],
-    );
-
-    const onHoverViewLink = React.useCallback(
-        function onHoverViewLink(viewIds: string[] | null) {
-            if (!viewIds) {
-                setHoveredViewIds?.(EMPTY_HOVERED_VIEW_IDS);
-            } else {
-                setHoveredViewIds?.(new Set(viewIds));
-            }
-        },
-        [setHoveredViewIds],
-    );
-
-    const availableViewLinks: ViewLink[] = !multipleViews ? [] : viewLinks;
-
-    // Views not in any ViewLink, excluding self
-    const viewIdsInAnyLink = new Set(viewLinks.flatMap((l) => l.viewIds));
-    const unlinkedViews = !multipleViews
-        ? []
-        : intersectionViews.filter((v) => v.id !== viewId && !viewIdsInAnyLink.has(v.id));
-
-    const focusBounds = viewLink ? computeViewLinkFocusBounds(viewLink.viewIds, intersectionViews) : null;
-    const isHoverHighlighted = hoveredViewIds.has(viewId);
-
-    // Use the link's color when highlighted via a link group, otherwise null
-    const hoveredLink = isHoverHighlighted
-        ? viewLinks.find((l) => l.viewIds.includes(viewId) || l.viewIds.some((id) => hoveredViewIds.has(id)))
-        : null;
-    const highlightColor = hoveredLink?.color ?? null;
-
-    return {
-        availableViewLinks,
-        intersectionViews,
-        unlinkedViews,
-        isLinked,
-        isHoverHighlighted,
-        highlightColor,
-        viewportSourceViewId: viewLink?.viewportSourceViewId ?? null,
-        focusBounds,
-        linkAutoFitView: viewLink?.autoFitView ?? null,
-        onToggleViewLink,
-        onHoverViewLink,
-        onLinkedViewportChange: onLinkedViewportChangeForView,
-        onLinkedVerticalScaleChange: onLinkedVerticalScaleChangeForView,
-        onLinkedBoundsChange: onLinkedBoundsChangeForView,
-        onLinkedAutoFitViewChange: onLinkedAutoFitViewChangeForView,
-        bounds: viewLink?.bounds ?? null,
-    };
 }

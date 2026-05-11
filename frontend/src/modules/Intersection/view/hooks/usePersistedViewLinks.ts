@@ -1,9 +1,9 @@
 import React from "react";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 
 import { viewLinksAtom } from "../atoms/baseAtoms";
-import type { ViewLink } from "../components/ViewLinkManager";
+import type { ViewLink } from "../typesAndEnums";
 
 /**
  * Manages the lifecycle of persisted view links:
@@ -15,8 +15,7 @@ export function usePersistedViewLinks(intersectionViewIds: string[]): {
     initialViewLinks: ViewLink[] | null;
     handleViewLinksChange: (viewLinks: ViewLink[]) => void;
 } {
-    const persistedViewLinks = useAtomValue(viewLinksAtom);
-    const setPersistedViewLinks = useSetAtom(viewLinksAtom);
+    const [persistedViewLinks, setPersistedViewLinks] = useAtom(viewLinksAtom);
 
     const initialViewLinksRef = React.useRef<ViewLink[] | null>(null);
     const hasComputedInitialRef = React.useRef(false);

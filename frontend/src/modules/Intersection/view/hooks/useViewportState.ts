@@ -13,7 +13,8 @@ import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { ViewState } from "@modules/Intersection/typesAndEnums";
 
 import { viewStateMapAtom } from "../atoms/baseAtoms";
-import type { ViewLinkResult } from "../components/ViewLinkManager";
+
+import type { ViewLinkResult } from "./useViewLinkResult";
 
 const DISPLACEMENT_FACTOR = 1.4;
 

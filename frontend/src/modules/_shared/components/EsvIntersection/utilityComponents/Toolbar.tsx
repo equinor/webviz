@@ -40,8 +40,8 @@ export type ViewLinkOption = {
 };
 
 export type ToolbarProps = {
-    viewLinks?: ViewLinkOption[];
-    unlinkedViews?: ViewOption[];
+    viewLinks?: readonly ViewLinkOption[];
+    unlinkedViews?: readonly ViewOption[];
     visible: boolean;
     zFactor: number;
     gridVisible: boolean;

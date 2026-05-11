@@ -2,8 +2,9 @@ import React from "react";
 
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
 
-import type { ViewLinkResult } from "../components/ViewLinkManager";
 import { createIntersectionSourceKey } from "../utils/createIntersectionSourceKey";
+
+import type { ViewLinkResult } from "./useViewLinkResult";
 
 export type UseAutoFitViewResult = readonly [autoFitView: boolean, setAutoFitView: (value: boolean) => void];
 

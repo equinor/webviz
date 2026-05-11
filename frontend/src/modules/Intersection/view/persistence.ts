@@ -8,7 +8,7 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import type { ViewStateMap } from "../typesAndEnums";
 
 import { viewStateMapAtom, viewLinksAtom } from "./atoms/baseAtoms";
-import type { ViewLink } from "./components/ViewLinkManager";
+import type { ViewLink } from "./typesAndEnums";
 
 export type SerializedView = {
     viewLinks: ViewLink[];
@@ -36,7 +36,7 @@ const VIEW_LINK_SCHEMA = {
         },
         autoFitView: { type: "boolean" as const },
     },
-} as unknown as JTDSchemaType<ViewLink>;
+} as JTDSchemaType<ViewLink>;
 
 const schemaBuilder = new SchemaBuilder<SerializedView>(() => ({
     properties: {

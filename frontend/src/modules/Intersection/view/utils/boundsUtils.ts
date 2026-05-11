@@ -1,4 +1,5 @@
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { cloneDeep } from "lodash";
 
 import type { BBox } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
@@ -49,5 +50,5 @@ export function createBoundsForIntersectionView(
         return { x: [prevBounds.x[0], prevBounds.x[1]], y: [prevBounds.y[0], prevBounds.y[1]] };
     }
 
-    return { x: [...DEFAULT_INTERSECTION_VIEW_BOUNDS.x], y: [...DEFAULT_INTERSECTION_VIEW_BOUNDS.y] };
+    return cloneDeep(DEFAULT_INTERSECTION_VIEW_BOUNDS);
 }
