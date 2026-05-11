@@ -203,18 +203,6 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
         );
     }
 
-    function setNumSteps(numSteps: number) {
-        makeAndPropagateColorScale(
-            colorScaleSpecification.colorScale.getColorPalette(),
-            colorScaleSpecification.colorScale.getType(),
-            colorScaleSpecification.colorScale.getGradientType(),
-            colorScaleSpecification.colorScale.getMin(),
-            colorScaleSpecification.colorScale.getMax(),
-            numSteps,
-            colorScaleSpecification.colorScale.getDivMidPoint(),
-            colorScaleSpecification.areBoundariesUserDefined,
-        );
-    }
 
     const makeAndPropagateColorScale = React.useCallback(
         function makeAndPropagateColorScale(
@@ -246,6 +234,25 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
         },
         [onChange],
     );
+
+    const handleNumStepsChange = React.useCallback(
+        function handleNumStepsChange(value: string) {
+            const numSteps = parseInt(value);
+
+            makeAndPropagateColorScale(
+            colorScaleSpecification.colorScale.getColorPalette(),
+            colorScaleSpecification.colorScale.getType(),
+            colorScaleSpecification.colorScale.getGradientType(),
+            colorScaleSpecification.colorScale.getMin(),
+            colorScaleSpecification.colorScale.getMax(),
+            numSteps,
+            colorScaleSpecification.colorScale.getDivMidPoint(),
+            colorScaleSpecification.areBoundariesUserDefined,
+        );
+        },
+        [colorScaleSpecification, makeAndPropagateColorScale],
+    );
+
 
     const handleMinMaxDivMidPointChange = React.useCallback(
         function handleMinMaxDivMidPointChange(min: number, max: number, divMidPoint?: number) {
@@ -307,7 +314,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                     <Input
                         type="number"
                         value={colorScaleSpecification.colorScale.getNumSteps()}
-                        onChange={(e) => setNumSteps(parseInt(e.target.value, 10))}
+                        onValueChange={handleNumStepsChange}
                         disabled={colorScaleSpecification.colorScale.getType() !== ColorScaleType.Discrete}
                         min={2}
                     />

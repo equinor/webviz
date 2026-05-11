@@ -120,8 +120,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         setSubplotLimitDirection(newLimitDirection);
     }
 
-    function handleSubplotMaxDirectionElementsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setSubplotMaxDirectionElements(parseInt(event.target.value));
+    function handleSubplotMaxDirectionElementsChange(value: string) {
+        setSubplotMaxDirectionElements(parseInt(value, 10));
     }
 
     function handleGroupByChange(newValue: GroupBy) {
@@ -280,7 +280,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             min={1}
                             max={12}
                             debounceTimeMs={150}
-                            onChange={handleSubplotMaxDirectionElementsChange}
+                            onValueChange={handleSubplotMaxDirectionElementsChange}
                         />
                     </div>
                 </Label>
