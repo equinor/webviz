@@ -74,12 +74,11 @@ export type DrilledWellboreTrajectoriesStoredData = {
 
 export class DrilledWellboreTrajectoriesProvider
     implements
-        CustomDataProviderImplementation<
-            DrilledWellboreTrajectoriesSettings,
-            DrilledWellboreTrajectoriesData,
-            DrilledWellboreTrajectoriesStoredData
-        >
-{
+    CustomDataProviderImplementation<
+        DrilledWellboreTrajectoriesSettings,
+        DrilledWellboreTrajectoriesData,
+        DrilledWellboreTrajectoriesStoredData
+    > {
     settings = drilledWellboreTrajectoriesSettings;
 
     getDefaultName() {
@@ -95,18 +94,6 @@ export class DrilledWellboreTrajectoriesProvider
     >): boolean {
         if (!getSetting(Setting.ENSEMBLE)) {
             return false;
-        }
-
-        if (getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) === "surface_based") {
-            if (!getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE)) {
-                return false;
-            }
-            if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.topSurfaceName) {
-                return false;
-            }
-            if (getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.realizationNum === undefined) {
-                return false;
-            }
         }
 
         return true;
@@ -275,36 +262,26 @@ export class DrilledWellboreTrajectoriesProvider
         valueConstraintsUpdater,
         settingAttributesUpdater,
         storedDataUpdater,
-        workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
         valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
-
+            if (!fieldIdentifier) {
+                return [];
+            }
             const ensembleIdents = ensembles
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .filter((ensemble) => ensemble.getFieldIdentifiers().includes(fieldIdentifier))
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
 
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            if (!fieldIdentifier) {
                 return null;
             }
-
-            const ensembleSet = workbenchSession.getEnsembleSet();
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-            if (!ensemble) {
-                return null;
-            }
-
-            const fieldIdentifier = ensemble.getFieldIdentifier();
-
             return await queryClient.fetchQuery({
                 ...getDrilledWellboreHeadersOptions({
                     query: { field_identifier: fieldIdentifier },
@@ -425,9 +402,13 @@ export class DrilledWellboreTrajectoriesProvider
             return [globalMin, globalMax, 1];
         });
 
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getLocalSetting }) => {
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
             const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
             return {
+                enabled: data?.surfaces.length
+                    ? true
+                    : { enabled: false, reason: "No surfaces available" },
                 visible: filterType === "surface_based",
             };
         });
@@ -452,9 +433,14 @@ export class DrilledWellboreTrajectoriesProvider
             return availableAttributes;
         });
 
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getLocalSetting }) => {
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getHelperDependency, getLocalSetting }) => {
             const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
             return {
+                enabled: data?.surfaces.length
+                    ? true
+                    : { enabled: false, reason: "No surfaces available" },
                 visible: filterType === "surface_based",
             };
         });

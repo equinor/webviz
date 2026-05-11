@@ -191,10 +191,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 drawer={{
                     open: showEnsembleExplorer,
                     onClose: handleCloseEnsembleExplorer,
-                    width: "85%",
+                    width: "95%",
+                    maxWidth: "99%",
                     content: hasExplorerBeenOpened ? (
                         <EnsembleExplorer
-                            disableQueries={!showEnsembleExplorer}
+                            queriesDisabled={!showEnsembleExplorer}
                             nextEnsembleColor={nextEnsembleColor}
                             selectedEnsembles={
                                 ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE

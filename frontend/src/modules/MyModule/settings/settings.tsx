@@ -96,14 +96,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 />
             </Label>
             <Label text="Max">
-                <Input type="number" value={max} onChange={(e) => setMax(parseFloat(e.target.value))} />
+                <Input type="number" value={max} onValueChange={(value: string) => setMax(parseFloat(value))} />
             </Label>
             {gradientType === ColorScaleGradientType.Diverging && (
                 <Label text="Midpoint">
                     <Input
                         type="number"
                         value={divMidPoint}
-                        onChange={(e) => setDivMidPoint(parseFloat(e.target.value))}
+                        onValueChange={(value: string) => setDivMidPoint(parseFloat(value))}
                         min={0}
                         max={max}
                     />

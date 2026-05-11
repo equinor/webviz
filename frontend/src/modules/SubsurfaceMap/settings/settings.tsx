@@ -382,7 +382,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedEnsembleIdent.getCaseUuid(),
             computedEnsembleIdent.getEnsembleName(),
         );
-        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
+        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifiers().at(0) ?? null;
     }
     const wellHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? "");
     let wellHeaderOptions: SelectOption[] = [];
@@ -455,20 +455,20 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         setAggregation(aggregation);
     }
 
-    function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        const realNum = parseInt(event.target.value, 10);
+    function handleRealizationTextChanged(value: string) {
+        const realNum = parseInt(value, 10);
         if (realNum >= 0) {
             setRealizationNum(realNum);
         }
     }
-    function handleContourStartChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const contourStart = parseInt(event.target.value, 10);
+    function handleContourStartChange(value: string) {
+        const contourStart = parseInt(value, 10);
         if (contourStart >= 0) {
             setContourStartValue(contourStart);
         }
     }
-    function handleContourIncChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const contourInc = parseInt(event.target.value, 10);
+    function handleContourIncChange(value: string) {
+        const contourInc = parseInt(value, 10);
         if (contourInc > 0) {
             setContourIncValue(contourInc);
         }
@@ -503,7 +503,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 />
                 {aggregation === null && (
                     <Label text="Realization:">
-                        <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
+                        <Input type={"number"} value={realizationNum} onValueChange={handleRealizationTextChanged} />
                     </Label>
                 )}
             </CollapsibleGroup>
@@ -717,7 +717,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                                                 className="text-xs"
                                                 type={"number"}
                                                 value={contourStartValue}
-                                                onChange={handleContourStartChange}
+                                                onValueChange={handleContourStartChange}
                                             />
                                         </div>
                                         <div className=" float-right">
@@ -725,7 +725,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                                                 className="text-xs"
                                                 type={"number"}
                                                 value={contourIncValue}
-                                                onChange={handleContourIncChange}
+                                                onValueChange={handleContourIncChange}
                                             />
                                         </div>
                                     </>

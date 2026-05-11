@@ -17,8 +17,8 @@ export class ExternalSettingController<
     TExternalValue extends SettingTypeDefinitions[TSetting]["externalValue"] | null =
         | SettingTypeDefinitions[TSetting]["externalValue"]
         | null,
-    TValueConstraints extends
-        SettingTypeDefinitions[TSetting]["valueConstraints"] = SettingTypeDefinitions[TSetting]["valueConstraints"],
+    TValueConstraints extends SettingTypeDefinitions[TSetting]["valueConstraints"] =
+        SettingTypeDefinitions[TSetting]["valueConstraints"],
 > {
     private _parentItem: Item;
     private _setting: SettingManager<TSetting, TInternalValue, TExternalValue, TValueConstraints>;
@@ -108,7 +108,10 @@ export class ExternalSettingController<
                 const setting = child.getSharedSettingsDelegate().getWrappedSettings()[this._setting.getType()];
                 if (setting) {
                     foundSettings.push(setting);
-                    continue;
+                    // A SharedSetting of the same type intercepts all subsequent siblings in this
+                    // group: they are managed through that SharedSetting's own controller. Stop
+                    // looking further in this group so we don't double-register those siblings.
+                    break;
                 }
             } else if (child instanceof Group) {
                 const sharedSettingsDelegate = child.getSharedSettingsDelegate();
@@ -207,8 +210,8 @@ export class ExternalSettingController<
 
     makeIntersectionOfValueConstraints(): void {
         if (!this.syncStateFromControlledSettings()) {
-            // Not ready yet, but we should avoid exposing deprecated value constraints to the controlled settings
-            this._setting.setValueConstraints(null);
+            // Not ready yet — syncStateFromControlledSettings has already set loading=true
+            // on the output setting, so just wait for dependencies to resolve.
             return;
         }
 
