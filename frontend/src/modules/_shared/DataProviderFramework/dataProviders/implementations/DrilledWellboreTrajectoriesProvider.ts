@@ -96,18 +96,6 @@ export class DrilledWellboreTrajectoriesProvider
             return false;
         }
 
-        if (getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) === "surface_based") {
-            if (!getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE)) {
-                return false;
-            }
-            if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.topSurfaceName) {
-                return false;
-            }
-            if (getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.realizationNum === undefined) {
-                return false;
-            }
-        }
-
         return true;
     }
 
@@ -414,9 +402,13 @@ export class DrilledWellboreTrajectoriesProvider
             return [globalMin, globalMax, 1];
         });
 
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getLocalSetting }) => {
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
             const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
             return {
+                enabled: data?.surfaces.length
+                    ? true
+                    : { enabled: false, reason: "No surfaces available" },
                 visible: filterType === "surface_based",
             };
         });
@@ -441,9 +433,14 @@ export class DrilledWellboreTrajectoriesProvider
             return availableAttributes;
         });
 
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getLocalSetting }) => {
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getHelperDependency, getLocalSetting }) => {
             const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
             return {
+                enabled: data?.surfaces.length
+                    ? true
+                    : { enabled: false, reason: "No surfaces available" },
                 visible: filterType === "surface_based",
             };
         });
