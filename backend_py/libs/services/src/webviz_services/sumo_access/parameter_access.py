@@ -1,7 +1,9 @@
 import logging
 from dataclasses import dataclass
+
 import polars as pl
 import pyarrow as pa
+from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 from fmu.datamodels import ErtDistribution
