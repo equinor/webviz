@@ -5,12 +5,14 @@ import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFram
 import type { ViewLinkResult } from "../components/ViewLinkManager";
 import { createIntersectionSourceKey } from "../utils/createIntersectionSourceKey";
 
-export type UseAutoFitViewResult = {
-    /** Whether the view should auto-fit on the next focus-bounds change. */
-    autoFitView: boolean;
-    /** Sets whether auto-fit is enabled. Pass `false` on user-initiated viewport changes. */
-    setAutoFitView: (value: boolean) => void;
-};
+// export type UseAutoFitViewResult = {
+//     /** Whether the view should auto-fit on the next focus-bounds change. */
+//     autoFitView: boolean;
+//     /** Sets whether auto-fit is enabled. Pass `false` on user-initiated viewport changes. */
+//     setAutoFitView: (value: boolean) => void;
+// };
+
+export type UseAutoFitViewResult = readonly [autoFitView: boolean, setAutoFitView: (value: boolean) => void];
 
 /**
  * Tracks whether the view should auto-fit to the focus bounds.
@@ -35,7 +37,7 @@ function useLocalAutoFitView(
         setAutoFitView(true);
     }
 
-    return { autoFitView, setAutoFitView };
+    return [autoFitView, setAutoFitView];
 }
 
 /**
@@ -52,10 +54,7 @@ export function useAutoFitView(
     hasExistingViewport: boolean,
     viewLinkResult: ViewLinkResult,
 ): UseAutoFitViewResult {
-    const { autoFitView: localAutoFitView, setAutoFitView: setLocalAutoFitView } = useLocalAutoFitView(
-        intersectionSource,
-        hasExistingViewport,
-    );
+    const [localAutoFitView, setLocalAutoFitView] = useLocalAutoFitView(intersectionSource, hasExistingViewport);
 
     const { isLinked, linkAutoFitView, onLinkedAutoFitViewChange } = viewLinkResult;
 
@@ -76,5 +75,5 @@ export function useAutoFitView(
         [isLinked, setLocalAutoFitView, onLinkedAutoFitViewChange],
     );
 
-    return { autoFitView, setAutoFitView };
+    return [autoFitView, setAutoFitView];
 }

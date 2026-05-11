@@ -55,7 +55,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     const { isHoverHighlighted, highlightColor, onToggleViewLink, onHoverViewLink } = viewLinkResult;
 
     // Auto-fit for view
-    const { autoFitView, setAutoFitView } = useAutoFitView(
+    const [autoFitView, setAutoFitView] = useAutoFitView(
         props.intersectionSource,
         existingViewport !== null,
         viewLinkResult,
@@ -123,7 +123,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         <div
             ref={mainDivRef}
             className={resolveClassNames("relative w-full h-full flex flex-col", {
-                "outline-2 -outline-offset-2 rounded": isHoverHighlighted,
+                "outline-2 rounded": isHoverHighlighted,
                 "outline-gray-400": isHoverHighlighted && !highlightColor,
             })}
             style={isHoverHighlighted && highlightColor ? { outlineColor: highlightColor } : undefined}
@@ -149,10 +149,6 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     visible
                     zFactor={verticalScale}
                     gridVisible={showGrid}
-                    onFitInView={handleFitInView}
-                    onGridLinesToggle={handleShowGridToggle}
-                    onVerticalScaleIncrease={handleVerticalScaleIncrease}
-                    onVerticalScaleDecrease={handleVerticalScaleDecrease}
                     viewLinks={viewLinkResult.availableViewLinks.map((link) => {
                         const views = link.viewIds
                             .map((id) => viewLinkResult.intersectionViews.find((v) => v.id === id))
@@ -166,6 +162,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                         };
                     })}
                     unlinkedViews={viewLinkResult.unlinkedViews}
+                    onFitInView={handleFitInView}
+                    onGridLinesToggle={handleShowGridToggle}
+                    onVerticalScaleIncrease={handleVerticalScaleIncrease}
+                    onVerticalScaleDecrease={handleVerticalScaleDecrease}
                     onToggleViewLink={handleToggleViewLink}
                     onHoverViewLink={onHoverViewLink}
                 />

@@ -41,7 +41,7 @@ export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
     return (
         <div className={resolveClassNames("w-full h-full", containerClasses)} style={gridStyle}>
             {React.Children.map(children, (child) => (
-                <div className={resolveClassNames("overflow-hidden", childClasses)}>{child}</div>
+                <div className={resolveClassNames("overflow-hidden p-0.5", childClasses)}>{child}</div>
             ))}
         </div>
     );

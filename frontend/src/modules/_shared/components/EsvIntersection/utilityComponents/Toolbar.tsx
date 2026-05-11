@@ -4,13 +4,12 @@ import { Dropdown } from "@mui/base";
 import { MenuButton as MuiMenuButton } from "@mui/base/MenuButton";
 import {
     Add,
-    AddToQueue,
     FilterCenterFocus,
     GridOn,
     KeyboardDoubleArrowLeft,
     KeyboardDoubleArrowRight,
     Remove,
-    Tv,
+    SyncAlt,
 } from "@mui/icons-material";
 
 import { Button } from "@lib/components/Button";
@@ -111,7 +110,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     },
                                 }}
                             >
-                                {isAnyLinked ? <Tv fontSize="inherit" /> : <AddToQueue fontSize="inherit" />}
+                                {<SyncAlt fontSize="inherit" />}
                             </MuiMenuButton>
                         </Tooltip>
                         <Menu anchorOrigin="bottom-start" className="text-sm p-1 min-w-40">
@@ -127,7 +126,12 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     onMouseEnter={() => props.onHoverViewLink?.(viewLink.views.map((v) => v.id))}
                                     onMouseLeave={() => props.onHoverViewLink?.(null)}
                                 >
-                                    <Tv fontSize="inherit" className="shrink-0" style={{ color: viewLink.color }} />
+                                    <div
+                                        className="flex items-center px-1.5 py-0.5 -ml-1.5 rounded"
+                                        style={{ backgroundColor: viewLink.color }}
+                                    >
+                                        <SyncAlt fontSize="inherit" className="shrink-0 text-white" />
+                                    </div>
                                     {viewLink.views.map((v) => (
                                         <span
                                             key={v.id}
