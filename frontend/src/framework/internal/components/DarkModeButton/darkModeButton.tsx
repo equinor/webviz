@@ -4,6 +4,7 @@ import { DarkMode, LightMode } from "@mui/icons-material";
 
 import { getMainDataAttribute, setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export function DarkModeButton(): React.ReactNode {
     const [colorScheme, setColorScheme] = React.useState<string | null>(getMainDataAttribute("color-scheme"));
@@ -16,8 +17,10 @@ export function DarkModeButton(): React.ReactNode {
     }, []);
 
     return (
-        <Button variant="text" tone="accent" iconOnly onClick={toggleDarkMode}>
-            {colorScheme === "dark" ? <DarkMode fontSize="inherit" /> : <LightMode fontSize="inherit" />}
-        </Button>
+        <Tooltip title="Toggle dark mode">
+            <Button variant="text" tone="accent" iconOnly onClick={toggleDarkMode}>
+                {colorScheme === "dark" ? <DarkMode fontSize="inherit" /> : <LightMode fontSize="inherit" />}
+            </Button>
+        </Tooltip>
     );
 }

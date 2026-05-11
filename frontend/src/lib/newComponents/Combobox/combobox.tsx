@@ -111,7 +111,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
             {...baseProps}
         >
-            <ComboboxBase.InputGroup className="form-element text-body-md gap-horizontal-sm py-vertical-xs pl-horizontal-sm flex cursor-text items-center -outline-offset-2">
+            <ComboboxBase.InputGroup className="form-element text-body-md gap-horizontal-sm py-vertical-xs pl-horizontal-sm flex cursor-text items-center">
                 {props.multiple && selectionMode === "chips" ? (
                     <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex w-full grow flex-wrap items-center">
                         <ComboboxBase.Value>

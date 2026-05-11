@@ -6,6 +6,7 @@ import { Button } from "@lib/newComponents/Button";
 
 import { EnsemblesLoadingErrorInfoDialog } from "../../EnsemblesLoadingErrorInfoDialog";
 import type { StateTuple } from "../_hooks";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export type SelectEnsemblesConfirmationDialogsProps = {
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
@@ -26,22 +27,24 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
 
     return (
         <>
-            <Dialog
+            <AlertDialog
                 open={showCancelDialog}
-                onClose={() => setShowCancelDialog(false)}
+                onOpenChange={(open) => setShowCancelDialog(open)}
                 title="Unsaved changes"
-                modal
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => setShowCancelDialog(false)}>No, don&apos;t cancel</Button>
-                        <Button onClick={props.onConfirmCancel} tone="danger">
-                            Yes, cancel
-                        </Button>
-                    </div>
-                }
-            >
-                You have unsaved changes which will be lost. Are you sure you want to cancel?
-            </Dialog>
+                primaryAction={{
+                    label: "Yes, cancel",
+                    onClick: props.onConfirmCancel,
+                    tone: "danger",
+                }}
+                secondaryActions={[
+                    {
+                        label: "No, don't cancel",
+                        onClick: () => setShowCancelDialog(false),
+                        tone: "neutral",
+                    },
+                ]}
+                description="You have unsaved changes which will be lost. Are you sure you want to cancel?"
+            />
             <EnsemblesLoadingErrorInfoDialog
                 open={showEnsemblesLoadingErrorDialog}
                 onClose={() => setShowLoadingErrorsDialog(false)}

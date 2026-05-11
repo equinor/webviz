@@ -12,6 +12,9 @@ import { SortableList } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { InternalDeltaEnsembleSetting } from "../../types";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { ComboboxItem } from "@lib/newComponents/Combobox/combobox";
 
 export type RegularEnsembleOption = {
     ensembleIdent: RegularEnsembleIdent;
@@ -40,11 +43,10 @@ function getEnsembleIdentFromDropdownValue(value: string): RegularEnsembleIdent 
     return RegularEnsembleIdent.fromString(value);
 }
 
-function makeDropdownOptions(regularEnsembleOptions: RegularEnsembleOption[]): DropdownOption[] {
+function makeDropdownOptions(regularEnsembleOptions: RegularEnsembleOption[]): ComboboxItem<string>[] {
     return regularEnsembleOptions.map((option) => ({
         value: createEnsembleOptionValue(option.ensembleIdent),
         label: option.customName ?? `${option.ensembleIdent.getEnsembleName()} (${option.caseName})`,
-        adornment: option.adornment,
     }));
 }
 
@@ -56,7 +58,6 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         {
             value: SELECT_OTHER_VALUE,
             label: "Select other ensemble...",
-            adornment: <FolderOpen fontSize="small" />,
         },
     ];
 
@@ -77,7 +78,10 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         });
     }
 
-    function onComparisonEnsembleChange(value: string) {
+    function handleComparisonEnsembleChange(value: string | null) {
+        if (value === null) {
+            return;
+        }
         if (value === SELECT_OTHER_VALUE) {
             props.onRequestOtherComparisonEnsemble({
                 ...props.deltaEnsembleSetting,
@@ -90,7 +94,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         const ensIdent = getEnsembleIdentFromDropdownValue(value);
         const ensOptions = props.regularEnsembleOptions.find((option) => option.ensembleIdent.equals(ensIdent));
         if (!ensOptions) {
-            throw new Error("Selected reference ensemble not found in regular ensemble options");
+            throw new Error("Selected comparison ensemble not found in regular ensemble options");
         }
 
         props.onUpdate({
@@ -100,7 +104,10 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         });
     }
 
-    function onReferenceEnsembleChange(value: string) {
+    function handleReferenceEnsembleChange(value: string | null) {
+        if (value === null) {
+            return;
+        }
         if (value === SELECT_OTHER_VALUE) {
             props.onRequestOtherReferenceEnsemble({
                 ...props.deltaEnsembleSetting,
@@ -139,7 +146,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                 })}
             >
                 <td>
-                    <SortableList.DragHandle className="flex justify-center items-center">
+                    <SortableList.DragHandle className="flex items-center justify-center">
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </SortableList.DragHandle>
                 </td>
@@ -147,26 +154,28 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                     <ColorSelect value={props.deltaEnsembleSetting.color} onChange={onColorChange} />
                 </td>
                 <td className="p-2">
-                    <Input
+                    <TextInput
                         value={props.deltaEnsembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
                         onValueChange={onNameChange}
                     />
                 </td>
                 <td className="p-2">
-                    <Dropdown
+                    <Combobox
                         value={comparisonEnsValue ?? ""}
                         placeholder="Select comparison ensemble..."
-                        options={ensembleDropdownOptions}
-                        onChange={onComparisonEnsembleChange}
+                        items={ensembleDropdownOptions}
+                        onValueChange={handleComparisonEnsembleChange}
+                        renderItemAdornment={() => <FolderOpen fontSize="small" />}
                     />
                 </td>
                 <td className="p-2">
-                    <Dropdown
+                    <Combobox
                         value={referenceEnsValue ?? ""}
                         placeholder="Select reference ensemble..."
-                        options={ensembleDropdownOptions}
-                        onChange={onReferenceEnsembleChange}
+                        items={ensembleDropdownOptions}
+                        onValueChange={handleReferenceEnsembleChange}
+                        renderItemAdornment={() => <FolderOpen fontSize="small" />}
                     />
                 </td>
                 <td className="p-2">

@@ -10,6 +10,7 @@ export type EnsembleColorTileProps = {
     isRealizationFilterEffective?: boolean;
     wrapperClassName?: string;
     badgeClassName?: string;
+    size?: "small" | "default" | "large";
 };
 
 export function EnsembleColorTile(props: EnsembleColorTileProps): React.ReactNode {
@@ -26,6 +27,7 @@ export function EnsembleColorTile(props: EnsembleColorTileProps): React.ReactNod
                     showBadge={props.isRealizationFilterEffective ?? false}
                     badgeIcon={FilterAlt}
                     badgeClassName={badgeClassName}
+                    size={props.size}
                 />
             </span>
         </Tooltip>

@@ -166,6 +166,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 width={`${dialogSizePercent.width}%`}
                 height={`${dialogSizePercent.height}%`}
                 modal
+                alertDialogs={[
+                    <SelectEnsemblesConfirmationDialogs
+                        ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
+                        showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
+                        showLoadingErrorsDialogState={[
+                            showEnsemblesLoadingErrorDialog,
+                            setShowEnsemblesLoadingErrorDialog,
+                        ]}
+                        onConfirmCancel={handleClose}
+                        onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
+                    />,
+                ]}
             >
                 <div className="flex h-full flex-col">
                     <Dialog.Header closeIconVisible>
@@ -237,13 +249,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     </Dialog.Body>
                 </div>
             </Dialog.Popup>
-            <SelectEnsemblesConfirmationDialogs
-                ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
-                showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
-                showLoadingErrorsDialogState={[showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog]}
-                onConfirmCancel={handleClose}
-                onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
-            />
         </>
     );
 };

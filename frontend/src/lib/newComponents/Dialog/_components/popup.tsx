@@ -13,6 +13,8 @@ export type PopupProps = {
     width?: number | string;
     /** Height of the dialog. Can be a number (pixels) or a string (e.g., "50%"). */
     height?: number | string;
+    minWidth?: number | string;
+    minHeight?: number | string;
     /** Keeps the dialog mounted in the DOM even when it's closed. Useful for maintaining state or avoiding re-renders. */
     keepMounted?: boolean;
     /** Array of alert dialogs to be rendered within the popup. */
@@ -31,8 +33,13 @@ export function Popup(props: PopupProps) {
                 <DialogBase.Backdrop className="dialog__backdrop" />
                 <DialogBase.Popup
                     ref={setPopupContainer}
-                    className="dialog__popup z-modal"
-                    style={{ width: props.width, height: props.height }}
+                    className="dialog__popup z-modal flex flex-col"
+                    style={{
+                        width: props.width,
+                        height: props.height,
+                        minWidth: props.minWidth,
+                        minHeight: props.minHeight,
+                    }}
                     initialFocus={props.initialFocus}
                     finalFocus={props.finalFocus}
                 >

@@ -3,8 +3,8 @@ import type React from "react";
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { vectorDefinitions } from "@assets/vectorDefinitions";
 
-import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/newComponents/SmartNodeSelector";
 
 import aquifer from "./private-assets/aquifer.svg";
 import block from "./private-assets/block.svg";
@@ -274,7 +274,6 @@ export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
             (() => {
                 return;
             }),
-        label: props.label ?? "",
         maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
         delimiter: props.delimiter ?? ":",
         numMetaNodes: props.numMetaNodes ?? 0,

@@ -278,7 +278,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="text-danger-strong flex items-center gap-2 text-xs">
+                <div className="text-danger-strong gap-horizontal-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
@@ -286,7 +286,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="text-warning-strong flex items-center gap-2 text-xs">
+                <div className="text-warning-strong gap-horizontal-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Experimental</span>
                 </div>
@@ -297,14 +297,14 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makePersistenceState(isSerializable: boolean): React.ReactNode {
         if (isSerializable) {
             return (
-                <div className="text-success-strong flex items-center gap-2 text-xs">
+                <div className="text-success-strong gap-horizontal-xs text-body-xs flex items-center">
                     <CloudDone fontSize="inherit" />
                     <span className="mt-[0.2rem]">Module is persistable</span>
                 </div>
             );
         }
         return (
-            <div className="text-disabled flex items-center gap-2 text-xs">
+            <div className="text-disabled gap-horizontal-xs text-body-xs flex items-center">
                 <CloudOff fontSize="inherit" />
                 <span className="mt-[0.2rem]">Module is not persistable</span>
             </div>
@@ -316,7 +316,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             const tagObj = ModuleDataTags.find((el) => el.id === tag);
             if (tagObj) {
                 tags.push(
-                    <div key={tag} className="font-bold text-indigo-600">
+                    <div key={tag} className="text-accent-subtle font-bolder">
                         #{tagObj.name}
                     </div>,
                 );
@@ -337,25 +337,25 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="z-tooltip border-neutral-subtle bg-floating p-vertical-md text-body-md absolute flex w-96 gap-4 border shadow-lg"
+            className="z-tooltip border-neutral-subtle bg-floating p-vertical-md text-body-md gap-horizontal-sm absolute flex w-96 border shadow-lg"
             style={style}
         >
             <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>
                 {previewFunc?.(64, 64)}
             </svg>
-            <div className="grow">
-                <div className="flex items-center">
-                    <span className="grow font-bold">{props.module.getDefaultTitle()}</span>
-                    <div className="cursor-pointer hover:text-blue-600" onClick={props.onClose} title="Close popup">
+            <div className="gap-vertical-2xs flex grow flex-col">
+                <div className="flex items-start">
+                    <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
+                    <Button variant="text" tone="neutral" size="small" onClick={props.onClose}>
                         <Close fontSize="inherit" />
-                    </div>
+                    </Button>
                 </div>
-                <span className="flex flex-row gap-4">
+                <div className="gap-horizontal-xs flex">
                     {makeDevState(props.module.getDevState())}
                     {makePersistenceState(props.module.canBeSerialized())}
-                </span>
-                <div className="mt-2 text-xs">{props.module.getDescription()}</div>
-                <div className="text-bold mt-2 flex flex-wrap gap-2 text-xs">{makeDataTags()}</div>
+                </div>
+                <div className="text-body-xs">{props.module.getDescription()}</div>
+                <div className="text-bolder gap-horizontal-2xs text-body-xs flex flex-wrap">{makeDataTags()}</div>
             </div>
         </div>
     );

@@ -4,6 +4,8 @@ import { ContextHelp, type ContextHelpProps } from "../ContextHelp";
 
 import { Annotations } from "./_components/Annotations";
 import { Overlay, type OverlayProps } from "./_components/Overlay";
+import { Field } from "@lib/newComponents/Field";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 
 export type SettingAnnotation = {
     type: "warning" | "info" | "error";
@@ -30,6 +32,7 @@ export type SettingWrapperProps = {
     infoOverlay?: string;
     loadingOverlay?: boolean;
     label?: React.ReactNode;
+    description?: React.ReactNode;
     help?: ContextHelpProps;
 } & (
     | {
@@ -76,20 +79,20 @@ export function SettingWrapper(props: SettingWrapperProps) {
     }
 
     return (
-        <div className="flex flex-col gap-1">
-            {props.label && (
-                <div className="flex items-center justify-between gap-2">
-                    <label className="text-sm text-gray-500 leading-tight" htmlFor={id}>
-                        {props.label}
-                    </label>
-                    {props.help && <ContextHelp title={props.help.title} content={props.help.content} />}
-                </div>
+        <Field.Root layoutClassName="w-full">
+            {props.label && <Field.Label>{props.label}</Field.Label>}
+            {props.description && <Field.Description>{props.description}</Field.Description>}
+            {props.help && (
+                <Field.Info>
+                    <Heading as="h6">{props.help.title}</Heading>
+                    {props.help.content}
+                </Field.Info>
             )}
-            <div className="relative">
-                {React.cloneElement(props.children, { id })}
+            <div className="gap-vertical-xs relative flex w-full flex-col">
+                {props.children}
                 <Overlay type={overlayType} message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay} />
             </div>
             <Annotations annotations={annotations} />
-        </div>
+        </Field.Root>
     );
 }

@@ -7,6 +7,8 @@ import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { Tooltip } from "@lib/components/Tooltip";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Button } from "@lib/newComponents/Button";
+import { Toggle } from "@lib/newComponents/Toggle";
 
 export type ToggleDevToolsButtonProps = {
     guiMessageBroker: GuiMessageBroker;
@@ -31,17 +33,16 @@ export const ToggleDevToolsButton: React.FC<ToggleDevToolsButtonProps> = (props)
         <Tooltip title={devToolsVisible ? "Hide dev tools" : "Show dev tools"} placement="right">
             <div
                 className={resolveClassNames(
-                    "absolute bottom-2 shadow-sm left-1.5 z-50 m-2 p-2 rounded-full flex items-center justify-center w-8 h-8 bg-gray-800 text-white text-m cursor-pointer",
-                    {
-                        "bg-green-700 hover: hover:bg-green-600": devToolsVisible,
-                        "bg-gray-800 hover:bg-gray-700": !devToolsVisible,
-                    },
+                    "text-m absolute right-1.5 bottom-16 z-50 m-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-800 p-2 text-white shadow-sm",
                 )}
-                onClick={() => {
-                    setDevToolsVisible(!devToolsVisible);
-                }}
             >
-                <BugReport fontSize="inherit" />
+                <Toggle.Button
+                    pressed={devToolsVisible}
+                    buttonProps={{ size: "small", tone: "accent" }}
+                    onPressedChange={() => setDevToolsVisible(!devToolsVisible)}
+                >
+                    <BugReport fontSize="inherit" />
+                </Toggle.Button>
             </div>
         </Tooltip>
     );

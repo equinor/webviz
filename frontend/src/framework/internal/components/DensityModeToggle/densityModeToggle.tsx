@@ -4,6 +4,7 @@ import { DensityMedium, DensitySmall } from "@mui/icons-material";
 
 import { getMainDataAttribute, setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export function DensityModeToggle(): React.ReactNode {
     const [density, setDensity] = React.useState<string | null>(getMainDataAttribute("density"));
@@ -16,8 +17,10 @@ export function DensityModeToggle(): React.ReactNode {
     }, []);
 
     return (
-        <Button variant="text" tone="accent" iconOnly onClick={toggleDenseMode}>
-            {density === "comfortable" ? <DensitySmall fontSize="inherit" /> : <DensityMedium fontSize="inherit" />}
-        </Button>
+        <Tooltip title="Toggle density mode">
+            <Button variant="text" tone="accent" iconOnly onClick={toggleDenseMode}>
+                {density === "comfortable" ? <DensitySmall fontSize="inherit" /> : <DensityMedium fontSize="inherit" />}
+            </Button>
+        </Tooltip>
     );
 }

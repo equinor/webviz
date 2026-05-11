@@ -2,8 +2,8 @@ import type React from "react";
 
 import type { SvgIconProps } from "@mui/material/SvgIcon";
 
-import { ColorTile } from "@lib/components/ColorTile";
-import type { ColorTileProps } from "@lib/components/ColorTile/colorTile";
+import { ColorTile } from "@lib/newComponents/ColorTile";
+import type { ColorTileProps } from "@lib/newComponents/ColorTile";
 
 export type ColorTileWithBadgeProps = ColorTileProps & {
     showBadge: boolean;
@@ -13,14 +13,14 @@ export type ColorTileWithBadgeProps = ColorTileProps & {
 
 export const ColorTileWithBadge: React.FC<ColorTileWithBadgeProps> = (props) => {
     return (
-        <div className="relative bg-inherit inline-flex items-center mr-4">
+        <div className="relative mr-4 inline-flex items-center bg-inherit">
             {/* The colored tile */}
-            <ColorTile {...props} />
+            <ColorTile.Tile {...props} />
 
             {/* The badge icon, positioned top-right */}
             {props.showBadge && (
                 <props.badgeIcon
-                    className={`${props.badgeClassName ?? "bg-white"} text-black absolute -top-1 -right-1.5 rounded-full p-px`}
+                    className={`${props.badgeClassName ?? "bg-white"} absolute -top-1 -right-1.5 rounded-full p-px text-black`}
                     fontSize="inherit"
                     style={{
                         fontSize: "1rem",

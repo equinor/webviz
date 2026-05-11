@@ -14,7 +14,7 @@ import {
 import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/components/Badge";
+import { Badge } from "@lib/newComponents/Badge";
 import { NavBarButton } from "@lib/components/NavBarComponents";
 import { Tabs } from "@lib/newComponents/Tabs";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -160,7 +160,7 @@ function RealizationFilterButtonIcon(
     return (
         <Badge
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
-            color={numberOfUnsavedRealizationFilters ? "bg-warning-strong" : "bg-accent-strong"}
+            tone={numberOfUnsavedRealizationFilters ? "warning" : "accent"}
             invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
         >
             {active ? <FilterAlt fontSize="small" /> : <FilterAltOutlined fontSize="small" />}
