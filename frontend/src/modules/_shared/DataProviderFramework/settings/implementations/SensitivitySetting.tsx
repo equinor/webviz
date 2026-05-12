@@ -17,7 +17,8 @@ export type SensitivityNameCasePair = {
 type ValueType = SensitivityNameCasePair | null;
 type ValueConstraintsType = SensitivityNameCasePair[];
 export class SensitivitySetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -76,7 +77,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             const valueConstraints = props.valueConstraints ?? [];
 
             const availableSensitivityNames: string[] = [
-                ...Array.from(new Set(valueConstraints.map((sensitivity) => sensitivity.sensitivityName))),
+                ...new Set(valueConstraints.map((sensitivity) => sensitivity.sensitivityName)),
             ];
 
             const currentSensitivityName = props.value?.sensitivityName;

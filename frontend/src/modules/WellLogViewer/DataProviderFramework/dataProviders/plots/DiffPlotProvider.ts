@@ -3,7 +3,7 @@ import type { CustomDataProviderImplementation } from "@modules/_shared/DataProv
 
 import {
     baseContinuousSettings,
-    defineBaseContinuousDependencies,
+    setupBaseContinuousBindings,
     doSettingsChangesRequireDataRefetch,
     fetchLogCurveData,
     verifyBasePlotSettings,
@@ -17,7 +17,7 @@ export class DiffPlotProvider
 {
     doSettingsChangesRequireDataRefetch = doSettingsChangesRequireDataRefetch;
     areCurrentSettingsValid = verifyBasePlotSettings<DiffPlotSettingTypes>;
-    defineDependencies = defineBaseContinuousDependencies<DiffPlotSettingTypes>;
+    setupBindings = setupBaseContinuousBindings<DiffPlotSettingTypes>;
     fetchData = fetchLogCurveData<DiffPlotSettingTypes>;
     settings = differentialPlotSettings;
 
