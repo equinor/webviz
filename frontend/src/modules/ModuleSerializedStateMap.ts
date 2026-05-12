@@ -16,11 +16,13 @@ import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings 
 import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPlotSettings } from "@modules/ParameterResponseCorrelationParallelCoordsPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
+import type { SerializedSettings as PvtSettings } from "@modules/Pvt/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
+import type { SerializedSettings as VfpSettings } from "@modules/Vfp/settings/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 import type { SerializedSettings as WellLogViewerSettings } from "@modules/WellLogViewer/settings/persistence";
 
@@ -32,10 +34,6 @@ export type ModuleSerializedStateMap = {
   "3DViewer": {
     settings?: Partial<M_3DViewerSettings>,
     view?: Partial<M_3DViewerView>,
-  },
-  "DbgWorkbenchSpy": {
-    settings?: never,
-    view?: never,
   },
   "DistributionPlot": {
     settings?: Partial<DistributionPlotSettings>,
@@ -61,18 +59,6 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<IntersectionSettings>,
     view?: never,
   },
-  "Map": {
-    settings?: never,
-    view?: never,
-  },
-  "MyModule": {
-    settings?: never,
-    view?: never,
-  },
-  "MyModule2": {
-    settings?: never,
-    view?: never,
-  },
   "ParameterDistributions": {
     settings?: Partial<ParameterDistributionsSettings>,
     view?: never,
@@ -94,11 +80,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Pvt": {
-    settings?: never,
-    view?: never,
-  },
-  "Rft": {
-    settings?: never,
+    settings?: Partial<PvtSettings>,
     view?: never,
   },
   "SensitivityPlot": {
@@ -113,12 +95,8 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
     view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
-  "SubsurfaceMap": {
-    settings?: never,
-    view?: never,
-  },
   "Vfp": {
-    settings?: never,
+    settings?: Partial<VfpSettings>,
     view?: never,
   },
   "WellCompletions": {

@@ -19,6 +19,7 @@ import {
     deleteSnapshotAccessLog,
     getAlive,
     getAliveProtected,
+    getAssetInfos,
     getCases,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
@@ -26,8 +27,8 @@ import {
     getDeltaSurfaceData,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
+    getFieldIdentifiers,
     getFieldPerforations,
-    getFields,
     getFieldScreens,
     getGridModelsInfo,
     getGridParameter,
@@ -109,6 +110,8 @@ import type {
     GetAliveProtectedData_api,
     GetAliveProtectedResponse_api,
     GetAliveResponse_api,
+    GetAssetInfosData_api,
+    GetAssetInfosResponse_api,
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
@@ -130,14 +133,14 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsError_api,
     GetEnsembleDetailsResponse_api,
+    GetFieldIdentifiersData_api,
+    GetFieldIdentifiersResponse_api,
     GetFieldPerforationsData_api,
     GetFieldPerforationsError_api,
     GetFieldPerforationsResponse_api,
     GetFieldScreensData_api,
     GetFieldScreensError_api,
     GetFieldScreensResponse_api,
-    GetFieldsData_api,
-    GetFieldsResponse_api,
     GetGridModelsInfoData_api,
     GetGridModelsInfoError_api,
     GetGridModelsInfoResponse_api,
@@ -356,22 +359,23 @@ const createQueryKey = <TOptions extends Options>(
     return [params];
 };
 
-export const getFieldsQueryKey = (options?: Options<GetFieldsData_api>) => createQueryKey("getFields", options);
+export const getAssetInfosQueryKey = (options?: Options<GetAssetInfosData_api>) =>
+    createQueryKey("getAssetInfos", options);
 
 /**
- * Get Fields
+ * Get Asset Infos
  *
- * Get list of fields
+ * Get list of asset infos
  */
-export const getFieldsOptions = (options?: Options<GetFieldsData_api>) =>
+export const getAssetInfosOptions = (options?: Options<GetAssetInfosData_api>) =>
     queryOptions<
-        GetFieldsResponse_api,
+        GetAssetInfosResponse_api,
         AxiosError<DefaultError>,
-        GetFieldsResponse_api,
-        ReturnType<typeof getFieldsQueryKey>
+        GetAssetInfosResponse_api,
+        ReturnType<typeof getAssetInfosQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getFields({
+            const { data } = await getAssetInfos({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -379,7 +383,34 @@ export const getFieldsOptions = (options?: Options<GetFieldsData_api>) =>
             });
             return data;
         },
-        queryKey: getFieldsQueryKey(options),
+        queryKey: getAssetInfosQueryKey(options),
+    });
+
+export const getFieldIdentifiersQueryKey = (options?: Options<GetFieldIdentifiersData_api>) =>
+    createQueryKey("getFieldIdentifiers", options);
+
+/**
+ * Get Field Identifiers
+ *
+ * Get list of field identifiers
+ */
+export const getFieldIdentifiersOptions = (options?: Options<GetFieldIdentifiersData_api>) =>
+    queryOptions<
+        GetFieldIdentifiersResponse_api,
+        AxiosError<DefaultError>,
+        GetFieldIdentifiersResponse_api,
+        ReturnType<typeof getFieldIdentifiersQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getFieldIdentifiers({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getFieldIdentifiersQueryKey(options),
     });
 
 export const getCasesQueryKey = (options: Options<GetCasesData_api>) => createQueryKey("getCases", options);
@@ -387,7 +418,7 @@ export const getCasesQueryKey = (options: Options<GetCasesData_api>) => createQu
 /**
  * Get Cases
  *
- * Get list of cases for specified field
+ * Get list of cases for specified asset
  */
 export const getCasesOptions = (options: Options<GetCasesData_api>) =>
     queryOptions<

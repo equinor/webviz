@@ -23,7 +23,8 @@ def pytest_sessionstart(session):
 
 @dataclass
 class SumoTestEnsemble:
-    field_identifier: str
+    asset_name: str
+    field_identifiers: list[str]
     case_uuid: str
     case_name: str
     ensemble_name: str
@@ -32,7 +33,8 @@ class SumoTestEnsemble:
 @pytest.fixture(name="sumo_test_ensemble_ahm", scope="session")
 def fixture_sumo_test_ensemble_ahm() -> SumoTestEnsemble:
     return SumoTestEnsemble(
-        field_identifier="DROGON",
+        asset_name="Drogon",
+        field_identifiers=["DROGON"],
         case_name="webviz_ahm_case",
         case_uuid="485041ce-ad72-48a3-ac8c-484c0ed95cf8",
         ensemble_name="iter-0",
@@ -42,7 +44,8 @@ def fixture_sumo_test_ensemble_ahm() -> SumoTestEnsemble:
 @pytest.fixture(name="sumo_test_ensemble_design", scope="session")
 def fixture_sumo_test_ensemble_design() -> SumoTestEnsemble:
     return SumoTestEnsemble(
-        field_identifier="DROGON",
+        asset_name="Drogon",
+        field_identifiers=["DROGON"],
         case_name="01_drogon_design",
         case_uuid="b89873c8-6f4d-40e5-978c-afc47beb2a26",
         ensemble_name="iter-0",

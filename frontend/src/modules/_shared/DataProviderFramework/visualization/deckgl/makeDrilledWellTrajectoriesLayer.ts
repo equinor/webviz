@@ -17,12 +17,7 @@ export function makeDrilledWellTrajectoriesLayer({
         return null;
     }
 
-    // Filter out some wellbores that are known to be not working - this is a temporary solution
-    const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH",
-    );
-
-    const wellLayerDataFeatures = tempWorkingWellsData.map((well) => wellTrajectoryToGeojson(well));
+    const wellLayerDataFeatures = fieldWellboreTrajectoriesData.map((well) => wellTrajectoryToGeojson(well));
 
     const wellsLayer = new AdjustedWellsLayer({
         ...DEFAULT_WELLS_LAYER_PROPS,

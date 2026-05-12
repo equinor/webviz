@@ -138,7 +138,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(ensembleApiData.ensembleDetails.fipRegions);
         outEnsembleArray.push(
             new RegularEnsemble(
-                ensembleApiData.ensembleDetails.fieldIdentifier,
+                ensembleApiData.ensembleDetails.assetName,
+                ensembleApiData.ensembleDetails.fieldIdentifiers,
                 ensembleApiData.ensembleDetails.caseUuid,
                 ensembleApiData.ensembleDetails.caseName,
                 ensembleApiData.ensembleDetails.name,
@@ -209,7 +210,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                comparisonEnsembleApiData.ensembleDetails.fieldIdentifier,
+                comparisonEnsembleApiData.ensembleDetails.assetName,
+                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
                 comparisonEnsembleApiData.ensembleDetails.caseUuid,
                 comparisonEnsembleApiData.ensembleDetails.caseName,
                 comparisonEnsembleApiData.ensembleDetails.name,
@@ -225,7 +227,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                referenceEnsembleApiData.ensembleDetails.fieldIdentifier,
+                comparisonEnsembleApiData.ensembleDetails.assetName,
+                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
                 referenceEnsembleApiData.ensembleDetails.caseUuid,
                 referenceEnsembleApiData.ensembleDetails.caseName,
                 referenceEnsembleApiData.ensembleDetails.name,

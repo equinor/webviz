@@ -251,4 +251,3 @@ class StratigraphicUnit(BaseModel):
     colorR: int
     colorG: int
     colorB: int
-    lithologyType: int | float | str = "unknown"

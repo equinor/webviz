@@ -126,7 +126,6 @@ class StratigraphicUnit(BaseModel):
     color_r: int
     color_g: int
     color_b: int
-    lithology_type: int | float | str = "unknown"
 
 
 class WellboreStratigraphicUnit(BaseModel):

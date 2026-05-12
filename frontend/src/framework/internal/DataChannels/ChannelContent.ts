@@ -6,10 +6,6 @@ export interface ChannelContentDefinition {
     readonly dataGenerator: DataGenerator;
 }
 
-export enum ChannelContentNotificationTopic {
-    DATA_ARRAY_CHANGE = "data-array-change",
-}
-
 export type DataGenerator = () => DataGeneratorRet;
 
 export type DataGeneratorRet = {
@@ -23,7 +19,6 @@ export class ChannelContent {
     private _dataGenerator: DataGenerator;
     private _cachedDataArray: DataElement<KeyType>[] | null = null;
     private _cachedMetaData: ChannelContentMetaData | null = null;
-    private _subscribersMap: Map<ChannelContentNotificationTopic, Set<() => void>> = new Map();
 
     constructor(def: ChannelContentDefinition) {
         this._idString = def.contentIdString;
@@ -37,14 +32,6 @@ export class ChannelContent {
 
     getDisplayName(): string {
         return this._displayName;
-    }
-
-    publish(dataGenerator: DataGenerator): void {
-        this._dataGenerator = dataGenerator;
-        this._cachedDataArray = null;
-        this._cachedMetaData = null;
-
-        this.notifySubscribers(ChannelContentNotificationTopic.DATA_ARRAY_CHANGE);
     }
 
     private runDataGenerator(): void {
@@ -65,25 +52,5 @@ export class ChannelContent {
             this.runDataGenerator();
         }
         return this._cachedMetaData as ChannelContentMetaData;
-    }
-
-    subscribe(topic: ChannelContentNotificationTopic, callback: () => void): void {
-        const topicSubscribers = this._subscribersMap.get(topic) || new Set();
-
-        topicSubscribers.add(callback);
-
-        this._subscribersMap.set(topic, topicSubscribers);
-    }
-
-    private notifySubscribers(topic: ChannelContentNotificationTopic): void {
-        const topicSubscribers = this._subscribersMap.get(topic);
-
-        if (!topicSubscribers) {
-            return;
-        }
-
-        for (const subscriber of topicSubscribers) {
-            subscriber();
-        }
     }
 }
