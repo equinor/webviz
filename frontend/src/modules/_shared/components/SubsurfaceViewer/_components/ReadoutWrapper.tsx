@@ -3,8 +3,9 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LightsType, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
-import { isEqual, uniqBy } from "lodash";
+import type { LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
+import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { isEqual } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
@@ -18,6 +19,8 @@ import {
     DeckGlInstanceManagerTopic,
     type DeckGlInstanceManager,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import type { ExtendedWellFeature, LayerPickInfoWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import { isPickWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
@@ -123,11 +126,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     unproject3D: true,
                 });
 
-                // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
-                // See issue #webviz-subsurface-components/2320
-                const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
+                // WellsLayer has multiple pick-able sub layers, and each pick shows up a distinct info object.
+                const mergedPicks = consolidateWellsLayerReadouts(picks);
 
-                pickingInfo[viewport.id] = uniquePicks;
+                pickingInfo[viewport.id] = mergedPicks;
             }
             return pickingInfo;
         },
@@ -489,3 +491,59 @@ const LIGHTS_3D: LightsType = {
     },
     ambientLight: { intensity: 1.5, color: [255, 255, 255] },
 } as const;
+
+/**
+ * The wells-layer returns trajectory, label, and layer as distinct picks, causing readouts to appear multiple times.
+ * As a workaround, we manually merge these readouts into a single pick..
+ * @param picks A list of picks
+ * @returns A new list of picks, with picks from the same wellbore merged into a single pick
+ * @remark This is a temporary solution, awaiting a fix in the subsurface components library
+ */
+function consolidateWellsLayerReadouts(picks: PickingInfo[]): PickingInfo[] {
+    const mergedPicks: PickingInfo[] = [];
+
+    const wellsLayerPickIndexMap: Map<string, number> = new Map();
+
+    for (const pick of picks) {
+        if (!(pick.layer instanceof WellsLayer) || !isPickWithReadout<ExtendedWellFeature>(pick) || !pick.readout) {
+            mergedPicks.push(pick);
+            continue;
+        }
+
+        const wellName = pick.readout.name;
+
+        const existingIndex = wellsLayerPickIndexMap.get(wellName);
+
+        if (existingIndex === undefined) {
+            wellsLayerPickIndexMap.set(wellName, mergedPicks.length);
+            mergedPicks.push(pick);
+            continue;
+        }
+
+        // Merge subsequent well layer readouts for the same well
+        const prevPick = mergedPicks[existingIndex] as LayerPickInfoWithReadout<WellFeature>;
+
+        if (prevPick.readout?.properties && pick.readout?.properties) {
+            const mergedProperties = [...prevPick.readout.properties];
+
+            for (const newProp of pick.readout.properties) {
+                const existingPropIndex = mergedProperties.findIndex((p) => p.name === newProp.name);
+
+                if (existingPropIndex === -1) {
+                    // Property doesn't exist, add it
+                    mergedProperties.push(newProp);
+                } else {
+                    const existingValue = mergedProperties[existingPropIndex].value;
+                    // Replace if existing value is empty
+                    if (existingValue == null) {
+                        mergedProperties[existingPropIndex] = newProp;
+                    }
+                }
+            }
+
+            prevPick.readout.properties = mergedProperties;
+        }
+    }
+
+    return mergedPicks;
+}
