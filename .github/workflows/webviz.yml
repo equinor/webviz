@@ -87,15 +87,22 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Cache backend Docker image
+        id: docker-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/backend-image.tar
+          key: backend-docker-${{ runner.os }}-${{ hashFiles('backend_py/primary/Dockerfile', 'backend_py/primary/pyproject.toml', 'backend_py/primary/poetry.lock', 'backend_py/libs/**') }}
 
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
-          docker buildx build -f ./backend_py/primary/Dockerfile -t backend:latest --load \
-            --cache-from type=gha,scope=backend-docker \
-            --cache-to type=gha,scope=backend-docker,mode=max \
-            .
+          if [ "${{ steps.docker-cache.outputs.cache-hit }}" == "true" ]; then
+            docker load -i /tmp/backend-image.tar
+            docker build -f ./backend_py/primary/Dockerfile -t backend:latest --cache-from backend:latest .
+          else
+            docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
+            docker save backend:latest -o /tmp/backend-image.tar
+          fi
           CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 backend:latest)
           sleep 10  # Ensure the backend server is up and running exposing /openapi.json
           npm run generate:api --prefix ./frontend
