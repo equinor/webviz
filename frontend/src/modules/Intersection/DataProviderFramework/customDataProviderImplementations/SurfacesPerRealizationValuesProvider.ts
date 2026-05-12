@@ -149,14 +149,11 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
             read(read) {
-                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+                return { fieldIdentifier: read.globalSetting("fieldId") };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
-                return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
             },
-        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({

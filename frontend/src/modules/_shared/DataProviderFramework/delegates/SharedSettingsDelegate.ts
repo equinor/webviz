@@ -33,8 +33,7 @@ export class SharedSettingsDelegate<
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements PublishSubscribe<SharedSettingsDelegatePayloads>
-{
+> implements PublishSubscribe<SharedSettingsDelegatePayloads> {
     private _publishSubscribeDelegate: PublishSubscribeDelegate<SharedSettingsDelegatePayloads> =
         new PublishSubscribeDelegate<SharedSettingsDelegatePayloads>();
     private _externalSettingControllers: { [K in TSettingKey]: ExternalSettingController<K> } = {} as {
@@ -345,10 +344,7 @@ export class SharedSettingsDelegate<
             args: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads> & { debugName: string },
         ) => {
             const { debugName, ...resolverSpec } = args;
-            const dependency = createDependency(
-                debugName,
-                resolverSpec as ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
-            );
+            const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();

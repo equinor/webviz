@@ -1,19 +1,11 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 
-/**
- * Returns ensemble idents filtered by the given field identifier.
- */
-export function resolveEnsembleConstraints(fieldId: string | null, ensembles: readonly RegularEnsemble[]) {
-    const ensembleIdents = ensembles
-        .filter((ensemble: RegularEnsemble) => ensemble.getFieldIdentifier() === fieldId)
-        .map((ensemble: RegularEnsemble) => ensemble.getIdent());
-
-    return ensembleIdents;
-}
+export type SensitivityConstraint = {
+    sensitivityName: string;
+    sensitivityCase: string;
+};
 
 /**
  * Returns sensitivity name/case pairs for the selected ensemble.
@@ -21,7 +13,7 @@ export function resolveEnsembleConstraints(fieldId: string | null, ensembles: re
 export function resolveSensitivityConstraints(
     ensembleIdent: RegularEnsembleIdent | null,
     workbenchSession: WorkbenchSession,
-) {
+): SensitivityConstraint[] {
     if (!ensembleIdent) {
         return [];
     }

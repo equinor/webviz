@@ -29,12 +29,12 @@ import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransfor
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
-
 import {
-    resolveEnsembleConstraints,
-    resolveSensitivityConstraints,
-    resolveStatisticFunctionConstraints,
-} from "./_commonSettingsUpdaters";
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
+
+import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
 import type { SurfaceData, SurfaceStoredData } from "./types";
 import { SurfaceDataFormat } from "./types";
 
@@ -193,7 +193,7 @@ export class SeismicSurfaceProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ fieldIdentifier, ensembles }) {
-                return resolveEnsembleConstraints(fieldIdentifier, ensembles);
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -254,10 +254,7 @@ export class SeismicSurfaceProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent) {
-                    return [];
-                }
-                return [...realizationFilterFunction(ensembleIdent)];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 

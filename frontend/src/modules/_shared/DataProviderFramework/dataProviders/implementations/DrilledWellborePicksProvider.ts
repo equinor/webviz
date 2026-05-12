@@ -15,6 +15,7 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+import { getAvailableEnsembleIdentsForField } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
@@ -87,9 +88,7 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
                 };
             },
             resolve({ fieldIdentifier, ensembles }) {
-                return ensembles
-                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                    .map((ensemble) => ensemble.getIdent());
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -97,22 +96,13 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
             debugName: "WellboreHeaders",
             read(read) {
                 return {
-                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    fieldIdentifier: read.globalSetting("fieldId"),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
-                if (!ensembleIdent) {
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                if (!fieldIdentifier) {
                     return null;
                 }
-
-                const ensembleSet = workbenchSession.getEnsembleSet();
-                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-                if (!ensemble) {
-                    return null;
-                }
-
-                const fieldIdentifier = ensemble.getFieldIdentifier();
 
                 return await queryClient.fetchQuery({
                     ...getDrilledWellboreHeadersOptions({
@@ -121,17 +111,6 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
                     }),
                 });
             },
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            if (!fieldIdentifier) {
-                return null;
-            }
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
         });
 
         const pickIdentifiersDep = makeSharedResult({
@@ -164,7 +143,7 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
             },
         });
 
-        setting(Setting.SMDA_WELLBORE_HEADERS).bindValueConstraints({
+        setting(Setting.WELLBORES).bindValueConstraints({
             read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeadersDep),

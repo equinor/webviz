@@ -37,6 +37,7 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+import { getAvailableEnsembleIdentsForField } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
@@ -257,7 +258,6 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         storedData,
         makeSharedResult,
         queryClient,
-        workbenchSession,
     }: SetupBindingsContext<DrilledWellboreTrajectoriesSettings, DrilledWellboreTrajectoriesStoredData>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
@@ -267,9 +267,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                 };
             },
             resolve({ fieldIdentifier, ensembles }) {
-                return ensembles
-                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                    .map((ensemble) => ensemble.getIdent());
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -277,22 +275,13 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
             debugName: "WellboreHeaders",
             read(read) {
                 return {
-                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    fieldIdentifier: read.globalSetting("fieldId"),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
-                if (!ensembleIdent) {
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                if (!fieldIdentifier) {
                     return null;
                 }
-
-                const ensembleSet = workbenchSession.getEnsembleSet();
-                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-                if (!ensemble) {
-                    return null;
-                }
-
-                const fieldIdentifier = ensemble.getFieldIdentifier();
 
                 return await queryClient.fetchQuery({
                     ...getDrilledWellboreHeadersOptions({
@@ -301,17 +290,6 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     }),
                 });
             },
-        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            if (!fieldIdentifier) {
-                return null;
-            }
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
         });
 
         setting(Setting.WELLBORES).bindValueConstraints({
@@ -463,22 +441,15 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
             read(read) {
                 return {
                     filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
+                    data: read.sharedResult(realizationSurfaceMetadata),
                 };
             },
-            resolve({ filterType }) {
+            resolve({ filterType, data }) {
                 return {
+                    enabled: data?.surfaces.length ? true : { enabled: false, reason: "No surfaces available" },
                     visible: filterType === "surface_based",
                 };
             },
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
-            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-            const data = getHelperDependency(realizationSurfaceMetadataDep);
-            return {
-                enabled: data?.surfaces.length
-                    ? true
-                    : { enabled: false, reason: "No surfaces available" },
-                visible: filterType === "surface_based",
-            };
         });
 
         setting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE).bindValueConstraints({
@@ -508,23 +479,15 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
             read(read) {
                 return {
                     filterType: read.localSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE),
+                    data: read.sharedResult(realizationSurfaceMetadata),
                 };
             },
-            resolve({ filterType }) {
+            resolve({ filterType, data }) {
                 return {
+                    enabled: data?.surfaces.length ? true : { enabled: false, reason: "No surfaces available" },
                     visible: filterType === "surface_based",
                 };
             },
-        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getHelperDependency, getLocalSetting }) => {
-            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
-
-            const data = getHelperDependency(realizationSurfaceMetadataDep);
-            return {
-                enabled: data?.surfaces.length
-                    ? true
-                    : { enabled: false, reason: "No surfaces available" },
-                visible: filterType === "surface_based",
-            };
         });
 
         setting(Setting.WELLBORE_DEPTH_FORMATION_FILTER).bindValueConstraints({
@@ -654,6 +617,10 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                 const startDate = timeInterval.split("/")[0];
                 const endDate = timeInterval.split("/")[1];
 
+                if (!endDate) {
+                    return [];
+                }
+
                 return await queryClient.fetchQuery({
                     ...getProductionDataOptions({
                         query: {
@@ -693,6 +660,10 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
                 const startDate = timeInterval.split("/")[0];
                 const endDate = timeInterval.split("/")[1];
+
+                if (!endDate) {
+                    return [];
+                }
 
                 return await queryClient.fetchQuery({
                     ...getInjectionDataOptions({

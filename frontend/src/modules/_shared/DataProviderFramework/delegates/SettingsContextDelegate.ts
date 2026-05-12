@@ -64,8 +64,7 @@ export class SettingsContextDelegate<
     TStoredData extends StoredData = Record<string, never>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData,
-> implements PublishSubscribe<SettingsContextDelegatePayloads>
-{
+> implements PublishSubscribe<SettingsContextDelegatePayloads> {
     private _customSettingsHandler: CustomSettingsHandler<
         TSettings,
         TStoredData,
@@ -505,10 +504,7 @@ export class SettingsContextDelegate<
             args: ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads> & { debugName: string },
         ) => {
             const { debugName, ...resolverSpec } = args;
-            const dependency = createDependency(
-                debugName,
-                resolverSpec as ResolverSpec<T, TSettings, TSettingTypes, TSettingKey, TReads>,
-            );
+            const dependency = createDependency(debugName, resolverSpec);
 
             dependency.subscribeLoading(() => {
                 this.handleSettingChanged();

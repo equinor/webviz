@@ -98,7 +98,6 @@ export type SharedResult<
     TReads extends Record<string, Read<any>> = Record<string, never>,
 > = {
     readonly [sharedResultBrand]: true;
-    readonly debugName: string;
 } & Dependency<T, TSettings, TSettingTypes, TKey, TReads>;
 /**
  * Settings-only context.

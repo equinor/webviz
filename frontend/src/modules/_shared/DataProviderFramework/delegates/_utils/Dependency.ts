@@ -1,4 +1,4 @@
-import { isCancelledError } from "@tanstack/react-query";
+import { CancelledError } from "@tanstack/react-query";
 
 import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
 import type { PublishSubscribeStatusMessageStore, StatusWriter } from "@framework/types/statusWriter";
@@ -72,7 +72,8 @@ export class Dependency<
     private _queued = false;
     private _unsubscribers: (() => void)[] = [];
     private _isProbing = false;
-    private _debugName: string;
+
+    readonly debugName: string;
 
     private _statusStore = new GenericStatusMessageStore("Dependency");
 
@@ -88,7 +89,7 @@ export class Dependency<
         ) => void,
         debugName: string,
     ) {
-        this._debugName = debugName;
+        this.debugName = debugName;
 
         this._localSettingManagerGetter = localSettingManagerGetter;
         this._globalSettingGetter = globalSettingGetter;
@@ -397,7 +398,7 @@ export class Dependency<
             // as they are expected to happen during the lifecycle of the dependency
             // and are handled by not updating the value or notifying subscribers
             const aborted = this._abortController?.signal.aborted || isAbortLike(e);
-            if (aborted || isCancelledError(e)) return;
+            if (aborted || e instanceof CancelledError) return;
 
             // If this dependency is not initialized yet and is not a root node, we don't want to update the value or notify subscribers
             // as it might be a dependency that is still being established

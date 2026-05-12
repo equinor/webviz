@@ -1,5 +1,9 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
     CustomDataProviderImplementation,
@@ -163,11 +167,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 };
             },
             resolve({ fieldIdentifier, ensembles }) {
-                const ensembleIdents = ensembles
-                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                    .map((ensemble) => ensemble.getIdent());
-
-                return ensembleIdents;
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -179,11 +179,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent) {
-                    return [];
-                }
-                const realizations = realizationFilterFunction(ensembleIdent);
-                return [...realizations];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 

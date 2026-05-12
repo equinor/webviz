@@ -27,12 +27,12 @@ import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransfor
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
-
 import {
-    resolveEnsembleConstraints,
-    resolveSensitivityConstraints,
-    resolveStatisticFunctionConstraints,
-} from "./_commonSettingsUpdaters";
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
+
+import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
 import { SurfaceDataFormat, type SurfaceData, type SurfaceStoredData } from "./types";
 
 const surfaceSettings = [
@@ -145,11 +145,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                 return { fieldId: read.globalSetting("fieldId"), ensembles: read.globalSetting("ensembles") };
             },
             resolve({ fieldId, ensembles }) {
-                if (!fieldId || ensembles.length === 0) {
-                    return [];
-                }
-
-                return resolveEnsembleConstraints(fieldId, ensembles);
+                return getAvailableEnsembleIdentsForField(fieldId, ensembles);
             },
         });
 
@@ -193,10 +189,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent || !realizationFilterFunction) {
-                    return [];
-                }
-                return [...realizationFilterFunction(ensembleIdent)];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 
@@ -246,14 +239,11 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ filterFunction, ensembleIdent }) {
-                if (!ensembleIdent || !filterFunction) {
-                    return [];
-                }
-                return [...filterFunction(ensembleIdent)];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, filterFunction);
             },
         });
 
-        //Needed to trigger updates when switching between realization and ensemble statistics
+        // Needed to trigger updates when switching between realization and ensemble statistics
         storedData("realizationMode").bindValue({
             read(read) {
                 return { representation: read.localSetting(Setting.REPRESENTATION) };

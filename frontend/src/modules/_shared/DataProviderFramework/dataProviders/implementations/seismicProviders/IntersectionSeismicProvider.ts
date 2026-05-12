@@ -266,15 +266,12 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
             debugName: "wellboreHeaders",
             read(read) {
                 return {
-                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    fieldIdentifier: read.globalSetting("fieldId"),
                 };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
-                return await fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                return await fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
             },
-        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({

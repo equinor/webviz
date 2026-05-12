@@ -40,12 +40,7 @@ export class EnsembleWellborePicksProvider implements CustomDataProviderImplemen
         return !isEqual(prevSettings, newSettings);
     }
 
-    setupBindings({
-        setting,
-        makeSharedResult,
-        queryClient,
-        workbenchSession,
-    }: SetupBindingsContext<EnsembleWellborePicksSettings>) {
+    setupBindings({ setting, makeSharedResult, queryClient }: SetupBindingsContext<EnsembleWellborePicksSettings>) {
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
                 return {
@@ -61,17 +56,11 @@ export class EnsembleWellborePicksProvider implements CustomDataProviderImplemen
         const wellboreHeadersDep = makeSharedResult({
             debugName: "WellboreHeaders",
             read(read) {
-                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+                return { fieldIdentifier: read.globalSetting("fieldId") };
             },
-            async resolve({ ensembleIdent }, { abortSignal }) {
-                return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
             },
-        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            if (!fieldIdentifier) {
-                return null;
-            }
-            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
         });
 
         setting(Setting.INTERSECTION).bindValueConstraints({

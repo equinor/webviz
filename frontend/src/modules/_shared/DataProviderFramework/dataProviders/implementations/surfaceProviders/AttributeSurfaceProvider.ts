@@ -30,10 +30,13 @@ import { encodeSurfAddrStr, type FullSurfaceAddress } from "@modules/_shared/Sur
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 
 import {
-    resolveEnsembleConstraints,
     resolveSensitivityConstraints,
     resolveStatisticFunctionConstraints,
 } from "./_commonSettingsUpdaters";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
 import { SurfaceDataFormat, type SurfaceData, type SurfaceStoredData } from "./types";
 
 const surfaceSettings = [
@@ -198,7 +201,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                 };
             },
             resolve({ fieldIdentifier, ensembles }) {
-                return resolveEnsembleConstraints(fieldIdentifier, ensembles);
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -242,10 +245,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent) {
-                    return [];
-                }
-                return [...realizationFilterFunction(ensembleIdent)];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 

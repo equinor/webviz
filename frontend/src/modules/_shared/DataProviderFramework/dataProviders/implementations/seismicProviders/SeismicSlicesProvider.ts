@@ -16,6 +16,11 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Representation } from "@modules/_shared/DataProviderFramework/settings/implementations/RepresentationSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
+
 import { representationToApiRepresentation } from "./representationUtils";
 import { type SeismicSliceData_trans, transformSeismicSlice } from "./transformSeismicSlice";
 
@@ -189,10 +194,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ fieldId, ensembles }) {
-
-                return ensembles
-                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldId)
-                    .map((ensemble) => ensemble.getIdent());
+                return getAvailableEnsembleIdentsForField(fieldId, ensembles);
             },
         });
 
@@ -204,11 +206,7 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent || !realizationFilterFunction) {
-                    return [];
-                }
-
-                return [...realizationFilterFunction(ensembleIdent)];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 

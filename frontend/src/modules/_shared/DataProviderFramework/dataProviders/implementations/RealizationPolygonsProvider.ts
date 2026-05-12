@@ -11,6 +11,10 @@ import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramewor
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "../dependencyFunctions/sharedSettingUpdaterFunctions";
 
 const realizationPolygonsSettings = [
     Setting.ENSEMBLE,
@@ -47,9 +51,7 @@ export class RealizationPolygonsProvider implements CustomDataProviderImplementa
                 };
             },
             resolve({ fieldIdentifier, ensembles }) {
-                return ensembles
-                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                    .map((ensemble) => ensemble.getIdent());
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -61,10 +63,7 @@ export class RealizationPolygonsProvider implements CustomDataProviderImplementa
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent) {
-                    return [];
-                }
-                return [...realizationFilterFunction(ensembleIdent)];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 

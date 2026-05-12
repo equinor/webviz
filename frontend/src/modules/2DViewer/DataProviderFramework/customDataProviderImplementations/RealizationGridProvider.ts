@@ -2,6 +2,10 @@ import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import {
+    getAvailableEnsembleIdentsForField,
+    getAvailableRealizationsForEnsembleIdent,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type {
     CustomDataProviderImplementation,
     DataProviderAccessors,
@@ -169,11 +173,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 };
             },
             resolve({ ensembles, fieldIdentifier }) {
-                const ensembleIdents = ensembles
-                    .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                    .map((ensemble) => ensemble.getIdent());
-
-                return ensembleIdents;
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
             },
         });
 
@@ -185,11 +185,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 };
             },
             resolve({ ensembleIdent, realizationFilterFunction }) {
-                if (!ensembleIdent) {
-                    return [];
-                }
-                const realizations = realizationFilterFunction(ensembleIdent);
-                return [...realizations];
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
             },
         });
 
