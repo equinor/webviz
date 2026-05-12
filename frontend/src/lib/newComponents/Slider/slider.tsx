@@ -206,43 +206,46 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
     const showMinLock = [true, "both", "min"].includes(defaultedProps.enableRangeLocks);
     const showMaxLock = [true, "both", "max"].includes(defaultedProps.enableRangeLocks);
+    const [prevShowMinLock, setPrevShowMinLock] = React.useState(showMinLock);
+    const [prevShowMaxLock, setPrevShowMaxLock] = React.useState(showMaxLock);
+
+    if (prevShowMinLock !== showMinLock) {
+        setPrevShowMinLock(showMinLock);
+        if (!showMinLock && minLocked) {
+            setMinLocked(false);
+        }
+    }
+
+    if (prevShowMaxLock !== showMaxLock) {
+        setPrevShowMaxLock(showMaxLock);
+        if (!showMaxLock && maxLocked) {
+            setMaxLocked(false);
+        }
+    }
 
     const showThumbValueLabels =
         defaultedProps.valueLabelDisplay === "always" ||
         (defaultedProps.valueLabelDisplay === "auto" && (isHovered || isFocused));
 
-    let needToClampValue = false;
-    const clampedValue = isDualSlider ? clone(internalValue as number[]) : ([internalValue, internalValue] as number[]);
+    const [valueToClamp, setValueToClamp] = React.useState<null | number | number[]>(null);
+    let clampedValue = isDualSlider ? clone(internalValue as number[]) : ([internalValue, internalValue] as number[]);
 
-    if (prevMin !== defaultedProps.min) {
+    if (prevMin !== defaultedProps.min || prevMax !== defaultedProps.max) {
         setPrevMin(defaultedProps.min);
-
-        if (clampedValue[0] < defaultedProps.min || minLocked) {
-            clampedValue[0] = defaultedProps.min;
-            needToClampValue = true;
-        }
-        if (clampedValue[1] < defaultedProps.min) {
-            clampedValue[1] = defaultedProps.min;
-            needToClampValue = true;
-        }
-    }
-
-    if (prevMax !== defaultedProps.max) {
         setPrevMax(defaultedProps.max);
 
-        if (clampedValue[1] > defaultedProps.max || maxLocked) {
+        clampedValue = clampedValue.map((v) => clamp(v, defaultedProps.min, defaultedProps.max));
+
+        if (minLocked) {
+            clampedValue[0] = defaultedProps.min;
+            if (!isDualSlider) clampedValue[1] = defaultedProps.min;
+        }
+
+        if (maxLocked) {
+            if (!isDualSlider) clampedValue[0] = defaultedProps.max;
             clampedValue[1] = defaultedProps.max;
-            needToClampValue = true;
         }
-        if (clampedValue[0] > defaultedProps.max) {
-            clampedValue[0] = defaultedProps.max;
-            needToClampValue = true;
-        }
-    }
 
-    const [valueToClamp, setValueToClamp] = React.useState<null | number | number[]>(null);
-
-    if (needToClampValue) {
         setValueToClamp(isDualSlider ? clampedValue : clampedValue[0]);
     }
 
