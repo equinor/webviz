@@ -87,36 +87,39 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
-      - name: Cache backend Docker image
-        id: docker-cache
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker build layers
         uses: actions/cache@v4
         with:
-          path: /tmp/backend-image.tar
+          path: /tmp/buildx-cache
           # Key covers only the files that drive the expensive layers (poetry install).
           # Source-only changes (backend_py/primary/**) intentionally do not bust this
-          # cache — they are handled by --cache-from at build time instead, so only
-          # the layers from COPY primary onward are rebuilt on source changes.
+          # cache — the buildx layer cache handles those incrementally via restore-keys,
+          # so only the layers from COPY primary onward are rebuilt on source changes.
           key: backend-docker-${{ runner.os }}-${{ hashFiles('backend_py/primary/Dockerfile', 'backend_py/primary/pyproject.toml', 'backend_py/primary/poetry.lock', 'backend_py/libs/**') }}
+          restore-keys: |
+            backend-docker-${{ runner.os }}-
 
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
           set -euo pipefail
 
-          if [ "${{ steps.docker-cache.outputs.cache-hit }}" == "true" ]; then
-            # Restore the cached image into the local Docker daemon so its layers
-            # are available as a --cache-from source for the build below.
-            docker load -i /tmp/backend-image.tar
-            # Rebuild using the cached image as a layer cache. BUILDKIT_INLINE_CACHE=1
-            # ensures the image carries inline cache metadata, allowing --cache-from to
-            # match layers. Only layers after COPY primary are rebuilt on source changes.
-            docker build -f ./backend_py/primary/Dockerfile -t backend:latest --cache-from backend:latest --build-arg BUILDKIT_INLINE_CACHE=1 .
-          else
-            # No cached image exists yet. Build from scratch and embed inline cache
-            # metadata (BUILDKIT_INLINE_CACHE=1) so future runs can use --cache-from.
-            docker build -f ./backend_py/primary/Dockerfile -t backend:latest --build-arg BUILDKIT_INLINE_CACHE=1 .
-            # Save the image as a tarball so actions/cache can persist it for future runs.
-            docker save backend:latest -o /tmp/backend-image.tar
-          fi
+          # Build using the local BuildKit cache for layer-level caching.
+          # Writes to a separate directory to avoid corrupting the restored cache
+          # mid-build; the swap below atomically replaces it for the next run.
+          docker buildx build \
+            -f ./backend_py/primary/Dockerfile \
+            -t backend:latest \
+            --cache-from type=local,src=/tmp/buildx-cache \
+            --cache-to type=local,dest=/tmp/buildx-cache-new,mode=max \
+            --load \
+            .
+
+          # Swap: replace the restored cache with the freshly written one.
+          rm -rf /tmp/buildx-cache
+          mv /tmp/buildx-cache-new /tmp/buildx-cache
 
           CONTAINER_ID=$(docker run --detach -p 5000:5000 \
             --env UVICORN_PORT=5000 \
