@@ -20,6 +20,16 @@ export enum ALQ_api {
 }
 
 /**
+ * AssetInfo
+ */
+export type AssetInfo_api = {
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
  * B64FloatArray
  */
 export type B64FloatArray_api = {
@@ -195,6 +205,14 @@ export type CaseInfo_api = {
      */
     description: string;
     /**
+     * Modelname
+     */
+    modelName: string | null;
+    /**
+     * Modelrevision
+     */
+    modelRevision: string | null;
+    /**
      * Ensembles
      */
     ensembles: Array<EnsembleInfo_api>;
@@ -289,9 +307,13 @@ export type EnsembleDetails_api = {
      */
     name: string;
     /**
-     * Fieldidentifier
+     * Assetname
      */
-    fieldIdentifier: string;
+    assetName: string;
+    /**
+     * Fieldidentifiers
+     */
+    fieldIdentifiers: Array<string>;
     /**
      * Casename
      */
@@ -3245,36 +3267,56 @@ export type WellboreTrajectory_api = {
     northingArr: Array<number>;
 };
 
-export type GetFieldsData_api = {
+export type GetAssetInfosData_api = {
     body?: never;
     path?: never;
     query?: {
         zCacheBust?: string;
     };
-    url: "/fields";
+    url: "/asset_infos";
 };
 
-export type GetFieldsResponses_api = {
+export type GetAssetInfosResponses_api = {
     /**
-     * Response Get Fields
+     * Response Get Asset Infos
+     *
+     * Successful Response
+     */
+    200: Array<AssetInfo_api>;
+};
+
+export type GetAssetInfosResponse_api = GetAssetInfosResponses_api[keyof GetAssetInfosResponses_api];
+
+export type GetFieldIdentifiersData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: "/field_identifiers";
+};
+
+export type GetFieldIdentifiersResponses_api = {
+    /**
+     * Response Get Field Identifiers
      *
      * Successful Response
      */
     200: Array<FieldInfo_api>;
 };
 
-export type GetFieldsResponse_api = GetFieldsResponses_api[keyof GetFieldsResponses_api];
+export type GetFieldIdentifiersResponse_api = GetFieldIdentifiersResponses_api[keyof GetFieldIdentifiersResponses_api];
 
 export type GetCasesData_api = {
     body?: never;
     path?: never;
     query: {
         /**
-         * Field Identifier
+         * Asset Name
          *
-         * Field identifier
+         * Asset name
          */
-        field_identifier: string;
+        asset_name: string;
         zCacheBust?: string;
     };
     url: "/cases";

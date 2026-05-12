@@ -11,8 +11,12 @@ from .sumo_client_factory import create_sumo_client
 LOGGER = logging.getLogger(__name__)
 
 
-class FieldInfo(BaseModel):
-    identifier: str
+class SumoAsset(BaseModel):
+    asset_name: str
+
+
+class FieldIdentifier(BaseModel):
+    field_identifier: str
 
 
 class EnsembleInfo(BaseModel):
@@ -28,6 +32,8 @@ class CaseInfo(BaseModel):
     user: str
     updated_at_utc_ms: int
     description: str
+    model_name: str | None
+    model_revision: str | None
     ensembles: list[EnsembleInfo]
 
 
@@ -35,17 +41,27 @@ class SumoInspector:
     def __init__(self, access_token: str):
         self._sumo_client: SumoClient = create_sumo_client(access_token)
 
-    async def get_fields_async(self) -> List[FieldInfo]:
-        """Get list of fields"""
+    async def get_asset_infos_async(self) -> List[SumoAsset]:
+        """Get list of assets"""
         timer = PerfMetrics()
         search_context = SearchContext(self._sumo_client)
-        field_names = await search_context.fieldidentifiers_async
-        timer.record_lap("get_fields")
-        field_idents = sorted(list(set(field_names)))
+        asset_names = await search_context.asset_names_async
+        timer.record_lap("get_assets")
+        asset_names = sorted(list(set(asset_names)))
         LOGGER.debug(timer.to_string())
-        return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
+        return [SumoAsset(asset_name=asset_name) for asset_name in asset_names]
 
-    async def get_cases_async(self, field_identifier: str) -> list[CaseInfo]:
+    async def get_field_identifiers_async(self) -> List[FieldIdentifier]:
+        """Get list of field identifiers"""
+        timer = PerfMetrics()
+        search_context = SearchContext(self._sumo_client)
+        field_identifiers = await search_context.fieldidentifiers_async
+        timer.record_lap("get_field_identifiers")
+        field_identifiers_sorted = sorted(list(set(field_identifiers)))
+        LOGGER.debug(timer.to_string())
+        return [FieldIdentifier(field_identifier=field_identifier) for field_identifier in field_identifiers_sorted]
+
+    async def get_cases_async(self, asset_name: str) -> list[CaseInfo]:
         """
         Get all cases with available result types from SUMO using aggregations and filters.
 
@@ -58,7 +74,7 @@ class SumoInspector:
             "query": {
                 "bool": {
                     "must": [
-                        {"match": {"masterdata.smda.field.identifier.keyword": field_identifier}},
+                        {"match": {"access.asset.name.keyword": asset_name}},
                     ],
                     "must_not": [{"exists": {"field": "fmu.aggregation"}}],
                 },
@@ -97,6 +113,18 @@ class SumoInspector:
                             "terms": {
                                 "field": "fmu.case.name.keyword",
                                 "size": 100,
+                            }
+                        },
+                        "model_name": {
+                            "terms": {
+                                "field": "fmu.model.name.keyword",
+                                "size": 10,
+                            }
+                        },
+                        "model_revision": {
+                            "terms": {
+                                "field": "fmu.model.revision.keyword",
+                                "size": 10,
                             }
                         },
                         "ensemble_names": {
@@ -145,6 +173,23 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
     user = _get_single_bucket_key_as_str(case_bucket, "user")
     case_name = _get_single_bucket_key_as_str(case_bucket, "name")
 
+    # Populate model name and revision.
+    # The assumption here is that a case should only have one model name and revision.
+    # If there are multiple or none, we will default to user None for both model name and revision.
+    # Missing model name/revision has the string value "undefined", so we will also default to None in that case.
+    model_name = None
+    model_revision = None
+    try:
+        model_name = _get_single_bucket_key_as_str(case_bucket, "model_name")
+        model_name = None if model_name == "undefined" else model_name
+    except ValueError:
+        model_name = None
+    try:
+        model_revision = _get_single_bucket_key_as_str(case_bucket, "model_revision")
+        model_revision = None if model_revision == "undefined" else model_revision
+    except ValueError:
+        model_revision = None
+
     ensemble_buckets = case_bucket.get("ensemble_names", {}).get("buckets", [])
 
     ensemble_info_arr: list[EnsembleInfo] = []
@@ -160,6 +205,8 @@ def _create_case_info_from_case_bucket(case_bucket: dict) -> CaseInfo:
         user=user,
         updated_at_utc_ms=case_timestamp_max,
         description=description[0] if description else "",
+        model_name=model_name,
+        model_revision=model_revision,
         ensembles=ensemble_info_arr,
     )
 

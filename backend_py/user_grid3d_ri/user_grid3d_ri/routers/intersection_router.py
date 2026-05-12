@@ -4,7 +4,6 @@ import grpc
 from fastapi import APIRouter, HTTPException
 
 from rips.generated import GridGeometryExtraction_pb2, GridGeometryExtraction_pb2_grpc
-from rips.instance import *
 
 from webviz_core_utils.b64 import B64FloatArray, B64IntArray
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
@@ -23,6 +22,7 @@ router = APIRouter()
 
 
 @router.post("/get_polyline_intersection")
+# pylint: disable-next=too-many-locals, too-many-statements
 async def post_get_polyline_intersection(
     req_body: api_schemas.PolylineIntersectionRequest,
 ) -> api_schemas.PolylineIntersectionResponse:
@@ -52,7 +52,9 @@ async def post_get_polyline_intersection(
         raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
     perf_metrics.record_lap("get-prop-blob")
 
-    grpc_channel: grpc.Channel = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    grpc_channel: grpc.aio.Channel | None = await RESINSIGHT_MANAGER.get_channel_for_running_ri_instance_async()
+    if grpc_channel is None:
+        raise HTTPException(500, detail="Failed to get gRPC channel for ResInsight instance")
     perf_metrics.record_lap("get-ri")
 
     grpc_request = GridGeometryExtraction_pb2.CutAlongPolylineRequest(
@@ -84,7 +86,7 @@ async def post_get_polyline_intersection(
     ret_sections: list[api_schemas.FenceMeshSection] = []
     tot_num_vertices: int = 0
     tot_num_polys: int = 0
-    for fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
+    for _fence_idx, grpc_section in enumerate(grpc_response.fenceMeshSections):
         poly_props_b64arr: B64FloatArray | B64IntArray
         if prop_extractor.is_discrete():
             int_prop_arr_np = prop_extractor.get_discrete_prop_values_for_cells(grpc_section.sourceCellIndicesArr)
@@ -130,12 +132,12 @@ async def post_get_polyline_intersection(
     )
     perf_metrics.record_lap("make-response")
 
-    grpc_timeElapsedInfo = grpc_response.timeElapsedInfo
+    grpc_time_elapsed_info = grpc_response.timeElapsedInfo
     ret_obj.stats = api_schemas.Stats(
         total_time=perf_metrics.get_elapsed_ms(),
         perf_metrics=perf_metrics.to_dict(),
-        ri_total_time=grpc_timeElapsedInfo.totalTimeElapsedMs,
-        ri_perf_metrics=dict(grpc_timeElapsedInfo.namedEventsAndTimeElapsedMs),
+        ri_total_time=grpc_time_elapsed_info.totalTimeElapsedMs,
+        ri_perf_metrics=dict(grpc_time_elapsed_info.namedEventsAndTimeElapsedMs),
         vertex_count=tot_num_vertices,
         poly_count=tot_num_polys,
     )

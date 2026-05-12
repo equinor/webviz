@@ -16,7 +16,7 @@ import type {
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
+const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.WELLBORES, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 
 export type DrilledWellborePicksData = WellborePick_api[];
@@ -42,7 +42,7 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
         getGlobalSetting,
         fetchQuery,
     }: FetchDataParams<DrilledWellborePicksSettings, DrilledWellborePicksData>): Promise<WellborePick_api[]> {
-        const selectedWellbores = getSetting(Setting.SMDA_WELLBORE_HEADERS) ?? [];
+        const selectedWellbores = getSetting(Setting.WELLBORES) ?? [];
         const selectedWellboreUuids = selectedWellbores.map((wb) => wb.wellboreUuid);
         const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
@@ -64,11 +64,11 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderAccessors<DrilledWellborePicksSettings, DrilledWellborePicksData>): boolean {
-        const smdaWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
+        const selectedWellbores = getSetting(Setting.WELLBORES);
         return (
             getSetting(Setting.ENSEMBLE) !== null &&
-            smdaWellboreHeaders !== null &&
-            smdaWellboreHeaders.length > 0 &&
+            selectedWellbores !== null &&
+            selectedWellbores.length > 0 &&
             getSetting(Setting.SURFACE_NAME) !== null
         );
     }
@@ -121,6 +121,17 @@ export class DrilledWellborePicksProvider implements CustomDataProviderImplement
                     }),
                 });
             },
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            if (!fieldIdentifier) {
+                return null;
+            }
+            return await queryClient.fetchQuery({
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
+            });
         });
 
         const pickIdentifiersDep = makeSharedResult({

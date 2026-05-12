@@ -1,4 +1,5 @@
 import { SurfaceStatisticFunction_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";

@@ -91,18 +91,6 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
             return false;
         }
 
-        if (getSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE) === "surface_based") {
-            if (!getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE)) {
-                return false;
-            }
-            if (!getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.topSurfaceName) {
-                return false;
-            }
-            if (getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER)?.realizationNum === undefined) {
-                return false;
-            }
-        }
-
         return true;
     }
 
@@ -313,6 +301,17 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     }),
                 });
             },
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getGlobalSetting, abortSignal }) {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            if (!fieldIdentifier) {
+                return null;
+            }
+            return await queryClient.fetchQuery({
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
+            });
         });
 
         setting(Setting.WELLBORES).bindValueConstraints({
@@ -471,6 +470,15 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     visible: filterType === "surface_based",
                 };
             },
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE, ({ getHelperDependency, getLocalSetting }) => {
+            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
+            return {
+                enabled: data?.surfaces.length
+                    ? true
+                    : { enabled: false, reason: "No surfaces available" },
+                visible: filterType === "surface_based",
+            };
         });
 
         setting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE).bindValueConstraints({
@@ -507,6 +515,16 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
                     visible: filterType === "surface_based",
                 };
             },
+        settingAttributesUpdater(Setting.WELLBORE_DEPTH_FORMATION_FILTER, ({ getHelperDependency, getLocalSetting }) => {
+            const filterType = getLocalSetting(Setting.WELLBORE_DEPTH_FILTER_TYPE);
+
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
+            return {
+                enabled: data?.surfaces.length
+                    ? true
+                    : { enabled: false, reason: "No surfaces available" },
+                visible: filterType === "surface_based",
+            };
         });
 
         setting(Setting.WELLBORE_DEPTH_FORMATION_FILTER).bindValueConstraints({

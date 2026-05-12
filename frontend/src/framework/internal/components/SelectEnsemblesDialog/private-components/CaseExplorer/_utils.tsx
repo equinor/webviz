@@ -33,6 +33,8 @@ export function readInitialStateFromLocalStorage(stateName: string): string {
  */
 export function makeCaseTableColumns(
     statusOptions: string[],
+    modelNameOptions: string[],
+    modelRevisionOptions: string[],
     disabledFilterComponents: { disableAuthorComponent: boolean; disableStatusComponent: boolean },
 ): TableColumns<CaseRowData> {
     return [
@@ -40,7 +42,7 @@ export function makeCaseTableColumns(
             label: "Name / id",
             _type: "data",
             columnId: "caseName",
-            sizeInPercent: 30,
+            sizeInPercent: 24,
             renderData: (value, context) => (
                 <CaseNameAndIdCell caseName={value} caseId={context.entry.caseId} cellRowSelected={context.selected} />
             ),
@@ -54,7 +56,7 @@ export function makeCaseTableColumns(
             label: "Description",
             _type: "data",
             columnId: "description",
-            sizeInPercent: 25,
+            sizeInPercent: 18,
             showTooltip: true,
             renderData: (value) => <DescriptionCell description={value} />,
             filter: { render: (props) => filterInput(props) },
@@ -63,7 +65,7 @@ export function makeCaseTableColumns(
             label: "Author",
             _type: "data",
             columnId: "author",
-            sizeInPercent: 15,
+            sizeInPercent: 12,
             filter: {
                 render: (props) => filterInput(props, disabledFilterComponents.disableAuthorComponent),
             },
@@ -73,7 +75,7 @@ export function makeCaseTableColumns(
             label: "Status",
             _type: "data",
             columnId: "status",
-            sizeInPercent: 10,
+            sizeInPercent: 8,
             filter: {
                 render: (props) => (
                     <TagPicker
@@ -91,7 +93,7 @@ export function makeCaseTableColumns(
             label: "Date",
             _type: "data",
             columnId: "dateUtcMs",
-            sizeInPercent: 20,
+            sizeInPercent: 18,
             formatValue: (value) => formatDate(value),
             filter: {
                 render: (props) => (
@@ -102,6 +104,44 @@ export function makeCaseTableColumns(
                     />
                 ),
                 predicate: (filterValue, dataValue) => predicateDateRangePick(filterValue, dataValue),
+            },
+        },
+        {
+            label: "Model",
+            _type: "data",
+            columnId: "modelName",
+            sizeInPercent: 11,
+            formatValue: (value) => formatNullableText(value),
+            showTooltip: true,
+            filter: {
+                render: (props) => (
+                    <TagPicker
+                        selection={(props.value as string[]) ?? []}
+                        showListAsSelectionCount={true}
+                        tagOptions={modelNameOptions.map((elm) => ({ label: elm, value: elm }))}
+                        onChange={(selectedItems) => props.onFilterChange(selectedItems)}
+                    />
+                ),
+                predicate: (selectedItems: string[], dataValue) => predicateStatusSelection(selectedItems, dataValue),
+            },
+        },
+        {
+            label: "Revision",
+            _type: "data",
+            columnId: "modelRevision",
+            sizeInPercent: 9,
+            formatValue: (value) => formatNullableText(value),
+            showTooltip: true,
+            filter: {
+                render: (props) => (
+                    <TagPicker
+                        selection={(props.value as string[]) ?? []}
+                        showListAsSelectionCount={true}
+                        tagOptions={modelRevisionOptions.map((elm) => ({ label: elm, value: elm }))}
+                        onChange={(selectedItems) => props.onFilterChange(selectedItems)}
+                    />
+                ),
+                predicate: (selectedItems: string[], dataValue) => predicateStatusSelection(selectedItems, dataValue),
             },
         },
     ];
@@ -115,6 +155,8 @@ export function makeCaseRowData(apiData: CaseInfo_api[]): CaseRowData[] {
         description: item.description,
         author: item.user,
         status: item.status,
+        modelName: item.modelName,
+        modelRevision: item.modelRevision,
         dateUtcMs: item.updatedAtUtcMs,
     }));
 }
@@ -128,11 +170,15 @@ function predicateCaseNameAndIdFilter(filterValue: string, dataValue: string, ca
     return caseNameAndId === filterValue;
 }
 
-function predicateStatusSelection(filterValues: string[], dataValue: string): boolean {
-    if (typeof dataValue !== "string") return true;
+function predicateStatusSelection(filterValues: string[], dataValue: string | null): boolean {
+    if (typeof dataValue !== "string") return false;
     if (!filterValues || filterValues.length === 0) return true;
 
     return filterValues.some((filterValue) => filterValue.toLowerCase() === dataValue.toLowerCase());
+}
+
+function formatNullableText(value: string | null): string {
+    return value ?? "";
 }
 
 function predicateDateRangePick(dateRange: { from: Date | null; to: Date | null }, dataValue: number): boolean {

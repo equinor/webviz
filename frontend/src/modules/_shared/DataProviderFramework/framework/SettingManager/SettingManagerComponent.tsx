@@ -22,8 +22,8 @@ export type SettingComponentProps<TSetting extends Setting> = {
 
 export function SettingManagerComponent<
     TSetting extends Setting,
-    TValue extends
-        SettingTypeDefinitions[TSetting]["internalValue"] = SettingTypeDefinitions[TSetting]["internalValue"],
+    TValue extends SettingTypeDefinitions[TSetting]["internalValue"] =
+        SettingTypeDefinitions[TSetting]["internalValue"],
 >(props: SettingComponentProps<TSetting>): React.ReactNode {
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<any, any>) => React.ReactNode>(
         props.setting.makeComponent(),
@@ -64,7 +64,7 @@ export function SettingManagerComponent<
         return null;
     }
 
-    if (props.sharedSetting && isInitialized && valueConstraints === null && !props.setting.isStatic()) {
+    if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>

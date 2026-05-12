@@ -34,6 +34,7 @@ const SECOND_PARAMETER: Parameter = {
 
 const FIRST_ENSEMBLE = new RegularEnsemble(
     "DROGON",
+    ["DROGON"],
     "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
     "First case",
     "First ensemble",

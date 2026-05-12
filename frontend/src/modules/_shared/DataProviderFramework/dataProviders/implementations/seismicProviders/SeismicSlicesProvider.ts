@@ -189,9 +189,6 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
                 };
             },
             resolve({ fieldId, ensembles }) {
-                if (!fieldId || !ensembles) {
-                    return [];
-                }
 
                 return ensembles
                     .filter((ensemble) => ensemble.getFieldIdentifier() === fieldId)

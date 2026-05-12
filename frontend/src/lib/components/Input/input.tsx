@@ -71,15 +71,15 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
 
     const clampNumberValue = React.useCallback(
         function clampNumberValue(val: unknown): number {
-            let newValue = 0;
-            if (!isNaN(parseFloat(val as string))) {
-                newValue = parseFloat((val as string) || "0");
-                if (props.min !== undefined) {
-                    newValue = Math.max(props.min, newValue);
-                }
-                if (props.max !== undefined) {
-                    newValue = Math.min(props.max, newValue);
-                }
+            const parsedValue = parseFloat(val as string);
+            let newValue = isNaN(parsedValue) ? 0 : parsedValue;
+
+            // Clamp to min/max if specified
+            if (props.min !== undefined) {
+                newValue = Math.max(props.min, newValue);
+            }
+            if (props.max !== undefined) {
+                newValue = Math.min(props.max, newValue);
             }
             return newValue;
         },

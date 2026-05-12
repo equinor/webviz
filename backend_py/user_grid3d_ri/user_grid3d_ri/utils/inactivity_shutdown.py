@@ -15,7 +15,7 @@ class InactivityShutdown:
         self._inactivity_limit_seconds: int = inactivity_limit_minutes * 60
 
         @app.middleware("http")
-        async def _update_time_last_request(request: Request, call_next: Callable) -> Any:
+        async def _update_time_last_request_async(request: Request, call_next: Callable) -> Any:
             self._time_last_request = time.time()
             return await call_next(request)
 

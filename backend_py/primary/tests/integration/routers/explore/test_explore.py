@@ -4,14 +4,20 @@ from primary.routers.explore import schemas
 from tests.integration.conftest import SumoTestEnsemble
 
 
-async def test_get_fields(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
-    fields = await router.get_fields(test_user)
+async def get_asset_names(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
+    asset_names = await router.get_asset_names(test_user)
+    assert all(isinstance(a, schemas.AssetInfo) for a in asset_names)
+    assert any(a.name == sumo_test_ensemble_ahm.asset_name for a in asset_names)
+
+
+async def get_field_identifiers(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
+    fields = await router.get_field_identifiers(test_user)
     assert all(isinstance(f, schemas.FieldInfo) for f in fields)
-    assert any(f.fieldIdentifier == sumo_test_ensemble_ahm.field_identifier for f in fields)
+    assert any(f.fieldIdentifier == sumo_test_ensemble_ahm.field_identifiers[0] for f in fields)
 
 
 async def test_get_cases(test_user: router.AuthenticatedUser, sumo_test_ensemble_ahm: SumoTestEnsemble) -> None:
-    cases = await router.get_cases(test_user, sumo_test_ensemble_ahm.field_identifier)
+    cases = await router.get_cases(test_user, sumo_test_ensemble_ahm.asset_name)
     assert all(isinstance(c, schemas.CaseInfo) for c in cases)
     assert any(c.uuid == sumo_test_ensemble_ahm.case_uuid for c in cases)
     case = next(c for c in cases if c.uuid == sumo_test_ensemble_ahm.case_uuid)
@@ -26,7 +32,8 @@ async def test_get_ensemble_details(
     )
     assert isinstance(ensemble_details, schemas.EnsembleDetails)
     assert ensemble_details.name == sumo_test_ensemble_ahm.ensemble_name
-    assert ensemble_details.fieldIdentifier == sumo_test_ensemble_ahm.field_identifier
+    assert ensemble_details.assetName == sumo_test_ensemble_ahm.asset_name
+    assert ensemble_details.fieldIdentifiers == sumo_test_ensemble_ahm.field_identifiers
     assert ensemble_details.caseUuid == sumo_test_ensemble_ahm.case_uuid
     assert ensemble_details.caseName == sumo_test_ensemble_ahm.case_name
     assert len(ensemble_details.realizations) == 100

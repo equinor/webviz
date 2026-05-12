@@ -20,16 +20,26 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/fields")
-async def get_fields(
+@router.get("/asset_infos")
+async def get_asset_infos(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+) -> List[schemas.AssetInfo]:
+    """Get list of asset infos"""
+    sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
+    asset_arr = await sumo_inspector.get_asset_infos_async()
+    ret_arr = [schemas.AssetInfo(name=asset.asset_name) for asset in asset_arr]
+
+    return ret_arr
+
+
+@router.get("/field_identifiers")
+async def get_field_identifiers(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[schemas.FieldInfo]:
-    """
-    Get list of fields
-    """
+    """Get list of field identifiers"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
-    field_ident_arr = await sumo_inspector.get_fields_async()
-    ret_arr = [schemas.FieldInfo(fieldIdentifier=field_ident.identifier) for field_ident in field_ident_arr]
+    field_arr = await sumo_inspector.get_field_identifiers_async()
+    ret_arr = [schemas.FieldInfo(fieldIdentifier=field.field_identifier) for field in field_arr]
 
     return ret_arr
 
@@ -37,11 +47,11 @@ async def get_fields(
 @router.get("/cases")
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    field_identifier: str = Query(description="Field identifier"),
+    asset_name: str = Query(min_length=1, description="Asset name"),
 ) -> List[schemas.CaseInfo]:
-    """Get list of cases for specified field"""
+    """Get list of cases for specified asset"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
-    case_info_arr = await sumo_inspector.get_cases_async(field_identifier=field_identifier)
+    case_info_arr = await sumo_inspector.get_cases_async(asset_name=asset_name)
 
     ret_arr: List[schemas.CaseInfo] = []
 
@@ -53,6 +63,8 @@ async def get_cases(
             user=ci.user,
             updatedAtUtcMs=ci.updated_at_utc_ms,
             description=ci.description,
+            modelName=ci.model_name,
+            modelRevision=ci.model_revision,
             ensembles=[
                 schemas.EnsembleInfo(
                     name=ei.name,
@@ -80,19 +92,18 @@ async def get_ensemble_details(
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     case_name = await case_inspector.get_case_name_async()
     realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
+    asset_name = await case_inspector.get_asset_name_async()
     field_identifiers = await case_inspector.get_field_identifiers_async()
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
-
-    if len(field_identifiers) != 1:
-        raise NotImplementedError("Multiple field identifiers not supported")
 
     return schemas.EnsembleDetails(
         name=ensemble_name,
         caseName=case_name,
         caseUuid=case_uuid,
+        assetName=asset_name,
         realizations=realizations,
-        fieldIdentifier=field_identifiers[0],
+        fieldIdentifiers=field_identifiers,
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         standardResults=standard_results,
     )

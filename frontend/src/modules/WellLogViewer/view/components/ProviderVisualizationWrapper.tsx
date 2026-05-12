@@ -3,7 +3,7 @@ import React from "react";
 import { CircularProgress } from "@mui/material";
 import type { WellLogSet } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import type { ColorMapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
+import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
 
 import type { WellboreTrajectory_api } from "@api";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
@@ -26,7 +26,6 @@ import { isWellPickVisualization } from "@modules/WellLogViewer/DataProviderFram
 import type { WellLogFactoryProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { useLogViewerVisualizationProduct } from "@modules/WellLogViewer/hooks/useLogViewerVisualizationProduct";
 import { createLogViewerWellPicks, createWellLogSets } from "@modules/WellLogViewer/utils/queryDataTransform";
-import { trajectoryToIntersectionReference } from "@modules/WellLogViewer/utils/trajectory";
 
 import type { SubsurfaceLogViewerWrapperProps } from "./SubsurfaceLogViewerWrapper";
 import { SubsurfaceLogViewerWrapper } from "./SubsurfaceLogViewerWrapper";
@@ -103,6 +102,7 @@ function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryProduct 
 
 function createWellLogJsonFromProduct(
     factoryProduct: WellLogFactoryProduct | null,
+    wellPickProps: WellPickProps | undefined,
     wellboreTrajectory: WellboreTrajectory_api,
     limitDomainToData?: boolean,
 ): WellLogSet[] {
@@ -112,9 +112,7 @@ function createWellLogJsonFromProduct(
     const curveData = accData[DATA_ACC_KEY];
     const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY];
 
-    const referenceSystem = trajectoryToIntersectionReference(wellboreTrajectory);
-
-    return createWellLogSets(curveData, wellboreTrajectory, referenceSystem, duplicatedCurveNames, limitDomainToData);
+    return createWellLogSets(curveData, wellboreTrajectory, wellPickProps, duplicatedCurveNames, !limitDomainToData);
 }
 
 function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | null): WellPickProps | undefined {
@@ -126,7 +124,7 @@ function createWellPickPropFromProduct(factoryProduct: WellLogFactoryProduct | n
     return createLogViewerWellPicks(wellPickCollections) ?? undefined;
 }
 
-function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | null): ColorMapFunction[] {
+function createColorMapDefsFromProduct(factoryProduct: WellLogFactoryProduct | null): ColormapFunction[] {
     if (!factoryProduct) return [];
 
     const accData = factoryProduct.accumulatedData;
@@ -151,8 +149,8 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
     const template = React.useMemo(() => createWellLogTemplateFromProduct(factoryProduct), [factoryProduct]);
 
     const wellLogSets = React.useMemo(
-        () => createWellLogJsonFromProduct(factoryProduct, trajectoryData, limitDomainToData),
-        [factoryProduct, trajectoryData, limitDomainToData],
+        () => createWellLogJsonFromProduct(factoryProduct, wellPicks, trajectoryData, limitDomainToData),
+        [factoryProduct, wellPicks, trajectoryData, limitDomainToData],
     );
 
     if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
