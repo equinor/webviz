@@ -219,12 +219,16 @@ export function getDepthFromSubsurfaceReadout(wellsLayerInfo: WellsPickInfo) {
     const sanitizedMd = sanitizeMdReadout(mdReadout);
     const sanitizedTvd = sanitizeMdReadout(tvdReadout);
 
-    const properties: ReadoutProperty<string>[] = [];
+    const properties: ReadoutProperty<number | null>[] = [];
 
-    if (sanitizedMd != null) properties.push({ name: "MD", value: sanitizedMd.toFixed(0) + " M" });
-    else properties.push({ name: "MD", value: "--" });
-    if (sanitizedTvd != null) properties.push({ name: "TVD", value: sanitizedTvd.toFixed(0) + " M" });
-    else properties.push({ name: "TVD", value: "--" });
+    function formatDepth(v: number | null): string {
+        if (v === null) return "--";
+
+        return v.toFixed(0) + " M";
+    }
+
+    properties.push({ name: "MD", value: sanitizedMd, format: formatDepth });
+    properties.push({ name: "TVD", value: sanitizedTvd, format: formatDepth });
 
     return properties;
 }

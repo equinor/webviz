@@ -105,6 +105,7 @@ function ReadoutPropertyList(props: { properties?: ReadoutProperty<any>[] }): Re
 
 function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> }): React.ReactNode {
     const { property } = props;
+    const valueFormat = property.format ?? String;
 
     if (property.render) {
         return property.render(property.name, property.value);
@@ -113,7 +114,7 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     return (
         <li className="flex gap-2 text-xs">
             <span className="--readout-label">{property.name}:</span>
-            <span>{String(property.value)}</span>
+            <span>{valueFormat(property.value)}</span>
         </li>
     );
 }
