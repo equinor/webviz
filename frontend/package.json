@@ -8,8 +8,8 @@
         "npm": "^11.10.0"
     },
     "scripts": {
-        "dev": "npm run generate:module-states-map && vite --host",
-        "build": "npm run generate:module-states-map && tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
+        "dev": "vite --host",
+        "build": "tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
         "preview": "vite preview",
         "generate:api": "openapi-ts",
         "generate:module-states-map": "node scripts/generate-module-states-map.js && eslint src/modules/ModuleSerializedStateMap.ts --fix",
