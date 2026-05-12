@@ -101,7 +101,10 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     if (defaultedProps.min > defaultedProps.max) throw new Error("Slider min cannot be greater than max");
 
     const inputRefs = [React.useRef<HTMLInputElement | null>(null), React.useRef<HTMLInputElement | null>(null)];
+
     const wrapperRef = React.useRef<HTMLDivElement>(null);
+    const minGutterDotRef = React.useRef<HTMLDivElement | null>(null);
+    const maxGutterDotRef = React.useRef<HTMLDivElement | null>(null);
 
     const [prevMin, setPrevMin] = React.useState(defaultedProps.min);
     const [prevMax, setPrevMax] = React.useState(defaultedProps.max);
@@ -110,6 +113,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
     const [isHovered, setIsHovered] = React.useState(false);
     const [isFocused, setIsFocused] = React.useState(false);
+    const [isDragging, setIsDragging] = React.useState(false);
 
     const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue ?? 0);
 
@@ -286,9 +290,33 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                         onMouseLeave={() => setIsHovered(false)}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
+                        // If the slider is being dragged, we want to check if we should lock to min or max based on the pointer position
+                        onPointerDown={(evt) => {
+                            if (props.disabled) return;
+
+                            wrapperRef.current?.setPointerCapture(evt.pointerId);
+                            setIsDragging(true);
+                        }}
+                        onPointerUp={(evt) => {
+                            wrapperRef.current?.releasePointerCapture(evt.pointerId);
+                            setIsDragging(false);
+                        }}
+                        onPointerMove={(evt) => {
+                            if (!isDragging) return;
+
+                            if (showMinLock && minGutterDotRef.current && !minLocked) {
+                                const rect = minGutterDotRef.current.getBoundingClientRect();
+                                toggleMinLock(evt.pageX <= rect.x + rect.width / 2);
+                            }
+                            if (showMaxLock && maxGutterDotRef.current && !maxLocked) {
+                                const rect = maxGutterDotRef.current.getBoundingClientRect();
+                                toggleMaxLock(evt.pageX >= rect.x + rect.width / 2);
+                            }
+                        }}
                     >
                         {showMinLock && (
                             <SliderLockGutter
+                                ref={minGutterDotRef}
                                 locked={minLocked}
                                 placement="start"
                                 inverse={!isDualSlider}
@@ -340,6 +368,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                         {showMaxLock && (
                             <SliderLockGutter
+                                ref={maxGutterDotRef}
                                 inverse={false}
                                 locked={maxLocked}
                                 placement="end"
@@ -461,13 +490,16 @@ function LimitLockSwitch(props: { disabled: boolean; isLocked: boolean; onSetLoc
         </Button>
     );
 }
-function SliderLockGutter(props: {
+
+type SliderLockGutterProps = {
     placement: "start" | "end";
     inverse: boolean;
     locked: boolean;
     sliderState: SliderRootState;
     onSetLocked: (locked: boolean) => void;
-}) {
+};
+
+const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>(function SliderLockGutter(props, ref) {
     const isFilled = props.inverse !== props.locked;
 
     function resolveGutterColorClassnames() {
@@ -495,22 +527,15 @@ function SliderLockGutter(props: {
             })}
         >
             <div
-                className={resolveClassNames("-inset-y-horizontal-xs absolute w-(--thumb-size)", {
-                    "left-0": props.placement === "start",
-                    "right-0": props.placement === "end",
-                })}
-                onPointerOver={() =>
-                    !props.sliderState.disabled && props.sliderState.dragging && props.onSetLocked(true)
-                }
-                // Using pointer-down to avoid the slider jumping to end pos, *then* locking
+                ref={ref}
+                className="border-neutral bg-surface m-(--mark-thumb-diff) box-content size-(--mark-size) shrink-0 rounded-full border"
                 onPointerDownCapture={() => !props.sliderState.disabled && props.onSetLocked(true)}
             />
-            <div className="border-neutral bg-surface m-(--mark-thumb-diff) box-content size-(--mark-size) shrink-0 rounded-full border" />
 
             <div className={resolveClassNames("h-0 w-full border-2 border-dotted", resolveGutterColorClassnames())} />
         </div>
     );
-}
+});
 
 function Dot(props: { placement: "start" | "end" }) {
     const className =
