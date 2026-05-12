@@ -28,15 +28,12 @@ import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransfor
 import { encodeSurfAddrStr, type FullSurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
-
-import {
-    resolveSensitivityConstraints,
-    resolveStatisticFunctionConstraints,
-} from "./_commonSettingsUpdaters";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
 } from "../../dependencyFunctions/sharedSettingUpdaterFunctions";
+
+import { resolveSensitivityConstraints, resolveStatisticFunctionConstraints } from "./_commonSettingsUpdaters";
 import { SurfaceDataFormat, type SurfaceData, type SurfaceStoredData } from "./types";
 
 const surfaceSettings = [
