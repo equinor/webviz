@@ -82,6 +82,7 @@ async def get_tasks_purge(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
+    # This is just a comment that is going to be removed again
     perf_metrics = ResponsePerfMetrics(response)
     LOGGER.debug(f"get_tasks_purge() - start")
 
