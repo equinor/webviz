@@ -28,6 +28,7 @@ import {
     VisualizationItemType,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
+import type { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import {
     makeGridColorScaleAnnotation,
@@ -49,7 +50,6 @@ import { createSurfacesUncertaintiesLayerItemsMaker } from "@modules/Intersectio
 import { createWellborePicksLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createWellborePicksLayerItemsMaker";
 import { makeEsvViewDataCollection } from "@modules/Intersection/DataProviderFramework/visualization/makeEsvViewDataCollection";
 import type { Interfaces } from "@modules/Intersection/interfaces";
-import type { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
 
 import "../../DataProviderFramework/customDataProviderImplementations/registerAllDataProviders";
 import { useWellboreCasingsQuery } from "../hooks/queryHooks";
@@ -69,7 +69,7 @@ import { ViewportWrapper } from "./ViewportWrapper";
 
 export type DataProvidersWrapperProps = {
     dataProviderManager: DataProviderManager;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
     viewContext: ViewContext<Interfaces>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
