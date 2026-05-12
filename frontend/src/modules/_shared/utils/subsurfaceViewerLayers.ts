@@ -1,7 +1,8 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { WellFeature as BaseWellFeature, LayerPickInfo } from "@webviz/subsurface-viewer";
-import { ColormapLayer, Grid3DLayer, MapLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { ColormapLayer, Grid3DLayer, MapLayer, WellMarkersLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { MarkerData } from "@webviz/subsurface-viewer/dist/layers/wells/layers/flatWellMarkersLayer";
+import { FlatWellMarkersLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/flatWellMarkersLayer";
 import type {
     GeoJsonWellProperties as BaseWellProperties,
     PerforationProperties,
@@ -47,7 +48,7 @@ export type ColorMapPickInfo = ReturnType<ColormapLayer["getPickingInfo"]>;
 export type LayerPickInfoWithReadout<TData> = LayerPickInfo<TData> & { readout?: CategoricalReadout };
 
 function sanitizeMdReadout(readoutValue: string | number | undefined): number | null {
-    if (readoutValue === undefined) return null;
+    if (readoutValue == null) return null;
     if (typeof readoutValue === "number") return readoutValue;
 
     const strippedReadout = readoutValue.replaceAll(/[^\d.]/g, "");
@@ -65,6 +66,17 @@ function getInfoPickForLayer<TPickingInfo extends LayerPickInfo>(
     return infos.find((i): i is TPickingInfo => i.layer instanceof layerCls);
 }
 
+function getWellFeatureFromSubLayerData(pick: LayerPickInfoWithReadout<ExtendedWellFeature> | undefined) {
+    if (!pick) return undefined;
+
+    if (pick.sourceLayer instanceof FlatWellMarkersLayer || pick.sourceLayer instanceof WellMarkersLayer) {
+        const markerObject = pick.object as MarkerData<ExtendedWellFeature> | undefined;
+        return markerObject?.sourceObject;
+    }
+
+    return pick.object;
+}
+
 function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
     topic: TTopic,
     pickingInfos: LayerPickInfo[],
@@ -72,20 +84,29 @@ function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
     // Add more topic handlers here in the future
     switch (topic) {
         case HoverTopic.WELLBORE_MD: {
-            const wellsInfo = getInfoPickForLayer<WellboreGeoPickInfo>(pickingInfos, AdjustedWellsLayer);
-            const mdProperty = wellsInfo?.properties?.find((prop) => prop.name.startsWith("MD "));
-            const wellboreUuid = wellsInfo?.object?.properties.uuid;
+            const wellsInfo = getInfoPickForLayer<LayerPickInfoWithReadout<ExtendedWellFeature>>(
+                pickingInfos,
+                AdjustedWellsLayer,
+            );
+            const wellFeature = getWellFeatureFromSubLayerData(wellsInfo);
 
+            const mdProperty = wellsInfo?.readout?.properties?.find((prop) => prop.name === "MD");
+
+            const wellboreUuid = wellFeature?.properties.uuid;
             const mdReadout = sanitizeMdReadout(mdProperty?.value);
 
             if (!wellboreUuid || !mdReadout) return null;
             return { wellboreUuid, md: mdReadout } as HoverData[TTopic];
         }
         case HoverTopic.WELLBORE: {
-            const wellsInfo = getInfoPickForLayer<WellboreGeoPickInfo>(pickingInfos, AdjustedWellsLayer);
-            if (!wellsInfo || !wellsInfo.object) return null;
+            const wellsInfo = getInfoPickForLayer<LayerPickInfoWithReadout<ExtendedWellFeature>>(
+                pickingInfos,
+                AdjustedWellsLayer,
+            );
+            const wellboreFeature = getWellFeatureFromSubLayerData(wellsInfo);
 
-            const wellboreFeature = wellsInfo.object;
+            if (!wellsInfo || !wellboreFeature) return null;
+
             return wellboreFeature.properties.uuid as HoverData[TTopic];
         }
 

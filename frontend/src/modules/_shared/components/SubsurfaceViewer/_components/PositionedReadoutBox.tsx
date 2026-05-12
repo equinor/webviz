@@ -4,9 +4,9 @@ import { Close } from "@mui/icons-material";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { CategoricalReadout } from "../../Readout/types";
 
 import { ReadoutList } from "../../Readout/ReadoutList";
+import type { CategoricalReadout } from "../../Readout/types";
 
 export type PositionedReadoutBoxProps = {
     readouts: CategoricalReadout[];
@@ -17,6 +17,7 @@ export type PositionedReadoutBoxProps = {
     visible?: boolean;
     stale?: boolean;
     interactable?: boolean;
+    pinned?: boolean;
     onClose?: () => void;
 };
 
@@ -32,12 +33,17 @@ export function PositionedReadoutBox(props: PositionedReadoutBoxProps): React.Re
                 right: position.x - 2,
             }}
         >
-            <TooltipContent readouts={readouts} stale={props.stale} onClose={props.onClose} />
+            <TooltipContent pinned={props.pinned} readouts={readouts} stale={props.stale} onClose={props.onClose} />
         </div>
     );
 }
 
-function TooltipContent(props: { readouts: CategoricalReadout[]; stale?: boolean; onClose?: () => void }) {
+function TooltipContent(props: {
+    pinned?: boolean;
+    readouts: CategoricalReadout[];
+    stale?: boolean;
+    onClose?: () => void;
+}) {
     return (
         <ReadoutList
             className={resolveClassNames("transition-opacity duration-500", {
@@ -45,7 +51,12 @@ function TooltipContent(props: { readouts: CategoricalReadout[]; stale?: boolean
             })}
             readouts={props.readouts}
             firstTitleAdornment={
-                <DenseIconButton className="text-sm -mr-2 ml-auto" onClick={props.onClose}>
+                <DenseIconButton
+                    className={resolveClassNames("text-sm -mr-2 ml-auto", {
+                        invisible: !props.pinned,
+                    })}
+                    onClick={props.onClose}
+                >
                     <Close fontSize="inherit" />
                 </DenseIconButton>
             }

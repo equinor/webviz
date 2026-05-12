@@ -172,7 +172,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             // No picks - clear readout
-            if (!event.infos.length) {
+            if (!event.infos.length || event.infos[0].index === -1) {
                 clearReadout();
                 return;
             }
@@ -445,6 +445,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                                     compact={props.views.viewports.length > 1}
                                     stale={pickingInfoPerView[viewport.id]?.some((pick) => pick.isStale)}
                                     verticalScale={props.verticalScale}
+                                    pinned={readoutMode === "click"}
                                     onClose={readoutMode === "click" ? handleCloseReadout : undefined}
                                 />
                             </div>

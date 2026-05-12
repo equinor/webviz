@@ -29,6 +29,7 @@ export type ReadoutBoxWrapperProps = {
     compact?: boolean;
     stale?: boolean;
     verticalScale?: number;
+    pinned?: boolean;
     onClose?: () => void;
 };
 
@@ -57,6 +58,7 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             interactable={true}
             readouts={readouts}
             stale={props.stale}
+            pinned={props.pinned}
             position={{
                 x: convertRemToPixels(READOUT_EDGE_DISTANCE_REM.right),
                 y: convertRemToPixels(READOUT_EDGE_DISTANCE_REM.bottom),
