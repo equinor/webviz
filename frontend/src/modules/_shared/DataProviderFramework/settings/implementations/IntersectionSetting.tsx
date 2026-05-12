@@ -5,13 +5,13 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { createValidExtensionLength } from "@modules/Intersection/DataProviderFramework/utils/extensionLengthUtils";
 
 import type {
     CustomSettingImplementation,
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import {
     fixupValue,

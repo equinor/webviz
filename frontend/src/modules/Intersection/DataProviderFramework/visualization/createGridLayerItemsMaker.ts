@@ -5,6 +5,7 @@ import type {
     IntersectionRealizationGridStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/IntersectionRealizationGridProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
@@ -12,7 +13,6 @@ import type {
 import { createTransformedPolylineIntersectionResult } from "@modules/_shared/Intersection/gridIntersectionTransform";
 
 import { createGridColorScaleValues } from "../utils/colorScaleUtils";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 export function createGridLayerItemsMaker({
     id,
