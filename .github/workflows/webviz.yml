@@ -92,22 +92,47 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /tmp/backend-image.tar
+          # Key covers only the files that drive the expensive layers (poetry install).
+          # Source-only changes (backend_py/primary/**) intentionally do not bust this
+          # cache — they are handled by --cache-from at build time instead, so only
+          # the layers from COPY primary onward are rebuilt on source changes.
           key: backend-docker-${{ runner.os }}-${{ hashFiles('backend_py/primary/Dockerfile', 'backend_py/primary/pyproject.toml', 'backend_py/primary/poetry.lock', 'backend_py/libs/**') }}
 
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
+          set -euo pipefail
+
           if [ "${{ steps.docker-cache.outputs.cache-hit }}" == "true" ]; then
+            # Restore the cached image into the local Docker daemon so its layers
+            # are available as a --cache-from source for the build below.
             docker load -i /tmp/backend-image.tar
-            docker build -f ./backend_py/primary/Dockerfile -t backend:latest --cache-from backend:latest .
+            # Rebuild using the cached image as a layer cache. BUILDKIT_INLINE_CACHE=1
+            # ensures the image carries inline cache metadata, allowing --cache-from to
+            # match layers. Only layers after COPY primary are rebuilt on source changes.
+            docker build -f ./backend_py/primary/Dockerfile -t backend:latest --cache-from backend:latest --build-arg BUILDKIT_INLINE_CACHE=1 .
           else
-            docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
+            # No cached image exists yet. Build from scratch and embed inline cache
+            # metadata (BUILDKIT_INLINE_CACHE=1) so future runs can use --cache-from.
+            docker build -f ./backend_py/primary/Dockerfile -t backend:latest --build-arg BUILDKIT_INLINE_CACHE=1 .
+            # Save the image as a tarball so actions/cache can persist it for future runs.
             docker save backend:latest -o /tmp/backend-image.tar
           fi
-          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 backend:latest)
-          sleep 10  # Ensure the backend server is up and running exposing /openapi.json
+
+          CONTAINER_ID=$(docker run --detach -p 5000:5000 \
+            --env UVICORN_PORT=5000 \
+            --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true \
+            --env WEBVIZ_CLIENT_SECRET=0 \
+            --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 \
+            --env WEBVIZ_VDS_HOST_ADDRESS=0 \
+            --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 \
+            backend:latest)
+
+          # Single-quoted so $CONTAINER_ID is expanded at exit time, not now.
+          trap 'docker stop "$CONTAINER_ID"' EXIT
+
+          sleep 10
           npm run generate:api --prefix ./frontend
-          docker stop $CONTAINER_ID
-          git diff --exit-code ./frontend/src/api || exit 1
+          git diff --exit-code ./frontend/src/api
 
   backend_py:
     runs-on: ubuntu-latest
