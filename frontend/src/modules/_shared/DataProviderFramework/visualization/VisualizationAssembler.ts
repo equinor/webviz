@@ -59,8 +59,8 @@ export type DataProviderHoverVisualizationTargetTypes = {
 
 export type DataProviderVisualization<
     TTarget extends VisualizationTarget,
-    TVisualization extends
-        DataProviderVisualizationTargetTypes[TTarget] = DataProviderVisualizationTargetTypes[TTarget],
+    TVisualization extends DataProviderVisualizationTargetTypes[TTarget] =
+        DataProviderVisualizationTargetTypes[TTarget],
 > = {
     itemType: VisualizationItemType.DATA_PROVIDER_VISUALIZATION;
     id: string;
@@ -99,6 +99,7 @@ export type VisualizationGroup<
     children: (VisualizationGroup<TTarget, TCustomGroupProps, TAccumulatedData> | DataProviderVisualization<TTarget>)[];
     annotations: Annotation[];
     aggregatedErrorMessages: (StatusMessage | string)[];
+    allItemIds: Set<string>;
     combinedBoundingBox: bbox.BBox | null;
     numLoadingDataProviders: number;
     numDataProviders: number;
@@ -301,6 +302,15 @@ export class VisualizationAssembler<
         );
     }
 
+    private collectAllIdsRecursively(groupDelegate: GroupDelegate, allItemIds: Set<string>): void {
+        for (const child of groupDelegate.getChildren()) {
+            allItemIds.add(child.getItemDelegate().getId());
+            if (instanceofItemGroup(child)) {
+                this.collectAllIdsRecursively(child.getGroupDelegate(), allItemIds);
+            }
+        }
+    }
+
     private makeRecursively(
         groupDelegate: GroupDelegate,
         inheritedDataProviders: DataProvider<any, any, any>[],
@@ -317,6 +327,7 @@ export class VisualizationAssembler<
         )[] = [];
         const annotations: Annotation[] = [];
         const aggregatedErrorMessages: (StatusMessage | string)[] = [];
+        const allItemIds = new Set<string>();
         let hoverVisualizationFunctions: HoverVisualizationFunctions<TTarget> = {};
         let numLoadingDataProviders = 0;
         let numDataProviders = 0;
@@ -333,7 +344,15 @@ export class VisualizationAssembler<
         };
 
         for (const child of groupDelegate.getChildren()) {
+            // Register item id
+            allItemIds.add(child.getItemDelegate().getId());
+
             if (!child.getItemDelegate().isVisible()) {
+                // Even though the item is hidden, recurse into groups to collect all descendant IDs.
+                // Downstream code needs to distinguish between a hidden item and a deleted one.
+                if (instanceofItemGroup(child)) {
+                    this.collectAllIdsRecursively(child.getGroupDelegate(), allItemIds);
+                }
                 continue;
             }
 
@@ -371,6 +390,12 @@ export class VisualizationAssembler<
 
             accumulatedData = product.accumulatedData;
             aggregatedErrorMessages.push(...product.aggregatedErrorMessages);
+
+            // Add all descendant item ids of the group to the set of all item ids
+            for (const id of product.allItemIds) {
+                allItemIds.add(id);
+            }
+
             hoverVisualizationFunctions = this.mergeHoverVisualizationFunctions(
                 hoverVisualizationFunctions,
                 product.hoverVisualizationFunctions,
@@ -441,13 +466,14 @@ export class VisualizationAssembler<
             name: "",
             groupType: null,
             children,
-            aggregatedErrorMessages: aggregatedErrorMessages,
-            combinedBoundingBox: combinedBoundingBox,
-            annotations: annotations,
+            aggregatedErrorMessages,
+            allItemIds,
+            combinedBoundingBox,
+            annotations,
             numLoadingDataProviders,
             numDataProviders,
             accumulatedData,
-            hoverVisualizationFunctions: hoverVisualizationFunctions,
+            hoverVisualizationFunctions,
             customProps: {} as TCustomGroupProps,
         };
     }
@@ -513,6 +539,7 @@ export class VisualizationAssembler<
             children: product.children,
             annotations: product.annotations,
             aggregatedErrorMessages: product.aggregatedErrorMessages,
+            allItemIds: product.allItemIds,
             combinedBoundingBox: product.combinedBoundingBox,
             numLoadingDataProviders: product.numLoadingDataProviders,
             numDataProviders: product.numDataProviders,
