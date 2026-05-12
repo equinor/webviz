@@ -13,17 +13,20 @@ export type PopupProps = {
     children?: React.ReactNode;
 };
 
-export function Popup(props: PopupProps): React.ReactNode {
+export const Popup = React.forwardRef<HTMLDivElement, PopupProps>(function PopupComp(props, ref) {
     const portalContainer = React.useContext(PortalContainerContext);
 
     return (
         <TooltipBase.Portal container={portalContainer}>
             <TooltipBase.Positioner side={props.side} align={props.align} sideOffset={8}>
-                <TooltipBase.Popup className="bg-floating-inverted text-neutral-strong-on-emphasis px-horizontal-sm py-vertical-xs relative rounded-sm">
+                <TooltipBase.Popup
+                    ref={ref}
+                    className="bg-floating-inverted text-neutral-strong-on-emphasis px-horizontal-sm py-vertical-xs relative rounded-sm"
+                >
                     <TooltipBase.Arrow className="floating__arrow" />
                     <Paragraph size="sm">{props.children}</Paragraph>
                 </TooltipBase.Popup>
             </TooltipBase.Positioner>
         </TooltipBase.Portal>
     );
-}
+});
