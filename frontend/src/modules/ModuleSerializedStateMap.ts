@@ -97,6 +97,10 @@ export type ModuleSerializedStateMap = {
     settings?: never,
     view?: never,
   },
+  "RelPerm": {
+    settings?: never,
+    view?: never,
+  },
   "Rft": {
     settings?: never,
     view?: never,

@@ -1226,7 +1226,7 @@ export const getSummaryObservations = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GetSummaryObservationsResponses_api, GetSummaryObservationsErrors_api, ThrowOnError>(
         {
             responseType: "json",
-            url: "/observations/summary",
+            url: "/observations/summary_observations",
             ...options,
         },
     );

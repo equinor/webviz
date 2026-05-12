@@ -16,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/summary")
+@router.get("/summary_observations")
 @cache_time(CacheTime.LONG)
 async def get_summary_observations(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],

@@ -4,18 +4,10 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class ObservationType(str, Enum):
-    """The observation file in Sumo is a dictionary with these datatypes as keys."""
-
-    SUMMARY = "summary"
-    RFT = "rft"
-
-
 class SummaryVectorDateObservation(BaseModel):
     """A single observation of a summary vector at a specific date."""
 
-    date: str
-    comment: Optional[str] = None
+    timestamp_utc_ms: int
     value: float
     error: float
     label: str
@@ -25,7 +17,6 @@ class SummaryVectorObservations(BaseModel):
     """A collection of observations of a summary vector."""
 
     vector_name: str
-    comment: Optional[str] = None
     observations: List[SummaryVectorDateObservation]
 
 
@@ -67,10 +58,3 @@ class RftObservations(BaseModel):
     date: str
     comment: Optional[str] = None
     observations: List[RftObservation]
-
-
-class Observations(BaseModel):
-    """A collection of observations associated with a field/case/ensemble"""
-
-    summary: List[SummaryVectorObservations] = []
-    rft: List[RftObservations] = []

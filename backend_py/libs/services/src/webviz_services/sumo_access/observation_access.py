@@ -1,5 +1,6 @@
 import pyarrow as pa
 
+from fmu.datamodels import __version__ as datamodels_version
 from fmu.datamodels.standard_results.ert_observations_summary import ErtObservationsSummaryResult
 from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
@@ -20,9 +21,6 @@ class ObservationAccess:
         self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._ensemble_name: str = ensemble_name
-        self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
-            uuid=self._case_uuid, ensemble=self._ensemble_name
-        )
 
     @classmethod
     def from_ensemble_name(cls, access_token: str, case_uuid: str, ensemble_name: str) -> "ObservationAccess":
@@ -31,7 +29,10 @@ class ObservationAccess:
 
     async def get_summary_observations_async(self) -> list[SummaryVectorObservations]:
         """Retrieve summary observations found in sumo case"""
-        context = self._ensemble_context.filter(standard_result=StandardResultName.observations_summary)
+
+        context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, ensemble=self._ensemble_name, standard_result=StandardResultName.observations_summary
+        )
         docs_len = await context.length_async()
         if docs_len == 0:
             return []
@@ -46,10 +47,14 @@ class ObservationAccess:
 
 
 def _create_summary_observations_from_table(obs_table: pa.Table) -> list[SummaryVectorObservations]:
+
     try:
         ert_observations = ErtObservationsSummaryResult.model_validate(obs_table.to_pylist())
     except ValidationError as exc:
-        raise InvalidDataError("Invalid summary observations table", Service.SUMO) from exc
+        raise InvalidDataError(
+            f"Summary observations does not validate against fmu.datamodels version {datamodels_version}",
+            Service.SUMO,
+        ) from exc
 
     observations_by_vector: dict[str, list[SummaryVectorDateObservation]] = {}
     for row in ert_observations.root:
@@ -59,7 +64,9 @@ def _create_summary_observations_from_table(obs_table: pa.Table) -> list[Summary
 
         observations_by_vector[response_key].append(
             SummaryVectorDateObservation(
-                date=row.time.isoformat(),
+                timestamp_utc_ms=int(
+                    row.time.timestamp() * 1000
+                ),  # returns POSIX milliseconds for the absolute instant in UTC.
                 value=row.observation_value,
                 error=row.observation_error,
                 label=response_key,

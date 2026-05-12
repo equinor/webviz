@@ -1823,13 +1823,9 @@ export type StratigraphicColumn_api = {
  */
 export type SummaryVectorDateObservation_api = {
     /**
-     * Date
+     * Timestamp Utc Ms
      */
-    date: string;
-    /**
-     * Comment
-     */
-    comment?: string | null;
+    timestamp_utc_ms: number;
     /**
      * Value
      */
@@ -1854,10 +1850,6 @@ export type SummaryVectorObservations_api = {
      * Vector Name
      */
     vector_name: string;
-    /**
-     * Comment
-     */
-    comment?: string | null;
     /**
      * Observations
      */
@@ -5915,7 +5907,7 @@ export type GetSummaryObservationsData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/observations/summary";
+    url: "/observations/summary_observations";
 };
 
 export type GetSummaryObservationsErrors_api = {
