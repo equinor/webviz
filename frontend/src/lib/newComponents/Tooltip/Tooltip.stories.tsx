@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "../Button";
 
+import { TooltipCompositions } from "./compositions";
+
 import { Tooltip } from "./index";
 
 const meta: Meta<typeof Tooltip.Root> = {
@@ -122,5 +124,13 @@ export const MultipleTooltips: Story = {
                 </Tooltip.Root>
             </div>
         </Tooltip.Provider>
+    ),
+};
+
+export const DefaultComposition: Story = {
+    render: () => (
+        <TooltipCompositions.Default content="This tooltip is from a composition!">
+            <Button>Hover me</Button>
+        </TooltipCompositions.Default>
     ),
 };
