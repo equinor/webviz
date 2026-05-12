@@ -80,19 +80,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Pvt": {
-<<<<<<< HEAD
-    settings?: never,
-    view?: never,
-  },
-  "RelPerm": {
-    settings?: never,
-    view?: never,
-  },
-  "Rft": {
-    settings?: never,
-=======
     settings?: Partial<PvtSettings>,
->>>>>>> upstream/main
     view?: never,
   },
   "SensitivityPlot": {
