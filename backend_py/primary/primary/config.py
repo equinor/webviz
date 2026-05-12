@@ -1,7 +1,6 @@
 import os
+import httpx
 
-# Import these from sumo wrapper package in order to grab the resource scopes
-from sumo.wrapper.config import APP_REGISTRATION as sumo_app_reg
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
@@ -17,9 +16,12 @@ VDS_HOST_ADDRESS = os.environ["WEBVIZ_VDS_HOST_ADDRESS"]
 
 SURFACE_QUERY_URL = "http://surface-query:5001"
 
+# Query Sumo's well-known endpoint to get the resource scopes for the current Sumo environment.
+sumo_well_known_dict = httpx.get("https://api.sumo.equinor.com/well-known").json()
+
 GRAPH_SCOPES = ["User.Read", "User.ReadBasic.All"]
 RESOURCE_SCOPES_DICT = {
-    "sumo": [f"api://{sumo_app_reg[SUMO_ENV]['RESOURCE_ID']}/access_as_user"],
+    "sumo": [f"api://{sumo_well_known_dict['envs'][SUMO_ENV]['resource_id']}/access_as_user"],
     "smda": ["api://691a29c5-8199-4e87-80a2-16bd71e831cd/user_impersonation"],
     "ssdl": ["8b6e5eb9-edc8-4086-83cb-afa5cc185b23/user_impersonation"],
     "pdm": ["f2e415dc-d400-4cd4-a801-fa707138a49c/user_impersonation"],
