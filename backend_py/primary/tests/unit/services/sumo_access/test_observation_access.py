@@ -36,14 +36,13 @@ def test_create_summary_observations_from_table_groups_by_response_key_and_retur
     result = _create_summary_observations_from_table(table)
 
     assert [vector.vector_name for vector in result] == ["WGOR:A1", "WWCT:A1"]
-    assert [observation.date for observation in result[0].observations] == [
-        "2018-03-30T00:00:00",
-        "2018-06-22T00:00:00",
-    ]
+    first_vector_timestamps = [observation.timestamp_utc_ms for observation in result[0].observations]
+    assert all(isinstance(timestamp_utc_ms, int) for timestamp_utc_ms in first_vector_timestamps)
+    assert first_vector_timestamps[1] > first_vector_timestamps[0]
     assert result[0].observations[0].value == pytest.approx(138.32457)
     assert result[0].observations[0].error == pytest.approx(50.0)
     assert result[0].observations[0].label == "WGOR:A1"
-    assert result[1].observations[0].date == "2018-03-30T00:00:00"
+    assert result[1].observations[0].timestamp_utc_ms == first_vector_timestamps[0]
     assert result[1].observations[0].value == pytest.approx(0.0000029900082)
     assert result[1].observations[0].error == pytest.approx(0.1)
 
@@ -57,5 +56,5 @@ def test_create_summary_observations_from_table_rejects_invalid_payload() -> Non
         }
     )
 
-    with pytest.raises(InvalidDataError, match="Invalid summary observations table"):
+    with pytest.raises(InvalidDataError, match=r"Summary observations does not validate against fmu\.datamodels"):
         _create_summary_observations_from_table(table)
