@@ -137,6 +137,12 @@ jobs:
           npm run generate:api --prefix ./frontend
           git diff --exit-code ./frontend/src/api
 
+      - name: 🕵️ Check ModuleSerializedStateMap is up to date
+        working-directory: ./frontend
+        run: |
+          npm run generate:module-states-map
+          git diff --exit-code src/modules/ModuleSerializedStateMap.ts || exit 1
+
   backend_py:
     runs-on: ubuntu-latest
 
