@@ -18,6 +18,16 @@ function pickNextLinkColor(existingLinks: ViewLink[], colors: string[]): string 
     return colors.find((c) => !usedColors.has(c)) ?? colors[existingLinks.length % colors.length];
 }
 
+/**
+ * Get a valid view ID
+ */
+function getValidViewId(value: string | null, validViewIds: string[]): string | null {
+    if (value !== null && validViewIds.includes(value)) {
+        return value;
+    }
+    return validViewIds[0] ?? null;
+}
+
 export const ViewLinkManagerContext = React.createContext<ViewLinkManagerContextValue | null>(null);
 
 export type ViewLinkManagerProps = {
@@ -93,6 +103,7 @@ export function ViewLinkManager({
                         return {
                             ...link,
                             viewIds: keptViewIds,
+                            viewportSourceViewId: getValidViewId(link.viewportSourceViewId, keptViewIds),
                             bounds: null, // Reset bounds when membership changes so remaining views re-report fresh bounds
                         };
                     })
@@ -126,14 +137,30 @@ export function ViewLinkManager({
                 next =
                     updatedViewIds.length <= 1
                         ? prev.filter((_, i) => i !== thisLinkIdx)
-                        : prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: updatedViewIds } : link));
+                        : prev.map((link, i) =>
+                              i === thisLinkIdx
+                                  ? {
+                                        ...link,
+                                        viewIds: updatedViewIds,
+                                        viewportSourceViewId: getValidViewId(link.viewportSourceViewId, updatedViewIds),
+                                    }
+                                  : link,
+                          );
             } else if (thisLinkIdx !== -1) {
                 // This view is already in a different link → leave it first
                 const prunedViewIds = prev[thisLinkIdx].viewIds.filter((id) => id !== thisViewId);
                 const newLinks =
                     prunedViewIds.length <= 1
                         ? prev.filter((_, i) => i !== thisLinkIdx)
-                        : prev.map((link, i) => (i === thisLinkIdx ? { ...link, viewIds: prunedViewIds } : link));
+                        : prev.map((link, i) =>
+                              i === thisLinkIdx
+                                  ? {
+                                        ...link,
+                                        viewIds: prunedViewIds,
+                                        viewportSourceViewId: getValidViewId(link.viewportSourceViewId, prunedViewIds),
+                                    }
+                                  : link,
+                          );
 
                 const updatedOtherLinkIdx = newLinks.findIndex((l) => l.viewIds.includes(otherViewId));
                 if (updatedOtherLinkIdx !== -1) {
