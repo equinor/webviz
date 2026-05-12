@@ -444,7 +444,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                                 <ReadoutBoxWrapper
                                     picks={pickingInfoPerView[viewport.id]}
                                     visible={readoutMode === "click" ? true : !hideReadout}
-                                    compact={props.views.viewports.length > 1}
+                                    compact={true}
                                     stale={pickingInfoPerView[viewport.id]?.some((pick) => pick.isStale)}
                                     verticalScale={props.verticalScale}
                                     pinned={readoutMode === "click"}

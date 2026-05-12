@@ -245,7 +245,7 @@ export function getDepthFromSubsurfaceReadout(wellsLayerInfo: WellsPickInfo) {
     function formatDepth(v: number | null): string {
         if (v === null) return "--";
 
-        return v.toFixed(0) + " M";
+        return v.toFixed(0) + " m";
     }
 
     properties.push({ name: "MD", value: sanitizedMd, format: formatDepth });
