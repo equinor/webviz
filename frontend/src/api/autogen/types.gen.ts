@@ -334,6 +334,10 @@ export type EnsembleDetails_api = {
      * Standardresults
      */
     standardResults: Array<string>;
+    /**
+     * Fipregions
+     */
+    fipRegions: Array<FipRegion_api>;
 };
 
 /**
@@ -492,6 +496,24 @@ export type FieldInfo_api = {
      * Fieldidentifier
      */
     fieldIdentifier: string;
+};
+
+/**
+ * FipRegion
+ */
+export type FipRegion_api = {
+    /**
+     * Fipnumber
+     */
+    fipNumber: number;
+    /**
+     * Zone
+     */
+    zone: string;
+    /**
+     * Region
+     */
+    region: string;
 };
 
 /**
