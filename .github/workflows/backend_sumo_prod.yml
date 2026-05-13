@@ -45,7 +45,6 @@ jobs:
           pip install --upgrade pip
           pip install poetry==2.4.1
           poetry config virtualenvs.create false
-          poetry config solver.min-release-age 7
 
           # Check that lock files are consistent with pyproject.toml
           poetry check --lock

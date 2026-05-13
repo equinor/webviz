@@ -35,7 +35,7 @@ ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN python3.13 -m ensurepip --upgrade
 RUN python3.13 -m pip install --upgrade pip setuptools wheel
-RUN python3.13 -m pip install --upgrade poetry==2.4.1 && poetry config solver.min-release-age 7
+RUN python3.13 -m pip install --upgrade poetry==2.4.1
 
 # This can probably be optimized wrt space usage by fetching and preparing Resinsight using a multi-stage build
 ADD --chown=appuser https://github.com/CeetronSolutions/ResInsight/releases/download/webviz.test.0.0.2/ResInsight-Ubuntu_20.04_gcc.tar.gz /home/appuser/ri_bin/dist_archive/
@@ -50,6 +50,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 WORKDIR /home/appuser/backend_py/user_grid3d_ri
 COPY --chown=appuser ./backend_py/user_grid3d_ri/pyproject.toml  /home/appuser/backend_py/user_grid3d_ri
 COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.lock     /home/appuser/backend_py/user_grid3d_ri
+COPY --chown=appuser ./backend_py/user_grid3d_ri/poetry.toml     /home/appuser/backend_py/user_grid3d_ri
 RUN poetry install --only main --no-root --no-directory
 
 WORKDIR /home/appuser/ri_bin/Python
