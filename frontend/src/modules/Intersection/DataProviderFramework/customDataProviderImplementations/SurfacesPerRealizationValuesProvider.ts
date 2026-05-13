@@ -23,7 +23,7 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
@@ -94,143 +94,186 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
         );
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
         workbenchSession,
-        storedDataUpdater,
-    }: DefineDependenciesArgs<SurfacesPerRealizationValuesSettings, SurfacesPerRealizationValuesStoredData>): void {
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+    }: SetupBindingsContext<SurfacesPerRealizationValuesSettings, SurfacesPerRealizationValuesStoredData>): void {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATIONS, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-            return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
+        setting(Setting.REALIZATIONS).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(({ getGlobalSetting, abortSignal }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+        const wellboreHeadersDep = makeSharedResult({
+            debugName: "WellboreHeaders",
+            read(read) {
+                return { fieldIdentifier: read.globalSetting("fieldId") };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+            },
         });
 
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
-
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
-
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeadersDep),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            resolve({ wellboreHeaders, intersectionPolylines, fieldIdentifier }) {
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+                );
+                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+            },
         });
 
-        const surfaceMetadataSetDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+        const surfaceMetadataSetDep = makeSharedResult({
+            debugName: "SurfaceMetadata",
+            read(read) {
+                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
+                }
 
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            const surfaceMetadata = await queryClient.fetchQuery({
-                ...getRealizationSurfacesMetadataOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
-
-            return surfaceMetadata;
+                return await queryClient.fetchQuery({
+                    ...getRealizationSurfacesMetadataOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
-            if (!surfaceMetadataSet) {
-                return [];
-            }
-            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
-                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-            if (!depthSurfacesMetadata) {
-                return [];
-            }
-
-            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return { surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep) };
+            },
+            resolve({ surfaceMetadataSet }) {
+                if (!surfaceMetadataSet) {
+                    return [];
+                }
+                const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                    (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+                );
+                return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
+            },
         });
 
-        valueConstraintsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
-
-            if (!attribute || !surfaceMetadataSet) {
-                return [];
-            }
-            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
-                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-
-            const filteredSurfaceNames = Array.from(
-                new Set(depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name)),
-            );
-            return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
+        setting(Setting.SURFACE_NAMES).bindValueConstraints({
+            read(read) {
+                return {
+                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep),
+                };
+            },
+            resolve({ attribute, surfaceMetadataSet }) {
+                if (!attribute || !surfaceMetadataSet) {
+                    return [];
+                }
+                const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                    (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+                );
+                const filteredSurfaceNames = Array.from(
+                    new Set(
+                        depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name),
+                    ),
+                );
+                return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
+            },
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
-        const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-
-            return createIntersectionPolylineWithSectionLengthsForField(
-                fieldIdentifier,
-                intersection,
-                workbenchSession,
-                queryClient,
-            );
+        const intersectionPolylineWithSectionLengthsDep = makeSharedResult({
+            debugName: "IntersectionPolylineWithSectionLengths",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                };
+            },
+            async resolve({ fieldIdentifier, intersection }, { abortSignal }) {
+                return createIntersectionPolylineWithSectionLengthsForField(
+                    fieldIdentifier,
+                    intersection,
+                    workbenchSession,
+                    queryClient,
+                    abortSignal,
+                );
+            },
         });
 
-        storedDataUpdater("requestedPolylineWithCumulatedLengths", ({ getHelperDependency, getLocalSetting }) => {
-            const intersectionPolylineWithSectionLengths = getHelperDependency(
-                intersectionPolylineWithSectionLengthsDep,
-            );
-            const extensionLength = createValidExtensionLength(getLocalSetting(Setting.INTERSECTION));
-
-            // Add hard coded sample resolution of 25 meters for now (should be derived from metadata in future)
-            const sampleResolutionInMeters = 25.0;
-
-            // If no intersection is selected, or polyline is empty, cancel update
-            if (
-                !intersectionPolylineWithSectionLengths ||
-                intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
-            ) {
+        storedData("requestedPolylineWithCumulatedLengths").bindValue({
+            read(read) {
                 return {
-                    xUtmPoints: [],
-                    yUtmPoints: [],
-                    cumulatedHorizontalPolylineLengthArr: [],
+                    intersectionPolylineWithSectionLengths: read.sharedResult(
+                        intersectionPolylineWithSectionLengthsDep,
+                    ),
+                    intersection: read.localSetting(Setting.INTERSECTION),
                 };
-            }
+            },
+            resolve({ intersectionPolylineWithSectionLengths, intersection }) {
+                const extensionLength = createValidExtensionLength(intersection);
 
-            const initialHorizontalPosition = -extensionLength;
-            const resampledPolylineWithCumulatedLengths = createResampledPolylinePointsAndCumulatedLengthArray(
-                intersectionPolylineWithSectionLengths.polylineUtmXy,
-                intersectionPolylineWithSectionLengths.actualSectionLengths,
-                initialHorizontalPosition,
-                sampleResolutionInMeters,
-            );
+                // Add hard coded sample resolution of 25 meters for now (should be derived from metadata in future)
+                const sampleResolutionInMeters = 25.0;
 
-            return {
-                xUtmPoints: resampledPolylineWithCumulatedLengths.xPoints,
-                yUtmPoints: resampledPolylineWithCumulatedLengths.yPoints,
-                cumulatedHorizontalPolylineLengthArr:
-                    resampledPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr,
-            };
+                // If no intersection is selected, or polyline is empty, cancel update
+                if (
+                    !intersectionPolylineWithSectionLengths ||
+                    intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
+                ) {
+                    return {
+                        xUtmPoints: [],
+                        yUtmPoints: [],
+                        cumulatedHorizontalPolylineLengthArr: [],
+                    };
+                }
+
+                const initialHorizontalPosition = -extensionLength;
+                const resampledPolylineWithCumulatedLengths = createResampledPolylinePointsAndCumulatedLengthArray(
+                    intersectionPolylineWithSectionLengths.polylineUtmXy,
+                    intersectionPolylineWithSectionLengths.actualSectionLengths,
+                    initialHorizontalPosition,
+                    sampleResolutionInMeters,
+                );
+
+                return {
+                    xUtmPoints: resampledPolylineWithCumulatedLengths.xPoints,
+                    yUtmPoints: resampledPolylineWithCumulatedLengths.yPoints,
+                    cumulatedHorizontalPolylineLengthArr:
+                        resampledPolylineWithCumulatedLengths.cumulatedHorizontalPolylineLengthArr,
+                };
+            },
         });
     }
 

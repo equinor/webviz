@@ -3,7 +3,7 @@ import { getDrilledWellboreHeadersOptions } from "@api";
 import { Setting } from "../..//settings/settingsDefinitions";
 import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
-import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
 const intersectionViewSettings = [Setting.INTERSECTION] as const;
@@ -17,36 +17,47 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
         return "Intersection view";
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
+    setupBindings({
+        setting,
+        makeSharedResult,
         queryClient,
-    }: DefineBasicDependenciesArgs<IntersectionViewSettings, SettingTypes>): void {
-        const wellboreHeadersDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
+    }: SetupBasicBindingsContext<IntersectionViewSettings, SettingTypes>): void {
+        const wellboreHeaders = makeSharedResult({
+            debugName: "wellboreHeaders",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                if (!fieldIdentifier) {
+                    return null;
+                }
 
-            if (!fieldIdentifier) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
+                return await queryClient.fetchQuery({
+                    ...getDrilledWellboreHeadersOptions({
+                        query: { field_identifier: fieldIdentifier },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    wellboreHeaders: read.sharedResult(wellboreHeaders),
+                };
+            },
+            resolve({ fieldIdentifier, intersectionPolylines, wellboreHeaders }) {
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+                );
 
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
-
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+            },
         });
     }
 

@@ -41,6 +41,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
     intersection: IntersectionSettingValue | null,
     workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
+    abortSignal: AbortSignal,
 ): Promise<PolylineWithSectionLengths | null> {
     if (!intersection) {
         return null;
@@ -58,7 +59,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
             type: IntersectionType.CUSTOM_POLYLINE,
             polyline: polyline,
         };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
     if (intersection.type === IntersectionType.WELLBORE) {
         if (!fieldIdentifier) {
@@ -70,9 +71,8 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
             wellboreUuid: intersection.uuid,
             extensionLength: intersection.extensionLength ?? 0,
             fieldIdentifier: fieldIdentifier,
-            queryClient,
         };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
 
     const _exhaustiveCheck: never = intersection;
