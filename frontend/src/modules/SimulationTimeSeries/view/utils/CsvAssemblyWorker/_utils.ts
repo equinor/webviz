@@ -182,7 +182,7 @@ function buildObservationCsvRows(
 
     for (const vecEnsData of perEnsembleData) {
         for (const obs of vecEnsData.data.observations) {
-            dataRows.push([vecEnsData.ensembleDisplayName, obs.date, obs.value, obs.error, obs.label]);
+            dataRows.push([vecEnsData.ensembleDisplayName, obs.timestamp_utc_ms, obs.value, obs.error, obs.label]);
         }
     }
 
