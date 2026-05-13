@@ -4,9 +4,8 @@ import { isEqual } from "lodash";
 
 import type { Parameter } from "@framework/EnsembleParameters";
 import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
 
 // Icons placed here due to limitation of jest for testing utils (cannot import svg)
 import checkIcon from "./private-assets/check.svg";
@@ -80,18 +79,17 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     }
 
     return (
-        <div className={props.showTitle ? "mb-2 mt-2" : ""}>
+        <div className={props.showTitle ? "mt-2 mb-2" : ""}>
             <>
                 <SmartNodeSelector
                     id={smartNodeSelectorId}
                     delimiter={smartNodeSelectorDelimiter}
                     data={treeDataNodeList}
                     selectedTags={selectedTags}
-                    label={props.showTitle ? "Parameter filtering" : undefined}
                     onChange={handleSmartNodeSelectorChange}
                     placeholder="Add new filter condition..."
                 />
-                <div className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm")}>
+                <div className={resolveClassNames("relative mt-2 w-full text-right text-sm text-slate-600")}>
                     Number of matches: {numberOfMatchingParameters}
                 </div>
             </>

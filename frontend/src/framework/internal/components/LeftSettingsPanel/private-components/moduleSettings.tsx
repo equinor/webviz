@@ -13,8 +13,9 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -23,7 +24,6 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
-import { Collapsible } from "@lib/newComponents/Collapsible";
 
 type ModuleSettingsProps = {
     workbench: Workbench;
@@ -60,9 +60,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 ? "Initializing..."
                 : "Resetting...";
         return (
-            <div className="m-2 flex h-full w-full flex-col items-center justify-center">
+            <div className="mx-horizontal-2xs my-vertical-2xs flex h-full w-full flex-col items-center justify-center">
                 <CircularProgress />
-                <div className="mt-4">{text}</div>
+                <div className="mt-vertical-xs">{text}</div>
             </div>
         );
     }
@@ -72,7 +72,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="m-2 text-red-600"
+                    className="mx-horizontal-2xs my-vertical-2xs text-danger-subtle"
                     style={{
                         display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
@@ -86,8 +86,8 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     function makeContent() {
         if (moduleInstanceSettingsStateInvalid) {
             return (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-                    <div className="m-2 text-center text-red-600">
+                <div className="gap-horizontal-xs flex h-full w-full flex-col items-center justify-center">
+                    <div className="m-vertical-2xs text-danger-subtle text-center">
                         The persisted settings for this module&apos;s settings are invalid and could not be applied.
                         They have most likely been outdated by a module update. You can reset the module to its default
                         values to continue using it.

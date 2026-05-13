@@ -167,20 +167,20 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         numMetaNodes: number,
         vectorDefinitions: VectorDefinitionsType,
     ): TreeDataNode[] {
-        const typeIcons: Record<string, string> = {
-            aquifer: aquifer,
-            block: block,
-            calculated: calculated,
-            field: field,
-            group: group,
-            misc: misc,
-            network: network,
-            others: others,
-            region: region,
-            "region-region": region_region,
-            segment: segment,
-            well: well,
-            "well-completion": well_completion,
+        const typeIcons: Record<string, JSX.Element> = {
+            aquifer: <img src={aquifer} alt="aquifer" />,
+            block: <img src={block} alt="block" />,
+            calculated: <img src={calculated} alt="calculated" />,
+            field: <img src={field} alt="field" />,
+            group: <img src={group} alt="group" />,
+            misc: <img src={misc} alt="misc" />,
+            network: <img src={network} alt="network" />,
+            others: <img src={others} alt="others" />,
+            region: <img src={region} alt="region" />,
+            "region-region": <img src={region_region} alt="region-region" />,
+            segment: <img src={segment} alt="segment" />,
+            well: <img src={well} alt="well" />,
+            "well-completion": <img src={well_completion} alt="well-completion" />,
         };
         const populateData = (data: TreeDataNode[] | undefined, level: number) => {
             const newData: TreeDataNode[] = [];

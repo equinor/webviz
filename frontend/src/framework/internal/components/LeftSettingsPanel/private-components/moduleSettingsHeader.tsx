@@ -6,6 +6,7 @@ import { useModuleWarning } from "@framework/internal/components/LeftSettingsPan
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Banner } from "@lib/newComponents/Banner";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type ModuleSettingsHeaderProps = {
@@ -37,7 +38,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
     function makeSettingsTabs() {
         if (tabKeys.length === 0) {
             return (
-                <div className="flex items-center justify-center h-full px-2">
+                <div className="px-horizontal-2xs flex h-full items-center justify-center">
                     <Settings fontSize="small" />
                 </div>
             );
@@ -89,8 +90,8 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                 <span
                     title={activeModuleTitle ?? undefined}
                     className={resolveClassNames(
-                        "grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm self-center",
-                        { "italic text-gray-500": !activeModuleTitle, "font-bold": !!activeModuleTitle },
+                        "text-body-sm grow self-center overflow-hidden p-0 text-ellipsis whitespace-nowrap",
+                        { "text-neutral-subtle italic": !activeModuleTitle, "font-bolder": !!activeModuleTitle },
                     )}
                 >
                     {activeModuleTitle ?? "No module selected"}
@@ -103,7 +104,9 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                         <WarningRounded
                             fontSize="small"
                             className={
-                                highlightWarning ? "text-yellow-500 shrink-0 cursor-pointer" : "text-slate-400 shrink-0"
+                                highlightWarning
+                                    ? "text-warning-subtle shrink-0 cursor-pointer"
+                                    : "text-neutral-subtle shrink-0"
                             }
                             onClick={handleWarningIconClick}
                         />
@@ -118,7 +121,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
 
     return (
         <div className="flex flex-col">
-            <div className="flex items-center bg-slate-100 h-10 gap-2 pt-1 pr-2 shadow-[inset_0_-1px_2px_rgba(0,0,0,0.1)]">
+            <div className="gap-horizontal-2xs pt-vertical-3xs pr-horizontal-2xs flex h-10 items-center bg-slate-100 shadow-[inset_0_-1px_2px_rgba(0,0,0,0.1)]">
                 {makeHeaderContent()}
             </div>
             {!props.isCollapsed && isWarningVisible && warningText && (
@@ -135,7 +138,7 @@ type WarningBannerProps = {
 
 function WarningBanner(props: WarningBannerProps): React.ReactNode {
     return (
-        <div className="m-2 py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm shrink-0">
+        <Banner tone="warning" dismissable={true} onDismiss={props.onDismiss}>
             <div className="flex flex-col">
                 <span>
                     <strong>Note:</strong> {props.text}
@@ -144,7 +147,7 @@ function WarningBanner(props: WarningBannerProps): React.ReactNode {
                     Close [X]
                 </strong>
             </div>
-        </div>
+        </Banner>
     );
 }
 
@@ -158,7 +161,7 @@ type TabDividerProps = {
 };
 
 function TabDivider(props: TabDividerProps): React.ReactNode {
-    return <div className={resolveClassNames("w-px h-1/2", props.visible ? "bg-slate-300" : "bg-transparent")} />;
+    return <div className={resolveClassNames("h-1/2 w-px", props.visible ? "bg-slate-300" : "bg-transparent")} />;
 }
 
 type TabProps = {
@@ -177,10 +180,10 @@ function SettingTab(props: TabProps): React.ReactNode {
                 onMouseEnter={props.onMouseEnter}
                 onMouseLeave={props.onMouseLeave}
                 className={resolveClassNames(
-                    "relative flex items-center justify-center h-full px-2 transition-colors",
+                    "relative flex h-full items-center justify-center px-2 transition-colors",
                     {
-                        "bg-white rounded-t pb-2 pt-2 shadow-[0_-1px_2px_rgba(0,0,0,0.1)]": props.isActive,
-                        "hover:bg-blue-100 hover:rounded-t cursor-pointer": !props.isActive,
+                        "rounded-t bg-white pt-2 pb-2 shadow-[0_-1px_2px_rgba(0,0,0,0.1)]": props.isActive,
+                        "cursor-pointer hover:rounded-t hover:bg-blue-100": !props.isActive,
                     },
                 )}
             >

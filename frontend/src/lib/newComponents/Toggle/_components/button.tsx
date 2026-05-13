@@ -7,11 +7,16 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 
 import { Button as Button_, type ButtonProps as ButtonProps_ } from "../../Button";
 
-export type ButtonProps<TValue extends string> = ComponentWrapperProps<Omit<ToggleBaseProps<TValue>, "ref" | "children">> & {
+export type ButtonProps<TValue extends string> = ComponentWrapperProps<
+    Omit<ToggleBaseProps<TValue>, "variant" | "ref" | "children">
+> & {
     buttonProps?: Omit<ButtonProps_, "ref">;
     children?:
         | React.ReactNode
-        | ((props: Omit<React.ComponentPropsWithoutRef<typeof ToggleBase>, "children">, state: { pressed: boolean }) => React.ReactNode);
+        | ((
+              props: Omit<React.ComponentPropsWithoutRef<typeof ToggleBase>, "children">,
+              state: { pressed: boolean },
+          ) => React.ReactNode);
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps<string>>(function ToggleButton(props, ref) {
@@ -35,7 +40,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps<string>>(f
                 }
 
                 return (
-                    <Button_ ref={ref} variant={variant} {...buttonProps} {...toggleProps}>
+                    <Button_ ref={ref} {...buttonProps} variant={variant} {...toggleProps}>
                         {content}
                     </Button_>
                 );

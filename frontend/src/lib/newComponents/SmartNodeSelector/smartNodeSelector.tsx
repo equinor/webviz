@@ -1760,19 +1760,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         />
                     )}
                 </div>
-                {maxNumSelectedNodes > 1 && (
-                    <div
-                        className={resolveClassNames(
-                            "mt-vertical-xs text-body-sm text-neutral-subtle relative w-full text-right",
-                            {
-                                "text-danger-subtle": this.numValidSelections > maxNumSelectedNodes,
-                            },
-                        )}
-                        ref={this.refNumberOfTags}
-                    >
-                        Selected {this.numValidSelections} of {maxNumSelectedNodes}
-                    </div>
-                )}
             </div>
         );
     }

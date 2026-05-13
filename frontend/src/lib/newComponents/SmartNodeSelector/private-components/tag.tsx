@@ -3,7 +3,7 @@ import React from "react";
 import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithFont } from "@lib/utils/textSize";
+import { getTextWidthWithFont, measureTextWidthWithElement } from "@lib/utils/textSize";
 
 import type { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
@@ -57,20 +57,12 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private innerTagClasses(invalid = false, duplicate = false): string {
-        const { treeNodeSelection } = this.props;
         let ret = {
-            "text-body-sm flex flex-wrap rounded justify-left items-center min-w-0 border-2 border-transparent whitespace-pre-wrap z-elevated bg-no-repeat": true,
+            "text-body-sm flex flex-wrap rounded justify-left items-center min-w-0 border-2 border-transparent whitespace-pre-wrap z-elevated": true,
         };
         if (this.addAdditionalClasses(invalid)) {
-            const icons = treeNodeSelection.icons();
             ret = Object.assign({}, ret, {
-                [invalid
-                    ? "bg-danger-canvas"
-                    : duplicate
-                      ? "bg-warning-canvas"
-                      : icons.length > 1
-                        ? "border-transparent"
-                        : "border-transparent "]: true,
+                [invalid ? "bg-danger-canvas" : duplicate ? "bg-warning-canvas" : "border-transparent"]: true,
             });
         }
         return resolveClassNames(ret);
@@ -121,11 +113,11 @@ export class Tag extends React.Component<TagProps> {
                 <span
                     key={"TagMatchesCounter_" + index}
                     className={resolveClassNames(
-                        "relative mr-2 flex h-5 min-w-5 items-center justify-center rounded-full pr-1.5 pl-1.5 text-center text-xs leading-none text-white outline-hidden",
+                        "mr-horizontal-2xs px-horizontal-3xs text-accent-strong-on-emphasis relative flex h-5 min-w-5 items-center justify-center rounded-full text-center text-xs leading-none outline-hidden",
                         {
-                            "bg-info-canvas":
+                            "bg-info-strong text-info-strong-on-emphasis":
                                 matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
-                            "bg-warning-canvas":
+                            "bg-warning-strong text-warning-strong-on-emphasis":
                                 matches > this.props.maxNumSelectedNodes && this.props.maxNumSelectedNodes !== -1,
                         },
                     )}
@@ -275,48 +267,29 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private createFocusOverlay(treeNodeSelection: TreeNodeSelection): React.ReactNode | null {
-        const inputElement = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>)
-            .current as HTMLInputElement;
-        if (inputElement) {
-            const inputContainerBoundingRect = (inputElement.parentElement as HTMLElement).getBoundingClientRect();
-            const inputBoundingRect = inputElement.getBoundingClientRect();
-            let left = inputBoundingRect.left - inputContainerBoundingRect.left;
+        const value = treeNodeSelection.displayText();
+        if (!value) return null;
 
-            const value = treeNodeSelection.displayText();
+        const inputElement = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>).current;
+        if (!inputElement) return null;
 
-            let width = this.calculateTextWidth(value, 0, 0);
-            let distanceLeft = 0;
-            const splitByDelimiter = value.split(treeNodeSelection.getDelimiter());
-            if (splitByDelimiter.length > 1) {
-                const currentText =
-                    splitByDelimiter[treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes()];
-                width = this.calculateTextWidth(currentText, 0, 0);
-                const splitByCurrentText = [
-                    ...splitByDelimiter.filter(
-                        (_, index) => index < treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes(),
-                    ),
-                    "",
-                ].join(treeNodeSelection.getDelimiter());
+        const delimiter = treeNodeSelection.getDelimiter();
+        const segments = value.split(delimiter);
+        const focusedIdx =
+            segments.length > 1 ? treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes() : 0;
 
-                if (splitByCurrentText[0] !== undefined) {
-                    distanceLeft = this.calculateTextWidth(splitByCurrentText, 0, 0);
-                }
-            }
+        const prefix = segments.slice(0, focusedIdx).join(delimiter);
+        const focused = segments[focusedIdx] ?? "";
 
-            left += distanceLeft;
+        const left = measureTextWidthWithElement(prefix ? prefix + delimiter : "", inputElement);
+        const width = measureTextWidthWithElement(focused, inputElement);
 
-            return (
-                <div
-                    className="absolute bottom-0 h-0.5 border-b border-dashed border-b-blue-600"
-                    style={{
-                        left: left + "px",
-                        width: width + "px",
-                    }}
-                ></div>
-            );
-        } else {
-            return null;
-        }
+        return (
+            <div
+                className="absolute bottom-0 h-0.5 border-b border-dashed border-b-blue-600"
+                style={{ left: `${left}px`, width: `${width}px` }}
+            />
+        );
     }
 
     private calculateInputWidth(): string {
@@ -403,7 +376,7 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
-                        className="z-overlay bg-accent selectable text-body-xs absolute -top-1.5 -right-2 flex h-3 w-3 cursor-pointer items-center justify-center rounded-full"
+                        className="z-overlay bg-accent selectable text-body-xs absolute -top-2 -right-2.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full"
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
@@ -411,21 +384,7 @@ export class Tag extends React.Component<TagProps> {
                     </button>
                 )}
                 {this.createBrowseButtons(treeNodeSelection, index)}
-                <div
-                    key={"InnerTag_" + index}
-                    className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}
-                    style={
-                        (valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1
-                            ? {
-                                  backgroundImage: "url(" + treeNodeSelection.icons()[0] + ")",
-                                  backgroundRepeat: "no-repeat",
-                                  backgroundPosition: "left center",
-                                  backgroundSize: "16px 16px",
-                                  paddingLeft: 24,
-                              }
-                            : {}
-                    }
-                >
+                <div key={"InnerTag_" + index} className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}>
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
                         <Error fontSize="small" className="mr-horizontal-3xs" />
                     )}
@@ -436,6 +395,11 @@ export class Tag extends React.Component<TagProps> {
                         (valid || currentTag) &&
                         !isDuplicate &&
                         treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-horizontal-3xs" />}
+                    {(valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1 && (
+                        <span className="mr-horizontal-3xs flex h-4 w-4 shrink-0 items-center justify-center">
+                            {treeNodeSelection.icons()[0]}
+                        </span>
+                    )}
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="relative flex whitespace-nowrap">
                         <input
@@ -464,7 +428,7 @@ export class Tag extends React.Component<TagProps> {
                     {treeNodeSelection.isSelected() && (
                         <div
                             key={"TagSelected_" + index}
-                            className="z-elevated bg-accent absolute top-0 left-0 block h-full w-full rounded-sm opacity-30"
+                            className="z-elevated bg-accent-active absolute top-0 left-0 block h-full w-full rounded-sm opacity-60"
                         ></div>
                     )}
                 </div>

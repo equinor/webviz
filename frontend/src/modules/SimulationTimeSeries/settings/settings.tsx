@@ -14,16 +14,21 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { IconButton } from "@lib/components/IconButton";
-import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
-import { Switch } from "@lib/components/Switch";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { CheckboxItem } from "@lib/newComponents/Checkbox";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { Hidden } from "@lib/newComponents/Hidden";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { Select } from "@lib/newComponents/Select";
+import { Switch } from "@lib/newComponents/Switch";
+import { Toggle } from "@lib/newComponents/Toggle";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
@@ -74,15 +79,6 @@ import {
     useVectorListQueriesErrorAnnotation,
 } from "./hooks/settingAnnotationHooks";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Field } from "@base-ui/react";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { Radio, RadioGroup, SimpleRadioGroup } from "@lib/newComponents/Radio";
-import { CheckboxItem } from "@lib/newComponents/Checkbox";
-import { Hidden } from "@lib/newComponents/Hidden";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -292,8 +288,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         />
                     </SettingWrapper>
                     <SettingWrapper
-                        label="Vectors"
-                        loadingOverlay={isVectorListQueriesFetching}
+                        label={
+                            <span className="gap-horizontal-2xs flex items-center">
+                                Vectors
+                                <span className="font-light">
+                                    ({selectedVectorNames.length}/{50})
+                                </span>
+                            </span>
+                        }
+                        loadingOverlay={
+                            isVectorListQueriesFetching || vectorListQueries.some((query) => query.isFetching)
+                        }
                         errorAnnotation={vectorListQueriesErrorAnnotation}
                     >
                         <>
@@ -381,14 +386,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             <>{makeStatisticCheckboxes()}</>
                         </SettingWrapper>
                     </Hidden>
-                    <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}>
-                        <Label text="Color realization by parameter" position="left" wrapperClassName="mt-2 mb-2">
+                </Collapsible.Content>
+            </Collapsible.Group>
+            <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}>
+                <Collapsible.Group
+                    title="Color realizations by parameter"
+                    defaultOpen
+                    adornment={
+                        <TooltipCompositions.Default content="Enable to color the individual realizations based on the value of a selected parameter. The parameter can be selected in the collapsible section below.">
                             <Switch
                                 checked={colorRealizationsByParameter}
-                                disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                                onChange={(event) => setColorRealizationsByParameter(event.target.checked)}
+                                onCheckedChange={setColorRealizationsByParameter}
                             />
-                        </Label>
+                        </TooltipCompositions.Default>
+                    }
+                >
+                    <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">
                         <div
                             className={resolveClassNames({
                                 "pointer-events-none opacity-70":
@@ -396,30 +409,25 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                     visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
                             })}
                         >
-                            <div className="flex flex-col">
-                                <div className="flex flex-row items-center justify-center border-b bg-slate-100 p-2 shadow-xs">
+                            <div className="gap-vertical-xs flex flex-col">
+                                <div className="gap-horizontal-xs flex items-center justify-center shadow-xs">
                                     <h3 className="grow text-sm leading-none font-semibold">Select Parameter</h3>
-                                    <IconButton
-                                        color="secondary"
+                                    <Toggle.Button
                                         title="Filter list of parameters"
+                                        pressed={showParameterListFilter}
+                                        buttonProps={{ size: "small", iconOnly: true }}
                                         onClick={() => setShowParameterListFilter((prev) => !prev)}
                                     >
                                         <FilterAlt fontSize="small" />
-                                    </IconButton>
+                                    </Toggle.Button>
                                 </div>
-                                <div
-                                    className={resolveClassNames("border p-2 shadow-md", {
-                                        hidden: !showParameterListFilter,
-                                    })}
-                                >
-                                    <Label text="Filter parameters on selection">
-                                        <ParameterListFilter
-                                            parameters={continuousAndNonConstantParametersUnion}
-                                            initialFilters={["Continuous", "Nonconstant"]}
-                                            onChange={handleParameterListFilterChange}
-                                        />
-                                    </Label>
-                                </div>
+                                <Label text="Filter parameters on selection">
+                                    <ParameterListFilter
+                                        parameters={continuousAndNonConstantParametersUnion}
+                                        initialFilters={["Continuous", "Nonconstant"]}
+                                        onChange={handleParameterListFilterChange}
+                                    />
+                                </Label>
                                 <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
                                     <SettingWrapper annotations={selectedParameterIdentStringAnnotations}>
                                         <Select
@@ -439,9 +447,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 </div>
                             </div>
                         </div>
-                    </Hidden>
-                </Collapsible.Content>
-            </Collapsible.Group>
+                    </Collapsible.Content>
+                </Collapsible.Group>
+            </Hidden>
         </Collapsible.ScrollArea>
     );
 }

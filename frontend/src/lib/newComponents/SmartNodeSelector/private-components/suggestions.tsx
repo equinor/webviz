@@ -335,20 +335,15 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             data-use={option.nodeName}
                             data-index={i}
                             className={resolveClassNames(
-                                "Suggestions__Suggestion py-selectable-y px-selectable-x gap-vertical-xs text-body-sm box-border cursor-pointer overflow-hidden bg-no-repeat leading-6 text-ellipsis whitespace-nowrap",
+                                "Suggestions__Suggestion py-selectable-y px-selectable-x gap-vertical-xs text-body-sm box-border flex cursor-pointer items-center overflow-hidden leading-6",
                                 {
-                                    "bg-[20px 20px] pl-horizontal-md": option.metaData.icon !== undefined,
                                     "Suggestions__Suggestion--Selected bg-accent":
                                         i === this._currentlySelectedSuggestionIndex - this.state.fromIndex,
                                 },
                             )}
                             style={{
                                 color: option.metaData.color !== undefined ? option.metaData.color : "inherit",
-                                backgroundImage:
-                                    option.metaData.icon !== undefined ? "url(" + option.metaData.icon + ")" : "none",
                                 height: this._rowHeight + "px",
-                                backgroundPosition: option.metaData.icon !== undefined ? "5px center" : undefined,
-                                backgroundSize: option.metaData.icon !== undefined ? "20px 20px" : undefined,
                             }}
                             onMouseDown={disableInputBlur}
                             onMouseUp={enableInputBlur}
@@ -359,7 +354,12 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             }}
                             title={`${option.nodeName} - ${option.metaData.description}`}
                         >
-                            {this.decorateOption(option, treeNodeSelection)}
+                            {option.metaData.icon !== undefined && (
+                                <span className="mr-horizontal-3xs flex h-5 w-5 flex-shrink-0 items-center justify-center text-base leading-none">
+                                    {option.metaData.icon}
+                                </span>
+                            )}
+                            <span className="truncate">{this.decorateOption(option, treeNodeSelection)}</span>
                         </div>
                     ))}
                     {options.length === 0 && (
