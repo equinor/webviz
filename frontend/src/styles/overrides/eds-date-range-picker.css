@@ -14,7 +14,7 @@
     }
 
     & [class*="Segment"] {
-        @apply text-body-sm text-neutral data-placeholder:text-neutral-subtle h-3;
+        @apply text-body-sm text-neutral-subtle data-placeholder:text-neutral-subtle h-3;
     }
 
     & [class*="Segment"]:focus-visible {

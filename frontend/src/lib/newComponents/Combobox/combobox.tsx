@@ -6,7 +6,6 @@ import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
 import { PortalContainerContext } from "../_shared/portalContainerContext";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
-import { Button } from "../Button";
 import { CircularProgress } from "../CircularProgress";
 import { Typography } from "../Typography";
 
@@ -157,7 +156,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                             <ComboboxBase.Value>
                                 {(value) =>
                                     Array.isArray(value) && value.length > 0 ? (
-                                        <span className="text-neutral block truncate">
+                                        <span className="text-neutral-subtle block truncate">
                                             {`${value.length}/${flatItems.length} selected`}
                                         </span>
                                     ) : (

@@ -13,17 +13,15 @@ import {
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Button } from "@lib/newComponents/Button";
 import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
 import { useActiveDashboard } from "../../ActiveDashboardBoundary";
-import { Button } from "@lib/newComponents/Button";
 
 export type ModuleInstanceLogProps = {
     workbench: Workbench;
@@ -198,7 +196,7 @@ function LogList(props: LogListProps): React.ReactNode {
                 return (
                     <React.Fragment key={entry.id}>
                         {showDatetime && (
-                            <div className="border-b-neutral px-horizontal-xs py-vertical-4xs text-neutral text-body-xs sticky border-b text-right">
+                            <div className="border-b-neutral px-horizontal-xs py-vertical-4xs text-neutral-subtle text-body-xs sticky border-b text-right">
                                 {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}
                             </div>
                         )}
@@ -287,7 +285,9 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             const text = `${props.logEntry.message.request.method} ${props.logEntry.message.request.url}`;
             detailsString = (
                 <div className="w-full overflow-hidden" title={text}>
-                    <span className="text-neutral block max-w-0 text-xs text-ellipsis whitespace-nowrap">{text}</span>
+                    <span className="text-neutral-subtle block max-w-0 text-xs text-ellipsis whitespace-nowrap">
+                        {text}
+                    </span>
                 </div>
             );
             detailsObject = {};
@@ -309,7 +309,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "py-vertical-3xs px-horizontal-2xs group hover:text-neutral gap-horizontal-2xs hover:bg-accent-hover flex items-center",
+                "py-vertical-3xs px-horizontal-2xs group hover:text-neutral-subtle gap-horizontal-2xs hover:bg-accent-hover flex items-center",
                 {
                     "cursor-help": Boolean(detailsObject),
                 },
@@ -322,7 +322,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                 {message}
                 {detailsString}
             </span>
-            <span className="text-body-xs group-hover:text-neutral text-transparent">
+            <span className="text-body-xs group-hover:text-neutral-subtle text-transparent">
                 {convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs, true)}
             </span>
         </div>

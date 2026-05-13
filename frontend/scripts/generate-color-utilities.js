@@ -6,12 +6,53 @@
  *   npm run generate:color-utilities
  */
 
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { fills, strokes, borders, text } from "../src/styles/theme/generator-configs/color-tokens.config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ── Validate that all configured variables exist in eds-tokens ────────────────
+
+const EDS_VARIABLES_CSS = resolve(
+    __dirname,
+    "../node_modules/@equinor/eds-tokens/build/css/variables.css"
+);
+
+const edsVariables = new Set(
+    readFileSync(EDS_VARIABLES_CSS, "utf8")
+        .split("\n")
+        .map((line) => line.match(/^\s+(--eds-[^:]+):/)?.[1]?.trim())
+        .filter(Boolean)
+);
+
+const allConfigEntries = [
+    ["fills", fills],
+    ["strokes", strokes],
+    ["borders", borders],
+    ["text", text],
+];
+
+const missing = [];
+for (const [configName, map] of allConfigEntries) {
+    for (const [name, variable] of Object.entries(map)) {
+        if (!edsVariables.has(variable)) {
+            missing.push(`  [${configName}] "${name}": "${variable}"`);
+        }
+    }
+}
+
+if (missing.length > 0) {
+    console.error(
+        `\nError: The following variables in color-tokens.config.js are not defined in @equinor/eds-tokens (${EDS_VARIABLES_CSS}):\n`
+    );
+    for (const entry of missing) console.error(entry);
+    console.error("\nUpdate the config to use variables that exist in the installed eds-tokens version.\n");
+    process.exit(1);
+}
+
+console.log(`Validated ${edsVariables.size} EDS token variables — all config references exist.`);
 const OUTPUT = resolve(__dirname, "../src/styles/generated/colors.css");
 
 const BORDER_SIDES = [

@@ -230,42 +230,36 @@
 
 /* Neutral */
 @utility text-neutral-subtle { color: var(--eds-color-text-neutral-subtle); }
-@utility text-neutral { color: var(--eds-color-text-neutral-default); }
 @utility text-neutral-strong { color: var(--eds-color-text-neutral-strong); }
 @utility text-neutral-subtle-on-emphasis { color: var(--eds-color-text-neutral-subtle-on-emphasis); }
 @utility text-neutral-strong-on-emphasis { color: var(--eds-color-text-neutral-strong-on-emphasis); }
 
 /* Accent */
 @utility text-accent-subtle { color: var(--eds-color-text-accent-subtle); }
-@utility text-accent { color: var(--eds-color-text-accent-default); }
 @utility text-accent-strong { color: var(--eds-color-text-accent-strong); }
 @utility text-accent-subtle-on-emphasis { color: var(--eds-color-text-accent-subtle-on-emphasis); }
 @utility text-accent-strong-on-emphasis { color: var(--eds-color-text-accent-strong-on-emphasis); }
 
 /* Success */
 @utility text-success-subtle { color: var(--eds-color-text-success-subtle); }
-@utility text-success { color: var(--eds-color-text-success-default); }
 @utility text-success-strong { color: var(--eds-color-text-success-strong); }
 @utility text-success-subtle-on-emphasis { color: var(--eds-color-text-success-subtle-on-emphasis); }
 @utility text-success-strong-on-emphasis { color: var(--eds-color-text-success-strong-on-emphasis); }
 
 /* Info */
 @utility text-info-subtle { color: var(--eds-color-text-info-subtle); }
-@utility text-info { color: var(--eds-color-text-info-default); }
 @utility text-info-strong { color: var(--eds-color-text-info-strong); }
 @utility text-info-subtle-on-emphasis { color: var(--eds-color-text-info-subtle-on-emphasis); }
 @utility text-info-strong-on-emphasis { color: var(--eds-color-text-info-strong-on-emphasis); }
 
 /* Warning */
 @utility text-warning-subtle { color: var(--eds-color-text-warning-subtle); }
-@utility text-warning { color: var(--eds-color-text-warning-default); }
 @utility text-warning-strong { color: var(--eds-color-text-warning-strong); }
 @utility text-warning-subtle-on-emphasis { color: var(--eds-color-text-warning-subtle-on-emphasis); }
 @utility text-warning-strong-on-emphasis { color: var(--eds-color-text-warning-strong-on-emphasis); }
 
 /* Danger */
 @utility text-danger-subtle { color: var(--eds-color-text-danger-subtle); }
-@utility text-danger { color: var(--eds-color-text-danger-default); }
 @utility text-danger-strong { color: var(--eds-color-text-danger-strong); }
 @utility text-danger-subtle-on-emphasis { color: var(--eds-color-text-danger-subtle-on-emphasis); }
 @utility text-danger-strong-on-emphasis { color: var(--eds-color-text-danger-strong-on-emphasis); }
@@ -400,42 +394,36 @@
 
 /* Neutral */
 @utility fill-text-neutral-subtle { fill: var(--eds-color-text-neutral-subtle); }
-@utility fill-text-neutral { fill: var(--eds-color-text-neutral-default); }
 @utility fill-text-neutral-strong { fill: var(--eds-color-text-neutral-strong); }
 @utility fill-text-neutral-subtle-on-emphasis { fill: var(--eds-color-text-neutral-subtle-on-emphasis); }
 @utility fill-text-neutral-strong-on-emphasis { fill: var(--eds-color-text-neutral-strong-on-emphasis); }
 
 /* Accent */
 @utility fill-text-accent-subtle { fill: var(--eds-color-text-accent-subtle); }
-@utility fill-text-accent { fill: var(--eds-color-text-accent-default); }
 @utility fill-text-accent-strong { fill: var(--eds-color-text-accent-strong); }
 @utility fill-text-accent-subtle-on-emphasis { fill: var(--eds-color-text-accent-subtle-on-emphasis); }
 @utility fill-text-accent-strong-on-emphasis { fill: var(--eds-color-text-accent-strong-on-emphasis); }
 
 /* Success */
 @utility fill-text-success-subtle { fill: var(--eds-color-text-success-subtle); }
-@utility fill-text-success { fill: var(--eds-color-text-success-default); }
 @utility fill-text-success-strong { fill: var(--eds-color-text-success-strong); }
 @utility fill-text-success-subtle-on-emphasis { fill: var(--eds-color-text-success-subtle-on-emphasis); }
 @utility fill-text-success-strong-on-emphasis { fill: var(--eds-color-text-success-strong-on-emphasis); }
 
 /* Info */
 @utility fill-text-info-subtle { fill: var(--eds-color-text-info-subtle); }
-@utility fill-text-info { fill: var(--eds-color-text-info-default); }
 @utility fill-text-info-strong { fill: var(--eds-color-text-info-strong); }
 @utility fill-text-info-subtle-on-emphasis { fill: var(--eds-color-text-info-subtle-on-emphasis); }
 @utility fill-text-info-strong-on-emphasis { fill: var(--eds-color-text-info-strong-on-emphasis); }
 
 /* Warning */
 @utility fill-text-warning-subtle { fill: var(--eds-color-text-warning-subtle); }
-@utility fill-text-warning { fill: var(--eds-color-text-warning-default); }
 @utility fill-text-warning-strong { fill: var(--eds-color-text-warning-strong); }
 @utility fill-text-warning-subtle-on-emphasis { fill: var(--eds-color-text-warning-subtle-on-emphasis); }
 @utility fill-text-warning-strong-on-emphasis { fill: var(--eds-color-text-warning-strong-on-emphasis); }
 
 /* Danger */
 @utility fill-text-danger-subtle { fill: var(--eds-color-text-danger-subtle); }
-@utility fill-text-danger { fill: var(--eds-color-text-danger-default); }
 @utility fill-text-danger-strong { fill: var(--eds-color-text-danger-strong); }
 @utility fill-text-danger-subtle-on-emphasis { fill: var(--eds-color-text-danger-subtle-on-emphasis); }
 @utility fill-text-danger-strong-on-emphasis { fill: var(--eds-color-text-danger-strong-on-emphasis); }

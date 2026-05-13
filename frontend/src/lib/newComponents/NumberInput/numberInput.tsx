@@ -51,7 +51,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 "gap-vertical-xs flex items-center pr-0",
                 "data-invalid:outline-danger data-invalid:bg-danger-surface",
                 {
-                    "outline-neutral text-neutral outline -outline-offset-1": !defaultedProps.disabled,
+                    "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,
                     "outline-transparent": defaultedProps.disabled,
                 },
             )}

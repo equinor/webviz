@@ -8,9 +8,9 @@ import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { makeInitials } from "@lib/utils/userNames";
-import { Heading } from "@lib/newComponents/Typography/compositions";
 
 export type ItemCardProps = {
     id: string;
@@ -124,7 +124,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-neutral mt-vertical-xs text-body-sm block italic">Click to open</span>
+            <span className="text-neutral-subtle mt-vertical-xs text-body-sm block italic">Click to open</span>
         </div>
     );
 }

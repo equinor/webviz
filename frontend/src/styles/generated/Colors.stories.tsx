@@ -324,7 +324,6 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Neutral",
         entries: [
             { name: "text-neutral-subtle", variable: "--eds-color-text-neutral-subtle" },
-            { name: "text-neutral", variable: "--eds-color-text-neutral-default" },
             { name: "text-neutral-strong", variable: "--eds-color-text-neutral-strong" },
             { name: "text-neutral-subtle-on-emphasis", variable: "--eds-color-text-neutral-subtle-on-emphasis" },
             { name: "text-neutral-strong-on-emphasis", variable: "--eds-color-text-neutral-strong-on-emphasis" },
@@ -334,7 +333,6 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Accent",
         entries: [
             { name: "text-accent-subtle", variable: "--eds-color-text-accent-subtle" },
-            { name: "text-accent", variable: "--eds-color-text-accent-default" },
             { name: "text-accent-strong", variable: "--eds-color-text-accent-strong" },
             { name: "text-accent-subtle-on-emphasis", variable: "--eds-color-text-accent-subtle-on-emphasis" },
             { name: "text-accent-strong-on-emphasis", variable: "--eds-color-text-accent-strong-on-emphasis" },
@@ -344,7 +342,6 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Success",
         entries: [
             { name: "text-success-subtle", variable: "--eds-color-text-success-subtle" },
-            { name: "text-success", variable: "--eds-color-text-success-default" },
             { name: "text-success-strong", variable: "--eds-color-text-success-strong" },
             { name: "text-success-subtle-on-emphasis", variable: "--eds-color-text-success-subtle-on-emphasis" },
             { name: "text-success-strong-on-emphasis", variable: "--eds-color-text-success-strong-on-emphasis" },
@@ -354,7 +351,6 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Info",
         entries: [
             { name: "text-info-subtle", variable: "--eds-color-text-info-subtle" },
-            { name: "text-info", variable: "--eds-color-text-info-default" },
             { name: "text-info-strong", variable: "--eds-color-text-info-strong" },
             { name: "text-info-subtle-on-emphasis", variable: "--eds-color-text-info-subtle-on-emphasis" },
             { name: "text-info-strong-on-emphasis", variable: "--eds-color-text-info-strong-on-emphasis" },
@@ -364,7 +360,6 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Warning",
         entries: [
             { name: "text-warning-subtle", variable: "--eds-color-text-warning-subtle" },
-            { name: "text-warning", variable: "--eds-color-text-warning-default" },
             { name: "text-warning-strong", variable: "--eds-color-text-warning-strong" },
             { name: "text-warning-subtle-on-emphasis", variable: "--eds-color-text-warning-subtle-on-emphasis" },
             { name: "text-warning-strong-on-emphasis", variable: "--eds-color-text-warning-strong-on-emphasis" },
@@ -374,7 +369,6 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Danger",
         entries: [
             { name: "text-danger-subtle", variable: "--eds-color-text-danger-subtle" },
-            { name: "text-danger", variable: "--eds-color-text-danger-default" },
             { name: "text-danger-strong", variable: "--eds-color-text-danger-strong" },
             { name: "text-danger-subtle-on-emphasis", variable: "--eds-color-text-danger-subtle-on-emphasis" },
             { name: "text-danger-strong-on-emphasis", variable: "--eds-color-text-danger-strong-on-emphasis" },

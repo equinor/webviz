@@ -1,5 +1,5 @@
 @utility selectable {
-    @apply focusable focus-visible:outline-0 hover:bg-accent-hover active:bg-accent-active py-vertical-2xs px-horizontal-3xs cursor-pointer rounded;
+    @apply focusable hover:bg-accent-hover active:bg-accent-active py-vertical-2xs px-horizontal-3xs cursor-pointer rounded focus-visible:outline-0;
 
     &[data-selectable-wrapper] {
         @apply px-horizontal-sm;
@@ -13,7 +13,7 @@
     }
 
     &[data-readonly] {
-        @apply text-neutral! cursor-not-allowed bg-transparent;
+        @apply text-neutral-subtle! cursor-not-allowed bg-transparent;
     }
 
     & .selectable {

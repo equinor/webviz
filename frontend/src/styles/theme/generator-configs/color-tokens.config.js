@@ -197,42 +197,36 @@ export const borders = {
 export const text = {
     // Neutral
     "neutral-subtle": "--eds-color-text-neutral-subtle",
-    neutral: "--eds-color-text-neutral-default",
     "neutral-strong": "--eds-color-text-neutral-strong",
     "neutral-subtle-on-emphasis": "--eds-color-text-neutral-subtle-on-emphasis",
     "neutral-strong-on-emphasis": "--eds-color-text-neutral-strong-on-emphasis",
 
     // Accent
     "accent-subtle": "--eds-color-text-accent-subtle",
-    accent: "--eds-color-text-accent-default",
     "accent-strong": "--eds-color-text-accent-strong",
     "accent-subtle-on-emphasis": "--eds-color-text-accent-subtle-on-emphasis",
     "accent-strong-on-emphasis": "--eds-color-text-accent-strong-on-emphasis",
 
     // Success
     "success-subtle": "--eds-color-text-success-subtle",
-    success: "--eds-color-text-success-default",
     "success-strong": "--eds-color-text-success-strong",
     "success-subtle-on-emphasis": "--eds-color-text-success-subtle-on-emphasis",
     "success-strong-on-emphasis": "--eds-color-text-success-strong-on-emphasis",
 
     // Info
     "info-subtle": "--eds-color-text-info-subtle",
-    info: "--eds-color-text-info-default",
     "info-strong": "--eds-color-text-info-strong",
     "info-subtle-on-emphasis": "--eds-color-text-info-subtle-on-emphasis",
     "info-strong-on-emphasis": "--eds-color-text-info-strong-on-emphasis",
 
     // Warning
     "warning-subtle": "--eds-color-text-warning-subtle",
-    warning: "--eds-color-text-warning-default",
     "warning-strong": "--eds-color-text-warning-strong",
     "warning-subtle-on-emphasis": "--eds-color-text-warning-subtle-on-emphasis",
     "warning-strong-on-emphasis": "--eds-color-text-warning-strong-on-emphasis",
 
     // Danger
     "danger-subtle": "--eds-color-text-danger-subtle",
-    danger: "--eds-color-text-danger-default",
     "danger-strong": "--eds-color-text-danger-strong",
     "danger-subtle-on-emphasis": "--eds-color-text-danger-subtle-on-emphasis",
     "danger-strong-on-emphasis": "--eds-color-text-danger-strong-on-emphasis",
