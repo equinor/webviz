@@ -74,13 +74,13 @@ export enum Setting {
     FLOW_FILTER = "flowFilter",
 }
 
-enum ProductionPhase {
+export enum ProductionPhase {
     OIL = "oil",
     GAS = "gas",
     WATER = "water",
 }
 
-enum InjectionPhase {
+export enum InjectionPhase {
     WATER = "water",
     GAS = "gas",
 }

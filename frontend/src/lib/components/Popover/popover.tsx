@@ -1,15 +1,25 @@
 import type React from "react";
 
-import type { PopoverRootProps, PopoverTriggerProps } from "@base-ui/react/popover";
+import type { PopoverPositionerProps, PopoverRootProps, PopoverTriggerProps } from "@base-ui/react/popover";
 import { Popover as BasePopover } from "@base-ui/react/popover";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DenseIconButton } from "../DenseIconButton";
 
 export type PopoverProps = {
     /** Trigger content */
-    children: React.ReactNode;
+    children?: React.ReactNode;
     /** Popover content */
     content: React.ReactNode;
+
+    disableInteraction?: boolean;
+
+    open?: PopoverRootProps["open"];
+    onOpenChange?: PopoverRootProps["onOpenChange"];
+
+    align?: PopoverPositionerProps["align"];
+    side?: PopoverPositionerProps["side"];
 
     /**
      * A ref to imperative actions.
@@ -32,12 +42,17 @@ export function Popover(props: PopoverProps): React.ReactNode {
     const triggerRenderOrDefault = props.renderTrigger ?? <DenseIconButton>{props.children}</DenseIconButton>;
 
     return (
-        <BasePopover.Root actionsRef={props.actionsRef}>
-            <BasePopover.Trigger render={triggerRenderOrDefault} />
+        <BasePopover.Root open={props.open} onOpenChange={props.onOpenChange} actionsRef={props.actionsRef}>
+            <BasePopover.Trigger render={triggerRenderOrDefault} nativeButton={false} />
 
             <BasePopover.Portal>
                 {/* Note the z-index class here. Base-ui assumes a different stacking context, so we need to manually ensure floating elements stay on top */}
-                <BasePopover.Positioner className="z-9999" sideOffset={4} align="end" side="bottom">
+                <BasePopover.Positioner
+                    className={resolveClassNames("z-9999", { "pointer-events-none": props.disableInteraction })}
+                    sideOffset={4}
+                    align={props.align}
+                    side={props.side}
+                >
                     <BasePopover.Popup className="bg-white shadow-md border border-gray-200 rounded-sm transition-opacity">
                         <BasePopover.Arrow
                             className="
@@ -56,7 +71,9 @@ export function Popover(props: PopoverProps): React.ReactNode {
                             data-[side=top]:-bottom-1.5
                         "
                         />
-                        <BasePopover.Viewport className=" py-2">{props.content}</BasePopover.Viewport>
+                        <BasePopover.Description render={<div />} className="py-1 px-2">
+                            {props.content}
+                        </BasePopover.Description>
                     </BasePopover.Popup>
                 </BasePopover.Positioner>
             </BasePopover.Portal>
