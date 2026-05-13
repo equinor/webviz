@@ -6,7 +6,6 @@ import {
     getRealizationSurfacesMetadataOptions,
     postGetSampleSurfaceInPointsOptions,
 } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -27,14 +26,12 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
 const surfacesPerRealizationValuesSettings = [
     Setting.INTERSECTION,
-    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATIONS,
     Setting.ATTRIBUTE,
@@ -67,16 +64,13 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
     }
 
     getDefaultSettingsValues() {
-        return {
-            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-        };
+        return {};
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return (
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
-            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realizations, newSettings.realizations) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
@@ -91,14 +85,8 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
         SurfacesPerRealizationValuesData,
         SurfacesPerRealizationValuesStoredData
     >): boolean {
-        // Extension has to be set if intersection is wellbore
-        const isValidExtensionLength =
-            getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
-
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATIONS) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
@@ -113,15 +101,6 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<SurfacesPerRealizationValuesSettings, SurfacesPerRealizationValuesStoredData>): void {
-        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read(read) {
-                return { intersection: read.localSetting(Setting.INTERSECTION) };
-            },
-            resolve({ intersection }) {
-                return { enabled: intersection?.type === IntersectionType.WELLBORE };
-            },
-        });
-
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
                 return {
@@ -240,14 +219,12 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersection: read.localSetting(Setting.INTERSECTION),
-                    wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
                 };
             },
-            async resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
+            async resolve({ fieldIdentifier, intersection }, { abortSignal }) {
                 return createIntersectionPolylineWithSectionLengthsForField(
                     fieldIdentifier,
                     intersection,
-                    wellboreExtensionLength ?? 0,
                     workbenchSession,
                     queryClient,
                     abortSignal,
@@ -262,11 +239,10 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
                         intersectionPolylineWithSectionLengthsDep,
                     ),
                     intersection: read.localSetting(Setting.INTERSECTION),
-                    wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
                 };
             },
-            resolve({ intersectionPolylineWithSectionLengths, intersection, wellboreExtensionLength }) {
-                const extensionLength = createValidExtensionLength(intersection, wellboreExtensionLength);
+            resolve({ intersectionPolylineWithSectionLengths, intersection }) {
+                const extensionLength = createValidExtensionLength(intersection);
 
                 // Add hard coded sample resolution of 25 meters for now (should be derived from metadata in future)
                 const sampleResolutionInMeters = 25.0;

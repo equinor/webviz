@@ -11,7 +11,7 @@ import type { ColorScaleSpecification } from "@framework/components/ColorScaleSe
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
-import type { IntersectionSettingValue } from "./implementations/IntersectionSetting";
+import type { IntersectionSettingOption, IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
 import type { Representation } from "./implementations/RepresentationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
@@ -66,7 +66,6 @@ export enum Setting {
     TVD_RANGE = "tvdRange",
     WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
     WELLBORE_DEPTH_FILTER_TYPE = "wellboreDepthFilterType",
-    WELLBORE_EXTENSION_LENGTH = "wellboreExtensionLength",
     WELLBORE_PICKS = "wellborePicks",
     WELLBORE_PICK_IDENTIFIER = "wellborePickIdentifier",
     REPRESENTATION = "representation",
@@ -121,11 +120,6 @@ export type SettingTypeDefinitions = {
         valueConstraints: [number, number];
     };
     [Setting.GRID_LAYER_K]: {
-        internalValue: number | null;
-        externalValue: number | null;
-        valueConstraints: [number, number];
-    };
-    [Setting.WELLBORE_EXTENSION_LENGTH]: {
         internalValue: number | null;
         externalValue: number | null;
         valueConstraints: [number, number];
@@ -275,7 +269,7 @@ export type SettingTypeDefinitions = {
     [Setting.INTERSECTION]: {
         internalValue: IntersectionSettingValue | null;
         externalValue: IntersectionSettingValue | null;
-        valueConstraints: IntersectionSettingValue[];
+        valueConstraints: IntersectionSettingOption[];
     };
     [Setting.SENSITIVITY]: {
         internalValue: SensitivityNameCasePair | null;

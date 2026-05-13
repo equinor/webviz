@@ -13,6 +13,9 @@ export type Action = {
     identifier: string;
     icon?: React.ReactNode;
     label: string;
+    disabled?: boolean;
+    /** Shown as a native tooltip when the action is disabled. */
+    disabledReason?: string;
 };
 
 export type ActionGroup = {
@@ -50,17 +53,29 @@ export function Actions(props: ActionsProps): React.ReactNode {
                 );
                 content.push(makeContent(item.children, indentLevel + 1));
             } else {
-                content.push(
+                const menuItem = (
                     <MenuItem
                         key={`${item.identifier}-${index}`}
                         className="text-sm p-0.5 flex gap-2 items-center"
                         style={{ paddingLeft: `${indentLevel * 1}rem` }}
+                        disabled={item.disabled}
                         onClick={() => props.onActionClick(item.identifier)}
                     >
                         <span className="text-slate-700">{item.icon}</span>
                         {item.label}
-                    </MenuItem>,
+                    </MenuItem>
                 );
+                // Wrap in a span so the native tooltip still shows even though the disabled
+                // MenuItem has `pointer-events: none`.
+                if (item.disabled && item.disabledReason) {
+                    content.push(
+                        <span key={`${item.identifier}-${index}`} title={item.disabledReason}>
+                            {menuItem}
+                        </span>,
+                    );
+                } else {
+                    content.push(menuItem);
+                }
             }
         }
         return content;

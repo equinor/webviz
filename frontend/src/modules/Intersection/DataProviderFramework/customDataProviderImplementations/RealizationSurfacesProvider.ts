@@ -6,7 +6,6 @@ import {
     getRealizationSurfacesMetadataOptions,
     postGetSurfaceIntersectionOptions,
 } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -27,15 +26,13 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
-
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
 const realizationSurfacesSettings = [
     Setting.INTERSECTION,
-    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
@@ -63,16 +60,13 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
     }
 
     getDefaultSettingsValues() {
-        return {
-            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-        };
+        return {};
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return (
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
-            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
@@ -87,14 +81,8 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         RealizationSurfacesData,
         RealizationSurfacesStoredData
     >): boolean {
-        // Extension has to be set if intersection is wellbore
-        const isValidExtensionLength =
-            getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
-
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
@@ -109,15 +97,6 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<RealizationSurfacesSettings, RealizationSurfacesStoredData>): void {
-        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read(read) {
-                return { intersection: read.localSetting(Setting.INTERSECTION) };
-            },
-            resolve({ intersection }) {
-                return { enabled: intersection?.type === IntersectionType.WELLBORE };
-            },
-        });
-
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
                 return {
@@ -236,14 +215,12 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersection: read.localSetting(Setting.INTERSECTION),
-                    wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
                 };
             },
-            async resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
+            async resolve({ fieldIdentifier, intersection }, { abortSignal }) {
                 return createIntersectionPolylineWithSectionLengthsForField(
                     fieldIdentifier,
                     intersection,
-                    wellboreExtensionLength ?? 0,
                     workbenchSession,
                     queryClient,
                     abortSignal,
@@ -293,10 +270,7 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
             getStoredData("polylineWithSectionLengths"),
             "No polyline and actual section lengths found in stored data",
         );
-        const extensionLength = createValidExtensionLength(
-            getSetting(Setting.INTERSECTION),
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-        );
+        const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
         if (polylineWithSectionLengths.polylineUtmXy.length < 4) {
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");
