@@ -39,7 +39,6 @@ import {
     getLogCurveData,
     getLoggedInUser,
     getMisfitSurfaceData,
-    getObservations,
     getObservedSurfacesMetadata,
     getParametersAndSensitivities,
     getPolygonsData,
@@ -62,6 +61,7 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
+    getSummaryObservations,
     getSurfaceData,
     getUserInfo,
     getUserPhoto,
@@ -168,9 +168,6 @@ import type {
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
-    GetObservationsData_api,
-    GetObservationsError_api,
-    GetObservationsResponse_api,
     GetObservedSurfacesMetadataData_api,
     GetObservedSurfacesMetadataError_api,
     GetObservedSurfacesMetadataResponse_api,
@@ -237,6 +234,9 @@ import type {
     GetStatisticalVectorDataPerSensitivityError_api,
     GetStatisticalVectorDataPerSensitivityResponse_api,
     GetStatisticalVectorDataResponse_api,
+    GetSummaryObservationsData_api,
+    GetSummaryObservationsError_api,
+    GetSummaryObservationsResponse_api,
     GetSurfaceDataData_api,
     GetSurfaceDataError_api,
     GetSurfaceDataResponse_api,
@@ -2168,23 +2168,23 @@ export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) =>
         queryKey: getUserPhotoQueryKey(options),
     });
 
-export const getObservationsQueryKey = (options: Options<GetObservationsData_api>) =>
-    createQueryKey("getObservations", options);
+export const getSummaryObservationsQueryKey = (options: Options<GetSummaryObservationsData_api>) =>
+    createQueryKey("getSummaryObservations", options);
 
 /**
- * Get Observations
+ * Get Summary Observations
  *
- * Retrieve all observations found in sumo case
+ * Retrieve all summary observations found in ensemble
  */
-export const getObservationsOptions = (options: Options<GetObservationsData_api>) =>
+export const getSummaryObservationsOptions = (options: Options<GetSummaryObservationsData_api>) =>
     queryOptions<
-        GetObservationsResponse_api,
-        AxiosError<GetObservationsError_api>,
-        GetObservationsResponse_api,
-        ReturnType<typeof getObservationsQueryKey>
+        GetSummaryObservationsResponse_api,
+        AxiosError<GetSummaryObservationsError_api>,
+        GetSummaryObservationsResponse_api,
+        ReturnType<typeof getSummaryObservationsQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getObservations({
+            const { data } = await getSummaryObservations({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2192,7 +2192,7 @@ export const getObservationsOptions = (options: Options<GetObservationsData_api>
             });
             return data;
         },
-        queryKey: getObservationsQueryKey(options),
+        queryKey: getSummaryObservationsQueryKey(options),
     });
 
 export const getRftTableDefinitionQueryKey = (options: Options<GetRftTableDefinitionData_api>) =>

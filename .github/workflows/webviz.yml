@@ -82,6 +82,12 @@ jobs:
           docker stop $CONTAINER_ID
           git diff --exit-code ./frontend/src/api || exit 1
 
+      - name: 🕵️ Check ModuleSerializedStateMap is up to date
+        working-directory: ./frontend
+        run: |
+          npm run generate:module-states-map
+          git diff --exit-code src/modules/ModuleSerializedStateMap.ts || exit 1
+
   backend_py:
     runs-on: ubuntu-latest
 
@@ -100,7 +106,7 @@ jobs:
         run: |
           set -x
           pip install --upgrade pip
-          pip install poetry==2.1.4
+          pip install poetry==2.4.1
           poetry config virtualenvs.create false
 
           # Check that lock files are consistent with pyproject.toml

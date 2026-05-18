@@ -8,7 +8,7 @@ ENV PATH="${PATH}:/home/appuser/.local/bin"
 
 RUN python3 -m pip install --user pipx
 RUN python3 -m pipx ensurepath
-RUN pipx install poetry==2.1.4
+RUN pipx install poetry==2.4.1
 
 ENV VIRTUAL_ENV=/home/appuser/venv
 RUN python3 -m venv $VIRTUAL_ENV
@@ -18,6 +18,7 @@ WORKDIR /home/appuser/backend_py/primary
 
 COPY --chown=appuser ./backend_py/primary/pyproject.toml  /home/appuser/backend_py/primary/
 COPY --chown=appuser ./backend_py/primary/poetry.lock     /home/appuser/backend_py/primary/
+COPY --chown=appuser ./backend_py/primary/poetry.toml     /home/appuser/backend_py/primary/
 RUN poetry install --only main --no-root --no-directory
 
 COPY --chown=appuser ./backend_py/libs    /home/appuser/backend_py/libs

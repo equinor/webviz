@@ -39,6 +39,12 @@ class EnsembleTimestamps(BaseModel):
     dataUpdatedAtUtcMs: int
 
 
+class FipRegion(BaseModel):
+    fipNumber: int
+    zone: str
+    region: str
+
+
 class EnsembleDetails(BaseModel):
     name: str
     assetName: str
@@ -48,3 +54,4 @@ class EnsembleDetails(BaseModel):
     realizations: Sequence[int]
     stratigraphicColumnIdentifier: str
     standardResults: Sequence[str]
+    fipRegions: Sequence[FipRegion]
