@@ -676,14 +676,14 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     );
 
     return (
-        <div className={resolveClassNames(props.className, "flex flex-col relative min-h-0 max-h-full")} ref={mainRef}>
+        <div className={resolveClassNames(props.className, "relative flex max-h-full min-h-0 flex-col")} ref={mainRef}>
             <SortableListContext.Provider value={context}>
                 {props.children}
                 <div className="h-5" />
                 {(cursor !== Cursor.NONE || isDragging) &&
                     createPortal(
                         <div
-                            className={resolveClassNames("absolute z-[400] inset-0", {
+                            className={resolveClassNames("z-elevated absolute inset-0", {
                                 "cursor-grabbing": cursor === Cursor.GRABBING,
                                 "cursor-not-allowed": cursor === Cursor.NOT_ALLOWED,
                                 "cursor-n-resize": isScrolling,

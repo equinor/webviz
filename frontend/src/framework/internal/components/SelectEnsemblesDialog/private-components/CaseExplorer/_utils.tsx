@@ -1,6 +1,5 @@
 import type React from "react";
 
-import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close } from "@mui/icons-material";
 
 import type { CaseInfo_api } from "@api";
@@ -16,6 +15,7 @@ import type { CaseRowData } from "./_types";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
+import { DateRangePicker } from "@lib/newComponents/DateRangePicker";
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
     localStorage.setItem(stateName, value);
@@ -81,6 +81,7 @@ export function makeCaseTableColumns(
                 render: (props) => (
                     <Combobox
                         multiple
+                        size="small"
                         selectionMode="count"
                         value={(props.value as string[]) ?? []}
                         items={statusOptions.map((elm) => ({ label: elm, value: elm }))}
@@ -100,6 +101,7 @@ export function makeCaseTableColumns(
             filter: {
                 render: (props) => (
                     <DateRangePicker
+                        size="small"
                         className="overflow-hidden"
                         value={props.value ?? { from: null, to: null }}
                         onChange={props.onFilterChange}
@@ -173,6 +175,7 @@ function filterInput(props: ColumnFilterImplementationProps<string>, disableFilt
 
     return (
         <TextInput
+            size="small"
             value={value}
             disabled={disableFilter}
             placeholder="Filter ..."

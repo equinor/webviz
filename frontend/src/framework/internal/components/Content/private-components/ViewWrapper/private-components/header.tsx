@@ -145,7 +145,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isSnapshotMode={isSnapshot}
                 onPointerDown={props.onPointerDown}
             />
-
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
 
             <Separator orientation="vertical" />
@@ -213,11 +212,6 @@ export const Header: React.FC<HeaderProps> = (props) => {
         </div>
     );
 };
-
-function HeaderSeparator(): React.ReactNode {
-    // The funky-looking class selector hides all separators that directly follows another separator
-    return <div className="mx-1 h-1/2 w-px bg-slate-300 [:where(&+&)]:hidden" />;
-}
 
 type ModuleLoadingBarProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -289,18 +283,18 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
 
     return (
-        <>
+        <div className="gap-x-horizontal-2xs flex items-center">
             {syncedSettings.map((setting) => (
                 <Tooltip
-                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
+                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
                     key={setting}
                 >
-                    <span className="mr-1 ml-1 flex cursor-help items-center justify-center rounded-sm bg-indigo-700 p-1 text-xs leading-none font-bold text-white">
+                    <span className="bg-info-strong px-horizontal-3xs py-vertical-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
                         {SyncSettingsMeta[setting].abbreviation}
                     </span>
                 </Tooltip>
             ))}
-        </>
+        </div>
     );
 }
 
@@ -497,7 +491,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         stateIndicators.push(
             <Dropdown key="header-status-messages">
                 <Tooltip title="Show status messages" placement="bottom">
-                    <MenuButton className="flex items-center justify-center rounded-sm p-1 text-sm hover:bg-blue-200">
+                    <MenuButton className="text-body-sm flex items-center justify-center rounded-sm p-1 hover:bg-blue-200">
                         <Tooltip title={badgeTitle} placement="bottom">
                             <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
                                 <Error

@@ -4,10 +4,13 @@ import { Combobox as ComboboxBase } from "@base-ui/react";
 import type { ComboboxRootProps } from "@base-ui/react";
 import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { PortalContainerContext } from "../_shared/portalContainerContext";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
 import { Typography } from "../Typography";
+import { SelectableSize, SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 
 export type ComboboxItem<TValue> = {
     value: TValue;
@@ -47,6 +50,7 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         renderItemAdornment?: (item: TValue) => React.ReactNode;
         /** Only applies when `multiple` is true. "chips" (default) renders a chip per selection; "count" renders "X/N selected". */
         selectionMode?: "chips" | "count";
+        size?: SelectableSize;
     };
 
 function getItemValueKey<TValue>(item: TValue): React.Key {
@@ -71,6 +75,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         clearable = false,
         renderItemAdornment,
         selectionMode = "chips",
+        size = "default",
         ...rest
     } = props;
     const baseProps = resolveWrapperProps(rest, "items", "loading", "errorText");
@@ -110,7 +115,14 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
             {...baseProps}
         >
-            <ComboboxBase.InputGroup className="form-element text-body-md gap-horizontal-sm py-vertical-xs px-horizontal-sm flex cursor-text items-center">
+            <ComboboxBase.InputGroup
+                className={resolveClassNames(
+                    "form-element gap-horizontal-sm pl-horizontal-sm flex cursor-text items-center",
+                    size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
+                    size !== "small" || (props.multiple && selectionMode === "chips") ? "py-vertical-xs" : undefined,
+                    SELECTABLE_SIZES_CLASSNAMES[size],
+                )}
+            >
                 {props.multiple && selectionMode === "chips" ? (
                     <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex w-full grow flex-wrap items-center">
                         <ComboboxBase.Value>
@@ -124,7 +136,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                                 <ComboboxBase.Chip
                                                     key={key}
                                                     aria-label={label}
-                                                    className="gap-horizontal-3xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover focus-within:bg-accent-hover flex items-center overflow-hidden rounded"
+                                                    className="gap-horizontal-3xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover data-highlighted:outline-focus not-data-highlighted:hover:outline-accent focus-within:bg-accent-hover flex items-center overflow-hidden rounded outline-2 outline-offset-1 outline-transparent"
                                                 >
                                                     {renderItemAdornment && (
                                                         <div className="pl-horizontal-xs flex shrink-0 items-center">

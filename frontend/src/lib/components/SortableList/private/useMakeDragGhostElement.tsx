@@ -55,9 +55,23 @@ export function useMakeDragGhostElement(
         style: { ...(element.props.style || {}) },
     });
 
+    const colWidths: number[] = [];
+    if (ref.current) {
+        for (const cell of ref.current.children) {
+            colWidths.push((cell as HTMLElement).getBoundingClientRect().width);
+        }
+    }
+
     return (
         <div style={baseStyle} className="bg-transparent" aria-hidden>
             <table className="table-fixed border-collapse w-[inherit]">
+                {colWidths.length > 0 && (
+                    <colgroup>
+                        {colWidths.map((w, i) => (
+                            <col key={i} style={{ width: w }} />
+                        ))}
+                    </colgroup>
+                )}
                 <tbody>{rowClone}</tbody>
             </table>
         </div>

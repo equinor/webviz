@@ -4,7 +4,6 @@ import { Close, ExpandLess, ExpandMore, Square } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { Input } from "../../Input";
 import { ALTERNATING_COLUMN_HEADING_COLORS } from "../constants";
 import type {
     HeaderCellDef,
@@ -240,6 +239,7 @@ function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
 
     return (
         <TextInput
+            size="small"
             value={value}
             placeholder="Filter ..."
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}

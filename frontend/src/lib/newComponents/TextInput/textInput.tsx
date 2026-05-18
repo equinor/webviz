@@ -7,14 +7,18 @@ import { Error } from "@mui/icons-material";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { SelectableSize, SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 
-export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref">> & {
+export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size">> & {
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
+    size?: SelectableSize;
+    inputSize?: InputBaseProps["size"];
 };
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
-    const baseProps = resolveWrapperProps(props, "startAdornment", "endAdornment");
+    const { size = "default", inputSize, ...rest } = props;
+    const baseProps = resolveWrapperProps(rest, "startAdornment", "endAdornment");
 
     function makeStartAdornment(state: InputState) {
         // state.valid is explicitly null when no validity is applied
@@ -40,20 +44,26 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
         <Input
             {...baseProps}
             ref={ref}
-            render={(p, state) => (
+            render={(inputProps, state) => (
                 <div
-                    {...extractDataProps(p)}
+                    {...extractDataProps(inputProps)}
                     className={resolveClassNames(
                         props.layoutClassName,
                         "form-element",
                         "w-full",
-                        "py-vertical-xs px-horizontal-sm text-body-md",
+                        "pl-horizontal-sm",
+                        size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
+                        SELECTABLE_SIZES_CLASSNAMES[size],
                         "gap-vertical-xs flex items-center",
                         "text-neutral",
                     )}
                 >
                     {makeStartAdornment(state)}
-                    <input className="w-full min-w-0 flex-auto p-0 outline-0 data-disabled:cursor-not-allowed" {...p} />
+                    <input
+                        className="w-full min-w-0 flex-auto p-0 outline-0 data-disabled:cursor-not-allowed"
+                        {...inputProps}
+                        size={inputSize}
+                    />
                     {props.endAdornment}
                 </div>
             )}

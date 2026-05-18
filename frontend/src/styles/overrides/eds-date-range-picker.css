@@ -1,10 +1,31 @@
 .webviz-eds-date-range-picker {
-    @apply form-element bg-canvas px-horizontal-sm py-vertical-xs box-border rounded border-none;
-    &.--compact [class*="Icon"] {
-        /* Adjust size of icon for compact view*/
+    @apply form-element bg-canvas box-border rounded border-none;
+
+    /* default size */
+    @apply h-selectable-md px-horizontal-sm py-vertical-xs;
+
+    &[data-size="small"] {
+        @apply h-selectable-sm pl-horizontal-sm pr-horizontal-xs py-vertical-3xs;
+    }
+
+    &[data-size="large"] {
+        @apply h-selectable-lg px-horizontal-md py-vertical-sm;
+    }
+
+    /* Icon size */
+    & [class*="Icon"] {
         @apply h-4;
     }
 
+    &[data-size="small"] [class*="Icon"] {
+        @apply h-3;
+    }
+
+    &[data-size="large"] [class*="Icon"] {
+        @apply h-5;
+    }
+
+    /* Field wrapper */
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
         @apply h-5 rounded bg-transparent p-0 shadow-none!;
     }
@@ -13,8 +34,25 @@
         @apply outline-0!;
     }
 
+    &[data-size="small"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
+        @apply h-4!;
+    }
+
+    &[data-size="large"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
+        @apply h-6!;
+    }
+
+    /* Segments (date input fields) */
     & [class*="Segment"] {
-        @apply text-body-sm text-neutral-subtle data-placeholder:text-neutral-subtle h-3;
+        @apply text-body-md text-neutral-subtle data-placeholder:text-neutral-subtle h-3 outline-0;
+    }
+
+    &[data-size="small"] [class*="Segment"] {
+        @apply text-body-xs;
+    }
+
+    &[data-size="large"] [class*="Segment"] {
+        @apply text-body-lg h-4;
     }
 
     & [class*="Segment"]:focus-visible {
@@ -24,8 +62,4 @@
     & [class*="Toggle__StyledButton"]:focus-visible {
         @apply outline-focus;
     }
-
-    /* outline-width: 1px; */
-    --eds_interactive_primary__resting: var(--color-indigo-500); /* Override eds icon color */
-    --eds_ui_background__light: white; /* Override eds background color */
 }

@@ -10,6 +10,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 export type CopyCellValueProps = {
     onCopyRequested: () => string;
     children: React.ReactNode;
+    highlightRef?: React.RefObject<HTMLElement>;
 };
 
 type CopyStatus = "idle" | "success" | "error";
@@ -66,16 +67,54 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
         setIsHovered(false);
     }
 
+    function handleButtonFocus() {
+        if (props.highlightRef?.current) {
+            props.highlightRef.current.classList.add(
+                "outline",
+                "outline-focus",
+                "transform",
+                "scale-105",
+                "transition-transform",
+                "duration-200",
+                "absolute",
+            );
+        }
+    }
+
+    function handleButtonBlur() {
+        if (props.highlightRef?.current) {
+            props.highlightRef.current.classList.remove(
+                "outline",
+                "outline-focus",
+                "transform",
+                "scale-105",
+                "transition-transform",
+                "duration-200",
+                "absolute",
+            );
+        }
+    }
+
     return (
         <div className="relative h-full w-full" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <div
                 className={resolveClassNames(
-                    "bg-neutral z-elevated absolute top-1/2 right-1 -translate-y-1/2 transform rounded-full transition-transform duration-200",
+                    "bg-neutral z-elevated absolute top-1/2 right-1 -translate-y-1/2 transform rounded-full transition-transform duration-100",
                     { "scale-100": isHovered || status !== "idle", "scale-0": !isHovered && status === "idle" },
                 )}
             >
                 <Tooltip title={TOOLTIP_BY_STATUS[status]}>
-                    <Button onClick={handleCopyClick} tone={TONE_BY_STATUS[status]} iconOnly size="small" round>
+                    <Button
+                        onClick={handleCopyClick}
+                        tone={TONE_BY_STATUS[status]}
+                        iconOnly
+                        size="small"
+                        round
+                        onFocus={handleButtonFocus}
+                        onBlur={handleButtonBlur}
+                        onPointerEnter={handleButtonFocus}
+                        onPointerLeave={handleButtonBlur}
+                    >
                         {status === "idle" && <ContentPaste fontSize="inherit" />}
                         {status === "success" && <AssignmentTurnedIn fontSize="inherit" />}
                         {status === "error" && <ContentPasteOff fontSize="inherit" />}

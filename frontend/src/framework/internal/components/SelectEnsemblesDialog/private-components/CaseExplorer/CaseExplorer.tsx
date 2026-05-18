@@ -325,7 +325,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             >
                 <div className="gap-vertical-3xs flex h-full flex-col">
                     <div className="gap-horizontal-sm flex items-center">
-                        <span className="text-neutral-subtle text-body-sm">Select from {numberOfCases} cases</span>
+                        <span className="text-neutral-subtle text-body-md gap-horizontal-2xs flex items-center">
+                            Case
+                            <span className="font-light">({numberOfCases})</span>
+                        </span>
                         <span className="grow" />
                         <span className="text-body-xs text-neutral-subtle italic">
                             Last updated:{" "}

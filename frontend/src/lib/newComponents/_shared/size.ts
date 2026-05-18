@@ -7,3 +7,11 @@ export const PIXEL_SIZES_CLASSNAMES: Record<PixelSize, string> = {
     40: "aspect-square h-10",
     48: "aspect-square h-12",
 };
+
+export type SelectableSize = "small" | "default" | "large";
+
+export const SELECTABLE_SIZES_CLASSNAMES: Record<SelectableSize, string> = {
+    small: "h-selectable-sm text-body-sm",
+    default: "h-selectable-md text-body-md",
+    large: "h-selectable-lg text-body-lg",
+};

@@ -8,6 +8,9 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Banner } from "@lib/newComponents/Banner";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Button } from "@lib/newComponents/Button";
+import { Tabs } from "@lib/newComponents/Tabs";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 type ModuleSettingsHeaderProps = {
     activeModuleInstance: ModuleInstance<any, any> | null;
@@ -20,8 +23,6 @@ type ModuleSettingsHeaderProps = {
 };
 
 export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.ReactNode {
-    const [hoveredTabIndex, setHoveredTabIndex] = React.useState<number | null>(null);
-
     const tabKeys = Object.keys(props.availableTabs);
     const activeTab = props.activeTab ? props.availableTabs[props.activeTab] : undefined;
 
@@ -35,6 +36,10 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
         }
     }
 
+    function handleTabChange(tabKey: string) {
+        props.onTabChange(tabKey);
+    }
+
     function makeSettingsTabs() {
         if (tabKeys.length === 0) {
             return (
@@ -45,27 +50,21 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
         }
 
         return (
-            <div className="flex h-full items-center pl-px" onMouseLeave={() => setHoveredTabIndex(null)}>
-                {tabKeys.map((key, index) => {
-                    const isActive = key === props.activeTab;
-                    const isNextActive = tabKeys.at(index + 1) === props.activeTab;
-                    const isHovered = hoveredTabIndex === index;
-                    const isNextHovered = hoveredTabIndex === index + 1;
-                    const showDividerAfter = !isActive && !isHovered && !isNextActive && !isNextHovered;
-
-                    return (
-                        <React.Fragment key={key}>
-                            <SettingTab
-                                config={props.availableTabs[key]}
-                                isActive={isActive}
-                                onClick={() => props.onTabChange(key)}
-                                onMouseEnter={() => setHoveredTabIndex(index)}
-                                onMouseLeave={() => setHoveredTabIndex(null)}
-                            />
-                            <TabDivider visible={showDividerAfter} />
-                        </React.Fragment>
-                    );
-                })}
+            <div className="flex h-full items-center pl-px">
+                <Tabs.Root onValueChange={handleTabChange}>
+                    <Tabs.List>
+                        {tabKeys.map((key) => {
+                            const config = props.availableTabs[key];
+                            return (
+                                <TooltipCompositions.Default key={key} content={config.title} side="bottom">
+                                    <Tabs.Tab key={key} value={key}>
+                                        {config.icon}
+                                    </Tabs.Tab>
+                                </TooltipCompositions.Default>
+                            );
+                        })}
+                    </Tabs.List>
+                </Tabs.Root>
             </div>
         );
     }
@@ -73,12 +72,19 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
     function makeHeaderContent() {
         if (props.isCollapsed) {
             return (
-                <DenseIconButton onClick={props.onExpandClick} title="Expand settings panel">
+                <Button
+                    onClick={props.onExpandClick}
+                    title="Expand settings panel"
+                    iconOnly
+                    tone="neutral"
+                    size="small"
+                    variant="text"
+                >
                     <div className="flex flex-row items-center">
-                        {activeTab?.icon ?? <Settings fontSize="small" />}
-                        <ChevronRight fontSize="small" />
+                        {activeTab?.icon ?? <Settings fontSize="inherit" />}
+                        <ChevronRight fontSize="inherit" />
                     </div>
-                </DenseIconButton>
+                </Button>
             );
         }
 
@@ -101,27 +107,34 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                         title={`Module has warning${highlightWarning ? " (click to view)" : ""}`}
                         enterDelay="medium"
                     >
-                        <WarningRounded
-                            fontSize="small"
-                            className={
-                                highlightWarning
-                                    ? "text-warning-subtle shrink-0 cursor-pointer"
-                                    : "text-neutral-subtle shrink-0"
-                            }
+                        <Button
+                            variant="text"
+                            disabled={!highlightWarning}
+                            tone="neutral"
+                            iconOnly
                             onClick={handleWarningIconClick}
-                        />
+                        >
+                            <WarningRounded fontSize="inherit" />
+                        </Button>
                     </Tooltip>
                 )}
-                <DenseIconButton onClick={props.onCollapseClick} title="Collapse settings panel">
-                    <ChevronLeft fontSize="small" />
-                </DenseIconButton>
+                <Button
+                    onClick={props.onCollapseClick}
+                    title="Collapse settings panel"
+                    iconOnly
+                    tone="neutral"
+                    size="small"
+                    variant="text"
+                >
+                    <ChevronLeft fontSize="inherit" />
+                </Button>
             </>
         );
     }
 
     return (
         <div className="flex flex-col">
-            <div className="gap-horizontal-2xs pt-vertical-3xs pr-horizontal-2xs flex h-10 items-center bg-slate-100 shadow-[inset_0_-1px_2px_rgba(0,0,0,0.1)]">
+            <div className="gap-horizontal-md pr-horizontal-2xs bg-canvas flex h-10 items-center shadow-[inset_0_-1px_2px_rgba(0,0,0,0.1)]">
                 {makeHeaderContent()}
             </div>
             {!props.isCollapsed && isWarningVisible && warningText && (
@@ -138,16 +151,11 @@ type WarningBannerProps = {
 
 function WarningBanner(props: WarningBannerProps): React.ReactNode {
     return (
-        <Banner tone="warning" dismissable={true} onDismiss={props.onDismiss}>
-            <div className="flex flex-col">
-                <span>
-                    <strong>Note:</strong> {props.text}
-                </span>
-                <strong className="cursor-pointer self-end" onClick={props.onDismiss}>
-                    Close [X]
-                </strong>
-            </div>
-        </Banner>
+        <div className="px-horizontal-2xs py-vertical-2xs">
+            <Banner tone="warning" dismissable={true} onDismiss={props.onDismiss}>
+                <strong>Note:</strong> {props.text}
+            </Banner>
+        </div>
     );
 }
 
@@ -155,40 +163,3 @@ type TabConfig = {
     title: string;
     icon: React.ReactElement;
 };
-
-type TabDividerProps = {
-    visible: boolean;
-};
-
-function TabDivider(props: TabDividerProps): React.ReactNode {
-    return <div className={resolveClassNames("h-1/2 w-px", props.visible ? "bg-slate-300" : "bg-transparent")} />;
-}
-
-type TabProps = {
-    config: TabConfig;
-    isActive: boolean;
-    onClick: () => void;
-    onMouseEnter: () => void;
-    onMouseLeave: () => void;
-};
-
-function SettingTab(props: TabProps): React.ReactNode {
-    return (
-        <Tooltip title={props.config.title} placement="bottom">
-            <button
-                onClick={props.onClick}
-                onMouseEnter={props.onMouseEnter}
-                onMouseLeave={props.onMouseLeave}
-                className={resolveClassNames(
-                    "relative flex h-full items-center justify-center px-2 transition-colors",
-                    {
-                        "rounded-t bg-white pt-2 pb-2 shadow-[0_-1px_2px_rgba(0,0,0,0.1)]": props.isActive,
-                        "cursor-pointer hover:rounded-t hover:bg-blue-100": !props.isActive,
-                    },
-                )}
-            >
-                {props.config.icon}
-            </button>
-        </Tooltip>
-    );
-}

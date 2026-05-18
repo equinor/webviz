@@ -18,19 +18,25 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
         return props.caseId;
     }
 
+    const highlightRef = React.useRef<HTMLSpanElement>(null);
+
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested}>
+        <CopyCellValue onCopyRequested={handleCopyRequested} highlightRef={highlightRef}>
             <div
                 className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
             >
-                <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                <div className="gap-horizontal-2xs flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
                     {props.caseName}
                     <span
-                        className={resolveClassNames("text-xs text-slate-500", { "text-white": props.cellRowSelected })}
+                        className={resolveClassNames("text-body-xs text-neutral-subtle", {
+                            "text-neutral-subtle-on-emphasis": props.cellRowSelected,
+                        })}
                     >
-                        {" "}
-                        - {props.caseId}
+                        -{" "}
+                        <span ref={highlightRef} className="inline-block">
+                            {props.caseId}
+                        </span>
                     </span>
                 </div>
             </div>

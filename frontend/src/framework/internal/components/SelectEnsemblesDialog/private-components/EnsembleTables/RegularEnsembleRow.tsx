@@ -48,10 +48,11 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                     </SortableList.DragHandle>
                 </td>
                 <td className="px-horizontal-xs py-vertical-xs">
-                    <ColorSelect value={props.ensembleSetting.color} onChange={onColorChange} />
+                    <ColorSelect size="small" value={props.ensembleSetting.color} onChange={onColorChange} />
                 </td>
                 <td className="px-horizontal-xs py-vertical-xs">
                     <TextInput
+                        size="small"
                         value={props.ensembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
                         onValueChange={onNameChange}
