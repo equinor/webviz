@@ -1,4 +1,5 @@
 import os
+import httpx
 
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
@@ -15,34 +16,16 @@ VDS_HOST_ADDRESS = os.environ["WEBVIZ_VDS_HOST_ADDRESS"]
 
 SURFACE_QUERY_URL = "http://surface-query:5001"
 
-GRAPH_SCOPES = ["User.Read", "User.ReadBasic.All"]
+# Query Sumo's well-known endpoint to get the resource scopes for the current Sumo environment.
+sumo_well_known_dict = httpx.get("https://api.sumo.equinor.com/well-known").json()
 
-SUMO_OAUTH_SCOPES_BY_ENV = {
-    "dev": "api://88d2b022-3539-4dda-9e66-853801334a86/access_as_user",
-    "prod": "api://9e5443dd-3431-4690-9617-31eed61cb55a/access_as_user",
-}
+GRAPH_SCOPES = ["User.Read", "User.ReadBasic.All"]
 RESOURCE_SCOPES_DICT = {
+    "sumo": [f"api://{sumo_well_known_dict['envs'][SUMO_ENV]['resource_id']}/access_as_user"],
     "smda": ["api://691a29c5-8199-4e87-80a2-16bd71e831cd/user_impersonation"],
     "ssdl": ["8b6e5eb9-edc8-4086-83cb-afa5cc185b23/user_impersonation"],
     "pdm": ["f2e415dc-d400-4cd4-a801-fa707138a49c/user_impersonation"],
 }
-
-
-def get_sumo_oauth_scope() -> str:
-    sumo_oauth_scope = SUMO_OAUTH_SCOPES_BY_ENV.get(SUMO_ENV)
-    if sumo_oauth_scope is not None:
-        return sumo_oauth_scope
-
-    raise RuntimeError(f"Unsupported Sumo environment '{SUMO_ENV}', expected 'prod' or 'dev'")
-
-
-def get_resource_scopes(resource_name: str) -> list[str] | None:
-    if resource_name == "sumo":
-        return [get_sumo_oauth_scope()]
-
-    return RESOURCE_SCOPES_DICT.get(resource_name)
-
-
 REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
 

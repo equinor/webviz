@@ -194,7 +194,7 @@ def _acquire_access_token_for_resource_scopes(
     if resource_name == "graph":
         scopes_list = config.GRAPH_SCOPES
     else:
-        scopes_list = config.get_resource_scopes(resource_name)
+        scopes_list = config.RESOURCE_SCOPES_DICT.get(resource_name)
 
     if not scopes_list:
         return None
