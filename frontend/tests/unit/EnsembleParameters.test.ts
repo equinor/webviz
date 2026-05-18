@@ -7,13 +7,13 @@ import { MinMax } from "@lib/utils/MinMax";
 
 // prettier-ignore
 const PARAM_ARR: Parameter[] = [
-    {type: ParameterType.CONTINUOUS, name: "cparam_10", groupName: null,   description: "desc10",   isConstant: false, isLogarithmic: false, realizations: [1,2,3], values: [11, 12, 19]},
-    {type: ParameterType.CONTINUOUS, name: "cparam_20", groupName: null,   description: "desc20",   isConstant: false, isLogarithmic: false, realizations: [1,2,3], values: [21, 22, 29]},
-    {type: ParameterType.CONTINUOUS, name: "cparam_50", groupName: "grp1", description: "desc50g1", isConstant: false, isLogarithmic: false, realizations: [1,2,3], values: [51, 52, 54]},
-    {type: ParameterType.CONTINUOUS, name: "cparam_50", groupName: "grp2", description: "desc50g2", isConstant: false, isLogarithmic: false, realizations: [1,2,3], values: [55, 56, 59]},
+    { type: ParameterType.CONTINUOUS, name: "cparam_10", groupName: null, description: "desc10", isConstant: false, isLogarithmic: false, realizations: [1, 2, 3], values: [11, 12, 19] },
+    { type: ParameterType.CONTINUOUS, name: "cparam_20", groupName: null, description: "desc20", isConstant: false, isLogarithmic: false, realizations: [1, 2, 3], values: [21, 22, 29] },
+    { type: ParameterType.CONTINUOUS, name: "cparam_50", groupName: "grp1", description: "desc50g1", isConstant: false, isLogarithmic: false, realizations: [1, 2, 3], values: [51, 52, 54] },
+    { type: ParameterType.CONTINUOUS, name: "cparam_50", groupName: "grp2", description: "desc50g2", isConstant: false, isLogarithmic: false, realizations: [1, 2, 3], values: [55, 56, 59] },
 
-    {type: ParameterType.DISCRETE, name: "dparam_A", groupName: null, description: "descA", isConstant: false, realizations: [1,2,3], values: [1, 2, 3]},
-    {type: ParameterType.DISCRETE, name: "dparam_B", groupName: null, description: "descB", isConstant: false, realizations: [1,2,3], values: ["A", "B", "C"]},
+    { type: ParameterType.DISCRETE, name: "dparam_A", groupName: null, description: "descA", isConstant: false, realizations: [1, 2, 3], isNumerical: true, values: [1, 2, 3] },
+    { type: ParameterType.DISCRETE, name: "dparam_B", groupName: null, description: "descB", isConstant: false, realizations: [1, 2, 3], isNumerical: false, values: ["A", "B", "C"] },
 ];
 
 describe("EnsembleParameters tests", () => {
