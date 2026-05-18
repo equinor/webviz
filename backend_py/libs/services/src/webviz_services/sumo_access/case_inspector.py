@@ -29,6 +29,8 @@ class CaseInspector:
         self._sumo_client = sumo_client
         self._case_uuid = case_uuid
         self._cached_case_context: Case | None = None
+        # Prevent duplicate lazy initialization when several async getters run concurrently.
+        self._case_context_lock = asyncio.Lock()
 
     @classmethod
     def from_case_uuid(cls, access_token: str, case_uuid: str) -> "CaseInspector":
@@ -37,9 +39,11 @@ class CaseInspector:
 
     async def _get_or_create_case_context_async(self) -> Case:
         if self._cached_case_context is None:
-            self._cached_case_context = await create_sumo_case_async(
-                client=self._sumo_client, case_uuid=self._case_uuid
-            )
+            async with self._case_context_lock:
+                if self._cached_case_context is None:
+                    self._cached_case_context = await create_sumo_case_async(
+                        client=self._sumo_client, case_uuid=self._case_uuid
+                    )
 
         return self._cached_case_context
 
@@ -115,6 +119,24 @@ class CaseInspector:
         case = await self._get_or_create_case_context_async()
         field_identifiers = await case.fieldidentifiers_async
         return field_identifiers
+
+    async def get_field_uuids_async(self) -> list[str]:
+        """Retrieve the field uuids for a case"""
+        case = await self._get_or_create_case_context_async()
+        field_ids = await case.get_field_values_async(field="masterdata.smda.field.uuid.keyword")
+        return field_ids
+
+    async def get_case_coordinate_system_async(self) -> str:
+        """Retrieve the coordinate system for a case"""
+        case = await self._get_or_create_case_context_async()
+        coordinate_systems = await case.get_field_values_async(
+            field="masterdata.smda.coordinate_system.identifier.keyword"
+        )
+        if len(coordinate_systems) == 0:
+            raise NoDataError(f"No coordinate system found for {case.name}", Service.SUMO)
+        if len(coordinate_systems) > 1:
+            raise MultipleDataMatchesError(f"Multiple coordinate systems found for {case.name}", Service.SUMO)
+        return coordinate_systems[0]
 
     async def get_standard_results_in_ensemble_async(self, ensemble_name: str) -> list[str]:
         """Retrieve the standard results for a specific ensemble"""
