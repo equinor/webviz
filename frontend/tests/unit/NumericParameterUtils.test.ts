@@ -77,6 +77,7 @@ function makeEnsemble(parameters: Parameter[]): RegularEnsemble {
         REALIZATIONS,
         parameters,
         null,
+        null,
         "#000000",
     );
 }

@@ -44,6 +44,7 @@ function makeEnsemble(name: string, values: number[]): RegularEnsemble {
         [1, 2, 3],
         [parameter],
         null,
+        null,
         "#000000",
     );
 }
