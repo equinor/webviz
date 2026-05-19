@@ -40,6 +40,14 @@ const meta: Meta<typeof Table.Root> = {
     },
 
     decorators: [
+        (Story) => {
+            return (
+                // TODO: Can't get the layout and stuff to stretch horizontally in a nice way, so hard-coding some sizes here
+                <div className="flex h-full w-[80vw] max-w-[850px] items-center">
+                    <Story />
+                </div>
+            );
+        },
         // Add state variables to keep track of sorting and selection state
         function SortableAndSelectable(Story, ctx) {
             const [tableSortingState, setTableSortingState] = React.useState<SortingConf>({});
@@ -87,7 +95,7 @@ type Story = StoryObj<typeof Table.Root>;
 
 export const Default: Story = {
     render: (args) => (
-        <Table.Root layoutClassName="w-[80vw]" {...args}>
+        <Table.Root layoutClassName="w-full" {...args}>
             <Table.Head>
                 <Table.Column colKey="id">ID</Table.Column>
                 <Table.Column colKey="name">Name</Table.Column>
