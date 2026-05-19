@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from dataclasses import dataclass
 from typing import Any, Coroutine
 
 from fastapi import APIRouter, Depends, Path, Query, Body, Response
@@ -19,6 +20,52 @@ from . import schemas
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@dataclass(frozen=True)
+class _EnsembleDetailsData:
+    case_name: str
+    realizations: list[int]
+    asset_name: str
+    field_identifiers: list[str]
+    stratigraphic_column_identifier: str
+    standard_results: list[str]
+    fip_regions: list[schemas.FipRegion]
+
+
+async def _get_ensemble_details_data_async(case_inspector: CaseInspector, ensemble_name: str) -> _EnsembleDetailsData:
+    async with asyncio.TaskGroup() as task_group:
+        case_name_task = task_group.create_task(case_inspector.get_case_name_async())
+        realizations_task = task_group.create_task(case_inspector.get_realizations_in_ensemble_async(ensemble_name))
+        asset_name_task = task_group.create_task(case_inspector.get_asset_name_async())
+        field_identifiers_task = task_group.create_task(case_inspector.get_field_identifiers_async())
+        stratigraphic_column_identifier_task = task_group.create_task(
+            case_inspector.get_stratigraphic_column_identifier_async()
+        )
+        standard_results_task = task_group.create_task(
+            case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
+        )
+        fip_regions_mapping_task = task_group.create_task(case_inspector.get_fip_regions_mapping_async(ensemble_name))
+
+    fip_regions_mapping = fip_regions_mapping_task.result()
+    fip_regions = (
+        [
+            schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION)
+            for mapping in fip_regions_mapping.root
+        ]
+        if fip_regions_mapping is not None
+        else []
+    )
+
+    return _EnsembleDetailsData(
+        case_name=case_name_task.result(),
+        realizations=realizations_task.result(),
+        asset_name=asset_name_task.result(),
+        field_identifiers=field_identifiers_task.result(),
+        stratigraphic_column_identifier=stratigraphic_column_identifier_task.result(),
+        standard_results=standard_results_task.result(),
+        fip_regions=fip_regions,
+    )
 
 
 @router.get("/asset_infos")
@@ -92,56 +139,27 @@ async def get_ensemble_details(
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
-
-    async with asyncio.TaskGroup() as task_group:
-        case_name_task = task_group.create_task(case_inspector.get_case_name_async())
-        realizations_task = task_group.create_task(case_inspector.get_realizations_in_ensemble_async(ensemble_name))
-        asset_name_task = task_group.create_task(case_inspector.get_asset_name_async())
-        field_identifiers_task = task_group.create_task(case_inspector.get_field_identifiers_async())
-        stratigraphic_column_identifier_task = task_group.create_task(
-            case_inspector.get_stratigraphic_column_identifier_async()
-        )
-        standard_results_task = task_group.create_task(
-            case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
-        )
-        fip_regions_mapping_task = task_group.create_task(case_inspector.get_fip_regions_mapping_async(ensemble_name))
-
-    case_name = case_name_task.result()
-    realizations = realizations_task.result()
-    asset_name = asset_name_task.result()
-    field_identifiers = field_identifiers_task.result()
-    stratigraphic_column_identifier = stratigraphic_column_identifier_task.result()
-    standard_results = standard_results_task.result()
-    fip_regions_mapping = fip_regions_mapping_task.result()
+    details = await _get_ensemble_details_data_async(case_inspector, ensemble_name)
 
     await validate_case_coordinate_systems_match_async(
         case_inspector,
         smda_access,
         case_uuid,
         ensemble_name,
-        asset_name,
-        field_identifiers,
-    )
-
-    fip_regions = (
-        [
-            schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION)
-            for mapping in fip_regions_mapping.root
-        ]
-        if fip_regions_mapping is not None
-        else []
+        details.asset_name,
+        details.field_identifiers,
     )
 
     return schemas.EnsembleDetails(
         name=ensemble_name,
-        caseName=case_name,
+        caseName=details.case_name,
         caseUuid=case_uuid,
-        assetName=asset_name,
-        realizations=realizations,
-        fieldIdentifiers=field_identifiers,
-        stratigraphicColumnIdentifier=stratigraphic_column_identifier,
-        standardResults=standard_results,
-        fipRegions=fip_regions,
+        assetName=details.asset_name,
+        realizations=details.realizations,
+        fieldIdentifiers=details.field_identifiers,
+        stratigraphicColumnIdentifier=details.stratigraphic_column_identifier,
+        standardResults=details.standard_results,
+        fipRegions=details.fip_regions,
     )
 
 
