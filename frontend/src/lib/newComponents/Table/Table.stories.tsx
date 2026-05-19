@@ -1,7 +1,11 @@
 import React from "react";
 
+import { DragIndicator } from "@mui/icons-material";
 import type { Meta, StoryObj } from "@storybook/react";
 import { orderBy } from "lodash";
+
+import { SortableList } from "@lib/components/SortableList";
+import { arrayMove } from "@lib/utils/arrays";
 
 import { Banner } from "../Banner";
 import { Typography } from "../Typography";
@@ -10,7 +14,8 @@ import { SortDirection } from "./typesAndEnums";
 
 import { Table } from ".";
 
-const EXAMPLE_DATA = [
+type TExampleData = { id: number; email: string; name: string };
+const EXAMPLE_DATA: TExampleData[] = [
     { id: 0, name: "Grace Wilson", email: "wilson.g@example.com" },
     { id: 1, name: "David Brown", email: "d.brown@example.com" },
     { id: 2, name: "Jack Anderson", email: "andersoj@example.com" },
@@ -21,7 +26,7 @@ const EXAMPLE_DATA = [
     { id: 7, name: "Emma Davis", email: "e.davis@example.com" },
     { id: 8, name: "Carol Williams", email: "c.williams@example.com" },
     { id: 9, name: "Frank Miller", email: "millerf@example.com" },
-] as const;
+];
 
 type SortingConf = {
     [colKey: string]: SortDirection;
@@ -87,6 +92,12 @@ const meta: Meta<typeof Table.Root> = {
                 </>
             );
         },
+        (Story) => (
+            <>
+                <Story />
+                <div id="portal-root"></div>
+            </>
+        ),
     ],
 };
 
@@ -238,6 +249,7 @@ export const Overflow: Story = {
             </Table.Head>
             <Table.Body>
                 {/* {range(0, 100)} */}
+                {/* TODO: Virtualization */}
                 <ExampleTableDataRows data={EXAMPLE_DATA} />
                 <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 1 }))} />
                 <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 2 }))} />
@@ -258,7 +270,58 @@ export const Overflow: Story = {
     ),
 };
 
-function ExampleTableDataRows(props: { data: ReadonlyArray<Record<string, any>> }): React.ReactNode {
+export const Draggable: Story = {
+    render: function DraggableComponent(args) {
+        const tableBodyRef = React.useRef<HTMLTableSectionElement | null>(null);
+        const tableHeaderRef = React.useRef<HTMLTableSectionElement | null>(null);
+
+        const [orderedData, setOrderedData] = React.useState(EXAMPLE_DATA);
+
+        function handleItemMoved(movedItemId: string, position: number) {
+            setOrderedData((prev) => {
+                const oldPos = prev.findIndex((d) => d.id === Number(movedItemId));
+                return arrayMove(prev, oldPos, position);
+            });
+        }
+
+        return (
+            <SortableList isMoveAllowed={() => true} onItemMoved={handleItemMoved}>
+                <SortableList.ScrollContainer>
+                    <Table.Root layoutClassName="w-full table-fixed" {...args}>
+                        {/* <SortableList.NoDropZone>
+                            <Table.Head>
+                                <Table.Column colKey="handle">{null}</Table.Column>
+                                <Table.Column colKey="id">ID</Table.Column>
+                                <Table.Column colKey="name">Name</Table.Column>
+                                <Table.Column colKey="email">Email</Table.Column>
+                            </Table.Head>
+                        </SortableList.NoDropZone> */}
+                        <SortableList.Content>
+                            <Table.Body ref={tableBodyRef}>
+                                {orderedData.map((datum) => (
+                                    <SortableList.Item key={datum.id} id={String(datum.id)}>
+                                        <Table.Row>
+                                            <Table.Cell>
+                                                <SortableList.DragHandle className="flex items-center justify-center">
+                                                    <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                                                </SortableList.DragHandle>
+                                            </Table.Cell>
+                                            <Table.Cell>{datum.id}</Table.Cell>
+                                            <Table.Cell>{datum.name}</Table.Cell>
+                                            <Table.Cell>{datum.email}</Table.Cell>
+                                        </Table.Row>
+                                    </SortableList.Item>
+                                ))}
+                            </Table.Body>
+                        </SortableList.Content>
+                    </Table.Root>
+                </SortableList.ScrollContainer>
+            </SortableList>
+        );
+    },
+};
+
+function ExampleTableDataRows(props: { data: readonly TExampleData[] }): React.ReactNode {
     return props.data.map((datum, i) => (
         <Table.Row rowKey={String(datum.id)} key={datum.id ?? i}>
             {Object.values(datum).map((v) => (

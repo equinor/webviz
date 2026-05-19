@@ -23,6 +23,7 @@ export type TableRootProps = {
     sortedColumns: [];
     currentSort?: { [colKey: string]: SortDirection };
     selectedRow?: string | null;
+    // headRef: React.MutableRefObject
     onRowSelect?: (rowKey: string) => void;
     onChangeSortDirection?: (colKey: string, newDirection: SortDirection) => void;
 } & ComponentWrapperProps<React.HTMLAttributes<HTMLTableElement>>;
@@ -46,8 +47,8 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
     const sizeOrDefault = props.size ?? "md";
 
     const headChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Head);
-    const bodyChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Body);
-    const footChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Foot);
+    // const bodyChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Body);
+    // const footChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Foot);
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
@@ -61,35 +62,36 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
     }
 
     return (
-        <TableRootContext.Provider
-            value={{
-                size: sizeOrDefault,
-                sortable: props.sortable,
-                compact: props.compact,
-                selectable: props.selectable,
-                currentSort: props.currentSort,
-                selectedRow: props.selectedRow,
-                onRowSelect: props.onRowSelect,
-                onColumnSort: props.onChangeSortDirection,
-            }}
-        >
-            <TableColumnContext.Provider value={headColumnMetaData}>
-                <div className={resolveClassNames("relative overflow-auto", layoutClassName)}>
-                    <Typography
-                        {...baseProps}
-                        className="w-full border-separate border-spacing-[0]"
-                        as="table"
-                        ref={ref}
-                        family="body"
-                        size={sizeOrDefault}
-                    >
-                        {headChild}
+        <div className={resolveClassNames("relative overflow-auto", layoutClassName)}>
+            <Typography
+                {...baseProps}
+                className="w-full border-separate border-spacing-[0]"
+                as="table"
+                ref={ref}
+                family="body"
+                size={sizeOrDefault}
+            >
+                <TableRootContext.Provider
+                    value={{
+                        size: sizeOrDefault,
+                        sortable: props.sortable,
+                        compact: props.compact,
+                        selectable: props.selectable,
+                        currentSort: props.currentSort,
+                        selectedRow: props.selectedRow,
+                        onRowSelect: props.onRowSelect,
+                        onColumnSort: props.onChangeSortDirection,
+                    }}
+                >
+                    <TableColumnContext.Provider value={headColumnMetaData}>
+                        {/* {headChild}
                         {bodyChild}
-                        {footChild}
-                    </Typography>
-                </div>
-            </TableColumnContext.Provider>
-        </TableRootContext.Provider>
+                        {footChild} */}
+                        {props.children}
+                    </TableColumnContext.Provider>
+                </TableRootContext.Provider>
+            </Typography>
+        </div>
     );
 }
 
