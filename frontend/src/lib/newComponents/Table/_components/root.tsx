@@ -29,7 +29,19 @@ export type TableRootProps = {
 
 function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableElement>): React.ReactNode {
     const { layoutClassName, ...otherProps } = props;
-    const baseProps = resolveWrapperProps(otherProps, "sortable", "selectable", "size", "onRowSelect");
+    const baseProps = resolveWrapperProps(
+        otherProps,
+        "sortable",
+        "selectable",
+        "size",
+        "children",
+        "compact",
+        "sortedColumns",
+        "currentSort",
+        "selectedRow",
+        "onRowSelect",
+        "onChangeSortDirection",
+    );
 
     const sizeOrDefault = props.size ?? "md";
 
@@ -83,7 +95,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
 
 function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth = -1): ColumnMetaData {
     if (depth > 100) throw new Error("Maximum column depth exceeded. Check for circular references");
-    if (!React.isValidElement(columnParent)) throw new Error("Exepected a valid React element as column parent");
+    if (!React.isValidElement(columnParent)) throw new Error("Expected a valid React element as column parent");
 
     const { children: colChildren, ...cellProps } = columnParent.props ?? {};
 
