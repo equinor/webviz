@@ -28,11 +28,14 @@ async def test_get_projected_coordinate_system_for_field_async_filters_none_valu
     assert result == "ST_WGS84_UTM37N_P32637"
 
 
-async def test_get_projected_coordinate_system_for_field_async_rejects_missing_coordinate_system_async() -> None:
+async def test_get_projected_coordinate_system_for_field_async_returns_none_when_missing_coordinate_system_async() -> (
+    None
+):
     access = FakeSmdaAccess([{"projected_coordinate_system": None}])
 
-    with pytest.raises(NoDataError, match="No projected coordinate system found"):
-        await access.get_projected_coordinate_system_for_field_async("field-a")
+    result = await access.get_projected_coordinate_system_for_field_async("field-a")
+
+    assert result is None
 
 
 async def test_get_projected_coordinate_system_for_field_async_rejects_multiple_values_async() -> None:

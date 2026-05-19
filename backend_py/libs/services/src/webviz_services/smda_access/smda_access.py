@@ -49,9 +49,9 @@ class SmdaAccess:
     async def _smda_get_aggregation_request_async(self, endpoint: str, params: dict) -> dict:
         return await smda_get_aggregation_request_async(access_token=self._smda_token, endpoint=endpoint, params=params)
 
-    async def get_projected_coordinate_system_for_field_async(self, field_uuid: str) -> str:
+    async def get_projected_coordinate_system_for_field_async(self, field_uuid: str) -> str | None:
         """
-        Get the projected coordinate system for a given field.
+        Get the projected coordinate system for a given field, if it exists.
         """
         params = {"uuid": field_uuid, "_projection": "projected_coordinate_system"}
 
@@ -71,7 +71,7 @@ class SmdaAccess:
             )
 
         if not projected_coordinate_systems:
-            raise NoDataError(f"No projected coordinate system found for {field_uuid=}.", Service.SMDA)
+            return None
 
         return projected_coordinate_systems[0]
 

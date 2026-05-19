@@ -105,7 +105,6 @@ async def get_ensemble_details(
             case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
         )
         fip_regions_mapping_task = task_group.create_task(case_inspector.get_fip_regions_mapping_async(ensemble_name))
-        task_group.create_task(validate_case_coordinate_systems_match_async(case_inspector, smda_access, case_uuid))
 
     case_name = case_name_task.result()
     realizations = realizations_task.result()
@@ -114,6 +113,15 @@ async def get_ensemble_details(
     stratigraphic_column_identifier = stratigraphic_column_identifier_task.result()
     standard_results = standard_results_task.result()
     fip_regions_mapping = fip_regions_mapping_task.result()
+
+    await validate_case_coordinate_systems_match_async(
+        case_inspector,
+        smda_access,
+        case_uuid,
+        ensemble_name,
+        asset_name,
+        field_identifiers,
+    )
 
     fip_regions = (
         [
