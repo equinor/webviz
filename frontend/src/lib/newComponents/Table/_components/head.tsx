@@ -1,5 +1,7 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { useTableColumnContext } from "../_contexts/tableColumnContext";
 import { TableSectionContext } from "../_contexts/tableSectionContext";
 import { recursivelyBuildHeaderRows } from "../_utils";
@@ -22,7 +24,12 @@ function HeadComponent(props: TableHeadProps, ref: React.ForwardedRef<HTMLTableS
 
     return (
         <TableSectionContext.Provider value="head">
-            <thead ref={ref} className="bg-input text-neutral-strong border-neutral-subtle border-separate border-b-2">
+            <thead
+                ref={ref}
+                className={resolveClassNames("bg-input text-neutral-strong border-neutral-subtle border-b-2", {
+                    "sticky top-0": props.sticky,
+                })}
+            >
                 {tableRows.map((row, rowIndex) => (
                     <Row key={rowIndex}>
                         {row.map((cell, cellIndex) => (

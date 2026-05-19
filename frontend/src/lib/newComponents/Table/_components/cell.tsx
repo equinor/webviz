@@ -30,7 +30,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
     const sectionContext = useTableSectionContext();
     const rootContext = useTableRootContext();
 
-    const CellTag = sectionContext === "head" ? "th" : "td";
+    const CellTag = sectionContext === "body" ? "td" : "th";
 
     // Local prop takes precedence over root prop
     const isSortable = (props.sortable ?? rootContext.sortable) && sectionContext === "head";
@@ -55,19 +55,27 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             ref={ref}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
-            className={resolveClassNames("px-horizontal-sm text-left whitespace-nowrap", {
+            className={resolveClassNames("px-horizontal-sm border-neutral-subtle text-left whitespace-nowrap", {
+                "border-b": sectionContext === "body",
+                "font-bolder border-b-2": sectionContext !== "body",
                 "py-vertical-sm": !rootContext.compact,
                 "py-vertical-2xs": rootContext.compact,
                 "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
-                "border-accent text-accent-subtle border-b-2": isActive,
+                "border-accent! text-accent-subtle": isActive,
             })}
             onClick={toggleSort}
             onKeyDown={(evt) => {
-                if ([Key.Enter, " "].includes(evt.key)) toggleSort();
+                if (!isSortable) return;
+                if (![Key.Enter, " "].includes(evt.key)) return;
+
+                evt.preventDefault();
+                toggleSort();
             }}
         >
-            {props.children}
-            {isSortable && <SortingIcon direction={currentSortDirection} />}
+            <div className="flex items-center">
+                {props.children}
+                {isSortable && <SortingIcon direction={currentSortDirection} />}
+            </div>
         </CellTag>
     );
 }
@@ -78,10 +86,10 @@ function SortingIcon(props: { direction: SortDirection }): React.ReactNode {
     switch (props.direction) {
         case SortDirection.NONE:
             // ! We add an invisible icon to keep spacing consistent as you toggle
-            return <Square fontSize="inherit" className="invisible" />;
+            return <Square fontSize="inherit" className="ml-vertical-4xs invisible" />;
         case SortDirection.ASC:
-            return <ArrowUpward fontSize="inherit" />;
+            return <ArrowUpward fontSize="inherit" className="ml-vertical-4xs" />;
         case SortDirection.DESC:
-            return <ArrowDownward fontSize="inherit" />;
+            return <ArrowDownward fontSize="inherit" className="ml-vertical-4xs" />;
     }
 }

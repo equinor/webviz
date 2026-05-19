@@ -1,6 +1,7 @@
 import { Body } from "./_components/body";
 import { Cell } from "./_components/cell";
 import { Column } from "./_components/column";
+import { Foot } from "./_components/foot";
 import { Head } from "./_components/head";
 import { Root } from "./_components/root";
 import { Row } from "./_components/row";
@@ -9,6 +10,7 @@ export const Table = {
     Root,
     Head,
     Body,
+    Foot,
     Cell,
     Row,
     Column,
@@ -20,3 +22,4 @@ export type { TableHeadProps } from "./_components/head";
 export type { TableRootProps } from "./_components/root";
 export type { TableRowProps } from "./_components/row";
 export type { TableColumnProps } from "./_components/column";
+export type { TableFootProps } from "./_components/foot";

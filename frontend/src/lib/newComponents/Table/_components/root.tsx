@@ -2,6 +2,7 @@ import React from "react";
 
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { TableColumnContextType } from "../_contexts/tableColumnContext";
 import { TableColumnContext } from "../_contexts/tableColumnContext";
@@ -10,12 +11,12 @@ import type { ColumnMetaData, SortDirection } from "../typesAndEnums";
 
 import { Body } from "./body";
 import { Column } from "./column";
+import { Foot } from "./foot";
 import { Head } from "./head";
 
 export type TableRootProps = {
     sortable?: boolean;
     selectable?: boolean;
-
     children?: React.ReactNode;
     size?: "sm" | "md" | "lg";
     compact?: boolean;
@@ -27,12 +28,14 @@ export type TableRootProps = {
 } & ComponentWrapperProps<React.HTMLAttributes<HTMLTableElement>>;
 
 function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableElement>): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "sortable", "selectable", "size", "onRowSelect");
+    const { layoutClassName, ...otherProps } = props;
+    const baseProps = resolveWrapperProps(otherProps, "sortable", "selectable", "size", "onRowSelect");
 
     const sizeOrDefault = props.size ?? "md";
 
     const headChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Head);
     const bodyChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Body);
+    const footChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Foot);
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
@@ -59,10 +62,20 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
             }}
         >
             <TableColumnContext.Provider value={headColumnMetaData}>
-                <Typography {...baseProps} as="table" ref={ref} family="body" size={sizeOrDefault}>
-                    {headChild}
-                    {bodyChild}
-                </Typography>
+                <div className={resolveClassNames("relative overflow-auto", layoutClassName)}>
+                    <Typography
+                        {...baseProps}
+                        className="w-full border-separate border-spacing-[0]"
+                        as="table"
+                        ref={ref}
+                        family="body"
+                        size={sizeOrDefault}
+                    >
+                        {headChild}
+                        {bodyChild}
+                        {footChild}
+                    </Typography>
+                </div>
             </TableColumnContext.Provider>
         </TableRootContext.Provider>
     );

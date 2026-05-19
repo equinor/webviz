@@ -110,6 +110,11 @@ export const Default: Story = {
                     <Table.Cell>andersoj@example.com</Table.Cell>
                 </Table.Row>
             </Table.Body>
+            <Table.Foot>
+                <Table.Row>
+                    <Table.Cell colSpan={3}>Total items: 3</Table.Cell>
+                </Table.Row>
+            </Table.Foot>
         </Table.Root>
     ),
 };
@@ -210,6 +215,37 @@ export const Compact: Story = {
             <Table.Body>
                 <ExampleTableDataRows data={EXAMPLE_DATA} />
             </Table.Body>
+        </Table.Root>
+    ),
+};
+
+export const Overflow: Story = {
+    args: { compact: true },
+    render: (args) => (
+        <Table.Root layoutClassName="w-full max-h-[50vh] overflow-auto" {...args}>
+            <Table.Head sticky>
+                <Table.Column colKey="id">ID</Table.Column>
+                <Table.Column colKey="name">Name</Table.Column>
+                <Table.Column colKey="email">Email</Table.Column>
+            </Table.Head>
+            <Table.Body>
+                {/* {range(0, 100)} */}
+                <ExampleTableDataRows data={EXAMPLE_DATA} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 1 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 2 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 3 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 4 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 5 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 6 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 7 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 8 }))} />
+                <ExampleTableDataRows data={EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * 9 }))} />
+            </Table.Body>
+            <Table.Foot sticky>
+                <Table.Row>
+                    <Table.Cell colSpan={3}>Total items: 100</Table.Cell>
+                </Table.Row>
+            </Table.Foot>
         </Table.Root>
     ),
 };
