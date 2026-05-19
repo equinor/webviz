@@ -3,13 +3,14 @@ import React from "react";
 import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
+import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/wrapperProps";
 
 export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & {
     variant?: "contained" | "outlined" | "text";
-    size?: "small" | "default" | "large";
+    size?: SelectableSize;
     tone?: "accent" | "neutral" | "danger";
     disabled?: boolean;
     round?: boolean;
@@ -53,12 +54,6 @@ const VARIANT_TONE_CLASSES: Record<
     },
 };
 
-const SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
-    small: "h-selectable-sm text-body-sm",
-    default: "h-selectable-md text-body-md",
-    large: "h-selectable-lg text-body-lg",
-};
-
 const LABEL_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
     small: "px-horizontal-2xs",
     default: "px-horizontal-xs",
@@ -89,7 +84,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
                     "aspect-square justify-center": props.iconOnly,
                     [ICON_SIZE_CLASSES[size]]: props.iconOnly,
                 },
-                SIZE_CLASSES[size],
+                SELECTABLE_SIZES_CLASSNAMES[size],
                 VARIANT_TONE_CLASSES[variant][props.disabled ? "disabled" : tone],
             )}
         >

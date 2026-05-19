@@ -24,19 +24,17 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/newComponents/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { MenuText } from "@lib/components/MenuText/menuText";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Badge } from "@lib/newComponents/Badge";
+import { Button } from "@lib/newComponents/Button";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
+import { Separator } from "@lib/newComponents/Separator";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Separator } from "@lib/newComponents/Separator";
-import { Button } from "@lib/newComponents/Button";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -383,29 +381,37 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     return (
         <>
             {hasDataChannel && (
-                <DenseIconButton
+                <Button
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="cursor-grab touch-none"
+                    layoutClassName="cursor-grab! touch-none"
                     title={makeChannelOutButtonTitle()}
                     disabled={props.isSnapshotMode}
                     onPointerDown={handleDataChannelOriginPointerDown}
+                    iconOnly
+                    variant="text"
+                    size="small"
+                    tone="neutral"
                 >
                     <Badge badgeContent={numOutgoingConnections} invisible={props.isMinimized}>
                         <Output fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
             {hasDataReceiver && (
-                <DenseIconButton
+                <Button
                     title={makeChannelInButtonTitle()}
                     onPointerDown={handleReceiverPointerDown}
                     onPointerUp={handleReceiversPointerUp}
+                    iconOnly
+                    variant="text"
+                    size="small"
+                    tone="neutral"
                 >
                     <Badge badgeContent={numIncomingConnections} invisible={props.isMinimized}>
                         <Input fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
         </>
     );

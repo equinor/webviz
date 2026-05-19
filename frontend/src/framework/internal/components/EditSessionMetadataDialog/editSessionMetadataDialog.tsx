@@ -4,14 +4,18 @@ import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { Button } from "@lib/newComponents/Button";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { TextArea } from "@lib/newComponents/TextArea";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { Dialog } from "@lib/newComponents/Dialog";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -20,10 +24,6 @@ export type EditSessionMetadataDialogProps = {
     description?: string;
     open: boolean;
     onClose?: () => void;
-};
-
-type EditSessionDialogInputFeedback = {
-    title?: string;
 };
 
 export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps) {
@@ -114,66 +114,77 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         props.onClose?.();
     }
 
-    const inputFeedback: EditSessionDialogInputFeedback = React.useMemo(() => {
-        const feedback: EditSessionDialogInputFeedback = {};
-        if (title.trim() === "") {
-            feedback.title = "Title is required.";
-        }
-        return feedback;
-    }, [title]);
-
     const layout = hasActiveSession
         ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() ?? [])
         : [];
-
-    React.useEffect(
-        function focusInput() {
-            if (props.open && inputRef.current) {
-                inputRef.current.focus();
-            }
-        },
-        [props.open],
-    );
 
     return (
         <Dialog.Popup open={props.open} onOpenChange={handleCancel} modal width={600}>
             <Dialog.Header closeIconVisible>
                 <Dialog.Title>Edit session metadata</Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body layoutClassName="flex items-center gap-4">
-                <DashboardPreview height={100} width={100} layout={layout} />
-                <div className="flex min-w-0 grow flex-col gap-2">
-                    <CharLimitedInput
-                        label="Title"
-                        onControlledValueChange={(value) => setTitle(value)}
-                        maxLength={MAX_TITLE_LENGTH}
-                        inputRef={inputRef}
-                        placeholder="Enter session title"
-                        type="text"
-                        value={title}
-                        error={!!inputFeedback.title}
-                        autoFocus
-                        required
-                    />
-                    <div className="mb-1 h-4 text-sm text-red-600">{inputFeedback.title}</div>
-                    <CharLimitedInput
-                        label="Description (optional)"
-                        maxLength={MAX_DESCRIPTION_LENGTH}
-                        onControlledValueChange={(value) => setDescription(value)}
-                        placeholder="Enter session description"
-                        value={description}
-                        multiline
-                    />
-                </div>
-            </Dialog.Body>
-            <Dialog.Actions>
-                <Button variant="text" disabled={isSaving} onClick={handleCancel}>
-                    Cancel
-                </Button>
-                <Button variant="contained" disabled={isSaving} type="submit" form={formId}>
-                    {isSaving && <CircularProgress size="small" />} Save
-                </Button>
-            </Dialog.Actions>
+            <form id={formId} onSubmit={handleSave}>
+                <Dialog.Body layoutClassName="flex items-center gap-horizontal-sm">
+                    <DashboardPreview height={220} width={150} layout={layout} />
+                    <div className="gap-vertical-sm flex min-w-0 grow flex-col">
+                        <FieldCompositions.Default
+                            label="Title"
+                            required
+                            info={`Enter a descriptive title for your session, which will help you identify it later. This must not be longer than ${MAX_TITLE_LENGTH} characters.`}
+                        >
+                            <TextInput
+                                maxLength={MAX_TITLE_LENGTH}
+                                ref={inputRef}
+                                value={title}
+                                onValueChange={(val) => setTitle(val)}
+                                placeholder="Enter session title"
+                                autoFocus
+                                required
+                                endAdornment={
+                                    <TooltipCompositions.Default
+                                        content={`Your title is currently using ${title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
+                                    >
+                                        <Typography
+                                            size="sm"
+                                            family="body"
+                                            tone="neutral"
+                                        >{`${title.length}/${MAX_TITLE_LENGTH}`}</Typography>
+                                    </TooltipCompositions.Default>
+                                }
+                            />
+                            <FieldCompositions.GenericErrors />
+                        </FieldCompositions.Default>
+                        <FieldCompositions.Default label="Description">
+                            <TextArea
+                                maxLength={MAX_DESCRIPTION_LENGTH}
+                                value={description}
+                                onValueChange={(val) => setDescription(val)}
+                                placeholder="Enter session description"
+                                rows={3}
+                                bottomAdornment={
+                                    <TooltipCompositions.Default
+                                        content={`Your descriptions is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
+                                    >
+                                        <Typography
+                                            size="sm"
+                                            family="body"
+                                            tone="neutral"
+                                        >{`${description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
+                                    </TooltipCompositions.Default>
+                                }
+                            />
+                        </FieldCompositions.Default>
+                    </div>
+                </Dialog.Body>
+                <Dialog.Actions>
+                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                        Cancel
+                    </Button>
+                    <Button variant="contained" disabled={isSaving} type="submit" form={formId}>
+                        {isSaving && <CircularProgress size="small" />} Save
+                    </Button>
+                </Dialog.Actions>
+            </form>
         </Dialog.Popup>
     );
 }

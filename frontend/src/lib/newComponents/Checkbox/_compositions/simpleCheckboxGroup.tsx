@@ -24,7 +24,7 @@ export const SimpleCheckboxGroup = React.forwardRef<HTMLDivElement, SimpleCheckb
             <CheckboxGroup
                 {...groupProps}
                 ref={ref}
-                layoutClassName={resolveClassNames("gap-x-horizontal-sm gap-y-vertical-sm flex", {
+                layoutClassName={resolveClassNames("flex", {
                     "flex-row": layout === "horizontal",
                     "flex-col": layout === "vertical",
                 })}

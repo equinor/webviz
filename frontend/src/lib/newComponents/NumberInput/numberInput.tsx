@@ -62,7 +62,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 {defaultedProps.unitPlacement === "start" && wrappedUnitIcon}
 
                 <NumberFieldBase.Input
-                    className="py-vertical-3xs min-w-0 grow outline-0 data-disabled:cursor-not-allowed"
+                    className="py-vertical-3xs w-full min-w-0 grow outline-0 data-disabled:cursor-not-allowed"
                     ref={ref}
                     placeholder={defaultedProps.placeholder}
                 />

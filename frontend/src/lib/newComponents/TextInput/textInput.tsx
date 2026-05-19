@@ -6,14 +6,16 @@ import { Error } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import type { SelectableSize } from "../_shared/size";
+import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
-import { SelectableSize, SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 
-export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size">> & {
+export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size" | "type">> & {
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     size?: SelectableSize;
     inputSize?: InputBaseProps["size"];
+    type?: Exclude<InputBaseProps["type"], "number">;
 };
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {

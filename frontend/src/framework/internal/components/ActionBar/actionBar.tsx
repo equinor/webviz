@@ -1,8 +1,8 @@
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { Workbench } from "@framework/Workbench";
 import { Tabs } from "@lib/newComponents/Tabs";
-import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
@@ -25,7 +25,7 @@ export function ActionBar(props: ActionBarProps) {
     return (
         <div className="border-b-neutral-subtle bg-neutral-canvas shadow-elevation-raised border-b-2">
             <Tabs.Root defaultValue="start">
-                <Tabs.List indicatorPosition="end">
+                <Tabs.List indicatorPosition="end" size="small">
                     <Tab value="start">Start</Tab>
                     {activeModule ? (
                         <Tab value="module" selectionBased>
@@ -52,14 +52,14 @@ type TabProps = {
 function Tab(props: TabProps) {
     return (
         <Tabs.Tab value={props.value}>
-            <Typography
-                family="body"
-                size={props.selectionBased ? "sm" : "xs"}
-                tone={props.selectionBased ? "accent" : "neutral"}
-                weight={props.selectionBased ? "bolder" : "normal"}
+            <span
+                className={resolveClassNames(
+                    props.selectionBased ? "text-accent font-bolder" : "text-neutral",
+                    "text-body-xs",
+                )}
             >
                 {props.children}
-            </Typography>
+            </span>
         </Tabs.Tab>
     );
 }
