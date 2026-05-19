@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
 
-import type { ViewStateMap } from "@modules/Intersection/typesAndEnums";
+import type { ViewStateMap } from "../typesAndEnums";
 
 /**
  * Returns a new view state map with the source view's viewport propagated to all

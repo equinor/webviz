@@ -43,8 +43,7 @@ export class Group<
     TSettings extends Settings = [],
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
     TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-> implements ItemGroup
-{
+> implements ItemGroup {
     private readonly [GROUP_BRAND] = true;
 
     private _itemDelegate: ItemDelegate;

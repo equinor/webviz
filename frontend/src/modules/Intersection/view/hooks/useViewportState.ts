@@ -10,9 +10,9 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
 import { isValidNumber, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
-import type { ViewState } from "@modules/Intersection/typesAndEnums";
 
 import { viewStateMapAtom } from "../atoms/baseAtoms";
+import type { ViewState } from "../typesAndEnums";
 
 import type { ViewLinkResult } from "./useViewLinkResult";
 

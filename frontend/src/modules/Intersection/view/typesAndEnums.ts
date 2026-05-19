@@ -1,5 +1,8 @@
+import type { Viewport } from "@framework/types/viewport";
 import type { BBox } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
+
+export const MAX_INTERSECTION_VIEWS = 4;
 
 /**
  * Ref-stable callback used by the ViewLinkManager to propagate the source view's viewport to
@@ -42,3 +45,9 @@ export type ViewLinkManagerContextValue = {
     onLinkedBoundsChange: (viewId: string, bounds: Bounds) => void;
     onLinkedAutoFitViewChange: (viewId: string, value: boolean) => void;
 };
+export type ViewState = {
+    viewport: Viewport | null;
+    verticalScale: number;
+};
+
+export type ViewStateMap = Record<string, ViewState>;

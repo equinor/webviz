@@ -5,10 +5,8 @@ import type { Viewport } from "@framework/types/viewport";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import type { ViewStateMap } from "../typesAndEnums";
-
 import { viewStateMapAtom, viewLinksAtom } from "./atoms/baseAtoms";
-import type { ViewLink } from "./typesAndEnums";
+import type { ViewStateMap, ViewLink } from "./typesAndEnums";
 
 export type SerializedView = {
     viewLinks: ViewLink[];
