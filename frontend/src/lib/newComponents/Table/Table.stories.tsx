@@ -92,12 +92,6 @@ const meta: Meta<typeof Table.Root> = {
                 </>
             );
         },
-        (Story) => (
-            <>
-                <Story />
-                <div id="portal-root"></div>
-            </>
-        ),
     ],
 };
 

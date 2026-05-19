@@ -36,13 +36,6 @@ export const Item = React.forwardRef<HTMLElement, ItemProps>(function Item(props
 
     const dragGhostElement = useMakeDragGhostElement(props.id, only, itemElementRef);
 
-    // TODO: REMOVE
-    const [isMounted, setIsMounted] = React.useState(false);
-
-    React.useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
     return (
         <>
             {React.cloneElement(only, {
@@ -50,7 +43,7 @@ export const Item = React.forwardRef<HTMLElement, ItemProps>(function Item(props
                 "data-sortable": "item",
                 "data-item-id": props.id,
             })}
-            {isMounted && createPortal(dragGhostElement)}
+            {createPortal(dragGhostElement)}
         </>
     );
 });
