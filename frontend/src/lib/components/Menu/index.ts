@@ -1,4 +1,4 @@
-export * as Parts from "./index.parts";
+export * as Menu from "./index.parts";
 
 export type { Action, SubMenu, Divider, Text, MenuItem } from "./types";
 

@@ -6,6 +6,7 @@ export type Action = {
     icon?: React.ReactNode;
     description?: string;
     disabled?: boolean;
+    tooltip?: string;
     checked?: boolean;
 };
 

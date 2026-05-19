@@ -10,6 +10,9 @@ export type Action = {
     icon?: React.ReactNode;
     label: string;
     description?: string;
+    disabled?: boolean;
+    /** Shown as a native tooltip when the action is disabled. */
+    disabledReason?: string;
 };
 
 export type ActionGroup = {
@@ -33,6 +36,8 @@ function recursivelyMakeMenuItem(entry: ActionGroup | Action): MenuItem {
         label: entry.label,
         icon: entry.icon,
         description: entry.description,
+        disabled: entry.disabled,
+        tooltip: entry.disabledReason,
     };
 }
 

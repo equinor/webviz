@@ -3,7 +3,7 @@ import type React from "react";
 import { GridView, Settings, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Parts as Menu } from "@lib/components/Menu";
+import { Menu } from "@lib/components/Menu";
 
 import { ViewLayout } from "../enums/viewLayout";
 

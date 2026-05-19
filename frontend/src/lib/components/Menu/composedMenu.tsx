@@ -8,6 +8,8 @@ import type { SizeName } from "@lib/utils/componentSize";
 import { getTextSizeClassName } from "@lib/utils/componentSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { Tooltip } from "../Tooltip";
+
 import * as Parts from "./index.parts";
 import type { MenuItem, Text, Action, SubMenu, Divider } from "./types";
 
@@ -112,18 +114,22 @@ function ActionItem(props: { action: Action }) {
     }
 
     return (
-        <ItemComp
-            closeOnClick={rootProps?.closeOnClick}
-            onClick={onClick}
-            checked={props.action.checked}
-            disabled={props.action.disabled}
-        >
-            <Parts.ItemContent
-                label={props.action.label}
-                icon={props.action.icon}
-                description={props.action.description}
-            />
-        </ItemComp>
+        <Tooltip title={props.action.tooltip}>
+            <span>
+                <ItemComp
+                    closeOnClick={rootProps?.closeOnClick}
+                    checked={props.action.checked}
+                    disabled={props.action.disabled}
+                    onClick={onClick}
+                >
+                    <Parts.ItemContent
+                        label={props.action.label}
+                        icon={props.action.icon}
+                        description={props.action.description}
+                    />
+                </ItemComp>
+            </span>
+        </Tooltip>
     );
 }
 
