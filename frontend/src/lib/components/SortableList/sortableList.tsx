@@ -69,9 +69,9 @@ export type SortableListProps = {
     isMoveAllowed?: (args: IsMoveAllowedArgs) => boolean;
     onItemMoved?: (
         movedItemId: string,
+        position: number,
         originId: string | null,
         destinationId: string | null,
-        position: number,
     ) => void;
     className?: string;
 };
@@ -616,7 +616,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
                     }
                 }
 
-                onItemMoved(draggedElementInfo.id, originId, destinationId, position);
+                onItemMoved(draggedElementInfo.id, position, originId, destinationId);
             }
 
             function handlePointerUp() {

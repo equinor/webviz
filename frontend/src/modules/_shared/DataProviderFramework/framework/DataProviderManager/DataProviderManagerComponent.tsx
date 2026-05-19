@@ -98,9 +98,9 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
 
     function handleItemMoved(
         movedItemId: string,
+        position: number,
         originId: string | null,
         destinationId: string | null,
-        position: number,
     ) {
         const movedItem = groupDelegate.findDescendantById(movedItemId);
         if (!movedItem) {
@@ -147,16 +147,16 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
     };
 
     return (
-        <div className="grow flex flex-col min-h-0">
-            <div className="w-full grow flex flex-col min-h-0" ref={listRef}>
-                <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
-                    <div className="grow font-bold text-sm">{props.title}</div>
+        <div className="flex min-h-0 grow flex-col">
+            <div className="flex min-h-0 w-full grow flex-col" ref={listRef}>
+                <div className="flex h-12 items-center gap-2 border-b border-gray-300 bg-slate-100 p-2">
+                    <div className="grow text-sm font-bold">{props.title}</div>
                     <Actions actionGroups={actions} onActionClick={handleActionClick} />
                     <ExpandCollapseAllButton group={props.dataProviderManager} />
                     {props.additionalHeaderComponents}
                 </div>
                 <div
-                    className="w-full grow flex flex-col relative"
+                    className="relative flex w-full grow flex-col"
                     style={{ height: listSize.height - convertRemToPixels(12) }}
                 >
                     <SortableList
@@ -166,9 +166,9 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                     >
                         <SortableList.Content>
                             <SortableList.ScrollContainer>
-                                <div className="grow overflow-auto min-h-0 bg-slate-200 relative h-full">
+                                <div className="relative h-full min-h-0 grow overflow-auto bg-slate-200">
                                     {items.length === 0 && (
-                                        <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
+                                        <div className="-mt-1 flex h-40 items-center justify-center gap-1 text-sm">
                                             Click on <Add fontSize="inherit" /> to add an item.
                                         </div>
                                     )}

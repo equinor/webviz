@@ -131,12 +131,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     </Button>
                 </div>
                 <div className="relative flex-1 overflow-auto">
-                    <SortableList
-                        isMoveAllowed={() => true}
-                        onItemMoved={(movedItemId, _originId, _destinationId, position) =>
-                            handleOnRegularEnsembleMoved(movedItemId, position)
-                        }
-                    >
+                    <SortableList isMoveAllowed={() => true} onItemMoved={handleOnRegularEnsembleMoved}>
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
                                 <table className="text-body-sm bg-neutral w-full table-fixed">
@@ -203,12 +198,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                     </Button>
                 </div>
                 <div className="relative flex-1 overflow-auto">
-                    <SortableList
-                        isMoveAllowed={() => true}
-                        onItemMoved={(movedItemId, _originId, _destinationId, position) =>
-                            handleOnDeltaEnsembleMoved(movedItemId, position)
-                        }
-                    >
+                    <SortableList isMoveAllowed={() => true} onItemMoved={handleOnDeltaEnsembleMoved}>
                         <SortableList.ScrollContainer>
                             <div className="grow overflow-auto">
                                 <table className="text-body-sm bg-neutral w-full table-fixed">
