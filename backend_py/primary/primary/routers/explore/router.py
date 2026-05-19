@@ -148,6 +148,7 @@ async def get_ensemble_details(
         ensemble_name,
         details.asset_name,
         details.field_identifiers,
+        LOGGER,
     )
 
     return schemas.EnsembleDetails(

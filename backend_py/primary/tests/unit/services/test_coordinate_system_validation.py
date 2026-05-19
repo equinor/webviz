@@ -42,6 +42,20 @@ async def _validate_case_coordinate_systems_match_async(case_inspector: CaseInsp
     )
 
 
+async def _validate_case_coordinate_systems_match_with_logger_async(
+    case_inspector: CaseInspector, smda_access: SmdaAccess, logger: logging.Logger
+) -> None:
+    await validate_case_coordinate_systems_match_async(
+        case_inspector,
+        smda_access,
+        "case-a",
+        "ensemble-a",
+        "asset-a",
+        ["field-ident-a"],
+        logger,
+    )
+
+
 async def test_validate_case_coordinate_systems_match_accepts_matching_systems_async() -> None:
     case_inspector = cast(CaseInspector, FakeCaseInspector("ST_WGS84_UTM37N_P32637", ["field-a", "field-b"]))
     smda_access = cast(
@@ -137,3 +151,18 @@ async def test_validate_case_coordinate_systems_match_warns_for_mismatching_syst
     assert caplog.records[0].sumo_coordinate_system == "ST_WGS84_UTM37N_P32637"
     assert caplog.records[0].smda_coordinate_system == "ST_WGS84_UTM38N_P32638"
     assert caplog.records[0].smda_coordinate_systems == ["ST_WGS84_UTM38N_P32638"]
+
+
+async def test_validate_case_coordinate_systems_match_uses_provided_logger_async(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    case_inspector = cast(CaseInspector, FakeCaseInspector("ST_WGS84_UTM37N_P32637", ["field-a"]))
+    smda_access = cast(SmdaAccess, FakeSmdaAccess({"field-a": "ST_WGS84_UTM38N_P32638"}))
+    logger = logging.getLogger("primary.routers.explore.router")
+
+    with caplog.at_level(logging.WARNING):
+        await _validate_case_coordinate_systems_match_with_logger_async(case_inspector, smda_access, logger)
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].name == "primary.routers.explore.router"
+    assert caplog.records[0].message == "Coordinate system mismatch for case_uuid='case-a' ensemble_name='ensemble-a'"

@@ -26,6 +26,7 @@ async def validate_case_coordinate_systems_match_async(
     ensemble_name: str,
     asset_name: str,
     field_identifiers: list[str],
+    logger: logging.Logger = LOGGER,
 ) -> None:
     """Validate that Sumo and SMDA report one matching projected coordinate system for a case."""
 
@@ -61,14 +62,14 @@ async def validate_case_coordinate_systems_match_async(
     }
 
     if not unique_smda_coordinate_systems:
-        LOGGER.warning(
+        logger.warning(
             f"Missing SMDA coordinate system for {case_uuid=} {ensemble_name=}",
             extra=warning_context,
         )
         return
 
     if len(unique_smda_coordinate_systems) > 1:
-        LOGGER.warning(
+        logger.warning(
             f"Coordinate system mismatch for {case_uuid=} {ensemble_name=}",
             extra=warning_context,
         )
@@ -77,7 +78,7 @@ async def validate_case_coordinate_systems_match_async(
     smda_coordinate_system = unique_smda_coordinate_systems[0]
 
     if smda_coordinate_system != sumo_coordinate_system:
-        LOGGER.warning(
+        logger.warning(
             f"Coordinate system mismatch for {case_uuid=} {ensemble_name=}",
             extra={**warning_context, "smda_coordinate_system": smda_coordinate_system},
         )
