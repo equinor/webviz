@@ -1,16 +1,15 @@
-import React from "react";
+import type React from "react";
 
 import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-material";
 
 import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/_hooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Banner } from "@lib/newComponents/Banner";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Button } from "@lib/newComponents/Button";
 import { Tabs } from "@lib/newComponents/Tabs";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type ModuleSettingsHeaderProps = {
     activeModuleInstance: ModuleInstance<any, any> | null;
@@ -134,7 +133,11 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
 
     return (
         <div className="flex flex-col">
-            <div className="gap-horizontal-md pr-horizontal-2xs bg-canvas flex h-10 items-center shadow-[inset_0_-1px_2px_rgba(0,0,0,0.1)]">
+            <div
+                className={resolveClassNames("gap-horizontal-md pr-horizontal-2xs bg-canvas flex h-10 items-center", {
+                    "pl-horizontal-xs": props.isCollapsed,
+                })}
+            >
                 {makeHeaderContent()}
             </div>
             {!props.isCollapsed && isWarningVisible && warningText && (

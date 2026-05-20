@@ -8,6 +8,14 @@
             @apply text-disabled cursor-not-allowed bg-transparent;
         }
 
+        [data-size="small"] & {
+            @apply py-vertical-3xs px-horizontal-xs text-body-sm;
+        }
+
+        [data-size="large"] & {
+            @apply py-vertical-sm px-horizontal-sm text-body-lg min-h-[var(--size-selectable-lg)];
+        }
+
         &[data-orientation="horizontal"] {
             [data-position="start"] & {
                 border-top: 2px solid var(--eds-color-bg-neutral-fill-muted-default);

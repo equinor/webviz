@@ -1,6 +1,7 @@
-import { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
+
+import type { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type GroupProps = LayoutClassProps & {
     children: React.ReactNode;
@@ -13,7 +14,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group
         <div
             ref={ref}
             data-group
-            className={resolveClassNames(layoutClassName, "flex items-center", { "gap-px": props.split })}
+            className={resolveClassNames(layoutClassName, "flex items-center", { "gap-x-px": props.split })}
             {...rest}
         >
             {children}

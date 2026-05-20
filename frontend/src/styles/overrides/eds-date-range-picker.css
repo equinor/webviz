@@ -59,6 +59,18 @@
         @apply focusable;
     }
 
+    & [class*="Toggle__StyledButton"] {
+        @apply rounded! aspect-square;
+    }
+
+    & [class*="Toggle__StyledButton"]:hover {
+        background-color: var(--eds-color-bg-neutral-fill-muted-hover) !important;
+    }
+
+    &[data-size="small"] [class*="Toggle__StyledButton"] {
+        @apply h-4! w-4!;
+    }
+
     & [class*="Toggle__StyledButton"]:focus-visible {
         @apply outline-focus;
     }

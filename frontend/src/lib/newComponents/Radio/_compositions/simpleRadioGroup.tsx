@@ -27,7 +27,7 @@ export const SimpleRadioGroup = React.forwardRef<HTMLDivElement, SimpleRadioGrou
                 ref={ref}
                 layoutClassName={resolveClassNames(
                     layoutClassName,
-                    "flex gap-x-horizontal-xs gap-y-vertical-xs",
+                    "flex",
                     layout === "horizontal" ? "flex-row" : "flex-col",
                 )}
             >

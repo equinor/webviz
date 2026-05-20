@@ -74,6 +74,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                         <div className="grow" />
                     )}
                     <Separator orientation="vertical" />
+                    <FullscreenToggleButton />
                     <DarkModeButton />
                     <DensityModeToggle />
                     <Separator orientation="vertical" />
@@ -100,12 +101,25 @@ function LogoWithText(): React.ReactNode {
     );
 }
 
+function FullscreenToggleButton(): React.ReactNode {
+    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
+
+    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
+
+    return (
+        <Tooltip title={fullscreenButtonTitle} placement="bottom">
+            <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
+                {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+            </TopBarButton>
+        </Tooltip>
+    );
+}
+
 type TopBarButtonsProps = {
     workbench: Workbench;
 };
 
 function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
-    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
@@ -114,8 +128,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
     function handleCloseSessionClick() {
         props.workbench.getSessionManager().maybeCloseCurrentSession();
     }
-
-    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
     const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
 
     return (
@@ -129,14 +141,8 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
                     <RefreshSessionButton workbench={props.workbench} />
                     <SessionSaveButton workbench={props.workbench} />
                     <SnapshotButton workbench={props.workbench} />
-                    <Separator orientation="vertical" />
                 </>
             )}
-            <Tooltip title={fullscreenButtonTitle} placement="bottom">
-                <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
-                    {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
-                </TopBarButton>
-            </Tooltip>
             <Tooltip title={closeButtonTitle} placement="bottom">
                 <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
                     <Close fontSize="small" />
@@ -377,22 +383,22 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     return (
         <div className="gap-horizontal-xs flex items-center justify-center p-2 text-sm">
             <Button.Group split>
-                <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
+                <Button variant="text" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
                     {isSaving ? (
                         // Margin is explicitly added to make the spinner's position width match the save icon
-                        <CircularProgress size={16} tone="on-emphasis" layoutClassName="mx-[2px]" />
+                        <CircularProgress size={16} layoutClassName="mx-[2px]" />
                     ) : (
                         <Save fontSize="small" />
                     )}
                 </Button>
                 <ComposedMenu
                     onActionClicked={handleSaveMenuAction}
-                    renderTrigger={(props) => {
+                    renderTrigger={(props, state) => {
                         return (
                             <Tooltip title="Save session options">
                                 {/* @ ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
                                 {/* <Button variant="contained" tone="accent" render={<MenuButton />}> */}
-                                <Button {...props} variant="contained" tone="accent">
+                                <Button {...props} variant="text" tone="accent" pressed={state.open}>
                                     <ArrowDropDown fontSize="small" />
                                 </Button>
                             </Tooltip>

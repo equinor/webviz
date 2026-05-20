@@ -14,8 +14,8 @@ import {
 import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/newComponents/Badge";
 import { NavBarButton } from "@lib/components/NavBarComponents";
+import { Badge } from "@lib/newComponents/Badge";
 import { Tabs } from "@lib/newComponents/Tabs";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 

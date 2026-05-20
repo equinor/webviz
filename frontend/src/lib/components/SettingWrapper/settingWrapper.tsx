@@ -1,11 +1,13 @@
-import React from "react";
+import type React from "react";
 
-import { ContextHelp, type ContextHelpProps } from "../ContextHelp";
+import { Field } from "@lib/newComponents/Field";
+import { Heading } from "@lib/newComponents/Typography/compositions";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { type ContextHelpProps } from "../ContextHelp";
 
 import { Annotations } from "./_components/Annotations";
 import { Overlay, type OverlayProps } from "./_components/Overlay";
-import { Field } from "@lib/newComponents/Field";
-import { Heading } from "@lib/newComponents/Typography/compositions";
 
 export type SettingAnnotation = {
     type: "warning" | "info" | "error";
@@ -34,6 +36,7 @@ export type SettingWrapperProps = {
     label?: React.ReactNode;
     description?: React.ReactNode;
     help?: ContextHelpProps;
+    contentClassName?: string;
 } & (
     | {
           annotations?: SettingAnnotation[];
@@ -57,8 +60,6 @@ function isNotAnnotationList(props: SettingWrapperProps): props is SettingWrappe
  * These two approaches are mutually exclusive and cannot be combined.
  */
 export function SettingWrapper(props: SettingWrapperProps) {
-    const id = React.useId();
-
     const annotations: SettingAnnotation[] = isNotAnnotationList(props)
         ? ([
               props.errorAnnotation && { type: "error", message: props.errorAnnotation },
@@ -79,7 +80,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
     }
 
     return (
-        <Field.Root layoutClassName="w-full">
+        <Field.Root layoutClassName="w-full focus-within:outline hover:outline outline-focus outline-offset-5 rounded">
             {props.label && <Field.Label>{props.label}</Field.Label>}
             {props.description && <Field.Description>{props.description}</Field.Description>}
             {props.help && (
@@ -88,7 +89,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
                     {props.help.content}
                 </Field.Info>
             )}
-            <div className="gap-vertical-xs relative flex w-full flex-col">
+            <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
                 {props.children}
                 <Overlay type={overlayType} message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay} />
             </div>

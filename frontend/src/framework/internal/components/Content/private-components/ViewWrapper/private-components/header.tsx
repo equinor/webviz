@@ -25,7 +25,6 @@ import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Popover } from "@lib/components/Popover";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Badge } from "@lib/newComponents/Badge";
@@ -380,29 +379,37 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     return (
         <>
             {hasDataChannel && (
-                <DenseIconButton
+                <Button
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="cursor-grab touch-none"
+                    layoutClassName="cursor-grab! touch-none"
                     title={makeChannelOutButtonTitle()}
                     disabled={props.isSnapshotMode}
                     onPointerDown={handleDataChannelOriginPointerDown}
+                    iconOnly
+                    variant="text"
+                    size="small"
+                    tone="neutral"
                 >
                     <Badge badgeContent={numOutgoingConnections} invisible={props.isMinimized}>
                         <Output fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
             {hasDataReceiver && (
-                <DenseIconButton
+                <Button
                     title={makeChannelInButtonTitle()}
                     onPointerDown={handleReceiverPointerDown}
                     onPointerUp={handleReceiversPointerUp}
+                    iconOnly
+                    variant="text"
+                    size="small"
+                    tone="neutral"
                 >
                     <Badge badgeContent={numIncomingConnections} invisible={props.isMinimized}>
                         <Input fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
         </>
     );

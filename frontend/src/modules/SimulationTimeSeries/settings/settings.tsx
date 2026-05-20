@@ -26,6 +26,7 @@ import { Hidden } from "@lib/newComponents/Hidden";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { SimpleRadioGroup } from "@lib/newComponents/Radio";
 import { Select } from "@lib/newComponents/Select";
+import { Separator } from "@lib/newComponents/Separator";
 import { Switch } from "@lib/newComponents/Switch";
 import { Toggle } from "@lib/newComponents/Toggle";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
@@ -277,7 +278,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     return (
         <Collapsible.ScrollArea>
             <Collapsible.Group title="Data" defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">
+                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
                     <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations}>
                         <EnsemblePicker
                             ensembles={ensembleSet.getEnsembleArray()}
@@ -287,6 +288,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onChange={handleEnsembleSelectChange}
                         />
                     </SettingWrapper>
+                    <Separator orientation="horizontal" />
                     <SettingWrapper
                         label={
                             <span className="gap-horizontal-2xs flex items-center">
@@ -300,6 +302,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             isVectorListQueriesFetching || vectorListQueries.some((query) => query.isFetching)
                         }
                         errorAnnotation={vectorListQueriesErrorAnnotation}
+                        contentClassName="flex flex-col gap-vertical-3xs"
                     >
                         <>
                             <div className="gap-y-vertical-xs gap-x-horizontal-xs flex flex-wrap">
@@ -326,6 +329,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             />
                         </>
                     </SettingWrapper>
+                    <Separator orientation="horizontal" />
                     <SettingWrapper label="Resampling frequency" warningAnnotation={resampleFrequencyWarningAnnotation}>
                         <Combobox
                             items={[
@@ -341,9 +345,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                 </Collapsible.Content>
             </Collapsible.Group>
             <Collapsible.Group title="Plot settings" defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">
+                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
                     <FieldCompositions.Default label="Limit subplots by">
-                        <div className="gap-horizontal-xs flex flex-row items-center">
+                        <div className="gap-horizontal-xs flex w-full min-w-0 items-center">
                             <Combobox
                                 items={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
                                     return { value: val, label: SubplotLimitDirectionEnumToStringMapping[val] };
@@ -351,15 +355,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 value={subplotLimitDirection}
                                 onValueChange={handleSubplotLimitDirectionChange}
                             />
-                            <NumberInput
-                                value={subplotMaxDirectionElements}
-                                disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
-                                min={1}
-                                max={12}
-                                onValueChange={debouncedHandleSubplotMaxDirectionElementsChange}
-                            />
+                            <div className="min-w-0 grow">
+                                <NumberInput
+                                    value={subplotMaxDirectionElements}
+                                    disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
+                                    min={1}
+                                    max={12}
+                                    onValueChange={debouncedHandleSubplotMaxDirectionElementsChange}
+                                />
+                            </div>
                         </div>
                     </FieldCompositions.Default>
+                    <Separator orientation="horizontal" />
                     <FieldCompositions.Default label="Group by">
                         <SimpleRadioGroup
                             value={groupBy}
@@ -373,7 +380,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                 </Collapsible.Content>
             </Collapsible.Group>
             <Collapsible.Group title="Visualization" defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">
+                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
                     <SimpleRadioGroup
                         value={visualizationMode}
                         options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
@@ -382,6 +389,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         onValueChange={(value) => handleVisualizationModeChange(value)}
                     />
                     <Hidden hidden={visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS}>
+                        <Separator orientation="horizontal" />
                         <SettingWrapper label="Statistic options">
                             <>{makeStatisticCheckboxes()}</>
                         </SettingWrapper>

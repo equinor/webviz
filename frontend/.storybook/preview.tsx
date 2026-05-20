@@ -1,6 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from "react";
 
+const portalRoot = document.createElement("div");
+portalRoot.id = "portal-root";
+document.body.appendChild(portalRoot);
+
 import type { Preview } from "@storybook/react";
 
 import { DarkModeButton } from "../src/framework/internal/components/DarkModeButton";
