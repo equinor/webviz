@@ -13,15 +13,16 @@ module.exports = {
                 path: "^(src/framework/internal)",
             },
         },
+
         {
-            name: "lib-has-dependencies-in-src-tree",
-            comment: "Files in the 'lib' folder must not be imported from project files from outside the 'lib' folder.",
+            name: "lib-must-not-import-src-outside-lib",
+            comment: "Files in src/lib must not import from other parts of src (outside src/lib).",
             severity: "error",
             from: {
-                path: "^(src/lib)",
+                path: "^src/lib",
             },
             to: {
-                pathNot: "^((src/lib)|(node_modules))",
+                path: "^src/(?!lib)", // anything in src except src/lib
             },
         },
         {

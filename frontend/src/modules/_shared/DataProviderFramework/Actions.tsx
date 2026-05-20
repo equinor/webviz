@@ -1,18 +1,15 @@
-import type React from "react";
+import React from "react";
 
-import { Dropdown } from "@mui/base";
 import { Add, ArrowDropDown } from "@mui/icons-material";
 
-import { Menu } from "@lib/components/Menu";
-import { MenuButton } from "@lib/components/MenuButton/menuButton";
-import { MenuDivider } from "@lib/components/MenuDivider";
-import { MenuHeading } from "@lib/components/MenuHeading";
-import { MenuItem } from "@lib/components/MenuItem";
+import { ComposedMenu } from "@lib/components/Menu/";
+import type { MenuItem } from "@lib/components/Menu/";
 
 export type Action = {
     identifier: string;
     icon?: React.ReactNode;
     label: string;
+    description?: string;
     disabled?: boolean;
     /** Shown as a native tooltip when the action is disabled. */
     disabledReason?: string;
@@ -24,73 +21,55 @@ export type ActionGroup = {
     children: (Action | ActionGroup)[];
 };
 
+function recursivelyMakeMenuItem(entry: ActionGroup | Action): MenuItem {
+    if (isActionGroup(entry)) {
+        return {
+            id: entry.label,
+            label: entry.label,
+            icon: entry.icon,
+            items: entry.children.map(recursivelyMakeMenuItem),
+        };
+    }
+
+    return {
+        id: entry.identifier,
+        label: entry.label,
+        icon: entry.icon,
+        description: entry.description,
+        disabled: entry.disabled,
+        tooltip: entry.disabledReason,
+    };
+}
+
 function isActionGroup(action: Action | ActionGroup): action is ActionGroup {
     return (action as ActionGroup).children !== undefined;
 }
 
 export type ActionsProps = {
     actionGroups: ActionGroup[];
+    startOpen?: boolean;
     onActionClick: (actionIdentifier: string) => void;
 };
 
 export function Actions(props: ActionsProps): React.ReactNode {
-    function makeContent(actionGroups: (ActionGroup | Action)[], indentLevel: number = 0): React.ReactNode[] {
-        const content: React.ReactNode[] = [];
-        for (const [index, item] of actionGroups.entries()) {
-            if (isActionGroup(item)) {
-                if (index > 0) {
-                    content.push(<MenuDivider key={index} />);
-                }
-                content.push(
-                    <MenuHeading
-                        key={`${item.label}-${index}`}
-                        style={{ paddingLeft: `${indentLevel + 1}rem` }}
-                        classNames="flex gap-2 items-center"
-                    >
-                        {item.icon}
-                        {item.label}
-                    </MenuHeading>,
-                );
-                content.push(makeContent(item.children, indentLevel + 1));
-            } else {
-                const menuItem = (
-                    <MenuItem
-                        key={`${item.identifier}-${index}`}
-                        className="text-sm p-0.5 flex gap-2 items-center"
-                        style={{ paddingLeft: `${indentLevel * 1}rem` }}
-                        disabled={item.disabled}
-                        onClick={() => props.onActionClick(item.identifier)}
-                    >
-                        <span className="text-slate-700">{item.icon}</span>
-                        {item.label}
-                    </MenuItem>
-                );
-                // Wrap in a span so the native tooltip still shows even though the disabled
-                // MenuItem has `pointer-events: none`.
-                if (item.disabled && item.disabledReason) {
-                    content.push(
-                        <span key={`${item.identifier}-${index}`} title={item.disabledReason}>
-                            {menuItem}
-                        </span>,
-                    );
-                } else {
-                    content.push(menuItem);
-                }
-            }
-        }
-        return content;
-    }
+    const [isOpen, setIsOpen] = React.useState(props.startOpen ?? false);
+
+    const actions = props.actionGroups.length === 1 ? props.actionGroups[0].children : props.actionGroups;
+
+    const menuItems = React.useMemo(() => actions.map(recursivelyMakeMenuItem), [actions]);
 
     return (
-        <Dropdown>
-            <MenuButton label="Add items" disabled={!props.actionGroups.length}>
-                <Add fontSize="inherit" />
-                <span>Add</span>
-                <ArrowDropDown fontSize="inherit" />
-            </MenuButton>
-            <Menu anchorOrigin="bottom-end" className="text-sm p-1 max-h-80 overflow-auto">
-                {makeContent(props.actionGroups)}
-            </Menu>
-        </Dropdown>
+        <ComposedMenu
+            open={isOpen}
+            items={menuItems}
+            itemSize="small"
+            triggerSize="small"
+            onOpenChange={setIsOpen}
+            onActionClicked={props.onActionClick}
+        >
+            <Add fontSize="inherit" />
+            <span>Add</span>
+            <ArrowDropDown fontSize="inherit" />
+        </ComposedMenu>
     );
 }

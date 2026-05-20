@@ -1,11 +1,11 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { PreferredViewLayout } from "@modules/Intersection/typesAndEnums";
+import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 
 export type MultiViewLayoutProps = {
     viewCount: number;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
     children: React.ReactNode;
 };
 
@@ -17,9 +17,9 @@ export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
     }
 
     const isSingleView = viewCount === 1;
-    const showHorizontal = isSingleView || preferredViewLayout === PreferredViewLayout.HORIZONTAL;
-    const showVertical = !isSingleView && preferredViewLayout === PreferredViewLayout.VERTICAL;
-    const showGrid = !isSingleView && preferredViewLayout === PreferredViewLayout.GRID;
+    const showHorizontal = isSingleView || preferredViewLayout === ViewLayout.HORIZONTAL;
+    const showVertical = !isSingleView && preferredViewLayout === ViewLayout.VERTICAL;
+    const showGrid = !isSingleView && preferredViewLayout === ViewLayout.GRID;
 
     const numCols = Math.ceil(Math.sqrt(viewCount));
     const numRows = Math.ceil(viewCount / numCols);
