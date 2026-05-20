@@ -15,3 +15,16 @@ export const SELECTABLE_SIZES_CLASSNAMES: Record<SelectableSize, string> = {
     default: "h-selectable-md text-body-md",
     large: "h-selectable-lg text-body-lg",
 };
+
+export function getDataAttributesForSelectableSize(size: SelectableSize, squished?: boolean): Record<string, string> {
+    const mapping: Record<SelectableSize, string> = {
+        small: "sm",
+        default: "md",
+        large: "lg",
+    };
+
+    return {
+        "data-selectable-space": mapping[size],
+        "data-space-proportions": squished ? "squished" : "square",
+    };
+}

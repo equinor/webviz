@@ -1,13 +1,12 @@
 import React from "react";
 
-import { AddLink } from "@mui/icons-material";
-
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dialog } from "@lib/components/Dialog";
+import { AddLink } from "@lib/mui-icons";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Dialog } from "@lib/newComponents/Dialog";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
@@ -82,12 +81,12 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
         actions = (
             <>
-                <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                <Button variant="text" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                     Cancel
                 </Button>
-                <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
-                    {isSaving && <CircularProgress size="small" />}
-                    <AddLink fontSize="inherit" /> Create snapshot
+                <Button tone="accent" disabled={isSaving} type="submit" form={formId}>
+                    {isSaving && <CircularProgress size={16} />}
+                    <AddLink size={16} /> Create snapshot
                 </Button>
             </>
         );
@@ -104,8 +103,12 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     }
 
     return (
-        <Dialog open={isOpen} onClose={handleCancel} title="Create Snapshot" modal showCloseCross actions={actions}>
-            {content}
-        </Dialog>
+        <Dialog.Popup open={isOpen} onOpenChange={handleCancel} modal width={600}>
+            <Dialog.Header closeIconVisible>
+                <Dialog.Title>Create Snapshot</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>{content}</Dialog.Body>
+            <Dialog.Actions>{actions}</Dialog.Actions>
+        </Dialog.Popup>
     );
 }

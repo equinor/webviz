@@ -17,15 +17,23 @@ export const CheckboxItem = React.forwardRef<HTMLLabelElement, CheckboxItemProps
     return (
         <label
             ref={ref}
+            data-selectable-space="md"
+            data-space-proportions="squished"
             data-disabled={checkboxProps.disabled || undefined}
             data-readonly={checkboxProps.readOnly || undefined}
-            className={resolveClassNames(layoutClassName, "selectable gap-horizontal-xs flex items-center", {
-                "flex-col": direction === "vertical",
-            })}
+            className={resolveClassNames(
+                layoutClassName,
+                "group border-box selectable gap-horizontal-sm flex items-center",
+                {
+                    "flex-col": direction === "vertical",
+                },
+            )}
             data-selectable-wrapper
         >
             <Checkbox {...checkboxProps} />
-            {children ?? label}
+            <span data-baseline="center" className="text-body-md">
+                {children ?? label}
+            </span>
         </label>
     );
 });

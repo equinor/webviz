@@ -7,10 +7,11 @@ import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { PortalContainerContext } from "../_shared/portalContainerContext";
+import type { SelectableSize } from "../_shared/size";
+import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
 import { Typography } from "../Typography";
-import { SelectableSize, SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 
 export type ComboboxItem<TValue> = {
     value: TValue;
@@ -262,6 +263,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                                                       size="sm"
                                                                       lineHeight="squished"
                                                                       weight="bolder"
+                                                                      tone="neutral"
+                                                                      variant="strong"
                                                                   >
                                                                       {group.value}
                                                                   </Typography>
@@ -323,7 +326,7 @@ function ComboboxItem<TValue>({
         <ComboboxBase.Item
             value={item.value}
             disabled={item.disabled}
-            className={`user-select-none py-selectable-y pr-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent-hover ${itemColSpan} data-disabled:text-disabled box-border grid grid-cols-subgrid items-center outline-0 data-disabled:cursor-not-allowed data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']`}
+            className={`user-select-none py-selectable-y pr-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent ${itemColSpan} data-disabled:text-disabled box-border grid grid-cols-subgrid items-center outline-0 data-disabled:cursor-not-allowed data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']`}
         >
             <ComboboxBase.ItemIndicator className="pl-selectable-x text-accent-subtle text-body-lg col-start-1 flex items-center">
                 <Check fontSize="inherit" />

@@ -4,7 +4,6 @@ import { AssignmentTurnedIn, ContentPaste, ContentPasteOff } from "@mui/icons-ma
 
 import { Tooltip } from "@lib/components/Tooltip";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
-import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type CopyCellValueProps = {
@@ -14,12 +13,6 @@ export type CopyCellValueProps = {
 };
 
 type CopyStatus = "idle" | "success" | "error";
-
-const TONE_BY_STATUS: Record<CopyStatus, ButtonProps["tone"]> = {
-    idle: "neutral",
-    success: "accent",
-    error: "danger",
-};
 
 const TOOLTIP_BY_STATUS: Record<CopyStatus, string> = {
     idle: "Copy to clipboard",
@@ -104,12 +97,17 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
                 )}
             >
                 <Tooltip title={TOOLTIP_BY_STATUS[status]}>
-                    <Button
+                    <button
+                        className={resolveClassNames(
+                            "selectable bg-neutral hover:bg-neutral-hover active:bg-neutral-active text-neutral-strong shadow-elevation-overlay flex aspect-square items-center rounded-full",
+                            {
+                                "bg-success-strong hover:bg-success-strong active:bg-success-strong text-success-strong-on-emphasis":
+                                    status === "success",
+                                "bg-danger-strong hover:bg-danger-strong active:bg-danger-strong text-danger-strong-on-emphasis":
+                                    status === "error",
+                            },
+                        )}
                         onClick={handleCopyClick}
-                        tone={TONE_BY_STATUS[status]}
-                        iconOnly
-                        size="small"
-                        round
                         onFocus={handleButtonFocus}
                         onBlur={handleButtonBlur}
                         onPointerEnter={handleButtonFocus}
@@ -118,7 +116,7 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
                         {status === "idle" && <ContentPaste fontSize="inherit" />}
                         {status === "success" && <AssignmentTurnedIn fontSize="inherit" />}
                         {status === "error" && <ContentPasteOff fontSize="inherit" />}
-                    </Button>
+                    </button>
                 </Tooltip>
             </div>
             {props.children}

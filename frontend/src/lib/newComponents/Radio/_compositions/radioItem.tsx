@@ -21,14 +21,18 @@ export const RadioItem = React.forwardRef<HTMLLabelElement, RadioItemProps>(func
     return (
         <label
             ref={ref}
+            data-selectable-space="md"
+            data-space-proportions="squished"
             data-disabled={radioProps.disabled || undefined}
-            className={resolveClassNames(layoutClassName, "selectable gap-horizontal-xs flex items-center", {
+            className={resolveClassNames(layoutClassName, "group selectable gap-horizontal-sm flex items-center", {
                 "flex-col": direction === "vertical",
             })}
             data-selectable-wrapper
         >
             <Radio {...radioProps} />
-            {children ?? label}
+            <span data-baseline="center" className="text-body-md">
+                {children ?? label}
+            </span>
         </label>
     );
 });

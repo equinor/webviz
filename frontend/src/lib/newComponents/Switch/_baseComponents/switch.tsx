@@ -21,8 +21,8 @@ export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Sw
             )}
         >
             <span className="h-selectable-sm flex aspect-square">
-                <span className="group-data-checked:bg-accent group-data-disabled:bg-disabled group-data-disabled:hover:bg-disabled bg-neutral relative top-1/2 flex h-1.5 grow -translate-y-1/2 rounded-full">
-                    <SwitchBase.Thumb className="time shadow-elevation-raised group-data-disabled:shadow-elevation-floating bg-neutral-strong group-hover:bg-accent-strong-hover group-data-checked:bg-accent-strong group-data-disabled:bg-disabled absolute top-1/2 left-0 aspect-square h-3 -translate-y-1/2 rounded-full transition-all duration-200 ease-linear data-checked:left-[calc(100%-0.75rem)]" />
+                <span className="not-group-data-disabled:not-group-data-readonly:group-hover:bg-neutral-surface group-data-checked:bg-accent not-group-data-disabled:not-group-data-readonly:group-data-checked:group-hover:bg-neutral-surface not-group-data-disabled:not-group-data-readonly:hover:bg-neutral-surface group-data-disabled:bg-disabled bg-neutral relative top-1/2 flex h-1.5 grow -translate-y-1/2 rounded-full">
+                    <SwitchBase.Thumb className="time shadow-elevation-raised group-data-disabled:shadow-elevation-floating bg-neutral-strong not-group-data-disabled:not-group-data-readonly:group-hover:bg-accent-strong-hover group-data-checked:bg-accent-strong group-data-disabled:bg-disabled absolute top-1/2 left-0 aspect-square h-3 -translate-y-1/2 rounded-full transition-all duration-200 ease-linear data-checked:left-[calc(100%-0.75rem)]" />
                 </span>
             </span>
         </SwitchBase.Root>

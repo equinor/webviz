@@ -16,13 +16,17 @@ export const SwitchItem = React.forwardRef<HTMLLabelElement, SwitchItemProps>(fu
     return (
         <label
             ref={ref}
+            data-selectable-space="md"
+            data-space-proportions="squished"
             data-disabled={switchProps.disabled || undefined}
             data-readonly={switchProps.readOnly || undefined}
-            className={resolveClassNames(layoutClassName, "selectable gap-horizontal-xs flex items-center")}
+            className={resolveClassNames(layoutClassName, "group selectable gap-horizontal-sm flex items-center")}
             data-selectable-wrapper
         >
             <Switch {...switchProps} />
-            {children ?? label}
+            <span data-baseline="center" className="text-body-md">
+                {children ?? label}
+            </span>
         </label>
     );
 });

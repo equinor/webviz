@@ -100,7 +100,7 @@ export const WithError: Story = {
 
         return (
             <Field.Root actionsRef={actionRef} validationMode="onChange" dirty touched>
-                <Field.Label required>Username</Field.Label>
+                <Field.Label indicator="(Required)">Username</Field.Label>
                 <Field.Description>Maximum 10 characters.</Field.Description>
                 <TextInput required maxLength={10} />
                 <Field.Error match="valueMissing">Value is required.</Field.Error>
@@ -148,7 +148,7 @@ export const Inline: Story = {
     render: () => (
         <div className="gap-x-horizontal-sm gap-y-vertical-xs grid w-sm grid-cols-2 items-center">
             <Field.Root inline validationMode="onChange">
-                <Field.Label required>Password</Field.Label>
+                <Field.Label indicator="(Required)">Password</Field.Label>
                 <div className="gap-horizontal-2xs flex items-center">
                     <TextInput
                         minLength={8}
@@ -172,7 +172,7 @@ export const Inline: Story = {
 
             <Field.Root inline>
                 <div>
-                    <Field.Label>Team</Field.Label>
+                    <Field.Label indicator="(Optional)">Team</Field.Label>
                     <Field.Description>You can change this later.</Field.Description>
                 </div>
                 <Combobox
@@ -199,13 +199,13 @@ export const DefaultComposition: StoryObj<FieldCompositionsDefaultProps> = {
                 "flex flex-col": !args.gridLayout,
             })}
         >
-            <FieldCompositions.Default {...args} required label="Full name">
+            <FieldCompositions.Default {...args} indicator="(Required)" label="Full name">
                 <TextInput required placeholder="Jane Doe" />
             </FieldCompositions.Default>
 
             <FieldCompositions.Default
                 {...args}
-                required
+                indicator="(Required)"
                 label="Password"
                 validationMode="onChange"
                 info={
@@ -243,7 +243,7 @@ export const FullForm: Story = {
     render: () => (
         <div className="gap-vertical-lg flex flex-col">
             <Field.Root>
-                <Field.Label required>Full name</Field.Label>
+                <Field.Label indicator="(Required)">Full name</Field.Label>
                 <TextInput required placeholder="Jane Doe" />
             </Field.Root>
             <Field.Root>
@@ -266,7 +266,7 @@ export const FullForm: Story = {
                         return null;
                     }}
                 >
-                    <Field.Label required>Password</Field.Label>
+                    <Field.Label indicator="(Required)">Password</Field.Label>
                     <div className="gap-horizontal-2xs flex items-center">
                         <TextInput
                             minLength={8}
@@ -288,7 +288,7 @@ export const FullForm: Story = {
 
                 <Field.Root inline>
                     <div>
-                        <Field.Label>Team</Field.Label>
+                        <Field.Label indicator="(Optional)">Team</Field.Label>
                         <Field.Description>You can change this later.</Field.Description>
                     </div>
                     <Combobox

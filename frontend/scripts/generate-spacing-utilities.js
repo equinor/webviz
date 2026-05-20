@@ -81,7 +81,7 @@ function getTokenClassName(tokenName, token) {
 }
 
 function getTokenValue(tokenName, token) {
-    return token.dynamic ? `var(--spacing-${tokenName})` : token.value;
+    return token.value;
 }
 
 function validateConfig() {

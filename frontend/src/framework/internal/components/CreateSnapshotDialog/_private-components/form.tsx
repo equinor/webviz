@@ -1,10 +1,15 @@
 import React from "react";
 
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
+import { Banner } from "@lib/newComponents/Banner";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { TextArea } from "@lib/newComponents/TextArea";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
@@ -20,10 +25,6 @@ export type FormProps = {
     setDescription: (description: string) => void;
     titleInputRef: React.ForwardedRef<HTMLInputElement>;
     onSubmit: React.FormEventHandler<HTMLFormElement>;
-};
-
-type MakeSnapshotDialogInputFeedback = {
-    title?: string;
 };
 
 export function Form(props: FormProps): React.ReactNode {
@@ -66,14 +67,6 @@ export function Form(props: FormProps): React.ReactNode {
 
     const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
 
-    const inputFeedback: MakeSnapshotDialogInputFeedback = React.useMemo(() => {
-        const feedback: MakeSnapshotDialogInputFeedback = {};
-        if (props.title.trim() === "") {
-            feedback.title = "Title is required.";
-        }
-        return feedback;
-    }, [props.title]);
-
     React.useEffect(function focusInput() {
         if (inputRef.current) {
             inputRef.current.focus();
@@ -91,34 +84,61 @@ export function Form(props: FormProps): React.ReactNode {
     return (
         <>
             {hasChanges && (
-                <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                <Banner tone="warning">
                     There are unsaved changes in the current session. These changes will be included in the snapshot.
-                </div>
+                </Banner>
             )}
-            <form id={props.id} className="flex gap-4 items-center" onSubmit={props.onSubmit}>
-                <DashboardPreview height={100} width={100} layout={layout} />
-                <div className="flex flex-col gap-2 grow min-w-0">
-                    <CharLimitedInput
+            <form id={props.id} className="gap-horizontal-sm flex items-center" onSubmit={props.onSubmit}>
+                <DashboardPreview height={220} width={150} layout={layout} />
+                <div className="gap-vertical-sm flex min-w-0 grow flex-col">
+                    <FieldCompositions.Default
                         label="Title"
-                        onControlledValueChange={handleTitleChange}
-                        maxLength={MAX_TITLE_LENGTH}
-                        inputRef={inputRef}
-                        placeholder="Enter snapshot title"
-                        type="text"
-                        value={props.title}
-                        error={!!inputFeedback.title}
-                        autoFocus
-                        required
-                    />
-                    <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
-                    <CharLimitedInput
-                        label="Description (optional)"
-                        maxLength={MAX_DESCRIPTION_LENGTH}
-                        onControlledValueChange={handleDescriptionChange}
-                        placeholder="Enter snapshot description"
-                        value={props.description}
-                        multiline
-                    />
+                        indicator="(Required)"
+                        info={`Enter a descriptive title for your session, which will help you identify it later. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
+                    >
+                        <TextInput
+                            minLength={MIN_TITLE_LENGTH}
+                            maxLength={MAX_TITLE_LENGTH}
+                            ref={inputRef}
+                            value={props.title}
+                            onValueChange={handleTitleChange}
+                            placeholder="Enter snapshot title"
+                            autoFocus
+                            required
+                            endAdornment={
+                                <TooltipCompositions.Default
+                                    content={`Your title is currently using ${props.title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
+                                >
+                                    <Typography
+                                        size="sm"
+                                        family="body"
+                                        tone="neutral"
+                                    >{`${props.title.length}/${MAX_TITLE_LENGTH}`}</Typography>
+                                </TooltipCompositions.Default>
+                            }
+                        />
+                        <FieldCompositions.GenericErrors />
+                    </FieldCompositions.Default>
+                    <FieldCompositions.Default label="Description" indicator="(Optional)">
+                        <TextArea
+                            maxLength={MAX_DESCRIPTION_LENGTH}
+                            value={props.description}
+                            onValueChange={handleDescriptionChange}
+                            placeholder="Enter session description"
+                            rows={3}
+                            bottomAdornment={
+                                <TooltipCompositions.Default
+                                    content={`Your descriptions is currently using ${props.description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
+                                >
+                                    <Typography
+                                        size="sm"
+                                        family="body"
+                                        tone="neutral"
+                                    >{`${props.description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
+                                </TooltipCompositions.Default>
+                            }
+                        />
+                    </FieldCompositions.Default>
                 </div>
             </form>
         </>

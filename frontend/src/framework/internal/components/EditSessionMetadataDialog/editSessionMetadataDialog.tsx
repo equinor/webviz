@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -129,10 +129,12 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     <div className="gap-vertical-sm flex min-w-0 grow flex-col">
                         <FieldCompositions.Default
                             label="Title"
-                            required
-                            info={`Enter a descriptive title for your session, which will help you identify it later. This must not be longer than ${MAX_TITLE_LENGTH} characters.`}
+                            indicator="(Required)"
+                            info={`Enter a descriptive title for your session, which will help you identify it later. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
+                            validationMode="onSubmit"
                         >
                             <TextInput
+                                minLength={MIN_TITLE_LENGTH}
                                 maxLength={MAX_TITLE_LENGTH}
                                 ref={inputRef}
                                 value={title}
@@ -152,9 +154,8 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                                     </TooltipCompositions.Default>
                                 }
                             />
-                            <FieldCompositions.GenericErrors />
                         </FieldCompositions.Default>
-                        <FieldCompositions.Default label="Description">
+                        <FieldCompositions.Default label="Description" indicator="(Optional)">
                             <TextArea
                                 maxLength={MAX_DESCRIPTION_LENGTH}
                                 value={description}
@@ -177,7 +178,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     </div>
                 </Dialog.Body>
                 <Dialog.Actions>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+                    <Button variant="text" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
                     <Button variant="contained" disabled={isSaving} type="submit" form={formId}>

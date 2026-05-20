@@ -57,10 +57,16 @@ include what the dialog needs:
 export default meta;
 type Story = StoryObj;
 
+function focusLastActionButton() {
+    const dialog = document.querySelector('[role="dialog"]');
+    const buttons = dialog?.querySelectorAll<HTMLButtonElement>("button");
+    return buttons?.[buttons.length - 1] ?? null;
+}
+
 // ─── Sub-component stories ────────────────────────────────────────────────────
 
 const withDialogRoot = (Story: React.ComponentType) => (
-    <DialogBase.Root open>
+    <DialogBase.Root open modal={false}>
         <Story />
     </DialogBase.Root>
 );
@@ -237,7 +243,7 @@ export const WithActionsNoHeader: Story = {
                 <Button variant="contained" tone="accent" onClick={() => setOpen(true)}>
                     Open Dialog
                 </Button>
-                <Dialog.Popup open={open} onOpenChange={setOpen}>
+                <Dialog.Popup open={open} onOpenChange={setOpen} initialFocus={focusLastActionButton}>
                     <Dialog.Body>
                         <Dialog.Description>
                             Are you sure you want to proceed? This dialog has no header, just a message and actions.
@@ -272,7 +278,7 @@ export const FullDialog: Story = {
                 <Button variant="contained" tone="accent" onClick={() => setOpen(true)}>
                     Open Dialog
                 </Button>
-                <Dialog.Popup open={open} onOpenChange={setOpen}>
+                <Dialog.Popup open={open} onOpenChange={setOpen} initialFocus={focusLastActionButton}>
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Dialog Title</Dialog.Title>
                     </Dialog.Header>
@@ -311,7 +317,7 @@ export const ConfirmDelete: Story = {
                 <Button variant="contained" tone="danger" onClick={() => setOpen(true)}>
                     Delete Item
                 </Button>
-                <Dialog.Popup open={open} onOpenChange={setOpen}>
+                <Dialog.Popup open={open} onOpenChange={setOpen} initialFocus={focusLastActionButton}>
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Confirm Deletion</Dialog.Title>
                     </Dialog.Header>

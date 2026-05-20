@@ -130,6 +130,21 @@ export const Disabled: Story = {
     },
 };
 
+export const ReadOnly: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "Read-only state — the switch shows its current value but cannot be toggled. Use when the value is informational or controlled externally.",
+            },
+        },
+    },
+    args: {
+        readOnly: true,
+        defaultChecked: true,
+        "aria-label": "Toggle",
+    },
+};
+
 export const WrappingLabel: Story = {
     parameters: {
         docs: {
@@ -234,6 +249,7 @@ export const WithSwitchItem: Story = {
             <SwitchItem label="Enable notifications" />
             <SwitchItem label="Email digest" defaultChecked />
             <SwitchItem label="Beta features" disabled />
+            <SwitchItem label="Dark mode (managed by admin)" readOnly defaultChecked />
         </div>
     ),
 };

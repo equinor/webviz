@@ -1,11 +1,16 @@
 @utility selectable {
-    @apply focusable hover:bg-accent-hover active:bg-accent-active py-vertical-2xs px-horizontal-3xs cursor-pointer rounded focus-visible:outline-0;
+    @apply focusable hover:bg-accent active:bg-accent-active cursor-pointer rounded p-[calc()] focus-visible:outline-0;
+
+    --touch-target-size: 2.25rem; /* 44px, per accessibility guidelines */
+    padding: calc((var(--touch-target-size) - var(--eds-sizing-icon-lg)) / 2);
+
+    transition: background-color 150ms;
 
     &[data-selectable-wrapper] {
-        @apply px-horizontal-sm;
+        @apply px-selectable-x py-selectable-y;
     }
     .group[data-selectable-wrapper] & {
-        @apply p-0 focus:shadow-none! focus:outline-0;
+        @apply -mx-[4.8px]! -my-[6px]! p-0! focus:shadow-none! focus:outline-0;
     }
 
     &[data-disabled] {

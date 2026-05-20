@@ -327,36 +327,36 @@
 @utility -inset-y-horizontal-3xl { inset-block: calc(var(--eds-spacing-horizontal-3xl) * -1); }
 
 /* selectable-x */
-@utility top-selectable-x { top: var(--spacing-selectable-x); }
-@utility -top-selectable-x { top: calc(var(--spacing-selectable-x) * -1); }
-@utility right-selectable-x { right: var(--spacing-selectable-x); }
-@utility -right-selectable-x { right: calc(var(--spacing-selectable-x) * -1); }
-@utility bottom-selectable-x { bottom: var(--spacing-selectable-x); }
-@utility -bottom-selectable-x { bottom: calc(var(--spacing-selectable-x) * -1); }
-@utility left-selectable-x { left: var(--spacing-selectable-x); }
-@utility -left-selectable-x { left: calc(var(--spacing-selectable-x) * -1); }
-@utility inset-selectable-x { inset: var(--spacing-selectable-x); }
-@utility -inset-selectable-x { inset: calc(var(--spacing-selectable-x) * -1); }
-@utility inset-x-selectable-x { inset-inline: var(--spacing-selectable-x); }
-@utility -inset-x-selectable-x { inset-inline: calc(var(--spacing-selectable-x) * -1); }
-@utility inset-y-selectable-x { inset-block: var(--spacing-selectable-x); }
-@utility -inset-y-selectable-x { inset-block: calc(var(--spacing-selectable-x) * -1); }
+@utility top-selectable-x { top: var(--eds-selectable-space-horizontal); }
+@utility -top-selectable-x { top: calc(var(--eds-selectable-space-horizontal) * -1); }
+@utility right-selectable-x { right: var(--eds-selectable-space-horizontal); }
+@utility -right-selectable-x { right: calc(var(--eds-selectable-space-horizontal) * -1); }
+@utility bottom-selectable-x { bottom: var(--eds-selectable-space-horizontal); }
+@utility -bottom-selectable-x { bottom: calc(var(--eds-selectable-space-horizontal) * -1); }
+@utility left-selectable-x { left: var(--eds-selectable-space-horizontal); }
+@utility -left-selectable-x { left: calc(var(--eds-selectable-space-horizontal) * -1); }
+@utility inset-selectable-x { inset: var(--eds-selectable-space-horizontal); }
+@utility -inset-selectable-x { inset: calc(var(--eds-selectable-space-horizontal) * -1); }
+@utility inset-x-selectable-x { inset-inline: var(--eds-selectable-space-horizontal); }
+@utility -inset-x-selectable-x { inset-inline: calc(var(--eds-selectable-space-horizontal) * -1); }
+@utility inset-y-selectable-x { inset-block: var(--eds-selectable-space-horizontal); }
+@utility -inset-y-selectable-x { inset-block: calc(var(--eds-selectable-space-horizontal) * -1); }
 
 /* selectable-y */
-@utility top-selectable-y { top: var(--spacing-selectable-y); }
-@utility -top-selectable-y { top: calc(var(--spacing-selectable-y) * -1); }
-@utility right-selectable-y { right: var(--spacing-selectable-y); }
-@utility -right-selectable-y { right: calc(var(--spacing-selectable-y) * -1); }
-@utility bottom-selectable-y { bottom: var(--spacing-selectable-y); }
-@utility -bottom-selectable-y { bottom: calc(var(--spacing-selectable-y) * -1); }
-@utility left-selectable-y { left: var(--spacing-selectable-y); }
-@utility -left-selectable-y { left: calc(var(--spacing-selectable-y) * -1); }
-@utility inset-selectable-y { inset: var(--spacing-selectable-y); }
-@utility -inset-selectable-y { inset: calc(var(--spacing-selectable-y) * -1); }
-@utility inset-x-selectable-y { inset-inline: var(--spacing-selectable-y); }
-@utility -inset-x-selectable-y { inset-inline: calc(var(--spacing-selectable-y) * -1); }
-@utility inset-y-selectable-y { inset-block: var(--spacing-selectable-y); }
-@utility -inset-y-selectable-y { inset-block: calc(var(--spacing-selectable-y) * -1); }
+@utility top-selectable-y { top: var(--eds-selectable-space-vertical); }
+@utility -top-selectable-y { top: calc(var(--eds-selectable-space-vertical) * -1); }
+@utility right-selectable-y { right: var(--eds-selectable-space-vertical); }
+@utility -right-selectable-y { right: calc(var(--eds-selectable-space-vertical) * -1); }
+@utility bottom-selectable-y { bottom: var(--eds-selectable-space-vertical); }
+@utility -bottom-selectable-y { bottom: calc(var(--eds-selectable-space-vertical) * -1); }
+@utility left-selectable-y { left: var(--eds-selectable-space-vertical); }
+@utility -left-selectable-y { left: calc(var(--eds-selectable-space-vertical) * -1); }
+@utility inset-selectable-y { inset: var(--eds-selectable-space-vertical); }
+@utility -inset-selectable-y { inset: calc(var(--eds-selectable-space-vertical) * -1); }
+@utility inset-x-selectable-y { inset-inline: var(--eds-selectable-space-vertical); }
+@utility -inset-x-selectable-y { inset-inline: calc(var(--eds-selectable-space-vertical) * -1); }
+@utility inset-y-selectable-y { inset-block: var(--eds-selectable-space-vertical); }
+@utility -inset-y-selectable-y { inset-block: calc(var(--eds-selectable-space-vertical) * -1); }
 
 /* 0 */
 @utility top-0 { top: 0px; }

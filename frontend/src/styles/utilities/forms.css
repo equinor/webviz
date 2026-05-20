@@ -1,6 +1,10 @@
 @utility form-element {
     @apply focusable bg-canvas outline-neutral rounded outline -outline-offset-2;
 
+    transition:
+        background-color 150ms,
+        outline-color 150ms;
+
     &:focus-within {
         box-shadow:
             0 0 0 1px var(--eds-color-bg-neutral-canvas),

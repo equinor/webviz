@@ -10,7 +10,6 @@ import type { Preview } from "@storybook/react";
 import { DarkModeButton } from "../src/framework/internal/components/DarkModeButton";
 import { DensityModeToggle } from "../src/framework/internal/components/DensityModeToggle";
 
-import "@fontsource-variable/inter/wght.css";
 import "../src/styles/index.css";
 import "./preview.css";
 

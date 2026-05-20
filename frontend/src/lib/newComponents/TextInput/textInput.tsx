@@ -57,12 +57,12 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                         size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
                         SELECTABLE_SIZES_CLASSNAMES[size],
                         "gap-vertical-xs flex items-center",
-                        "text-neutral",
+                        "text-neutral-strong",
                     )}
                 >
                     {makeStartAdornment(state)}
                     <input
-                        className="w-full min-w-0 flex-auto p-0 outline-0 data-disabled:cursor-not-allowed"
+                        className="text-neutral-strong w-full min-w-0 flex-auto p-0 outline-0 data-disabled:cursor-not-allowed"
                         {...inputProps}
                         size={inputSize}
                     />

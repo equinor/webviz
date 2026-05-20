@@ -2,19 +2,7 @@ import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import {
-    AddLink,
-    ArrowDropDown,
-    Close,
-    Edit,
-    Fullscreen,
-    FullscreenExit,
-    Link,
-    Lock,
-    Refresh,
-    Save,
-    SaveAs,
-} from "@mui/icons-material";
+import { AddLink, Close, Edit, Fullscreen, FullscreenExit, Link, Lock, Refresh, SaveAs } from "@mui/icons-material";
 
 import { FmuLogo } from "@assets/FmuLogo";
 
@@ -27,6 +15,7 @@ import { type Workbench } from "@framework/Workbench";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
 import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
+import { ArrowDropDown, Save } from "@lib/mui-icons";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Separator } from "@lib/newComponents/Separator";
@@ -383,12 +372,12 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     return (
         <div className="gap-horizontal-xs flex items-center justify-center p-2 text-sm">
             <Button.Group split>
-                <Button variant="text" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
+                <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
                     {isSaving ? (
                         // Margin is explicitly added to make the spinner's position width match the save icon
                         <CircularProgress size={16} layoutClassName="mx-[2px]" />
                     ) : (
-                        <Save fontSize="small" />
+                        <Save size={16} />
                     )}
                 </Button>
                 <ComposedMenu
@@ -398,8 +387,8 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                             <Tooltip title="Save session options">
                                 {/* @ ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
                                 {/* <Button variant="contained" tone="accent" render={<MenuButton />}> */}
-                                <Button {...props} variant="text" tone="accent" pressed={state.open}>
-                                    <ArrowDropDown fontSize="small" />
+                                <Button {...props} variant="contained" tone="accent" pressed={state.open}>
+                                    <ArrowDropDown size={16} />
                                 </Button>
                             </Tooltip>
                         );

@@ -3,7 +3,7 @@ import React from "react";
 import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
-import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "@lib/newComponents/_shared/size";
+import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/wrapperProps";
@@ -33,11 +33,11 @@ const VARIANT_TONE_CLASSES: Record<
         disabled: "bg-disabled text-disabled border-disabled cursor-not-allowed! opacity-50",
     },
     outlined: {
-        accent: "outline -outline-offset-1 outline-accent text-accent-subtle hover:bg-accent-hover active:bg-accent-active bg-transparent data-pressed:bg-accent-active",
+        accent: "outline -outline-offset-1 outline-accent-strong text-accent-subtle hover:bg-accent-hover active:bg-accent-active bg-transparent data-pressed:bg-accent-active",
         neutral:
-            "outline -outline-offset-1 outline-neutral text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent data-pressed:bg-neutral-active",
+            "outline -outline-offset-1 outline-neutral-strong text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent data-pressed:bg-neutral-active",
 
-        danger: "outline -outline-offset-1 outline-danger text-danger-subtle hover:bg-danger-hover active:bg-danger-active bg-transparent data-pressed:bg-danger-active",
+        danger: "outline -outline-offset-1 outline-danger-strong text-danger-subtle hover:bg-danger-hover active:bg-danger-active bg-transparent data-pressed:bg-danger-active",
 
         disabled:
             "outline -outline-offset-1 outline-disabled text-disabled cursor-not-allowed! opacity-50 bg-transparent",
@@ -55,9 +55,15 @@ const VARIANT_TONE_CLASSES: Record<
 };
 
 const LABEL_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
-    small: "px-horizontal-2xs",
-    default: "px-horizontal-xs",
-    large: "px-horizontal-sm",
+    small: "text-body-sm! leading-body-sm-squished",
+    default: "text-body-md! leading-body-md-squished",
+    large: "text-body-lg! leading-body-lg-squished",
+};
+
+const BUTTON_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
+    small: "text-body-sm py-[calc(var(--eds-selectable-space-vertical)-(var(--leading-body-sm-squished)-8px)/2)]",
+    default: "text-body-md py-[calc(var(--eds-selectable-space-vertical)-(var(--leading-body-md-squished)-12px)/2)]",
+    large: "text-body-lg py-[calc(var(--eds-selectable-space-vertical)-(var(--leading-body-lg-squished)-12px)/2)]",
 };
 
 const ICON_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
@@ -75,16 +81,20 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             {...baseProps}
             ref={ref}
             data-pressed={props.pressed ? "" : undefined}
+            {...getDataAttributesForSelectableSize(size, true)}
             className={resolveClassNames(
                 props.layoutClassName,
+                BUTTON_SIZE_CLASSES[size],
+                "px-selectable-x",
+                "min-h-[calc(var(--eds-selectable-space-vertical)*2+round(1cap,4px))]",
                 "focusable inline-flex cursor-pointer items-center rounded transition-colors duration-150 focus-visible:outline-0 [[data-group]_&:not(:first-child)]:rounded-l-none [[data-group]_&:not(:last-child)]:rounded-r-none",
                 {
                     "aspect-square rounded-full": props.round,
                     rounded: !props.round,
-                    "aspect-square justify-center": props.iconOnly,
+                    "aspect-square justify-center p-0!": props.iconOnly,
                     [ICON_SIZE_CLASSES[size]]: props.iconOnly,
                 },
-                SELECTABLE_SIZES_CLASSNAMES[size],
+                // SELECTABLE_SIZES_CLASSNAMES[size],
                 VARIANT_TONE_CLASSES[variant][props.disabled ? "disabled" : tone],
             )}
         >

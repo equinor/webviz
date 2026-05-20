@@ -5,21 +5,24 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { Typography } from "@lib/newComponents/Typography";
 
 export type LabelProps = ComponentWrapperProps<FieldLabelBaseProps> & {
-    required?: boolean;
+    indicator?: string;
 };
 
 export function Label(props: LabelProps) {
-    const baseProps = resolveWrapperProps(props, "required", "aria-required");
+    const baseProps = resolveWrapperProps(props, "indicator");
 
     return (
         <FieldBase.Label
             {...baseProps}
-            aria-required={props.required}
-            className="gap-horizontal-3xs flex items-center"
-            render={<Typography as="label" family="body" size="md" tone="neutral" />}
+            className="gap-x-selectable-x flex items-center"
+            render={<Typography as="label" family="body" variant="strong" size="md" tone="neutral" />}
         >
             {props.children}
-            {props.required && <span className="text-neutral-subtle"> (Required)</span>}
+            {props.indicator && (
+                <Typography as="span" family="body" variant="subtle" size="sm" tone="neutral">
+                    {props.indicator}
+                </Typography>
+            )}
         </FieldBase.Label>
     );
 }

@@ -2,18 +2,20 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type TypographyProps = {
+import { type ComponentWrapperProps } from "../_shared/wrapperProps";
+
+export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
     family: "header" | "body";
     size: "xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
     tone?: "accent" | "neutral" | "danger" | "success" | "warning" | "info";
+    variant?: "subtle" | "strong";
     as?: React.ElementType;
     lineHeight?: "default" | "squished";
     weight?: "lighter" | "normal" | "bolder";
     tracking?: "tight" | "normal" | "wide";
     italic?: boolean;
     className?: string;
-    children?: React.ReactNode;
-} & Omit<React.HTMLAttributes<HTMLElement>, "children" | "className">;
+};
 
 const FONT_SIZE_CLASSES: Record<
     TypographyProps["family"],
@@ -268,13 +270,34 @@ const FONT_SIZE_CLASSES: Record<
     },
 };
 
-const TONE_CLASSES: Record<NonNullable<TypographyProps["tone"]>, string> = {
-    accent: "text-accent-subtle",
-    neutral: "text-neutral-subtle",
-    danger: "text-danger-subtle",
-    success: "text-success-subtle",
-    warning: "text-warning-subtle",
-    info: "text-info-subtle",
+const TONE_CLASSES: Record<
+    NonNullable<TypographyProps["tone"]>,
+    Record<NonNullable<TypographyProps["variant"]>, string>
+> = {
+    accent: {
+        subtle: "text-accent-subtle",
+        strong: "text-accent-strong",
+    },
+    neutral: {
+        subtle: "text-neutral-subtle",
+        strong: "text-neutral-strong",
+    },
+    danger: {
+        subtle: "text-danger-subtle",
+        strong: "text-danger-strong",
+    },
+    success: {
+        subtle: "text-success-subtle",
+        strong: "text-success-strong",
+    },
+    warning: {
+        subtle: "text-warning-subtle",
+        strong: "text-warning-strong",
+    },
+    info: {
+        subtle: "text-info-subtle",
+        strong: "text-info-strong",
+    },
 };
 
 const WEIGHT_CLASSES: Record<Required<TypographyProps>["weight"], string> = {
@@ -290,22 +313,25 @@ function TypographyComponent<Element extends HTMLElement>(
     const {
         family,
         size,
-        tone,
+        tone = "neutral",
+        variant = "subtle",
         as = "span",
         lineHeight = "default",
         weight = "normal",
         tracking = "normal",
         className,
         children,
+        layoutClassName,
         ...htmlProps
     } = props;
 
     const Component = as;
 
     const resolvedClassName = resolveClassNames(
+        layoutClassName,
         FONT_SIZE_CLASSES[family][size][lineHeight][tracking],
         WEIGHT_CLASSES[weight],
-        tone ? TONE_CLASSES[tone] : "text-neutral",
+        TONE_CLASSES[tone][variant],
         className,
         { italic: props.italic },
     );

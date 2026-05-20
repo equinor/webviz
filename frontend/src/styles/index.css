@@ -1,3 +1,6 @@
+/* Fonts — must come before tailwindcss import */
+@import "@fontsource-variable/inter/wght.css";
+
 /* Importing additional animations. Imported first, so potential name conflicts prioritizes tailwind  */
 /* @import "animate.css/animate.css"; */
 
