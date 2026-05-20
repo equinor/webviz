@@ -48,6 +48,7 @@ from primary.utils.azure_service_credentials import ClientSecretVars, create_cre
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
+from primary.utils.user_cache import UserCacheFactory
 
 from . import config
 
@@ -64,6 +65,7 @@ logging.getLogger("webviz_services.surface_query_service").setLevel(logging.DEBU
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.timeseries").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
 # logging.getLogger("primary.auth").setLevel(logging.DEBUG)
@@ -109,6 +111,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
+    UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_USER_SESSION_URL)
 
     # This part, after the yield, will be executed after the application has finished.
     yield

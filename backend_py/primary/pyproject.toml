@@ -23,6 +23,8 @@ aiohttp = "^3.13.4"
 azure-cosmos = "^4.9.0"
 nanoid = "^2.0.0"
 
+msgpack = "^1.1.2"
+
 webviz-core-utils = { path = "../libs/core_utils", develop = true }
 webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
 webviz-services = { path = "../libs/services", develop = true }
