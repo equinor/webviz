@@ -1,13 +1,12 @@
 import { getDrilledWellboreHeadersOptions } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 
 import { Setting } from "../..//settings/settingsDefinitions";
 import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
 import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
-import type { DefineBasicDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
+const intersectionViewSettings = [Setting.INTERSECTION] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;
 type SettingTypes = MakeSettingTypesMap<IntersectionViewSettings>;
 
@@ -18,51 +17,53 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
         return "Intersection view";
     }
 
-    defineDependencies({
-        settingAttributesUpdater,
-        helperDependency,
-        valueConstraintsUpdater,
+    setupBindings({
+        setting,
+        makeSharedResult,
         queryClient,
-    }: DefineBasicDependenciesArgs<IntersectionViewSettings, SettingTypes>): void {
-        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-            const enableExtensionLength = intersection?.type === IntersectionType.WELLBORE;
+    }: SetupBasicBindingsContext<IntersectionViewSettings, SettingTypes>): void {
+        const wellboreHeaders = makeSharedResult({
+            debugName: "wellboreHeaders",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                if (!fieldIdentifier) {
+                    return null;
+                }
 
-            return { enabled: enableExtensionLength };
+                return await queryClient.fetchQuery({
+                    ...getDrilledWellboreHeadersOptions({
+                        query: { field_identifier: fieldIdentifier },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(async ({ getGlobalSetting, abortSignal }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    wellboreHeaders: read.sharedResult(wellboreHeaders),
+                };
+            },
+            resolve({ fieldIdentifier, intersectionPolylines, wellboreHeaders }) {
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+                );
 
-            if (!fieldIdentifier) {
-                return null;
-            }
-
-            return await queryClient.fetchQuery({
-                ...getDrilledWellboreHeadersOptions({
-                    query: { field_identifier: fieldIdentifier },
-                    signal: abortSignal,
-                }),
-            });
-        });
-
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
-
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
-
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+            },
         });
     }
 
     getDefaultSettingsValues() {
         return {
             intersection: null,
-            wellboreExtensionLength: 500.0,
         };
     }
 }

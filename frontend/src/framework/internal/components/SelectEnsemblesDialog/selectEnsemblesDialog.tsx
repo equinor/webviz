@@ -168,6 +168,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 modal
                 alertDialogs={[
                     <SelectEnsemblesConfirmationDialogs
+                        key="selectEnsembleConfirm"
                         ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
                         showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
                         showLoadingErrorsDialogState={[
@@ -178,6 +179,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
                     />,
                     <Dialog.Popup
+                        key="ensembleExplorer"
                         open={showEnsembleExplorer}
                         onOpenChange={(open) => {
                             if (!open) {
@@ -189,6 +191,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         modal
                         alertDialogs={[
                             <SelectEnsemblesConfirmationDialogs
+                                key="ensembleExplorerConfirm"
                                 ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
                                 showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
                                 showLoadingErrorsDialogState={[
@@ -200,8 +203,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             />,
                         ]}
                     >
+                        <Dialog.Header>
+                            <ExplorerTitle
+                                showExplorer={showEnsembleExplorer}
+                                explorerMode={ensembleExplorerMode}
+                                onClose={handleCloseEnsembleExplorer}
+                            />
+                        </Dialog.Header>
                         <EnsembleExplorer
-                            disableQueries={!showEnsembleExplorer}
+                            queriesDisabled={!showEnsembleExplorer}
                             nextEnsembleColor={nextEnsembleColor}
                             selectedEnsembles={
                                 ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE

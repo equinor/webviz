@@ -8,7 +8,8 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 describe("DeltaEnsemble", () => {
     const COMPARISON_ENSEMBLE = new RegularEnsemble(
-        "field1",
+        "assetname",
+        ["field1"],
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case1",
         "ensemble1",
@@ -27,12 +28,14 @@ describe("DeltaEnsemble", () => {
             },
         ],
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
+        [],
         "blue",
         "Custom Name First Ensemble",
     );
 
     const REFERENCE_ENSEMBLE = new RegularEnsemble(
-        "field1",
+        "assetname",
+        ["field1"],
         "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case2",
         "ensemble2",
@@ -51,6 +54,7 @@ describe("DeltaEnsemble", () => {
             },
         ],
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
+        [],
         "green",
         "Custom Name Second Ensemble",
     );

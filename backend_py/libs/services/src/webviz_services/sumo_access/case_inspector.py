@@ -1,8 +1,10 @@
 import logging
 import asyncio
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, SearchContext
+from fmu.datamodels.standard_results.simulator_fipregions_mapping import SimulatorFipregionsMappingResult
+from fmu.datamodels.standard_results.enums import StandardResultName
 
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.service_exceptions import (
@@ -98,6 +100,16 @@ class CaseInspector:
             )
         return strat_identifier[0]
 
+    async def get_asset_name_async(self) -> str:
+        """Retrieve the asset name for a case"""
+        case = await self._get_or_create_case_context_async()
+        asset_names = await case.asset_names_async
+        if len(asset_names) == 0:
+            raise NoDataError(f"No asset name found for {case.name}", Service.SUMO)
+        if len(asset_names) > 1:
+            raise MultipleDataMatchesError(f"Multiple asset names found for {case.name}", Service.SUMO)
+        return asset_names[0]
+
     async def get_field_identifiers_async(self) -> list[str]:
         """Retrieve the field identifiers for a case"""
         case = await self._get_or_create_case_context_async()
@@ -110,3 +122,35 @@ class CaseInspector:
         ensemble = case.filter(ensemble=ensemble_name)
         standard_results = await ensemble.standard_results_async
         return standard_results
+
+    async def get_fip_regions_mapping_async(self, ensemble_name: str) -> SimulatorFipregionsMappingResult | None:
+        """Get FIP regions mapping for the specified ensemble."""
+        sc = SearchContext(self._sumo_client).filter(
+            uuid=self._case_uuid,
+            ensemble=ensemble_name,
+            realization=True,
+            standard_result=StandardResultName.simulator_fipregions_mapping.value,
+        )
+        length = await sc.length_async()
+
+        if length == 0:
+            return None
+        # There will be fip num mappings per realization. For now we will assume that the mapping is the same across realizations.
+        # Ideally we should download all, check and raise if they differ, but this should not be necessary.
+        # The mapping is made deterministically from zone/region combinations.
+        # https://github.com/equinor/fmu-dataio/blob/main/src/fmu/dataio/export/rms/simulator_fipregions_mapping.py
+        document = await sc.getitem_async(0)
+        table = await document.to_arrow_async()
+        raw_data = table.to_pylist()
+
+        try:
+            validated_table = SimulatorFipregionsMappingResult.model_validate(raw_data)
+            return validated_table
+        except ValidationError as error:
+            LOGGER.warning(
+                "Failed to validate fipRegionsMapping for case_uuid=%s ensemble_name=%s: %s",
+                self._case_uuid,
+                ensemble_name,
+                error,
+            )
+            return None

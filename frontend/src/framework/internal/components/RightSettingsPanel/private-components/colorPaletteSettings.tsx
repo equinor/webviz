@@ -8,12 +8,10 @@ import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Collapsible } from "@lib/newComponents/Collapsible";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSettingsProps = {
     workbench: Workbench;

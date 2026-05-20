@@ -1,3 +1,5 @@
+import { EnsembleFipRegionsMapping } from "./EnsembleFipRegionsMapping";
+import type { FipRegionMapping } from "./EnsembleFipRegionsMapping";
 import type { Parameter } from "./EnsembleParameters";
 import { EnsembleParameters } from "./EnsembleParameters";
 import type { Sensitivity } from "./EnsembleSensitivities";
@@ -7,17 +9,20 @@ import { createRegularEnsembleDisplayName } from "./utils/ensembleUiHelpers";
 
 export class RegularEnsemble {
     private _ensembleIdent: RegularEnsembleIdent;
-    private _fieldIdentifier: string;
+    private _assetName: string;
+    private _fieldIdentifiers: readonly string[];
     private _caseName: string;
     private _stratigraphicColumnIdentifier: string;
     private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
+    private _fipRegionsMapping: EnsembleFipRegionsMapping;
     private _color: string;
     private _customName: string | null;
 
     constructor(
-        fieldIdentifier: string,
+        assetName: string,
+        fieldIdentifiers: string[],
         caseUuid: string,
         caseName: string,
         ensembleName: string,
@@ -25,15 +30,18 @@ export class RegularEnsemble {
         realizationsArray: number[],
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
+        fipRegionsMappingArray: FipRegionMapping[] | null,
         color: string,
         customName: string | null = null,
     ) {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
-        this._fieldIdentifier = fieldIdentifier;
+        this._assetName = assetName;
+        this._fieldIdentifiers = Array.from(fieldIdentifiers);
         this._caseName = caseName;
         this._stratigraphicColumnIdentifier = stratigraphicColumnIdentifier;
         this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArray);
+        this._fipRegionsMapping = new EnsembleFipRegionsMapping(fipRegionsMappingArray ?? []);
         this._color = color;
         this._customName = customName;
 
@@ -47,8 +55,11 @@ export class RegularEnsemble {
         return this._ensembleIdent;
     }
 
-    getFieldIdentifier(): string {
-        return this._fieldIdentifier;
+    getAssetName(): string {
+        return this._assetName;
+    }
+    getFieldIdentifiers(): readonly string[] {
+        return this._fieldIdentifiers;
     }
 
     getStratigraphicColumnIdentifier(): string {
@@ -94,7 +105,9 @@ export class RegularEnsemble {
     getSensitivities(): EnsembleSensitivities | null {
         return this._sensitivities;
     }
-
+    getFipRegionsMapping(): EnsembleFipRegionsMapping {
+        return this._fipRegionsMapping;
+    }
     getColor(): string {
         return this._color;
     }

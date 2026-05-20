@@ -5,20 +5,19 @@ import { Add, Check } from "@mui/icons-material";
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Label } from "@lib/components/Label";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { useValidState } from "@lib/hooks/useValidState";
 import { Button } from "@lib/newComponents/Button";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Select, type SelectOption } from "@lib/newComponents/Select";
 
 import type { InternalRegularEnsembleSetting } from "../types";
 
 import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 
 export type EnsembleExplorerProps = {
-    disableQueries: boolean;
+    queriesDisabled: boolean;
     nextEnsembleColor: string;
     selectedEnsembles: UserEnsembleSetting[];
     selectButtonLabel?: string;
@@ -118,7 +117,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
             <Dialog.Body layoutClassName="grow min-h-0">
                 <div className="gap-vertical-sm relative flex h-full w-full flex-col">
                     <CaseExplorer
-                        disableQueries={props.disableQueries}
+                        queriesDisabled={props.queriesDisabled}
                         onCaseSelectionChange={handleCaseSelectedChange}
                     />
                     <FieldCompositions.Default label="Ensemble" layoutClassName="w-full">

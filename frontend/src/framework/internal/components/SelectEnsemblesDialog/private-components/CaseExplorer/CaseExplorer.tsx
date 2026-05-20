@@ -4,12 +4,11 @@ import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
-import { getCasesOptions, getFieldsOptions, type EnsembleInfo_api } from "@api";
+import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Table } from "@lib/components/Table";
@@ -21,7 +20,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { Switch, SwitchItem } from "@lib/newComponents/Switch";
+import { SwitchItem } from "@lib/newComponents/Switch";
 
 import {
     makeCaseRowData,
@@ -40,7 +39,7 @@ export type CaseSelection = {
 };
 
 export type CaseExplorerProps = {
-    disableQueries: boolean;
+    queriesDisabled: boolean;
     onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -74,24 +73,24 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const [prevCaseSelection, setPrevCaseSelection] = React.useState<CaseSelection | null>(null);
 
     // --- Queries ---
-    const fieldsQuery = useQuery({
-        ...getFieldsOptions(),
-        enabled: !props.disableQueries,
+    const assetsQuery = useQuery({
+        ...getAssetInfosOptions(),
+        enabled: !props.queriesDisabled,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
-    const fieldOptions = fieldsQuery.data?.map((f) => ({ value: f.fieldIdentifier, label: f.fieldIdentifier })) ?? [];
+    const assetOptions = assetsQuery.data?.map((f) => ({ value: f.name, label: f.name })) ?? [];
 
-    const [selectedField, setSelectedField] = useValidState<string>({
-        initialState: readInitialStateFromLocalStorage("selectedField"),
-        validStates: fieldsQuery.data?.map((item) => item.fieldIdentifier) ?? [],
+    const [selectedAsset, setSelectedAsset] = useValidState<string>({
+        initialState: readInitialStateFromLocalStorage("selectedAsset"),
+        validStates: assetsQuery.data?.map((item) => item.name) ?? [],
         keepStateWhenInvalid: true,
     });
 
     const casesQuery = useQuery({
-        ...getCasesOptions({ query: { field_identifier: selectedField ?? "" } }),
-        enabled: selectedField !== null && !props.disableQueries,
+        ...getCasesOptions({ query: { asset_name: selectedAsset ?? "" } }),
+        enabled: !!selectedAsset && !props.queriesDisabled,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
@@ -119,22 +118,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     // Refresh query handlers
-    const { isRefreshing: isFieldsQueryRefreshing, refresh: refreshFields } = useRefreshQuery(fieldsQuery);
+    const { isRefreshing: isAssetsQueryRefreshing, refresh: refreshAssets } = useRefreshQuery(assetsQuery);
     const { isRefreshing: isCasesQueryRefreshing, refresh: refreshCases } = useRefreshQuery(casesQuery);
 
     // --- Derived data ---
     const lastUpdatedMs = React.useMemo(() => {
         return sortedCasesQueryData && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
     }, [sortedCasesQueryData, casesQuery.dataUpdatedAt]);
-
-    const caseTableColumns = React.useMemo(() => {
-        const disabledFilterComponents = {
-            disableAuthorComponent: showOnlyMyCases,
-            disableStatusComponent: showOnlyOfficialCases,
-        };
-
-        return makeCaseTableColumns(currentStatusOptions, disabledFilterComponents);
-    }, [currentStatusOptions, showOnlyMyCases, showOnlyOfficialCases]);
 
     // Ensure selected status is among options, when not showing only official cases
     const statusFilterState = (tableFiltersState["status"] as string[]) ?? null;
@@ -180,6 +170,50 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         validStateArray: casesStandardResults,
         keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
     });
+
+    const casesModelNames = React.useMemo(() => {
+        if (!sortedCasesQueryData) {
+            return [];
+        }
+
+        const modelNames = new Set<string>();
+        for (const c of sortedCasesQueryData) {
+            if (c.modelName) {
+                modelNames.add(c.modelName);
+            }
+        }
+
+        return Array.from(modelNames).sort();
+    }, [sortedCasesQueryData]);
+
+    const casesModelRevisions = React.useMemo(() => {
+        if (!sortedCasesQueryData) {
+            return [];
+        }
+
+        const modelRevisions = new Set<string>();
+        for (const c of sortedCasesQueryData) {
+            if (c.modelRevision) {
+                modelRevisions.add(c.modelRevision);
+            }
+        }
+
+        return Array.from(modelRevisions).sort();
+    }, [sortedCasesQueryData]);
+
+    const caseTableColumns = React.useMemo(() => {
+        const disabledFilterComponents = {
+            disableAuthorComponent: showOnlyMyCases,
+            disableStatusComponent: showOnlyOfficialCases,
+        };
+
+        return makeCaseTableColumns(
+            currentStatusOptions,
+            casesModelNames,
+            casesModelRevisions,
+            disabledFilterComponents,
+        );
+    }, [currentStatusOptions, casesModelNames, casesModelRevisions, showOnlyMyCases, showOnlyOfficialCases]);
 
     const caseRowData = React.useMemo(() => {
         if (!sortedCasesQueryData) {
@@ -229,12 +263,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     }, [currentCaseSelection, onCaseSelectionChange, prevCaseSelection]);
 
     // --- Handlers ---
-    function handleFieldChanged(fieldIdentifier: string | null) {
-        if (!fieldIdentifier) {
+    function handleAssetChanged(assetName: string | null) {
+        if (!assetName) {
             return;
         }
-        storeStateInLocalStorage("selectedField", fieldIdentifier);
-        setSelectedField(fieldIdentifier);
+
+        storeStateInLocalStorage("selectedAsset", assetName);
+        setSelectedAsset(assetName);
     }
 
     function handleOfficialCasesSwitchChange(checked: boolean) {
@@ -263,31 +298,31 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const handleManualRefetch = React.useCallback(
         function handleManualRefetch() {
             // Checking if queries are disabled or already isFetching (covers both fetching and re-fetching state)
-            if (props.disableQueries || (casesQuery.isFetching && fieldsQuery.isFetching)) return;
+            if (props.queriesDisabled || casesQuery.isFetching || assetsQuery.isFetching) return;
 
-            refreshFields();
+            refreshAssets();
             refreshCases();
         },
-        [refreshCases, refreshFields, props.disableQueries, casesQuery.isFetching, fieldsQuery.isFetching],
+        [refreshCases, refreshAssets, props.queriesDisabled, casesQuery.isFetching, assetsQuery.isFetching],
     );
 
     return (
         <div className="gap-vertical-3xs flex h-full min-h-0 flex-col">
             <div className="gap-horizontal-xs flex flex-row">
-                <FieldCompositions.Default gridLayout={true} label="Field">
+                <FieldCompositions.Default gridLayout={true} label="Asset">
                     <PendingWrapper
-                        isPending={fieldsQuery.isFetching && !fieldsQuery.isRefetching}
-                        errorMessage={fieldsQuery.error ? "Error loading fields" : undefined}
+                        isPending={assetsQuery.isFetching && !assetsQuery.isRefetching}
+                        errorMessage={assetsQuery.error ? "Error loading assets" : undefined}
                     >
                         <Combobox
-                            items={fieldOptions}
-                            value={selectedField}
-                            onValueChange={handleFieldChanged}
-                            disabled={fieldOptions.length === 0}
+                            items={assetOptions}
+                            value={selectedAsset}
+                            onValueChange={handleAssetChanged}
+                            disabled={assetOptions.length === 0}
                         />
                     </PendingWrapper>
                 </FieldCompositions.Default>
-                <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                <Tooltip title="Show only cases authored by me" enterDelay="medium">
                     <SwitchItem
                         checked={showOnlyMyCases}
                         onCheckedChange={handleCasesByMeChange}
@@ -298,7 +333,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     <SwitchItem
                         checked={showOnlyOfficialCases}
                         onCheckedChange={handleOfficialCasesSwitchChange}
-                        label="Only official cases"
+                        label="Only Official cases"
                     />
                 </Tooltip>
                 <PendingWrapper
@@ -309,7 +344,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
                         <Combobox
                             value={selectedStandardResults}
-                            placeholder="Filter cases by Standard Results..."
+                            placeholder="Standard Results"
                             multiple
                             items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
                             disabled={casesStandardResults.length === 0}
@@ -340,9 +375,9 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                                 "Never"
                             )}
                         </span>
-                        <Tooltip title="Refresh fields and cases lists" enterDelay="medium">
+                        <Tooltip title="Refresh assets and cases lists" enterDelay="medium">
                             <Button tone="accent" onClick={handleManualRefetch} variant="text">
-                                {isFieldsQueryRefreshing || isCasesQueryRefreshing ? (
+                                {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
                                     <CircularProgress size="small" />
                                 ) : (
                                     <Refresh fontSize="inherit" />

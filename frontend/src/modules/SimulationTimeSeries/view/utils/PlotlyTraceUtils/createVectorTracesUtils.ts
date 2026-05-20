@@ -200,11 +200,9 @@ export function createVectorObservationsTraces({
 
     const traceName = name ? `Observation<br>${name}` : "Observation";
     return vectorObservations.map((observation) => {
-        let hoverText = observation.label;
+        const hoverText = observation.label;
         let hoverData = `(%{x}, %{y})<br>`;
-        if (observation.comment) {
-            hoverText += `: ${observation.comment}`;
-        }
+
         if (type === "scattergl") {
             hoverData = `(%{x}, %{y} ± ${observation.error})<br>`;
         }
@@ -212,7 +210,7 @@ export function createVectorObservationsTraces({
         return {
             name: traceName,
             legendgroup: legendGroup,
-            x: [observation.date],
+            x: [observation.timestamp_utc_ms],
             y: [observation.value],
             marker: { color: color },
             yaxis: yaxis,

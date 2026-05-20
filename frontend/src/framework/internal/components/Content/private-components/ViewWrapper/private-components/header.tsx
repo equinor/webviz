@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Dropdown, MenuButton } from "@mui/base";
+import type { PopoverRootActions } from "@base-ui/react";
 import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
 
 import {
@@ -24,19 +24,16 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/newComponents/Badge";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
-import { MenuText } from "@lib/components/MenuText/menuText";
+import { Popover } from "@lib/components/Popover";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Badge } from "@lib/newComponents/Badge";
+import { Button } from "@lib/newComponents/Button";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
+import { Separator } from "@lib/newComponents/Separator";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Separator } from "@lib/newComponents/Separator";
-import { Button } from "@lib/newComponents/Button";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -418,6 +415,8 @@ type StatusIndicatorProps = {
 };
 
 function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
+    const popoverActionRef = React.useRef<PopoverRootActions | null>(null);
+
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const dashboard = useActiveDashboard();
 
@@ -433,7 +432,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         GuiState.RightSettingsPanelWidthInPercent,
     );
 
-    function handleShowLogClick(e: React.PointerEvent<HTMLDivElement> | React.PointerEvent<HTMLButtonElement>) {
+    function handleShowLogClick(e: React.PointerEvent<HTMLButtonElement>) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -441,15 +440,16 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
             setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
 
+        popoverActionRef.current?.close();
         dashboard.setActiveModuleInstanceId(props.moduleInstance.getId());
         setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
     }
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <div className="flex flex-col gap-2 p-2">
+            <ul className="flex flex-col gap-2 p-2">
                 {hotStatusMessages.map((entry, i) => (
-                    <MenuText key={`${entry.message}-${i}`}>
+                    <li key={`${entry.message}-${i}`} className="px-3 py-1 text-xs tracking-wider text-gray-500">
                         {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
                         {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
                         <span
@@ -458,9 +458,9 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                         >
                             {entry.message}
                         </span>
-                    </MenuText>
+                    </li>
                 ))}
-            </div>
+            </ul>
         );
     }
 
@@ -489,42 +489,48 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
-            <Dropdown key="header-status-messages">
-                <Tooltip title="Show status messages" placement="bottom">
-                    <MenuButton className="text-body-sm flex items-center justify-center rounded-sm p-1 hover:bg-blue-200">
-                        <Tooltip title={badgeTitle} placement="bottom">
-                            <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
-                                <Error
-                                    fontSize="inherit"
-                                    color="error"
-                                    style={{ display: numErrors === 0 ? "none" : "block" }}
-                                />
-                                <div className="overflow-hidden">
-                                    <Warning
-                                        fontSize="inherit"
-                                        color="warning"
-                                        style={{ display: numWarnings === 0 ? "none" : "block" }}
-                                        className={resolveClassNames({
-                                            "-ml-3": numErrors > 0,
-                                        })}
-                                    />
-                                </div>
-                            </Badge>
-                        </Tooltip>
-                    </MenuButton>
+            <Popover
+                actionsRef={popoverActionRef}
+                triggerTitle="Show status messages"
+                content={
+                    <>
+                        {makeHotStatusMessages()}
+                        {log.length > 0 && (
+                            <>
+                                <div className="my-1 h-0.5 w-full bg-gray-300" />
+                                <li>
+                                    <button
+                                        className="text-body-sm flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left hover:bg-blue-100"
+                                        onClick={handleShowLogClick}
+                                    >
+                                        <History fontSize="inherit" /> Show complete log
+                                    </button>
+                                </li>
+                            </>
+                        )}
+                    </>
+                }
+            >
+                <Tooltip title={badgeTitle} placement="bottom">
+                    <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
+                        <Error
+                            fontSize="inherit"
+                            color="error"
+                            style={{ display: numErrors === 0 ? "none" : "block" }}
+                        />
+                        <div className="overflow-hidden">
+                            <Warning
+                                fontSize="inherit"
+                                color="warning"
+                                style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                className={resolveClassNames({
+                                    "-ml-3": numErrors > 0,
+                                })}
+                            />
+                        </div>
+                    </Badge>
                 </Tooltip>
-                <Menu anchorOrigin="bottom-end">
-                    {makeHotStatusMessages()}
-                    {log.length > 0 && (
-                        <>
-                            <div className="my-1 h-0.5 w-full bg-gray-300" />
-                            <MenuItem onClick={handleShowLogClick} className="text-sm">
-                                <History fontSize="inherit" /> Show complete log
-                            </MenuItem>
-                        </>
-                    )}
-                </Menu>
-            </Dropdown>,
+            </Popover>,
         );
     }
 

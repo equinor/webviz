@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import type { FipRegionMapping } from "@framework/EnsembleFipRegionsMapping";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
 import type { Sensitivity } from "@framework/EnsembleSensitivities";
@@ -7,7 +8,8 @@ import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensi
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 describe("RegularEnsemble", () => {
-    const fieldIdentifier = "field1";
+    const assetName = "DROGON";
+    const fieldIdentifiers = ["DROGON"];
     const caseUuid = "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa";
     const caseName = "case1";
     const ensembleName = "ensemble1";
@@ -26,11 +28,13 @@ describe("RegularEnsemble", () => {
         },
     ];
     const sensitivityArray: Sensitivity[] = [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }];
+    const fipRegionsMappingArray: FipRegionMapping[] = [];
     const color = "red";
     const customName = "customName1";
 
     const TEST_ENSEMBLE = new RegularEnsemble(
-        fieldIdentifier,
+        assetName,
+        fieldIdentifiers,
         caseUuid,
         caseName,
         ensembleName,
@@ -38,6 +42,7 @@ describe("RegularEnsemble", () => {
         realizationsArray,
         parameterArray,
         sensitivityArray,
+        fipRegionsMappingArray,
         color,
         customName,
     );
@@ -46,8 +51,8 @@ describe("RegularEnsemble", () => {
         expect(TEST_ENSEMBLE).toBeInstanceOf(RegularEnsemble);
     });
 
-    test("should return the correct field identifier", () => {
-        expect(TEST_ENSEMBLE.getFieldIdentifier()).toBe(fieldIdentifier);
+    test("should return the correct field identifiers", () => {
+        expect(TEST_ENSEMBLE.getFieldIdentifiers()).toEqual(fieldIdentifiers);
     });
 
     test("should return the correct stratigraphic column identifier", () => {
@@ -107,7 +112,8 @@ describe("RegularEnsemble", () => {
 
     test("should return display name if custom name is not set", () => {
         const ensemble = new RegularEnsemble(
-            fieldIdentifier,
+            assetName,
+            fieldIdentifiers,
             caseUuid,
             caseName,
             ensembleName,
@@ -115,6 +121,7 @@ describe("RegularEnsemble", () => {
             realizationsArray,
             parameterArray,
             sensitivityArray,
+            fipRegionsMappingArray,
             color,
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);

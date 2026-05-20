@@ -2,7 +2,6 @@ import type { QueryClient } from "@tanstack/query-core";
 
 import type { WellboreHeader_api } from "@api";
 import { getDrilledWellboreHeadersOptions } from "@api";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
@@ -15,26 +14,16 @@ import type {
 import type { IntersectionSettingValue } from "../../settings/implementations/IntersectionSetting";
 
 /**
- * Fetch wellbore headers for field identifier for the provided ensemble identifier.
+ * Fetch wellbore headers for the provided field identifier.
  */
 export async function fetchWellboreHeaders(
-    ensembleIdent: RegularEnsembleIdent | null,
+    fieldIdentifier: string | null,
     abortSignal: AbortSignal,
-    workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
 ): Promise<WellboreHeader_api[] | null> {
-    if (!ensembleIdent) {
+    if (!fieldIdentifier) {
         return null;
     }
-
-    const ensembleSet = workbenchSession.getEnsembleSet();
-    const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-    if (!ensemble) {
-        return null;
-    }
-
-    const fieldIdentifier = ensemble.getFieldIdentifier();
 
     return await queryClient.fetchQuery({
         ...getDrilledWellboreHeadersOptions({
@@ -50,9 +39,9 @@ export async function fetchWellboreHeaders(
 export async function createIntersectionPolylineWithSectionLengthsForField(
     fieldIdentifier: string | null,
     intersection: IntersectionSettingValue | null,
-    wellboreExtensionLength: number,
     workbenchSession: WorkbenchSession,
     queryClient: QueryClient,
+    abortSignal: AbortSignal,
 ): Promise<PolylineWithSectionLengths | null> {
     if (!intersection) {
         return null;
@@ -70,7 +59,7 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
             type: IntersectionType.CUSTOM_POLYLINE,
             polyline: polyline,
         };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
     if (intersection.type === IntersectionType.WELLBORE) {
         if (!fieldIdentifier) {
@@ -80,12 +69,12 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
         const intersectionSpecification: WellboreIntersectionSpecification = {
             type: IntersectionType.WELLBORE,
             wellboreUuid: intersection.uuid,
-            extensionLength: wellboreExtensionLength,
+            extensionLength: intersection.extensionLength ?? 0,
             fieldIdentifier: fieldIdentifier,
-            queryClient,
         };
-        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification);
+        return makeIntersectionPolylineWithSectionLengthsPromise(intersectionSpecification, queryClient, abortSignal);
     }
 
-    throw new Error(`Unhandled intersection type ${intersection.type}`);
+    const _exhaustiveCheck: never = intersection;
+    throw new Error(`Unhandled intersection type ${JSON.stringify(_exhaustiveCheck)}`);
 }

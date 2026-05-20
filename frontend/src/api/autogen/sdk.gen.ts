@@ -24,6 +24,8 @@ import type {
     GetAliveProtectedData_api,
     GetAliveProtectedResponses_api,
     GetAliveResponses_api,
+    GetAssetInfosData_api,
+    GetAssetInfosResponses_api,
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
@@ -45,14 +47,14 @@ import type {
     GetEnsembleDetailsData_api,
     GetEnsembleDetailsErrors_api,
     GetEnsembleDetailsResponses_api,
+    GetFieldIdentifiersData_api,
+    GetFieldIdentifiersResponses_api,
     GetFieldPerforationsData_api,
     GetFieldPerforationsErrors_api,
     GetFieldPerforationsResponses_api,
     GetFieldScreensData_api,
     GetFieldScreensErrors_api,
     GetFieldScreensResponses_api,
-    GetFieldsData_api,
-    GetFieldsResponses_api,
     GetGridModelsInfoData_api,
     GetGridModelsInfoErrors_api,
     GetGridModelsInfoResponses_api,
@@ -80,9 +82,6 @@ import type {
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataErrors_api,
     GetMisfitSurfaceDataResponses_api,
-    GetObservationsData_api,
-    GetObservationsErrors_api,
-    GetObservationsResponses_api,
     GetObservedSurfacesMetadataData_api,
     GetObservedSurfacesMetadataErrors_api,
     GetObservedSurfacesMetadataResponses_api,
@@ -149,6 +148,9 @@ import type {
     GetStatisticalVectorDataPerSensitivityErrors_api,
     GetStatisticalVectorDataPerSensitivityResponses_api,
     GetStatisticalVectorDataResponses_api,
+    GetSummaryObservationsData_api,
+    GetSummaryObservationsErrors_api,
+    GetSummaryObservationsResponses_api,
     GetSurfaceDataData_api,
     GetSurfaceDataErrors_api,
     GetSurfaceDataResponses_api,
@@ -233,10 +235,11 @@ import type {
     UpdateSessionResponses_api,
 } from "./types.gen";
 
-export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<
-    TData,
-    ThrowOnError
-> & {
+export type Options<
+    TData extends TDataShape = TDataShape,
+    ThrowOnError extends boolean = boolean,
+    TResponse = unknown,
+> = Options2<TData, ThrowOnError, TResponse> & {
     /**
      * You can provide a client instance returned by `createClient()` instead of
      * individual options. This might be also useful if you want to implement a
@@ -251,21 +254,37 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Get Fields
+ * Get Asset Infos
  *
- * Get list of fields
+ * Get list of asset infos
  */
-export const getFields = <ThrowOnError extends boolean = false>(options?: Options<GetFieldsData_api, ThrowOnError>) =>
-    (options?.client ?? client).get<GetFieldsResponses_api, unknown, ThrowOnError>({
+export const getAssetInfos = <ThrowOnError extends boolean = false>(
+    options?: Options<GetAssetInfosData_api, ThrowOnError>,
+) =>
+    (options?.client ?? client).get<GetAssetInfosResponses_api, unknown, ThrowOnError>({
         responseType: "json",
-        url: "/fields",
+        url: "/asset_infos",
+        ...options,
+    });
+
+/**
+ * Get Field Identifiers
+ *
+ * Get list of field identifiers
+ */
+export const getFieldIdentifiers = <ThrowOnError extends boolean = false>(
+    options?: Options<GetFieldIdentifiersData_api, ThrowOnError>,
+) =>
+    (options?.client ?? client).get<GetFieldIdentifiersResponses_api, unknown, ThrowOnError>({
+        responseType: "json",
+        url: "/field_identifiers",
         ...options,
     });
 
 /**
  * Get Cases
  *
- * Get list of cases for specified field
+ * Get list of cases for specified asset
  */
 export const getCases = <ThrowOnError extends boolean = false>(options: Options<GetCasesData_api, ThrowOnError>) =>
     (options.client ?? client).get<GetCasesResponses_api, GetCasesErrors_api, ThrowOnError>({
@@ -1197,18 +1216,20 @@ export const getUserPhoto = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Get Observations
+ * Get Summary Observations
  *
- * Retrieve all observations found in sumo case
+ * Retrieve all summary observations found in ensemble
  */
-export const getObservations = <ThrowOnError extends boolean = false>(
-    options: Options<GetObservationsData_api, ThrowOnError>,
+export const getSummaryObservations = <ThrowOnError extends boolean = false>(
+    options: Options<GetSummaryObservationsData_api, ThrowOnError>,
 ) =>
-    (options.client ?? client).get<GetObservationsResponses_api, GetObservationsErrors_api, ThrowOnError>({
-        responseType: "json",
-        url: "/observations/observations/",
-        ...options,
-    });
+    (options.client ?? client).get<GetSummaryObservationsResponses_api, GetSummaryObservationsErrors_api, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/observations/summary_observations",
+            ...options,
+        },
+    );
 
 /**
  * Get Rft Table Definition

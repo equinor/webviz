@@ -6,7 +6,6 @@ import {
     getRealizationSurfacesMetadataOptions,
     postGetSurfaceIntersectionOptions,
 } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -24,18 +23,16 @@ import type {
     DataProviderAccessors,
     FetchDataParams,
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
-
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
 const realizationSurfacesSettings = [
     Setting.INTERSECTION,
-    Setting.WELLBORE_EXTENSION_LENGTH,
     Setting.ENSEMBLE,
     Setting.REALIZATION,
     Setting.ATTRIBUTE,
@@ -63,16 +60,13 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
     }
 
     getDefaultSettingsValues() {
-        return {
-            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
-        };
+        return {};
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return (
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
-            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
@@ -87,14 +81,8 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         RealizationSurfacesData,
         RealizationSurfacesStoredData
     >): boolean {
-        // Extension has to be set if intersection is wellbore
-        const isValidExtensionLength =
-            getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
-
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
@@ -102,135 +90,166 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
         );
     }
 
-    defineDependencies({
-        helperDependency,
-        valueConstraintsUpdater,
-        settingAttributesUpdater,
+    setupBindings({
+        setting,
+        storedData,
+        makeSharedResult,
         queryClient,
         workbenchSession,
-        storedDataUpdater,
-    }: DefineDependenciesArgs<RealizationSurfacesSettings, RealizationSurfacesStoredData>): void {
-        settingAttributesUpdater(Setting.WELLBORE_EXTENSION_LENGTH, ({ getLocalSetting }) => {
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-
-            const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-            return { enabled: isEnabled };
+    }: SetupBindingsContext<RealizationSurfacesSettings, RealizationSurfacesStoredData>): void {
+        setting(Setting.ENSEMBLE).bindValueConstraints({
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    ensembles: read.globalSetting("ensembles"),
+                };
+            },
+            resolve({ fieldIdentifier, ensembles }) {
+                return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+            },
         });
 
-        valueConstraintsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
-            return getAvailableEnsembleIdentsForField(fieldIdentifier, ensembles);
+        setting(Setting.REALIZATION).bindValueConstraints({
+            read(read) {
+                return {
+                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
+                    realizationFilterFunction: read.globalSetting("realizationFilterFunction"),
+                };
+            },
+            resolve({ ensembleIdent, realizationFilterFunction }) {
+                return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunction);
+            },
         });
 
-        valueConstraintsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-            return getAvailableRealizationsForEnsembleIdent(ensembleIdent, realizationFilterFunc);
+        const wellboreHeadersDep = makeSharedResult({
+            debugName: "WellboreHeaders",
+            read(read) {
+                return { fieldIdentifier: read.globalSetting("fieldId") };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                return fetchWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+            },
         });
 
-        const wellboreHeadersDep = helperDependency(({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-            return fetchWellboreHeaders(ensembleIdent, abortSignal, workbenchSession, queryClient);
+        setting(Setting.INTERSECTION).bindValueConstraints({
+            read(read) {
+                return {
+                    wellboreHeaders: read.sharedResult(wellboreHeadersDep),
+                    intersectionPolylines: read.globalSetting("intersectionPolylines"),
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            resolve({ wellboreHeaders, intersectionPolylines, fieldIdentifier }) {
+                const fieldIntersectionPolylines = intersectionPolylines.filter(
+                    (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
+                );
+                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+            },
         });
 
-        valueConstraintsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
-            const wellboreHeaders = getHelperDependency(wellboreHeadersDep) ?? [];
-            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
-            const fieldIdentifier = getGlobalSetting("fieldId");
+        const surfaceMetadataSetDep = makeSharedResult({
+            debugName: "SurfaceMetadata",
+            read(read) {
+                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
+            },
+            async resolve({ ensembleIdent }, { abortSignal }) {
+                if (!ensembleIdent) {
+                    return null;
+                }
 
-            const fieldIntersectionPolylines = intersectionPolylines.filter(
-                (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
-            );
-
-            return getAvailableIntersectionOptions(wellboreHeaders, fieldIntersectionPolylines);
+                return await queryClient.fetchQuery({
+                    ...getRealizationSurfacesMetadataOptions({
+                        query: {
+                            case_uuid: ensembleIdent.getCaseUuid(),
+                            ensemble_name: ensembleIdent.getEnsembleName(),
+                            ...makeCacheBustingQueryParam(ensembleIdent),
+                        },
+                        signal: abortSignal,
+                    }),
+                });
+            },
         });
 
-        const surfaceMetadataSetDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
-
-            if (!ensembleIdent) {
-                return null;
-            }
-
-            const surfaceMetadata = await queryClient.fetchQuery({
-                ...getRealizationSurfacesMetadataOptions({
-                    query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        ...makeCacheBustingQueryParam(ensembleIdent),
-                    },
-                    signal: abortSignal,
-                }),
-            });
-
-            return surfaceMetadata;
+        setting(Setting.ATTRIBUTE).bindValueConstraints({
+            read(read) {
+                return { surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep) };
+            },
+            resolve({ surfaceMetadataSet }) {
+                if (!surfaceMetadataSet) {
+                    return [];
+                }
+                const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                    (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+                );
+                return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
+            },
         });
 
-        valueConstraintsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
-            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
-            if (!surfaceMetadataSet) {
-                return [];
-            }
-            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
-                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-            if (!depthSurfacesMetadata) {
-                return [];
-            }
-
-            return Array.from(new Set(depthSurfacesMetadata.map((elm) => elm.attribute_name))).sort();
-        });
-
-        valueConstraintsUpdater(Setting.SURFACE_NAMES, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(Setting.ATTRIBUTE);
-            const surfaceMetadataSet = getHelperDependency(surfaceMetadataSetDep);
-
-            if (!attribute || !surfaceMetadataSet) {
-                return [];
-            }
-            const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
-                (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
-            );
-
-            const filteredSurfaceNames = Array.from(
-                new Set(depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name)),
-            );
-            return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
+        setting(Setting.SURFACE_NAMES).bindValueConstraints({
+            read(read) {
+                return {
+                    attribute: read.localSetting(Setting.ATTRIBUTE),
+                    surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep),
+                };
+            },
+            resolve({ attribute, surfaceMetadataSet }) {
+                if (!attribute || !surfaceMetadataSet) {
+                    return [];
+                }
+                const depthSurfacesMetadata = surfaceMetadataSet.surfaces.filter(
+                    (elm) => elm.attribute_type === SurfaceAttributeType_api.DEPTH,
+                );
+                const filteredSurfaceNames = Array.from(
+                    new Set(
+                        depthSurfacesMetadata.filter((elm) => elm.attribute_name === attribute).map((elm) => elm.name),
+                    ),
+                );
+                return sortStringArray(filteredSurfaceNames, surfaceMetadataSet.surface_names_in_strat_order);
+            },
         });
 
         // Create intersection polyline and actual section lengths data asynchronously
-        const intersectionPolylineWithSectionLengthsDep = helperDependency(({ getLocalSetting, getGlobalSetting }) => {
-            const fieldIdentifier = getGlobalSetting("fieldId");
-            const intersection = getLocalSetting(Setting.INTERSECTION);
-            const wellboreExtensionLength = getLocalSetting(Setting.WELLBORE_EXTENSION_LENGTH) ?? 0;
-
-            return createIntersectionPolylineWithSectionLengthsForField(
-                fieldIdentifier,
-                intersection,
-                wellboreExtensionLength,
-                workbenchSession,
-                queryClient,
-            );
+        const intersectionPolylineWithSectionLengthsDep = makeSharedResult({
+            debugName: "IntersectionPolylineWithSectionLengths",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                    intersection: read.localSetting(Setting.INTERSECTION),
+                };
+            },
+            async resolve({ fieldIdentifier, intersection }, { abortSignal }) {
+                return createIntersectionPolylineWithSectionLengthsForField(
+                    fieldIdentifier,
+                    intersection,
+                    workbenchSession,
+                    queryClient,
+                    abortSignal,
+                );
+            },
         });
 
-        storedDataUpdater("polylineWithSectionLengths", ({ getHelperDependency }) => {
-            const intersectionPolylineWithSectionLengths = getHelperDependency(
-                intersectionPolylineWithSectionLengthsDep,
-            );
-
-            // If no intersection is selected, or polyline is empty, return an empty polyline
-            if (
-                !intersectionPolylineWithSectionLengths ||
-                intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
-            ) {
+        storedData("polylineWithSectionLengths").bindValue({
+            read(read) {
                 return {
-                    polylineUtmXy: [],
-                    actualSectionLengths: [],
+                    intersectionPolylineWithSectionLengths: read.sharedResult(
+                        intersectionPolylineWithSectionLengthsDep,
+                    ),
                 };
-            }
+            },
+            resolve({ intersectionPolylineWithSectionLengths }) {
+                // If no intersection is selected, or polyline is empty, return an empty polyline
+                if (
+                    !intersectionPolylineWithSectionLengths ||
+                    intersectionPolylineWithSectionLengths.polylineUtmXy.length === 0
+                ) {
+                    return {
+                        polylineUtmXy: [],
+                        actualSectionLengths: [],
+                    };
+                }
 
-            return intersectionPolylineWithSectionLengths;
+                return intersectionPolylineWithSectionLengths;
+            },
         });
     }
 
@@ -251,10 +270,7 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
             getStoredData("polylineWithSectionLengths"),
             "No polyline and actual section lengths found in stored data",
         );
-        const extensionLength = createValidExtensionLength(
-            getSetting(Setting.INTERSECTION),
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-        );
+        const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
         if (polylineWithSectionLengths.polylineUtmXy.length < 4) {
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");

@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "baseUrl": ".",
         "paths": {
             "@api": ["./src/api"],
             "@api/*": ["./src/api/autogen/*"],

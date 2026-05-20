@@ -2,7 +2,6 @@ import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import { Dropdown, MenuButton } from "@mui/base";
 import {
     AddLink,
     ArrowDropDown,
@@ -25,12 +24,11 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
+import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
 import { Heading } from "@lib/newComponents/Typography/compositions";
@@ -366,37 +364,53 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         setSaveSessionDialogOpen(true);
     };
 
+    function handleSaveMenuAction(actionId: string) {
+        if (actionId === "save") {
+            handleSaveClick();
+        } else if (actionId === "save-as") {
+            handleSaveAsClick();
+        }
+    }
+
     const saveEnabled = persistenceInfo.hasChanges && isPersisted;
 
     return (
-        <div className={resolveClassNames("gap-horizontal-xs flex items-center justify-center p-2 text-sm")}>
-            {isSaving ? (
-                <CircularProgress size="medium-small" className="text-amber-600" />
-            ) : (
-                <Button.Group split>
-                    <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
-                        <Save fontSize="small" />
-                    </Button>
-                    <Dropdown>
-                        <Tooltip title="Save session options">
-                            {/* @ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
-                            <Button variant="contained" tone="accent" render={<MenuButton />}>
-                                <ArrowDropDown fontSize="small" />
-                            </Button>
-                        </Tooltip>
-                        <Menu anchorOrigin="bottom-start">
-                            <MenuItem onClick={handleSaveClick} disabled={!saveEnabled}>
-                                <Save fontSize="small" className="mr-2" />
-                                Save session
-                            </MenuItem>
-                            <MenuItem onClick={handleSaveAsClick}>
-                                <SaveAs fontSize="small" className="mr-2" />
-                                Save session as ...
-                            </MenuItem>
-                        </Menu>
-                    </Dropdown>
-                </Button.Group>
-            )}
+        <div className="gap-horizontal-xs flex items-center justify-center p-2 text-sm">
+            <Button.Group split>
+                <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
+                    {isSaving ? <CircularProgress size={16} tone="on-emphasis" /> : <Save fontSize="small" />}
+                </Button>
+                <ComposedMenu
+                    onActionClicked={handleSaveMenuAction}
+                    renderTrigger={(props) => {
+                        return (
+                            <Tooltip title="Save session options">
+                                {/* @ ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
+                                {/* <Button variant="contained" tone="accent" render={<MenuButton />}> */}
+                                <Button {...props} variant="contained" tone="accent">
+                                    <ArrowDropDown fontSize="small" />
+                                </Button>
+                            </Tooltip>
+                        );
+                    }}
+                    items={[
+                        {
+                            id: "save",
+                            label: "Save session",
+                            icon: <Save fontSize="small" />,
+                            disabled: !saveEnabled,
+                        },
+                        {
+                            id: "save-as",
+                            label: "Save session as ...",
+                            icon: <SaveAs fontSize="small" />,
+                        },
+                    ]}
+                >
+                    <Save fontSize="small" />
+                    <ArrowDropDown fontSize="small" />
+                </ComposedMenu>
+            </Button.Group>
         </div>
     );
 }
@@ -410,25 +424,29 @@ type TopBarButtonProps = {
 } & ButtonProps;
 
 function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
-    const { title, onClick, disabled, ...baseProps } = props;
+    const { active, title, onClick, disabled, ...baseProps } = props;
     return (
         <Tooltip title={title} placement="bottom">
-            <Button
-                {...baseProps}
-                ref={ref}
-                variant="text"
-                tone="accent"
-                iconOnly
-                onClick={onClick}
-                disabled={disabled}
-            >
-                {props.children}
-            </Button>
+            {/* ! Workaround required to deal with EDS tooltip overwriting refs */}
+            <span>
+                <Button
+                    {...baseProps}
+                    ref={ref}
+                    variant="text"
+                    tone="accent"
+                    iconOnly
+                    pressed={active}
+                    onClick={onClick}
+                    disabled={disabled}
+                >
+                    {props.children}
+                </Button>
+            </span>
         </Tooltip>
     );
 }
 
-const TopBarButton = React.forwardRef(TopBarButtonComponent);
+export const TopBarButton = React.forwardRef(TopBarButtonComponent);
 
 type RefreshSessionButtonProps = {
     workbench: Workbench;
