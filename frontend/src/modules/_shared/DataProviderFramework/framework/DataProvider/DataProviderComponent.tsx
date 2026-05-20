@@ -1,11 +1,10 @@
 import type React from "react";
 
-import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
-
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@lib/mui-icons";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -57,11 +56,11 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
-            <div className="relative">
+            <div className="bg-surface relative">
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
                 <div
                     className={resolveClassNames(
-                        "grid grid-cols-[auto_1fr] items-stretch text-xs border [&>*:nth-child(4n-3)]:bg-slate-50 [&>*:nth-child(4n-2)]:bg-slate-50",
+                        "[&>*:nth-child(4n-2)]:bg-neutral [&>*:nth-child(4n-3)]:bg-surface text-body-xs grid grid-cols-[auto_1fr] items-stretch border",
                         {
                             hidden: !isExpanded,
                         },
@@ -86,9 +85,16 @@ function StartActions(props: StartActionProps): React.ReactNode {
     }
     return (
         <div className="flex items-center">
-            <DenseIconButton onClick={handleToggleExpanded} title={isExpanded ? "Hide settings" : "Show settings"}>
-                {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </DenseIconButton>
+            <Button
+                onClick={handleToggleExpanded}
+                title={isExpanded ? "Hide settings" : "Show settings"}
+                variant="text"
+                tone="neutral"
+                size="small"
+                iconOnly
+            >
+                {isExpanded ? <ExpandLess size={16} /> : <ExpandMore size={16} />}
+            </Button>
             <VisibilityToggle item={props.dataProvider} />
         </div>
     );
@@ -112,18 +118,18 @@ function EndActions(props: EndActionProps): React.ReactNode {
         if (isSubordinated) {
             return (
                 <Tooltip title="Subordinated">
-                    <Difference fontSize="small" />
+                    <Difference size={16} />
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
                 <Tooltip title={progressMessage ?? "Loading"}>
-                    <div className="flex gap-2 min-w-0 items-center">
-                        <span className="overflow-hidden whitespace-nowrap min-w-0 text-ellipsis">
+                    <div className="flex min-w-0 items-center gap-2">
+                        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
-                        <CircularProgress size="extra-small" />
+                        <CircularProgress size={16} />
                     </div>
                 </Tooltip>
             );
@@ -133,7 +139,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             if (!error) {
                 return (
                     <Tooltip title="Error">
-                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                        <Error className="text-error-subtle" size={16} />
                     </Tooltip>
                 );
             }
@@ -141,16 +147,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
             if (typeof error === "string") {
                 return (
                     <Tooltip title={error}>
-                        <div className="text-red-700 p-0.5">
-                            <Error fontSize="small" />
-                        </div>
+                        <Error className="text-error-subtle" size={16} />
                     </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
                     <Tooltip title={statusMessage.message}>
-                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                        <Error className="text-error-subtle" size={16} />
                     </Tooltip>
                 );
             }
@@ -168,14 +172,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
             return (
                 <Tooltip title={errorMessage}>
-                    <Block className="text-red-700 p-0.5" fontSize="small" />
+                    <Block className="text-error-subtle" size={16} />
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
                 <Tooltip title="Successfully loaded">
-                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
+                    <CheckCircle className="text-success-subtle" size={16} />
                 </Tooltip>
             );
         }

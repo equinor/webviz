@@ -41,9 +41,9 @@ export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>
 
     return (
         <>
-            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} variant={variant} tone="neutral">
+            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} variant={variant} tone="neutral" iconOnly>
                 <ColorTile.Tile color={selectedColor} size={props.size} />
-                <ExpandMore fontSize="inherit" />
+                {props.size !== "small" && <ExpandMore fontSize="inherit" />}
             </Button>
             <input
                 id={props.id}

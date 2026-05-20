@@ -18,7 +18,7 @@ const SIZE_TO_CLASSNAMES: Record<NonNullable<TileProps["size"]>, string> = {
 export const Tile: React.FC<TileProps> = (props) => {
     return (
         <div
-            className={resolveClassNames("box-border aspect-square grow", SIZE_TO_CLASSNAMES[props.size || "default"], {
+            className={resolveClassNames("box-border aspect-square", SIZE_TO_CLASSNAMES[props.size || "default"], {
                 "border-neutral-subtle rounded-sm border": !props.grouped,
                 "cursor-pointer hover:border hover:outline hover:brightness-110": props.interactive,
             })}

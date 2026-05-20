@@ -7,6 +7,8 @@ import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { Add } from "@lib/mui-icons";
+import { Button } from "@lib/newComponents/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/2DViewer/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
@@ -46,12 +48,16 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
+    function handleAddView(groupDelegate: GroupDelegate) {
+        const color = colorSet.getNextColor();
+        const view = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, color);
+        groupDelegate.appendChild(view);
+    }
+
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view": {
-                const color = colorSet.getNextColor();
-                const view = GroupRegistry.makeGroup(GroupType.VIEW, props.dataProviderManager, color);
-                groupDelegate.appendChild(view);
+                handleAddView(groupDelegate);
                 return;
             }
 
@@ -266,6 +272,11 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             isMoveAllowed={checkIfItemMoveAllowed}
             additionalHeaderComponents={
                 <ViewportLayoutMenu value={preferredViewLayout} onValueChange={setPreferredViewLayout} />
+            }
+            emptyContentPlaceholder={
+                <Button tone="accent" onClick={() => handleAddView(groupDelegate)}>
+                    <Add size={16} /> Add first view
+                </Button>
             }
         />
     );

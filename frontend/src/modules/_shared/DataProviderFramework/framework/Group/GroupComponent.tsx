@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ColorSelect } from "@lib/components/ColorSelect";
+import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
@@ -100,9 +100,9 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
             title={
-                <div className="flex gap-1 items-center relative min-w-0">
-                    {color && <ColorSelect onChange={handleColorChange} value={color} dense />}
-                    <div className="grow min-w-0">
+                <div className="gap-horizontal-2xs relative flex min-w-0 items-center">
+                    {color && <ColorSelect onChange={handleColorChange} value={color} size="small" variant="text" />}
+                    <div className="min-w-0 grow">
                         <EditName item={props.group} />
                     </div>
                 </div>
@@ -119,7 +119,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                 sharedSettingsDelegate ? (
                     <div className="relative">
                         <ErrorOverlay itemDelegate={props.group.getItemDelegate()} isExpanded={isExpanded} />
-                        <div className="bg-slate-100! border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                        <div className="grid grid-cols-[auto_1fr] items-center gap-2 border bg-slate-100! text-xs">
                             {makeSettings(Object.values(props.group.getWrappedSettings()))}
                         </div>
                     </div>

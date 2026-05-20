@@ -535,8 +535,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 message: "You have unsaved changes in your current session. Do you want to save them before closing?",
                 actions: [
                     { id: "cancel", label: "Cancel", color: "secondary" },
-                    { id: "discard", label: "Discard changes", color: "danger" },
-                    { id: "save", label: "Save changes", color: "primary" },
+                    { id: "discard", label: "Don't save", color: "danger" },
+                    { id: "save", label: "Save", color: "primary" },
                 ],
             });
 

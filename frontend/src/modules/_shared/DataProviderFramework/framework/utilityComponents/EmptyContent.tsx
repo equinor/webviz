@@ -5,5 +5,9 @@ export type EmptyContentProps = {
 };
 
 export function EmptyContent(props: EmptyContentProps): React.ReactNode {
-    return <div className="flex bg-white! h-16 border p-2 text-sm items-center justify-center">{props.children}</div>;
+    return (
+        <div className="bg-surface! px-horizontal-3xs py-vertical-3xs text-body-sm border-neutral-subtle flex h-16 items-center justify-center border">
+            {props.children}
+        </div>
+    );
 }

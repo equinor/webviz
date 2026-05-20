@@ -66,7 +66,6 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
                     value={!props.isOverridden ? props.value : props.overriddenValue}
                     onChange={props.onValueChange}
                     disabled={props.isOverridden}
-                    showArrows
                 />
             );
         };

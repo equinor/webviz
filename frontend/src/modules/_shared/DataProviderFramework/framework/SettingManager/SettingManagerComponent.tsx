@@ -67,8 +67,10 @@ export function SettingManagerComponent<
     if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
-                <div className="p-0.5 px-2 w-full italic flex items-center text-orange-600">Empty intersection</div>
+                <div className="flex w-32 items-center p-0.5 px-2">{props.setting.getLabel()}</div>
+                <div className="text-warning-strong px-horizontal-4xs py-vertical-4xs gap-horizontal-2xs flex w-full items-center italic">
+                    Empty intersection
+                </div>
             </React.Fragment>
         );
     }
@@ -85,13 +87,13 @@ export function SettingManagerComponent<
 
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">
+                <div className="flex w-32 items-center gap-2 p-0.5 px-2 text-teal-600">
                     <span>{props.setting.getLabel()}</span>
-                    <span className="text-base mb-1">
+                    <span className="mb-1 text-base">
                         <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center">
+                <div className="flex w-full items-center p-0.5 px-2">
                     {isValid ? valueAsString : <i className="text-orange-600">No valid shared setting value</i>}
                 </div>
             </React.Fragment>
@@ -100,10 +102,10 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
-            <div className="p-0.5 px-2 w-full">
+            <div className="flex w-32 items-center p-0.5 px-2">{props.setting.getLabel()}</div>
+            <div className="w-full p-0.5 px-2">
                 <PendingWrapper isPending={actuallyLoading}>
-                    <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex min-w-0 flex-col gap-1">
                         <div
                             className={resolveClassNames("relative", {
                                 "outline outline-red-500": !isValid && !actuallyLoading,
@@ -111,7 +113,7 @@ export function SettingManagerComponent<
                             })}
                         >
                             {isEnabledObject(attributes.enabled) && !attributes.enabled.enabled && (
-                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 text-center p-2">
+                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 p-2 text-center">
                                     {attributes.enabled.reason}
                                 </div>
                             )}
@@ -129,22 +131,22 @@ export function SettingManagerComponent<
                         </div>
                         {isPersisted && isValidPersistedValue && !isLoading && isInitialized && !isValid && (
                             <span
-                                className="text-xs flex items-center gap-1 text-orange-600"
+                                className="flex items-center gap-1 text-xs text-orange-600"
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
                             >
                                 <Warning fontSize="inherit" />
-                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value not valid.
                                 </span>
                             </span>
                         )}
                         {isPersisted && !isValidPersistedValue && (
                             <span
-                                className="text-xs flex items-center gap-1 text-red-600"
+                                className="flex items-center gap-1 text-xs text-red-600"
                                 title="The persisted value for this setting has an invalid structure and could not be loaded."
                             >
                                 <Warning fontSize="inherit" />
-                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value has invalid structure.
                                 </span>
                             </span>

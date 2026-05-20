@@ -58,7 +58,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                                     )}
                                 />
                             ) : (
-                                <Button variant="outlined" key={index} tone={action.tone} onClick={action.onClick}>
+                                <Button variant="text" key={index} tone={action.tone} onClick={action.onClick}>
                                     {action.label}
                                 </Button>
                             ),
@@ -67,13 +67,18 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                             <AlertDialogBase.Close
                                 onClick={primaryAction.onClick}
                                 render={(htmlProps) => (
-                                    <Button variant="contained" tone={primaryAction.tone} {...htmlProps}>
+                                    <Button variant="contained" tone={primaryAction.tone} {...htmlProps} autoFocus>
                                         {primaryAction.label}
                                     </Button>
                                 )}
                             />
                         ) : (
-                            <Button variant="contained" tone={primaryAction.tone} onClick={primaryAction.onClick}>
+                            <Button
+                                variant="contained"
+                                tone={primaryAction.tone}
+                                onClick={primaryAction.onClick}
+                                autoFocus
+                            >
                                 {primaryAction.label}
                             </Button>
                         )}

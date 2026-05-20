@@ -28,6 +28,7 @@ export type DataProviderManagerComponentProps = {
     groupActions: ActionGroup[] | ((group: ItemGroup) => ActionGroup[]);
     onAction: (identifier: string, groupDelegate: GroupDelegate) => void;
     isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
+    emptyContentPlaceholder?: React.ReactNode;
 };
 
 export function DataProviderManagerComponent(props: DataProviderManagerComponentProps): React.ReactNode {
@@ -149,8 +150,8 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
     return (
         <div className="flex min-h-0 grow flex-col">
             <div className="flex min-h-0 w-full grow flex-col" ref={listRef}>
-                <div className="flex h-12 items-center gap-2 border-b border-gray-300 bg-slate-100 p-2">
-                    <div className="grow text-sm font-bold">{props.title}</div>
+                <div className="gap-x-horizontal-2xs border-neutral-subtle bg-neutral px-horizontal-xs py-vertical-2xs flex h-12 items-center border-b">
+                    <div className="font-bolder grow text-sm">{props.title}</div>
                     <Actions actionGroups={actions} onActionClick={handleActionClick} />
                     <ExpandCollapseAllButton group={props.dataProviderManager} />
                     {props.additionalHeaderComponents}
@@ -166,10 +167,14 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                     >
                         <SortableList.Content>
                             <SortableList.ScrollContainer>
-                                <div className="relative h-full min-h-0 grow overflow-auto bg-slate-200">
+                                <div className="bg-canvas relative h-full min-h-0 grow overflow-auto">
                                     {items.length === 0 && (
-                                        <div className="-mt-1 flex h-40 items-center justify-center gap-1 text-sm">
-                                            Click on <Add fontSize="inherit" /> to add an item.
+                                        <div className="gap-horizontal-3xs -mt-vertical3xs text-body-sm flex h-full items-center justify-center">
+                                            {props.emptyContentPlaceholder ?? (
+                                                <>
+                                                    Click on <Add fontSize="inherit" /> to add an item.
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                     {items.map((item: Item) =>

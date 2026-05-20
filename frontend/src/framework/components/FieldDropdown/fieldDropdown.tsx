@@ -1,18 +1,18 @@
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox";
 
 export type FieldDropdownProps = {
     ensembleSet: EnsembleSet;
     value: string | null;
     fallbackFieldList?: string[];
     onChange: (fieldIdentifier: string | null) => void;
-} & Omit<DropdownProps, "options" | "value" | "onChange">;
+} & Omit<ComboboxProps<string>, "items" | "value" | "onValueChange">;
 
 export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
     const { ensembleSet, value, fallbackFieldList, onChange, ...rest } = props;
 
-    function handleSelectionChanged(fieldIdentifier: string) {
+    function handleSelectionChanged(fieldIdentifier: string | null) {
         onChange(fieldIdentifier);
     }
     const fieldIdents = new Set<string>();
@@ -34,5 +34,5 @@ export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
         label: id,
     }));
 
-    return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
+    return <Combobox items={optionsArray} value={value?.toString()} onValueChange={handleSelectionChanged} {...rest} />;
 }

@@ -8,12 +8,12 @@ import {
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Dialog } from "@lib/newComponents/Dialog";
 import { timeAgo } from "@lib/utils/dates";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { Dialog } from "@lib/newComponents/Dialog";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;
@@ -66,11 +66,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
 
     return (
         <Dialog.Popup open={isOpen} modal width={800}>
-            <Dialog.Header closeIconVisible>
+            <Dialog.Header>
                 <Dialog.Title>Do you want to recover your session?</Dialog.Title>
             </Dialog.Header>
             <Dialog.Body layoutClassName="flex flex-col gap-vertical-xs">
-                We found an unsaved version of your current session in your local storage. You can either discard or
+                We found an unsaved version of your current session in your local storage. You can either delete or
                 recover it.
                 <div className="gap-horizontal-sm flex">
                     <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
@@ -92,10 +92,10 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             </Dialog.Body>
             <Dialog.Actions>
                 <Button onClick={handleDiscard} variant="text" tone="danger" disabled={isLoading}>
-                    Discard
+                    Delete session
                 </Button>
                 <Button onClick={handleOpen} variant="contained" disabled={isLoading}>
-                    {isLoading && <CircularProgress size="small" />}
+                    {isLoading && <CircularProgress size={16} />}
                     Recover session
                 </Button>
             </Dialog.Actions>
