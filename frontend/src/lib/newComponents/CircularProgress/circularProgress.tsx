@@ -7,6 +7,7 @@ export type CircularProgressProps = {
     tone?: "default" | "on-emphasis";
     variant?: "indeterminate" | "determinate";
     value?: number;
+    layoutClassName?: string;
 };
 
 const TONE_CLASSNAMES: Record<NonNullable<CircularProgressProps["tone"]>, { track: string; progress: string }> = {
@@ -35,6 +36,7 @@ export function CircularProgress(props: CircularProgressProps) {
             className={resolveClassNames(
                 { "animate-spin [animation-duration:1.4s]": isIndeterminate },
                 PIXEL_SIZES_CLASSNAMES[size],
+                props.layoutClassName,
             )}
             /* Avoid using viewBox="0 0 100 100" to prevent blurriness */
             viewBox="22 22 52 52"

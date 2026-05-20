@@ -378,7 +378,12 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         <div className="gap-horizontal-xs flex items-center justify-center p-2 text-sm">
             <Button.Group split>
                 <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled}>
-                    {isSaving ? <CircularProgress size={16} tone="on-emphasis" /> : <Save fontSize="small" />}
+                    {isSaving ? (
+                        // Margin is explicitly added to make the spinner's position width match the save icon
+                        <CircularProgress size={16} tone="on-emphasis" layoutClassName="mx-[2px]" />
+                    ) : (
+                        <Save fontSize="small" />
+                    )}
                 </Button>
                 <ComposedMenu
                     onActionClicked={handleSaveMenuAction}
