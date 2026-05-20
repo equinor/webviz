@@ -13,7 +13,7 @@ import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
-import { getVaryingContinuousParameters } from "@modules/_shared/parameterUtils";
+import { getVaryingNumericParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
 
@@ -147,8 +147,8 @@ export function View(props: ModuleViewProps<Interfaces>) {
                         return;
                     }
 
-                    const continuousParameters = getVaryingContinuousParameters(ensemble);
-                    if (!continuousParameters) {
+                    const numericParameters = getVaryingNumericParameters(ensemble);
+                    if (!numericParameters) {
                         continue;
                     }
                     const responseData: ResponseData = {
@@ -158,7 +158,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
                     };
 
                     const rankedParameters = createRankedParameterCorrelations(
-                        continuousParameters,
+                        numericParameters,
                         responseData,
                         numParams,
                         corrCutOff,
