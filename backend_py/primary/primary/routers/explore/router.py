@@ -1,18 +1,20 @@
 import asyncio
 import logging
-from typing import List, Coroutine, Any
+from dataclasses import dataclass
+from typing import Any, Coroutine
 
 from fastapi import APIRouter, Depends, Path, Query, Body, Response
 
+from webviz_services.coordinate_system_validation import validate_case_coordinate_systems_match_async
 from webviz_services.sumo_access.case_inspector import CaseInspector
 from webviz_services.sumo_access.sumo_inspector import SumoInspector
+from webviz_services.smda_access.smda_access import SmdaAccess
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
 from primary.middleware.cache_control_middleware import cache_time, CacheTime
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
-
 from . import schemas
 
 LOGGER = logging.getLogger(__name__)
@@ -20,10 +22,56 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
+@dataclass(frozen=True)
+class _EnsembleDetailsData:
+    case_name: str
+    realizations: list[int]
+    asset_name: str
+    field_identifiers: list[str]
+    stratigraphic_column_identifier: str
+    standard_results: list[str]
+    fip_regions: list[schemas.FipRegion]
+
+
+async def _get_ensemble_details_data_async(case_inspector: CaseInspector, ensemble_name: str) -> _EnsembleDetailsData:
+    async with asyncio.TaskGroup() as task_group:
+        case_name_task = task_group.create_task(case_inspector.get_case_name_async())
+        realizations_task = task_group.create_task(case_inspector.get_realizations_in_ensemble_async(ensemble_name))
+        asset_name_task = task_group.create_task(case_inspector.get_asset_name_async())
+        field_identifiers_task = task_group.create_task(case_inspector.get_field_identifiers_async())
+        stratigraphic_column_identifier_task = task_group.create_task(
+            case_inspector.get_stratigraphic_column_identifier_async()
+        )
+        standard_results_task = task_group.create_task(
+            case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
+        )
+        fip_regions_mapping_task = task_group.create_task(case_inspector.get_fip_regions_mapping_async(ensemble_name))
+
+    fip_regions_mapping = fip_regions_mapping_task.result()
+    fip_regions = (
+        [
+            schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION)
+            for mapping in fip_regions_mapping.root
+        ]
+        if fip_regions_mapping is not None
+        else []
+    )
+
+    return _EnsembleDetailsData(
+        case_name=case_name_task.result(),
+        realizations=realizations_task.result(),
+        asset_name=asset_name_task.result(),
+        field_identifiers=field_identifiers_task.result(),
+        stratigraphic_column_identifier=stratigraphic_column_identifier_task.result(),
+        standard_results=standard_results_task.result(),
+        fip_regions=fip_regions,
+    )
+
+
 @router.get("/asset_infos")
 async def get_asset_infos(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> List[schemas.AssetInfo]:
+) -> list[schemas.AssetInfo]:
     """Get list of asset infos"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     asset_arr = await sumo_inspector.get_asset_infos_async()
@@ -35,7 +83,7 @@ async def get_asset_infos(
 @router.get("/field_identifiers")
 async def get_field_identifiers(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> List[schemas.FieldInfo]:
+) -> list[schemas.FieldInfo]:
     """Get list of field identifiers"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     field_arr = await sumo_inspector.get_field_identifiers_async()
@@ -48,12 +96,12 @@ async def get_field_identifiers(
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     asset_name: str = Query(min_length=1, description="Asset name"),
-) -> List[schemas.CaseInfo]:
+) -> list[schemas.CaseInfo]:
     """Get list of cases for specified asset"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     case_info_arr = await sumo_inspector.get_cases_async(asset_name=asset_name)
 
-    ret_arr: List[schemas.CaseInfo] = []
+    ret_arr: list[schemas.CaseInfo] = []
 
     ret_arr = [
         schemas.CaseInfo(
@@ -90,33 +138,29 @@ async def get_ensemble_details(
     """Get more detailed information for an ensemble"""
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    case_name = await case_inspector.get_case_name_async()
-    realizations = await case_inspector.get_realizations_in_ensemble_async(ensemble_name)
-    asset_name = await case_inspector.get_asset_name_async()
-    field_identifiers = await case_inspector.get_field_identifiers_async()
-    stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
-    standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
+    smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
+    details = await _get_ensemble_details_data_async(case_inspector, ensemble_name)
 
-    if len(field_identifiers) != 1:
-        raise NotImplementedError("Multiple field identifiers not supported")
-
-    fip_regions: List[schemas.FipRegion] = []
-    fip_regions_mapping = await case_inspector.get_fip_regions_mapping_async(ensemble_name)
-
-    if fip_regions_mapping is not None:
-        for mapping in fip_regions_mapping.root:
-            fip_regions.append(schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION))
+    await validate_case_coordinate_systems_match_async(
+        case_inspector,
+        smda_access,
+        case_uuid,
+        ensemble_name,
+        details.asset_name,
+        details.field_identifiers,
+        LOGGER,
+    )
 
     return schemas.EnsembleDetails(
         name=ensemble_name,
-        caseName=case_name,
+        caseName=details.case_name,
         caseUuid=case_uuid,
-        assetName=asset_name,
-        realizations=realizations,
-        fieldIdentifiers=field_identifiers,
-        stratigraphicColumnIdentifier=stratigraphic_column_identifier,
-        standardResults=standard_results,
-        fipRegions=fip_regions,
+        assetName=details.asset_name,
+        realizations=details.realizations,
+        fieldIdentifiers=details.field_identifiers,
+        stratigraphicColumnIdentifier=details.stratigraphic_column_identifier,
+        standardResults=details.standard_results,
+        fipRegions=details.fip_regions,
     )
 
 

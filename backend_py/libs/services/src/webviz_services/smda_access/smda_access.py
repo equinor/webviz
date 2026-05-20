@@ -6,6 +6,7 @@ import polars as pl
 from webviz_services.service_exceptions import (
     Service,
     NoDataError,
+    MultipleDataMatchesError,
 )
 
 from .types import (
@@ -35,6 +36,7 @@ class SmdaEndpoints:
     WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
     WELLBORE_PICKS = "wellbore-picks"
     WELLBORE_PICKS_STRAT_COLUM = "wellbore-picks-columns"
+    FIELDS = "fields"
 
 
 class SmdaAccess:
@@ -46,6 +48,32 @@ class SmdaAccess:
 
     async def _smda_get_aggregation_request_async(self, endpoint: str, params: dict) -> dict:
         return await smda_get_aggregation_request_async(access_token=self._smda_token, endpoint=endpoint, params=params)
+
+    async def get_projected_coordinate_system_for_field_async(self, field_uuid: str) -> str | None:
+        """
+        Get the projected coordinate system for a given field, if it exists.
+        """
+        params = {"uuid": field_uuid, "_projection": "projected_coordinate_system"}
+
+        results = await self._smda_get_request_async(endpoint=SmdaEndpoints.FIELDS, params=params)
+        if not results:
+            raise NoDataError(f"No field found for {field_uuid=}.", Service.SMDA)
+
+        projected_coordinate_systems = [
+            result.get("projected_coordinate_system")
+            for result in results
+            if result.get("projected_coordinate_system") is not None
+        ]
+
+        if len(projected_coordinate_systems) > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple projected coordinate systems found for {field_uuid=}.", Service.SMDA
+            )
+
+        if not projected_coordinate_systems:
+            return None
+
+        return projected_coordinate_systems[0]
 
     async def get_stratigraphic_units_async(
         self,
