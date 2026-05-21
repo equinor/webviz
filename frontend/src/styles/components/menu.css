@@ -1,6 +1,7 @@
 @layer components {
+    /* The menu styles are reused for both menu and context-menu */
     .menu__popup {
-        @apply bg-floating shadow-elevation-overlay py-vertical-xs transform-origin: var(--transform-origin) min-w-20 rounded outline-0 transition-all;
+        @apply bg-floating shadow-elevation-overlay py-vertical-xs min-w-20 rounded-sm outline-0 transition-all;
 
         &[data-ending-style] {
             opacity: 0;
@@ -8,5 +9,20 @@
     }
 
     .menu__item {
+        @apply gap-horizontal-xs px-vertical-md py-horizontal-xs text-neutral-subtle flex max-w-md items-center;
+    }
+
+    .menu__interactable {
+        &[data-disabled] {
+            @apply text-disabled! cursor-not-allowed bg-transparent opacity-75;
+        }
+
+        @apply cursor-pointer;
+        @apply not-data-disabled:hover:bg-accent-hover focus:outline-focus;
+        @apply data-popup-open:bg-accent-hover;
+    }
+
+    .menu__toggle_indicator {
+        @apply text-body-2xl -ml-horizontal-3xs text-accent-subtle data-disabled:text-fill-disabled;
     }
 }

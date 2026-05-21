@@ -268,7 +268,7 @@
 @utility text-link { color: var(--eds-color-text-link); }
 
 /* Disabled */
-@utility text-disabled { color: var(--eds-color-text-neutral-subtle); }
+@utility text-disabled { color: var(--eds-color-text-disabled); }
 
 /* Fill */
 @utility text-fill-disabled { color: var(--eds-color-bg-fill-emphasis-disabled); }
@@ -432,7 +432,7 @@
 @utility fill-text-link { fill: var(--eds-color-text-link); }
 
 /* Disabled */
-@utility fill-text-disabled { fill: var(--eds-color-text-neutral-subtle); }
+@utility fill-text-disabled { fill: var(--eds-color-text-disabled); }
 
 /* Fill */
 @utility fill-text-fill-disabled { fill: var(--eds-color-bg-fill-emphasis-disabled); }

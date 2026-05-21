@@ -378,7 +378,7 @@ const TEXT_COLORS: ColorGroup[] =
         group: "Special",
         entries: [
             { name: "text-link", variable: "--eds-color-text-link" },
-            { name: "text-disabled", variable: "--eds-color-text-neutral-subtle" },
+            { name: "text-disabled", variable: "--eds-color-text-disabled" },
             { name: "text-fill-disabled", variable: "--eds-color-bg-fill-emphasis-disabled" },
         ],
     },

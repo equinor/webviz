@@ -2,11 +2,12 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import type { TextSize } from "../_shared/size";
 import { type ComponentWrapperProps } from "../_shared/wrapperProps";
 
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
-    family: "header" | "body";
-    size: "xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
+    family?: "header" | "body";
+    size: TextSize;
     tone?: "accent" | "neutral" | "danger" | "success" | "warning" | "info";
     variant?: "subtle" | "strong";
     as?: React.ElementType;
@@ -18,7 +19,7 @@ export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLEle
 };
 
 const FONT_SIZE_CLASSES: Record<
-    TypographyProps["family"],
+    NonNullable<TypographyProps["family"]>,
     Record<
         TypographyProps["size"],
         Record<NonNullable<TypographyProps["lineHeight"]>, Record<NonNullable<TypographyProps["tracking"]>, string>>
@@ -311,7 +312,7 @@ function TypographyComponent<Element extends HTMLElement>(
     ref: React.ForwardedRef<Element>,
 ): React.ReactNode {
     const {
-        family,
+        family = "body",
         size,
         tone = "neutral",
         variant = "subtle",
