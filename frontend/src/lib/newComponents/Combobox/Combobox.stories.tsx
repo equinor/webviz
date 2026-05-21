@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { Public, Search } from "@mui/icons-material";
 
 import { Field } from "@lib/newComponents/Field";
 
@@ -270,6 +271,46 @@ export const WithItemAdornment: Story = {
             </div>
         );
     },
+};
+
+export const WithStartAdornment: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "Use `startAdornment` to place a decorative element before the input group. Useful for icons that hint at the input's purpose.",
+            },
+        },
+    },
+    render: () => (
+        <div className="w-64">
+            <Combobox
+                items={COUNTRIES}
+                placeholder="Select a country"
+                clearable
+                startAdornment={<Search fontSize="small" />}
+            />
+        </div>
+    ),
+};
+
+export const WithEndAdornment: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "Use `endAdornment` to replace the default trigger icon at the end of the input. Only applies when `multiple` is false.",
+            },
+        },
+    },
+    render: () => (
+        <div className="w-64">
+            <Combobox
+                items={COUNTRIES}
+                placeholder="Select a country"
+                clearable
+                endAdornment={<Public fontSize="small" />}
+            />
+        </div>
+    ),
 };
 
 // ─── Async stories ────────────────────────────────────────────────────────────

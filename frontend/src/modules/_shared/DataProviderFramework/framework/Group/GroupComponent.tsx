@@ -119,7 +119,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                 sharedSettingsDelegate ? (
                     <div className="relative">
                         <ErrorOverlay itemDelegate={props.group.getItemDelegate()} isExpanded={isExpanded} />
-                        <div className="grid grid-cols-[auto_1fr] items-center gap-2 border bg-slate-100! text-xs">
+                        <div className="gap-vertical-2xs border-neutral-subtle bg-canvas! text-body-xs grid grid-cols-[auto_1fr] items-center border">
                             {makeSettings(Object.values(props.group.getWrappedSettings()))}
                         </div>
                     </div>

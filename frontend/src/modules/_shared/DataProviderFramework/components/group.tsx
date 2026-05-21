@@ -43,11 +43,11 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
 
     return (
         <SortableList.Group id={props.id}>
-            <div className={resolveClassNames("bg-gray-200")}>
+            <div className="bg-canvas">
                 <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={props.expanded} hovered={false} />
                 <SortableList.GroupContent>
                     <div
-                        className={resolveClassNames("border-b border-b-gray-300 bg-white pl-1 shadow-inner", {
+                        className={resolveClassNames("pl-horizontal-3xs border-b-neutral-subtle bg-surface border-b", {
                             hidden: !props.expanded,
                         })}
                         style={props.contentStyle}

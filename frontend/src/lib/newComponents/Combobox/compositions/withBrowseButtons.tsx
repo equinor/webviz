@@ -88,7 +88,7 @@ function ArrowButton(props: ArrowButtonProps) {
     return (
         <button
             className={resolveClassNames(
-                "focusable text-body-xs bg-neutral hover:bg-neutral-hover active:bg-neutral-active px-horizontal-4xs flex flex-1 items-center justify-center group-disabled:pointer-events-none focus:outline-0",
+                "focusable text-body-xs bg-neutral hover:bg-neutral-hover active:bg-neutral-active px-horizontal-4xs flex flex-1 items-center justify-center focus:outline-0",
                 {
                     "pointer-events-none": props.disabled,
                 },

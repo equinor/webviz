@@ -35,8 +35,8 @@ const components = iconNames
     .map((name) => {
         const pascal = toPascalCase(name);
         return (
-            `export const ${pascal} = React.forwardRef<SVGSVGElement, EdsIconProps>((props, ref) => (\n` +
-            `    <Icon data={icons.${name}} ref={ref} {...props} />\n` +
+            `export const ${pascal} = React.forwardRef<SVGSVGElement, EdsIconProps>(({ size, style, ...props }, ref) => (\n` +
+            `    <Icon data={icons.${name}} ref={ref} size={size} style={size === undefined ? { width: "1em", height: "1em", ...style } : style} {...props} />\n` +
             `));\n` +
             `${pascal}.displayName = "${pascal}";`
         );

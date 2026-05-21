@@ -30,7 +30,7 @@ const components = iconNames
     .map((name) => {
         return (
             `export const ${name} = React.forwardRef<SVGSVGElement, MuiIconProps>(({ size, style, ...props }, ref) => (\n` +
-            `    <Mui.${name} ref={ref} style={size !== undefined ? { fontSize: size, ...style } : style} {...props} />\n` +
+            `    <Mui.${name} ref={ref} fontSize="inherit" style={size !== undefined ? { fontSize: size, ...style } : style} {...props} />\n` +
             `));\n` +
             `${name}.displayName = "${name}";`
         );

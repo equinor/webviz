@@ -60,7 +60,7 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
                 <div
                     className={resolveClassNames(
-                        "[&>*:nth-child(4n-2)]:bg-canvas [&>*:nth-child(4n-3)]:bg-canvas text-body-xs border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
+                        "[&>*:nth-child(4n-2)]:bg-canvas [&>*:nth-child(4n-3)]:bg-canvas text-body-sm border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
                         {
                             hidden: !isExpanded,
                         },
@@ -125,7 +125,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
         if (status === DataProviderStatus.LOADING) {
             return (
                 <Tooltip title={progressMessage ?? "Loading"}>
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="gap-horizontal-2xs flex min-w-0 items-center">
                         <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
@@ -139,7 +139,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             if (!error) {
                 return (
                     <Tooltip title="Error">
-                        <Error className="text-error-subtle" size={16} />
+                        <Error className="text-danger-subtle" size={16} />
                     </Tooltip>
                 );
             }
@@ -147,14 +147,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
             if (typeof error === "string") {
                 return (
                     <Tooltip title={error}>
-                        <Error className="text-error-subtle" size={16} />
+                        <Error className="text-danger-subtle" size={16} />
                     </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
                     <Tooltip title={statusMessage.message}>
-                        <Error className="text-error-subtle" size={16} />
+                        <Error className="text-danger-subtle" size={16} />
                     </Tooltip>
                 );
             }
@@ -172,7 +172,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
             return (
                 <Tooltip title={errorMessage}>
-                    <Block className="text-error-subtle" size={16} />
+                    <Block className="text-danger-subtle" size={16} />
                 </Tooltip>
             );
         }

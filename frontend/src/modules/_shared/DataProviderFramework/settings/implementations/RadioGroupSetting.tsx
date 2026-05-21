@@ -1,4 +1,5 @@
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { Radio, RadioGroup } from "@lib/newComponents/Radio";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
@@ -71,11 +72,29 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
             return (
                 <div className="flex h-8 items-center">
                     <RadioGroup
-                        options={options ?? []}
-                        value={props.value ?? options![0].value}
-                        onChange={(_, v) => props.onValueChange(v)}
-                        direction={layout}
-                    />
+                        value={props.value}
+                        onValueChange={(v) => props.onValueChange(v)}
+                        layoutClassName={resolveClassNames("flex items-center", {
+                            "flex-col": layout === "vertical",
+                        })}
+                    >
+                        {(options ?? []).map((option) => (
+                            <label
+                                key={option.value}
+                                data-selectable-space="sm"
+                                data-space-proportions="squished"
+                                className={resolveClassNames("selectable gap-horizontal-xs flex items-center", {
+                                    "flex-col": layout === "vertical",
+                                })}
+                                data-selectable-wrapper
+                            >
+                                <Radio value={option.value} />
+                                <span data-baseline="center" className="text-body-sm">
+                                    {option.label}
+                                </span>
+                            </label>
+                        ))}
+                    </RadioGroup>
                 </div>
             );
         };

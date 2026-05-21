@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -255,28 +255,28 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
             );
 
             return (
-                <div className="flex flex-col gap-2 mt-1">
-                    <Label text="Top Surface:" labelClassName="text-xs">
-                        <Dropdown
-                            options={topSurfaceOptions}
+                <div className="gap-vertical-2xs text-body-sm flex w-full flex-col">
+                    <FieldCompositions.Default label="Top Surface">
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={topSurfaceOptions}
                             value={props.value?.topSurfaceName}
-                            onChange={handleTopSurfaceChange}
+                            onValueChange={handleTopSurfaceChange}
                         />
-                    </Label>
-                    <Label text="Base Surface:" labelClassName="text-xs">
-                        <Dropdown
-                            options={baseSurfaceOptions}
+                    </FieldCompositions.Default>
+                    <FieldCompositions.Default label="Base Surface">
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={baseSurfaceOptions}
                             value={props.value?.baseSurfaceName}
-                            onChange={handleBaseSurfaceChange}
+                            onValueChange={handleBaseSurfaceChange}
                         />
-                    </Label>
-                    <Label text="Realization Number:" labelClassName="text-xs">
-                        <Dropdown
-                            options={realizationNumOptions}
+                    </FieldCompositions.Default>
+                    <FieldCompositions.Default label="Realization Number">
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={realizationNumOptions}
                             value={props.value?.realizationNum}
-                            onChange={handleRealizationNumChange}
+                            onValueChange={handleRealizationNumChange}
                         />
-                    </Label>
+                    </FieldCompositions.Default>
                 </div>
             );
         };

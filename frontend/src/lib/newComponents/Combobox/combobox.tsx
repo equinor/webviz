@@ -120,16 +120,14 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
             {...baseProps}
         >
-            {props.startAdornment && (
-                <div className="mr-horizontal-sm flex shrink-0 items-center">{props.startAdornment}</div>
-            )}
             <ComboboxBase.InputGroup
                 className={resolveClassNames(
-                    "form-element gap-horizontal-sm pl-horizontal-sm flex cursor-text items-center",
+                    "form-element gap-horizontal-sm pl-horizontal-sm flex w-full cursor-text items-center",
                     size !== "small" || (props.multiple && selectionMode === "chips") ? "py-vertical-xs" : undefined,
                     SELECTABLE_SIZES_CLASSNAMES[size],
                 )}
             >
+                {props.startAdornment && <div className="flex shrink-0 items-center">{props.startAdornment}</div>}
                 {props.multiple && selectionMode === "chips" ? (
                     <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex w-full grow flex-wrap items-center">
                         <ComboboxBase.Value>
