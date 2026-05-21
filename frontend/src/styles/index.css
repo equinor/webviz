@@ -32,6 +32,7 @@
 @import "./components/tabs.css";
 @import "./components/toast.css";
 @import "./components/arrow.css";
+@import "./components/menu.css";
 
 /* Base styles */
 @import "./base/app.css";
