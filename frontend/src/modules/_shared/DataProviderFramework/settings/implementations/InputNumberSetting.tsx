@@ -1,4 +1,4 @@
-import { Input } from "@lib/components/Input";
+import { NumberInput } from "@lib/newComponents/NumberInput";
 
 import type {
     CustomSettingImplementation,
@@ -101,17 +101,15 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
             const min = isStatic ? staticProps?.min : props.valueConstraints?.[0];
             const max = isStatic ? staticProps?.max : props.valueConstraints?.[1];
 
-            function handleInputChange(value: string) {
-                props.onValueChange(Number(value));
+            function handleInputChange(value: number | null) {
+                props.onValueChange(value);
             }
 
             return (
-                <Input
-                    type="number"
+                <NumberInput
                     value={!props.isOverridden ? (props.value ?? min) : props.overriddenValue}
                     min={min}
                     max={max}
-                    debounceTimeMs={200}
                     onValueChange={handleInputChange}
                 />
             );

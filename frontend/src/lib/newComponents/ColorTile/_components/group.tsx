@@ -2,6 +2,7 @@ import type React from "react";
 
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { Tile } from "./tile";
 
 export type GroupProps = {

@@ -60,7 +60,7 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
                 <div
                     className={resolveClassNames(
-                        "[&>*:nth-child(4n-2)]:bg-neutral [&>*:nth-child(4n-3)]:bg-surface text-body-xs grid grid-cols-[auto_1fr] items-stretch border",
+                        "[&>*:nth-child(4n-2)]:bg-canvas [&>*:nth-child(4n-3)]:bg-canvas text-body-xs border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
                         {
                             hidden: !isExpanded,
                         },

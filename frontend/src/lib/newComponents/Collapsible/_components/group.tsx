@@ -33,22 +33,25 @@ export function Group(props: GroupProps) {
         <Collapsible.Root
             {...baseProps}
             disabled={disabled}
-            className={resolveClassNames(props.layoutClassName, "group flex flex-col")}
+            className={resolveClassNames(props.layoutClassName, "group/scrollareaGroup flex flex-col")}
         >
             <div
                 className={resolveClassNames(
-                    "group-data-collapsible-scroll-area:z-sticky gap-vertical-md shadow-elevation-raised flex items-center justify-between border-b group-data-collapsible-scroll-area:sticky group-data-collapsible-scroll-area:top-0",
+                    "group-data-collapsible-scroll-area/scrollarea:z-sticky gap-vertical-md shadow-elevation-raised flex items-center justify-between border-b group-data-collapsible-scroll-area/scrollarea:sticky group-data-collapsible-scroll-area/scrollarea:top-0",
                     TONE_TO_CLASSNAMES[disabled ? "disabled" : tone],
                     { "pointer-events-none cursor-not-allowed": disabled },
                 )}
             >
                 <Collapsible.Trigger className="focusable gap-vertical-xs px-selectable-x py-selectable-y flex grow cursor-pointer items-center">
-                    <ExpandMore className="transition-transform group-data-closed:-rotate-90" fontSize="inherit" />
+                    <ExpandMore
+                        className="transition-transform group-data-closed/scrollareaGroup:-rotate-90"
+                        fontSize="inherit"
+                    />
                     <Typography family="body" as="span" size="sm" weight="bolder">
                         {props.title}
                     </Typography>
                 </Collapsible.Trigger>
-                <span className="px-selectable-x py-selectable-y">{props.adornment}</span>
+                {props.adornment && <span className="px-selectable-x py-selectable-y">{props.adornment}</span>}
             </div>
             <Collapsible.Panel className="flex h-(--collapsible-panel-height) flex-col justify-end overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [[hidden]:not([hidden='until-found'])]:hidden">
                 {props.children}

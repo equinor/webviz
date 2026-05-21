@@ -48,6 +48,10 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         placeholder?: string;
         noMatchesText?: React.ReactNode;
         clearable?: boolean;
+        /** startAdornment is shown at the start of the component */
+        startAdornment?: React.ReactNode;
+        /** endAdornment is shown instead of the trigger icon at the end of the input - only when `multiple` is false */
+        endAdornment?: React.ReactNode;
         renderItemAdornment?: (item: TValue) => React.ReactNode;
         /** Only applies when `multiple` is true. "chips" (default) renders a chip per selection; "count" renders "X/N selected". */
         selectionMode?: "chips" | "count";
@@ -116,10 +120,12 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             itemToStringLabel={(value) => getLabelForValue(value as unknown as TValue)}
             {...baseProps}
         >
+            {props.startAdornment && (
+                <div className="mr-horizontal-sm flex shrink-0 items-center">{props.startAdornment}</div>
+            )}
             <ComboboxBase.InputGroup
                 className={resolveClassNames(
                     "form-element gap-horizontal-sm pl-horizontal-sm flex cursor-text items-center",
-                    size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
                     size !== "small" || (props.multiple && selectionMode === "chips") ? "py-vertical-xs" : undefined,
                     SELECTABLE_SIZES_CLASSNAMES[size],
                 )}
@@ -209,7 +215,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                             <Clear fontSize="inherit" />
                         </ComboboxBase.Clear>
                     )}
-                    {(!props.multiple || selectionMode === "count") && (
+                    {(!props.multiple || selectionMode === "count") && !props.endAdornment && (
                         <ComboboxBase.Trigger
                             className="box-border flex items-center justify-center"
                             aria-label="Open options"
@@ -217,6 +223,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                             <UnfoldMore fontSize="inherit" />
                         </ComboboxBase.Trigger>
                     )}
+                    {props.endAdornment && <div className="flex items-center">{props.endAdornment}</div>}
                 </div>
             </ComboboxBase.InputGroup>
 

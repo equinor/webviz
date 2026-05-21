@@ -39,14 +39,14 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
 
     return (
         <div
-            className="grow font-bold flex items-center gap-2 group min-w-0 overflow-hidden"
+            className="group/editName gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to edit name"
         >
             {editingName ? (
                 <input
                     type="text"
-                    className="p-0.5 w-full"
+                    className="w-full"
                     value={currentName}
                     onChange={handleNameChange}
                     onBlur={handleBlur}
@@ -55,11 +55,12 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
                 />
             ) : (
                 <>
-                    <div className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
+                    <div className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
                     <Edit
                         fontSize="inherit"
-                        className="opacity-0 group-hover:opacity-50 cursor-pointer"
+                        className="cursor-pointer opacity-0 group-hover/editName:opacity-50"
                         onClick={handleNameDoubleClick}
+                        titleAccess="Click to edit name"
                     />
                 </>
             )}

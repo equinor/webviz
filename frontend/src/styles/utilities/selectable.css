@@ -9,7 +9,7 @@
     &[data-selectable-wrapper] {
         @apply px-selectable-x py-selectable-y;
     }
-    .group[data-selectable-wrapper] & {
+    .selectable[data-selectable-wrapper] & {
         @apply -mx-[4.8px]! -my-[6px]! p-0! focus:shadow-none! focus:outline-0;
     }
 

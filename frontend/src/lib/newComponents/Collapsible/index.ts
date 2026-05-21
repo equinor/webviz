@@ -1,6 +1,6 @@
+import { Content } from "./_components/content";
 import { Group } from "./_components/group";
 import { ScrollArea } from "./_components/scrollArea";
-import { Content } from "./_components/content";
 
 export const Collapsible = {
     Group,

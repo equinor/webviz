@@ -80,7 +80,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
     }
 
     return (
-        <Field.Root layoutClassName="w-full focus-within:outline hover:outline outline-focus outline-offset-5 rounded">
+        <Field.Root layoutClassName="w-full">
             {props.label && <Field.Label>{props.label}</Field.Label>}
             {props.description && <Field.Description>{props.description}</Field.Description>}
             {props.help && (

@@ -8,6 +8,8 @@ import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizati
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox/combobox";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { WithBrowseButtonsProps } from "@lib/newComponents/Combobox/compositions/withBrowseButtons";
 
 import { EnsembleColorTile } from "../EnsembleColorTile";
 
@@ -26,7 +28,14 @@ export type EnsembleDropdownProps = (
       }
 ) & {
     ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
-} & Omit<ComboboxProps<string>, "items" | "value" | "onValueChange">;
+} & (
+        | ({
+              showBrowseButtons: true;
+          } & Omit<WithBrowseButtonsProps<string>, "items" | "value" | "onValueChange">)
+        | ({
+              showBrowseButtons?: false | undefined;
+          } & Omit<ComboboxProps<string>, "items" | "value" | "onValueChange">)
+    );
 
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { onChange, ensembles, allowDeltaEnsembles, value, ensembleRealizationFilterFunction, ...rest } = props;
@@ -72,6 +81,17 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         },
         [allowDeltaEnsembles, ensembles, onChange],
     );
+
+    if (props.showBrowseButtons) {
+        return (
+            <ComboboxCompositions.WithBrowseButtons
+                items={optionsArray}
+                value={value?.toString()}
+                onValueChange={handleSelectionChange}
+                {...rest}
+            />
+        );
+    }
 
     return <Combobox items={optionsArray} value={value?.toString()} onValueChange={handleSelectionChange} {...rest} />;
 }

@@ -20,16 +20,16 @@ export const Checkbox = React.forwardRef<HTMLSpanElement, CheckboxProps>(functio
             data-selectable-space="md"
             className={resolveClassNames(
                 props.layoutClassName,
-                "selectable group text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
+                "selectable group/checkbox text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
             )}
         >
-            <CheckboxBase.Indicator className="flex items-center justify-center not-data-checked:hidden">
+            <CheckboxBase.Indicator className="flex items-center justify-center not-group-data-checked/checkbox:hidden">
                 <CheckBox className="size-icon-lg" />
             </CheckboxBase.Indicator>
-            <CheckboxBase.Indicator className="flex items-center justify-center not-data-indeterminate:hidden">
+            <CheckboxBase.Indicator className="flex items-center justify-center not-group-data-indeterminate/checkbox:hidden">
                 <IndeterminateCheckBox className="size-icon-lg" />
             </CheckboxBase.Indicator>
-            <span className="flex items-center justify-center not-group-data-unchecked:hidden">
+            <span className="flex items-center justify-center not-group-data-unchecked/checkbox:hidden">
                 <CheckBoxOutlineBlank className="size-icon-lg" />
             </span>
         </CheckboxBase.Root>

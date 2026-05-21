@@ -20,7 +20,10 @@ export const SwitchItem = React.forwardRef<HTMLLabelElement, SwitchItemProps>(fu
             data-space-proportions="squished"
             data-disabled={switchProps.disabled || undefined}
             data-readonly={switchProps.readOnly || undefined}
-            className={resolveClassNames(layoutClassName, "group selectable gap-horizontal-sm flex items-center")}
+            className={resolveClassNames(
+                layoutClassName,
+                "group/switch selectable gap-horizontal-sm flex items-center",
+            )}
             data-selectable-wrapper
         >
             <Switch {...switchProps} />

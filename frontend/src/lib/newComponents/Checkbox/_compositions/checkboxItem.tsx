@@ -23,7 +23,7 @@ export const CheckboxItem = React.forwardRef<HTMLLabelElement, CheckboxItemProps
             data-readonly={checkboxProps.readOnly || undefined}
             className={resolveClassNames(
                 layoutClassName,
-                "group border-box selectable gap-horizontal-sm flex items-center",
+                "group/checkbox border-box selectable gap-horizontal-sm flex items-center",
                 {
                     "flex-col": direction === "vertical",
                 },
