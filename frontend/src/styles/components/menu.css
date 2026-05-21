@@ -13,12 +13,16 @@
     }
 
     .menu__interactable {
+        &[data-disabled] {
+            @apply text-disabled! cursor-not-allowed bg-transparent opacity-75;
+        }
+
         @apply cursor-pointer;
-        @apply hover:bg-accent-hover focus:outline-focus;
+        @apply not-data-disabled:hover:bg-accent-hover focus:outline-focus;
         @apply data-popup-open:bg-accent-hover;
     }
 
     .menu__toggle_indicator {
-        @apply text-body-2xl -ml-horizontal-3xs text-accent-subtle;
+        @apply text-body-2xl -ml-horizontal-3xs text-accent-subtle data-disabled:text-fill-disabled;
     }
 }

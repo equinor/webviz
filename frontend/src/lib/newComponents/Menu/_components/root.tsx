@@ -1,3 +1,5 @@
+import type React from "react";
+
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuRootProps as MenuBaseRootProps } from "@base-ui/react";
 
@@ -5,7 +7,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 
 export type MenuRootProps = ComponentWrapperProps<MenuBaseRootProps>;
 
-export function Root(props: MenuRootProps) {
+export function Root(props: MenuRootProps): React.ReactNode {
     const baseProps = resolveWrapperProps(props);
 
     return <MenuBase.Root {...baseProps} />;
