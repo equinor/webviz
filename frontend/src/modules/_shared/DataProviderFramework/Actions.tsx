@@ -2,8 +2,9 @@ import React from "react";
 
 import { Add, ArrowDropDown } from "@mui/icons-material";
 
-import { ComposedMenu } from "@lib/components/Menu/";
-import type { MenuItem } from "@lib/components/Menu/";
+import { Button } from "@lib/newComponents/Button";
+import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
+import type { MenuItem } from "@lib/newComponents/Menu/compositions/types";
 
 export type Action = {
     identifier: string;
@@ -59,17 +60,19 @@ export function Actions(props: ActionsProps): React.ReactNode {
     const menuItems = React.useMemo(() => actions.map(recursivelyMakeMenuItem), [actions]);
 
     return (
-        <ComposedMenu
+        <MenuCompositions.Default
+            side="right"
+            align="start"
             open={isOpen}
             items={menuItems}
-            itemSize="small"
-            triggerSize="small"
             onOpenChange={setIsOpen}
             onActionClicked={props.onActionClick}
         >
-            <Add fontSize="inherit" />
-            <span>Add</span>
-            <ArrowDropDown fontSize="inherit" />
-        </ComposedMenu>
+            <Button size="small" variant="text">
+                <Add fontSize="inherit" />
+                <span>Add</span>
+                <ArrowDropDown fontSize="inherit" />
+            </Button>
+        </MenuCompositions.Default>
     );
 }

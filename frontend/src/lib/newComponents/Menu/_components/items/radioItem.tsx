@@ -9,10 +9,10 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ItemContent, type MenuItemContentProps } from "./itemContent";
 
-export type MenuRadioItemProps = ComponentWrapperProps<MenuRadioItemBaseProps> & Omit<MenuItemContentProps, "icon">;
+export type MenuRadioItemProps = ComponentWrapperProps<MenuRadioItemBaseProps> & MenuItemContentProps;
 
 function RadioItemComponent(props: MenuRadioItemProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
-    const baseProps = resolveWrapperProps(props) as MenuRadioItemBaseProps;
+    const baseProps = resolveWrapperProps(props, "description", "icon", "text") as MenuRadioItemBaseProps;
 
     return (
         <MenuBase.RadioItem
@@ -36,6 +36,7 @@ function RadioItemComponent(props: MenuRadioItemProps, ref: React.ForwardedRef<H
                 }
             >
                 {props.children}
+                {props.icon}
             </ItemContent>
         </MenuBase.RadioItem>
     );

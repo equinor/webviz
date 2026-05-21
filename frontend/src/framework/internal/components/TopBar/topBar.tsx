@@ -13,11 +13,11 @@ import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSessi
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
 import { ArrowDropDown, Save } from "@lib/mui-icons";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
 import { Heading } from "@lib/newComponents/Typography/compositions";
@@ -380,19 +380,9 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                         <Save size={16} />
                     )}
                 </Button>
-                <ComposedMenu
+
+                <MenuCompositions.Default
                     onActionClicked={handleSaveMenuAction}
-                    renderTrigger={(props, state) => {
-                        return (
-                            <Tooltip title="Save session options">
-                                {/* @ ts-expect-error -- Render is softly removed, but this whole thing will be replaced by menu update */}
-                                {/* <Button variant="contained" tone="accent" render={<MenuButton />}> */}
-                                <Button {...props} variant="contained" tone="accent" pressed={state.open}>
-                                    <ArrowDropDown size={16} />
-                                </Button>
-                            </Tooltip>
-                        );
-                    }}
                     items={[
                         {
                             id: "save",
@@ -407,9 +397,11 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                         },
                     ]}
                 >
-                    <Save fontSize="small" />
-                    <ArrowDropDown fontSize="small" />
-                </ComposedMenu>
+                    {/* TODO: Pressed state when menu is open */}
+                    <Button {...props} variant="contained" tone="accent">
+                        <ArrowDropDown size={16} />
+                    </Button>
+                </MenuCompositions.Default>
             </Button.Group>
         </div>
     );

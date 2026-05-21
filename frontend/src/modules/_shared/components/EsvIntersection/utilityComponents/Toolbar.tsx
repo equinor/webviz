@@ -14,9 +14,10 @@ import {
 
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { Menu } from "@lib/components/Menu";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Menu } from "@lib/newComponents/Menu";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 
@@ -83,7 +84,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="flex items-center gap-1 justify-start">
+            <div className="flex items-center justify-start gap-1">
                 <Tooltip title="Fit all data in view" placement="bottom">
                     <Button onClick={handleFitInView}>
                         <FilterCenterFocus fontSize="inherit" />
@@ -97,28 +98,33 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             }
                         }}
                     >
-                        <Menu.Root itemSize="small">
-                            <Tooltip title="Link this view with others" placement="bottom">
-                                <Menu.Trigger
-                                    render={<MuiMenuButton />}
-                                    className={resolveClassNames(
-                                        "inline-flex items-center px-4 py-2 font-medium rounded-md",
+                        <Menu.Root>
+                            <TooltipCompositions.Default content="Link this view with others" side="bottom">
+                                <Menu.Trigger>
+                                    <MuiMenuButton
+                                        className={resolveClassNames(
+                                            "inline-flex items-center rounded-md px-4 py-2 font-medium",
 
-                                        isAnyLinked
-                                            ? "text-white hover:text-white hover:opacity-75"
-                                            : "bg-transparent text-indigo-600 hover:bg-indigo-100",
-                                    )}
-                                    style={{ backgroundColor: isAnyLinked ? activeLink.color : undefined }}
-                                >
-                                    <SyncAlt fontSize="inherit" />
+                                            isAnyLinked
+                                                ? "text-white hover:text-white hover:opacity-75"
+                                                : "bg-transparent text-indigo-600 hover:bg-indigo-100",
+                                        )}
+                                        slotProps={{
+                                            root: {
+                                                style: { backgroundColor: isAnyLinked ? activeLink.color : undefined },
+                                            },
+                                        }}
+                                    >
+                                        <SyncAlt fontSize="inherit" />
+                                    </MuiMenuButton>
                                 </Menu.Trigger>
-                            </Tooltip>
+                            </TooltipCompositions.Default>
 
-                            <Menu.Popup align="start" side="bottom">
+                            <Menu.Popup itemSize="small" align="start" side="bottom">
                                 {viewLinks.map((viewLink) => (
                                     <Menu.Item
                                         key={viewLink.id}
-                                        className={resolveClassNames(
+                                        layoutClassName={resolveClassNames(
                                             "flex items-center gap-2 overflow-hidden",
                                             viewLink.containsThisView ? "bg-indigo-50" : "",
                                         )}
@@ -128,7 +134,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                         onMouseLeave={() => props.onHoverViewLink?.(null)}
                                     >
                                         <div
-                                            className="flex items-center px-1.5 py-0.5 -ml-1.5 rounded"
+                                            className="-ml-1.5 flex items-center rounded px-1.5 py-0.5"
                                             style={{ backgroundColor: viewLink.color }}
                                         >
                                             <SyncAlt fontSize="inherit" className="shrink-0 text-white" />
@@ -136,11 +142,11 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                         {viewLink.views.map((v) => (
                                             <span
                                                 key={v.id}
-                                                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                                                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                                                 style={{ backgroundColor: v.color ?? "#888" }}
                                             />
                                         ))}
-                                        <span className="truncate min-w-0">
+                                        <span className="min-w-0 truncate">
                                             {viewLink.views.map((v) => v.name).join(", ")}
                                         </span>
                                     </Menu.Item>
@@ -151,13 +157,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 {unlinkedViews.map((view) => (
                                     <Menu.Item
                                         key={view.id}
-                                        className="flex items-center gap-2"
+                                        layoutClassName="flex items-center gap-2"
                                         onClick={() => props.onToggleViewLink!(view.id)}
                                         onMouseEnter={() => props.onHoverViewLink?.([view.id])}
                                         onMouseLeave={() => props.onHoverViewLink?.(null)}
                                     >
                                         <span
-                                            className="inline-block w-3 h-3 rounded-full shrink-0"
+                                            className="inline-block h-3 w-3 shrink-0 rounded-full"
                                             style={{ backgroundColor: view.color ?? "#888" }}
                                         />
                                         <span>{view.name}</span>

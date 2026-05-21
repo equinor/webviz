@@ -9,14 +9,13 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ItemContent, type MenuItemContentProps } from "./itemContent";
 
-export type MenuCheckboxItemProps = ComponentWrapperProps<MenuCheckboxItemBaseProps> &
-    Omit<MenuItemContentProps, "icon">;
+export type MenuCheckboxItemProps = ComponentWrapperProps<MenuCheckboxItemBaseProps> & MenuItemContentProps;
 
 function CheckboxItemComponent(
     props: MenuCheckboxItemProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "description", "label");
+    const baseProps = resolveWrapperProps(props, "description", "label", "icon");
 
     return (
         <MenuBase.CheckboxItem
@@ -40,6 +39,7 @@ function CheckboxItemComponent(
                 }
             >
                 {props.children}
+                {props.icon}
             </ItemContent>
         </MenuBase.CheckboxItem>
     );

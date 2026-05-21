@@ -2,8 +2,9 @@ import type React from "react";
 
 import { GridView, Settings, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Menu } from "@lib/components/Menu";
+import { Button } from "@lib/newComponents/Button";
+import { Menu } from "@lib/newComponents/Menu";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 import { ViewLayout } from "../enums/viewLayout";
 
@@ -14,28 +15,31 @@ export type ViewportLayoutMenuProps = {
 
 export function ViewportLayoutMenu(props: ViewportLayoutMenuProps): React.ReactNode {
     return (
-        <Menu.Root itemSize="small">
-            <Menu.Trigger
-                render={
-                    <DenseIconButton title="Settings">
+        <Menu.Root>
+            <TooltipCompositions.Default content="View layout settings">
+                <Menu.Trigger>
+                    <Button iconOnly size="small" variant="text">
                         <Settings fontSize="inherit" />
-                    </DenseIconButton>
-                }
-            />
+                    </Button>
+                </Menu.Trigger>
+            </TooltipCompositions.Default>
             <Menu.Popup>
                 <Menu.Group>
                     <Menu.GroupLabel>Preferred view layout</Menu.GroupLabel>
                     <Menu.RadioGroup value={props.value} onValueChange={props.onValueChange}>
                         <Menu.RadioItem value={ViewLayout.GRID}>
-                            <Menu.ItemContent icon={<GridView fontSize="inherit" />} label="Grid" />
+                            Grid
+                            <GridView className="ml-auto" fontSize="small" />
                         </Menu.RadioItem>
 
                         <Menu.RadioItem value={ViewLayout.HORIZONTAL}>
-                            <Menu.ItemContent icon={<ViewColumnOutlined fontSize="inherit" />} label="Horizontal" />
+                            Horizontal
+                            <ViewColumnOutlined className="ml-auto" fontSize="small" />
                         </Menu.RadioItem>
 
                         <Menu.RadioItem value={ViewLayout.VERTICAL}>
-                            <Menu.ItemContent icon={<TableRowsOutlined fontSize="inherit" />} label="Vertical" />
+                            Vertical
+                            <TableRowsOutlined className="ml-auto" fontSize="small" />
                         </Menu.RadioItem>
                     </Menu.RadioGroup>
                 </Menu.Group>

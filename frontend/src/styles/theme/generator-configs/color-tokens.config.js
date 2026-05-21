@@ -233,8 +233,6 @@ export const text = {
 
     // Special
     link: "--eds-color-text-link",
-    // disabled: "--eds-color-text-neutral-subtle",
-    // disabled: "--eds_interactive__disabled__text",
     disabled: "--eds-color-text-disabled",
     "fill-disabled": "--eds-color-bg-fill-emphasis-disabled",
 };

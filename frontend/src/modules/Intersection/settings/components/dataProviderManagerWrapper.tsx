@@ -218,27 +218,27 @@ const ADD_CONTEXT_BOUNDARY_ACTION = {
 const SHARED_SETTINGS_CHILDREN = [
     {
         identifier: "intersection-source",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Intersection source",
     },
     {
         identifier: "ensemble",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Ensemble",
     },
     {
         identifier: "realization",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Realization",
     },
     {
         identifier: "attribute",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Attribute",
     },
     {
         identifier: "date",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Date",
     },
 ];
@@ -265,7 +265,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "seismic",
-                        icon: <Icon data={timeline} fontSize="small" />,
+                        icon: <Icon data={timeline} size={16} />,
                         label: "Seismic",
                     },
                 ],
@@ -275,7 +275,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "realization-grid",
-                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        icon: <Icon data={grid_layer} size={16} />,
                         label: "Realization Grid",
                     },
                 ],
@@ -285,12 +285,12 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "realization-surfaces",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        icon: <Icon data={surface_layer} size={16} />,
                         label: "Realization Surfaces",
                     },
                     {
                         identifier: "surfaces-realizations-uncertainty",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        icon: <Icon data={surface_layer} size={16} />,
                         label: "Surfaces Realizations Uncertainty",
                     },
                 ],
@@ -300,7 +300,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "wellbore-picks",
-                        icon: <Icon data={wellbore} fontSize="small" />,
+                        icon: <Icon data={wellbore} size={16} />,
                         label: "Wellbore Picks",
                     },
                 ],
@@ -313,7 +313,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
         children: [
             {
                 identifier: "color-scale",
-                icon: <Icon data={color_palette} fontSize="small" />,
+                icon: <Icon data={color_palette} size={16} />,
                 label: "Color scale",
             },
         ],
