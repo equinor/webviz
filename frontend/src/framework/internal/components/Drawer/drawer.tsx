@@ -2,12 +2,13 @@ import React from "react";
 
 import { Close, MoreVert, Search } from "@mui/icons-material";
 
-import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
+import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
 import { TextInput } from "@lib/newComponents/TextInput";
 
 export type DrawerFilterItem<T extends string | number> = {
+    icon: React.ReactNode;
     label: React.ReactNode;
     value: T;
     initiallySelected: boolean;
@@ -91,7 +92,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                             </div>
                         )}
                         {showFilter && props.filterItems?.length && (
-                            <ComposedMenu
+                            <MenuCompositions.Default
                                 open={open}
                                 onOpenChange={handleOpenChange}
                                 closeOnClick={false}
@@ -100,10 +101,13 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                     id: String(item.value),
                                     checked: selectedFilterItems.includes(item.value),
                                     label: item.label,
+                                    icon: item.icon,
                                 }))}
                             >
-                                <MoreVert fontSize="small" />
-                            </ComposedMenu>
+                                <Button variant="text" iconOnly>
+                                    <MoreVert fontSize="small" />
+                                </Button>
+                            </MenuCompositions.Default>
                         )}
                     </div>
                 )}
