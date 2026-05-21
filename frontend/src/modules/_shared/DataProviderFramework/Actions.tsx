@@ -61,12 +61,10 @@ export function Actions(props: ActionsProps): React.ReactNode {
 
     return (
         <MenuCompositions.Default
-            flat
             side="right"
             align="start"
             open={isOpen}
             items={menuItems}
-            itemSize="small"
             onOpenChange={setIsOpen}
             onActionClicked={props.onActionClick}
         >
