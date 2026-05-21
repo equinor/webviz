@@ -82,12 +82,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             ref={ref}
             data-pressed={props.pressed ? "" : undefined}
             {...getDataAttributesForSelectableSize(size, true)}
+            style={{
+                minHeight: "calc(var(--eds-selectable-space-vertical) * 2 + round(1cap , 4px))",
+            }}
             className={resolveClassNames(
                 props.layoutClassName,
                 BUTTON_SIZE_CLASSES[size],
-                "px-selectable-x",
-                "min-h-[calc(var(--eds-selectable-space-vertical)*2+round(1cap,4px))]",
-                "focusable inline-flex cursor-pointer items-center rounded transition-colors duration-150 focus-visible:outline-0 [[data-group]_&:not(:first-child)]:rounded-l-none [[data-group]_&:not(:last-child)]:rounded-r-none",
+                "px-selectable-x inline-flex cursor-pointer items-center rounded",
+                "transition-colors duration-150",
+                "focusable focus-visible:outline-0",
+                "group-data-group/button-group:not-first-of-type:rounded-l-none group-data-group/button-group:not-last-of-type:rounded-r-none",
                 {
                     "aspect-square rounded-full": props.round,
                     rounded: !props.round,
@@ -103,7 +107,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             ) : (
                 <span
                     className={resolveClassNames(
-                        "gap-x-horizontal-2xs inline-flex h-full w-full items-center",
+                        "gap-x-horizontal-4xs inline-flex h-full w-full items-center",
                         LABEL_SIZE_CLASSES[size],
                     )}
                 >

@@ -17,7 +17,9 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group
         <div
             ref={ref}
             data-group
-            className={resolveClassNames(layoutClassName, "flex items-center", { "gap-x-px": props.split })}
+            className={resolveClassNames(layoutClassName, "group/button-group flex items-center", {
+                "gap-x-px": props.split,
+            })}
             {...rest}
         >
             {React.Children.map(children, (child) => {
