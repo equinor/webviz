@@ -10,7 +10,7 @@ const TRIGGER_PROPS = ["delay"] as (keyof TooltipTriggerProps)[];
 const POPUP_PROPS = ["align", "side"] as (keyof TooltipPopupProps)[];
 
 export type DefaultTooltipProps = {
-    content: string;
+    content: string | undefined;
     children: React.ReactNode;
 } & Pick<TooltipRootProps, (typeof ROOT_PROPS)[number]> &
     Pick<TooltipTriggerProps, (typeof TRIGGER_PROPS)[number]> &
@@ -21,8 +21,10 @@ function DefaultTooltipComponent(props: DefaultTooltipProps, ref: React.Forwarde
     const triggerProps = pick(props, ...TRIGGER_PROPS);
     const popupProps = pick(props, ...POPUP_PROPS);
 
+    const disabled = props.disabled ?? !props.content;
+
     return (
-        <Tooltip.Root {...rootProps}>
+        <Tooltip.Root {...rootProps} disabled={disabled}>
             <Tooltip.Trigger {...triggerProps}>{props.children}</Tooltip.Trigger>
             <Tooltip.Popup {...popupProps} ref={ref}>
                 {props.content}
