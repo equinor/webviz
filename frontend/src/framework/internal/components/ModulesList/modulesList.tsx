@@ -232,7 +232,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     if (isDragged) {
         return (
             <>
-                <div ref={ref} className="h-12 w-full bg-blue-300" />
+                <div ref={ref} className="bg-accent-canvas h-12 w-full" />
                 {createPortal(makeItem())}
             </>
         );
@@ -281,7 +281,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="text-danger-strong gap-horizontal-xs text-body-xs flex items-center">
+                <div className="text-warning-subtle gap-horizontal-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
@@ -289,7 +289,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="text-warning-strong gap-horizontal-xs text-body-xs flex items-center">
+                <div className="text-danger-subtle gap-horizontal-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Experimental</span>
                 </div>
@@ -458,27 +458,23 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 filterItems={[
                     {
                         value: ModuleDevState.DEPRECATED,
-                        label: (
-                            <>
-                                <span className="inline-block align-middle text-orange-600">
-                                    {makeDevStateIcon(ModuleDevState.DEPRECATED)}
-                                </span>
-                                <span className="mt-[0.2rem]">Show deprecated</span>
-                            </>
-                        ),
+                        label: <span className="mt-[0.2rem]">Show deprecated</span>,
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
+                        icon: (
+                            <span className="text-warning-subtle ml-auto inline-block align-middle">
+                                {makeDevStateIcon(ModuleDevState.DEPRECATED)}
+                            </span>
+                        ),
                     },
                     {
                         value: ModuleDevState.DEV,
-                        label: (
-                            <>
-                                <span className="inline-block align-middle text-yellow-500">
-                                    {makeDevStateIcon(ModuleDevState.DEV)}
-                                </span>
-                                <span className="mt-[0.2rem]">Show experimental</span>
-                            </>
-                        ),
+                        label: <span className="mt-[0.2rem]">Show experimental</span>,
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
+                        icon: (
+                            <span className="text-danger-subtle ml-auto inline-block align-middle">
+                                {makeDevStateIcon(ModuleDevState.DEV)}
+                            </span>
+                        ),
                     },
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}
