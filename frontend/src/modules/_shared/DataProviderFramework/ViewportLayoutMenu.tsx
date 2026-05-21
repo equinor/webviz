@@ -18,14 +18,14 @@ export function ViewportLayoutMenu(props: ViewportLayoutMenuProps): React.ReactN
         <Menu.Root>
             <TooltipCompositions.Default content="View layout settings">
                 <Menu.Trigger>
-                    <Button iconOnly size="small" variant="text">
+                    <Button iconOnly size="small" variant="text" tone="neutral">
                         <Settings fontSize="inherit" />
                     </Button>
                 </Menu.Trigger>
             </TooltipCompositions.Default>
             <Menu.Popup>
                 <Menu.Group>
-                    <Menu.GroupLabel>Preferred view layout</Menu.GroupLabel>
+                    <Menu.GroupLabel>View layout</Menu.GroupLabel>
                     <Menu.RadioGroup value={props.value} onValueChange={props.onValueChange}>
                         <Menu.RadioItem value={ViewLayout.GRID}>
                             Grid

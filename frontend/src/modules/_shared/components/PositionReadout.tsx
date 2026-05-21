@@ -33,7 +33,7 @@ export function PositionReadout(props: PositionReadoutProps): React.ReactNode {
     const zLabel = props.labels?.z ?? "Z";
     const className =
         props.className ??
-        "absolute bottom-0 right-0 bg-white/50 p-2 backdrop-blur-sm rounded-sm flex gap-2 z-10 text-sm font-mono";
+        "absolute bottom-0 right-0 bg-surface/50 px-horizontal-2xs py-vertical-2xs backdrop-blur-sm rounded-sm flex gap-horizontal-xs z-10 text-body-sm font-mono";
 
     return (
         <div className={className}>

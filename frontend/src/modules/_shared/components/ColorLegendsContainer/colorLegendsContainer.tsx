@@ -26,7 +26,7 @@ const TEXT_STYLE: React.CSSProperties = {
     strokeWidth: "5px",
     strokeLinecap: "round",
     strokeLinejoin: "round",
-    fontWeight: 800,
+    fontWeight: 400,
     overflow: "hidden",
 };
 
@@ -377,7 +377,7 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
 
     return (
         <div
-            className={resolveClassNames("absolute bottom-8 flex gap-2 z-50", {
+            className={resolveClassNames("z-elevated gap-horizontal-2xs absolute bottom-8 flex", {
                 "left-0": props.position === "left" || props.position === undefined,
                 "right-0": props.position === "right",
             })}

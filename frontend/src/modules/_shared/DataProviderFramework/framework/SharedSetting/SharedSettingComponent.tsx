@@ -2,12 +2,9 @@ import type React from "react";
 
 import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { Button } from "@lib/newComponents/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-
 
 import { SortableListItem } from "../../components/item";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -36,28 +33,35 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
             key={props.sharedSetting.getItemDelegate().getId()}
             id={props.sharedSetting.getItemDelegate().getId()}
             title={
-                <div className="font-bold overflow-hidden text-ellipsis">
+                <div className="font-bolder overflow-hidden text-ellipsis">
                     {props.sharedSetting.getItemDelegate().getName()}
                 </div>
             }
             startAdornment={
-                <div className="flex gap-1 items-center">
-                    <DenseIconButton
+                <div className="gap-horizontal-2xs flex items-center">
+                    <Button
                         onClick={handleToggleExpanded}
                         title={isExpanded ? "Hide settings" : "Show settings"}
+                        iconOnly
+                        size="small"
+                        variant="text"
+                        tone="neutral"
                     >
                         {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-                    </DenseIconButton>
+                    </Button>
                     <Link fontSize="inherit" />
                 </div>
             }
             endAdornment={<Actions sharedSetting={props.sharedSetting} />}
-            headerClassNames="bg-teal-200!"
+            headerClassNames="bg-accent!"
         >
             <div
-                className={resolveClassNames("grid grid-cols-[auto_1fr] items-center text-xs border", {
-                    hidden: !isExpanded,
-                })}
+                className={resolveClassNames(
+                    "border-neutral-subtle grid grid-cols-[auto_1fr] items-center border text-xs",
+                    {
+                        hidden: !isExpanded,
+                    },
+                )}
             >
                 <SettingManagerComponent
                     setting={props.sharedSetting.getWrappedSetting()}
@@ -84,13 +88,9 @@ function Actions(props: ActionProps): React.ReactNode {
 
     return (
         <>
-            <DenseIconButton
-                onClick={handleRemove}
-                title="Remove group"
-                colorScheme={DenseIconButtonColorScheme.DANGER}
-            >
+            <Button onClick={handleRemove} title="Remove group" variant="text" tone="danger" iconOnly size="small">
                 <Delete fontSize="inherit" />
-            </DenseIconButton>
+            </Button>
         </>
     );
 }

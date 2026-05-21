@@ -15,6 +15,7 @@ export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & 
     disabled?: boolean;
     round?: boolean;
     iconOnly?: boolean;
+    compact?: boolean;
     pressed?: boolean;
 };
 
@@ -97,6 +98,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
                     rounded: !props.round,
                     "aspect-square justify-center p-0!": props.iconOnly,
                     [ICON_SIZE_CLASSES[size]]: props.iconOnly,
+                    "px-horizontal-3xs! aspect-auto!": props.compact,
                 },
                 // SELECTABLE_SIZES_CLASSNAMES[size],
                 VARIANT_TONE_CLASSES[variant][props.disabled ? "disabled" : tone],

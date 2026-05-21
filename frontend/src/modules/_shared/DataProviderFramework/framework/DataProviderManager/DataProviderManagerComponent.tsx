@@ -150,7 +150,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
     return (
         <div className="flex min-h-0 grow flex-col">
             <div className="flex min-h-0 w-full grow flex-col" ref={listRef}>
-                <div className="gap-x-horizontal-2xs border-neutral-subtle bg-neutral px-horizontal-xs py-vertical-2xs flex h-12 items-center border-b">
+                <div className="gap-x-horizontal-2xs border-neutral-subtle bg-neutral px-horizontal-3xs pl-horizontal-xs py-vertical-2xs flex items-center border-b">
                     <div className="font-bolder grow text-sm">{props.title}</div>
                     <Actions actionGroups={actions} onActionClick={handleActionClick} />
                     <ExpandCollapseAllButton group={props.dataProviderManager} />

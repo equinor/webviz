@@ -7,10 +7,10 @@ export type ViewportLabelProps = {
 
 export function ViewportLabel(props: ViewportLabelProps): React.ReactNode {
     return (
-        <div className="font-bold text-base flex gap-2 justify-center items-center">
-            <div className="flex gap-2 items-center bg-white/50 px-2 py-1 backdrop-blur-sm rounded-sm">
+        <div className="font-bolder gap-horizontal-2xs flex items-center justify-center text-base">
+            <div className="gap-x-horizontal-2xs font-bolder px-horizontal-2xs py-vertical-3xs bg-surface/50 flex items-center rounded-sm text-base backdrop-blur-sm">
                 <div
-                    className="rounded-full h-3 w-3 border border-white"
+                    className="border-neutral-subtle h-3 w-3 rounded-full border"
                     style={{ backgroundColor: props.color ?? undefined }}
                 />
                 <div>{props.name}</div>

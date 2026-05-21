@@ -3,8 +3,8 @@ import React from "react";
 import { Close } from "@mui/icons-material";
 import _ from "lodash";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { useStableProp } from "@lib/hooks/useStableProp";
+import { Button } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
@@ -104,11 +104,12 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
         <div
             ref={readoutRoot}
             className={resolveClassNames(
-                "absolute z-9999 grid items-center rounded-sm border border-neutral-300 bg-white/75 backdrop-blur-xs pointer-events-none",
+                "z-elevated border-neutral-subtle bg-surface/75 pointer-events-none absolute grid items-center rounded-sm border backdrop-blur-xs",
                 {
-                    "gap-2 p-2 text-sm w-72": !props.compact,
-                    "gap-y-0.5 gap-x-2 py-2 px-2 text-xs min-w-52": props.compact,
-                    "text-neutral-500": props.textGrayedOut,
+                    "px-horizontal-2xs py-vertical-3xs text-body-sm w-72 gap-2": !props.compact,
+                    "gap-x-horizontal-2xs gap-y-vertical-2xs px-horizontal-2xs py-vertical-2xs text-body-xs min-w-52":
+                        props.compact,
+                    "text-neutral-subtle": props.textGrayedOut,
                 },
             )}
             style={{
@@ -117,13 +118,17 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             }}
         >
             {props.onClose && (
-                <DenseIconButton
+                <Button
                     onClick={props.onClose}
-                    className="absolute top-0.5 right-0.5 pointer-events-auto text-xs"
+                    layoutClassName="pointer-events-auto absolute top-0.5 right-0.5"
                     title="Clear readout"
+                    variant="text"
+                    size="small"
+                    tone="neutral"
+                    iconOnly
                 >
                     <Close fontSize="inherit" />
-                </DenseIconButton>
+                </Button>
             )}
             {visibleReadoutItems.map((item, idx) => (
                 <React.Fragment key={idx}>
@@ -136,7 +141,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             ))}
 
             {props.readoutItems.length > maxNumItemsOrDefault && (
-                <div className="flex items-center gap-2 col-span-4">
+                <div className="gap-horizontal-2xs col-span-4 flex items-center">
                     ...and {props.readoutItems.length - maxNumItemsOrDefault} more
                 </div>
             )}
@@ -146,10 +151,10 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
 
 function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean; compact?: boolean }): React.ReactNode {
     return (
-        <div className="col-span-4 flex gap-2 font-bold items-center">
+        <div className="gap-horizontal-2xs font-bolder col-span-4 flex items-center">
             {!props.noLabelColor && (
                 <div
-                    className="rounded-full w-3 h-3 border border-slate-500"
+                    className="border-neutral-subtle h-3 w-3 rounded-full border"
                     style={{ backgroundColor: props.item.color }}
                 />
             )}

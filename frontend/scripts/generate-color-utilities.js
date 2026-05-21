@@ -65,8 +65,20 @@ const BORDER_SIDES = [
 
 const OUTLINE_SIDES = [["", "outline-color"]];
 
+const OPACITY_SCALE = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95];
+
 function utilityLine(name, property, variable) {
     return `@utility ${name} { ${property}: var(${variable}); }`;
+}
+
+function colorUtilityLines(name, property, variable) {
+    return [
+        utilityLine(name, property, variable),
+        ...OPACITY_SCALE.map(
+            (n) =>
+                `@utility ${name}/${n} { ${property}: color-mix(in oklab, var(${variable}) ${n}%, transparent); }`,
+        ),
+    ];
 }
 
 function sectionHeader(title) {
@@ -91,7 +103,7 @@ const lines = [
 
 lines.push(sectionHeader("Background/fill utilities"));
 for (const [name, variable] of Object.entries(fills)) {
-    lines.push(utilityLine(`bg-${name}`, "background-color", variable));
+    lines.push(...colorUtilityLines(`bg-${name}`, "background-color", variable));
 }
 
 // ── Borders ──────────────────────────────────────────────────────────────────
@@ -138,7 +150,7 @@ for (const [name, variable] of Object.entries(text)) {
         currentGroup = group;
         lines.push(`\n/* ${group.charAt(0).toUpperCase() + group.slice(1)} */`);
     }
-    lines.push(utilityLine(`text-${name}`, "color", variable));
+    lines.push(...colorUtilityLines(`text-${name}`, "color", variable));
 }
 
 // ── SVG fill (bg tokens) ──────────────────────────────────────────────────────

@@ -309,7 +309,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "py-vertical-3xs px-horizontal-2xs group hover:text-neutral-subtle gap-horizontal-2xs hover:bg-accent-hover flex items-center",
+                "py-vertical-3xs px-horizontal-2xs group/log-item gap-horizontal-2xs hover:bg-accent flex items-center",
                 {
                     "cursor-help": Boolean(detailsObject),
                 },
@@ -322,7 +322,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                 {message}
                 {detailsString}
             </span>
-            <span className="text-body-xs group-hover:text-neutral-subtle text-transparent">
+            <span className="text-body-xs group-hover/log-item:text-neutral-subtle text-transparent">
                 {convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs, true)}
             </span>
         </div>

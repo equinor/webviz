@@ -39,7 +39,7 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
 
     return (
         <div
-            className="group/editName gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
+            className="group/edit-name gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to edit name"
         >
@@ -58,7 +58,7 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
                     <div className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
                     <Edit
                         fontSize="inherit"
-                        className="cursor-pointer opacity-0 group-hover/editName:opacity-50"
+                        className="cursor-pointer opacity-0 group-hover/edit-name:opacity-50"
                         onClick={handleNameDoubleClick}
                         titleAccess="Click to edit name"
                     />

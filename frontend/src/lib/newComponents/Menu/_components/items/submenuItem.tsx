@@ -20,8 +20,13 @@ function SubmenuItemCompontent(props: SubmenuItemProps, ref: React.ForwardedRef<
     const baseProps = resolveWrapperProps(props, "triggerContent", "children");
     return (
         <MenuBase.SubmenuRoot {...baseProps}>
-            <MenuBase.SubmenuTrigger className="menu__item menu__interactable pr-vertical-xs" ref={ref}>
-                <ItemContent>{props.triggerContent}</ItemContent>
+            <MenuBase.SubmenuTrigger
+                className="menu__item menu__interactable pr-vertical-xs gap-horizontal-2xs flex"
+                ref={ref}
+            >
+                <span className="grow">
+                    <ItemContent>{props.triggerContent}</ItemContent>
+                </span>
                 <ChevronRight fontSize="inherit" className="ml-vertical-2xs" />
             </MenuBase.SubmenuTrigger>
             <Popup side="right" align="start">
