@@ -14,7 +14,7 @@ import { SortDirection } from "../typesAndEnums";
 
 export type TableCellProps = {
     colKey?: string;
-    children: React.ReactNode;
+    children?: React.ReactNode;
 
     sortable?: boolean;
 
@@ -40,7 +40,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
         currentSortDirection = rootContext.currentSort[props.colKey];
     }
 
-    const isActive = currentSortDirection !== SortDirection.NONE;
+    const isSorted = currentSortDirection !== SortDirection.NONE;
 
     function toggleSort() {
         if (!isSortable) return;
@@ -57,19 +57,24 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             role={isSortable ? "button" : undefined}
             className={resolveClassNames("px-horizontal-sm border-neutral-subtle text-left whitespace-nowrap", {
                 "border-b": sectionContext === "body",
-                "font-bolder border-b-2": sectionContext !== "body",
+                "border-b-2": sectionContext !== "body",
                 "py-vertical-sm": !rootContext.compact,
                 "py-vertical-2xs": rootContext.compact,
                 "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
-                "border-accent! text-accent-subtle": isActive,
+                "border-accent! text-accent-subtle": isSorted,
             })}
-            onClick={toggleSort}
+            onClick={(evt) => {
+                toggleSort();
+                props.onClick?.(evt);
+            }}
             onKeyDown={(evt) => {
                 if (!isSortable) return;
                 if (![Key.Enter, " "].includes(evt.key)) return;
 
                 evt.preventDefault();
+
                 toggleSort();
+                props.onKeyDown?.(evt);
             }}
         >
             <div className="flex items-center">

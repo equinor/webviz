@@ -39,7 +39,7 @@ function HeadComponent(props: TableHeadProps, ref: React.ForwardedRef<HTMLTableS
                                 rowSpan={cell.rowSpan}
                                 colSpan={cell.colSpan}
                                 // Explicitly avoid sortable group headers
-                                sortable={cell.isLeaf ? undefined : false}
+                                sortable={cell.isLeaf ? cell.cellProps.sortable : false}
                             >
                                 {cell.content}
                             </Cell>

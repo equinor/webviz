@@ -7,12 +7,10 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { TableColumnContextType } from "../_contexts/tableColumnContext";
 import { TableColumnContext } from "../_contexts/tableColumnContext";
 import { TableRootContext } from "../_contexts/tableRootContext";
+import { recursivelyFindHeadChild } from "../_utils";
 import type { ColumnMetaData, SortDirection } from "../typesAndEnums";
 
-import { Body } from "./body";
 import { Column } from "./column";
-import { Foot } from "./foot";
-import { Head } from "./head";
 
 export type TableRootProps = {
     sortable?: boolean;
@@ -46,16 +44,14 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
 
     const sizeOrDefault = props.size ?? "md";
 
-    const headChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Head);
-    // const bodyChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Body);
-    // const footChild = React.Children.toArray(props.children).find((c) => React.isValidElement(c) && c.type === Foot);
-
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
         content: null,
         maxDepth: 0,
         leafCount: 0,
     };
+
+    const headChild = recursivelyFindHeadChild(props.children);
 
     if (headChild) {
         headColumnMetaData = recursivelyProcessColumnChildren(headChild);
@@ -84,9 +80,6 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                     }}
                 >
                     <TableColumnContext.Provider value={headColumnMetaData}>
-                        {/* {headChild}
-                        {bodyChild}
-                        {footChild} */}
                         {props.children}
                     </TableColumnContext.Provider>
                 </TableRootContext.Provider>

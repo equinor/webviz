@@ -1,6 +1,9 @@
-import type React from "react";
+import React from "react";
 
+import { Body } from "./_components/body";
 import type { TableCellProps } from "./_components/cell";
+import { Foot } from "./_components/foot";
+import { Head } from "./_components/head";
 import { SortDirection, type ColumnMetaData } from "./typesAndEnums";
 
 export function getNextSortDirection(currentSortDirection: SortDirection) {
@@ -60,4 +63,29 @@ function doRecursivelyBuildHeaderRows(
     }
 
     return headerCellAcc;
+}
+
+/** The table head component *might* be wrapped in virtual context components, so we need to recursively dig down for it */
+export function recursivelyFindHeadChild(children: React.ReactNode): React.ReactElement | null {
+    return doRecursivelyFindHeadChild(children);
+}
+
+function doRecursivelyFindHeadChild(children: React.ReactNode, depth = 0): React.ReactElement | null {
+    if (depth > 100) throw new Error("Maximum table child depth exceeded. Check for circular references");
+
+    for (const child of React.Children.toArray(children)) {
+        if (!React.isValidElement(child)) continue;
+
+        // Per html syntax, head cannot be in inside the footer or body, so we'll just skip them
+        if (child.type === Foot) continue;
+        if (child.type === Body) continue;
+        if (child.type === Head) return child;
+
+        if (child.props?.children) {
+            // Recursively check element children
+            return doRecursivelyFindHeadChild(child.props?.children, depth + 1);
+        }
+    }
+
+    return null;
 }

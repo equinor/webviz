@@ -264,10 +264,10 @@ export const Overflow: Story = {
     ),
 };
 
-export const Draggable: Story = {
+export const WithSortableList: Story = {
+    name: "With SortableList",
     render: function DraggableComponent(args) {
         const tableBodyRef = React.useRef<HTMLTableSectionElement | null>(null);
-        const tableHeaderRef = React.useRef<HTMLTableSectionElement | null>(null);
 
         const [orderedData, setOrderedData] = React.useState(EXAMPLE_DATA);
 
@@ -279,17 +279,18 @@ export const Draggable: Story = {
         }
 
         return (
-            <SortableList isMoveAllowed={() => true} onItemMoved={handleItemMoved}>
+            <SortableList className="w-full" isMoveAllowed={() => true} onItemMoved={handleItemMoved}>
                 <SortableList.ScrollContainer>
-                    <Table.Root layoutClassName="w-full table-fixed" {...args}>
-                        {/* <SortableList.NoDropZone>
+                    <Table.Root layoutClassName="table-fixed" {...args}>
+                        <SortableList.NoDropZone>
                             <Table.Head>
-                                <Table.Column colKey="handle">{null}</Table.Column>
+                                {/* Add column to show the drag indicator, and explicitly make it unsortable */}
+                                <Table.Column width={1} colKey="handle" sortable={false} />
                                 <Table.Column colKey="id">ID</Table.Column>
                                 <Table.Column colKey="name">Name</Table.Column>
                                 <Table.Column colKey="email">Email</Table.Column>
                             </Table.Head>
-                        </SortableList.NoDropZone> */}
+                        </SortableList.NoDropZone>
                         <SortableList.Content>
                             <Table.Body ref={tableBodyRef}>
                                 {orderedData.map((datum) => (
