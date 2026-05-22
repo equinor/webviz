@@ -2,13 +2,14 @@ import React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
 import type { Meta, StoryObj } from "@storybook/react";
-import { orderBy } from "lodash";
+import { flatMap, orderBy, range } from "lodash";
 
 import { SortableList } from "@lib/components/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
 
 import { Banner } from "../Banner";
 import { Typography } from "../Typography";
+import { Virtualization } from "../Virtualization";
 
 import { SortDirection } from "./typesAndEnums";
 
@@ -263,6 +264,63 @@ export const Overflow: Story = {
             </Table.Foot>
         </Table.Root>
     ),
+};
+
+export const WithVirtualization: Story = {
+    args: { compact: true },
+
+    render: function WithVirtualizationComp(args) {
+        const tableWrapperRef = React.useRef(null);
+        const exampleData = React.useMemo(
+            () =>
+                flatMap<TExampleData>(
+                    range(0, 1000).map((i) => EXAMPLE_DATA.map((c) => ({ ...c, id: c.id + EXAMPLE_DATA.length * i }))),
+                ),
+            [],
+        );
+
+        return (
+            <Table.Root
+                layoutClassName="w-full max-h-[50vh] overflow-auto"
+                {...args}
+                fixed
+                overflowWrapperRef={tableWrapperRef}
+            >
+                <Table.Head sticky>
+                    <Table.Column width={20} colKey="id">
+                        ID
+                    </Table.Column>
+                    <Table.Column width={60} colKey="name">
+                        Name
+                    </Table.Column>
+                    <Table.Column width={60} colKey="email">
+                        Email
+                    </Table.Column>
+                </Table.Head>
+                <Table.Body>
+                    <Virtualization
+                        containerRef={tableWrapperRef}
+                        direction="vertical"
+                        items={exampleData}
+                        placeholderComponent="tr"
+                        itemSize={{ small: 29, default: 33, large: 37 }[args.size ?? "default"]}
+                        renderItem={(datum: TExampleData) => (
+                            <Table.Row key={datum.id} rowKey={String(datum.id)}>
+                                <Table.Cell>{datum.id}</Table.Cell>
+                                <Table.Cell>{datum.name}</Table.Cell>
+                                <Table.Cell>{datum.email}</Table.Cell>
+                            </Table.Row>
+                        )}
+                    />
+                </Table.Body>
+                <Table.Foot sticky>
+                    <Table.Row>
+                        <Table.Cell colSpan={3}>Total items: {exampleData.length}</Table.Cell>
+                    </Table.Row>
+                </Table.Foot>
+            </Table.Root>
+        );
+    },
 };
 
 export const WithSortableList: Story = {

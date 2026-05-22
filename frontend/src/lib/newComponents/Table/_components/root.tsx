@@ -1,5 +1,7 @@
 import React from "react";
 
+import type { SelectableSize } from "@lib/newComponents/_shared/size";
+import { getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -8,18 +10,18 @@ import type { TableColumnContextType } from "../_contexts/tableColumnContext";
 import { TableColumnContext } from "../_contexts/tableColumnContext";
 import { TableRootContext } from "../_contexts/tableRootContext";
 import { recursivelyFindHeadChild } from "../_utils";
-import type { ColumnMetaData, SortDirection } from "../typesAndEnums";
+import type { ColumnMetaData, SortDirection, TableSortState } from "../typesAndEnums";
 
 import { Column } from "./column";
-import { getTextSizeForSelectableSize, SelectableSize } from "@lib/newComponents/_shared/size";
 
 export type TableRootProps = {
+    overflowWrapperRef: React.RefObject<HTMLDivElement>;
     sortable?: boolean;
     selectable?: boolean;
     children?: React.ReactNode;
     size?: SelectableSize;
     compact?: boolean;
-    currentSort?: { [colKey: string]: SortDirection };
+    currentSort?: TableSortState;
     selectedRow?: string | null;
     fixed?: boolean;
     onRowSelect?: (rowKey: string) => void;
@@ -58,7 +60,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
     }
 
     return (
-        <div className={resolveClassNames("relative overflow-auto", layoutClassName)}>
+        <div ref={props.overflowWrapperRef} className={resolveClassNames("relative overflow-auto", layoutClassName)}>
             <Typography
                 {...baseProps}
                 className={resolveClassNames("w-full border-separate border-spacing-[0]", {
