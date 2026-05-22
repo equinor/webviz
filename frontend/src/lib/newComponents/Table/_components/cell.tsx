@@ -55,14 +55,18 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             ref={ref}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
-            className={resolveClassNames("px-horizontal-sm border-neutral-subtle text-left whitespace-nowrap", {
-                "border-b": sectionContext === "body",
-                "border-b-2": sectionContext !== "body",
-                "py-vertical-sm": !rootContext.compact,
-                "py-vertical-2xs": rootContext.compact,
-                "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
-                "border-accent! text-accent-subtle": isSorted,
-            })}
+            className={resolveClassNames(
+                props.layoutClassName,
+                "px-horizontal-sm border-neutral-subtle text-left align-middle whitespace-nowrap",
+                {
+                    "border-b": sectionContext === "body",
+                    "border-b-2": sectionContext !== "body",
+                    "py-vertical-sm": !rootContext.compact,
+                    "py-vertical-2xs": rootContext.compact,
+                    "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
+                    "border-accent! text-accent-subtle": isSorted,
+                },
+            )}
             onClick={(evt) => {
                 toggleSort();
                 props.onClick?.(evt);
@@ -77,10 +81,8 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                 props.onKeyDown?.(evt);
             }}
         >
-            <div className="flex items-center">
-                {props.children}
-                {isSortable && <SortingIcon direction={currentSortDirection} />}
-            </div>
+            {props.children}
+            {isSortable && <SortingIcon direction={currentSortDirection} />}
         </CellTag>
     );
 }

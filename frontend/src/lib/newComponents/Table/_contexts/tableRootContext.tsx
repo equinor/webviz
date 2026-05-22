@@ -1,12 +1,14 @@
 import React from "react";
 
+import type { SelectableSize } from "@lib/newComponents/_shared/size";
+
 import type { SortDirection } from "../typesAndEnums";
 
 export type TableRootContextType = {
     sortable?: boolean;
     selectable?: boolean;
     compact?: boolean;
-    size?: "sm" | "md" | "lg";
+    size?: SelectableSize;
 
     selection?: null | string | string[];
 

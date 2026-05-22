@@ -11,16 +11,17 @@ import { recursivelyFindHeadChild } from "../_utils";
 import type { ColumnMetaData, SortDirection } from "../typesAndEnums";
 
 import { Column } from "./column";
+import { getTextSizeForSelectableSize, SelectableSize } from "@lib/newComponents/_shared/size";
 
 export type TableRootProps = {
     sortable?: boolean;
     selectable?: boolean;
     children?: React.ReactNode;
-    size?: "sm" | "md" | "lg";
+    size?: SelectableSize;
     compact?: boolean;
     currentSort?: { [colKey: string]: SortDirection };
     selectedRow?: string | null;
-    // headRef: React.MutableRefObject
+    fixed?: boolean;
     onRowSelect?: (rowKey: string) => void;
     onChangeSortDirection?: (colKey: string, newDirection: SortDirection) => void;
 } & ComponentWrapperProps<React.HTMLAttributes<HTMLTableElement>>;
@@ -34,13 +35,14 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "size",
         "children",
         "compact",
+        "fixed",
         "currentSort",
         "selectedRow",
         "onRowSelect",
         "onChangeSortDirection",
     );
 
-    const sizeOrDefault = props.size ?? "md";
+    const sizeOrDefault = props.size ?? "default";
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
@@ -59,11 +61,13 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         <div className={resolveClassNames("relative overflow-auto", layoutClassName)}>
             <Typography
                 {...baseProps}
-                className="w-full border-separate border-spacing-[0]"
+                className={resolveClassNames("w-full border-separate border-spacing-[0]", {
+                    "table-fixed": props.fixed,
+                })}
                 as="table"
                 ref={ref}
                 family="body"
-                size={sizeOrDefault}
+                size={getTextSizeForSelectableSize(sizeOrDefault)}
             >
                 <TableRootContext.Provider
                     value={{
