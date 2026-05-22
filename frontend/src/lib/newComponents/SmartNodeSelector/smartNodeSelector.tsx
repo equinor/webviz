@@ -241,7 +241,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 
     componentDidUpdate(prevProps: SmartNodeSelectorProps): void {
         if (
-            (this.props.data && JSON.stringify(this.props.data) !== JSON.stringify(prevProps.data)) ||
+            (this.props.data && this.props.data !== prevProps.data) ||
             (this.props.delimiter && this.props.delimiter !== prevProps.delimiter)
         ) {
             let error: string | undefined;

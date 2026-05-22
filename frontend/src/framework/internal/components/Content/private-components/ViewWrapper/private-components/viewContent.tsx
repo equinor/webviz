@@ -93,13 +93,13 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
 
     const stateRelatedContent = makeStateRelatedContent();
     if (stateRelatedContent) {
-        return <div className="h-full w-full flex flex-col justify-center items-center">{stateRelatedContent}</div>;
+        return <div className="flex h-full w-full flex-col items-center justify-center">{stateRelatedContent}</div>;
     }
 
     if (moduleInstanceViewStateInvalid) {
         return (
-            <div className="flex flex-col gap-4 p-4 h-full w-full justify-center items-center">
-                <div className="text-red-600 m-2 text-center max-w-96">
+            <div className="gap-vertical-xs px-horizontal-xs py-vertical-xs flex h-full w-full flex-col items-center justify-center">
+                <div className="mx-horizontal-2xs my-vertical-2xs text-warning-subtle max-w-96 text-center">
                     The persisted view state for this module&apos;s view is invalid and could not be applied. It has
                     most likely been outdated by a module update. You can reset the module to its default view to
                     continue using it.
@@ -133,7 +133,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
-            <div className="p-2 h-full w-full">
+            <div className="px-horizontal-2xs py-vertical-2xs h-full w-full">
                 <DebugProfiler
                     id={`${props.moduleInstance.getId()}-view`}
                     statusController={props.moduleInstance.getStatusController()}

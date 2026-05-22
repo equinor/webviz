@@ -84,7 +84,7 @@ export function Form(props: FormProps): React.ReactNode {
     return (
         <>
             {hasChanges && (
-                <Banner tone="warning">
+                <Banner tone="warning" layoutClassName="mb-vertical-2xs">
                     There are unsaved changes in the current session. These changes will be included in the snapshot.
                 </Banner>
             )}
@@ -94,7 +94,7 @@ export function Form(props: FormProps): React.ReactNode {
                     <FieldCompositions.Default
                         label="Title"
                         indicator="(Required)"
-                        info={`Enter a descriptive title for your session, which will help you identify it later. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
+                        info={`Enter a descriptive title for your snapshot, which will help you identify it later. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
                     >
                         <TextInput
                             minLength={MIN_TITLE_LENGTH}

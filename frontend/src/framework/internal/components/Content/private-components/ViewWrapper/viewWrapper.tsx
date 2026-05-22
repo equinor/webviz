@@ -161,10 +161,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={resolveClassNames(
-                        "border-neutral-subtle shadow-elevation-raised relative box-border flex h-full w-full flex-col border bg-white",
+                        "border-neutral-subtle shadow-elevation-raised bg-surface relative box-border flex h-full w-full flex-col border",
                         {
                             "cursor-grabbing select-none": props.isDragged,
-                            "p-1": !props.isMinimized,
+                            "p-0": !props.isMinimized,
                         },
                     )}
                     onPointerDown={handlePointerDown}

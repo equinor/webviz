@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Check, Clear } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
@@ -25,6 +24,12 @@ import type { ByRealizationNumberFilterSelection } from "./private-components/by
 import { ByRealizationNumberFilter } from "./private-components/byRealizationNumberFilter";
 import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
+import { Button } from "@lib/newComponents/Button";
+import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { Hidden } from "@lib/newComponents/Hidden";
+import { Check, Clear } from "@lib/mui-icons";
+import { Separator } from "@lib/newComponents/Separator";
 
 export type EnsembleRealizationFilterSelections = {
     realizationNumbers: readonly number[]; // Array of realization numbers to include in the ensemble
@@ -231,12 +236,15 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
     return (
         <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
-            <div className="flex justify-center items-center bg-slate-100 rounded-tl-md rounded-tr-md">
+            <div className="bg-neutral flex items-center justify-center rounded-t-md">
                 <div
-                    className={resolveClassNames("flex min-w-0 h-full items-center flex-grow group p-2", {
-                        "opacity-50 group-hover:opacity-75 transition-opacity duration-100":
-                            !props.isActive && props.isAnotherFilterActive,
-                    })}
+                    className={resolveClassNames(
+                        "group px-horizontal-2xs py-vertical-3xs gap-horizontal-2xs flex h-full min-w-0 grow items-center",
+                        {
+                            "opacity-50 transition-opacity duration-100 group-hover:opacity-75":
+                                !props.isActive && props.isAnotherFilterActive,
+                        },
+                    )}
                     onClick={handleHeaderOnClick}
                 >
                     <EnsembleColorTile
@@ -246,48 +254,51 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         isRealizationFilterEffective={areRealizationsFiltered}
                     />
                     <div
-                        className="grow min-w-0 h-full pl-2 pr-2 flex items-center cursor-pointer font-bold text-sm"
+                        className="font-bolder flex h-full min-w-0 grow cursor-pointer items-center pr-2 pl-2 text-sm"
                         title={props.isActive ? `Ensemble: ${readableEnsembleName}` : "Click to open filter"}
                     >
                         <span className="truncate">{readableEnsembleName}</span>
                     </div>
-                    <div className="flex h-full items-center pr-2">
-                        <HasChangesIndicator
-                            visible={props.hasUnsavedSelections}
-                            tooltipText="You have unapplied changes"
-                        />
-                    </div>
-                    <div className="bg-slate-400 w-px self-stretch" />
-                </div>
-                <div className={resolveClassNames("flex h-full items-center gap-1 pr-2")}>
-                    <DenseIconButton
-                        colorScheme={DenseIconButtonColorScheme.SUCCESS}
+                    <HasChangesIndicator
+                        visible={props.hasUnsavedSelections}
+                        tooltipText="You have unapplied changes"
+                        size="small"
+                        iconSize={16}
+                    />
+                    <Button
+                        tone="accent"
                         disabled={!props.hasUnsavedSelections}
                         onClick={handleApplyClick}
                         title={props.hasUnsavedSelections ? "Apply changes" : "No changes to apply"}
+                        size="small"
+                        variant="text"
+                        iconOnly
                     >
-                        <Check fontSize="small" />
-                    </DenseIconButton>
-                    <DenseIconButton
-                        colorScheme={DenseIconButtonColorScheme.DANGER}
+                        <Check size={16} />
+                    </Button>
+                    <Button
+                        tone="danger"
                         disabled={!props.hasUnsavedSelections}
                         onClick={handleDiscardClick}
                         title={props.hasUnsavedSelections ? "Discard changes" : "No changes to discard"}
+                        size="small"
+                        variant="text"
+                        iconOnly
                     >
-                        <Clear fontSize="small" />
-                    </DenseIconButton>
+                        <Clear size={16} />
+                    </Button>
                 </div>
             </div>
             <div
                 className={resolveClassNames({
-                    "opacity-30 group-hover:opacity-75 transition-opacity duration-100":
+                    "opacity-30 transition-opacity duration-100 group-hover:opacity-75":
                         !props.isActive && props.isAnotherFilterActive,
                 })}
                 title={!props.isActive ? "Click to open filter" : undefined}
                 onClickCapture={handleBodyOnClickCapture}
             >
-                <div className="flex flex-col gap-2 p-2">
-                    <div className="border p-2 rounded-md">
+                <div className="border-neutral-subtle flex flex-col gap-2 rounded-b border p-2">
+                    <div className="py-vertical-2xs px-horizontal-2xs">
                         <RealizationNumberDisplay
                             selectedRealizations={props.selections.realizationNumbers}
                             availableRealizations={props.ensemble.getRealizations()}
@@ -300,9 +311,10 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         />
                     </div>
                     <div className={resolveClassNames({ hidden: !props.isActive })}>
-                        <div className="border rounded-md shadow-md p-2">
-                            <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">
-                                <RadioGroup
+                        <div className="border-neutral-subtle px-horizontal-2xs py-vertical-2xs">
+                            <Separator orientation="horizontal" />
+                            <FieldCompositions.Default label="Active Filter Type">
+                                <SimpleRadioGroup
                                     value={props.selections.filterType}
                                     options={Object.values(RealizationFilterType).map((filterType) => {
                                         return {
@@ -310,14 +322,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                             value: filterType,
                                         };
                                     })}
-                                    onChange={(_, value) => handleActiveFilterTypeChange(value)}
-                                    direction="horizontal"
+                                    onValueChange={(value) => handleActiveFilterTypeChange(value)}
+                                    layout="horizontal"
                                 />
-                            </Label>
-                            <div
-                                className={resolveClassNames({
-                                    hidden: props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER,
-                                })}
+                            </FieldCompositions.Default>
+                            <Separator orientation="horizontal" />
+                            <Hidden
+                                hidden={props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
                             >
                                 <ByRealizationNumberFilter
                                     initialRealizationNumberSelections={actualInitialRealizationNumberSelections}
@@ -329,12 +340,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                     }
                                     onFilterChange={handleRealizationNumberFilterChanged}
                                 />
-                            </div>
-                            <div
-                                className={resolveClassNames({
-                                    hidden: props.selections.filterType !== RealizationFilterType.BY_PARAMETER_VALUES,
-                                })}
-                            >
+                            </Hidden>
+                            <Hidden hidden={props.selections.filterType !== RealizationFilterType.BY_PARAMETER_VALUES}>
                                 <ByParameterValueFilter
                                     disabled={props.selections.filterType !== RealizationFilterType.BY_PARAMETER_VALUES}
                                     ensembleParameters={props.ensemble.getParameters()}
@@ -343,7 +350,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                     }
                                     onFilterChange={handleParameterValueFilterChanged}
                                 />
-                            </div>
+                            </Hidden>
                         </div>
                     </div>
                 </div>

@@ -12,6 +12,8 @@ import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,
     makeRealizationPickerTagsFromRealizationNumberSelections,
 } from "../private-utils/realizationPickerUtils";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { SimpleRadioGroup } from "@lib/newComponents/Radio";
 
 export interface ByRealizationNumberFilterSelection {
     realizationNumberSelections: RealizationNumberSelection[] | null;
@@ -103,9 +105,9 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     );
 
     return (
-        <div className="flex flex-col gap-2">
-            <Label text="Filtering Option">
-                <RadioGroup
+        <div className="gap-vertical-2xs flex flex-col">
+            <FieldCompositions.Default label="Filtering Option">
+                <SimpleRadioGroup
                     value={props.selectedIncludeOrExcludeFilter}
                     options={[
                         {
@@ -117,12 +119,12 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                             label: "Exclude",
                         },
                     ]}
-                    onChange={(_, value) => handleIncludeExcludeFilterChange(value)}
+                    onValueChange={(value) => handleIncludeExcludeFilterChange(value)}
                     disabled={props.disabled}
-                    direction="horizontal"
+                    layout="horizontal"
                 />
-            </Label>
-            <Label text="Pick Realization Numbers">
+            </FieldCompositions.Default>
+            <FieldCompositions.Default label="Pick Realization Numbers">
                 <RealizationPicker
                     initialRangeTags={initialRangeTags}
                     selectedRangeTags={selectedRangeTags}
@@ -131,7 +133,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                     onChange={handleRealizationPickChange}
                     disabled={props.disabled}
                 />
-            </Label>
+            </FieldCompositions.Default>
         </div>
     );
 };

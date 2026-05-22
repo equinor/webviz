@@ -19,6 +19,7 @@ export type PopupProps = {
     keepMounted?: boolean;
     /** Array of alert dialogs to be rendered within the popup. */
     alertDialogs?: React.ReactElement<AlertDialogProps>[];
+    defaultOpen?: boolean;
 } & Pick<DialogRootProps, "defaultOpen" | "open" | "onOpenChange" | "modal"> &
     Pick<DialogPopupProps, "initialFocus" | "finalFocus">;
 

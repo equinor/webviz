@@ -19,7 +19,8 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Menu } from "@lib/newComponents/Menu";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
+import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
+import { Separator } from "@lib/newComponents/Separator";
 
 export enum FitInViewStatus {
     ON = "ON",
@@ -180,7 +181,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 <GridOn fontSize="inherit" />
                             </ToggleButton>
                         </Tooltip>
-                        <ToolBarDivider />
+                        <Separator orientation="vertical" />
                         <Tooltip title="Increase vertical scale" placement="bottom">
                             <HoldPressedIntervalCallbackButton
                                 onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
@@ -198,7 +199,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         </Tooltip>
                     </>
                 )}
-                <ToolBarDivider />
+                <Separator orientation="vertical" />
                 <Tooltip title={expanded ? "Collapse toolbar" : "Expand toolbar"} placement="bottom">
                     <Button onClick={() => setExpanded(!expanded)}>
                         {expanded ? (

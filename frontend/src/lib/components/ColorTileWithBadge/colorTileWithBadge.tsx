@@ -20,10 +20,13 @@ export const ColorTileWithBadge: React.FC<ColorTileWithBadgeProps> = (props) => 
             {/* The badge icon, positioned top-right */}
             {props.showBadge && (
                 <props.badgeIcon
-                    className={`${props.badgeClassName ?? "bg-white"} absolute -top-1 -right-1.5 rounded-full p-px text-black`}
+                    className={`${props.badgeClassName ?? "bg-white"} text-neutral-strong absolute -top-1 -right-1.5 rounded-full p-px`}
                     fontSize="inherit"
                     style={{
                         fontSize: "1rem",
+                        stroke: "var(--eds-color-bg-neutral-canvas)",
+                        strokeWidth: "3px",
+                        paintOrder: "stroke fill",
                     }}
                 />
             )}

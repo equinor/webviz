@@ -67,11 +67,13 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                 >
                     <div
                         className={resolveClassNames(
-                            `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline-2 hover:outline-blue-300`,
+                            `${realizationDivSizeClass} flex aspect-square items-center justify-center rounded-full hover:outline`,
                             {
-                                "bg-green-600": isRealizationSelected,
-                                "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
-                                "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
+                                "bg-accent-strong hover:bg-accent-strong-hover hover:outline-accent-strong":
+                                    isRealizationSelected,
+                                "bg-accent hover:bg-accent-hover hover:outline-accent":
+                                    !isRealizationSelected && isCurrentRealizationAvailable,
+                                "bg-disabled": !isRealizationSelected && !isCurrentRealizationAvailable,
                                 "cursor-pointer": !props.disableOnClick && isCurrentRealizationAvailable,
                                 "cursor-not-allowed": !props.disableOnClick && !isCurrentRealizationAvailable,
                             },

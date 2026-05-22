@@ -9,7 +9,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     return (
-        <div className="absolute left-0 top-0 bg-white p-1 rounded-sm border-gray-300 border shadow-sm z-30 text-sm flex gap-1 items-center">
+        <div className="bg-surface px-horizontal-3xs py-vertical-3xs border-neutral-subtle z-elevated text-body-sm gap-horizontal-3xs absolute top-0 left-0 flex items-center rounded border shadow-sm">
             {props.children}
         </div>
     );

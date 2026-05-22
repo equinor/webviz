@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Add, Delete, Report } from "@mui/icons-material";
+import { Add, Delete } from "@mui/icons-material";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
@@ -11,17 +11,12 @@ import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
-import { Button } from "@lib/components/Button";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
-import { Label } from "@lib/components/Label";
+import { Button } from "@lib/newComponents/Button";
 import { Slider } from "@lib/components/Slider";
-import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
-import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
-import { TagPicker } from "@lib/components/TagPicker";
+import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
+import type { SmartNodeSelectorTag } from "@lib/newComponents/SmartNodeSelector/smartNodeSelector";
 import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
 import {
@@ -29,6 +24,9 @@ import {
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
 } from "../private-utils/smartNodeSelectorUtils";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { Typography } from "@lib/newComponents/Typography";
+import { Field } from "@lib/newComponents/Field";
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
@@ -265,13 +263,14 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfStrings(valueSelection) && isArrayOfStrings(parameter.values)) {
             const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
-                <TagPicker
-                    showListAsSelectionCount
-                    selection={[...valueSelection]}
-                    tagOptions={uniqueValues.map((elm) => {
+                <Combobox
+                    value={[...valueSelection]}
+                    items={uniqueValues.map((elm) => {
                         return { label: elm, value: elm };
                     })}
-                    onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
+                    onValueChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
+                    multiple
+                    size="small"
                 />
             );
         }
@@ -279,15 +278,16 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfNumbers(valueSelection) && isArrayOfNumbers(parameter.values)) {
             const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
-                <TagPicker
-                    showListAsSelectionCount
-                    selection={valueSelection.map((elm) => String(elm))}
-                    tagOptions={uniqueValues.map((elm) => {
+                <Combobox
+                    items={uniqueValues.map((elm) => {
                         return { label: String(elm), value: String(elm) };
                     })}
-                    onChange={(value) =>
+                    value={valueSelection.map(String)}
+                    onValueChange={(value) =>
                         handleDiscreteParameterValueSelectionChange(parameterIdentString, value.map(Number))
                     }
+                    multiple
+                    size="small"
                 />
             );
         }
@@ -304,22 +304,31 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const displayParameterName = createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString);
 
         return (
-            <div key={parameterIdentString} className="grow border rounded-md p-2">
-                <div className="flex flex-col gap-2 ">
+            <div
+                key={parameterIdentString}
+                className="px-horizontal-2xs py-vertical-2xs border-neutral-subtle grow rounded-md border"
+            >
+                <div className="gap-vertical-3xs flex flex-col">
                     <div className="flex flex-row items-center gap-2">
-                        <div
-                            title={`Parameter: ${displayParameterName}`}
-                            className="grow text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis"
+                        <Typography
+                            variant="strong"
+                            as="span"
+                            size="sm"
+                            weight="bolder"
+                            layoutClassName="text-ellipsis whitespace-nowrap overflow-hidden grow"
                         >
                             {displayParameterName}
-                        </div>
-                        <DenseIconButton
+                        </Typography>
+                        <Button
                             title="Remove parameter"
-                            colorScheme={DenseIconButtonColorScheme.DANGER}
+                            tone="danger"
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}
+                            variant="text"
+                            size="small"
+                            iconOnly
                         >
                             <Delete fontSize="inherit" />
-                        </DenseIconButton>
+                        </Button>
                     </div>
                     <div className="flex items-center">
                         <div className="grow">
@@ -354,57 +363,38 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     return (
         <div className="grow flex-col gap-2">
             <div className="flex flex-col pb-2">
-                <div className="flex items-center gap-2 h-8">
-                    <div
-                        className={resolveClassNames(
-                            "text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis",
-                        )}
-                    >
-                        {"Select parameters to add"}
-                    </div>
-                    <div className={resolveClassNames({ hidden: !isReportIconVisible })}>
-                        <Report
-                            fontSize="medium"
-                            titleAccess={reportIconText ?? undefined}
-                            className={
-                                "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
-                            }
-                        />
-                    </div>
-                </div>
-                <div className="flex p-1 gap-1 items-center overflow-x-scroll">
-                    <div className="grow">
-                        <SmartNodeSelector
-                            data={smartNodeSelectorTreeDataNodes ?? []}
-                            selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
-                            onChange={handleParameterNameSelectionChanged}
-                            placeholder="Add parameter..."
-                            caseInsensitiveMatching={true}
-                        />
-                    </div>
-                    <div className="grow-0">
+                <Field.Root invalid={reportIconText !== null}>
+                    <Field.Label>Select parameters to add</Field.Label>
+                    <div className="gap-horizontal-xs flex w-full items-center p-1">
+                        <div className="grow">
+                            <SmartNodeSelector
+                                data={smartNodeSelectorTreeDataNodes ?? []}
+                                selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
+                                onChange={handleParameterNameSelectionChanged}
+                                placeholder="Add parameter..."
+                                caseInsensitiveMatching={true}
+                            />
+                        </div>
                         <Tooltip title={addButtonText ?? ""}>
                             <Button
                                 variant="contained"
                                 disabled={isAddButtonDisabled}
                                 onClick={handleAddSelectedParametersClick}
-                                className="h-full"
                             >
                                 <Add fontSize="small" />
                             </Button>
                         </Tooltip>
                     </div>
-                </div>
+                    <Field.Error match={true}>{reportIconText}</Field.Error>
+                </Field.Root>
             </div>
             {parameterIdentStringToValueSelectionReadonlyMap && (
-                <Label text="Selected parameters">
-                    <>
-                        {Array.from(parameterIdentStringToValueSelectionReadonlyMap).map(
-                            ([parameterIdentString, valueSelection]) =>
-                                createParameterValueSelectionRow(parameterIdentString, valueSelection),
-                        )}
-                    </>
-                </Label>
+                <>
+                    {Array.from(parameterIdentStringToValueSelectionReadonlyMap).map(
+                        ([parameterIdentString, valueSelection]) =>
+                            createParameterValueSelectionRow(parameterIdentString, valueSelection),
+                    )}
+                </>
             )}
         </div>
     );

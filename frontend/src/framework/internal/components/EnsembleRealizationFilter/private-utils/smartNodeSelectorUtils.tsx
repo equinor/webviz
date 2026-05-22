@@ -1,9 +1,7 @@
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
-
-import folderIcon from "../private-assets/folder.svg";
-import miscIcon from "../private-assets/misc.svg";
+import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import { MoreHoriz, Folder } from "@lib/mui-icons";
 
 const NON_GROUPED_PARENT_NODE = "Generic";
 
@@ -18,11 +16,11 @@ export function addParameterNodeToTreeDataNodeList(
     const groupNode = treeDataNodeList.find((node) => node.id === groupNodeName);
 
     if (!groupNode) {
-        const icon = groupNodeName === NON_GROUPED_PARENT_NODE ? miscIcon : folderIcon;
+        const icon: React.ReactNode = groupNodeName === NON_GROUPED_PARENT_NODE ? <MoreHoriz /> : <Folder />;
         const newGroupNode: TreeDataNode = {
             id: groupNodeName,
             name: groupNodeName,
-            icon: icon,
+            icon,
             children: [parameterNode],
         };
         treeDataNodeList.push(newGroupNode);

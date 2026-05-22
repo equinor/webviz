@@ -98,38 +98,38 @@ const numericLengthTokens = {
 };
 
 const fractionTokens = {
-    full: { className: "full", value: "100%", groups: ["dimension", "position"] },
+    full: { className: "full", value: "100%", groups: ["semantic-spacing", "dimension", "position"] },
 
-    half: { className: "1/2", value: "50%", groups: ["dimension", "position"], negative: true },
+    half: { className: "1/2", value: "50%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
 
-    third: { className: "1/3", value: "33.333333%", groups: ["dimension", "position"], negative: true },
-    twoThirds: { className: "2/3", value: "66.666667%", groups: ["dimension", "position"], negative: true },
+    third: { className: "1/3", value: "33.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    twoThirds: { className: "2/3", value: "66.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
 
-    quarter: { className: "1/4", value: "25%", groups: ["dimension", "position"], negative: true },
-    threeQuarters: { className: "3/4", value: "75%", groups: ["dimension", "position"], negative: true },
+    quarter: { className: "1/4", value: "25%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    threeQuarters: { className: "3/4", value: "75%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
 
-    fifth: { className: "1/5", value: "20%", groups: ["dimension", "position"], negative: true },
-    twoFifths: { className: "2/5", value: "40%", groups: ["dimension", "position"], negative: true },
-    threeFifths: { className: "3/5", value: "60%", groups: ["dimension", "position"], negative: true },
-    fourFifths: { className: "4/5", value: "80%", groups: ["dimension", "position"], negative: true },
+    fifth: { className: "1/5", value: "20%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    twoFifths: { className: "2/5", value: "40%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    threeFifths: { className: "3/5", value: "60%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    fourFifths: { className: "4/5", value: "80%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
 
-    sixth: { className: "1/6", value: "16.666667%", groups: ["dimension", "position"], negative: true },
-    twoSixths: { className: "2/6", value: "33.333333%", groups: ["dimension", "position"], negative: true },
-    threeSixths: { className: "3/6", value: "50%", groups: ["dimension", "position"], negative: true },
-    fourSixths: { className: "4/6", value: "66.666667%", groups: ["dimension", "position"], negative: true },
-    fiveSixths: { className: "5/6", value: "83.333333%", groups: ["dimension", "position"], negative: true },
+    sixth: { className: "1/6", value: "16.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    twoSixths: { className: "2/6", value: "33.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    threeSixths: { className: "3/6", value: "50%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    fourSixths: { className: "4/6", value: "66.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    fiveSixths: { className: "5/6", value: "83.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
 
-    twelfth: { className: "1/12", value: "8.333333%", groups: ["dimension", "position"], negative: true },
-    twoTwelfths: { className: "2/12", value: "16.666667%", groups: ["dimension", "position"], negative: true },
-    threeTwelfths: { className: "3/12", value: "25%", groups: ["dimension", "position"], negative: true },
-    fourTwelfths: { className: "4/12", value: "33.333333%", groups: ["dimension", "position"], negative: true },
-    fiveTwelfths: { className: "5/12", value: "41.666667%", groups: ["dimension", "position"], negative: true },
-    sixTwelfths: { className: "6/12", value: "50%", groups: ["dimension", "position"], negative: true },
-    sevenTwelfths: { className: "7/12", value: "58.333333%", groups: ["dimension", "position"], negative: true },
-    eightTwelfths: { className: "8/12", value: "66.666667%", groups: ["dimension", "position"], negative: true },
-    nineTwelfths: { className: "9/12", value: "75%", groups: ["dimension", "position"], negative: true },
-    tenTwelfths: { className: "10/12", value: "83.333333%", groups: ["dimension", "position"], negative: true },
-    elevenTwelfths: { className: "11/12", value: "91.666667%", groups: ["dimension", "position"], negative: true },
+    twelfth: { className: "1/12", value: "8.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    twoTwelfths: { className: "2/12", value: "16.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    threeTwelfths: { className: "3/12", value: "25%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    fourTwelfths: { className: "4/12", value: "33.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    fiveTwelfths: { className: "5/12", value: "41.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    sixTwelfths: { className: "6/12", value: "50%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    sevenTwelfths: { className: "7/12", value: "58.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    eightTwelfths: { className: "8/12", value: "66.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    nineTwelfths: { className: "9/12", value: "75%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    tenTwelfths: { className: "10/12", value: "83.333333%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
+    elevenTwelfths: { className: "11/12", value: "91.666667%", groups: ["semantic-spacing", "dimension", "position"], negative: true },
 };
 
 export const tokens = {

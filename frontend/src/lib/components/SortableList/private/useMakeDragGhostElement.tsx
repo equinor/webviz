@@ -18,7 +18,7 @@ export function useMakeDragGhostElement(
         return null;
     }
 
-    const isTableRow = isElementTypeTr(element);
+    const isTableRow = getRenderedTagName(element, ref) === "tr";
 
     const width = Math.round(boundingClientRect.width || ref.current?.offsetWidth || 0);
     const height = Math.round(boundingClientRect.height || ref.current?.offsetHeight || 0);
@@ -78,6 +78,7 @@ export function useMakeDragGhostElement(
     );
 }
 
-function isElementTypeTr(el: React.ReactElement): boolean {
-    return typeof el.type === "string" && el.type.toLowerCase() === "tr";
+function getRenderedTagName(el: React.ReactElement, ref: React.MutableRefObject<HTMLElement | null>): string {
+    if (typeof el.type === "string") return el.type.toLowerCase();
+    return ref.current?.tagName?.toLowerCase() ?? "";
 }
