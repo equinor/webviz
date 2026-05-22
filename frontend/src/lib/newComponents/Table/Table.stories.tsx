@@ -42,6 +42,7 @@ const meta: Meta<typeof Table.Root> = {
     argTypes: {
         sortable: { control: "boolean" },
         selectable: { control: "boolean" },
+        size: { control: "select", options: ["small", "default", "large"] },
     },
 
     decorators: [
