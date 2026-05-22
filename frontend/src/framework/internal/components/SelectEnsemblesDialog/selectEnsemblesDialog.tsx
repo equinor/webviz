@@ -238,7 +238,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         />
                     </Dialog.Header>
                     <Dialog.Body layoutClassName="grow min-h-0">
-                        <div className="relative flex h-full w-full flex-col">
+                        <div className="relative flex h-full min-h-0 w-full flex-col">
                             <EnsembleTables
                                 nextEnsembleColor={nextEnsembleColor}
                                 selectedRegularEnsembles={selectedRegularEnsembles}

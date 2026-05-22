@@ -121,7 +121,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     }
 
     return (
-        <div className="gap-vertical-sm flex h-full flex-col">
+        <div className="gap-vertical-sm flex h-full min-h-0 flex-col">
             <div className="gap-vertical-2xs flex min-h-0 flex-1 flex-col">
                 <div className="flex shrink-0 items-center justify-between">
                     <Heading as="h6">Regular Ensembles</Heading>
@@ -141,7 +141,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         <SortableList.ScrollContainer>
                             <Table.Root compact fixed size="small">
                                 <SortableList.NoDropZone>
-                                    <Table.Head>
+                                    <Table.Head sticky>
                                         <Table.Column layoutClassName="w-5" colKey="handle" />
                                         <Table.Column layoutClassName="w-20">Color</Table.Column>
                                         <Table.Column layoutClassName="min-w-1/3">Custom name</Table.Column>
@@ -206,7 +206,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         <SortableList.ScrollContainer>
                             <Table.Root compact fixed size="small">
                                 <SortableList.NoDropZone>
-                                    <Table.Head>
+                                    <Table.Head sticky>
                                         <Table.Column layoutClassName="w-5" colKey="handle" />
                                         <Table.Column layoutClassName="w-20">Color</Table.Column>
                                         <Table.Column layoutClassName="min-w-1/3">Custom name</Table.Column>
