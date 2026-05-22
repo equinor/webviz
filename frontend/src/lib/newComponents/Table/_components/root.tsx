@@ -18,7 +18,6 @@ export type TableRootProps = {
     children?: React.ReactNode;
     size?: "sm" | "md" | "lg";
     compact?: boolean;
-    sortedColumns: [];
     currentSort?: { [colKey: string]: SortDirection };
     selectedRow?: string | null;
     // headRef: React.MutableRefObject
@@ -35,7 +34,6 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "size",
         "children",
         "compact",
-        "sortedColumns",
         "currentSort",
         "selectedRow",
         "onRowSelect",

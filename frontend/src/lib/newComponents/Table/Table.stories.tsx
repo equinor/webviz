@@ -295,7 +295,7 @@ export const WithSortableList: Story = {
                             <Table.Body ref={tableBodyRef}>
                                 {orderedData.map((datum) => (
                                     <SortableList.Item key={datum.id} id={String(datum.id)}>
-                                        <Table.Row>
+                                        <Table.Row rowKey={String(datum.id)}>
                                             <Table.Cell>
                                                 <SortableList.DragHandle className="flex items-center justify-center">
                                                     <DragIndicator fontSize="inherit" className="pointer-events-none" />
