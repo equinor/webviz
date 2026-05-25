@@ -20,11 +20,13 @@ import {
     getAlive,
     getAliveProtected,
     getAssetInfos,
+    getCalcSomethingOnDerivedTable,
     getCases,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
+    getDerivedVectorTableHybrid,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
     getFieldIdentifiers,
@@ -112,6 +114,9 @@ import type {
     GetAliveResponse_api,
     GetAssetInfosData_api,
     GetAssetInfosResponse_api,
+    GetCalcSomethingOnDerivedTableData_api,
+    GetCalcSomethingOnDerivedTableError_api,
+    GetCalcSomethingOnDerivedTableResponse_api,
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
@@ -127,6 +132,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
+    GetDerivedVectorTableHybridData_api,
+    GetDerivedVectorTableHybridError_api,
+    GetDerivedVectorTableHybridResponse_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersError_api,
     GetDrilledWellboreHeadersResponse_api,
@@ -760,6 +768,56 @@ export const getStatisticalVectorDataPerSensitivityOptions = (
             return data;
         },
         queryKey: getStatisticalVectorDataPerSensitivityQueryKey(options),
+    });
+
+export const getDerivedVectorTableHybridQueryKey = (options: Options<GetDerivedVectorTableHybridData_api>) =>
+    createQueryKey("getDerivedVectorTableHybrid", options);
+
+/**
+ * Get Derived Vector Table Hybrid
+ */
+export const getDerivedVectorTableHybridOptions = (options: Options<GetDerivedVectorTableHybridData_api>) =>
+    queryOptions<
+        GetDerivedVectorTableHybridResponse_api,
+        AxiosError<GetDerivedVectorTableHybridError_api>,
+        GetDerivedVectorTableHybridResponse_api,
+        ReturnType<typeof getDerivedVectorTableHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDerivedVectorTableHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDerivedVectorTableHybridQueryKey(options),
+    });
+
+export const getCalcSomethingOnDerivedTableQueryKey = (options: Options<GetCalcSomethingOnDerivedTableData_api>) =>
+    createQueryKey("getCalcSomethingOnDerivedTable", options);
+
+/**
+ * Get Calc Something On Derived Table
+ */
+export const getCalcSomethingOnDerivedTableOptions = (options: Options<GetCalcSomethingOnDerivedTableData_api>) =>
+    queryOptions<
+        GetCalcSomethingOnDerivedTableResponse_api,
+        AxiosError<GetCalcSomethingOnDerivedTableError_api>,
+        GetCalcSomethingOnDerivedTableResponse_api,
+        ReturnType<typeof getCalcSomethingOnDerivedTableQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCalcSomethingOnDerivedTable({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCalcSomethingOnDerivedTableQueryKey(options),
     });
 
 export const getInplaceTableDefinitionsQueryKey = (options: Options<GetInplaceTableDefinitionsData_api>) =>

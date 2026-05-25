@@ -681,19 +681,24 @@ class DerivedTableInfo(BaseModel):
     vector_names: list[str]
 
 
-@router.get("/derived_vector_table/hybrid")
+@router.get("/derived_vector_table_hybrid")
 async def get_derived_vector_table_hybrid(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    vector_names: Annotated[list[str], Query(description="List of vector names to include in the derived table")],
     # fmt:on
 ) -> LroSuccessResp[DerivedTableResponse] | LroInProgressResp | LroFailureResp:
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    vector_names = ["WBHP:A1","RGIP:1", "RGIPG:1", "RGIPL:1", "RGPR:1", "RGPT:1", "GGPR:OP"]
+    # !!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!
+    if not vector_names:
+        vector_names = ["WBHP:A1","RGIP:1", "RGIPG:1", "RGIPL:1", "RGPR:1", "RGPT:1", "GGPR:OP"]
 
     LOGGER.info(f"!!!!!!!!!!Received request for derived vector table with: {case_uuid=} {ensemble_name=} {vector_names=}")
 
@@ -714,7 +719,7 @@ async def get_derived_vector_table_hybrid(
     task_tracker = get_task_meta_tracker_for_user(authenticated_user)
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     perf_metrics.record_lap("task-meta")
-    task_meta = None
+    #task_meta = None
 
     access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(access_token)
@@ -726,6 +731,9 @@ async def get_derived_vector_table_hybrid(
         #  * Write DerivedTableInfo to the user cache
         #  * Return success with the table handle
 
+        # !!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!
+        # Must start using the return value here
         await _find_columns_needing_aggregation_async(sumo_client, case_uuid, ensemble_name, vector_names)
 
         # But until then, let's just start the batch
@@ -798,6 +806,27 @@ async def get_derived_vector_table_hybrid(
     #     await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
     #     raise
 
+
+@router.get("/calc_something_on_derived_table")
+async def get_calc_something_on_derived_table(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    derived_table_handle: Annotated[str, Query(description="Handle for the derived table to do some calculation on")],
+    calculation_params: Annotated[str, Query(description="Some parameter for the calculation")],
+    # fmt:on
+) -> str:
+    perf_metrics = ResponsePerfMetrics(response)
+
+    user_cache: UserCache = get_user_cache_for_user(authenticated_user)
+    table_info: DerivedTableInfo | None = await user_cache.get_pydantic_model_async(derived_table_handle, DerivedTableInfo, "json")
+    perf_metrics.record_lap("get-from-cache")
+    if not table_info:
+        raise HTTPException(status_code=404, detail="Derived table not found in cache")
+    
+    return f"Did some calculation with {calculation_params=} on derived table with vectors {table_info.vector_names} (retrieved from cache in {perf_metrics.to_string()})"
 
 
 

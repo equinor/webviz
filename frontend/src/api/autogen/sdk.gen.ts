@@ -26,6 +26,9 @@ import type {
     GetAliveResponses_api,
     GetAssetInfosData_api,
     GetAssetInfosResponses_api,
+    GetCalcSomethingOnDerivedTableData_api,
+    GetCalcSomethingOnDerivedTableErrors_api,
+    GetCalcSomethingOnDerivedTableResponses_api,
     GetCasesData_api,
     GetCasesErrors_api,
     GetCasesResponses_api,
@@ -41,6 +44,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataErrors_api,
     GetDeltaSurfaceDataResponses_api,
+    GetDerivedVectorTableHybridData_api,
+    GetDerivedVectorTableHybridErrors_api,
+    GetDerivedVectorTableHybridResponses_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersErrors_api,
     GetDrilledWellboreHeadersResponses_api,
@@ -478,6 +484,38 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
     >({
         responseType: "json",
         url: "/timeseries/statistical_vector_data_per_sensitivity/",
+        ...options,
+    });
+
+/**
+ * Get Derived Vector Table Hybrid
+ */
+export const getDerivedVectorTableHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetDerivedVectorTableHybridData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetDerivedVectorTableHybridResponses_api,
+        GetDerivedVectorTableHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/derived_vector_table_hybrid",
+        ...options,
+    });
+
+/**
+ * Get Calc Something On Derived Table
+ */
+export const getCalcSomethingOnDerivedTable = <ThrowOnError extends boolean = false>(
+    options: Options<GetCalcSomethingOnDerivedTableData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetCalcSomethingOnDerivedTableResponses_api,
+        GetCalcSomethingOnDerivedTableErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/timeseries/calc_something_on_derived_table",
         ...options,
     });
 

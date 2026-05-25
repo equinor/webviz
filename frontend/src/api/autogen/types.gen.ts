@@ -260,6 +260,20 @@ export type DatedFlowNetwork_api = {
 };
 
 /**
+ * DerivedTableResponse
+ */
+export type DerivedTableResponse_api = {
+    /**
+     * Table Handle
+     */
+    table_handle: string;
+    /**
+     * Dbg Info
+     */
+    dbg_info: string | null;
+};
+
+/**
  * DerivedVectorInfo
  */
 export type DerivedVectorInfo_api = {
@@ -973,6 +987,17 @@ export type LroInProgressResp_api = {
      * Progress Message
      */
     progress_message?: string | null;
+};
+
+/**
+ * LroSuccessResp[DerivedTableResponse]
+ */
+export type LroSuccessRespDerivedTableResponse_api = {
+    /**
+     * Status
+     */
+    status: "success";
+    result: DerivedTableResponse_api;
 };
 
 /**
@@ -3935,6 +3960,110 @@ export type GetStatisticalVectorDataPerSensitivityResponses_api = {
 
 export type GetStatisticalVectorDataPerSensitivityResponse_api =
     GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
+
+export type GetDerivedVectorTableHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Vector Names
+         *
+         * List of vector names to include in the derived table
+         */
+        vector_names: Array<string>;
+        zCacheBust?: string;
+    };
+    url: "/timeseries/derived_vector_table_hybrid";
+};
+
+export type GetDerivedVectorTableHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetDerivedVectorTableHybridError_api =
+    GetDerivedVectorTableHybridErrors_api[keyof GetDerivedVectorTableHybridErrors_api];
+
+export type GetDerivedVectorTableHybridResponses_api = {
+    /**
+     * Response Get Derived Vector Table Hybrid
+     *
+     * Successful Response
+     */
+    200: LroSuccessRespDerivedTableResponse_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type GetDerivedVectorTableHybridResponse_api =
+    GetDerivedVectorTableHybridResponses_api[keyof GetDerivedVectorTableHybridResponses_api];
+
+export type GetCalcSomethingOnDerivedTableData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Derived Table Handle
+         *
+         * Handle for the derived table to do some calculation on
+         */
+        derived_table_handle: string;
+        /**
+         * Calculation Params
+         *
+         * Some parameter for the calculation
+         */
+        calculation_params: string;
+        zCacheBust?: string;
+    };
+    url: "/timeseries/calc_something_on_derived_table";
+};
+
+export type GetCalcSomethingOnDerivedTableErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetCalcSomethingOnDerivedTableError_api =
+    GetCalcSomethingOnDerivedTableErrors_api[keyof GetCalcSomethingOnDerivedTableErrors_api];
+
+export type GetCalcSomethingOnDerivedTableResponses_api = {
+    /**
+     * Response Get Calc Something On Derived Table
+     *
+     * Successful Response
+     */
+    200: string;
+};
+
+export type GetCalcSomethingOnDerivedTableResponse_api =
+    GetCalcSomethingOnDerivedTableResponses_api[keyof GetCalcSomethingOnDerivedTableResponses_api];
 
 export type GetInplaceTableDefinitionsData_api = {
     body?: never;

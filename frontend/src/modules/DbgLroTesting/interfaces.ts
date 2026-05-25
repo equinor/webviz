@@ -1,10 +1,13 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { displayableDataAtom } from "./settings/atoms/baseAtoms";
-import { DisplayableData } from "./types";
+import { viewInputDataAtom } from "./settings/atoms";
+import { viewDisplayableDataAtom } from "./settings/atoms";
+import { ViewDisplayableData } from "./types";
+import { ViewInputData } from "./types";
 
 type SettingsToViewInterface = {
-    displayableData: DisplayableData | null;
+    displayableData: ViewDisplayableData | null;
+    viewInputData: ViewInputData | null;
 };
 
 export type Interfaces = {
@@ -12,5 +15,6 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    displayableData: (get) => get(displayableDataAtom),
+    displayableData: (get) => get(viewDisplayableDataAtom),
+    viewInputData: (get) => get(viewInputDataAtom),
 };
