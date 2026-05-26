@@ -2,7 +2,7 @@ import React from "react";
 
 import { SettingConfigButton } from "@lib/components/SettingConfigButton/settingConfigButton";
 import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationForm";
-import { PolygonVisualizationForm } from "@modules/_shared/components/PolygonVisualizationForm";
+import { PolygonVisualizationForm, PolylinePreview } from "@modules/_shared/components/PolygonVisualizationForm";
 import { LabelPositionType } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
 
 import type {
@@ -17,10 +17,13 @@ type ValueType = PolygonVisualizationSpec | null;
 
 export class PolygonVisualizationSetting implements StaticSettingImplementation<ValueType> {
     defaultValue: ValueType = {
-        color: "#000000",
-        lineThickness: 2,
-        lineOpacity: 1,
-        fill: false,
+        colorsLinked: true,
+        hasStroke: true,
+        strokeColor: "#000000",
+        strokeWeight: 2,
+        strokeOpacity: 1,
+        hasFill: false,
+        fillColor: "#000000",
         fillOpacity: 0.5,
         showLabels: false,
         labelPosition: LabelPositionType.CENTROID,
@@ -46,10 +49,13 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
 
         const v = value as Record<string, unknown>;
         return (
-            typeof v.color === "string" &&
-            typeof v.lineThickness === "number" &&
-            typeof v.lineOpacity === "number" &&
-            typeof v.fill === "boolean" &&
+            typeof v.colorsLinked === "boolean" &&
+            typeof v.hasStroke === "boolean" &&
+            typeof v.strokeColor === "string" &&
+            typeof v.strokeWeight === "number" &&
+            typeof v.strokeOpacity === "number" &&
+            typeof v.hasFill === "boolean" &&
+            typeof v.fillColor === "string" &&
             typeof v.fillOpacity === "number" &&
             typeof v.showLabels === "boolean" &&
             typeof v.labelPosition === "string" &&
@@ -63,11 +69,11 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
         const validLabelPositions = Object.values(LabelPositionType);
 
         return (
-            /^#[0-9A-Fa-f]{6}$/.test(value.color) &&
-            value.lineThickness >= 0.5 &&
-            value.lineThickness <= 10 &&
-            value.lineOpacity >= 0 &&
-            value.lineOpacity <= 1 &&
+            /^#[0-9A-Fa-f]{6}$/.test(value.strokeColor) &&
+            value.strokeWeight >= 0.5 &&
+            value.strokeWeight <= 10 &&
+            value.strokeOpacity >= 0 &&
+            value.strokeOpacity <= 1 &&
             value.fillOpacity >= 0 &&
             value.fillOpacity <= 1 &&
             validLabelPositions.includes(value.labelPosition as LabelPositionType) &&
@@ -122,8 +128,7 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
 
             return (
                 <SettingConfigButton
-                    className="w-full"
-                    size="medium"
+                    layoutClassName="w-full"
                     formTitle="Polygon Visualization Settings"
                     title="Configure visualization"
                     formContent={
@@ -155,19 +160,21 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
 }
 
 function VisualizationPreview({ value }: { value: PolygonVisualizationSpec }) {
+    const parts: string[] = [];
+    if (value.hasStroke) {
+        parts.push(`stroke ${value.strokeWeight}px ${Math.round(value.strokeOpacity * 100)}%`);
+    }
+    if (value.hasFill) {
+        parts.push(`fill ${Math.round(value.fillOpacity * 100)}%`);
+    }
+    if (value.showLabels) {
+        parts.push("labels");
+    }
+
     return (
         <>
-            <div
-                className="size-5 border rounded-sm"
-                style={{
-                    backgroundColor: value.fill ? value.color : "transparent",
-                    borderColor: value.color,
-                    borderWidth: `${Math.max(2, value.lineThickness / 2)}px`,
-                }}
-            />
-            <span className="shrink truncate">
-                {value.lineThickness}px {value.fill ? "filled" : "outline"}
-            </span>
+            <PolylinePreview spec={value} className="mr-horizontal-2xs h-6 w-auto shrink-0" />
+            <span className="shrink truncate">{parts.length > 0 ? parts.join(" · ") : "none"}</span>
         </>
     );
 }

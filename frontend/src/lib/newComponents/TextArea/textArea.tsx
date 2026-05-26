@@ -10,7 +10,7 @@ export type TextAreaProps = {
 } & ComponentWrapperProps<Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "className">>;
 
 export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(function TextArea(props, ref) {
-    const { onValueChange, onChange, ...rest } = props;
+    const { onValueChange, onChange, bottomAdornment, ...rest } = props;
     const baseProps = resolveWrapperProps(rest);
 
     const handleChange = React.useCallback(
@@ -40,9 +40,7 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(fun
                 ref={ref}
                 className={resolveClassNames(props.layoutClassName, "m-0 w-full bg-transparent p-0 outline-0")}
             />
-            {props.bottomAdornment && (
-                <span className="mr-horizontal-lg w-full text-right">{props.bottomAdornment}</span>
-            )}
+            {bottomAdornment && <span className="mr-horizontal-lg w-full text-right">{bottomAdornment}</span>}
         </div>
     );
 });

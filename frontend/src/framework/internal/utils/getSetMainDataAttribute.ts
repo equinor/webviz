@@ -1,6 +1,5 @@
 export function getMainDataAttribute(attributeName: string) {
     const htmlElement = document.querySelector<HTMLHtmlElement>("html");
-    console.debug(htmlElement?.getAttribute(`data-${attributeName}`));
     return htmlElement ? htmlElement.getAttribute(`data-${attributeName}`) : null;
 }
 

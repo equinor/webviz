@@ -6,11 +6,12 @@ import type {
 } from "@base-ui/react/number-field";
 import { NumberField as NumberFieldBase } from "@base-ui/react/number-field";
 import { Add, Remove } from "@mui/icons-material";
-import _ from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type NumberInputProps = Omit<NumberFieldRootBaseProps, "className"> & {
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+
+export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBaseProps, "className">> & {
     unitIcon?: React.ReactNode;
 
     startAdornment?: React.ReactNode;
@@ -32,20 +33,23 @@ const DEFAULT_PROPS = {
 
 function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
-    const baseRootProps = _.omit(defaultedProps, [
+    const baseRootProps = resolveWrapperProps(
+        defaultedProps,
         "unitIcon",
         "startAdornment",
         "endAdornment",
         "disableUnitScrubArea",
-        "unitPosition",
+        "unitPlacement",
         "placeholder",
-    ]);
+    );
 
     const wrappedUnitIcon = makeUnitIcon(defaultedProps.unitIcon, defaultedProps.disableUnitScrubArea);
 
     return (
         <NumberFieldBase.Root
+            {...baseRootProps}
             className={resolveClassNames(
+                props.layoutClassName,
                 "form-element",
                 "bg-canvas text-body-md",
                 "gap-vertical-xs flex items-center pr-0",
@@ -55,7 +59,6 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                     "outline-transparent": defaultedProps.disabled,
                 },
             )}
-            {...baseRootProps}
         >
             <NumberFieldBase.Group className="gap-vertical-3xs pl-vertical-xs flex min-w-0 grow items-center">
                 {defaultedProps.startAdornment}

@@ -79,7 +79,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
     return (
         <>
             <div
-                className="flex-grow cursor-pointer border border-slate-400 hover:outline hover:outline-blue-300 rounded overflow-hidden"
+                className="grow cursor-pointer overflow-hidden rounded border border-slate-400 hover:outline hover:outline-blue-300"
                 onClick={handleClick}
             >
                 <ColorScalePreview
@@ -203,7 +203,6 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
         );
     }
 
-
     const makeAndPropagateColorScale = React.useCallback(
         function makeAndPropagateColorScale(
             colorPalette: ColorPalette,
@@ -240,19 +239,18 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
             const numSteps = parseInt(value);
 
             makeAndPropagateColorScale(
-            colorScaleSpecification.colorScale.getColorPalette(),
-            colorScaleSpecification.colorScale.getType(),
-            colorScaleSpecification.colorScale.getGradientType(),
-            colorScaleSpecification.colorScale.getMin(),
-            colorScaleSpecification.colorScale.getMax(),
-            numSteps,
-            colorScaleSpecification.colorScale.getDivMidPoint(),
-            colorScaleSpecification.areBoundariesUserDefined,
-        );
+                colorScaleSpecification.colorScale.getColorPalette(),
+                colorScaleSpecification.colorScale.getType(),
+                colorScaleSpecification.colorScale.getGradientType(),
+                colorScaleSpecification.colorScale.getMin(),
+                colorScaleSpecification.colorScale.getMax(),
+                numSteps,
+                colorScaleSpecification.colorScale.getDivMidPoint(),
+                colorScaleSpecification.areBoundariesUserDefined,
+            );
         },
         [colorScaleSpecification, makeAndPropagateColorScale],
     );
-
 
     const handleMinMaxDivMidPointChange = React.useCallback(
         function handleMinMaxDivMidPointChange(min: number, max: number, divMidPoint?: number) {
@@ -304,7 +302,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                 direction="horizontal"
             />
             <Label text="Steps" position="left">
-                <div className="flex gap-2 items-center">
+                <div className="flex items-center gap-2">
                     <div className="h-6">
                         <Switch
                             checked={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
@@ -605,12 +603,12 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
     return (
         <>
             {isDragging &&
-                createPortal(<div className="absolute z-40 transparent w-full h-full inset-0 cursor-ew-resize"></div>)}
-            <div className="relative w-full h-3 border-l border-r border-gray-500" ref={containerDivRef}>
+                createPortal(<div className="transparent absolute inset-0 z-40 h-full w-full cursor-ew-resize"></div>)}
+            <div className="relative h-3 w-full border-r border-l border-gray-500" ref={containerDivRef}>
                 <div
                     title="Drag to adjust mid point"
                     className={resolveClassNames(
-                        "absolute -top-1.5 -ml-1.5 w-3 h-3 rotate-45 bg-gray-500 hover:bg-blue-500 cursor-ew-resize",
+                        "absolute -top-1.5 -ml-1.5 h-3 w-3 rotate-45 cursor-ew-resize bg-gray-500 hover:bg-blue-500",
                         {
                             "z-50": isDragging,
                             hidden:
@@ -621,7 +619,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     ref={divMidPointRef}
                 />
             </div>
-            <div className="flex gap-2 justify-between">
+            <div className="flex justify-between gap-2">
                 <Input
                     type="number"
                     value={min}
@@ -750,7 +748,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
 
     return (
-        <div className="bg-slate-100 rounded-sm flex items-center" ref={ref}>
+        <div className="flex items-center rounded-sm bg-slate-100" ref={ref}>
             <div className="grow cursor-pointer hover:outline hover:outline-blue-300" onClick={handleClick}>
                 <ColorScalePreview
                     {...props}
@@ -764,7 +762,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                         <Overlay visible={true} />
                         <div
                             ref={dropdownContentRef}
-                            className="absolute z-60 shadow-sm bg-white rounded-sm overflow-hidden"
+                            className="absolute z-60 overflow-hidden rounded-sm bg-white shadow-sm"
                             style={{
                                 left: boundingRect.left,
                                 top: boundingRect.top,
@@ -805,13 +803,13 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("p-2 flex items-center gap-2 hover:bg-blue-100 cursor-pointer h-12", {
+            className={resolveClassNames("flex h-12 cursor-pointer items-center gap-2 p-2 hover:bg-blue-100", {
                 "bg-blue-50": props.selected,
             })}
             onClick={handleItemClick}
         >
             <span
-                className="text-sm leading-none min-w-0 w-20 whitespace-nowrap text-ellipsis overflow-hidden"
+                className="w-20 min-w-0 overflow-hidden text-sm leading-none text-ellipsis whitespace-nowrap"
                 title={props.colorPalette.getName()}
             >
                 {props.colorPalette.getName()}

@@ -1,10 +1,8 @@
 import React from "react";
 
-import { SettingsOutlined } from "@mui/icons-material";
-
-import { Button } from "../Button";
-import type { ButtonProps } from "../Button/button";
-import { Dialog } from "../Dialog";
+import { SettingsDialogIcon } from "@lib/icons";
+import { Button, type ButtonProps } from "@lib/newComponents/Button";
+import { Dialog } from "@lib/newComponents/Dialog";
 
 export type SettingConfigButtonProps = {
     formTitle: string;
@@ -19,7 +17,7 @@ function SettingConfigButtonComponent(
     props: SettingConfigButtonProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
-    const { formTitle, size, className, formContent, onOpen, onApply, onDiscard, ...baseProps } = props;
+    const { formTitle, size, layoutClassName, formContent, onOpen, onApply, onDiscard, ...baseProps } = props;
 
     const [modalOpen, setModalOpen] = React.useState(false);
 
@@ -40,7 +38,7 @@ function SettingConfigButtonComponent(
 
     const actions = (
         <>
-            <Button className="mr-4" variant="outlined" onClick={handleCancel}>
+            <Button variant="text" tone="neutral" onClick={handleCancel}>
                 Cancel
             </Button>
             <Button variant="contained" onClick={handleApply}>
@@ -52,20 +50,24 @@ function SettingConfigButtonComponent(
     return (
         <>
             <Button
-                className={className}
-                buttonRef={ref}
+                layoutClassName={layoutClassName}
+                ref={ref}
                 variant="outlined"
                 size={size}
-                endIcon={<SettingsOutlined className="ml-auto" fontSize={size} />}
                 onClick={handleClick}
                 {...baseProps}
             >
                 {props.children}
+                <SettingsDialogIcon className="ml-auto" size={16} />
             </Button>
 
-            <Dialog open={modalOpen} title={formTitle} modal actions={actions}>
-                {formContent}
-            </Dialog>
+            <Dialog.Popup open={modalOpen} onOpenChange={handleCancel} modal>
+                <Dialog.Header closeIconVisible>
+                    <Dialog.Title>{formTitle}</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>{formContent}</Dialog.Body>
+                <Dialog.Actions>{actions}</Dialog.Actions>
+            </Dialog.Popup>
         </>
     );
 }

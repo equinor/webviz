@@ -2,7 +2,7 @@ import type React from "react";
 
 import { SurfaceTimeType_api } from "@api";
 import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
 import {
     isIsoIntervalString,
     isIsoString,
@@ -73,13 +73,12 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
             });
 
             return (
-                <Dropdown
-                    options={options}
+                <ComboboxCompositions.WithBrowseButtons
+                    items={options}
                     placeholder="Select a date"
                     value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
-                    onChange={props.onValueChange}
+                    onValueChange={props.onValueChange}
                     disabled={props.isOverridden}
-                    showArrows
                 />
             );
         };

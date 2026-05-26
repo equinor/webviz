@@ -2,9 +2,9 @@ import React from "react";
 
 import { debounce } from "lodash";
 
-import { Input } from "@lib/components/Input";
-import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
@@ -149,7 +149,7 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             }, [debouncedOnValueChange]);
 
             const handleSliderChange = React.useCallback(
-                function handleSliderChange(_: any, value: number | number[]) {
+                function handleSliderChange(value: number | readonly number[]) {
                     const newValue = Array.isArray(value) ? value[0] : value;
                     setLocalValue(newValue);
                     debouncedOnValueChange(newValue);
@@ -158,37 +158,48 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             );
 
             const handleInputChange = React.useCallback(
-                function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-                    let value = Number(event.target.value);
+                function handleInputChange(value: number | null) {
+                    if (value === null) {
+                        setLocalValue(min);
+                        debouncedOnValueChange(min);
+                        return;
+                    }
                     const allowedValues = Array.from(
                         { length: Math.floor((max - min) / step) + 1 },
                         (_, i) => min + i * step,
                     );
-                    value = allowedValues.reduce((prev, curr) =>
+                    const closestValue = allowedValues.reduce((prev, curr) =>
                         Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
                     );
 
-                    setLocalValue(value);
-                    debouncedOnValueChange(value);
+                    setLocalValue(closestValue);
+                    debouncedOnValueChange(closestValue);
                 },
                 [debouncedOnValueChange, min, max, step],
             );
 
             const displayValue = !props.isOverridden ? localValue : (props.overriddenValue ?? min);
             return (
-                <div className="flex flex-row gap-2" ref={divRef}>
-                    <div className="flex-4">
+                <div className="gap-horizontal-sm flex items-center" ref={divRef}>
+                    <div className="grow">
                         <Slider
                             min={min}
                             max={max}
-                            onChange={handleSliderChange}
+                            onValueChange={handleSliderChange}
                             value={displayValue}
                             valueLabelDisplay="auto"
                             step={step}
                         />
                     </div>
-                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
-                        <Input type="number" value={displayValue} min={min} max={max} onChange={handleInputChange} />
+                    <div className={resolveClassNames("w-24", { hidden: !inputVisible })}>
+                        <NumberInput
+                            value={displayValue}
+                            min={min}
+                            max={max}
+                            onValueChange={handleInputChange}
+                            unitIcon="%"
+                            unitPlacement="end"
+                        />
                     </div>
                 </div>
             );

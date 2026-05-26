@@ -17,7 +17,7 @@ export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Sw
             ref={ref}
             className={resolveClassNames(
                 props.layoutClassName,
-                "group/switch p-selectable-y selectable relative box-border flex aspect-square appearance-none rounded-full border-0",
+                "group/switch p-selectable-y selectable relative box-border inline-flex aspect-square appearance-none rounded-full border-0",
             )}
         >
             <span className="h-selectable-sm flex aspect-square">
