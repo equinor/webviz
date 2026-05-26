@@ -10,7 +10,7 @@ import type { ColorScaleWithId } from "./colorScaleWithId";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
-    lineColor: "#555",
+    lineColor: "currentColor",
     textGap: 6,
     offset: 10,
     legendGap: 4,
@@ -21,7 +21,8 @@ const STYLE_CONSTANTS = {
 
 const TEXT_STYLE: React.CSSProperties = {
     fontSize: "11px",
-    stroke: "#fff",
+    fill: "currentColor",
+    stroke: "Canvas",
     paintOrder: "stroke",
     strokeWidth: "5px",
     strokeLinecap: "round",
