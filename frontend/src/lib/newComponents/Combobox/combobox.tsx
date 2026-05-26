@@ -177,7 +177,9 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                                             {`${value.length}/${flatItems.length} selected`}
                                         </span>
                                     ) : (
-                                        <span className="text-neutral-subtle block truncate">{placeholder}</span>
+                                        <span className="text-neutral-subtle block truncate opacity-70">
+                                            {placeholder}
+                                        </span>
                                     )
                                 }
                             </ComboboxBase.Value>
