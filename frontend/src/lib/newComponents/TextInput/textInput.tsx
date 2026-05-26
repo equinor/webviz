@@ -6,6 +6,7 @@ import { Error } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useComponentSize } from "../_shared/componentSizeContext";
 import type { SelectableSize } from "../_shared/size";
 import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
@@ -19,8 +20,10 @@ export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | 
 };
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
-    const { size = "default", inputSize, layoutClassName, ...rest } = props;
+    const { inputSize, layoutClassName, ...rest } = props;
     const baseProps = resolveWrapperProps(rest, "startAdornment", "endAdornment");
+
+    const size = useComponentSize(props);
 
     function makeStartAdornment(state: InputState) {
         // state.valid is explicitly null when no validity is applied

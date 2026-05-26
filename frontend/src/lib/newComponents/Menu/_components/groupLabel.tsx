@@ -3,18 +3,17 @@ import React from "react";
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuGroupLabelProps as MenuGroupLabelBaseProps } from "@base-ui/react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getNextTextSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useItemSizeContext } from "../_contexts/itemSizeContext";
-
 export type MenuGroupLabelProps = ComponentWrapperProps<MenuGroupLabelBaseProps>;
 
 function GroupLabelComponent(props: MenuGroupLabelProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props);
-    const menuItemSize = useItemSizeContext();
+    const menuItemSize = useComponentSize();
     const labelTextSize = getNextTextSize(getTextSizeForSelectableSize(menuItemSize), -1);
 
     return (

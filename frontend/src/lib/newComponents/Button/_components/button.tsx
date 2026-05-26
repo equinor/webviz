@@ -3,6 +3,7 @@ import React from "react";
 import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -74,8 +75,10 @@ const ICON_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
-    const { variant = "contained", size = "default", tone = "accent", ...rest } = props;
-    const baseProps = resolveWrapperProps(rest, "round", "iconOnly", "pressed", "compact");
+    const { variant = "contained", tone = "accent", ...rest } = props;
+
+    const baseProps = resolveWrapperProps(rest, "round", "iconOnly", "pressed", "compact", "size");
+    const size = useComponentSize(props);
 
     return (
         <ButtonBase

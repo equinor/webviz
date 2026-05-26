@@ -2,6 +2,7 @@ import React from "react";
 
 import { Tabs as TabsBase, type TabsListProps as TabsListBaseProps } from "@base-ui/react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import type { SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -12,8 +13,9 @@ export type ListProps = ComponentWrapperProps<TabsListBaseProps> & {
 };
 
 export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(props, ref) {
-    const { indicatorPosition = "end", size = "default", ...rest } = props;
-    const baseProps = resolveWrapperProps(rest);
+    const { indicatorPosition = "end", ...rest } = props;
+    const baseProps = resolveWrapperProps(rest, "size");
+    const size = useComponentSize(props);
 
     // The "tabs__*" classes can be found in the tabs.css file in the styles/components folder
     return (

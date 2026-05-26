@@ -6,6 +6,7 @@ import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useComponentSize } from "../_shared/componentSizeContext";
 import { PortalContainerContext } from "../_shared/portalContainerContext";
 import type { SelectableSize } from "../_shared/size";
 import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
@@ -80,14 +81,14 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         clearable = false,
         renderItemAdornment,
         selectionMode = "chips",
-        size = "default",
         ...rest
     } = props;
-    const baseProps = resolveWrapperProps(rest, "items", "loading", "errorText");
+    const baseProps = resolveWrapperProps(rest, "items", "loading", "errorText", "size");
 
     const hasGroups = isGroupedItems(props.items);
     const listCols = renderItemAdornment ? "grid-cols-[1.5rem_auto_1fr]" : "grid-cols-[1.5rem_1fr]";
     const itemColSpan = renderItemAdornment ? "col-span-3" : "col-span-2";
+    const size = useComponentSize(props);
 
     const flatItems = React.useMemo(
         () =>

@@ -1,5 +1,6 @@
 import React from "react";
 
+import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import type { SelectableSize } from "@lib/newComponents/_shared/size";
 import { getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
@@ -33,6 +34,8 @@ export type TableRootProps = {
 
 function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableElement>): React.ReactNode {
     const { layoutClassName, ...otherProps } = props;
+
+    const size = useComponentSize(props);
     const baseProps = resolveWrapperProps(
         otherProps,
         "sortable",
@@ -50,8 +53,6 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "onChangeSortDirection",
         "overflowWrapperRef",
     );
-
-    const sizeOrDefault = props.size ?? "default";
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
@@ -84,11 +85,10 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                 as="table"
                 ref={ref}
                 family="body"
-                size={getTextSizeForSelectableSize(sizeOrDefault)}
+                size={getTextSizeForSelectableSize(size)}
             >
                 <TableRootContext.Provider
                     value={{
-                        size: sizeOrDefault,
                         sortable: props.sortable,
                         compact: props.compact,
                         selectable: props.selectable,
@@ -98,9 +98,11 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                         onColumnSort: props.onChangeSortDirection,
                     }}
                 >
-                    <TableColumnContext.Provider value={headColumnMetaData}>
-                        {props.children}
-                    </TableColumnContext.Provider>
+                    <ComponentSizeContext.Provider value={size}>
+                        <TableColumnContext.Provider value={headColumnMetaData}>
+                            {props.children}
+                        </TableColumnContext.Provider>
+                    </ComponentSizeContext.Provider>
                 </TableRootContext.Provider>
             </Typography>
         </div>
