@@ -33,6 +33,8 @@
 @import "./components/toast.css";
 @import "./components/arrow.css";
 @import "./components/menu.css";
+/* Temporary override for Plotly.js, to be removed once we migrate to echarts */
+@import "./components/plot.css";
 
 /* Base styles */
 @import "./base/app.css";

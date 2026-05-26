@@ -1,0 +1,4 @@
+/* Temporary override for Plotly.js, to be removed once we migrate to echarts */
+[data-color-scheme="dark"] .plot-container {
+    filter: invert(75%) hue-rotate(180deg);
+}
