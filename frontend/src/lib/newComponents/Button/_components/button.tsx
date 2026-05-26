@@ -75,7 +75,7 @@ const ICON_SIZE_CLASSES: Record<NonNullable<ButtonProps["size"]>, string> = {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
     const { variant = "contained", size = "default", tone = "accent", ...rest } = props;
-    const baseProps = resolveWrapperProps(rest, "round", "iconOnly", "pressed");
+    const baseProps = resolveWrapperProps(rest, "round", "iconOnly", "pressed", "compact");
 
     return (
         <ButtonBase

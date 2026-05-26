@@ -497,6 +497,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
             <Popover
+                key="state-indicator-warning"
                 actionsRef={popoverActionRef}
                 triggerTitle="Show status messages"
                 content={
@@ -544,14 +545,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (stateIndicators.length === 0) {
         stateIndicators.push(
             <Tooltip title="Show complete log for this module" key="header-module-log">
-                <Button
-                    key="header-module-log"
-                    onPointerDown={handleShowLogClick}
-                    variant="text"
-                    tone="neutral"
-                    size="small"
-                    iconOnly
-                >
+                <Button onPointerDown={handleShowLogClick} variant="text" tone="neutral" size="small" iconOnly>
                     <History fontSize="inherit" />
                 </Button>
             </Tooltip>,

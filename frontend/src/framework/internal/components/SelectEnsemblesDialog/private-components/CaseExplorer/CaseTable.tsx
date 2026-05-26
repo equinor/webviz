@@ -134,6 +134,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
 
             <Table.Body>
                 <Virtualization
+                    placeholderComponent="tr"
                     direction="vertical"
                     containerRef={tableOverflowWrapperRef}
                     items={collatedCaseData}

@@ -39,6 +39,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
         "disableUnitScrubArea",
         "unitPosition",
         "placeholder",
+        "unitPlacement",
     ]);
 
     const wrappedUnitIcon = makeUnitIcon(defaultedProps.unitIcon, defaultedProps.disableUnitScrubArea);

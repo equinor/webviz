@@ -48,6 +48,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "width",
         "onRowSelect",
         "onChangeSortDirection",
+        "overflowWrapperRef",
     );
 
     const sizeOrDefault = props.size ?? "default";

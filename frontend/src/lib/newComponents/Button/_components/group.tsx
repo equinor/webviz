@@ -12,13 +12,13 @@ export type GroupProps = LayoutClassProps & {
 };
 
 export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group(props, ref) {
-    const { children, layoutClassName, ...rest } = props;
+    const { children, layoutClassName, split, ...rest } = props;
     return (
         <div
             ref={ref}
             data-group
             className={resolveClassNames(layoutClassName, "group/button-group flex items-center", {
-                "gap-x-px": props.split,
+                "gap-x-px": split,
             })}
             {...rest}
         >

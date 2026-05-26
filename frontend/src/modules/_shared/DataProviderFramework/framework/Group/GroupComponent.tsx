@@ -80,7 +80,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         adornments.push(<GroupErrorBadge key="error-badge" group={props.group} />);
 
         if (sharedSettingsDelegate) {
-            adornments.push(<StatusMessagesWrapper settingsDelegate={sharedSettingsDelegate} />);
+            adornments.push(<StatusMessagesWrapper key="status-wrapper" settingsDelegate={sharedSettingsDelegate} />);
         }
 
         adornments.push(<Actions key="actions" actionGroups={actions} onActionClick={handleActionClick} />);
