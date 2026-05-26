@@ -1,5 +1,8 @@
 import React from "react";
 
+import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
+import type { SelectableSize } from "@lib/newComponents/_shared/size";
+import { getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -8,18 +11,21 @@ import type { TableColumnContextType } from "../_contexts/tableColumnContext";
 import { TableColumnContext } from "../_contexts/tableColumnContext";
 import { TableRootContext } from "../_contexts/tableRootContext";
 import { recursivelyFindHeadChild } from "../_utils";
-import type { ColumnMetaData, SortDirection } from "../typesAndEnums";
+import type { ColumnMetaData, SortDirection, TableSortState } from "../typesAndEnums";
 
 import { Column } from "./column";
-import { getTextSizeForSelectableSize, SelectableSize } from "@lib/newComponents/_shared/size";
 
 export type TableRootProps = {
+    height?: number | string;
+    maxHeight?: number | string;
+    width?: number | string;
+    overflowWrapperRef?: React.RefObject<HTMLDivElement>;
     sortable?: boolean;
     selectable?: boolean;
     children?: React.ReactNode;
     size?: SelectableSize;
     compact?: boolean;
-    currentSort?: { [colKey: string]: SortDirection };
+    currentSort?: TableSortState;
     selectedRow?: string | null;
     fixed?: boolean;
     onRowSelect?: (rowKey: string) => void;
@@ -28,6 +34,8 @@ export type TableRootProps = {
 
 function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableElement>): React.ReactNode {
     const { layoutClassName, ...otherProps } = props;
+
+    const size = useComponentSize(props);
     const baseProps = resolveWrapperProps(
         otherProps,
         "sortable",
@@ -38,11 +46,13 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "fixed",
         "currentSort",
         "selectedRow",
+        "height",
+        "maxHeight",
+        "width",
         "onRowSelect",
         "onChangeSortDirection",
+        "overflowWrapperRef",
     );
-
-    const sizeOrDefault = props.size ?? "default";
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
@@ -58,7 +68,15 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
     }
 
     return (
-        <div className={resolveClassNames("relative overflow-auto", layoutClassName)}>
+        <div
+            ref={props.overflowWrapperRef}
+            className={resolveClassNames("relative overflow-auto", layoutClassName)}
+            style={{
+                height: props.height,
+                maxHeight: props.maxHeight,
+                width: props.width,
+            }}
+        >
             <Typography
                 {...baseProps}
                 className={resolveClassNames("w-full border-separate border-spacing-[0]", {
@@ -67,11 +85,10 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                 as="table"
                 ref={ref}
                 family="body"
-                size={getTextSizeForSelectableSize(sizeOrDefault)}
+                size={getTextSizeForSelectableSize(size)}
             >
                 <TableRootContext.Provider
                     value={{
-                        size: sizeOrDefault,
                         sortable: props.sortable,
                         compact: props.compact,
                         selectable: props.selectable,
@@ -81,9 +98,11 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                         onColumnSort: props.onChangeSortDirection,
                     }}
                 >
-                    <TableColumnContext.Provider value={headColumnMetaData}>
-                        {props.children}
-                    </TableColumnContext.Provider>
+                    <ComponentSizeContext.Provider value={size}>
+                        <TableColumnContext.Provider value={headColumnMetaData}>
+                            {props.children}
+                        </TableColumnContext.Provider>
+                    </ComponentSizeContext.Provider>
                 </TableRootContext.Provider>
             </Typography>
         </div>

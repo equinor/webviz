@@ -7,12 +7,11 @@ import type {
 } from "@base-ui/react";
 import { defaults } from "lodash";
 
+import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { ItemSizeContext } from "../_contexts/itemSizeContext";
 
 export type MenuPopupProps = ComponentWrapperProps<MenuBasePopupProps> & {
     side?: MenuBasePositionerProps["side"];
@@ -29,6 +28,7 @@ const DEFAULT_PROPS = {
 function PopupComponent(props: MenuPopupProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const defaultedProps = defaults({}, props, DEFAULT_PROPS);
     const baseProps = resolveWrapperProps(defaultedProps, "side", "align", "itemSize");
+    const itemSize = useComponentSize({ size: props.itemSize });
 
     return (
         <MenuBase.Portal>
@@ -45,9 +45,7 @@ function PopupComponent(props: MenuPopupProps, ref: React.ForwardedRef<HTMLDivEl
                     ref={ref}
                     className={resolveClassNames("menu__popup", baseProps.className)}
                 >
-                    <ItemSizeContext.Provider value={defaultedProps.itemSize}>
-                        {props.children}
-                    </ItemSizeContext.Provider>
+                    <ComponentSizeContext.Provider value={itemSize}>{props.children}</ComponentSizeContext.Provider>
                 </Typography>
             </MenuBase.Positioner>
         </MenuBase.Portal>

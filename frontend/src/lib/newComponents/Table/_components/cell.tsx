@@ -21,11 +21,13 @@ export type TableCellProps = {
     // Don't understand why, but these don't get included by the native type, for some reason...
     colSpan?: number;
     rowSpan?: number;
+    noPadding?: boolean;
+    widthInPercent?: number;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;
 
 function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableCellElement>): React.ReactNode {
     // const props = defaults({}, props, DEFAULT_PROPS);
-    const baseProps = resolveWrapperProps(props, "colKey", "sortable");
+    const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
 
     const sectionContext = useTableSectionContext();
     const rootContext = useTableRootContext();
@@ -41,6 +43,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
     }
 
     const isSorted = currentSortDirection !== SortDirection.NONE;
+    const percentWidth = props.widthInPercent ? `${props.widthInPercent}%` : undefined;
 
     function toggleSort() {
         if (!isSortable) return;
@@ -53,16 +56,19 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
         <CellTag
             {...baseProps}
             ref={ref}
+            width={props.width ?? percentWidth}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
+            style={{ fontWeight: "inherit" }}
             className={resolveClassNames(
                 props.layoutClassName,
-                "px-horizontal-sm border-neutral-subtle text-left align-middle whitespace-nowrap",
+                "border-neutral-subtle text-left align-middle whitespace-nowrap",
                 {
                     "border-b": sectionContext === "body",
                     "border-b-2": sectionContext !== "body",
-                    "py-vertical-sm": !rootContext.compact,
-                    "py-vertical-2xs": rootContext.compact,
+                    "px-horizontal-sm": !props.noPadding,
+                    "py-vertical-sm": !rootContext.compact && !props.noPadding,
+                    "py-vertical-2xs": rootContext.compact && !props.noPadding,
                     "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
                     "border-accent! text-accent-subtle": isSorted,
                 },

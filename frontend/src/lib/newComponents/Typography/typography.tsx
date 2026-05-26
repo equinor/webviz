@@ -323,6 +323,7 @@ function TypographyComponent<Element extends HTMLElement>(
         className,
         children,
         layoutClassName,
+        italic,
         ...htmlProps
     } = props;
 
@@ -334,7 +335,7 @@ function TypographyComponent<Element extends HTMLElement>(
         WEIGHT_CLASSES[weight],
         TONE_CLASSES[tone][variant],
         className,
-        { italic: props.italic },
+        { italic: italic },
     );
 
     return (

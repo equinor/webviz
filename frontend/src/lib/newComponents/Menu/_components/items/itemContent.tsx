@@ -1,9 +1,8 @@
 import type React from "react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getNextTextSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { Typography } from "@lib/newComponents/Typography";
-
-import { useItemSizeContext } from "../../_contexts/itemSizeContext";
 
 export type MenuItemContentProps = {
     /** An icon shown on the left side of the text/description */
@@ -17,7 +16,7 @@ export type MenuItemContentProps = {
 };
 
 export function ItemContent(props: MenuItemContentProps) {
-    const size = useItemSizeContext();
+    const size = useComponentSize();
 
     if (props.description) {
         return (

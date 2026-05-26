@@ -27,7 +27,7 @@ function HeadComponent(props: TableHeadProps, ref: React.ForwardedRef<HTMLTableS
             <thead
                 ref={ref}
                 className={resolveClassNames("bg-input text-neutral-strong border-neutral-subtle border-b-2", {
-                    "sticky top-0": props.sticky,
+                    "z-elevated sticky top-0": props.sticky,
                 })}
             >
                 {tableRows.map((row, rowIndex) => (

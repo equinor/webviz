@@ -6,13 +6,10 @@ import { isEqual } from "lodash";
 
 import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { Table } from "@lib/components/Table";
-import { SortDirection, type TableSorting, type TableFilters } from "@lib/components/Table/types";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
@@ -22,12 +19,8 @@ import { Combobox } from "@lib/newComponents/Combobox";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { SwitchItem } from "@lib/newComponents/Switch";
 
-import {
-    makeCaseRowData,
-    makeCaseTableColumns,
-    readInitialStateFromLocalStorage,
-    storeStateInLocalStorage,
-} from "./_utils";
+import { readInitialStateFromLocalStorage, storeStateInLocalStorage } from "./_utils";
+import { CaseTable } from "./CaseTable";
 
 const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
 const CACHE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -44,27 +37,16 @@ export type CaseExplorerProps = {
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const { onCaseSelectionChange } = props;
-    const { userInfo } = useAuthProvider();
-    const userName = React.useMemo(() => {
-        return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
-    }, [userInfo]);
 
     // --- State ---
     const [numberOfCases, setNumberOfCases] = React.useState<number>(0);
-    const [currentStatusOptions, setCurrentStatusOptions] = React.useState<string[]>([]);
+
     const [showOnlyMyCases, setShowOnlyMyCases] = React.useState<boolean>(
         readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
     );
     const [showOnlyOfficialCases, setShowOnlyOfficialCases] = React.useState<boolean>(
         readInitialStateFromLocalStorage("showOfficialCases") === "true",
     );
-    const [tableFiltersState, setTableFiltersState] = React.useState<TableFilters>({
-        ...(showOnlyMyCases && { author: userName }),
-        ...(showOnlyOfficialCases && { status: ["official"] }),
-    });
-    const [tableSortingState, setTableSortingState] = React.useState<TableSorting>([
-        { columnId: "dateUtcMs", direction: SortDirection.DESC },
-    ]);
 
     // Have without fixup to allow resetting to null when table filters out selected case
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
@@ -80,7 +62,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
-    const assetOptions = assetsQuery.data?.map((f) => ({ value: f.name, label: f.name })) ?? [];
 
     const [selectedAsset, setSelectedAsset] = useValidState<string>({
         initialState: readInitialStateFromLocalStorage("selectedAsset"),
@@ -95,17 +76,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         staleTime: STALE_TIME,
         refetchOnMount: "always", // Set to "always" to ensure data is fresh on mount
     });
-
-    // Sort cases by date descending (to prevent random order when no sorting is applied in the table)
-    const sortedCasesQueryData = React.useMemo(
-        function sortCaseQueryDataByDate() {
-            if (!casesQuery.data) {
-                return undefined;
-            }
-            return [...casesQuery.data].sort((a, b) => b.updatedAtUtcMs - a.updatedAtUtcMs);
-        },
-        [casesQuery.data],
-    );
 
     // Ensure valid selected case uuid, use casesQuery data to utilize fetching state
     React.useEffect(
@@ -122,39 +92,20 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const { isRefreshing: isCasesQueryRefreshing, refresh: refreshCases } = useRefreshQuery(casesQuery);
 
     // --- Derived data ---
+    const assetOptions = assetsQuery.data?.map((f) => ({ value: f.name, label: f.name })) ?? [];
+
     const lastUpdatedMs = React.useMemo(() => {
-        return sortedCasesQueryData && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
-    }, [sortedCasesQueryData, casesQuery.dataUpdatedAt]);
+        return casesQuery.data && casesQuery.dataUpdatedAt ? casesQuery.dataUpdatedAt : null;
+    }, [casesQuery.data, casesQuery.dataUpdatedAt]);
 
-    // Ensure selected status is among options, when not showing only official cases
-    const statusFilterState = (tableFiltersState["status"] as string[]) ?? null;
-    if (
-        !showOnlyOfficialCases &&
-        statusFilterState &&
-        !statusFilterState.every((elm) => currentStatusOptions.includes(elm))
-    ) {
-        setTableFiltersState((prev) => ({
-            ...prev,
-            status: statusFilterState.filter((elm) => currentStatusOptions.includes(elm)),
-        }));
-    }
-
-    // Extract unique status options and standard results from cases data when it's available
-    if (sortedCasesQueryData) {
-        const uniqueStatuses = [...new Set(sortedCasesQueryData.map((c) => c.status))];
-        if (!isEqual(uniqueStatuses, currentStatusOptions)) {
-            setCurrentStatusOptions(uniqueStatuses);
-        }
-    }
-
-    // // Extract unique standard results from cases data when it's available
+    // Extract unique standard results from cases data when it's available
     const casesStandardResults = React.useMemo(() => {
-        if (!sortedCasesQueryData) {
+        if (!casesQuery.data) {
             return [];
         }
 
         const standardResults = new Set<string>();
-        for (const c of sortedCasesQueryData) {
+        for (const c of casesQuery.data) {
             c.ensembles.forEach((ens) => {
                 ens.standardResults.forEach((res) => {
                     standardResults.add(res);
@@ -163,79 +114,35 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         }
 
         return Array.from(standardResults).sort();
-    }, [sortedCasesQueryData]);
+    }, [casesQuery.data]);
 
     const [selectedStandardResults, setSelectedStandardResults] = useValidArrayState<string>({
         initialState: [],
         validStateArray: casesStandardResults,
-        keepStateWhenInvalid: !sortedCasesQueryData, // Requires valid state when data is available, allows invalid while data is fetching
+        keepStateWhenInvalid: !casesQuery.data, // Requires valid state when data is available, allows invalid while data is fetching
     });
 
-    const casesModelNames = React.useMemo(() => {
-        if (!sortedCasesQueryData) {
+    const caseData = React.useMemo(() => {
+        if (!casesQuery.data) {
             return [];
         }
 
-        const modelNames = new Set<string>();
-        for (const c of sortedCasesQueryData) {
-            if (c.modelName) {
-                modelNames.add(c.modelName);
-            }
-        }
-
-        return Array.from(modelNames).sort();
-    }, [sortedCasesQueryData]);
-
-    const casesModelRevisions = React.useMemo(() => {
-        if (!sortedCasesQueryData) {
-            return [];
-        }
-
-        const modelRevisions = new Set<string>();
-        for (const c of sortedCasesQueryData) {
-            if (c.modelRevision) {
-                modelRevisions.add(c.modelRevision);
-            }
-        }
-
-        return Array.from(modelRevisions).sort();
-    }, [sortedCasesQueryData]);
-
-    const caseTableColumns = React.useMemo(() => {
-        const disabledFilterComponents = {
-            disableAuthorComponent: showOnlyMyCases,
-            disableStatusComponent: showOnlyOfficialCases,
-        };
-
-        return makeCaseTableColumns(
-            currentStatusOptions,
-            casesModelNames,
-            casesModelRevisions,
-            disabledFilterComponents,
-        );
-    }, [currentStatusOptions, casesModelNames, casesModelRevisions, showOnlyMyCases, showOnlyOfficialCases]);
-
-    const caseRowData = React.useMemo(() => {
-        if (!sortedCasesQueryData) {
-            return [];
-        }
-
-        let cases = sortedCasesQueryData;
+        let cases = casesQuery.data;
         if (selectedStandardResults.length > 0) {
             cases = cases.filter((c) =>
                 c.ensembles.some((ens) => ens.standardResults.some((res) => selectedStandardResults.includes(res))),
             );
         }
 
-        return makeCaseRowData(cases);
-    }, [sortedCasesQueryData, selectedStandardResults]);
+        return cases;
+    }, [casesQuery.data, selectedStandardResults]);
 
     const currentCaseSelection: CaseSelection | null = React.useMemo(() => {
         if (!selectedCaseUuid) {
             return null;
         }
 
-        const selectedCase = sortedCasesQueryData?.find((c) => c.uuid === selectedCaseUuid);
+        const selectedCase = casesQuery.data?.find((c) => c.uuid === selectedCaseUuid);
         if (!selectedCase) {
             return null;
         }
@@ -252,7 +159,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             caseUuid: selectedCaseUuid,
             filteredEnsembles: selectedCaseFilteredEnsembles,
         };
-    }, [sortedCasesQueryData, selectedCaseUuid, selectedStandardResults]);
+    }, [casesQuery.data, selectedCaseUuid, selectedStandardResults]);
 
     // Add useEffect that compares with previous selection before calling the callback
     React.useEffect(() => {
@@ -275,25 +182,12 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     function handleOfficialCasesSwitchChange(checked: boolean) {
         setShowOnlyOfficialCases(checked);
         storeStateInLocalStorage("showOfficialCases", checked.toString());
-
-        setTableFiltersState((prev) => ({
-            ...prev,
-            status: checked ? ["official"] : [],
-        }));
     }
 
-    const handleCasesByMeChange = React.useCallback(
-        function handleCasesByMeChange(checked: boolean) {
-            setShowOnlyMyCases(checked);
-            storeStateInLocalStorage("showOnlyMyCases", checked.toString());
-
-            setTableFiltersState((prev) => ({
-                ...prev,
-                author: checked ? userName : "",
-            }));
-        },
-        [userName],
-    );
+    function handleCasesByMeChange(checked: boolean) {
+        setShowOnlyMyCases(checked);
+        storeStateInLocalStorage("showOnlyMyCases", checked.toString());
+    }
 
     const handleManualRefetch = React.useCallback(
         function handleManualRefetch() {
@@ -386,22 +280,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             </Button>
                         </Tooltip>
                     </div>
+
                     <div className="min-h-0 grow">
-                        <Table
-                            rowIdentifier="caseId"
-                            height={"100%"}
-                            rowHeight={38}
-                            numPendingRows={!sortedCasesQueryData ? "fill" : undefined}
-                            columns={caseTableColumns}
-                            rows={caseRowData}
-                            selectable
-                            multiColumnSort
-                            selectedRows={selectedCaseUuid ? [selectedCaseUuid] : []}
-                            filters={tableFiltersState}
-                            sorting={tableSortingState}
-                            onSelectedRowsChange={(caseIds) => setSelectedCaseUuid(caseIds[0] ?? null)}
-                            onFiltersChange={setTableFiltersState}
-                            onSortingChange={setTableSortingState}
+                        <CaseTable
+                            caseData={caseData}
+                            selectedCase={selectedCaseUuid}
+                            showOnlyMyCases={showOnlyMyCases}
+                            showOnlyOfficialCases={showOnlyOfficialCases}
+                            onCaseSelected={setSelectedCaseUuid}
                             onDataCollated={(data) => setNumberOfCases(data.length)}
                         />
                     </div>
