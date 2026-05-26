@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { PopoverRootActions } from "@base-ui/react";
+import type { BaseUIEvent, PopoverRootActions } from "@base-ui/react";
 import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
 
 import {
@@ -25,12 +25,13 @@ import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Popover } from "@lib/components/Popover";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Badge } from "@lib/newComponents/Badge";
 import { Button } from "@lib/newComponents/Button";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
+import { Popover } from "@lib/newComponents/Popover";
 import { Separator } from "@lib/newComponents/Separator";
+import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -439,7 +440,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         GuiState.RightSettingsPanelWidthInPercent,
     );
 
-    function handleShowLogClick(e: React.PointerEvent<HTMLButtonElement>) {
+    function handleShowLogClick(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -454,17 +455,20 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <ul className="flex flex-col gap-2 p-2">
+            <ul className="gap-vertical-2xs px-horizontal-2xs py-vertical-2xs flex flex-col">
                 {hotStatusMessages.map((entry, i) => (
-                    <li key={`${entry.message}-${i}`} className="px-3 py-1 text-xs tracking-wider text-gray-500">
-                        {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
-                        {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
-                        <span
-                            className="ml-2 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+                    <li key={`${entry.message}-${i}`} className="px-horizontal-3xs py-vertical-4xs">
+                        <Typography
+                            as="span"
+                            size="xs"
                             title={entry.message}
+                            tone="neutral"
+                            layoutClassName="gap-horizontal-2xs flex items-center"
                         >
+                            {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
+                            {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
                             {entry.message}
-                        </span>
+                        </Typography>
                     </li>
                 ))}
             </ul>
@@ -496,49 +500,48 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
-            <Popover
-                key="state-indicator-warning"
-                actionsRef={popoverActionRef}
-                triggerTitle="Show status messages"
-                content={
-                    <>
+            <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
+                <Popover.Trigger variant="text" size="small" iconOnly tone="neutral">
+                    <Tooltip title={badgeTitle} placement="bottom">
+                        <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
+                            <Error
+                                fontSize="inherit"
+                                color="error"
+                                style={{ display: numErrors === 0 ? "none" : "block" }}
+                            />
+                            <div className="overflow-hidden">
+                                <Warning
+                                    fontSize="inherit"
+                                    color="warning"
+                                    style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                    className={resolveClassNames({
+                                        "-ml-3": numErrors > 0,
+                                    })}
+                                />
+                            </div>
+                        </Badge>
+                    </Tooltip>
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
                         {makeHotStatusMessages()}
                         {log.length > 0 && (
                             <>
-                                <div className="my-1 h-0.5 w-full bg-gray-300" />
-                                <li>
-                                    <button
-                                        className="text-body-sm flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left hover:bg-blue-100"
-                                        onClick={handleShowLogClick}
-                                    >
-                                        <History fontSize="inherit" /> Show complete log
-                                    </button>
-                                </li>
+                                <Separator orientation="horizontal" />
+                                <Button
+                                    variant="text"
+                                    tone="neutral"
+                                    size="small"
+                                    onClick={handleShowLogClick}
+                                    layoutClassName="w-full"
+                                >
+                                    <History fontSize="inherit" /> Show complete log
+                                </Button>
                             </>
                         )}
-                    </>
-                }
-            >
-                <Tooltip title={badgeTitle} placement="bottom">
-                    <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
-                        <Error
-                            fontSize="inherit"
-                            color="error"
-                            style={{ display: numErrors === 0 ? "none" : "block" }}
-                        />
-                        <div className="overflow-hidden">
-                            <Warning
-                                fontSize="inherit"
-                                color="warning"
-                                style={{ display: numWarnings === 0 ? "none" : "block" }}
-                                className={resolveClassNames({
-                                    "-ml-3": numErrors > 0,
-                                })}
-                            />
-                        </div>
-                    </Badge>
-                </Tooltip>
-            </Popover>,
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>,
         );
     }
 

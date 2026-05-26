@@ -15,7 +15,7 @@ import type {
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import {
     edsDateRangeToIsoStringRange,
@@ -152,9 +152,10 @@ const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
             const style = makeRowStyle(context);
             const ownerInfo = useUserGraphInfo(userId);
             const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+            const avatarFn = useUserAvatar(name ?? "", ownerInfo?.display_name);
             return (
                 <div className="gap-horizontal-xs flex items-center" style={style}>
-                    <Avatar userData={fetchUserAvatar(name ?? "", ownerInfo?.display_name)} size={24} />
+                    <Avatar userData={avatarFn} size={24} />
                     {name}
                 </div>
             );

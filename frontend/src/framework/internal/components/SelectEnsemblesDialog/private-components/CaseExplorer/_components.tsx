@@ -1,6 +1,6 @@
 import React from "react";
 
-import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -71,8 +71,7 @@ type AuthorCellProps = {
     author: string;
 };
 export function AuthorCell(props: AuthorCellProps): React.ReactNode {
-    // @eslint-disable-next-line react-hooks/exhaustive-deps
-    const avatarSrc = React.useCallback(fetchUserAvatar(`${props.author}@equinor.com`, props.author), [props.author]);
+    const avatarSrc = useUserAvatar(`${props.author}@equinor.com`, props.author);
 
     return (
         <div className="gap-horizontal-xs flex items-center">

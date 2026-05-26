@@ -1,6 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import { toast } from "react-toastify";
 
 import {
     deleteSessionMutation,
@@ -13,6 +12,7 @@ import { ConfirmationService } from "@framework/ConfirmationService";
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent } from "@framework/GuiMessageBroker";
 import type { Template } from "@framework/TemplateRegistry";
+import { toastManager } from "@framework/toastManager";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -87,7 +87,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     private _activeSession: PrivateWorkbenchSession | null = null;
     private _persistenceOrchestrator: PersistenceOrchestrator | null = null;
-    private _activeToasts: Map<string, string | number> = new Map(); // Map of operation name -> toast ID
+    private _activeToasts: Map<string, string> = new Map(); // Map of operation name -> toast ID
 
     constructor(workbench: Workbench, queryClient: QueryClient, guiMessageBroker: GuiMessageBroker) {
         this._workbench = workbench;
@@ -157,16 +157,17 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     // ========== Toast Management ==========
 
+    private createToast(message: string, type: "success" | "error" | "default" = "default"): string {
+        return toastManager.add({ title: message, type });
+    }
+
     /**
      * Dismiss any existing toast for an operation and create a new loading toast.
      * Returns the new toast ID.
      */
-    private createLoadingToast(operation: string, message: string): string | number {
-        // Dismiss any existing toast for this operation
+    private createLoadingToast(operation: string, message: string): string {
         this.dismissToast(operation);
-
-        // Create new loading toast
-        const toastId = toast.loading(message, { autoClose: false });
+        const toastId = toastManager.add({ title: message, type: "loading", timeout: 0 });
         this._activeToasts.set(operation, toastId);
         return toastId;
     }
@@ -177,7 +178,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     private dismissToast(operation: string): void {
         const toastId = this._activeToasts.get(operation);
         if (toastId !== undefined) {
-            toast.dismiss(toastId);
+            toastManager.close(toastId);
             this._activeToasts.delete(operation);
         }
     }
@@ -187,7 +188,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      */
     private dismissAllToasts(): void {
         for (const toastId of this._activeToasts.values()) {
-            toast.dismiss(toastId);
+            toastManager.close(toastId);
         }
         this._activeToasts.clear();
     }
@@ -440,7 +441,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         } catch (error) {
             if (error instanceof UrlError) {
                 console.warn("Invalid ID in URL, ignoring URL parameters.", error);
-                toast.error("Invalid snapshot ID in URL, ignoring URL parameters.");
+                this.createToast("Invalid snapshot ID in URL, ignoring URL parameters.", "error");
                 return false;
             }
             throw error;
@@ -457,7 +458,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         } catch (error) {
             if (error instanceof UrlError) {
                 console.warn("Invalid ID in URL, ignoring URL parameters.", error);
-                toast.error("Invalid session ID in URL, ignoring URL parameters.");
+                this.createToast("Invalid session ID in URL, ignoring URL parameters.", "error");
                 return false;
             }
             throw error;
@@ -677,7 +678,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this.dismissToast(progressToastId);
 
             if (result.success) {
-                toast.success("Session saved successfully");
+                this.createToast("Session saved successfully", "success");
 
                 const newId = this._activeSession.getId();
                 // Update URL if session id changed. This happens when you save-as
@@ -743,7 +744,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this.dismissToast("createSnapshot");
 
         if (result.success) {
-            toast.success("Snapshot created successfully");
+            this.createToast("Snapshot created successfully", "success");
         } else {
             const errorMsg = result.message
                 ? `Failed to create snapshot: ${result.message}`
@@ -951,20 +952,20 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             .getMutationCache()
             .build(queryClient, {
                 ...updateSessionMutation(),
-                onSuccess(data) {
+                onSuccess: (data) => {
                     replaceSessionQueryData(queryClient, data);
-                    toast.success("Session successfully updated.");
+                    this.createToast("Session successfully updated.", "success");
                     success = true;
                 },
-                onError(error) {
+                onError: (error) => {
                     console.error("Failed to update session:", error);
                     const apiError = ApiErrorHelper.fromError(error);
                     if (!apiError) {
-                        toast.error("An unknown error occurred while updating the session.");
+                        this.createToast("An unknown error occurred while updating the session.", "error");
                         return;
                     }
                     console.error("API error details:", apiError.getMessage());
-                    toast.error(`Failed to update session: ${apiError.getMessage()}`);
+                    this.createToast(`Failed to update session: ${apiError.getMessage()}`, "error");
                 },
             })
             .execute({ path: { session_id: sessionId }, body: sessionUpdate });
@@ -999,7 +1000,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     ...deleteSessionMutation(),
                     onSuccess: () => {
                         this.dismissToast("deleteSession");
-                        toast.success("Session successfully deleted.");
+                        this.createToast("Session successfully deleted.", "success");
                         success = true;
                         removeSessionQueryData(this._queryClient, sessionId);
                     },
@@ -1007,7 +1008,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .execute({ path: { session_id: sessionId } });
         } catch (error) {
             this.dismissToast("deleteSession");
-            toast.error("An error occurred while deleting the session.");
+            this.createToast("An error occurred while deleting the session.", "error");
             console.error("Failed to delete session:", error);
         }
 
@@ -1037,7 +1038,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     ...deleteSnapshotMutation(),
                     onSuccess: () => {
                         this.dismissToast("deleteSnapshot");
-                        toast.success("Snapshot successfully deleted.");
+                        this.createToast("Snapshot successfully deleted.", "success");
                         success = true;
                         removeSnapshotQueryData(this._queryClient);
                     },
@@ -1045,7 +1046,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .execute({ path: { snapshot_id: snapshotId } });
         } catch (error) {
             this.dismissToast("deleteSnapshot");
-            toast.error("An error occurred while deleting the snapshot.");
+            this.createToast("An error occurred while deleting the snapshot.", "error");
             console.error("Failed to delete snapshot:", error);
         }
 
@@ -1075,7 +1076,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                     ...deleteSnapshotAccessLogMutation(),
                     onSuccess: () => {
                         this.dismissToast("deleteSnapshotAccessLog");
-                        toast.success("Snapshot successfully removed from list.");
+                        this.createToast("Snapshot successfully removed from list.", "success");
                         success = true;
                         removeSnapshotQueryData(this._queryClient);
                     },
@@ -1083,7 +1084,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 .execute({ path: { snapshot_id: snapshotId } });
         } catch (error) {
             this.dismissToast("deleteSnapshotAccessLog");
-            toast.error("An error occurred while removing the snapshot from the list.");
+            this.createToast("An error occurred while removing the snapshot from the list.", "error");
             console.error("Failed to delete snapshot access log:", error);
         }
 

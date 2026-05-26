@@ -4,13 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
-import { fetchUserAvatar } from "@framework/internal/utils/fetchUserAvatar";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { makeInitials } from "@lib/utils/userNames";
+
 
 export type ItemCardProps = {
     id: string;
@@ -76,18 +76,16 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
 
 function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+    const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
 
     return (
         <div className="gap-vertical-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
             <Avatar
                 size={16}
                 userData={
-                    name
-                        ? fetchUserAvatar(name, props.owner?.display_name ?? "")
-                        : {
-                              initials: props.owner ? (makeInitials(props.owner.display_name) ?? "") : undefined,
-                              title: props.owner?.display_name,
-                          }
+                    props.owner !== null
+                        ? avatarFn
+                        : undefined
                 }
             />
             <span className="min-w-0 flex-1 truncate">{name}</span>

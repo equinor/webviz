@@ -12,6 +12,7 @@ type ValueRangeType = { value: string; label: string }[] | null;
 export class RadioGroupSetting implements CustomSettingImplementation<ValueType, ValueType, ValueRangeType> {
     private _staticOptions: ValueRangeType;
     private _layout: "horizontal" | "vertical";
+    defaultValue: ValueType;
 
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
@@ -34,6 +35,7 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
     constructor(props: { staticOptions?: { value: string; label: string }[]; layout?: "horizontal" | "vertical" }) {
         this._staticOptions = props.staticOptions ?? null;
         this._layout = props.layout ?? "vertical";
+        this.defaultValue = props.staticOptions?.[0]?.value ?? null;
     }
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {

@@ -151,11 +151,7 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
             return "-";
         }
 
-        return (
-            <div className="flex items-center gap-2 text-xs">
-                <VisualizationPreview value={value} />
-            </div>
-        );
+        return <VisualizationPreview value={value} />;
     }
 }
 
@@ -172,9 +168,9 @@ function VisualizationPreview({ value }: { value: PolygonVisualizationSpec }) {
     }
 
     return (
-        <>
-            <PolylinePreview spec={value} className="mr-horizontal-2xs h-6 w-auto shrink-0" />
+        <div className="gap-horizontal-xs text-body-sm flex items-center">
+            <PolylinePreview spec={value} className="h-4 w-auto shrink-0" />
             <span className="shrink truncate">{parts.length > 0 ? parts.join(" · ") : "none"}</span>
-        </>
+        </div>
     );
 }

@@ -54,6 +54,7 @@ function SettingConfigButtonComponent(
                 ref={ref}
                 variant="outlined"
                 size={size}
+                tone="neutral"
                 onClick={handleClick}
                 {...baseProps}
             >
