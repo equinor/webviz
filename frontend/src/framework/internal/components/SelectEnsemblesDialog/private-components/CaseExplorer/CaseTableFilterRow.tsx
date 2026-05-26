@@ -104,15 +104,13 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
                     items={statusOptions}
                     disabled={props.disableStatusFilter}
                     multiple
-                    size="small"
                     selectionMode="count"
                     onValueChange={(v) => props.onFilterStateChange("status", v)}
                 />
             </Table.Cell>
             <Table.Cell noPadding>
                 <DateRangePicker
-                    className="overflow-hidden"
-                    size="small"
+                    layoutClassName="overflow-hidden"
                     value={props.filterState["dateRange"] ?? { from: null, to: null }}
                     onChange={(v) => props.onFilterStateChange("dateRange", v)}
                 />
@@ -123,7 +121,6 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
                     items={casesModelNames}
                     multiple
                     selectionMode="count"
-                    size="small"
                     onValueChange={(v) => props.onFilterStateChange("model", v)}
                 />
             </Table.Cell>
@@ -133,7 +130,6 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
                     items={casesModelRevisions}
                     multiple
                     selectionMode="count"
-                    size="small"
                     onValueChange={(v) => props.onFilterStateChange("revision", v)}
                 />
             </Table.Cell>
@@ -152,7 +148,6 @@ function FilterInput(props: TextInputProps) {
         <TextInput
             {...props}
             layoutClassName="h-full"
-            size="small"
             placeholder="Filter ..."
             endAdornment={
                 <Button
