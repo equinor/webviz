@@ -5,26 +5,30 @@ import type { DateRangePickerProps as DateRangePickerBaseProps } from "@equinor/
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useComponentSize } from "../_shared/componentSizeContext";
 import type { SelectableSize } from "../_shared/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 
 // ! Base package doesn't export this, so we manually re-export it here
 export type DateRange = NonNullable<DateRangePickerBaseProps["value"]>;
 
-export type DateRangePickerProps = DateRangePickerBaseProps & {
+export type DateRangePickerProps = ComponentWrapperProps<DateRangePickerBaseProps> & {
     value: DateRange | null;
     size?: SelectableSize;
 };
 
-export const DateRangePicker = React.forwardRef<HTMLDivElement, DateRangePickerProps>(function DateRangePicker(
-    { size = "default", className, ...props },
-    ref,
-) {
-    return (
-        <DateRangePickerBase
-            {...props}
-            ref={ref}
-            className={resolveClassNames("webviz-eds-date-range-picker", className)}
-            data-size={size}
-        />
-    );
-});
+export const DateRangePicker = React.forwardRef<HTMLDivElement, DateRangePickerProps>(
+    function DateRangePicker(props, ref) {
+        const baseProps = resolveWrapperProps(props, "size");
+        const size = useComponentSize(props);
+
+        return (
+            <DateRangePickerBase
+                {...baseProps}
+                ref={ref}
+                className={resolveClassNames("webviz-eds-date-range-picker", props.layoutClassName)}
+                data-size={size}
+            />
+        );
+    },
+);
