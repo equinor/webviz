@@ -19,7 +19,7 @@ export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | 
 };
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
-    const { size = "default", inputSize, ...rest } = props;
+    const { size = "default", inputSize, layoutClassName, ...rest } = props;
     const baseProps = resolveWrapperProps(rest, "startAdornment", "endAdornment");
 
     function makeStartAdornment(state: InputState) {
@@ -50,14 +50,14 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                 <div
                     {...extractDataProps(inputProps)}
                     className={resolveClassNames(
-                        props.layoutClassName,
+                        layoutClassName,
                         "form-element",
                         "w-full",
                         "pl-horizontal-sm",
-                        size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
-                        SELECTABLE_SIZES_CLASSNAMES[size],
                         "gap-vertical-xs flex items-center",
                         "text-neutral-strong",
+                        SELECTABLE_SIZES_CLASSNAMES[size],
+                        size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
                     )}
                 >
                     {makeStartAdornment(state)}

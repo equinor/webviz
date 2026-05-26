@@ -15,7 +15,7 @@ function FootComponent(props: TableFootProps, ref: React.ForwardedRef<HTMLTableS
             <tfoot
                 ref={ref}
                 className={resolveClassNames("bg-input text-neutral-strong border-neutral-subtle border-b-2", {
-                    "sticky bottom-0": props.sticky,
+                    "z-elevated sticky bottom-0": props.sticky,
                 })}
             >
                 {props.children}

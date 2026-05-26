@@ -15,7 +15,10 @@ import type { ColumnMetaData, SortDirection, TableSortState } from "../typesAndE
 import { Column } from "./column";
 
 export type TableRootProps = {
-    overflowWrapperRef: React.RefObject<HTMLDivElement>;
+    height?: number | string;
+    maxHeight?: number | string;
+    width?: number | string;
+    overflowWrapperRef?: React.RefObject<HTMLDivElement>;
     sortable?: boolean;
     selectable?: boolean;
     children?: React.ReactNode;
@@ -40,6 +43,9 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "fixed",
         "currentSort",
         "selectedRow",
+        "height",
+        "maxHeight",
+        "width",
         "onRowSelect",
         "onChangeSortDirection",
     );
@@ -60,7 +66,15 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
     }
 
     return (
-        <div ref={props.overflowWrapperRef} className={resolveClassNames("relative overflow-auto", layoutClassName)}>
+        <div
+            ref={props.overflowWrapperRef}
+            className={resolveClassNames("relative overflow-auto", layoutClassName)}
+            style={{
+                height: props.height,
+                maxHeight: props.maxHeight,
+                width: props.width,
+            }}
+        >
             <Typography
                 {...baseProps}
                 className={resolveClassNames("w-full border-separate border-spacing-[0]", {

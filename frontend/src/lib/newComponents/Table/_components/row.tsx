@@ -3,16 +3,17 @@ import React from "react";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useTableRootContext } from "../_contexts/tableRootContext";
+import { TableRootContext, useTableRootContext } from "../_contexts/tableRootContext";
 import { useTableSectionContext } from "../_contexts/tableSectionContext";
 
 export type TableRowProps = {
+    sortable?: boolean;
     rowKey?: string;
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableRowElement>>;
 
 function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRowElement>): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "rowKey");
+    const baseProps = resolveWrapperProps(props, "rowKey", "sortable");
 
     const rootContext = useTableRootContext();
     const sectionContext = useTableSectionContext();
@@ -26,8 +27,8 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
         <tr
             {...baseProps}
             ref={ref}
-            className={resolveClassNames({
-                "font-bolder": sectionContext === "body",
+            className={resolveClassNames(props.layoutClassName, {
+                "font-normal": sectionContext === "body",
                 "font-extrabold": sectionContext !== "body",
                 "text-neutral-subtle": !isSelected,
                 "hover:bg-neutral-hover": isSelectable && !isSelected,
@@ -42,7 +43,9 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
                 props?.onClick?.(evt);
             }}
         >
-            {props.children}
+            <TableRootContext.Provider value={{ ...rootContext, sortable: props.sortable ?? rootContext.sortable }}>
+                {props.children}
+            </TableRootContext.Provider>
         </tr>
     );
 }

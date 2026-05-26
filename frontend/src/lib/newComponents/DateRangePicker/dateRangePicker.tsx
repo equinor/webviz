@@ -7,7 +7,11 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { SelectableSize } from "../_shared/size";
 
+// ! Base package doesn't export this, so we manually re-export it here
+export type DateRange = NonNullable<DateRangePickerBaseProps["value"]>;
+
 export type DateRangePickerProps = DateRangePickerBaseProps & {
+    value: DateRange | null;
     size?: SelectableSize;
 };
 
