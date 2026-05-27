@@ -12,9 +12,10 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/componentSizeContext";
-import type { SelectableSize } from "../_shared/size";
+import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "../_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 import { Button } from "../Button";
+import { Typography } from "../Typography";
 
 const TRACK_CLASS_NAME = "not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas";
 const INDICATOR_CLASS_NAME = "bg-accent-strong data-disabled:bg-disabled";
@@ -382,6 +383,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                             <Thumb
                                 index={0}
+                                size={componentSize}
                                 showValue={showThumbValueLabels}
                                 sliderValue={internalValue}
                                 inputRefs={inputRefs}
@@ -398,6 +400,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                             <Thumb
                                 index={1}
+                                size={componentSize}
                                 showValue={showThumbValueLabels}
                                 sliderValue={internalValue}
                                 inputRefs={inputRefs}
@@ -442,6 +445,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 }
 
 function Thumb(props: {
+    size: SelectableSize;
     index: number;
     showValue: boolean;
     sliderValue: number | readonly number[];
@@ -519,10 +523,17 @@ function Thumb(props: {
                 <Tooltip.Positioner sideOffset={5}>
                     <Tooltip.Popup
                         data-slider-disabled={props.disabled ? "" : undefined}
-                        className="bg-accent-strong data-slider-disabled:bg-disabled text-info-strong-on-emphasis px-horizontal-2xs py-vertical-4xs text-body-sm pointer-events-none rounded"
-                    >
-                        {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
-                    </Tooltip.Popup>
+                        className="bg-accent-strong data-slider-disabled:bg-disabled px-horizontal-2xs py-vertical-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
+                        render={
+                            <Typography
+                                as="div"
+                                variant="subtle"
+                                size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
+                            >
+                                {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
+                            </Typography>
+                        }
+                    ></Tooltip.Popup>
                 </Tooltip.Positioner>
             </Tooltip.Portal>
         </Tooltip.Root>
