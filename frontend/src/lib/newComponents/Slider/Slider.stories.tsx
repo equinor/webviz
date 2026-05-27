@@ -38,6 +38,7 @@ export const Default: Story = {
         <div className="gap-y-vertical-lg flex flex-col">
             <Slider defaultValue={25} {...args} />
             <Slider defaultValue={[25, 75]} {...args} />
+            <Slider defaultValue={75} {...args} inverted={!args.inverted} />
         </div>
     ),
 };
@@ -47,6 +48,26 @@ export const Disabled: Story = {
     render: (args) => (
         <div className="gap-y-vertical-lg flex flex-col">
             <Slider defaultValue={25} {...args} />
+        </div>
+    ),
+};
+
+export const Inverted: Story = {
+    args: { inverted: true },
+    render: (args) => (
+        <div className="gap-y-vertical-lg flex flex-col">
+            <Slider defaultValue={25} {...args} />
+        </div>
+    ),
+};
+
+export const Size: Story = {
+    argTypes: { size: { table: { disable: true } } },
+    render: (args) => (
+        <div className="gap-y-vertical-lg flex flex-col">
+            <Slider defaultValue={25} valueLabelDisplay="always" {...args} size="small" />
+            <Slider defaultValue={50} valueLabelDisplay="always" {...args} size="default" />
+            <Slider defaultValue={75} valueLabelDisplay="always" {...args} size="large" />
         </div>
     ),
 };

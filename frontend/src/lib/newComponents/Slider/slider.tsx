@@ -5,13 +5,20 @@ import { Tooltip } from "@base-ui/react";
 import type { SliderRootProps as SliderRootBaseProps, SliderRootState } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
 import { Lock, LockOpen } from "@mui/icons-material";
-import { clamp, clone, omit } from "lodash";
+import { clamp, clone } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useComponentSize } from "../_shared/componentSizeContext";
+import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "../_shared/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 import { Button } from "../Button";
+import { Typography } from "../Typography";
+
+const TRACK_CLASS_NAME = "not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas";
+const INDICATOR_CLASS_NAME = "bg-accent-strong data-disabled:bg-disabled";
 
 export type SliderChangeEventDetails =
     | SliderBase.Root.ChangeEventDetails
@@ -22,7 +29,7 @@ export type SliderChangeEventDetails =
 // | BaseUIChangeEventDetails<"clamp-min", SliderRootChangeEventCustomProperties>
 // | BaseUIChangeEventDetails<"clamp-max", SliderRootChangeEventCustomProperties>;
 
-export type SliderProps = Omit<SliderRootBaseProps, "className" | "orientation"> & {
+export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orientation">> & {
     /**
      * Shows a button and gutter tracks for locking value to min and/or max values
      *
@@ -50,6 +57,13 @@ export type SliderProps = Omit<SliderRootBaseProps, "className" | "orientation">
      * Aria label for the thumbs. Can be a single string, which will be used for both thumbs, or an array of strings to provide separate labels for each thumb (in the case of a range slider).
      */
     thumbAriaLabel?: string | string[];
+
+    /**
+     * Inverts the track/indicator colors
+     */
+    inverted?: boolean;
+
+    size?: SelectableSize;
 
     /**
      * Formats the value displayed by the thumbs value tooltip.
@@ -85,18 +99,31 @@ function isDualSliderValue(value: number | readonly number[]): value is readonly
     return Array.isArray(value);
 }
 
+function resolveTrackHeightClassName(size: SelectableSize) {
+    return {
+        // Same size for small and default, as h-0.5 seems way to small
+        small: "h-1",
+        default: "h-1",
+        large: "h-1.5",
+    }[size];
+}
+
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const defaultedProps: DefaultedSliderProps = { ...DEFAULT_PROPS, ...props };
     const { onValueChange, onValueCommitted } = props;
 
-    const baseProps = omit(defaultedProps, [
+    const baseProps = resolveWrapperProps(defaultedProps, [
         "enableRangeLocks",
         "valueLabelDisplay",
         "thumbAriaLabel",
         "valueLabelFormat",
+        "inverted",
+        "size",
         "onValueChange",
         "onValueCommitted",
     ]);
+
+    const componentSize = useComponentSize(props);
 
     if (defaultedProps.min > defaultedProps.max) throw new Error("Slider min cannot be greater than max");
 
@@ -259,7 +286,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     return (
         <SliderBase.Root
             {...baseProps}
-            className="gap-horizontal-2xs flex items-center data-disabled:cursor-not-allowed"
+            className="gap-horizontal-2xs px-horizontal-2xs flex items-center data-disabled:cursor-not-allowed"
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}
@@ -268,8 +295,8 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                 "--lock-gutter-size": `${clamp(wrapperSize.width * 0.1, 20, 40)}px`,
 
                 // Couldn't find any EDS variable for these sizes; these pixels sizes are used in the design doc
-                "--thumb-size": "8px",
-                "--mark-size": "6px",
+                "--thumb-size": `${{ small: 6, default: 8, large: 10 }[componentSize]}px`,
+                "--mark-size": `${{ small: 4, default: 6, large: 8 }[componentSize]}px`,
 
                 // Needed to avoid some jumpiness in some cases
                 "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
@@ -277,7 +304,12 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
             render={(rootProps, state) => (
                 <div {...rootProps}>
                     {showMinLock && (
-                        <LimitLockSwitch disabled={state.disabled} isLocked={minLocked} onSetLocked={toggleMinLock} />
+                        <LimitLockSwitch
+                            size={componentSize}
+                            disabled={state.disabled}
+                            isLocked={minLocked}
+                            onSetLocked={toggleMinLock}
+                        />
                     )}
 
                     <SliderBase.Control
@@ -297,11 +329,11 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                         onPointerDown={(evt) => {
                             if (props.disabled) return;
 
-                            wrapperRef.current?.setPointerCapture(evt.pointerId);
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
                             setIsDragging(true);
                         }}
-                        onPointerUp={(evt) => {
-                            wrapperRef.current?.releasePointerCapture(evt.pointerId);
+                        onPointerUpCapture={(evt) => {
+                            evt.currentTarget.releasePointerCapture(evt.pointerId);
                             setIsDragging(false);
                         }}
                         onPointerMove={(evt) => {
@@ -321,21 +353,37 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             <SliderLockGutter
                                 ref={minGutterDotRef}
                                 locked={minLocked}
+                                size={componentSize}
                                 placement="start"
-                                inverse={!isDualSlider}
+                                inverse={isDualSlider !== !props.inverted}
                                 sliderState={state}
                                 onSetLocked={toggleMinLock}
                             />
                         )}
 
-                        <SliderBase.Track className="not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas shadow-elevation-floating h-1 w-full rounded-lg">
+                        <SliderBase.Track
+                            className={resolveClassNames(
+                                "w-full rounded-lg",
+                                resolveTrackHeightClassName(componentSize),
+                                {
+                                    [INDICATOR_CLASS_NAME]: props.inverted,
+                                    [TRACK_CLASS_NAME]: !props.inverted,
+                                },
+                            )}
+                        >
                             {/* Only show start dot for dual sliders */}
                             <Dot placement="start" />
 
-                            <SliderBase.Indicator className="bg-accent-strong data-disabled:bg-disabled rounded-lg" />
+                            <SliderBase.Indicator
+                                className={resolveClassNames("rounded-lg", {
+                                    [TRACK_CLASS_NAME]: props.inverted,
+                                    [INDICATOR_CLASS_NAME]: !props.inverted,
+                                })}
+                            />
 
                             <Thumb
                                 index={0}
+                                size={componentSize}
                                 showValue={showThumbValueLabels}
                                 sliderValue={internalValue}
                                 inputRefs={inputRefs}
@@ -352,6 +400,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                             <Thumb
                                 index={1}
+                                size={componentSize}
                                 showValue={showThumbValueLabels}
                                 sliderValue={internalValue}
                                 inputRefs={inputRefs}
@@ -372,7 +421,8 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                         {showMaxLock && (
                             <SliderLockGutter
                                 ref={maxGutterDotRef}
-                                inverse={false}
+                                inverse={!!props.inverted}
+                                size={componentSize}
                                 locked={maxLocked}
                                 placement="end"
                                 sliderState={state}
@@ -381,7 +431,12 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                         )}
                     </SliderBase.Control>
                     {showMaxLock && (
-                        <LimitLockSwitch disabled={state.disabled} isLocked={maxLocked} onSetLocked={toggleMaxLock} />
+                        <LimitLockSwitch
+                            size={componentSize}
+                            disabled={state.disabled}
+                            isLocked={maxLocked}
+                            onSetLocked={toggleMaxLock}
+                        />
                     )}
                 </div>
             )}
@@ -390,6 +445,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 }
 
 function Thumb(props: {
+    size: SelectableSize;
     index: number;
     showValue: boolean;
     sliderValue: number | readonly number[];
@@ -467,24 +523,37 @@ function Thumb(props: {
                 <Tooltip.Positioner sideOffset={5}>
                     <Tooltip.Popup
                         data-slider-disabled={props.disabled ? "" : undefined}
-                        className="bg-accent-strong data-slider-disabled:bg-disabled text-info-strong-on-emphasis px-horizontal-2xs py-vertical-4xs text-body-sm pointer-events-none rounded"
-                    >
-                        {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
-                    </Tooltip.Popup>
+                        className="bg-accent-strong data-slider-disabled:bg-disabled px-horizontal-2xs py-vertical-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
+                        render={
+                            <Typography
+                                as="div"
+                                variant="subtle"
+                                size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
+                            >
+                                {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
+                            </Typography>
+                        }
+                    ></Tooltip.Popup>
                 </Tooltip.Positioner>
             </Tooltip.Portal>
         </Tooltip.Root>
     );
 }
 
-function LimitLockSwitch(props: { disabled: boolean; isLocked: boolean; onSetLocked: (newValue: boolean) => void }) {
+function LimitLockSwitch(props: {
+    size: SelectableSize;
+    disabled: boolean;
+    isLocked: boolean;
+    onSetLocked: (newValue: boolean) => void;
+}) {
     const ButtonIcon = props.isLocked ? Lock : LockOpen;
 
     return (
         <Button
             variant="text"
             tone="accent"
-            size="small"
+            size={props.size}
+            compact
             pressed={props.isLocked}
             disabled={props.disabled}
             onClick={() => props.onSetLocked(!props.isLocked)}
@@ -498,27 +567,30 @@ type SliderLockGutterProps = {
     placement: "start" | "end";
     inverse: boolean;
     locked: boolean;
+    size: SelectableSize;
     sliderState: SliderRootState;
     onSetLocked: (locked: boolean) => void;
 };
 
 const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>(function SliderLockGutter(props, ref) {
     const isFilled = props.inverse !== props.locked;
+    const isDragging = props.sliderState.dragging;
+    const isDisabled = props.sliderState.disabled;
 
-    function resolveGutterColorClassnames() {
-        // The gutter tracks are mimicking the look of the slider track, except using a border to show the line as dashed.
-        // The background colors used in the track are not normally exposed for borders, so we have to manually refer to them here
-        if (props.sliderState.disabled && isFilled) {
-            return "border-(--eds-color-bg-fill-emphasis-disabled)";
-        } else if (props.sliderState.disabled) {
-            return "border-(--eds-color-bg-neutral-canvas)";
+    function getGutterColorVariable(disabled: boolean, isFilled: boolean, dragging: boolean) {
+        // The gutter tracks are mimicking the look of the slider track, except using a gradient to have it appear as a dashed line.
+        // Tailwind gradient classes are not included, so we have to manually refer to eds variables here
+        if (disabled && isFilled) {
+            return "var(--eds-color-bg-fill-emphasis-disabled)";
+        } else if (disabled) {
+            return "var(--eds-color-bg-neutral-canvas)";
         } else if (isFilled) {
-            return "border-(--eds-color-bg-accent-fill-emphasis-default)";
-        } else if (props.sliderState.dragging) {
-            return "border-(--eds-color-bg-neutral-fill-muted-hover)";
+            return "var(--eds-color-bg-accent-fill-emphasis-default)";
+        } else if (dragging) {
+            return "var(--eds-color-bg-neutral-fill-muted-hover)";
+        } else {
+            return "var(--eds-color-bg-neutral-canvas)";
         }
-
-        return "border-(--eds-color-bg-neutral-canvas) group-hover:border-(--eds-color-bg-neutral-fill-muted-hover)";
     }
 
     return (
@@ -535,14 +607,26 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
                 onPointerDownCapture={() => !props.sliderState.disabled && props.onSetLocked(true)}
             />
 
-            <div className={resolveClassNames("h-0 w-full border-2 border-dotted", resolveGutterColorClassnames())} />
+            <div
+                className={resolveClassNames("w-full", resolveTrackHeightClassName(props.size))}
+                style={{
+                    // @ts-expect-error -- css typing doesn't accept variables
+                    "--gutter-color": getGutterColorVariable(isDisabled, isFilled, isDragging),
+                    backgroundImage: `repeating-linear-gradient(
+                            to right,
+                            var(--gutter-color) 0px,
+                            var(--gutter-color) 4px,
+                            transparent 4px, transparent 8px
+                        )`,
+                }}
+            />
         </div>
     );
 });
 
 function Dot(props: { placement: "start" | "end" }) {
     const className =
-        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface -top-0.5 z-1";
+        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4";
 
     const style: React.HTMLAttributes<HTMLDivElement>["style"] = {};
 

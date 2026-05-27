@@ -411,7 +411,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                 valueLabelDisplay="auto"
                 valueLabelFormat={(val: number) => formatNumber(val)}
                 step={step}
-                // track="inverted"
+                inverted
             />
             {props.inputVisible && (
                 <NumberInput
@@ -420,8 +420,6 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                     max={max / 1000}
                     onValueChange={handleInputChange}
                     endAdornment="K"
-
-                    // layoutClassName="min-w-20"
                 />
             )}
         </>

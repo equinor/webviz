@@ -111,7 +111,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                     Description
                 </Table.Column>
                 <Table.Column colKey="author" widthInPercent={12}>
-                    Author {userName}
+                    Author
                 </Table.Column>
                 <Table.Column colKey="status" widthInPercent={8}>
                     Status
