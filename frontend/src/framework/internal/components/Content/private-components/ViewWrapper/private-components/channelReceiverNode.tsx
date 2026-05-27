@@ -1,5 +1,6 @@
 import React from "react";
 
+import type { BaseUIEvent } from "@base-ui/react";
 import { Edit, Remove } from "@mui/icons-material";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
@@ -9,7 +10,7 @@ import { useActiveSession } from "@framework/internal/components/ActiveSessionBo
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { KeyKind } from "@framework/types/dataChannnel";
 import type { Workbench } from "@framework/Workbench";
-import { IconButton } from "@lib/components/IconButton";
+import { Button } from "@lib/newComponents/Button";
 import { rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -199,7 +200,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
     const receiver = moduleInstance?.getChannelManager().getReceiver(props.idString);
     const channel = receiver?.getChannel();
 
-    function handleEditChannelClick(e: React.PointerEvent<HTMLButtonElement>) {
+    function handleEditChannelClick(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement>>) {
         if (!channel) {
             return;
         }
@@ -230,13 +231,15 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
-                "w-40 max-w-[25%] flex flex-col items-center justify-center rounded-sm border h-20 max-h-[25%] m-2 gap-2 text-sm text-center",
+                "mx-horizontal-2xs z-overlay my-vertical-2xs text-body-sm gap-vertical-2xs flex h-20 max-h-[25%] w-40 max-w-[25%] flex-col items-center justify-center rounded-sm border text-center",
                 {
-                    "bg-green-600 border-green-600": hoveredAndHoverable && connectable,
-                    "bg-red-600 border-red-600": hoveredAndHoverable && !connectable && !editDataChannelConnections,
-                    "bg-blue-600 border-blue-600": hoveredAndHoverable && !connectable && editDataChannelConnections,
+                    "border-accent bg-accent-canvas":
+                        (hoveredAndHoverable && connectable) ||
+                        (hoveredAndHoverable && !connectable && editDataChannelConnections),
+                    "border-danger bg-danger-canvas":
+                        hoveredAndHoverable && !connectable && !editDataChannelConnections,
                     "opacity-50": !connectable && !editDataChannelConnections,
-                    "bg-slate-100": !hoveredAndHoverable,
+                    "border-neutral-subtle bg-neutral-canvas": !hoveredAndHoverable,
                     "text-white": hoveredAndHoverable,
                     "shadow-md": hasConnection,
                 },
@@ -244,34 +247,37 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeave}
         >
-            <div className="h-16 flex items-center">{props.displayName}</div>
+            <div className="flex h-16 items-center">{props.displayName}</div>
             <div
                 className={resolveClassNames(
-                    "flex gap-2 bg-slate-200 w-full rounded-b items-center justify-center p-1",
+                    "bg-neutral-subtle px-horizontal-3xs py-vertical-3xs gap-horizontal-2xs flex w-full items-center justify-center rounded-b",
                     {
                         hidden: !editDataChannelConnections || isSnapshot,
                     },
                 )}
             >
-                <IconButton
+                <Button
                     ref={editButtonRef}
-                    className="m-0 hover:bg-white hover:text-blue-600"
                     title="Edit data channel connection"
                     disabled={!hasConnection || !hasMultiplePossibleConnections}
                     size="small"
                     onClick={handleEditChannelClick}
+                    iconOnly
+                    variant="text"
                 >
                     <Edit fontSize="small" />
-                </IconButton>
-                <IconButton
+                </Button>
+                <Button
                     ref={removeButtonRef}
-                    className="m-0 hover:bg-white text-red-600"
                     title="Remove data channel connection"
                     disabled={!hasConnection}
                     size="small"
+                    variant="text"
+                    iconOnly
+                    tone="danger"
                 >
                     <Remove fontSize="small" />
-                </IconButton>
+                </Button>
             </div>
         </div>
     );

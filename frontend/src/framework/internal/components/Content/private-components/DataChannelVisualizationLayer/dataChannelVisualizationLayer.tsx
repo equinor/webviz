@@ -375,7 +375,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     return createPortal(
         <svg
             ref={ref}
-            className={resolveClassNames("absolute bg-slate-50/70 left-0 top-0 h-full w-full z-40", {
+            className={resolveClassNames("bg-backdrop/70 z-modal absolute top-0 left-0 h-full w-full", {
                 invisible: !visible && !showDataChannelConnections,
             })}
         >
@@ -485,7 +485,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                             }}
                         />
                         {dataChannelPath.highlighted && !visible && (
-                            <text>
+                            <text fill="currentColor">
                                 <textPath
                                     href={`#${dataChannelPath.key}`}
                                     startOffset="50%"
@@ -525,7 +525,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                         />
                     )}
                     {currentChannelName && (
-                        <text>
+                        <text fill="currentColor">
                             <textPath
                                 href={`#current-data-channel-path`}
                                 startOffset="50%"

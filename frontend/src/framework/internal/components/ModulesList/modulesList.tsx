@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { BaseUIEvent } from "@base-ui/react";
-import { Close, CloudOff, Help, HistoryToggleOff, Science, WebAsset } from "@mui/icons-material";
+import { Close, WebAsset } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
@@ -15,6 +15,7 @@ import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/de
 import type { Workbench } from "@framework/Workbench";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Help, Science, HistoryToggleOff, CloudOff } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { createPortal } from "@lib/utils/createPortal";
@@ -179,7 +180,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
-                    "hover:bg-accent-hover text-body-md flex h-12 w-full touch-none flex-col select-none",
+                    "hover:bg-accent text-body-md flex h-12 w-full touch-none flex-col select-none",
                     {
                         "cursor-move": !isDragged,
                         "cursor-grabbing": isDragged,
@@ -206,8 +207,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     </span>
                     <span className="text-neutral-subtle">{makePersistenceIcon(props.isSerializable)}</span>
                     <Tooltip title="Show details">
-                        <Button variant="text" tone="accent" size="small" onClick={handleShowDetails}>
-                            <Help fontSize="inherit" />
+                        <Button variant="text" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
+                            <Help size={16} />
                         </Button>
                     </Tooltip>
                 </div>
@@ -230,14 +231,14 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.DEPRECATED) {
         return (
             <span title="Deprecated" className="inline-block align-middle text-base">
-                <HistoryToggleOff fontSize="inherit" />
+                <HistoryToggleOff size={16} />
             </span>
         );
     }
     if (devState === ModuleDevState.DEV) {
         return (
             <span title="Experimental" className="inline-block align-middle text-base">
-                <Science fontSize="inherit" />
+                <Science size={16} />
             </span>
         );
     }
@@ -249,7 +250,7 @@ function makePersistenceIcon(isSerializable: boolean): React.ReactNode {
     if (!isSerializable) {
         return (
             <span title="Module settings won't be saved" className="inline-block align-middle text-base">
-                <CloudOff fontSize="inherit" />
+                <CloudOff size={16} />
             </span>
         );
     }

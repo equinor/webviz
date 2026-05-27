@@ -1,13 +1,14 @@
 import React from "react";
 
+import type { BaseUIEvent } from "@base-ui/react";
 import { Close } from "@mui/icons-material";
 import { createPortal } from "react-dom";
 
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
-import { Button } from "@lib/components/Button";
-import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
+import { Button } from "@lib/newComponents/Button";
+import { CheckboxItem } from "@lib/newComponents/Checkbox";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -27,22 +28,28 @@ type ChannelContentSelectorProps = {
 };
 
 const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) => {
-    function handleChannelToggle(e: React.ChangeEvent<HTMLInputElement>) {
-        props.onSelectChannel(props.channel.idString, e.currentTarget.checked);
+    function handleChannelToggle(checked: boolean) {
+        props.onSelectChannel(props.channel.idString, checked);
     }
 
-    function handleContentToggle(contentIdString: string, e: React.ChangeEvent<HTMLInputElement>) {
-        props.onSelectContent(props.channel.idString, contentIdString, e.currentTarget.checked);
+    function handleContentToggle(contentIdString: string, checked: boolean) {
+        props.onSelectContent(props.channel.idString, contentIdString, checked);
     }
 
     return (
-        <div>
-            <div className="p-2 hover:bg-blue-50 cursor-pointer text-sm font-bold flex items-center gap-2 h-12">
-                <Checkbox onChange={handleChannelToggle} label={props.channel.displayName} checked={props.selected} />
+        <div className="flex flex-col">
+            <div className="px-horizontal-2xs py-vertical-2xs font-bolder text-body-sm flex cursor-pointer items-center">
+                <CheckboxItem
+                    onCheckedChange={handleChannelToggle}
+                    label={props.channel.displayName}
+                    checked={props.selected}
+                    data-selectable-space="sm"
+                    data-space-proportions="squished"
+                />
             </div>
-            <div className="relative pb-2">
+            <div className="relative">
                 {props.selected && (
-                    <div className="absolute inset-0 bg-slate-100 opacity-90 w-full h-full flex items-center justify-center text-sm">
+                    <div className="bg-canvas text-body-sm absolute inset-0 -top-2 flex w-full items-center justify-center opacity-90">
                         {props.multiSelect
                             ? "All contents are automatically selected."
                             : "The first content is automatically selected."}
@@ -51,16 +58,18 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
                 {props.channel.contents.map((content, index) => (
                     <div
                         key={content.contentIdString}
-                        className="flex items-center gap-1 ml-5 pl-0 p-2 hover:bg-blue-50 cursor-pointer text-sm border-l border-slate-400 h-8"
+                        className="ml-horizontal-2xl border-neutral-strong text-body-sm gap-horizontal-3xs px-horizontal-2xs py-vertical-2xs flex cursor-pointer items-center border-l pl-0"
                     >
-                        <span className="h-px w-2 bg-slate-400 mr-2 inline-block" />
-                        <Checkbox
-                            onChange={(e) => handleContentToggle(content.contentIdString, e)}
+                        <span className="bg-neutral-strong -mr-horizontal-2xs inline-block h-px w-2" />
+                        <CheckboxItem
+                            onCheckedChange={(checked) => handleContentToggle(content.contentIdString, checked)}
                             label={content.displayName}
                             checked={
                                 (props.selected && (props.multiSelect || index === 0)) ||
                                 props.selectedContentIdStrings.includes(content.contentIdString)
                             }
+                            data-selectable-space="sm"
+                            data-space-proportions="squished"
                         />
                     </div>
                 ))}
@@ -118,12 +127,12 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
         };
     }, [onCancel]);
 
-    function handleCancelChannelSelection(e: React.PointerEvent<HTMLButtonElement>) {
+    function handleCancelChannelSelection(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement>>) {
         e.stopPropagation();
         onCancel();
     }
 
-    function handleSelectionDone(e: React.PointerEvent<HTMLButtonElement>) {
+    function handleSelectionDone(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement>>) {
         e.stopPropagation();
         if (selectedContents === null && selectedChannelIdString === null) {
             return;
@@ -192,7 +201,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     }
 
     const channelElementHeight = convertRemToPixels(3.5);
-    const contentElementHeight = convertRemToPixels(2);
+    const contentElementHeight = convertRemToPixels(3);
 
     const calculatedHeight =
         props.selectableChannels.reduce((acc, el) => {
@@ -213,7 +222,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             <Overlay visible />
             <div
                 id="channel-selector"
-                className="absolute bg-white border rounded-sm overflow-auto z-50 shadow-sm flex flex-col w-80"
+                className="bg-surface z-toast shadow-elevation-overlay border-neutral-subtle absolute flex flex-col overflow-auto rounded border"
                 style={{
                     left: `calc(${left}px - 10rem)`,
                     top: top,
@@ -223,15 +232,15 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             >
                 <div
                     id="channel-selector-header"
-                    className="px-2 bg-slate-200 font-bold flex items-center text-sm h-12"
+                    className="bg-neutral px-horizontal-2xs text-body-sm font-bolder flex h-12 items-center"
                 >
                     <div className="grow">
-                        Make <i className="font-bold text-green-700">{props.receiver.getDisplayName()}</i> subscribe
+                        Make <i className="text-accent-subtle font-bold">{props.receiver.getDisplayName()}</i> subscribe
                         to...
                     </div>
-                    <div className="hover:text-slate-500 cursor-pointer" onClick={props.onCancel}>
+                    <Button variant="text" tone="neutral" size="small" onClick={handleCancelChannelSelection} iconOnly>
                         <Close fontSize="small" />
-                    </div>
+                    </Button>
                 </div>
                 <div className="grow overflow-auto">
                     {props.selectableChannels.map((channel) => (
@@ -250,8 +259,10 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                         />
                     ))}
                 </div>
-                <div className="px-2 bg-slate-200 flex gap-2 justify-end h-16 items-center">
-                    <Button onClick={handleCancelChannelSelection}>Cancel</Button>
+                <div className="gap-horizontal-2xs bg-canvas px-horizontal-2xs flex h-16 items-center justify-end">
+                    <Button variant="text" tone="neutral" onClick={handleCancelChannelSelection}>
+                        Cancel
+                    </Button>
                     <Button onClick={handleSelectionDone} disabled={!checkIfSelectionIsMade()}>
                         OK
                     </Button>
