@@ -186,8 +186,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 handleCancel();
                             }
                         }}
-                        width={`${dialogSizePercent.width - 5}%`}
-                        height={`${dialogSizePercent.height - 5}%`}
+                        width={`${dialogSizePercent.width}%`}
+                        height={`${dialogSizePercent.height}%`}
                         modal
                         alertDialogs={[
                             <SelectEnsemblesConfirmationDialogs
@@ -219,11 +219,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     : []
                             }
                             onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                            selectButtonLabel={
+                            onRemoveEnsemble={
                                 ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                    ? "Add Ensemble"
-                                    : "Select Ensemble"
+                                    ? selectionHandlers.handleRemoveRegularEnsemble
+                                    : () => {}
                             }
+                            multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
                             onRequestClose={handleCloseEnsembleExplorer}
                         />
                     </Dialog.Popup>,

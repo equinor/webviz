@@ -112,7 +112,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             ) : (
                 <span
                     className={resolveClassNames(
-                        "gap-x-horizontal-4xs inline-flex h-full w-full items-center",
+                        "gap-x-horizontal-4xs inline-flex h-full w-full items-center justify-center",
                         LABEL_SIZE_CLASSES[size],
                     )}
                 >

@@ -3,7 +3,6 @@ import React from "react";
 import {
     Add,
     Check,
-    CropSquare,
     FilterCenterFocus,
     KeyboardDoubleArrowLeft,
     KeyboardDoubleArrowRight,
@@ -11,19 +10,15 @@ import {
     Remove,
 } from "@mui/icons-material";
 
+import { AddPathPointIcon, AxesLayerIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
 import { Button } from "@lib/newComponents/Button";
-import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { Input } from "@lib/components/Input";
-import { ToggleButton } from "@lib/components/ToggleButton";
-import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon, XYRulersIcon } from "@lib/icons/";
+import { Separator } from "@lib/newComponents/Separator";
+import { TextInput } from "@lib/newComponents/TextInput";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
 import { type PolylinesPlugin, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
-import { Separator } from "@lib/newComponents/Separator";
-import { Toggle } from "@lib/newComponents/Toggle";
-import { TextInput } from "@lib/newComponents/TextInput";
 
 export type ToolbarProps = {
     hideVerticalScaleControls?: boolean;
@@ -116,13 +111,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                     >
                         <Button
                             onClick={handleGridToggle}
-                            title="Toggle bounding box"
+                            title="Toggle axes visibility"
                             pressed={gridVisible}
                             iconOnly
                             size="small"
                             variant="text"
                         >
-                            <XYRulersIcon fontSize="inherit" />
+                            <AxesLayerIcon fontSize="inherit" />
                         </Button>
                         <Separator orientation="vertical" />
                         <Button

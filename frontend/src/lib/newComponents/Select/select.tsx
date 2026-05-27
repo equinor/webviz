@@ -5,6 +5,7 @@ import { isEqual } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import type { LayoutClassProps } from "../_shared/wrapperProps";
 import { Button } from "../Button";
 import { TextInput } from "../TextInput";
 import { Virtualization } from "../Virtualization";
@@ -22,7 +23,7 @@ export type SelectOption<TValue = string> = {
     disabled?: boolean;
 };
 
-export type SelectProps<TValue = string> = {
+export type SelectProps<TValue = string> = LayoutClassProps & {
     id?: string;
     wrapperId?: string;
     disabled?: boolean;
@@ -390,7 +391,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     }
 
     return (
-        <div ref={ref} className="gap-vertical-xs flex flex-col text-sm">
+        <div
+            ref={ref}
+            className={resolveClassNames(props.layoutClassName, "gap-vertical-xs text-body-sm flex flex-col")}
+        >
             {props.showQuickSelectButtons && (
                 <div className="gap-horizontal-3xs flex items-center">
                     <Button

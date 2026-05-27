@@ -3,11 +3,14 @@ import React from "react";
 import { isEqual, orderBy } from "lodash";
 
 import type { CaseInfo_api } from "@api";
+import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Table } from "@lib/newComponents/Table";
 import { SortDirection, type TableSortState } from "@lib/newComponents/Table/typesAndEnums";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { Virtualization } from "@lib/newComponents/Virtualization";
 import { formatDate } from "@lib/utils/dates";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
 import type { CaseTableFilterState } from "./CaseTableFilterRow";
@@ -15,6 +18,8 @@ import { CaseTableFilterRow, useCaseDataFilter } from "./CaseTableFilterRow";
 
 export type CaseTableProps = {
     selectedCase?: string | null;
+
+    selectedEnsembles: UserEnsembleSetting[];
 
     caseData: CaseInfo_api[] | undefined;
 
@@ -98,6 +103,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             onRowSelect={props.onCaseSelected}
         >
             <Table.Head sticky>
+                <Table.Column colKey="#" width={56} sortable={false}></Table.Column>
                 <Table.Column colKey="name" widthInPercent={24}>
                     Name / id
                 </Table.Column>
@@ -139,27 +145,46 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                     containerRef={tableOverflowWrapperRef}
                     items={collatedCaseData}
                     itemSize={37}
-                    renderItem={(caseRow: CaseInfo_api) => (
-                        <Table.Row key={caseRow.uuid} rowKey={caseRow.uuid}>
-                            <Table.Cell>
-                                <CaseNameAndIdCell
-                                    cellRowSelected={props.selectedCase === caseRow.uuid}
-                                    caseName={caseRow.name}
-                                    caseId={caseRow.uuid}
-                                />
-                            </Table.Cell>
-                            <Table.Cell>
-                                <DescriptionCell description={caseRow.description} />
-                            </Table.Cell>
-                            <Table.Cell>
-                                <AuthorCell author={caseRow.user} />
-                            </Table.Cell>
-                            <Table.Cell>{caseRow.status}</Table.Cell>
-                            <Table.Cell>{formatDate(caseRow.updatedAtUtcMs)}</Table.Cell>
-                            <Table.Cell>{formatNullableText(caseRow.modelName)}</Table.Cell>
-                            <Table.Cell>{formatNullableText(caseRow.modelRevision)}</Table.Cell>
-                        </Table.Row>
-                    )}
+                    renderItem={(caseRow: CaseInfo_api) => {
+                        const numSelectedEnsemblesInCase = props.selectedEnsembles.filter(
+                            (e) => e.ensembleIdent.getCaseUuid() === caseRow.uuid,
+                        ).length;
+                        return (
+                            <Table.Row key={caseRow.uuid} rowKey={caseRow.uuid}>
+                                <Table.Cell>
+                                    <TooltipCompositions.Default
+                                        content={`${numSelectedEnsemblesInCase} ensemble(s) selected in this case`}
+                                    >
+                                        <div
+                                            className={resolveClassNames(
+                                                "px-horizontal-3xs py-vertical-4xs bg-canvas text-neutral-strong text-body-xs w-full cursor-help rounded-full text-center",
+                                                { "bg-accent!": numSelectedEnsemblesInCase > 0 },
+                                            )}
+                                        >
+                                            {numSelectedEnsemblesInCase}/{caseRow.ensembles.length}
+                                        </div>
+                                    </TooltipCompositions.Default>
+                                </Table.Cell>
+                                <Table.Cell>
+                                    <CaseNameAndIdCell
+                                        cellRowSelected={props.selectedCase === caseRow.uuid}
+                                        caseName={caseRow.name}
+                                        caseId={caseRow.uuid}
+                                    />
+                                </Table.Cell>
+                                <Table.Cell>
+                                    <DescriptionCell description={caseRow.description} />
+                                </Table.Cell>
+                                <Table.Cell>
+                                    <AuthorCell author={caseRow.user} />
+                                </Table.Cell>
+                                <Table.Cell>{caseRow.status}</Table.Cell>
+                                <Table.Cell>{formatDate(caseRow.updatedAtUtcMs)}</Table.Cell>
+                                <Table.Cell>{formatNullableText(caseRow.modelName)}</Table.Cell>
+                                <Table.Cell>{formatNullableText(caseRow.modelRevision)}</Table.Cell>
+                            </Table.Row>
+                        );
+                    }}
                 />
             </Table.Body>
         </Table.Root>

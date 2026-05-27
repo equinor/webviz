@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@api";
+import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -33,6 +34,7 @@ export type CaseSelection = {
 
 export type CaseExplorerProps = {
     queriesDisabled: boolean;
+    selectedEnsembles: UserEnsembleSetting[];
     onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -285,6 +287,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         <CaseTable
                             caseData={caseData}
                             selectedCase={selectedCaseUuid}
+                            selectedEnsembles={props.selectedEnsembles}
                             showOnlyMyCases={showOnlyMyCases}
                             showOnlyOfficialCases={showOnlyOfficialCases}
                             onCaseSelected={setSelectedCaseUuid}

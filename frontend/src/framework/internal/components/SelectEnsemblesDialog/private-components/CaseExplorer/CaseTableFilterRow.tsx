@@ -79,6 +79,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
 
     return (
         <Table.Row layoutClassName="font-normal!" sortable={false}>
+            <Table.Cell noPadding></Table.Cell>
             <Table.Cell noPadding>
                 <FilterInput
                     value={props.filterState["name"]}

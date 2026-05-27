@@ -3,12 +3,12 @@ import React from "react";
 import { cloneDeep, isEqual } from "lodash";
 
 import type { Grid3dZone_api } from "@api";
-import { Button } from "@lib/components/Button";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { Button } from "@lib/newComponents/Button";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
@@ -34,9 +34,11 @@ function isNumberTuple(value: unknown, length: number): value is number[] {
     return Array.isArray(value) && value.length === length && value.every((v) => typeof v === "number");
 }
 
-export class GridLayerRangeSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
-{
+export class GridLayerRangeSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueConstraintsType
+> {
     defaultValue: InternalValueType = null;
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType, index: number) => {
@@ -306,8 +308,7 @@ export class GridLayerRangeSetting
                 }
             }
 
-            // @ts-expect-error unused argument
-            function handleRadioChange(_, newType: "range" | "zone") {
+            function handleRadioChange(newType: "range" | "zone") {
                 const newValue: InternalValueType = {
                     ...(internalValue ?? { i: [0, 0], j: [0, 0], k: { type: "range", range: [0, 0] } }),
                 };
@@ -329,128 +330,146 @@ export class GridLayerRangeSetting
             return (
                 <>
                     <div
-                        className={resolveClassNames("flex flex-col gap-y-2", {
-                            "outline-2 outline-amber-400": hasChanges,
-                        })}
+                        className={resolveClassNames(
+                            "grid grid-cols-[auto_1fr] items-center gap-x-horizontal-3xs gap-y-vertical-2xs",
+                            {
+                                "outline-accent-strong rounded outline-2": hasChanges,
+                            },
+                        )}
                         ref={divRef}
                     >
                         {labels.map((label) => (
-                            <div key={`setting-${label}`} className="flex items-center gap-x-1">
-                                <div className="w-8 flex flex-col items-start pl-1">{label.toUpperCase()}</div>
-                                <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
-                                    <Input
-                                        type="number"
-                                        value={internalValue?.[label][0] ?? valueConstraints.range[label][0]}
-                                        onChange={(e) => handleInputChange(label, 0, parseInt(e.target.value))}
-                                    />
+                            <React.Fragment key={`setting-${label}`}>
+                                <div className="pl-horizontal-3xs w-8">{label.toUpperCase()}</div>
+                                <div className="gap-x-horizontal-3xs flex items-center">
+                                    <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
+                                        <NumberInput
+                                            min={valueConstraints.range[label][0]}
+                                            max={valueConstraints.range[label][1]}
+                                            value={internalValue?.[label][0] ?? valueConstraints.range[label][0]}
+                                            onValueChange={(val) =>
+                                                handleInputChange(label, 0, val ?? valueConstraints.range[label][0])
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grow">
+                                        <Slider
+                                            min={valueConstraints.range[label][0]}
+                                            max={valueConstraints.range[label][1]}
+                                            onValueChange={(value) =>
+                                                handleSliderChange(label, value as [number, number])
+                                            }
+                                            value={
+                                                internalValue?.[label] ?? [
+                                                    valueConstraints.range[label][0],
+                                                    valueConstraints.range[label][1],
+                                                ]
+                                            }
+                                            valueLabelDisplay="auto"
+                                            step={valueConstraints.range[label][2]}
+                                            enableRangeLocks
+                                        />
+                                    </div>
+                                    <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
+                                        <NumberInput
+                                            min={valueConstraints.range[label][0]}
+                                            max={valueConstraints.range[label][1]}
+                                            value={internalValue?.[label][1] ?? valueConstraints.range[label][1]}
+                                            onValueChange={(val) =>
+                                                handleInputChange(label, 1, val ?? valueConstraints.range[label][1])
+                                            }
+                                        />
+                                    </div>
                                 </div>
-                                <div className="grow">
-                                    <Slider
-                                        min={valueConstraints.range[label][0]}
-                                        max={valueConstraints.range[label][1]}
-                                        onChange={(_, value) => handleSliderChange(label, value as [number, number])}
-                                        value={
-                                            internalValue?.[label] ?? [
-                                                valueConstraints.range[label][0],
-                                                valueConstraints.range[label][1],
-                                            ]
-                                        }
-                                        valueLabelDisplay="auto"
-                                        step={valueConstraints.range[label][2]}
-                                    />
-                                </div>
-                                <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
-                                    <Input
-                                        type="number"
-                                        value={internalValue?.[label][1] ?? valueConstraints.range[label][1]}
-                                        onChange={(e) => handleInputChange(label, 1, parseInt(e.target.value))}
-                                    />
-                                </div>
-                            </div>
+                            </React.Fragment>
                         ))}
-                        <div className="flex items-center gap-x-1">
-                            <div className="w-8 flex flex-col items-start pl-1">K</div>
-                            <div>
-                                <RadioGroup
-                                    value={internalValue?.["k"].type ?? "range"}
-                                    options={[
-                                        { label: "Range", value: "range" },
-                                        { label: "Zone", value: "zone", disabled: valueConstraints.zones.length === 0 },
-                                    ]}
-                                    onChange={handleRadioChange}
-                                    direction="horizontal"
-                                />
-                            </div>
-                        </div>
-                        <div
-                            className={resolveClassNames("flex items-center gap-x-1 pl-8 h-8", {
-                                hidden: internalValue?.["k"].type !== "range" && internalValue !== null,
-                            })}
-                        >
-                            <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
-                                <Input
-                                    type="number"
-                                    value={internalValue?.["k"].range[0] ?? valueConstraints.range["k"][0]}
-                                    onChange={(e) => handleInputChange("k", 0, parseInt(e.target.value))}
-                                />
-                            </div>
-                            <div className="grow">
-                                <Slider
-                                    min={valueConstraints.range["k"][0]}
-                                    max={valueConstraints.range["k"][1]}
-                                    onChange={(_, value) => handleSliderChange("k", value as [number, number])}
-                                    value={
-                                        internalValue?.["k"].range ?? [
-                                            valueConstraints.range["k"][0],
-                                            valueConstraints.range["k"][1],
-                                        ]
-                                    }
-                                    valueLabelDisplay="auto"
-                                    step={valueConstraints.range["k"][2]}
-                                />
-                            </div>
-                            <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
-                                <Input
-                                    type="number"
-                                    value={internalValue?.["k"].range[1] ?? valueConstraints.range["k"][1]}
-                                    onChange={(e) => handleInputChange("k", 1, parseInt(e.target.value))}
-                                />
-                            </div>
-                        </div>
-                        <div
-                            className={resolveClassNames("flex items-center gap-x-1 pl-8 h-8", {
-                                hidden: internalValue?.["k"].type !== "zone",
-                            })}
-                        >
-                            <Dropdown
-                                options={valueConstraints.zones.map((zone) => ({
-                                    label: zone.name,
-                                    value: zone.name,
-                                }))}
-                                value={internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined}
-                                onChange={(val) => {
-                                    const zone = valueConstraints.zones.find((z) => z.name === val);
-                                    if (zone) {
-                                        const newValue: InternalValueType = {
-                                            ...(internalValue ?? {
-                                                i: [0, 0],
-                                                j: [0, 0],
-                                                k: { type: "range", range: [0, 0] },
-                                            }),
-                                            k: {
-                                                type: "zone",
-                                                range: [zone.start_layer, zone.end_layer],
-                                                name: zone.name,
-                                            },
-                                        };
-                                        setInternalValue(newValue);
-                                    }
-                                }}
+                        <div className="pl-horizontal-3xs row-span-2 w-8 self-center">K</div>
+                        <div>
+                            <SimpleRadioGroup
+                                value={internalValue?.["k"].type ?? "range"}
+                                options={[
+                                    { label: "Range", value: "range" },
+                                    { label: "Zone", value: "zone", disabled: valueConstraints.zones.length === 0 },
+                                ]}
+                                onValueChange={handleRadioChange}
+                                layout="horizontal"
                             />
                         </div>
+                        <div className="flex h-8 items-center">
+                            {internalValue?.k.type !== "zone" ? (
+                                <div className="gap-x-horizontal-3xs flex w-full items-center">
+                                    <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
+                                        <NumberInput
+                                            min={valueConstraints.range["k"][0]}
+                                            max={valueConstraints.range["k"][1]}
+                                            value={internalValue?.["k"].range[0] ?? valueConstraints.range["k"][0]}
+                                            onValueChange={(val) =>
+                                                handleInputChange("k", 0, val ?? valueConstraints.range["k"][0])
+                                            }
+                                        />
+                                    </div>
+                                    <div className="grow">
+                                        <Slider
+                                            min={valueConstraints.range["k"][0]}
+                                            max={valueConstraints.range["k"][1]}
+                                            onValueChange={(value) =>
+                                                handleSliderChange("k", value as [number, number])
+                                            }
+                                            value={
+                                                internalValue?.["k"].range ?? [
+                                                    valueConstraints.range["k"][0],
+                                                    valueConstraints.range["k"][1],
+                                                ]
+                                            }
+                                            valueLabelDisplay="auto"
+                                            step={valueConstraints.range["k"][2]}
+                                            enableRangeLocks
+                                        />
+                                    </div>
+                                    <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
+                                        <NumberInput
+                                            min={valueConstraints.range["k"][0]}
+                                            max={valueConstraints.range["k"][1]}
+                                            value={internalValue?.["k"].range[1] ?? valueConstraints.range["k"][1]}
+                                            onValueChange={(val) =>
+                                                handleInputChange("k", 1, val ?? valueConstraints.range["k"][1])
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <Combobox
+                                    items={valueConstraints.zones.map((zone) => ({
+                                        label: zone.name,
+                                        value: zone.name,
+                                    }))}
+                                    value={
+                                        internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined
+                                    }
+                                    onValueChange={(val) => {
+                                        const zone = valueConstraints.zones.find((z) => z.name === val);
+                                        if (zone) {
+                                            const newValue: InternalValueType = {
+                                                ...(internalValue ?? {
+                                                    i: [0, 0],
+                                                    j: [0, 0],
+                                                    k: { type: "range", range: [0, 0] },
+                                                }),
+                                                k: {
+                                                    type: "zone",
+                                                    range: [zone.start_layer, zone.end_layer],
+                                                    name: zone.name,
+                                                },
+                                            };
+                                            setInternalValue(newValue);
+                                        }
+                                    }}
+                                />
+                            )}
+                        </div>
                     </div>
-                    <div className="flex justify-end mt-2">
-                        <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges}>
+                    <div className="mt-vertical-2xs flex justify-end">
+                        <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges} size="small">
                             Apply Changes
                         </Button>
                     </div>

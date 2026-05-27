@@ -174,20 +174,6 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         props.onHover(props.name, target.getBoundingClientRect().top);
     }
 
-    function makePreviewImage() {
-        if (props.drawPreviewFunc) {
-            const pixels = convertRemToPixels(2.5);
-            return (
-                <svg width={pixels} height={pixels} viewBox={`0 0 ${pixels} ${pixels}`}>
-                    {props.drawPreviewFunc(pixels, pixels)}
-                </svg>
-            );
-        }
-        return (
-            <div className="border-neutral-subtle bg-neutral flex h-full w-full items-center justify-center border" />
-        );
-    }
-
     function makeItem() {
         return (
             <div
@@ -203,11 +189,11 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 onMouseOver={handleHover}
             >
                 <div
-                    className="px-horizontal-xs gap-horizontal-xs flex h-full items-center text-sm"
+                    className="px-horizontal-xs gap-horizontal-xs text-body-sm flex h-full items-center"
                     title={props.displayName}
                 >
-                    <div className="p-vertical-3xs h-12 w-12 min-w-12 shrink-0 overflow-hidden">
-                        {makePreviewImage()}
+                    <div className="border-neutral-subtle bg-canvas h-10 w-10 min-w-10 shrink-0 overflow-hidden border">
+                        {makePreviewImage(40, props.drawPreviewFunc)}
                     </div>
                     <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
                     <span
@@ -331,20 +317,16 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         style.top = props.top;
     }
 
-    const previewFunc = props.module.getDrawPreviewFunc();
-
     return (
         <div
-            className="z-tooltip border-neutral-subtle bg-floating p-vertical-md text-body-md gap-horizontal-sm absolute flex w-96 border shadow-lg"
+            className="z-tooltip border-neutral-subtle bg-floating p-vertical-md text-body-md gap-horizontal-sm absolute flex w-96 items-center border shadow-lg"
             style={style}
         >
-            <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>
-                {previewFunc?.(64, 64)}
-            </svg>
+            <div className="min-w-20">{makePreviewImage(80, props.module.getDrawPreviewFunc())}</div>
             <div className="gap-vertical-2xs flex grow flex-col">
                 <div className="flex items-start">
                     <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
-                    <Button variant="text" tone="neutral" size="small" onClick={props.onClose}>
+                    <Button variant="text" tone="neutral" size="small" onClick={props.onClose} iconOnly>
                         <Close fontSize="inherit" />
                     </Button>
                 </div>
@@ -352,7 +334,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                     {makeDevState(props.module.getDevState())}
                     {makePersistenceState(props.module.canBeSerialized())}
                 </div>
-                <div className="text-body-xs">{props.module.getDescription()}</div>
+                <div className="text-body-sm">{props.module.getDescription()}</div>
                 <div className="text-bolder gap-horizontal-2xs text-body-xs flex flex-wrap">{makeDataTags()}</div>
             </div>
         </div>
@@ -516,3 +498,14 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         </div>
     );
 };
+
+function makePreviewImage(size: number, drawPreviewFunc: DrawPreviewFunc | null): React.ReactNode {
+    if (drawPreviewFunc) {
+        return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                {drawPreviewFunc(size, size)}
+            </svg>
+        );
+    }
+    return <div className="border-neutral-subtle bg-neutral flex h-full w-full items-center justify-center border" />;
+}

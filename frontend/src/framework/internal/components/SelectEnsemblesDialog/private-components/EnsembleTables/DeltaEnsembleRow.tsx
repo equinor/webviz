@@ -1,9 +1,10 @@
 import type React from "react";
 
-import { DragIndicator, FolderOpen, Remove, WarningOutlined } from "@mui/icons-material";
+import { DragIndicator, FolderOpen, WarningOutlined } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SortableList } from "@lib/components/SortableList";
+import { Delete } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Combobox } from "@lib/newComponents/Combobox";
@@ -195,7 +196,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                     <div className="flex flex-row">
                         <TooltipCompositions.Default content="Remove delta ensemble from selection">
                             <Button variant="text" tone="danger" size="small" iconOnly onClick={onDelete}>
-                                <Remove fontSize="inherit" />
+                                <Delete fontSize="inherit" />
                             </Button>
                         </TooltipCompositions.Default>
                     </div>

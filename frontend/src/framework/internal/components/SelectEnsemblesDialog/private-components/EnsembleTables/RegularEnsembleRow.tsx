@@ -1,8 +1,9 @@
 import type React from "react";
 
-import { DragIndicator, Remove } from "@mui/icons-material";
+import { DragIndicator } from "@mui/icons-material";
 
 import { SortableList } from "@lib/components/SortableList";
+import { Delete } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Table } from "@lib/newComponents/Table";
@@ -69,7 +70,7 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                 <Table.Cell>
                     <TooltipCompositions.Default content="Remove this ensemble from the list" delay="medium">
                         <Button variant="text" tone="danger" onClick={onDelete} size="small" iconOnly>
-                            <Remove fontSize="inherit" />
+                            <Delete fontSize="inherit" />
                         </Button>
                     </TooltipCompositions.Default>
                 </Table.Cell>

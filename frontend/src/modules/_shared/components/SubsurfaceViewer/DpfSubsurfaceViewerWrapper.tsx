@@ -164,7 +164,15 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
 
     deckGlLayers.push(
         new PlaceholderLayer({ id: "placeholder" }),
-        new AxesLayer({ id: "axes", bounds: bounds3D, ZIncreasingDownwards: true }),
+        new AxesLayer({
+            id: "axes",
+            bounds: bounds3D,
+            ZIncreasingDownwards: true,
+            // Alpha must be explicit — luma.gl's shared scratch buffer is never zeroed, so a
+            // 3-element array leaves the alpha channel at whatever garbage was last written there.
+            axisColor: [120, 120, 120, 255],
+            labelColor: [120, 120, 120, 255],
+        }),
     );
 
     deckGlLayers.reverse();
