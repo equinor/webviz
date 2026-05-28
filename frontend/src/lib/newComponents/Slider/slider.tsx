@@ -41,7 +41,7 @@ export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orien
      *
      * @default "none"
      */
-    enableRangeLocks?: "both" | "min" | "max" | "none" | true;
+    showRangeLocks?: "both" | "min" | "max" | "none" | true;
 
     /**
      * Displays a label over the thumbs showing their current value
@@ -89,7 +89,7 @@ export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orien
 const DEFAULT_PROPS = {
     min: 0,
     max: 100,
-    enableRangeLocks: "none" as NonNullable<SliderProps["enableRangeLocks"]>,
+    showRangeLocks: "none" as NonNullable<SliderProps["showRangeLocks"]>,
     valueLabelDisplay: "auto" as NonNullable<SliderProps["valueLabelDisplay"]>,
 } satisfies Partial<SliderProps>;
 
@@ -113,7 +113,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const { onValueChange, onValueCommitted } = props;
 
     const baseProps = resolveWrapperProps(defaultedProps, [
-        "enableRangeLocks",
+        "showRangeLocks",
         "valueLabelDisplay",
         "thumbAriaLabel",
         "valueLabelFormat",
@@ -231,8 +231,8 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         }
     }
 
-    const showMinLock = [true, "both", "min"].includes(defaultedProps.enableRangeLocks);
-    const showMaxLock = [true, "both", "max"].includes(defaultedProps.enableRangeLocks);
+    const showMinLock = [true, "both", "min"].includes(defaultedProps.showRangeLocks);
+    const showMaxLock = [true, "both", "max"].includes(defaultedProps.showRangeLocks);
     const [prevShowMinLock, setPrevShowMinLock] = React.useState(showMinLock);
     const [prevShowMaxLock, setPrevShowMaxLock] = React.useState(showMaxLock);
 

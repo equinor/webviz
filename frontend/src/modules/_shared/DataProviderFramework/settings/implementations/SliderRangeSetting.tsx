@@ -237,7 +237,7 @@ export class SliderRangeSetting implements CustomSettingImplementation<
                             ]}
                             valueLabelDisplay="auto"
                             step={step}
-                            enableRangeLocks
+                            showRangeLocks
                         />
                     </div>
                     <div className={resolveClassNames("min-w-16 flex-1", { hidden: !inputVisible })}>

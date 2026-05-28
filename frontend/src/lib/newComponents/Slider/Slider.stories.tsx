@@ -93,7 +93,7 @@ export const Controlled: Story = {
                     <Slider
                         {...args}
                         layoutClassName="w-full grow"
-                        enableRangeLocks="both"
+                        showRangeLocks="both"
                         value={sliderValue}
                         onValueChange={(v) => {
                             setSliderValue(v as any);
@@ -117,31 +117,31 @@ export const SnapRangeLimit: Story = {
         <div className="gap-y-vertical-lg flex flex-col">
             <SliderController
                 initialValue={25}
-                renderChildren={(props) => <Slider enableRangeLocks {...args} {...props} />}
+                renderChildren={(props) => <Slider showRangeLocks {...args} {...props} />}
             />
             <SliderController
                 initialValue={[25, 75]}
-                renderChildren={(props) => <Slider enableRangeLocks {...args} {...props} />}
+                renderChildren={(props) => <Slider showRangeLocks {...args} {...props} />}
             />
 
             <div className="w-3/4">
                 <SliderController
                     initialValue={[25, 75]}
-                    renderChildren={(props) => <Slider enableRangeLocks {...args} {...props} />}
+                    renderChildren={(props) => <Slider showRangeLocks {...args} {...props} />}
                 />
             </div>
 
             <div className="w-1/2">
                 <SliderController
                     initialValue={[25, 75]}
-                    renderChildren={(props) => <Slider enableRangeLocks="min" {...args} {...props} />}
+                    renderChildren={(props) => <Slider showRangeLocks="min" {...args} {...props} />}
                 />
             </div>
 
             <div className="w-2/5">
                 <SliderController
                     initialValue={[25, 75]}
-                    renderChildren={(props) => <Slider enableRangeLocks="max" {...args} {...props} />}
+                    renderChildren={(props) => <Slider showRangeLocks="max" {...args} {...props} />}
                 />
             </div>
         </div>
