@@ -168,7 +168,7 @@ spec:
       runAsUser: 999
       variables:
         REDIS_REQUIREPASS: DummyUserSessionPwd
-      command: ["--loglevel", "notice"]
+      args: ["--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
@@ -180,7 +180,7 @@ spec:
         REDIS_REQUIREPASS: DummyCachePwd
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
-      command: ["--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "''",  "--appendonly", "no",  "--loglevel", "notice"]
+      args: ["--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "",  "--appendonly", "no",  "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
