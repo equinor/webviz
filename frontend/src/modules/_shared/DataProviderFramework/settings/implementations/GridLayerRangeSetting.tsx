@@ -367,7 +367,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             }
                                             valueLabelDisplay="auto"
                                             step={valueConstraints.range[label][2]}
-                                            enableRangeLocks
+                                            showRangeLocks
                                         />
                                     </div>
                                     <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
@@ -424,7 +424,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             }
                                             valueLabelDisplay="auto"
                                             step={valueConstraints.range["k"][2]}
-                                            enableRangeLocks
+                                            showRangeLocks
                                         />
                                     </div>
                                     <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
