@@ -11,7 +11,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 msal = "^1.32.0"
-starsessions = "^2.2.1"
+starsessions = "^2.3.0a1"
 redis = "7.1.1"
 pyjwt = "^2.6.0"
 

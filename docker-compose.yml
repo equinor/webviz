@@ -33,6 +33,10 @@ services:
       - WEBVIZ_PSEUDONYM_HMAC_KEY
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
+
+      - WEBVIZ_REDIS_USER_SESSION_PASSWORD
+      - WEBVIZ_REDIS_CACHE_PASSWORD
+      - WEBVIZ_SESSION_STORE_ENCRYPTION_KEY
     volumes:
       - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
       - ./backend_py/libs:/home/appuser/backend_py/libs
@@ -79,19 +83,27 @@ services:
       - ./backend_py/libs:/home/appuser/backend_py/libs
 
   redis-user-session:
-    image: redis:7.2
+    build:
+      context: .
+      dockerfile: docker/redis/Dockerfile
+    environment:
+      - REDIS_REQUIREPASS=${WEBVIZ_REDIS_USER_SESSION_PASSWORD}
     expose:
       - 6379
     user: "999:999"
-    command: ["redis-server",  "--loglevel", "notice"]
+    command: ["--loglevel", "notice"]
 
   redis-cache:
-    image: redis:7.2
+    build:
+      context: .
+      dockerfile: docker/redis/Dockerfile
+    environment:
+      - REDIS_REQUIREPASS=${WEBVIZ_REDIS_CACHE_PASSWORD}
     expose:
       - 6379
     user: "999:999"
     # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
-    command: ["redis-server",  "--maxmemory", "1gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "''",  "--appendonly", "no",  "--logfile", "''",  "--loglevel", "notice"]
+    command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no", "--logfile", "", "--loglevel", "notice"]
 
 
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,

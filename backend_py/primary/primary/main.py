@@ -9,7 +9,9 @@ from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from starsessions.stores.redis import RedisStore
+from starsessions.encryptors import FernetEncryptor
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+from cryptography.fernet import Fernet
 
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
@@ -66,7 +68,7 @@ logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.surface").setLevel(logging.DEBUG)
 logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 # logging.getLogger("primary.middleware").setLevel(logging.DEBUG)
-# logging.getLogger("primary.auth").setLevel(logging.DEBUG)
+logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
@@ -189,6 +191,8 @@ app.add_middleware(
 )
 
 session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
+encryptor=FernetEncryptor(config.SESSION_STORE_ENCRYPTION_KEY)
+app.add_middleware(SessionMiddleware, store=session_store, encryptor=encryptor)
 app.add_middleware(SessionMiddleware, store=session_store)
 
 # Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)

@@ -9,6 +9,8 @@ CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 
 PSEUDONYM_HMAC_KEY = os.getenv("WEBVIZ_PSEUDONYM_HMAC_KEY")
 
+SESSION_STORE_ENCRYPTION_KEY = os.environ["WEBVIZ_SESSION_STORE_ENCRYPTION_KEY"]
+
 SMDA_SUBSCRIPTION_KEY = os.environ["WEBVIZ_SMDA_SUBSCRIPTION_KEY"]
 ENTERPRISE_SUBSCRIPTION_KEY = os.environ["WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY"]
 SUMO_ENV = os.getenv("WEBVIZ_SUMO_ENV", "prod")
@@ -26,8 +28,16 @@ RESOURCE_SCOPES_DICT = {
     "ssdl": ["8b6e5eb9-edc8-4086-83cb-afa5cc185b23/user_impersonation"],
     "pdm": ["f2e415dc-d400-4cd4-a801-fa707138a49c/user_impersonation"],
 }
-REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
-REDIS_CACHE_URL = "redis://redis-cache:6379"
+
+REDIS_USER_SESSION_PASSWORD = os.environ["WEBVIZ_REDIS_USER_SESSION_PASSWORD"]
+REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
+
+REDIS_USER_SESSION_URL = f"redis://:{REDIS_USER_SESSION_PASSWORD}@redis-user-session:6379"
+REDIS_CACHE_URL = f"redis://:{REDIS_CACHE_PASSWORD}@redis-cache:6379"
+
+#REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
+#REDIS_CACHE_URL = "redis://redis-cache:6379"
+
 
 _is_on_radix_platform = is_running_on_radix_platform()
 if _is_on_radix_platform:
