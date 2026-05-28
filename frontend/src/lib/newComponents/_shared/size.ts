@@ -44,6 +44,16 @@ export function getTextSizeForSelectableSize(size: SelectableSize): TextSize {
     return mapping[size];
 }
 
+export function getIconSizeClassNameForSelectableSize(size: SelectableSize): string {
+    const mapping: Record<SelectableSize, string> = {
+        small: "text-body-xl",
+        default: "text-body-3xl",
+        large: "text-body-4xl",
+    };
+
+    return mapping[size];
+}
+
 export function getNextTextSize(size: TextSize, increment: number = 1) {
     const currentIndex = TEXT_SIZES.findIndex((s) => s === size);
 

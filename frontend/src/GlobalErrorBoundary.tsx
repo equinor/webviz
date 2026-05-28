@@ -3,7 +3,6 @@ import React from "react";
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
 import { Button } from "@lib/newComponents/Button";
-import { IconButton } from "@lib/components/IconButton";
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";

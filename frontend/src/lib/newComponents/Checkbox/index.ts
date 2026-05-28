@@ -1,9 +1,17 @@
 export { Checkbox } from "./_baseComponents/checkbox";
 export { CheckboxGroup } from "./_baseComponents/checkboxGroup";
-export { CheckboxItem } from "./_compositions/checkboxItem";
-export { SimpleCheckboxGroup } from "./_compositions/simpleCheckboxGroup";
+import { GroupWithLabels } from "./_compositions/groupWithLabels";
+import { WithLabel } from "./_compositions/withLabel";
+
+export const CheckboxCompositions = {
+    WithLabel,
+    GroupWithLabels,
+};
 
 export type { CheckboxGroupProps } from "./_baseComponents/checkboxGroup";
-export type { CheckboxItemProps } from "./_compositions/checkboxItem";
-export type { SimpleCheckboxGroupProps, CheckboxOption } from "./_compositions/simpleCheckboxGroup";
+export type { WithLabelProps as CheckboxWithLabelProps } from "./_compositions/withLabel";
+export type {
+    GroupWithLabelsProps as CheckboxGroupWithLabelsProps,
+    CheckboxOption,
+} from "./_compositions/groupWithLabels";
 export type { CheckboxProps } from "./_baseComponents/checkbox";

@@ -18,7 +18,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { SwitchItem } from "@lib/newComponents/Switch";
+import { SwitchCompositions } from "@lib/newComponents/Switch";
 
 import { readInitialStateFromLocalStorage, storeStateInLocalStorage } from "./_utils";
 import { CaseTable } from "./CaseTable";
@@ -219,14 +219,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     </PendingWrapper>
                 </FieldCompositions.Default>
                 <Tooltip title="Show only cases authored by me" enterDelay="medium">
-                    <SwitchItem
+                    <SwitchCompositions.WithLabel
                         checked={showOnlyMyCases}
                         onCheckedChange={handleCasesByMeChange}
                         label="Only my cases"
                     />
                 </Tooltip>
                 <Tooltip title="Show only cases marked as official" enterDelay="medium">
-                    <SwitchItem
+                    <SwitchCompositions.WithLabel
                         checked={showOnlyOfficialCases}
                         onCheckedChange={handleOfficialCasesSwitchChange}
                         label="Only Official cases"

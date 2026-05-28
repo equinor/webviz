@@ -1,10 +1,18 @@
 import type React from "react";
 
 import type { ColorPalette } from "@lib/utils/ColorPalette";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ColorGradientProps = {
     colorPalette: ColorPalette;
     steps?: number;
+    size?: "small" | "default" | "large";
+};
+
+const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string> = {
+    small: "h-4",
+    default: "h-5",
+    large: "h-6",
 };
 
 function makeColorSamples(steps: number, colorPalette: ColorPalette) {
@@ -15,20 +23,22 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
         samples.push(
             <div
                 key={`${color}-${i}`}
-                className="border-neutral h-5 w-full"
+                className="h-full grow first-of-type:rounded-l last-of-type:rounded-r"
                 style={{
                     backgroundColor: color,
                 }}
-            ></div>,
+            />,
         );
     }
     return samples;
 }
 
 export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
+    const { size = "default" } = props;
+
     if (props.steps) {
         return (
-            <div className="border-neutral flex flex-row justify-between gap-0.5 rounded border">
+            <div className={resolveClassNames(SIZE_TO_CLASSNAMES[size], "border-neutral-strong flex rounded border")}>
                 {makeColorSamples(props.steps, props.colorPalette)}
             </div>
         );
@@ -36,10 +46,10 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
 
     return (
         <div
-            className="border-neutral h-5 w-full rounded border"
+            className={resolveClassNames(SIZE_TO_CLASSNAMES[size], "border-neutral-subtle rounded border")}
             style={{
                 backgroundImage: props.colorPalette.getGradient(),
             }}
-        ></div>
+        />
     );
 };

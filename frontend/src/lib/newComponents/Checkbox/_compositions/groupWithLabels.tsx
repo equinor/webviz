@@ -4,7 +4,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { CheckboxGroup, type CheckboxGroupProps } from "../_baseComponents/checkboxGroup";
 
-import { CheckboxItem } from "./checkboxItem";
+import { WithLabel } from "./withLabel";
 
 export type CheckboxOption = {
     label: string;
@@ -12,12 +12,12 @@ export type CheckboxOption = {
     disabled?: boolean;
 };
 
-export type SimpleCheckboxGroupProps = {
+export type GroupWithLabelsProps = {
     options: CheckboxOption[];
     layout?: "vertical" | "horizontal";
 } & CheckboxGroupProps;
 
-export const SimpleCheckboxGroup = React.forwardRef<HTMLDivElement, SimpleCheckboxGroupProps>(
+export const GroupWithLabels = React.forwardRef<HTMLDivElement, GroupWithLabelsProps>(
     function SimpleCheckboxGroup(props, ref) {
         const { options, layout = "vertical", ...groupProps } = props;
         return (
@@ -30,7 +30,7 @@ export const SimpleCheckboxGroup = React.forwardRef<HTMLDivElement, SimpleCheckb
                 })}
             >
                 {options.map((option) => (
-                    <CheckboxItem
+                    <WithLabel
                         key={option.value}
                         value={option.value}
                         label={option.label}

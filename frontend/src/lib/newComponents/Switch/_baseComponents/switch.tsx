@@ -3,13 +3,17 @@ import React from "react";
 import type { SwitchRootProps } from "@base-ui/react";
 import { Switch as SwitchBase } from "@base-ui/react";
 
+import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type SwitchProps = ComponentWrapperProps<Omit<SwitchRootProps, "ref">>;
+export type SwitchProps = ComponentWrapperProps<Omit<SwitchRootProps, "ref">> & {
+    size?: SelectableSize;
+};
 
 export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Switch(props, ref) {
-    const baseProps = resolveWrapperProps(props);
+    const { size = "default", ...rest } = props;
+    const baseProps = resolveWrapperProps(rest);
 
     return (
         <SwitchBase.Root
@@ -17,8 +21,9 @@ export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Sw
             ref={ref}
             className={resolveClassNames(
                 props.layoutClassName,
-                "group/switch p-selectable-y selectable relative box-border inline-flex aspect-square appearance-none rounded-full border-0",
+                "group/switch p-selectable-y selectable relative box-border inline-flex aspect-square w-fit appearance-none rounded-full border-0",
             )}
+            {...getDataAttributesForSelectableSize(size, true)}
         >
             <span className="h-selectable-sm flex aspect-square">
                 <span className="not-group-data-disabled/switch:not-group-data-readonly/switch:group-hover/switch:bg-neutral-surface group-data-checked/switch:bg-accent not-group-data-disabled/switch:not-group-data-readonly/switch:group-data-checked/switch:group-hover/switch:bg-neutral-surface group-data-disabled/switch:bg-disabled bg-neutral relative top-1/2 flex h-1.5 grow -translate-y-1/2 rounded-full">

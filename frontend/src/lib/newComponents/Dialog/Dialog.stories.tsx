@@ -4,6 +4,7 @@ import { Dialog as DialogBase } from "@base-ui/react";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "../Button";
+import { Slider } from "../Slider";
 
 import { Dialog } from "./index";
 
@@ -332,6 +333,53 @@ export const ConfirmDelete: Story = {
                         </Button>
                         <Button variant="contained" tone="danger" onClick={() => setOpen(false)}>
                             Delete
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog.Popup>
+            </>
+        );
+    },
+};
+
+export const WithSlider: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "A dialog with a slider control in the body — useful for settings or value-selection dialogs.",
+            },
+        },
+    },
+    render: function WithSliderStory() {
+        const [open, setOpen] = React.useState(false);
+        const [value, setValue] = React.useState<number | readonly number[]>(40);
+
+        return (
+            <>
+                <Button variant="contained" tone="accent" onClick={() => setOpen(true)}>
+                    Open Dialog
+                </Button>
+                <Dialog.Popup open={open} onOpenChange={setOpen}>
+                    <Dialog.Header closeIconVisible>
+                        <Dialog.Title>Adjust Value</Dialog.Title>
+                    </Dialog.Header>
+                    <Dialog.Body>
+                        <Dialog.Description>Use the slider to select a value between 0 and 100.</Dialog.Description>
+                        <div className="px-horizontal-md pt-vertical-md">
+                            <Slider
+                                min={0}
+                                max={100}
+                                value={value}
+                                onValueChange={setValue}
+                                valueLabelDisplay="auto"
+                            />
+                        </div>
+                    </Dialog.Body>
+                    <Dialog.Actions>
+                        <Button variant="text" tone="neutral" onClick={() => setOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button variant="contained" tone="accent" onClick={() => setOpen(false)}>
+                            Apply
                         </Button>
                     </Dialog.Actions>
                 </Dialog.Popup>

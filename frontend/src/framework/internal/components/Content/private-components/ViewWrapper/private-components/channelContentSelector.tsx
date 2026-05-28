@@ -8,7 +8,7 @@ import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelRe
 import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
 import { Overlay } from "@lib/components/Overlay";
 import { Button } from "@lib/newComponents/Button";
-import { CheckboxItem } from "@lib/newComponents/Checkbox";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -37,14 +37,13 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
     }
 
     return (
-        <div className="flex flex-col">
-            <div className="px-horizontal-2xs py-vertical-2xs font-bolder text-body-sm flex cursor-pointer items-center">
-                <CheckboxItem
+        <div className="py-vertical-2xs flex flex-col">
+            <div className="px-horizontal-2xs font-bolder text-body-sm flex cursor-pointer items-center">
+                <CheckboxCompositions.WithLabel
                     onCheckedChange={handleChannelToggle}
                     label={props.channel.displayName}
                     checked={props.selected}
-                    data-selectable-space="sm"
-                    data-space-proportions="squished"
+                    size="small"
                 />
             </div>
             <div className="relative">
@@ -58,18 +57,17 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
                 {props.channel.contents.map((content, index) => (
                     <div
                         key={content.contentIdString}
-                        className="ml-horizontal-2xl border-neutral-strong text-body-sm gap-horizontal-3xs px-horizontal-2xs py-vertical-2xs flex cursor-pointer items-center border-l pl-0"
+                        className="ml-horizontal-2xl border-neutral-strong text-body-sm gap-horizontal-3xs px-horizontal-2xs flex cursor-pointer items-center border-l pl-0"
                     >
                         <span className="bg-neutral-strong -mr-horizontal-2xs inline-block h-px w-2" />
-                        <CheckboxItem
+                        <CheckboxCompositions.WithLabel
                             onCheckedChange={(checked) => handleContentToggle(content.contentIdString, checked)}
                             label={content.displayName}
                             checked={
                                 (props.selected && (props.multiSelect || index === 0)) ||
                                 props.selectedContentIdStrings.includes(content.contentIdString)
                             }
-                            data-selectable-space="sm"
-                            data-space-proportions="squished"
+                            size="small"
                         />
                     </div>
                 ))}

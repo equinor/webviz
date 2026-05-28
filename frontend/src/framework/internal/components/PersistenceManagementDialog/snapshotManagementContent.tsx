@@ -35,7 +35,7 @@ import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Field } from "@lib/newComponents/Field";
-import { SwitchItem } from "@lib/newComponents/Switch";
+import { SwitchCompositions } from "@lib/newComponents/Switch";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { formatDate } from "@lib/utils/dates";
 
@@ -422,13 +422,13 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 </Field.Root>
             </div>
             <div className="gap-horizontal-xs flex items-center">
-                <SwitchItem
+                <SwitchCompositions.WithLabel
                     checked={tableFilter.ownerId === userId}
                     onCheckedChange={handleShowMySnapshotsOnlyChange}
                     label="Show my snapshots only"
                 />
 
-                <SwitchItem
+                <SwitchCompositions.WithLabel
                     checked={tableFilter.snapshotDeleted === false}
                     onCheckedChange={handleHideDeletedSnapshotsChange}
                     label="Hide deleted snapshots"

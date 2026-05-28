@@ -1,10 +1,10 @@
 import React from "react";
 
 import { ColorGradient } from "@lib/components/ColorGradient";
+import { ColorTile } from "@lib/newComponents/ColorTile";
 import { Combobox } from "@lib/newComponents/Combobox";
 import type { ComboboxItem } from "@lib/newComponents/Combobox/combobox";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
-import { ColorTile } from "@lib/newComponents/ColorTile";
 
 export enum ColorPaletteSelectorType {
     Categorical = "categorical",
@@ -36,9 +36,8 @@ export type ColorPaletteSelectorProps = {
 };
 
 export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
-    const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(
-        props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0],
-    );
+    const selectedColorPalette =
+        props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) ?? props.colorPalettes[0];
 
     const comboboxItems = React.useMemo(
         () =>
@@ -53,7 +52,6 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
         if (!colorPalette) {
             return;
         }
-        setSelectedColorPalette(colorPalette);
         props.onChange?.(colorPalette);
     }
 

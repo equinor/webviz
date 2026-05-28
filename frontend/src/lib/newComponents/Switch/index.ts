@@ -1,5 +1,9 @@
 export { Switch } from "./_baseComponents/switch";
-export { SwitchItem } from "./_compositions/switchItem";
+import { WithLabel } from "./_compositions/withLabel";
 
+export const SwitchCompositions = {
+    WithLabel,
+};
+
+export type { WithLabelProps as SwitchWithLabelProps } from "./_compositions/withLabel";
 export type { SwitchProps } from "./_baseComponents/switch";
-export type { SwitchItemProps } from "./_compositions/switchItem";

@@ -1,6 +1,5 @@
 import type React from "react";
 
-
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Switch } from "@lib/newComponents/Switch";
 
@@ -180,7 +179,7 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             }
 
             return (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div className="gap-horizontal-2xs flex items-center">
                     <Switch checked={enabled} onCheckedChange={handleBooleanChange} />
                     <NumberInput
                         value={value}
@@ -188,6 +187,7 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
                         max={max}
                         disabled={!enabled}
                         onValueChange={handleNumberChange}
+                        layoutClassName="grow"
                     />
                 </div>
             );

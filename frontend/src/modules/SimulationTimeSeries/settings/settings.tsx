@@ -18,13 +18,13 @@ import { Label } from "@lib/components/Label";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { CheckboxItem } from "@lib/newComponents/Checkbox";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Hidden } from "@lib/newComponents/Hidden";
 import { NumberInput } from "@lib/newComponents/NumberInput";
-import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio";
 import { Select } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
 import { Switch } from "@lib/newComponents/Switch";
@@ -238,13 +238,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         if (statisticsType === StatisticsType.FANCHART) {
             return Object.values(FanchartStatisticOption).map((value: FanchartStatisticOption) => {
                 return (
-                    <CheckboxItem
+                    <CheckboxCompositions.WithLabel
                         key={value}
                         label={FanchartStatisticOptionEnumToStringMapping[value]}
                         checked={statisticsSelection?.FanchartStatisticsSelection?.includes(value)}
                         onCheckedChange={(checked) => {
                             handleFanchartStatisticsSelectionChange(checked, value);
                         }}
+                        size="small"
                     />
                 );
             });
@@ -252,13 +253,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         if (statisticsType === StatisticsType.INDIVIDUAL) {
             return Object.values(StatisticFunction_api).map((value: StatisticFunction_api) => {
                 return (
-                    <CheckboxItem
+                    <CheckboxCompositions.WithLabel
                         key={value}
                         label={StatisticFunctionEnumToStringMapping[value]}
                         checked={statisticsSelection?.IndividualStatisticsSelection.includes(value)}
                         onCheckedChange={(checked) => {
                             handleIndividualStatisticsSelectionChange(checked, value);
                         }}
+                        size="small"
                     />
                 );
             });
@@ -306,16 +308,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     >
                         <>
                             <div className="gap-y-vertical-xs gap-x-horizontal-xs flex flex-wrap">
-                                <CheckboxItem
+                                <CheckboxCompositions.WithLabel
                                     label="Show historical"
                                     checked={showHistorical}
                                     disabled={!selectedVectorNamesHasHistorical}
                                     onCheckedChange={(checked) => handleShowHistorical(checked)}
+                                    size="small"
                                 />
-                                <CheckboxItem
+                                <CheckboxCompositions.WithLabel
                                     label="Show observations"
                                     checked={showObservations}
                                     onCheckedChange={handleShowObservations}
+                                    size="small"
                                 />
                             </div>
                             <VectorSelector
@@ -368,25 +372,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     </FieldCompositions.Default>
                     <Separator orientation="horizontal" />
                     <FieldCompositions.Default label="Group by">
-                        <SimpleRadioGroup
+                        <RadioCompositions.GroupWithLabels
                             value={groupBy}
                             options={Object.values(GroupBy).map((val: GroupBy) => {
                                 return { value: val, label: GroupByEnumToStringMapping[val] };
                             })}
                             onValueChange={(value) => handleGroupByChange(value)}
                             layout="horizontal"
+                            size="small"
                         />
                     </FieldCompositions.Default>
                 </Collapsible.Content>
             </Collapsible.Group>
             <Collapsible.Group title="Visualization" defaultOpen>
                 <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
-                    <SimpleRadioGroup
+                    <RadioCompositions.GroupWithLabels
                         value={visualizationMode}
                         options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
                             return { value: val, label: VisualizationModeEnumToStringMapping[val] };
                         })}
                         onValueChange={(value) => handleVisualizationModeChange(value)}
+                        size="small"
                     />
                     <Hidden hidden={visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS}>
                         <Separator orientation="horizontal" />

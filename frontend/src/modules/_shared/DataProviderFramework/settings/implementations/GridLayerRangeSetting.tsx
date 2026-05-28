@@ -7,7 +7,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { NumberInput } from "@lib/newComponents/NumberInput";
-import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio";
 import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -331,7 +331,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                 <>
                     <div
                         className={resolveClassNames(
-                            "grid grid-cols-[auto_1fr] items-center gap-x-horizontal-3xs gap-y-vertical-2xs",
+                            "gap-x-horizontal-3xs gap-y-vertical-2xs grid grid-cols-[auto_1fr] items-center",
                             {
                                 "outline-accent-strong rounded outline-2": hasChanges,
                             },
@@ -385,7 +385,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                         ))}
                         <div className="pl-horizontal-3xs row-span-2 w-8 self-center">K</div>
                         <div>
-                            <SimpleRadioGroup
+                            <RadioCompositions.GroupWithLabels
                                 value={internalValue?.["k"].type ?? "range"}
                                 options={[
                                     { label: "Range", value: "range" },
@@ -393,6 +393,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                 ]}
                                 onValueChange={handleRadioChange}
                                 layout="horizontal"
+                                size="small"
                             />
                         </div>
                         <div className="flex h-8 items-center">
@@ -443,9 +444,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                         label: zone.name,
                                         value: zone.name,
                                     }))}
-                                    value={
-                                        internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined
-                                    }
+                                    value={internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined}
                                     onValueChange={(val) => {
                                         const zone = valueConstraints.zones.find((z) => z.name === val);
                                         if (zone) {

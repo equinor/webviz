@@ -25,7 +25,7 @@ import { ByRealizationNumberFilter } from "./private-components/byRealizationNum
 import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
 import { Button } from "@lib/newComponents/Button";
-import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Hidden } from "@lib/newComponents/Hidden";
 import { Check, Clear } from "@lib/mui-icons";
@@ -314,7 +314,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         <div className="border-neutral-subtle px-horizontal-2xs py-vertical-2xs">
                             <Separator orientation="horizontal" />
                             <FieldCompositions.Default label="Active Filter Type">
-                                <SimpleRadioGroup
+                                <RadioCompositions.GroupWithLabels
                                     value={props.selections.filterType}
                                     options={Object.values(RealizationFilterType).map((filterType) => {
                                         return {

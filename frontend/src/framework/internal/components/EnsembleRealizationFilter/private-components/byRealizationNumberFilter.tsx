@@ -13,7 +13,7 @@ import {
     makeRealizationPickerTagsFromRealizationNumberSelections,
 } from "../private-utils/realizationPickerUtils";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { SimpleRadioGroup } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio";
 
 export interface ByRealizationNumberFilterSelection {
     realizationNumberSelections: RealizationNumberSelection[] | null;
@@ -107,7 +107,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     return (
         <div className="gap-vertical-2xs flex flex-col">
             <FieldCompositions.Default label="Filtering Option">
-                <SimpleRadioGroup
+                <RadioCompositions.GroupWithLabels
                     value={props.selectedIncludeOrExcludeFilter}
                     options={[
                         {

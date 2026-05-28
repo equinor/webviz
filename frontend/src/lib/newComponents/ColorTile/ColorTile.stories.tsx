@@ -35,13 +35,11 @@ A small colored square used to represent a color value inline.
     argTypes: {
         color: { control: "color" },
         size: { control: "select", options: ["small", "default", "large"] },
-        interactive: { control: "boolean" },
         grouped: { control: "boolean" },
     },
     args: {
         color: "#3b82f6",
         size: "default",
-        interactive: false,
         grouped: false,
     },
 };
@@ -69,9 +67,6 @@ export const Interactive: TileStory = {
         docs: {
             description: { story: "`interactive` adds a hover outline and brightness lift — hover to see the effect." },
         },
-    },
-    args: {
-        interactive: true,
     },
 };
 

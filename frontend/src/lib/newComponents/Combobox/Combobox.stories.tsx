@@ -405,12 +405,14 @@ export const AsyncSearchAsYouType: Story = {
     render: () => {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
+        const [query, setQuery] = React.useState("");
         const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-        function handleInputValueChange(query: string) {
+        function handleInputValueChange(nextQuery: string) {
+            setQuery(nextQuery);
             if (debounceRef.current) clearTimeout(debounceRef.current);
 
-            if (!query) {
+            if (!nextQuery) {
                 setItems([]);
                 setLoading(false);
                 return;
@@ -418,7 +420,7 @@ export const AsyncSearchAsYouType: Story = {
 
             setLoading(true);
             debounceRef.current = setTimeout(() => {
-                const results = COUNTRIES.filter((c) => c.label.toLowerCase().includes(query.toLowerCase()));
+                const results = COUNTRIES.filter((c) => c.label.toLowerCase().includes(nextQuery.toLowerCase()));
                 setItems(results);
                 setLoading(false);
             }, 600);
@@ -432,6 +434,7 @@ export const AsyncSearchAsYouType: Story = {
                     filter={null}
                     clearable
                     placeholder="Type to search countries…"
+                    noMatchesText={query ? "No matches found" : "Type to search…"}
                     onInputValueChange={handleInputValueChange}
                 />
             </div>

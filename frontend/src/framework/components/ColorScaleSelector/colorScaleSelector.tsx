@@ -4,21 +4,20 @@ import { isEqual } from "lodash";
 
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
-import { Button } from "@lib/components/Button";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
 import { ColorScalePreview } from "@lib/components/ColorScalePreview";
-import { Dialog } from "@lib/components/Dialog";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { Overlay } from "@lib/components/Overlay";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import { Switch } from "@lib/components/Switch";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Button } from "@lib/newComponents/Button";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { RadioCompositions } from "@lib/newComponents/Radio";
+import { Switch } from "@lib/newComponents/Switch";
+import { Typography } from "@lib/newComponents/Typography";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance } from "@lib/utils/vec2";
 
@@ -78,10 +77,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
 
     return (
         <>
-            <div
-                className="grow cursor-pointer overflow-hidden rounded border border-slate-400 hover:outline hover:outline-blue-300"
-                onClick={handleClick}
-            >
+            <div className="selectable grow cursor-pointer overflow-hidden rounded" onClick={handleClick}>
                 <ColorScalePreview
                     colorPalette={colorScaleSpecification.colorScale.getColorPalette()}
                     gradientType={colorScaleSpecification.colorScale.getGradientType()}
@@ -93,29 +89,24 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
                     id={id}
                 />
             </div>
-            <Dialog
-                open={dialogOpen}
-                onClose={handleDiscardChanges}
-                title="Color Scale Selector"
-                width={"33%"}
-                modal
-                actions={
-                    <>
-                        <Button color="primary" onClick={handleAcceptChanges}>
-                            OK
-                        </Button>
-                        <Button color="danger" onClick={handleDiscardChanges}>
-                            Discard
-                        </Button>
-                    </>
-                }
-            >
-                <ColorScaleSelectorDialog
-                    {...props}
-                    colorScaleSpecification={tempColorScaleSpecification}
-                    onChange={handleColorScaleChange}
-                />
-            </Dialog>
+            <Dialog.Popup open={dialogOpen} onOpenChange={setDialogOpen} width={"33%"} modal>
+                <Dialog.Header>
+                    <Dialog.Title>Color Scale Selector</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                    <ColorScaleSelectorDialog
+                        {...props}
+                        colorScaleSpecification={tempColorScaleSpecification}
+                        onChange={handleColorScaleChange}
+                    />
+                </Dialog.Body>
+                <Dialog.Actions>
+                    <Button tone="neutral" variant="text" onClick={handleDiscardChanges}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleAcceptChanges}>Apply</Button>
+                </Dialog.Actions>
+            </Dialog.Popup>
         </>
     );
 }
@@ -153,8 +144,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
         }
     }
 
-    function toggleDiscrete(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
+    function toggleDiscrete(checked: boolean) {
         makeAndPropagateColorScale(
             colorScaleSpecification.colorScale.getColorPalette(),
             checked ? ColorScaleType.Discrete : ColorScaleType.Continuous,
@@ -167,8 +157,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
         );
     }
 
-    function handleGradientTypeChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const newGradientType = e.target.value as ColorScaleGradientType;
+    function handleGradientTypeChange(newGradientType: ColorScaleGradientType) {
         const lastSelectedColorPalette =
             newGradientType === ColorScaleGradientType.Sequential
                 ? lastSelectedSequentialColorPalette
@@ -235,8 +224,8 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
     );
 
     const handleNumStepsChange = React.useCallback(
-        function handleNumStepsChange(value: string) {
-            const numSteps = parseInt(value);
+        function handleNumStepsChange(value: number | null) {
+            const numSteps = value ?? 0;
 
             makeAndPropagateColorScale(
                 colorScaleSpecification.colorScale.getColorPalette(),
@@ -285,58 +274,80 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
     );
 
     return (
-        <div className="flex flex-col gap-4">
-            <RadioGroup
-                value={colorScaleSpecification.colorScale.getGradientType()}
-                onChange={handleGradientTypeChange}
-                options={[
-                    {
-                        value: ColorScaleGradientType.Sequential,
-                        label: "Sequential",
-                    },
-                    {
-                        value: ColorScaleGradientType.Diverging,
-                        label: "Diverging",
-                    },
-                ]}
-                direction="horizontal"
-            />
-            <Label text="Steps" position="left">
-                <div className="flex items-center gap-2">
-                    <div className="h-6">
-                        <Switch
-                            checked={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
-                            onChange={toggleDiscrete}
-                        />
-                    </div>
-                    <Input
-                        type="number"
+        <div className="gap-vertical-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
+            <FieldCompositions.Default label="Gradient type" gridLayout>
+                <RadioCompositions.GroupWithLabels
+                    value={colorScaleSpecification.colorScale.getGradientType()}
+                    onValueChange={handleGradientTypeChange}
+                    options={[
+                        {
+                            value: ColorScaleGradientType.Sequential,
+                            label: "Sequential",
+                        },
+                        {
+                            value: ColorScaleGradientType.Diverging,
+                            label: "Diverging",
+                        },
+                    ]}
+                    layout="horizontal"
+                />
+            </FieldCompositions.Default>
+            <FieldCompositions.Default label="Discrete?" gridLayout>
+                <div className="gap-horizontal-2xs flex items-center">
+                    <Switch
+                        checked={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
+                        onCheckedChange={toggleDiscrete}
+                    />
+                    <NumberInput
                         value={colorScaleSpecification.colorScale.getNumSteps()}
                         onValueChange={handleNumStepsChange}
                         disabled={colorScaleSpecification.colorScale.getType() !== ColorScaleType.Discrete}
                         min={2}
+                        unitIcon="steps"
+                        unitPlacement="end"
                     />
                 </div>
-            </Label>
-            <ColorScaleSetter
-                id={id}
-                selectedColorPalette={colorScaleSpecification.colorScale.getColorPalette()}
-                colorPalettes={
-                    props.workbenchSettings.getColorPalettes()[
-                        getPaletteTypeFromColorScale(colorScaleSpecification.colorScale)
-                    ]
-                }
-                type={colorScaleSpecification.colorScale.getType()}
-                gradientType={colorScaleSpecification.colorScale.getGradientType()}
-                min={colorScaleSpecification.colorScale.getMin()}
-                max={colorScaleSpecification.colorScale.getMax()}
-                divMidPoint={colorScaleSpecification.colorScale.getDivMidPoint()}
-                steps={colorScaleSpecification.colorScale.getNumSteps()}
-                areBoundariesUserDefined={colorScaleSpecification.areBoundariesUserDefined}
-                onChangeColorPalette={handleColorPaletteChange}
-                onChangeMinMaxDivMidPoint={handleMinMaxDivMidPointChange}
-                onChangeAreBoundariesUserDefined={handleAreBoundariesUserDefinedChange}
-            />
+            </FieldCompositions.Default>
+            <FieldCompositions.Default label="Color Palette" gridLayout>
+                <ColorPaletteSelector
+                    selectedColorPaletteId={colorScaleSpecification.colorScale.getColorPalette().getId()}
+                    colorPalettes={
+                        props.workbenchSettings.getColorPalettes()[
+                            getPaletteTypeFromColorScale(colorScaleSpecification.colorScale)
+                        ]
+                    }
+                    onChange={handleColorPaletteChange}
+                    type={convertColorScaleToColorPaletteSelectorType(colorScaleSpecification.colorScale)}
+                    steps={colorScaleSpecification.colorScale.getNumSteps()}
+                />
+            </FieldCompositions.Default>
+            <FieldCompositions.Default label="Customize range" gridLayout>
+                <Switch
+                    checked={colorScaleSpecification.areBoundariesUserDefined}
+                    onCheckedChange={handleAreBoundariesUserDefinedChange}
+                />
+            </FieldCompositions.Default>
+            <div className="col-start-2">
+                <ColorScaleSetter
+                    id={id}
+                    selectedColorPalette={colorScaleSpecification.colorScale.getColorPalette()}
+                    colorPalettes={
+                        props.workbenchSettings.getColorPalettes()[
+                            getPaletteTypeFromColorScale(colorScaleSpecification.colorScale)
+                        ]
+                    }
+                    type={colorScaleSpecification.colorScale.getType()}
+                    gradientType={colorScaleSpecification.colorScale.getGradientType()}
+                    min={colorScaleSpecification.colorScale.getMin()}
+                    max={colorScaleSpecification.colorScale.getMax()}
+                    divMidPoint={colorScaleSpecification.colorScale.getDivMidPoint()}
+                    steps={colorScaleSpecification.colorScale.getNumSteps()}
+                    areBoundariesUserDefined={colorScaleSpecification.areBoundariesUserDefined}
+                    onChangeColorPalette={handleColorPaletteChange}
+                    onChangeMinMaxDivMidPoint={handleMinMaxDivMidPointChange}
+                    onChangeAreBoundariesUserDefined={handleAreBoundariesUserDefinedChange}
+                />
+            </div>
         </div>
     );
 }
@@ -402,14 +413,21 @@ function ColorScaleSetter(props: ColorScaleSetterProps): React.ReactNode {
     }, []);
 
     return (
-        <div>
-            <ColorScalePaletteSelector
-                {...props}
-                min={min}
-                max={max}
-                divMidPoint={divMidPoint}
-                onChange={props.onChangeColorPalette}
-            />
+        <div
+            className={resolveClassNames({
+                "cursor-not-allowed opacity-50": !props.areBoundariesUserDefined,
+            })}
+        >
+            <div className={resolveClassNames("gap-vertical-sm flex flex-col")}>
+                <ColorScalePreview
+                    {...props}
+                    colorPalette={props.selectedColorPalette}
+                    discrete={props.type === ColorScaleType.Discrete}
+                    min={min}
+                    max={max}
+                    divMidPoint={divMidPoint}
+                />
+            </div>
             <MinMaxDivMidPointSetter
                 {...props}
                 min={min}
@@ -430,7 +448,6 @@ type MinMaxDivMidPointSetterProps = {
     areBoundariesUserDefined: boolean;
     onChange: (min: number, max: number, divMidPoint?: number) => void;
     onChangePreview: (min: number, max: number, divMidPoint?: number) => void;
-    onChangeAreBoundariesUserDefined: (areBoundariesUserDefined: boolean) => void;
 };
 
 function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.ReactNode {
@@ -485,18 +502,14 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
 
             let dragging = false;
             let pointerDownPosition: Vec2 | null = null;
-            let pointerDownPositionRelativeToElement: Vec2 = { x: 0, y: 0 };
             let newDivMidPoint = 0;
 
             function handlePointerDown(e: PointerEvent) {
                 if (!currentDivMidPointRef) {
                     return;
                 }
+                currentDivMidPointRef.setPointerCapture(e.pointerId);
                 pointerDownPosition = { x: e.clientX, y: e.clientY };
-                pointerDownPositionRelativeToElement = {
-                    x: e.clientX - currentDivMidPointRef.getBoundingClientRect().left,
-                    y: e.clientY - currentDivMidPointRef.getBoundingClientRect().top,
-                };
                 setIsDragging(true);
 
                 document.addEventListener("pointermove", handlePointerMove);
@@ -520,14 +533,17 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                 }
 
                 const containerRect = currentContainerDivRef.getBoundingClientRect();
-                const dx = e.clientX - pointerDownPositionRelativeToElement.x;
 
                 const newRelativeDivMidPoint = Math.min(
-                    Math.max((dx + convertRemToPixels(0.75) - containerRect.left) / containerRect.width, 0),
+                    Math.max((e.clientX - containerRect.left) / containerRect.width, 0),
                     1,
                 );
 
-                newDivMidPoint = min + newRelativeDivMidPoint * (max - min);
+                const step = computeNiceStep(min, max);
+                newDivMidPoint = Math.min(
+                    Math.max(snapToStep(min + newRelativeDivMidPoint * (max - min), min, step), min),
+                    max,
+                );
 
                 setDivMidPoint(newDivMidPoint);
                 onChangePreview(min, max, newDivMidPoint);
@@ -557,8 +573,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         [onChange, onChangePreview, min, max],
     );
 
-    function handleMinChange(value: string) {
-        let newMin = parseFloat(value);
+    function handleMinChange(value: number | null) {
+        let newMin = value ?? 0;
         let newDivMidPoint = divMidPoint;
         if (newMin >= max) {
             newMin = max - 0.000001;
@@ -570,8 +586,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         props.onChange(newMin, max, newDivMidPoint);
     }
 
-    function handleMaxChange(value: string) {
-        let newMax = parseFloat(value);
+    function handleMaxChange(value: number | null) {
+        let newMax = value ?? 0;
         let newDivMidPoint = divMidPoint;
         if (newMax <= min) {
             newMax = min + 0.000001;
@@ -583,8 +599,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         props.onChange(min, newMax, newDivMidPoint);
     }
 
-    function handleDivMidPointChange(value: string) {
-        let newDivMidPoint = parseFloat(value);
+    function handleDivMidPointChange(value: number | null) {
+        let newDivMidPoint = value ?? min;
         if (newDivMidPoint <= min) {
             newDivMidPoint = min;
         }
@@ -595,20 +611,15 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         props.onChange(min, max, newDivMidPoint);
     }
 
-    function handleAreBoundariesUserDefinedToggle(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
-        props.onChangeAreBoundariesUserDefined(checked);
-    }
-
     return (
         <>
             {isDragging &&
-                createPortal(<div className="transparent absolute inset-0 z-40 h-full w-full cursor-ew-resize"></div>)}
-            <div className="relative h-3 w-full border-r border-l border-gray-500" ref={containerDivRef}>
+                createPortal(<div className="transparent z-overlay absolute inset-0 h-full w-full cursor-ew-resize" />)}
+            <div className="relative h-3 w-full" ref={containerDivRef}>
                 <div
                     title="Drag to adjust mid point"
                     className={resolveClassNames(
-                        "absolute -top-1.5 -ml-1.5 h-3 w-3 rotate-45 cursor-ew-resize bg-gray-500 hover:bg-blue-500",
+                        "absolute -top-6 flex h-7 -translate-x-1/2 transform cursor-ew-resize flex-col",
                         {
                             "z-50": isDragging,
                             hidden:
@@ -617,41 +628,53 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     )}
                     style={{ left: `${(Math.abs(divMidPoint - min) / Math.abs(max - min)) * 100}%` }}
                     ref={divMidPointRef}
-                />
+                >
+                    <div className="bg-neutral-strong h-1 w-full" />
+                    <div className="border-neutral-strong w-1 grow border-r border-l" />
+                    <div className="bg-neutral-strong h-1 w-full" />
+                </div>
             </div>
-            <div className="flex justify-between gap-2">
-                <Input
-                    type="number"
+            <div className="gap-horizontal-2xs flex justify-between">
+                <NumberInput
                     value={min}
                     onValueChange={handleMinChange}
                     title="Min"
                     max={max - 0.000001}
                     disabled={!areBoundariesUserDefined}
+                    layoutClassName="grow"
                 />
                 {props.gradientType !== ColorScaleGradientType.Sequential && (
-                    <Input
-                        type="number"
+                    <NumberInput
                         value={divMidPoint}
                         onValueChange={handleDivMidPointChange}
                         min={min + 0.000001}
                         max={max}
                         title="Mid point"
                         disabled={!areBoundariesUserDefined}
+                        layoutClassName="grow"
                     />
                 )}
-                <Input
-                    type="number"
+                <NumberInput
                     value={max}
                     onValueChange={handleMaxChange}
                     title="Max"
                     min={min}
                     disabled={!areBoundariesUserDefined}
+                    layoutClassName="grow"
                 />
             </div>
-            <div className="mt-2">
-                <Label text="Use custom boundaries" position="left">
-                    <Switch checked={areBoundariesUserDefined} onChange={handleAreBoundariesUserDefinedToggle} />
-                </Label>
+            <div className="gap-horizontal-2xs flex justify-evenly">
+                <Typography size="sm" tone="neutral" variant="subtle" layoutClassName="grow text-center">
+                    Min
+                </Typography>
+                {props.gradientType !== ColorScaleGradientType.Sequential && (
+                    <Typography size="sm" tone="neutral" variant="subtle" layoutClassName="grow text-center">
+                        Mid point
+                    </Typography>
+                )}
+                <Typography size="sm" tone="neutral" variant="subtle" layoutClassName="grow text-center">
+                    Max
+                </Typography>
             </div>
         </>
     );
@@ -664,159 +687,27 @@ function getPaletteTypeFromColorScale(colorScale: ColorScale): ColorPaletteType 
     return ColorPaletteType.ContinuousDiverging;
 }
 
-type ColorScalePaletteSelectorProps = {
-    id: string;
-    colorPalettes: ColorPalette[];
-    selectedColorPalette: ColorPalette;
-    type: ColorScaleType;
-    gradientType: ColorScaleGradientType;
-    min: number;
-    max: number;
-    divMidPoint: number;
-    steps: number;
-    onChange?: (colorPalette: ColorPalette) => void;
-};
-
-const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (props) => {
-    const [open, setOpen] = React.useState<boolean>(false);
-    const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(props.selectedColorPalette);
-    const [prevSelectedColorPalette, setPrevSelectedColorPalette] = React.useState<ColorPalette>(
-        props.selectedColorPalette,
-    );
-
-    if (prevSelectedColorPalette.getId() !== props.selectedColorPalette.getId()) {
-        setPrevSelectedColorPalette(props.selectedColorPalette);
-        setSelectedColorPalette(props.selectedColorPalette);
+function convertColorScaleToColorPaletteSelectorType(colorScale: ColorScale): ColorPaletteSelectorType {
+    if (colorScale.getType() === ColorScaleType.Discrete) {
+        return ColorPaletteSelectorType.Discrete;
     }
+    return ColorPaletteSelectorType.Continuous;
+}
 
-    const ref = React.useRef<HTMLDivElement>(null);
-    const dropdownContentRef = React.useRef<HTMLDivElement>(null);
+function computeNiceStep(min: number, max: number): number {
+    const range = Math.abs(max - min);
+    if (range === 0) return 1;
+    const rawStep = range / 100;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+    const normalized = rawStep / magnitude;
+    if (normalized < 1.5) return magnitude;
+    if (normalized < 3.5) return 2 * magnitude;
+    if (normalized < 7.5) return 5 * magnitude;
+    return 10 * magnitude;
+}
 
-    const boundingRect = useElementBoundingRect(ref);
-
-    React.useEffect(function addPointerEvents() {
-        function handlePointerDown(event: PointerEvent) {
-            if (dropdownContentRef.current?.contains(event.target as Node)) {
-                return;
-            }
-
-            setOpen(false);
-        }
-
-        window.addEventListener("pointerdown", handlePointerDown);
-
-        return () => {
-            window.removeEventListener("pointerdown", handlePointerDown);
-        };
-    }, []);
-
-    function handleClick() {
-        setOpen(!open);
-    }
-
-    function handleColorPaletteSelected(colorPalette: ColorPalette) {
-        setSelectedColorPalette(colorPalette);
-        setOpen(false);
-
-        if (!props.onChange) {
-            return;
-        }
-
-        props.onChange(colorPalette);
-    }
-
-    function renderColorPalettes() {
-        return props.colorPalettes.map((colorPalette) => (
-            <ColorPaletteItem
-                key={colorPalette.getId()}
-                colorPalette={colorPalette}
-                discrete={props.type === ColorScaleType.Discrete}
-                gradientType={props.gradientType}
-                min={props.min}
-                max={props.max}
-                divMidPoint={props.divMidPoint}
-                steps={props.steps}
-                onClick={() => {
-                    handleColorPaletteSelected(colorPalette);
-                }}
-                selected={selectedColorPalette.getId() === colorPalette.getId()}
-                id={props.id}
-            />
-        ));
-    }
-
-    const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
-
-    return (
-        <div className="flex items-center rounded-sm bg-slate-100" ref={ref}>
-            <div className="grow cursor-pointer hover:outline hover:outline-blue-300" onClick={handleClick}>
-                <ColorScalePreview
-                    {...props}
-                    colorPalette={props.selectedColorPalette}
-                    discrete={props.type === ColorScaleType.Discrete}
-                />
-            </div>
-            {open &&
-                createPortal(
-                    <>
-                        <Overlay visible={true} />
-                        <div
-                            ref={dropdownContentRef}
-                            className="absolute z-60 overflow-hidden rounded-sm bg-white shadow-sm"
-                            style={{
-                                left: boundingRect.left,
-                                top: boundingRect.top,
-                                width: boundingRect.width,
-                                marginTop: marginTop,
-                                height: `${props.colorPalettes.length * 3}rem`,
-                            }}
-                        >
-                            {renderColorPalettes()}
-                        </div>
-                    </>,
-                )}
-        </div>
-    );
-};
-
-type ColorPaletteItemProps = {
-    id: string;
-    colorPalette: ColorPalette;
-    onClick?: () => void;
-    selected?: boolean;
-    discrete: boolean;
-    gradientType: ColorScaleGradientType;
-    min: number;
-    max: number;
-    divMidPoint: number;
-    steps: number;
-};
-
-const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
-    function handleItemClick() {
-        if (!props.onClick) {
-            return;
-        }
-
-        props.onClick();
-    }
-
-    return (
-        <div
-            className={resolveClassNames("flex h-12 cursor-pointer items-center gap-2 p-2 hover:bg-blue-100", {
-                "bg-blue-50": props.selected,
-            })}
-            onClick={handleItemClick}
-        >
-            <span
-                className="w-20 min-w-0 overflow-hidden text-sm leading-none text-ellipsis whitespace-nowrap"
-                title={props.colorPalette.getName()}
-            >
-                {props.colorPalette.getName()}
-            </span>
-            <div className="grow">
-                <ColorScalePreview {...props} />
-            </div>
-        </div>
-    );
-};
+function snapToStep(value: number, min: number, step: number): number {
+    const snapped = Math.round((value - min) / step) * step + min;
+    const decimals = Math.max(0, -Math.floor(Math.log10(step)));
+    return parseFloat(snapped.toFixed(decimals));
+}

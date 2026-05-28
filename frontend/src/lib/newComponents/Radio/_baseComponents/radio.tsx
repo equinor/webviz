@@ -3,13 +3,17 @@ import React from "react";
 import { Radio as RadioBase, type RadioRootProps as RadioRootBaseProps } from "@base-ui/react";
 import { RadioButtonChecked, RadioButtonUnchecked } from "@mui/icons-material";
 
+import { getIconSizeClassNameForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type RadioProps = ComponentWrapperProps<Omit<RadioRootBaseProps, "ref">>;
+export type RadioProps = ComponentWrapperProps<Omit<RadioRootBaseProps, "ref">> & {
+    size?: SelectableSize;
+};
 
 export const Radio = React.forwardRef<HTMLSpanElement, RadioProps>(function Radio(props, ref) {
-    const baseProps = resolveWrapperProps(props);
+    const { size = "default", ...restProps } = props;
+    const baseProps = resolveWrapperProps(restProps);
 
     return (
         <RadioBase.Root
@@ -18,7 +22,8 @@ export const Radio = React.forwardRef<HTMLSpanElement, RadioProps>(function Radi
             value={props.value}
             className={resolveClassNames(
                 props.layoutClassName,
-                "group selectable text-body-3xl text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
+                "group selectable text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
+                getIconSizeClassNameForSelectableSize(size),
             )}
         >
             <RadioBase.Indicator className="flex items-center justify-center data-unchecked:hidden">

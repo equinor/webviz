@@ -1,5 +1,8 @@
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import type { ColorGradientProps } from "../ColorGradient/colorGradient";
 
 export type ColorScalePreviewProps = {
     colorPalette: ColorPalette;
@@ -10,9 +13,18 @@ export type ColorScalePreviewProps = {
     max: number;
     divMidPoint: number;
     id: string;
+    size?: "small" | "default" | "large";
+};
+
+const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string> = {
+    small: "h-4",
+    default: "h-5",
+    large: "h-6",
 };
 
 export function ColorScalePreview(props: ColorScalePreviewProps): React.ReactNode {
+    const { size = "default" } = props;
+
     const colorScale = new ColorScale({
         colorPalette: props.colorPalette,
         type: props.discrete ? ColorScaleType.Discrete : ColorScaleType.Continuous,
@@ -27,11 +39,15 @@ export function ColorScalePreview(props: ColorScalePreviewProps): React.ReactNod
     const colorScaleGradientId = makeGradientId(props.id, props.colorPalette);
 
     return (
-        <svg className="w-full h-5" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <svg
+            className={resolveClassNames("text-neutral-strong w-full rounded", SIZE_TO_CLASSNAMES[size])}
+            version="1.1"
+            xmlns="http://www.w3.org/2000/svg"
+        >
             <defs>
                 <GradientDef id={props.id} colorScale={colorScale} />
             </defs>
-            <rect height="1.25rem" width="100%" fill={`url(#${colorScaleGradientId})`} stroke="#555" />
+            <rect height="100%" width="100%" fill={`url(#${colorScaleGradientId})`} stroke="currentColor" />
         </svg>
     );
 }
