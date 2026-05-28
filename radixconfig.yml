@@ -61,11 +61,11 @@ spec:
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
 
+      secrets:
+        - WEBVIZ_SESSION_STORE_ENCRYPTION_KEY
       variables:
         WEBVIZ_REDIS_USER_SESSION_PASSWORD: DummyUserSessionPwd
         WEBVIZ_REDIS_CACHE_PASSWORD: DummyCachePwd
-        WEBVIZ_SESSION_STORE_ENCRYPTION_KEY: yrSmb0NKoO_pAs04PcKpqaiO3bcNeTyMicuJMUkB-RM=
-
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
       environmentConfig:
