@@ -15,7 +15,7 @@ import {
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
