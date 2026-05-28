@@ -26,6 +26,8 @@ import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramew
 import { MAX_INTERSECTION_VIEWS } from "@modules/Intersection/view/typesAndEnums";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
+import { Button } from "@lib/newComponents/Button";
+import { Add } from "@lib/mui-icons";
 
 export type DataProviderManagerWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -41,20 +43,24 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
+    function handleAddView(groupDelegate: GroupDelegate) {
+        const viewCount = groupDelegate.getDescendantItems(
+            (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+        ).length;
+        if (viewCount < MAX_INTERSECTION_VIEWS) {
+            const view = GroupRegistry.makeGroup(
+                GroupType.INTERSECTION_VIEW,
+                props.dataProviderManager,
+                colorSet.getNextColor(),
+            );
+            groupDelegate.appendChild(view);
+        }
+    }
+
     function handleAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view": {
-                const viewCount = groupDelegate.getDescendantItems(
-                    (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-                ).length;
-                if (viewCount < MAX_INTERSECTION_VIEWS) {
-                    const view = GroupRegistry.makeGroup(
-                        GroupType.INTERSECTION_VIEW,
-                        props.dataProviderManager,
-                        colorSet.getNextColor(),
-                    );
-                    groupDelegate.appendChild(view);
-                }
+                handleAddView(groupDelegate);
                 return;
             }
             case "context-boundary": {
@@ -190,6 +196,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             groupActions={makeActionsForGroup}
             onAction={handleAction}
             isMoveAllowed={checkIfItemMoveIsAllowed}
+            emptyContentPlaceholder={
+                <Button tone="accent" onClick={() => handleAddView(groupDelegate)}>
+                    <Add size={16} /> Add first view
+                </Button>
+            }
         />
     );
 }
