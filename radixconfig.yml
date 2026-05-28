@@ -64,7 +64,7 @@ spec:
       variables:
         WEBVIZ_REDIS_USER_SESSION_PASSWORD: DummyUserSessionPwd
         WEBVIZ_REDIS_CACHE_PASSWORD: DummyCachePwd
-        WEBVIZ_SESSION_STORE_ENCRYPTION_KEY: DummyEncryptionKey
+        WEBVIZ_SESSION_STORE_ENCRYPTION_KEY: yrSmb0NKoO_pAs04PcKpqaiO3bcNeTyMicuJMUkB-RM=
 
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
@@ -168,10 +168,16 @@ spec:
       runAsUser: 999
       variables:
         REDIS_REQUIREPASS: DummyUserSessionPwd
-      args: ["--loglevel", "notice"]
+      args: ["--maxmemory", "800mb",  "--maxmemory-policy", "noeviction", "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 500m
+        limits:
+          memory: 1Gi
 
     - name: redis-cache
       dockerFileName: ./docker/redis/Dockerfile
@@ -180,7 +186,7 @@ spec:
         REDIS_REQUIREPASS: DummyCachePwd
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
-      args: ["--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "",  "--appendonly", "no",  "--loglevel", "notice"]
+      args: ["--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379

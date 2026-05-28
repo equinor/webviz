@@ -103,7 +103,7 @@ services:
       - 6379
     user: "999:999"
     # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
-    command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no", "--logfile", "", "--loglevel", "notice"]
+    command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--loglevel", "notice"]
 
 
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,
