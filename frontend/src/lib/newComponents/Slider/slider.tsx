@@ -286,7 +286,10 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     return (
         <SliderBase.Root
             {...baseProps}
-            className="gap-horizontal-2xs px-horizontal-2xs flex items-center data-disabled:cursor-not-allowed"
+            className={resolveClassNames(
+                "gap-horizontal-2xs px-horizontal-2xs flex items-center data-disabled:cursor-not-allowed",
+                props.layoutClassName,
+            )}
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}

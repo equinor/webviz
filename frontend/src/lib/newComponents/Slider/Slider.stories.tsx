@@ -3,6 +3,8 @@ import React from "react";
 import { Warning } from "@mui/icons-material";
 import type { Meta, StoryObj } from "@storybook/react";
 
+import { NumberInput } from "../NumberInput";
+
 import type { SliderProps } from "./index";
 import { Slider } from "./index";
 
@@ -72,6 +74,43 @@ export const Size: Story = {
     ),
 };
 
+export const Controlled: Story = {
+    argTypes: { min: { control: "number" }, max: { control: "number" } },
+    args: { min: 0, max: 100 },
+    render: function ControlledStoryComp(args) {
+        const [sliderValue, setSliderValue] = React.useState<number[]>([10, 75]);
+
+        return (
+            <div className="gap-y-vertical-lg flex flex-col">
+                <div className="flex justify-between">
+                    <div className="text-body-xs bg-accent-subtle border-neutral-strong px-vertical-2xs w-fit rounded border">
+                        Value: {Array.isArray(sliderValue) ? sliderValue.join(" - ") : sliderValue}
+                    </div>
+
+                </div>
+
+                <div className="gap-horizontal-xs flex">
+                    <Slider
+                        {...args}
+                        layoutClassName="w-full grow"
+                        enableRangeLocks="both"
+                        value={sliderValue}
+                        onValueChange={(v) => {
+                            setSliderValue(v as any);
+                        }}
+                    />
+                    <NumberInput
+                        layoutClassName="w-16"
+                        min={args.min}
+                        max={args.max}
+                        value={sliderValue[1]}
+                        onValueChange={(v) => setSliderValue((prev) => [prev[0], v ?? 100])}
+                    />
+                </div>
+            </div>
+        );
+    },
+};
 export const SnapRangeLimit: Story = {
     args: { min: 0, max: 100 },
     render: (args) => (
