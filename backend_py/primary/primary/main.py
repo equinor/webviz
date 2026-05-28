@@ -191,8 +191,8 @@ app.add_middleware(
 )
 
 session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
-encryptor=FernetEncryptor(config.SESSION_STORE_ENCRYPTION_KEY)
-app.add_middleware(SessionMiddleware, store=session_store, encryptor=encryptor)
+#encryptor=FernetEncryptor(config.SESSION_STORE_ENCRYPTION_KEY)
+#app.add_middleware(SessionMiddleware, store=session_store, encryptor=encryptor)
 app.add_middleware(SessionMiddleware, store=session_store)
 
 # Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)
