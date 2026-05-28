@@ -2,19 +2,30 @@ import React from "react";
 
 import { DarkMode, LightMode } from "@mui/icons-material";
 
-import { getMainDataAttribute, setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
+import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
 import { Button } from "@lib/newComponents/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 
+const LOCAL_STORAGE_KEY = "colorScheme";
+
+function resolveInitialColorScheme(): string {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored === "dark" || stored === "light") return stored;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export function DarkModeButton(): React.ReactNode {
-    const [colorScheme, setColorScheme] = React.useState<string | null>(getMainDataAttribute("color-scheme"));
+    const [colorScheme, setColorScheme] = React.useState<string>(() => resolveInitialColorScheme());
+
+    React.useLayoutEffect(() => {
+        setMainDataAttribute("color-scheme", colorScheme);
+    }, [colorScheme]);
 
     const toggleDarkMode = React.useCallback(function toggleDarkMode() {
-        const currentScheme = getMainDataAttribute("color-scheme");
-        const newScheme = currentScheme === "dark" ? "light" : "dark";
-        setMainDataAttribute("color-scheme", newScheme);
+        const newScheme = colorScheme === "dark" ? "light" : "dark";
+        localStorage.setItem(LOCAL_STORAGE_KEY, newScheme);
         setColorScheme(newScheme);
-    }, []);
+    }, [colorScheme]);
 
     return (
         <Tooltip title="Toggle dark mode">

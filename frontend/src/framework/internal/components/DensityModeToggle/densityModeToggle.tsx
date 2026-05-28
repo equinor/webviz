@@ -2,19 +2,31 @@ import React from "react";
 
 import { DensityMedium, DensitySmall } from "@mui/icons-material";
 
-import { getMainDataAttribute, setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
+import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
 import { Button } from "@lib/newComponents/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 
-export function DensityModeToggle(): React.ReactNode {
-    const [density, setDensity] = React.useState<string | null>(getMainDataAttribute("density"));
+const LOCAL_STORAGE_KEY = "density";
 
-    const toggleDenseMode = React.useCallback(function toggleDenseMode() {
-        const currentDensity = getMainDataAttribute("density");
-        const newDensity = currentDensity === "comfortable" ? "spacious" : "comfortable";
-        setMainDataAttribute("density", newDensity);
-        setDensity(newDensity);
-    }, []);
+function resolveInitialDensity(): string {
+    return localStorage.getItem(LOCAL_STORAGE_KEY) ?? "spacious";
+}
+
+export function DensityModeToggle(): React.ReactNode {
+    const [density, setDensity] = React.useState<string>(() => resolveInitialDensity());
+
+    React.useLayoutEffect(() => {
+        setMainDataAttribute("density", density);
+    }, [density]);
+
+    const toggleDenseMode = React.useCallback(
+        function toggleDenseMode() {
+            const newDensity = density === "comfortable" ? "spacious" : "comfortable";
+            localStorage.setItem(LOCAL_STORAGE_KEY, newDensity);
+            setDensity(newDensity);
+        },
+        [density],
+    );
 
     return (
         <Tooltip title="Toggle density mode">
