@@ -424,7 +424,7 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
                 <Button
                     {...baseProps}
                     ref={ref}
-                    variant="text"
+                    variant="ghost"
                     tone="accent"
                     iconOnly
                     pressed={active}

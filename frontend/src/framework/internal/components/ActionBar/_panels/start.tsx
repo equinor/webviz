@@ -45,7 +45,7 @@ export function StartPanel(props: StartPanelProps) {
                         iconOnly
                         onClick={handleEnsembleDialogOpenClick}
                         tone="accent"
-                        variant="text"
+                        variant="ghost"
                         size="small"
                     >
                         <Badge
@@ -76,7 +76,7 @@ export function StartPanel(props: StartPanelProps) {
                         iconOnly
                         onClick={handleTemplatesListClick}
                         tone="accent"
-                        variant="text"
+                        variant="ghost"
                         size="small"
                     >
                         <GridView fontSize="inherit" />

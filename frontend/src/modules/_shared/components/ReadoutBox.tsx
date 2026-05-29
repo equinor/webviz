@@ -122,7 +122,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                     onClick={props.onClose}
                     layoutClassName="pointer-events-auto absolute top-0.5 right-0.5"
                     title="Clear readout"
-                    variant="text"
+                    variant="ghost"
                     size="small"
                     tone="neutral"
                     iconOnly

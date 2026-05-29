@@ -323,7 +323,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             title="Remove parameter"
                             tone="danger"
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}
-                            variant="text"
+                            variant="ghost"
                             size="small"
                             iconOnly
                         >

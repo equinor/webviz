@@ -91,7 +91,7 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                 </div>
             </Dialog.Body>
             <Dialog.Actions>
-                <Button onClick={handleDiscard} variant="text" tone="danger" disabled={isLoading}>
+                <Button onClick={handleDiscard} variant="ghost" tone="danger" disabled={isLoading}>
                     Delete session
                 </Button>
                 <Button onClick={handleOpen} variant="contained" disabled={isLoading}>

@@ -157,7 +157,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                 </form>
             </Dialog.Body>
             <Dialog.Actions>
-                <Button variant="text" tone="neutral" disabled={isSaving} onClick={handleCancel}>
+                <Button variant="ghost" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                     Cancel
                 </Button>
                 <Button tone="accent" disabled={isSaving} type="submit" form={formId}>

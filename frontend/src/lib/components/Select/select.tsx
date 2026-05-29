@@ -393,7 +393,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     return (
         <BaseComponent ref={ref} disabled={props.disabled} className="flex flex-col gap-2 text-sm">
             {props.showQuickSelectButtons && (
-                <div className="flex gap-2 items-center">
+                <div className="flex items-center gap-2">
                     <Button
                         onClick={handleSelectAll}
                         startIcon={<SelectAll fontSize="inherit" />}
@@ -435,13 +435,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     />
                 )}
                 <div
-                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
+                    className="input-comp w-full overflow-y-auto rounded-md border border-gray-300 bg-white"
                     style={{ height: sizeWithDefault * (props.optionHeight ?? 24) + 2 }}
                     ref={virtualizationRef}
                     tabIndex={0}
                 >
                     {filteredOptions.length === 0 && (
-                        <div className="p-1 flex items-center text-gray-400 select-none">
+                        <div className="flex items-center p-1 text-gray-400 select-none">
                             {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}
@@ -464,7 +464,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                         "select-none",
                                         {
                                             "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
-                                            "bg-blue-600 text-white box-border hover:bg-blue-700":
+                                            "box-border bg-blue-600 text-white hover:bg-blue-700":
                                                 selectedOptionValues.includes(option.value),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
@@ -477,7 +477,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                     {option.adornment}
                                     <span
                                         title={option.hoverText ?? option.label}
-                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap grow"
+                                        className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap"
                                     >
                                         {option.label}
                                     </span>

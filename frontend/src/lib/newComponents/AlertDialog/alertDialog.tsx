@@ -58,7 +58,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                                     )}
                                 />
                             ) : (
-                                <Button variant="text" key={index} tone={action.tone} onClick={action.onClick}>
+                                <Button variant="ghost" key={index} tone={action.tone} onClick={action.onClick}>
                                     {action.label}
                                 </Button>
                             ),

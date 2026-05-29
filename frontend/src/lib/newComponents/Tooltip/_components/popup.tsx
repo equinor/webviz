@@ -21,12 +21,10 @@ export const Popup = React.forwardRef<HTMLDivElement, PopupProps>(function Popup
             <TooltipBase.Positioner side={props.side} align={props.align} sideOffset={8} className="z-tooltip">
                 <TooltipBase.Popup
                     ref={ref}
-                    className="bg-floating-inverted px-horizontal-sm py-vertical-xs relative rounded-sm"
+                    className="bg-floating-inverted px-horizontal-sm py-vertical-xs text-neutral-strong-on-emphasis! relative rounded"
                 >
                     <TooltipBase.Arrow className="floating__arrow" />
-                    <Paragraph size="sm" className="text-neutral-strong-on-emphasis!">
-                        {props.children}
-                    </Paragraph>
+                    <Paragraph size="sm">{props.children}</Paragraph>
                 </TooltipBase.Popup>
             </TooltipBase.Positioner>
         </TooltipBase.Portal>

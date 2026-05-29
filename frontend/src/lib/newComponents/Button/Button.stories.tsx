@@ -20,7 +20,7 @@ multiple buttons into a unified control — including split buttons with a dropd
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| \`variant\` | \`"contained" \\| "outlined" \\| "text"\` | \`"contained"\` | Visual style of the button |
+| \`variant\` | \`"contained" \\| "outlined" \\| "ghost"\` | \`"contained"\` | Visual style of the button |
 | \`tone\` | \`"accent" \\| "neutral" \\| "danger"\` | \`"accent"\` | Colour tone — conveys intent |
 | \`size\` | \`"small" \\| "default" \\| "large"\` | \`"default"\` | Height and font-size |
 | \`round\` | \`boolean\` | — | Fully rounded pill shape |
@@ -53,7 +53,7 @@ import { Button } from "@lib/newComponents/Button";
     argTypes: {
         variant: {
             control: "select",
-            options: ["contained", "outlined", "text"],
+            options: ["contained", "outlined", "ghost"],
         },
         tone: {
             control: "select",
@@ -109,8 +109,8 @@ export const Outlined: Story = {
     args: { children: "Cancel", variant: "outlined", tone: "neutral" },
 };
 
-export const TextVariant: Story = {
-    name: "Text",
+export const GhostVariant: Story = {
+    name: "Ghost",
     parameters: {
         docs: {
             description: {
@@ -118,7 +118,7 @@ export const TextVariant: Story = {
             },
         },
     },
-    args: { children: "Learn more", variant: "text", tone: "accent" },
+    args: { children: "Learn more", variant: "ghost", tone: "accent" },
 };
 
 // ─── Tones ────────────────────────────────────────────────────────────────────
@@ -133,7 +133,7 @@ export const AllTones: Story = {
         },
     },
     render: () => {
-        const variants = ["contained", "outlined", "text"] as const;
+        const variants = ["contained", "outlined", "ghost"] as const;
         const tones = ["accent", "neutral", "danger"] as const;
         const labels: Record<(typeof tones)[number], string> = {
             accent: "Confirm",
@@ -200,7 +200,7 @@ export const Disabled: Story = {
             <Button variant="outlined" tone="accent" disabled>
                 Outlined
             </Button>
-            <Button variant="text" tone="accent" disabled>
+            <Button variant="ghost" tone="accent" disabled>
                 Text
             </Button>
         </div>
@@ -245,7 +245,7 @@ export const Round: Story = {
             <Button variant="outlined" tone="neutral" round>
                 Pill
             </Button>
-            <Button variant="text" tone="accent" round>
+            <Button variant="ghost" tone="accent" round>
                 Pill
             </Button>
         </div>

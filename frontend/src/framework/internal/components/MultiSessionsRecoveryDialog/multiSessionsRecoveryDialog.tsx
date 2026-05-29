@@ -166,7 +166,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                                     <Button
                                         onClick={() => handleOpenInNewTab(sessionId ?? "")}
                                         size="small"
-                                        variant="text"
+                                        variant="ghost"
                                         iconOnly
                                         disabled={!sessionId}
                                     >
@@ -176,7 +176,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                             </Tooltip>
                             <Tooltip title="Open this session in the current tab." placement="left">
                                 <span>
-                                    <Button onClick={() => handleOpen(sessionId)} size="small" variant="text" iconOnly>
+                                    <Button onClick={() => handleOpen(sessionId)} size="small" variant="ghost" iconOnly>
                                         <OpenInBrowser fontSize="inherit" />
                                     </Button>
                                 </span>
@@ -189,7 +189,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                                     <Button
                                         onClick={() => handleDiscard(sessionId ?? null)}
                                         size="small"
-                                        variant="text"
+                                        variant="ghost"
                                         tone="danger"
                                         iconOnly
                                     >
@@ -234,7 +234,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                 </div>
             </Dialog.Body>
             <Dialog.Actions>
-                <Button onClick={handleDiscardAll} variant="text" tone="danger">
+                <Button onClick={handleDiscardAll} variant="ghost" tone="danger">
                     Delete all and close
                 </Button>
                 <Button onClick={handleCancel} variant="contained">

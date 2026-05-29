@@ -88,7 +88,7 @@ function StartActions(props: StartActionProps): React.ReactNode {
             <Button
                 onClick={handleToggleExpanded}
                 title={isExpanded ? "Hide settings" : "Show settings"}
-                variant="text"
+                variant="ghost"
                 tone="neutral"
                 size="small"
                 iconOnly

@@ -77,7 +77,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                     iconOnly
                     tone="neutral"
                     size="small"
-                    variant="text"
+                    variant="ghost"
                 >
                     <div className="flex flex-row items-center">
                         {activeTab?.icon ?? <Settings fontSize="inherit" />}
@@ -107,7 +107,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                         enterDelay="medium"
                     >
                         <Button
-                            variant="text"
+                            variant="ghost"
                             disabled={!highlightWarning}
                             tone="neutral"
                             iconOnly
@@ -123,7 +123,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                     iconOnly
                     tone="neutral"
                     size="small"
-                    variant="text"
+                    variant="ghost"
                 >
                     <ChevronLeft fontSize="inherit" />
                 </Button>

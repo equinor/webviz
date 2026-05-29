@@ -10,7 +10,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/wrapperProps";
 
 export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & {
-    variant?: "contained" | "outlined" | "text";
+    variant?: "contained" | "outlined" | "ghost";
     size?: SelectableSize;
     tone?: "accent" | "neutral" | "danger";
     disabled?: boolean;
@@ -44,7 +44,7 @@ const VARIANT_TONE_CLASSES: Record<
         disabled:
             "outline -outline-offset-1 outline-disabled text-disabled cursor-not-allowed! opacity-50 bg-transparent",
     },
-    text: {
+    ghost: {
         accent: "text-accent-subtle hover:bg-accent-hover active:bg-accent-active data-pressed:bg-accent-active bg-transparent",
 
         neutral:
@@ -112,7 +112,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             ) : (
                 <span
                     className={resolveClassNames(
-                        "gap-x-horizontal-4xs inline-flex h-full w-full items-center",
+                        "gap-x-horizontal-2xs inline-flex h-full w-full items-center",
                         LABEL_SIZE_CLASSES[size],
                     )}
                 >

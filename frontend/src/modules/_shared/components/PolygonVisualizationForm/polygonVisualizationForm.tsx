@@ -100,7 +100,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     <Button
                         iconOnly
                         size="small"
-                        variant="text"
+                        variant="ghost"
                         compact
                         pressed={props.value.colorsLinked}
                         onClick={handleToggleColorsLinked}
@@ -119,7 +119,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     onChange={handleStrokeColorChange}
                     value={props.value.strokeColor}
                     size="small"
-                    variant="text"
+                    variant="ghost"
                     compact
                     disabled={!props.value.hasStroke}
                 />
@@ -157,7 +157,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     onChange={handleFillColorChange}
                     value={props.value.fillColor}
                     size="small"
-                    variant="text"
+                    variant="ghost"
                     compact
                     disabled={!props.value.hasFill}
                 />
@@ -183,7 +183,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     value={props.value.labelColor}
                     disabled={!props.value.showLabels}
                     onChange={handleLabelColorChange}
-                    variant="text"
+                    variant="ghost"
                     compact
                     size="small"
                 />

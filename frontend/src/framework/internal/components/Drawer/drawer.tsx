@@ -72,7 +72,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                     {props.actions}
                     {props.onClose && (
                         <Tooltip title="Close">
-                            <Button variant="text" tone="neutral" iconOnly onClick={props.onClose} size="small">
+                            <Button variant="ghost" tone="neutral" iconOnly onClick={props.onClose} size="small">
                                 <Close fontSize="inherit" />
                             </Button>
                         </Tooltip>
@@ -104,7 +104,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                     icon: item.icon,
                                 }))}
                             >
-                                <Button variant="text" iconOnly>
+                                <Button variant="ghost" iconOnly>
                                     <MoreVert fontSize="small" />
                                 </Button>
                             </MenuCompositions.Default>

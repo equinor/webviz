@@ -39,6 +39,14 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     }
 
     private handleWindowError(event: ErrorEvent) {
+        // In development, React re-throws every render error to the window via
+        // invokeGuardedCallbackDev (to produce a real browser stack trace) before
+        // the inner error boundary even activates. That makes it impossible to
+        // distinguish these from genuine unhandled errors at the time of the event.
+        // Dev already surfaces errors via console + React's own overlay, so skip.
+        if (import.meta.env.DEV) {
+            return;
+        }
         this.setState({ error: event.error });
     }
 
@@ -105,7 +113,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                         onClick={copyToClipboard}
                                         title="Copy URL to clipboard"
                                         tone="neutral"
-                                        variant="text"
+                                        variant="ghost"
                                         iconOnly
                                     >
                                         <ContentCopy fontSize="small" />

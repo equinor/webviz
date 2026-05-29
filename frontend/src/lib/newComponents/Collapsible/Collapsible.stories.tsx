@@ -80,7 +80,7 @@ export const SubGroupWithAdornment: Story = {
         <Collapsible.Group
             title="Section with adornment"
             adornment={
-                <Button variant="text" tone="neutral" size="small">
+                <Button variant="ghost" tone="neutral" size="small">
                     Edit
                 </Button>
             }

@@ -27,7 +27,7 @@ export function Title(props: TitleProps): React.ReactNode {
                 </PopoverBase.Title>
 
                 {!defaultedProps.hideCloseButton && (
-                    <PopoverBase.Close render={<Button variant="text" round iconOnly size="small" />}>
+                    <PopoverBase.Close render={<Button variant="ghost" round iconOnly size="small" />}>
                         <Close fontSize="inherit" />
                     </PopoverBase.Close>
                 )}

@@ -61,18 +61,16 @@ export class SelectStringSetting implements CustomSettingImplementation<ValueTyp
             }
 
             return (
-                <div className="mt-1 flex flex-col gap-1">
-                    <Select
-                        filter
-                        options={options}
-                        value={props.value ?? undefined}
-                        onChange={handleChange}
-                        showQuickSelectButtons={true}
-                        disabled={props.isOverridden}
-                        multiple={true}
-                        size={5}
-                    />
-                </div>
+                <Select
+                    filter
+                    options={options}
+                    value={props.value ?? undefined}
+                    onChange={handleChange}
+                    showQuickSelectButtons={true}
+                    disabled={props.isOverridden}
+                    multiple={true}
+                    size={5}
+                />
             );
         };
     }

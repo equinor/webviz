@@ -263,7 +263,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                     size="small"
                     onClick={handleEditChannelClick}
                     iconOnly
-                    variant="text"
+                    variant="ghost"
                 >
                     <Edit fontSize="small" />
                 </Button>
@@ -272,7 +272,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                     title="Remove data channel connection"
                     disabled={!hasConnection}
                     size="small"
-                    variant="text"
+                    variant="ghost"
                     iconOnly
                     tone="danger"
                 >

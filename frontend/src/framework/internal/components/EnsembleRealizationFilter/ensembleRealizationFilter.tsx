@@ -271,7 +271,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         onClick={handleApplyClick}
                         title={props.hasUnsavedSelections ? "Apply changes" : "No changes to apply"}
                         size="small"
-                        variant="text"
+                        variant="ghost"
                         iconOnly
                     >
                         <Check size={16} />
@@ -282,7 +282,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         onClick={handleDiscardClick}
                         title={props.hasUnsavedSelections ? "Discard changes" : "No changes to discard"}
                         size="small"
-                        variant="text"
+                        variant="ghost"
                         iconOnly
                     >
                         <Clear size={16} />

@@ -195,7 +195,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                 <Table.Cell>
                     <div className="flex flex-row">
                         <TooltipCompositions.Default content="Remove delta ensemble from selection">
-                            <Button variant="text" tone="danger" size="small" iconOnly onClick={onDelete}>
+                            <Button variant="ghost" tone="danger" size="small" iconOnly onClick={onDelete}>
                                 <Delete fontSize="inherit" />
                             </Button>
                         </TooltipCompositions.Default>

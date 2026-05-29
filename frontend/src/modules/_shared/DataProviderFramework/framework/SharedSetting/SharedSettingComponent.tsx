@@ -44,7 +44,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
                         title={isExpanded ? "Hide settings" : "Show settings"}
                         iconOnly
                         size="small"
-                        variant="text"
+                        variant="ghost"
                         tone="neutral"
                     >
                         {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
@@ -88,7 +88,7 @@ function Actions(props: ActionProps): React.ReactNode {
 
     return (
         <>
-            <Button onClick={handleRemove} title="Remove group" variant="text" tone="danger" iconOnly size="small">
+            <Button onClick={handleRemove} title="Remove group" variant="ghost" tone="danger" iconOnly size="small">
                 <Delete fontSize="inherit" />
             </Button>
         </>

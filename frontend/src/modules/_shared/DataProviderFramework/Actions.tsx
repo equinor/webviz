@@ -68,7 +68,7 @@ export function Actions(props: ActionsProps): React.ReactNode {
             onOpenChange={setIsOpen}
             onActionClicked={props.onActionClick}
         >
-            <Button size="small" variant="text" tone="neutral" compact>
+            <Button size="small" variant="ghost" tone="neutral" compact>
                 <Add fontSize="inherit" />
                 <span>Add</span>
                 <ArrowDropDown fontSize="inherit" />

@@ -1,10 +1,15 @@
 import React from "react";
 
-import { BugReport, Info, MoodBad, Refresh } from "@mui/icons-material";
+import crashIllustration from "@assets/moduleCrash.svg";
 
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
+import { BugReport, Info, Refresh } from "@mui/icons-material";
+
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { Button } from "@lib/newComponents/Button";
+import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Separator } from "@lib/newComponents/Separator";
+import { Code } from "@lib/newComponents/Code";
 
 export type FormattedErrorProps = {
     moduleName: string;
@@ -21,12 +26,12 @@ function formatStackLine(line: string): React.ReactNode {
     const path = parts[2];
 
     return (
-        <div className="flex gap-2 ml-4">
+        <div className="ml-horizontal-sm gap-horizontal-2xs flex">
             <span>{at}</span>
             <strong>{location}</strong>
             {path && (
                 <span className="">
-                    (<span className="text-gray-500 underline">{path.replace("(", "").replace(")", "")}</span>)
+                    (<span className="text-neutral-subtle underline">{path.replace("(", "").replace(")", "")}</span>)
                 </span>
             )}
         </div>
@@ -39,7 +44,7 @@ function formatStack(stack: string): React.ReactNode {
     return (
         <>
             {lines.map((line, index) => (
-                <div key={"line-" + index} className="text-sm">
+                <div key={"line-" + index} className="text-body-sm">
                     {index === 0 ? line : formatStackLine(line)}
                 </div>
             ))}
@@ -47,7 +52,7 @@ function formatStack(stack: string): React.ReactNode {
     );
 }
 
-export const CrashView: React.FC<FormattedErrorProps> = (props) => {
+export function CrashView(props: FormattedErrorProps): React.ReactNode {
     const [showDetails, setShowDetails] = React.useState<boolean>(false);
     const [symbolicatingStack, setSymbolicatingStack] = React.useState<boolean>(false);
 
@@ -97,48 +102,78 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full">
-            <div className="bg-red-400 flex flex-col justify-center items-center h-[50%] text-white gap-4">
-                <MoodBad fontSize="small" />
-                <div className="font-bold text-center">{props.error.message}</div>
+        <div className="flex h-full w-full flex-col">
+            <div className="px-horizontal-md py-vertical-md gap-vertical-sm bg-danger flex min-h-[55%] flex-col items-center justify-center overflow-hidden text-center">
+                <img
+                    src={crashIllustration}
+                    alt="Broken module"
+                    aria-hidden="true"
+                    className="h-auto max-h-[100px] w-auto"
+                />
+                <Paragraph size="sm" layoutClassName="w-full line-clamp-3" title={props.error.message}>
+                    {props.error.message}
+                </Paragraph>
             </div>
-            <div className="flex flex-col items-center h-[50%] gap-6 p-8">
-                The above error made your module instance crash. Unfortunately, this means that its state is lost. You
-                can try to reset the instance to its initial state in order to start over.
-                <div className="flex gap-4">
-                    <Button onClick={handleReload} variant="contained" startIcon={<Refresh fontSize="small" />}>
-                        Reset to initial state
+            <div className="px-horizontal-md py-vertical-xs gap-vertical-sm flex h-[45%] flex-col items-center justify-center overflow-hidden text-center">
+                <Paragraph
+                    size="xs"
+                    layoutClassName="w-full line-clamp-3"
+                    title="The above error made your module instance crash. Unfortunately, this means that its state is lost. You can try to reset the instance to its initial state in order to start over."
+                >
+                    The above error made your module instance crash. Unfortunately, this means that its state is lost.
+                    You can try to reset the instance to its initial state in order to start over.
+                </Paragraph>
+                <Separator orientation="horizontal" />
+                <div className="gap-horizontal-sm flex">
+                    <Button onClick={handleReload} size="small">
+                        <Refresh fontSize="inherit" /> Reset to initial state
                     </Button>
-                    <Button onClick={handleShowDetails} startIcon={<Info fontSize="small" />}>
-                        Show error details
+                    <Button onClick={handleShowDetails} size="small" variant="ghost" tone="neutral">
+                        <Info fontSize="inherit" /> Show details
                     </Button>
                     <Button
                         onClick={handleReportError}
-                        startIcon={<BugReport fontSize="small" />}
                         disabled={symbolicatingStack}
+                        size="small"
+                        variant="ghost"
+                        tone="neutral"
                     >
+                        <BugReport fontSize="inherit" />{" "}
                         {symbolicatingStack ? "Symbolicating stack..." : "Report error"}
                     </Button>
                 </div>
             </div>
             {showDetails && (
-                <Dialog title={props.error.message} onClose={() => setShowDetails(false)} open modal>
-                    <div className="flex flex-col gap-2">
+                <Dialog.Popup onOpenChange={() => setShowDetails(false)} open modal>
+                    <Dialog.Header closeIconVisible>
+                        <Dialog.Title>Error Details</Dialog.Title>
+                    </Dialog.Header>
+                    <Dialog.Body layoutClassName="flex flex-col gap-vertical-2xs max-h-[70vh] overflow-y-auto">
+                        <Heading as="h6" weight="bolder">
+                            {props.moduleName} crashed with the following error:
+                        </Heading>
+                        <Code>{props.error.message}</Code>
                         {props.error.stack && (
-                            <div>
-                                <b>Stack:</b>
-                                {formatStack(props.error.stack)}
-                            </div>
+                            <>
+                                <Heading as="h6" weight="bolder">
+                                    Stack:
+                                </Heading>
+                                <Code layoutClassName="max-h-[20vh]">{formatStack(props.error.stack)}</Code>
+                            </>
                         )}
                         <div>
-                            <b>Component stack:</b>
-                            {formatStack(props.errorInfo.componentStack ?? "")}
+                            <Heading as="h6" weight="bolder">
+                                Component stack:
+                            </Heading>
+                            <Code layoutClassName="max-h-[20vh]">
+                                {formatStack(props.errorInfo.componentStack ?? "")}
+                            </Code>
                         </div>
-                    </div>
-                </Dialog>
+                    </Dialog.Body>
+                </Dialog.Popup>
             )}
         </div>
     );
-};
+}
 
 CrashView.displayName = "CrashView";

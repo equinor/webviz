@@ -83,7 +83,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
                 showCloseCross={true}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleDialogDiscardClick} tone="danger" variant="text">
+                        <Button onClick={handleDialogDiscardClick} tone="danger" variant="ghost">
                             Discard
                         </Button>
                         <Button onClick={handleDialogSaveClick} tone="accent">

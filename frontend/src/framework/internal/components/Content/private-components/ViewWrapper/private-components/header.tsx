@@ -170,7 +170,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         onPointerDown={handleRestoreClick}
                         onPointerUp={handlePointerUp}
                         title="Restore"
-                        variant="text"
+                        variant="ghost"
                         tone="neutral"
                         size="small"
                         iconOnly
@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         onPointerDown={handleMaximizeClick}
                         onPointerUp={handlePointerUp}
                         title="Maximize"
-                        variant="text"
+                        variant="ghost"
                         tone="neutral"
                         size="small"
                         iconOnly
@@ -199,7 +199,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     onPointerUp={handlePointerUp}
                     disabled={isSnapshot}
                     tone="danger"
-                    variant="text"
+                    variant="ghost"
                     size="small"
                     iconOnly
                 >
@@ -388,7 +388,7 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
                     disabled={props.isSnapshotMode}
                     onPointerDown={handleDataChannelOriginPointerDown}
                     iconOnly
-                    variant="text"
+                    variant="ghost"
                     size="small"
                     tone="neutral"
                 >
@@ -403,7 +403,7 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
                     onPointerDown={handleReceiverPointerDown}
                     onPointerUp={handleReceiversPointerUp}
                     iconOnly
-                    variant="text"
+                    variant="ghost"
                     size="small"
                     tone="neutral"
                 >
@@ -501,7 +501,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
             <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
-                <Popover.Trigger variant="text" size="small" iconOnly tone="neutral">
+                <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
                     <Tooltip title={badgeTitle} placement="bottom">
                         <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
                             <Error
@@ -529,7 +529,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                             <>
                                 <Separator orientation="horizontal" />
                                 <Button
-                                    variant="text"
+                                    variant="ghost"
                                     tone="neutral"
                                     size="small"
                                     onClick={handleShowLogClick}
@@ -548,7 +548,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (stateIndicators.length === 0) {
         stateIndicators.push(
             <Tooltip title="Show complete log for this module" key="header-module-log">
-                <Button onPointerDown={handleShowLogClick} variant="text" tone="neutral" size="small" iconOnly>
+                <Button onPointerDown={handleShowLogClick} variant="ghost" tone="neutral" size="small" iconOnly>
                     <History fontSize="inherit" />
                 </Button>
             </Tooltip>,

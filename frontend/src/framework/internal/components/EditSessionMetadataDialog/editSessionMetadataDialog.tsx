@@ -178,7 +178,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     </div>
                 </Dialog.Body>
                 <Dialog.Actions>
-                    <Button variant="text" tone="neutral" disabled={isSaving} onClick={handleCancel}>
+                    <Button variant="ghost" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
                     <Button variant="contained" disabled={isSaving} type="submit" form={formId}>

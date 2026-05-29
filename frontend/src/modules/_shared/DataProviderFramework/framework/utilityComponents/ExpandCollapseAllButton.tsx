@@ -32,7 +32,7 @@ export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): Re
                 onClick={expandAllChildren}
                 title="Expand all descendants"
                 iconOnly
-                variant="text"
+                variant="ghost"
                 size="small"
                 tone="neutral"
             >
@@ -42,7 +42,7 @@ export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): Re
                 onClick={collapseAllChildren}
                 title="Collapse all descendants"
                 iconOnly
-                variant="text"
+                variant="ghost"
                 size="small"
                 tone="neutral"
             >

@@ -30,7 +30,7 @@ export function DensityModeToggle(): React.ReactNode {
 
     return (
         <Tooltip title="Toggle density mode">
-            <Button variant="text" tone="accent" iconOnly onClick={toggleDenseMode}>
+            <Button variant="ghost" tone="accent" iconOnly onClick={toggleDenseMode}>
                 {density === "comfortable" ? <DensitySmall fontSize="inherit" /> : <DensityMedium fontSize="inherit" />}
             </Button>
         </Tooltip>

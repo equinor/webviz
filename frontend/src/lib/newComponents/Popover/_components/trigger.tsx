@@ -4,19 +4,17 @@ import type { PopoverTriggerProps as PopoverTriggerBaseProps } from "@base-ui/re
 import { Popover as PopoverBase } from "@base-ui/react/popover";
 import { omit } from "lodash";
 
-import { Button } from "@lib/newComponents/Button";
+import { Button, ButtonProps } from "@lib/newComponents/Button";
+import { ComponentWrapperProps, resolveWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 
-export type TriggerProps = {
-    iconOnly?: boolean;
-    variant?: "contained" | "outlined" | "text";
-    size?: "small" | "default" | "large";
-    tone?: "accent" | "neutral" | "danger";
-    round?: boolean;
+export type TriggerProps = ComponentWrapperProps<
+    Pick<ButtonProps, "variant" | "size" | "tone" | "round" | "iconOnly" | "compact">
+> & {
     children: React.ReactNode;
 } & Omit<PopoverTriggerBaseProps, "className" | "nativeButton" | "render">;
 
 export function Trigger(props: TriggerProps): React.ReactNode {
-    const baseProps = omit(props, ["iconOnly", "variant", "size", "tone", "round", "children"]);
+    const baseProps = resolveWrapperProps(props, "variant", "size", "tone", "round", "iconOnly", "compact", "children");
 
     return (
         <PopoverBase.Trigger
@@ -30,6 +28,7 @@ export function Trigger(props: TriggerProps): React.ReactNode {
                     size={props.size}
                     tone={props.tone}
                     pressed={state.open}
+                    compact={props.compact}
                 >
                     {props.children}
                 </Button>

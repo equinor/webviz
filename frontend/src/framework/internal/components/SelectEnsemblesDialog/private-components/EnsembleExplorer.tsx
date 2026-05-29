@@ -240,7 +240,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                     </Button>
                 ) : (
                     <>
-                        <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="text">
+                        <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="ghost">
                             Cancel
                         </Button>
                         <Button

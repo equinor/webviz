@@ -401,7 +401,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     return (
         <>
-            <ColorSelect value={props.color} onChange={props.onColorChange} size="small" compact variant="text" />
+            <ColorSelect value={props.color} onChange={props.onColorChange} size="small" compact variant="ghost" />
             <div className="text-body-sm">{props.label}</div>
             <Slider
                 min={min}

@@ -399,7 +399,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 <div className="gap-horizontal-3xs flex items-center">
                     <Button
                         onClick={handleSelectAll}
-                        variant="text"
+                        variant="ghost"
                         title="Select all"
                         size="small"
                         disabled={props.disabled}
@@ -409,7 +409,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     </Button>
                     <Button
                         onClick={handleUnselectAll}
-                        variant="text"
+                        variant="ghost"
                         title="Unselect all"
                         size="small"
                         disabled={props.disabled}

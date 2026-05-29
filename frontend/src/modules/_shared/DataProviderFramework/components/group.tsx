@@ -89,7 +89,7 @@ function Header(props: HeaderProps): React.ReactNode {
             <Button
                 onClick={props.onToggleExpanded}
                 title={props.expanded ? "Hide children" : "Show children"}
-                variant="text"
+                variant="ghost"
                 tone="neutral"
                 size="small"
                 iconOnly

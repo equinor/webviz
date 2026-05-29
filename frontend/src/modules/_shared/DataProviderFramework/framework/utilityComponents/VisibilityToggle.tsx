@@ -21,7 +21,7 @@ export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode 
         <Button
             onClick={handleToggleVisibility}
             title="Toggle visibility"
-            variant="text"
+            variant="ghost"
             tone="neutral"
             size="small"
             iconOnly

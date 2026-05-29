@@ -102,7 +102,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         title="Reset view to fit all objects"
                         iconOnly
                         size="small"
-                        variant="text"
+                        variant="ghost"
                     >
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
@@ -115,7 +115,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             pressed={gridVisible}
                             iconOnly
                             size="small"
-                            variant="text"
+                            variant="ghost"
                         >
                             <AxesLayerIcon fontSize="inherit" />
                         </Button>
@@ -126,7 +126,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             pressed={polylineEditingMode !== PolylineEditingMode.DISABLED}
                             iconOnly
                             size="small"
-                            variant="text"
+                            variant="ghost"
                         >
                             <Polyline fontSize="inherit" />
                         </Button>
@@ -138,7 +138,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     title="Decrease vertical scale"
                                     iconOnly
                                     size="small"
-                                    variant="text"
+                                    variant="ghost"
                                 >
                                     <Remove fontSize="inherit" />
                                 </Button>
@@ -150,7 +150,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     title="Increase vertical scale"
                                     iconOnly
                                     size="small"
-                                    variant="text"
+                                    variant="ghost"
                                 >
                                     <Add fontSize="inherit" />
                                 </Button>
@@ -163,7 +163,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         onClick={() => setExpanded(!expanded)}
                         iconOnly
                         size="small"
-                        variant="text"
+                        variant="ghost"
                     >
                         {expanded ? (
                             <KeyboardDoubleArrowLeft fontSize="inherit" />
@@ -187,7 +187,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 }
                                 iconOnly
                                 size="small"
-                                variant="text"
+                                variant="ghost"
                             >
                                 <DrawPathIcon fontSize="inherit" />
                             </Button>
@@ -204,7 +204,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 }
                                 iconOnly
                                 size="small"
-                                variant="text"
+                                variant="ghost"
                             >
                                 <AddPathPointIcon fontSize="inherit" />
                             </Button>
@@ -221,7 +221,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 }
                                 iconOnly
                                 size="small"
-                                variant="text"
+                                variant="ghost"
                             >
                                 <RemovePathPointIcon fontSize="inherit" />
                             </Button>
@@ -238,7 +238,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 disabled={!editingPolylineId}
                                 iconOnly
                                 size="small"
-                                variant="text"
+                                variant="ghost"
                             >
                                 <Check fontSize="inherit" />
                             </Button>

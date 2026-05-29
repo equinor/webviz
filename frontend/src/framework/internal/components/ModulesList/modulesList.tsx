@@ -207,7 +207,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     </span>
                     <span className="text-neutral-subtle">{makePersistenceIcon(props.isSerializable)}</span>
                     <Tooltip title="Show details">
-                        <Button variant="text" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
+                        <Button variant="ghost" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
                             <Help size={16} />
                         </Button>
                     </Tooltip>
@@ -327,7 +327,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             <div className="gap-vertical-2xs flex grow flex-col">
                 <div className="flex items-start">
                     <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
-                    <Button variant="text" tone="neutral" size="small" onClick={props.onClose} iconOnly>
+                    <Button variant="ghost" tone="neutral" size="small" onClick={props.onClose} iconOnly>
                         <Close fontSize="inherit" />
                     </Button>
                 </div>

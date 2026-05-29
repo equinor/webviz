@@ -854,7 +854,7 @@ export const LayoutBoxComponents: React.FC<{
                 {edges.map((edge) => (
                     <div
                         key={`${edge.edge}-${edge.rect.x}-${edge.rect.y}-${edge.rect.width}-${edge.rect.height}`}
-                        className="bg-accent absolute items-center justify-center rounded opacity-90"
+                        className="bg-accent-strong absolute items-center justify-center rounded opacity-90"
                         style={{
                             left: edge.rect.x,
                             top: edge.rect.y,
@@ -872,27 +872,27 @@ export const LayoutBoxComponents: React.FC<{
                         }}
                     >
                         {edge.edge === LayoutBoxEdgeType.LEFT && (
-                            <div className="border-accent-strong h-4 w-4 rotate-45 border-b-4 border-l-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-b-4 border-l-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.TOP && (
-                            <div className="border-accent-strong h-4 w-4 rotate-45 border-t-4 border-l-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-l-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.RIGHT && (
-                            <div className="border-accent-strong h-4 w-4 rotate-45 border-t-4 border-r-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-r-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.BOTTOM && (
-                            <div className="border-accent-strong h-4 w-4 rotate-45 border-r-4 border-b-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-r-4 border-b-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.VERTICAL && (
                             <>
-                                <div className="border-accent-strong h-4 w-4 rotate-45 border-b-4 border-l-4" />
-                                <div className="border-accent-strong h-4 w-4 rotate-45 border-t-4 border-r-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-b-4 border-l-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-r-4" />
                             </>
                         )}
                         {edge.edge === LayoutBoxEdgeType.HORIZONTAL && (
                             <>
-                                <div className="border-accent-strong h-4 w-4 rotate-45 border-t-4 border-l-4" />
-                                <div className="border-accent-strong h-4 w-4 rotate-45 border-r-4 border-b-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-l-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-r-4 border-b-4" />
                             </>
                         )}
                     </div>

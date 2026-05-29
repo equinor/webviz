@@ -357,12 +357,12 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Tooltip>
                 <span className="grow" />
                 <Tooltip title="Edit the selected session" placement="bottom" enterDelay="medium">
-                    <Button tone="accent" variant="text" disabled={!selectedSessionId} onClick={handleEditClick}>
+                    <Button tone="accent" variant="ghost" disabled={!selectedSessionId} onClick={handleEditClick}>
                         <Edit fontSize="inherit" /> Edit
                     </Button>
                 </Tooltip>
                 <Tooltip title="Open the selected session" placement="bottom" enterDelay="medium">
-                    <Button tone="accent" variant="text" disabled={!selectedSessionId} onClick={handleOpenSessionClick}>
+                    <Button tone="accent" variant="ghost" disabled={!selectedSessionId} onClick={handleOpenSessionClick}>
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
                 </Tooltip>
@@ -371,13 +371,13 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         tone="danger"
                         disabled={!selectedSessionId || deletePending}
                         onClick={handleDeleteClick}
-                        variant="text"
+                        variant="ghost"
                     >
                         {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button tone="accent" onClick={refresh} variant="text">
+                    <Button tone="accent" onClick={refresh} variant="ghost">
                         {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>

@@ -76,7 +76,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 
         return (
             <Tooltip title="Clear all messages">
-                <Button onClick={handleClearAll} tone="danger" variant="text" iconOnly size="small">
+                <Button onClick={handleClearAll} tone="danger" variant="ghost" iconOnly size="small">
                     <ClearAll fontSize="inherit" />
                 </Button>
             </Tooltip>

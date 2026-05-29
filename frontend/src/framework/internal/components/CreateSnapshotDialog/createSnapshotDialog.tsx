@@ -81,7 +81,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
         actions = (
             <>
-                <Button variant="text" tone="neutral" disabled={isSaving} onClick={handleCancel}>
+                <Button variant="ghost" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                     Cancel
                 </Button>
                 <Button tone="accent" disabled={isSaving} type="submit" form={formId}>
@@ -95,8 +95,8 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
 
         actions = (
             <>
-                <Button variant="text" disabled={isSaving} onClick={handleCancel}>
-                    Close
+                <Button disabled={isSaving} onClick={handleCancel}>
+                    Done
                 </Button>
             </>
         );

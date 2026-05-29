@@ -141,7 +141,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         zIndex: props.isDragged ? 1 : 0,
                     }}
                 >
-                    <div className="box-border flex h-full w-full flex-col border-2 border-solid bg-white shadow-sm">
+                    <div className="border-neutral-subtle bg-surface shadow-elevation-raised box-border flex h-full w-full flex-col border-2">
                         {makeHeader()}
                     </div>
                 </div>

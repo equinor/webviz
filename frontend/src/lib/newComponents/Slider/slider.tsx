@@ -698,7 +698,7 @@ function LimitLockSwitch(props: {
 
     return (
         <Button
-            variant="text"
+            variant="ghost"
             tone="accent"
             size={props.size}
             compact

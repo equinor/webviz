@@ -38,7 +38,7 @@ function SettingConfigButtonComponent(
 
     const actions = (
         <>
-            <Button variant="text" tone="neutral" onClick={handleCancel}>
+            <Button variant="ghost" tone="neutral" onClick={handleCancel}>
                 Cancel
             </Button>
             <Button variant="contained" onClick={handleApply}>

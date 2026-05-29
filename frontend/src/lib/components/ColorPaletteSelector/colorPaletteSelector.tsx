@@ -19,11 +19,11 @@ function makeColorPalettePreview(
 ): React.ReactNode {
     switch (type) {
         case ColorPaletteSelectorType.Continuous:
-            return <ColorGradient colorPalette={colorPalette} />;
+            return <ColorGradient colorPalette={colorPalette} layoutClassName="w-24" size="small" />;
         case ColorPaletteSelectorType.Categorical:
-            return <ColorTile.Group colorPalette={colorPalette} size="small" />;
+            return <ColorTile.Group colorPalette={colorPalette} layoutClassName="w-24" size="small" />;
         case ColorPaletteSelectorType.Discrete:
-            return <ColorGradient colorPalette={colorPalette} steps={steps} />;
+            return <ColorGradient colorPalette={colorPalette} layoutClassName="w-24" steps={steps} size="small" />;
     }
 }
 
@@ -62,7 +62,7 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
             onValueChange={handleValueChange}
             filter={null}
             renderItemAdornment={(palette) => (
-                <span className="min-w-32">{makeColorPalettePreview(palette, props.type, props.steps)}</span>
+                <span className="">{makeColorPalettePreview(palette, props.type, props.steps)}</span>
             )}
         />
     );

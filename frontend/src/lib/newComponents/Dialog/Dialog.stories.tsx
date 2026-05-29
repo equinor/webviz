@@ -290,7 +290,7 @@ export const FullDialog: Story = {
                         </Dialog.Description>
                     </Dialog.Body>
                     <Dialog.Actions>
-                        <Button variant="text" tone="neutral" onClick={() => setOpen(false)}>
+                        <Button variant="ghost" tone="neutral" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="contained" tone="accent" onClick={() => setOpen(false)}>
@@ -328,7 +328,7 @@ export const ConfirmDelete: Story = {
                         </Dialog.Description>
                     </Dialog.Body>
                     <Dialog.Actions>
-                        <Button variant="text" tone="neutral" onClick={() => setOpen(false)}>
+                        <Button variant="ghost" tone="neutral" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="contained" tone="danger" onClick={() => setOpen(false)}>
@@ -375,7 +375,7 @@ export const WithSlider: Story = {
                         </div>
                     </Dialog.Body>
                     <Dialog.Actions>
-                        <Button variant="text" tone="neutral" onClick={() => setOpen(false)}>
+                        <Button variant="ghost" tone="neutral" onClick={() => setOpen(false)}>
                             Cancel
                         </Button>
                         <Button variant="contained" tone="accent" onClick={() => setOpen(false)}>

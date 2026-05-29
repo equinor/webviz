@@ -24,7 +24,7 @@ export const DialogActions: React.FC<DialogActionsProps> = (props: DialogActions
 
     return (
         <div className="gap-x-horizontal-xs flex">
-            <Button onClick={props.onDiscard} tone="danger" variant="text" disabled={props.disableDiscard}>
+            <Button onClick={props.onDiscard} tone="danger" variant="ghost" disabled={props.disableDiscard}>
                 Discard changes
             </Button>
             <div title={props.hasDuplicatedDeltaEnsembles ? "Duplicate Delta Ensembles (marked blue)" : ""}>

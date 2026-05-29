@@ -155,7 +155,7 @@ function FilterInput(props: TextInputProps) {
                     title="Clear filter"
                     onClick={(evt) => props.onValueChange?.("", evt as any)}
                     iconOnly
-                    variant="text"
+                    variant="ghost"
                     tone="neutral"
                     size="small"
                 >

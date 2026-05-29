@@ -10,7 +10,7 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
+import { Typography } from "@lib/newComponents/Typography";
 
 export type ItemCardProps = {
     id: string;
@@ -66,7 +66,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             >
                 <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="w-24 shrink-0 text-right text-xs whitespace-nowrap">
+                <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
@@ -80,14 +80,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
 
     return (
         <div className="gap-vertical-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
-            <Avatar
-                size={16}
-                userData={
-                    props.owner !== null
-                        ? avatarFn
-                        : undefined
-                }
-            />
+            <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
             <span className="min-w-0 flex-1 truncate">{name}</span>
         </div>
     );
@@ -110,7 +103,7 @@ function TooltipContent(
     }
     return (
         <div className="w-2xs text-base whitespace-normal">
-            <Heading as="h6">{props.title}</Heading>
+            <h6>{props.title}</h6>
             <hr className="mb-vertical-xs bg-floating h-px" />
             {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
@@ -122,7 +115,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-neutral-subtle mt-vertical-xs text-body-sm block italic">Click to open</span>
+            <span className="text-neutral mt-vertical-xs text-body-sm block italic">Click to open</span>
         </div>
     );
 }

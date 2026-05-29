@@ -79,7 +79,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         >
             <Typography
                 {...baseProps}
-                className={resolveClassNames("w-full border-separate border-spacing-[0]", {
+                layoutClassName={resolveClassNames("w-full border-separate border-spacing-[0]", {
                     "table-fixed": props.fixed,
                 })}
                 as="table"

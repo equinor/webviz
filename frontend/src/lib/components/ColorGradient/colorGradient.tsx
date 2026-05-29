@@ -2,8 +2,9 @@ import type React from "react";
 
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
 
-export type ColorGradientProps = {
+export type ColorGradientProps = LayoutClassProps & {
     colorPalette: ColorPalette;
     steps?: number;
     size?: "small" | "default" | "large";
@@ -34,11 +35,17 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
 }
 
 export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
-    const { size = "default" } = props;
+    const { layoutClassName, size = "default" } = props;
 
     if (props.steps) {
         return (
-            <div className={resolveClassNames(SIZE_TO_CLASSNAMES[size], "border-neutral-strong flex rounded border")}>
+            <div
+                className={resolveClassNames(
+                    layoutClassName,
+                    SIZE_TO_CLASSNAMES[size],
+                    "border-neutral-strong flex rounded border",
+                )}
+            >
                 {makeColorSamples(props.steps, props.colorPalette)}
             </div>
         );
@@ -46,7 +53,11 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames(SIZE_TO_CLASSNAMES[size], "border-neutral-subtle rounded border")}
+            className={resolveClassNames(
+                layoutClassName,
+                SIZE_TO_CLASSNAMES[size],
+                "border-neutral-strong rounded border",
+            )}
             style={{
                 backgroundImage: props.colorPalette.getGradient(),
             }}

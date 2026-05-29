@@ -15,7 +15,7 @@ export function LoadingOverlay(props: LoadingOverlayProps): JSX.Element {
                 <div className="gap-vertical-xs flex flex-col items-center justify-center text-center">
                     <Heading as="h6">{props.text}</Heading>
                     {props.note && (
-                        <Paragraph size="md" className="whitespace-pre-line italic">
+                        <Paragraph size="md" layoutClassName="whitespace-pre-line" italic>
                             {props.note}
                         </Paragraph>
                     )}

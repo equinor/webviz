@@ -121,7 +121,7 @@ export const WithCancelConfirmation: Story = {
                         />
                     </Dialog.Body>
                     <Dialog.Actions>
-                        <Button variant="text" tone="neutral" onClick={handleCancelClick}>
+                        <Button variant="ghost" tone="neutral" onClick={handleCancelClick}>
                             Cancel
                         </Button>
                         <Button variant="contained" tone="accent" onClick={() => setDialogOpen(false)}>

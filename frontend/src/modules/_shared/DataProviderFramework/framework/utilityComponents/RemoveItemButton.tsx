@@ -20,7 +20,7 @@ export function RemoveItemButton(props: RemoveItemButtonProps): React.ReactNode 
 
     return (
         <>
-            <Button onClick={handleRemove} title="Remove item" tone="danger" variant="text" size="small" iconOnly>
+            <Button onClick={handleRemove} title="Remove item" tone="danger" variant="ghost" size="small" iconOnly>
                 <Delete fontSize="inherit" />
             </Button>
         </>

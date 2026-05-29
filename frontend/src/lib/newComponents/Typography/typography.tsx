@@ -8,6 +8,8 @@ import { type ComponentWrapperProps } from "../_shared/wrapperProps";
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
     family?: "header" | "body";
     size: TextSize;
+    // If tone is set, variant must be set as well. If tone is not set, variant is ignored.
+    // The text color is inherited by default, but setting tone to e.g. "danger" will apply a danger color. The variant controls the intensity of the color.
     tone?: "accent" | "neutral" | "danger" | "success" | "warning" | "info";
     variant?: "subtle" | "strong";
     as?: React.ElementType;
@@ -15,7 +17,6 @@ export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLEle
     weight?: "lighter" | "normal" | "bolder";
     tracking?: "tight" | "normal" | "wide";
     italic?: boolean;
-    className?: string;
 };
 
 const FONT_SIZE_CLASSES: Record<
@@ -314,13 +315,12 @@ function TypographyComponent<Element extends HTMLElement>(
     const {
         family = "body",
         size,
-        tone = "neutral",
         variant = "subtle",
         as = "span",
         lineHeight = "default",
         weight = "normal",
         tracking = "normal",
-        className,
+        tone,
         children,
         layoutClassName,
         italic,
@@ -333,8 +333,7 @@ function TypographyComponent<Element extends HTMLElement>(
         layoutClassName,
         FONT_SIZE_CLASSES[family][size][lineHeight][tracking],
         WEIGHT_CLASSES[weight],
-        TONE_CLASSES[tone][variant],
-        className,
+        tone ? TONE_CLASSES[tone][variant] : "",
         { italic: italic },
     );
 

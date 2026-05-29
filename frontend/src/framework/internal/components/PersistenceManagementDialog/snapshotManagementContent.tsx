@@ -436,7 +436,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 <span className="grow" />
                 <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
                     <Button
-                        variant="text"
+                        variant="ghost"
                         tone="accent"
                         disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
                         onClick={handleOpenSnapshotClick}
@@ -446,7 +446,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 </Tooltip>
                 <Tooltip title={deleteButtonTooltip} placement="top" enterDelay="medium">
                     <Button
-                        variant="text"
+                        variant="ghost"
                         tone="danger"
                         disabled={!selectedSnapshotId || deletePending || !userId}
                         onClick={handleDeleteClick}
@@ -456,7 +456,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     </Button>
                 </Tooltip>
                 <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button variant="text" tone="accent" onClick={refresh}>
+                    <Button variant="ghost" tone="accent" onClick={refresh}>
                         {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="inherit" />} Refresh
                     </Button>
                 </Tooltip>

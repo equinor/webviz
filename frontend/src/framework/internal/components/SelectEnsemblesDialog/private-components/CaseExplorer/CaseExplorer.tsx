@@ -272,7 +272,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             )}
                         </span>
                         <Tooltip title="Refresh assets and cases lists" enterDelay="medium">
-                            <Button tone="accent" onClick={handleManualRefetch} variant="text">
+                            <Button tone="accent" onClick={handleManualRefetch} variant="ghost">
                                 {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
                                     <CircularProgress size="small" />
                                 ) : (

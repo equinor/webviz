@@ -18,7 +18,7 @@ export function ViewportLayoutMenu(props: ViewportLayoutMenuProps): React.ReactN
         <Menu.Root>
             <TooltipCompositions.Default content="View layout settings">
                 <Menu.Trigger>
-                    <Button iconOnly size="small" variant="text" tone="neutral">
+                    <Button iconOnly size="small" variant="ghost" tone="neutral">
                         <Settings fontSize="inherit" />
                     </Button>
                 </Menu.Trigger>

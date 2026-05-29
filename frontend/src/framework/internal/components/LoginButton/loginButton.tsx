@@ -75,7 +75,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     return (
         <Popover.Root>
-            <Popover.Trigger variant="text" tone="neutral" iconOnly>
+            <Popover.Trigger variant="ghost" tone="neutral" iconOnly>
                 {makeIcon()}
             </Popover.Trigger>
             <Popover.Popup>
@@ -83,7 +83,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
                     <Popover.Title fontSize="sm" hideCloseButton>
                         {text}
                     </Popover.Title>
-                    <Button variant="text" tone="neutral" onClick={handleLogout}>
+                    <Button variant="ghost" tone="neutral" onClick={handleLogout}>
                         <Logout fontSize="inherit" />
                         Sign out
                     </Button>

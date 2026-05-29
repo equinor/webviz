@@ -236,7 +236,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                         Make <i className="text-accent-subtle font-bold">{props.receiver.getDisplayName()}</i> subscribe
                         to...
                     </div>
-                    <Button variant="text" tone="neutral" size="small" onClick={handleCancelChannelSelection} iconOnly>
+                    <Button variant="ghost" tone="neutral" size="small" onClick={handleCancelChannelSelection} iconOnly>
                         <Close fontSize="small" />
                     </Button>
                 </div>
@@ -258,7 +258,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     ))}
                 </div>
                 <div className="gap-horizontal-2xs bg-canvas px-horizontal-2xs flex h-16 items-center justify-end">
-                    <Button variant="text" tone="neutral" onClick={handleCancelChannelSelection}>
+                    <Button variant="ghost" tone="neutral" onClick={handleCancelChannelSelection}>
                         Cancel
                     </Button>
                     <Button onClick={handleSelectionDone} disabled={!checkIfSelectionIsMade()}>

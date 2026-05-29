@@ -88,7 +88,7 @@ function ToastList() {
                     <ToastBase.Action
                         render={(subProps) => (
                             <Button
-                                variant="text"
+                                variant="ghost"
                                 tone="accent"
                                 {...subProps}
                                 layoutClassName={resolveClassNames(subProps.className, "ml-auto")}

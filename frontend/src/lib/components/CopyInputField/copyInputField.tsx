@@ -4,14 +4,12 @@ import { AssignmentTurnedIn, ContentPaste } from "@mui/icons-material";
 
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 
-import { Button } from "../Button";
-import type { ButtonProps } from "../Button/button";
-import { Input } from "../Input";
 import { Tooltip } from "../Tooltip";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Button, ButtonProps } from "@lib/newComponents/Button";
 
 export type CopyInputFieldProps = {
     value: string;
-    size?: ButtonProps["size"];
     className?: string;
 };
 
@@ -30,18 +28,18 @@ export function CopyInputField(props: CopyInputFieldProps): React.ReactNode {
 
     return (
         <div className={props.className}>
-            <Input
-                type="text"
+            <TextInput
                 value={props.value}
                 readOnly
-                className="w-full"
+                layoutClassName="w-full"
                 endAdornment={
                     <Tooltip title={showCopySuccess ? "Copied!" : "Copy to clipboard"}>
                         <Button
                             variant="contained"
                             onClick={copyToClipboard}
-                            color={showCopySuccess ? "success" : "primary"}
-                            size={props.size ?? "medium"}
+                            tone={showCopySuccess ? "accent" : "neutral"}
+                            size="small"
+                            iconOnly
                         >
                             {showCopySuccess ? (
                                 <AssignmentTurnedIn fontSize="inherit" />

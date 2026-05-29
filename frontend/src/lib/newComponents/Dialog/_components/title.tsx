@@ -10,7 +10,7 @@ export function Title(props: TitleProps) {
     return (
         <DialogBase.Title
             render={(baseProps) => (
-                <Heading as="h6" {...baseProps}>
+                <Heading as="h4" {...baseProps}>
                     {props.children}
                 </Heading>
             )}

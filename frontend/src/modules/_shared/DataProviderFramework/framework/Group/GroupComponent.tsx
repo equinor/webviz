@@ -101,7 +101,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             id={props.group.getItemDelegate().getId()}
             title={
                 <div className="gap-horizontal-2xs relative flex min-w-0 items-center">
-                    {color && <ColorSelect onChange={handleColorChange} value={color} size="small" variant="text" />}
+                    {color && <ColorSelect onChange={handleColorChange} value={color} size="small" variant="ghost" />}
                     <div className="min-w-0 grow">
                         <EditName item={props.group} />
                     </div>

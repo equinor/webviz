@@ -17,14 +17,10 @@ const SIZE_TO_CLASSNAMES: Record<NonNullable<TileProps["size"]>, string> = {
 export const Tile: React.FC<TileProps> = (props) => {
     return (
         <div
-            className={resolveClassNames(
-                "box-border aspect-square rounded",
-                SIZE_TO_CLASSNAMES[props.size || "default"],
-                {
-                    "border-neutral-subtle border": !props.grouped,
-                    "not-first-of-type:rounded-l-none not-last-of-type:rounded-r-none": props.grouped,
-                },
-            )}
+            className={resolveClassNames("box-border rounded", SIZE_TO_CLASSNAMES[props.size || "default"], {
+                "border-neutral-subtle aspect-square border": !props.grouped,
+                "grow not-first-of-type:rounded-l-none not-last-of-type:rounded-r-none": props.grouped,
+            })}
             style={{ backgroundColor: props.color }}
         />
     );

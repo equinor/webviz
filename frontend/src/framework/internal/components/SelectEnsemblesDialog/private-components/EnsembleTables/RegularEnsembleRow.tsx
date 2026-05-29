@@ -69,7 +69,7 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                 </Table.Cell>
                 <Table.Cell>
                     <TooltipCompositions.Default content="Remove this ensemble from the list" delay="medium">
-                        <Button variant="text" tone="danger" onClick={onDelete} size="small" iconOnly>
+                        <Button variant="ghost" tone="danger" onClick={onDelete} size="small" iconOnly>
                             <Delete fontSize="inherit" />
                         </Button>
                     </TooltipCompositions.Default>

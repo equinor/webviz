@@ -182,7 +182,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         <Heading as="h6">Delta Ensembles</Heading>
                         <div className="fill-indigo-600">
                             <Popover.Root>
-                                <Popover.Trigger variant="text" size="small">
+                                <Popover.Trigger variant="ghost" size="small">
                                     <InfoOutlined size={16} className="cursor-help" />
                                 </Popover.Trigger>
                                 <Popover.Popup>

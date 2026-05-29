@@ -43,7 +43,7 @@ function PopupComponent(props: MenuPopupProps, ref: React.ForwardedRef<HTMLDivEl
                     as={MenuBase.Popup}
                     size={getTextSizeForSelectableSize(defaultedProps.itemSize)}
                     ref={ref}
-                    className={resolveClassNames("menu__popup", baseProps.className)}
+                    layoutClassName={resolveClassNames("menu__popup", baseProps.className)}
                 >
                     <ComponentSizeContext.Provider value={itemSize}>{props.children}</ComponentSizeContext.Provider>
                 </Typography>

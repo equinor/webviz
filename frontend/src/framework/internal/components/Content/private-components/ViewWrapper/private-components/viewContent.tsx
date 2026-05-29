@@ -16,10 +16,10 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
 import { CrashView } from "./crashView";
+import { Button } from "@lib/newComponents/Button";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -104,7 +104,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     most likely been outdated by a module update. You can reset the module to its default view to
                     continue using it.
                 </div>
-                <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} variant="contained">
+                <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} size="small">
                     Reset module
                 </Button>
             </div>

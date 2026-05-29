@@ -92,21 +92,21 @@ export function RecentList<TItemType, TQueryData = unknown>(
     return (
         <section className="gap-horizontal-xs flex min-w-0 flex-col">
             <div className="gap-vertical-xs flex items-center">
-                <Heading as="h4" className="grow">
+                <Heading as="h4" layoutClassName="grow">
                     {props.title}
                 </Heading>
                 <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
-                    <Button size="small" variant="text" iconOnly onClick={refresh}>
+                    <Button size="small" variant="ghost" iconOnly onClick={refresh}>
                         {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="small" />}
                     </Button>
                 </Tooltip>
                 <Tooltip title="Show all" placement="bottom" enterDelay="medium">
-                    <Button size="small" variant="text" iconOnly onClick={props.onDialogIconClick}>
+                    <Button size="small" variant="ghost" iconOnly onClick={props.onDialogIconClick}>
                         <Icon name="folder_open" />
                     </Button>
                 </Tooltip>
             </div>
-            <Typography size="sm" family="body" className="text-neutral-subtle">
+            <Typography size="sm" family="body" tone="neutral" variant="subtle">
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>

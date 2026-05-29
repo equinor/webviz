@@ -101,7 +101,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
                     />
                 </Dialog.Body>
                 <Dialog.Actions>
-                    <Button tone="neutral" variant="text" onClick={handleDiscardChanges}>
+                    <Button tone="neutral" variant="ghost" onClick={handleDiscardChanges}>
                         Cancel
                     </Button>
                     <Button onClick={handleAcceptChanges}>Apply</Button>

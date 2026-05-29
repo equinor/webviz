@@ -55,13 +55,13 @@ export function StartPage(props: StartPageProps) {
                             title="Create a new free session and save it later on demand."
                             enterDelay="medium"
                         >
-                            <Button variant="text" onClick={handleNewSession}>
+                            <Button variant="ghost" onClick={handleNewSession}>
                                 <Icon name="category" fontSize="inherit" />
                                 New session
                             </Button>
                         </Tooltip>
                         <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
-                            <Button variant="text" onClick={openOverviewDialogOnSessions}>
+                            <Button variant="ghost" onClick={openOverviewDialogOnSessions}>
                                 <Icon name="folder_open" fontSize="inherit" />
                                 Open session or snapshot...
                             </Button>
@@ -71,7 +71,7 @@ export function StartPage(props: StartPageProps) {
                             title="Start from a template to quickly set up a session with predefined settings and data."
                             enterDelay="medium"
                         >
-                            <Button variant="text" onClick={handleOpenTemplatesDialog}>
+                            <Button variant="ghost" onClick={handleOpenTemplatesDialog}>
                                 <Icon name="dashboard" fontSize="inherit" />
                                 Start from template...
                             </Button>
