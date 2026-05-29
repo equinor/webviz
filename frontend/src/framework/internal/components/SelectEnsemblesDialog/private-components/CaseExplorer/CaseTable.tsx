@@ -7,6 +7,7 @@ import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader"
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Table } from "@lib/newComponents/Table";
 import { TableCompositions } from "@lib/newComponents/Table/compositions";
+import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
 import { SortDirection, type TableSortState } from "@lib/newComponents/Table/typesAndEnums";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { Virtualization } from "@lib/newComponents/Virtualization";
@@ -147,7 +148,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                     direction="vertical"
                     containerRef={tableOverflowWrapperRef}
                     items={collatedCaseData}
-                    itemSize={37}
+                    itemSize={ROW_HEIGHT_PX["small"]}
                     renderItem={(caseRow: CaseInfo_api) => {
                         const numSelectedEnsemblesInCase = props.selectedEnsembles.filter(
                             (e) => e.ensembleIdent.getCaseUuid() === caseRow.uuid,

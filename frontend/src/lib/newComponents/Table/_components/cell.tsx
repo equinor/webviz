@@ -3,6 +3,7 @@ import React from "react";
 import { ArrowDownward, ArrowUpward, Square } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import type { ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -10,6 +11,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useTableRootContext } from "../_contexts/tableRootContext";
 import { useTableSectionContext } from "../_contexts/tableSectionContext";
 import { getNextSortDirection } from "../_utils";
+import { ROW_HEIGHT_PX } from "../constants";
 import { SortDirection } from "../typesAndEnums";
 
 export type TableCellProps = {
@@ -26,11 +28,11 @@ export type TableCellProps = {
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;
 
 function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableCellElement>): React.ReactNode {
-    // const props = defaults({}, props, DEFAULT_PROPS);
     const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
 
     const sectionContext = useTableSectionContext();
     const rootContext = useTableRootContext();
+    const componentSize = useComponentSize();
 
     const CellTag = sectionContext === "body" ? "td" : "th";
 
@@ -59,7 +61,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             width={props.width ?? percentWidth}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
-            style={{ fontWeight: "inherit" }}
+            style={{ fontWeight: "inherit", height: `${ROW_HEIGHT_PX[componentSize]}px` }}
             className={resolveClassNames(
                 props.layoutClassName,
                 "border-neutral-subtle text-left align-middle whitespace-nowrap",

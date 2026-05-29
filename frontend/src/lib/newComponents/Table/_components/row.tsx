@@ -1,10 +1,12 @@
 import React from "react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { TableRootContext, useTableRootContext } from "../_contexts/tableRootContext";
 import { useTableSectionContext } from "../_contexts/tableSectionContext";
+import { ROW_HEIGHT_PX } from "../constants";
 
 export type TableRowProps = {
     selectable?: boolean;
@@ -18,6 +20,7 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
 
     const rootContext = useTableRootContext();
     const sectionContext = useTableSectionContext();
+    const componentSize = useComponentSize();
 
     const isSelectable = (props.selectable ?? rootContext.selectable) && sectionContext === "body";
     const isSelected = isSelectable && rootContext.selectedRow === props.rowKey;
@@ -36,6 +39,7 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
                 "bg-accent-strong text-accent-strong-on-emphasis!": isSelected,
                 "hover:bg-accent-strong-hover hover:text-accent-strong-on-emphasis!": isSelected,
             })}
+            style={{ height: `${ROW_HEIGHT_PX[componentSize]}px` }}
             onClick={(evt) => {
                 if (!isSelectable) return;
                 if (!props.rowKey) return console.warn("Missing row identifier key");
