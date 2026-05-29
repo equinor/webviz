@@ -6,6 +6,7 @@ import type { CaseInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Table } from "@lib/newComponents/Table";
+import { TableCompositions } from "@lib/newComponents/Table/compositions";
 import { SortDirection, type TableSortState } from "@lib/newComponents/Table/typesAndEnums";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { Virtualization } from "@lib/newComponents/Virtualization";
@@ -17,6 +18,7 @@ import type { CaseTableFilterState } from "./CaseTableFilterRow";
 import { CaseTableFilterRow, useCaseDataFilter } from "./CaseTableFilterRow";
 
 export type CaseTableProps = {
+    isPending?: boolean;
     selectedCase?: string | null;
 
     selectedEnsembles: UserEnsembleSetting[];
@@ -139,6 +141,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             </Table.Head>
 
             <Table.Body>
+                {props.isPending && <TableCompositions.PendingRows rowCount="fill" />}
                 <Virtualization
                     placeholderComponent="tr"
                     direction="vertical"

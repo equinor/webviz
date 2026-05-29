@@ -3,6 +3,8 @@ import React from "react";
 import type { SortDirection } from "../typesAndEnums";
 
 export type TableRootContextType = {
+    availableBodyHeight: number;
+
     sortable?: boolean;
     selectable?: boolean;
     compact?: boolean;

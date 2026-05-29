@@ -285,6 +285,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     <div className="min-h-0 grow">
                         <CaseTable
                             caseData={caseData}
+                            isPending={casesQuery.isPending}
                             selectedCase={selectedCaseUuid}
                             selectedEnsembles={props.selectedEnsembles}
                             showOnlyMyCases={showOnlyMyCases}
