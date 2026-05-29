@@ -11,7 +11,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useTableRootContext } from "../_contexts/tableRootContext";
 import { useTableSectionContext } from "../_contexts/tableSectionContext";
 import { getNextSortDirection } from "../_utils";
-import { ROW_HEIGHT_PX } from "../constants";
+import { ROW_HEIGHT_PX, ROW_HEIGHT_PX_COMPACT } from "../constants";
 import { SortDirection } from "../typesAndEnums";
 
 export type TableCellProps = {
@@ -47,6 +47,8 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
     const isSorted = currentSortDirection !== SortDirection.NONE;
     const percentWidth = props.widthInPercent ? `${props.widthInPercent}%` : undefined;
 
+    const cellHeightPx = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
+
     function toggleSort() {
         if (!isSortable) return;
         if (!props.colKey) return console.warn("Missing column identifier key");
@@ -61,7 +63,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             width={props.width ?? percentWidth}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
-            style={{ fontWeight: "inherit", height: `${ROW_HEIGHT_PX[componentSize]}px` }}
+            style={{ fontWeight: "inherit", height: `${cellHeightPx}px` }}
             className={resolveClassNames(
                 props.layoutClassName,
                 "border-neutral-subtle text-left align-middle whitespace-nowrap",
