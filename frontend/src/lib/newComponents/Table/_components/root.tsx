@@ -74,14 +74,12 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         headColumnMetaData = recursivelyProcessColumnChildren(headChild);
     }
 
-    const [availableBodyHeight, setAvailableBodyHeight] = React.useState<number>(0);
-
     const wrapperSize = useElementSize(innerWrapperRef);
 
     // Calculate available body height if the table was to fill the wrapper. This is used for the PendingRows "fill" option to automatically fill the remaining space in the table body.
     // ! This assumes that header and footer sizes are static, and only re-triggers if the wrapper size changes
-    React.useLayoutEffect(() => {
-        if (!innerWrapperRef.current || !innerTableRef.current) return;
+    const availableBodyHeight = React.useMemo(() => {
+        if (!innerWrapperRef.current || !innerTableRef.current) return 0;
 
         const wrapperHeight = wrapperSize.height;
 
@@ -98,7 +96,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         const footerHeight = footerElement?.clientHeight ?? 0;
 
         const bodyHeight = wrapperHeight - headerHeight - footerHeight - existingRowsHeight;
-        setAvailableBodyHeight(Math.max(bodyHeight, 0));
+        return Math.max(bodyHeight, 0);
     }, [wrapperSize.height]);
 
     return (
