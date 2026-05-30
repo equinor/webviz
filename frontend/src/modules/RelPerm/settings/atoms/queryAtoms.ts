@@ -40,9 +40,12 @@ type RelPermRealizationDataQueryContext = {
     tableDefinitionIsLoaded: boolean;
 };
 
-export const relPermTableNamesQueriesAtom = atomWithQueries<string[], RelPermApiError, string[], RelPermTableNamesQueryKey>(
-    makeRelPermTableNamesQueryOptions,
-);
+export const relPermTableNamesQueriesAtom = atomWithQueries<
+    string[],
+    RelPermApiError,
+    string[],
+    RelPermTableNamesQueryKey
+>(makeRelPermTableNamesQueryOptions);
 
 export const relPermTableDefinitionQueriesAtom = atomWithQueries<
     RelpermTableDefinition_api,
@@ -110,10 +113,7 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     const validRealizationNumbers = get(validRealizationNumbersAtom);
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
-    function makeQueryContext(
-        ensembleIdent: RegularEnsembleIdent,
-        index: number,
-    ): RelPermRealizationDataQueryContext {
+    function makeQueryContext(ensembleIdent: RegularEnsembleIdent, index: number): RelPermRealizationDataQueryContext {
         const tableRealizations = tableDefinitionQueries[index]?.data?.realizations ?? [];
         const filteredRealizations = filterRealizationsByTable(validRealizationNumbers, tableRealizations);
 
@@ -195,7 +195,10 @@ function makeRelPermRealizationDataQueryOptions(get: Getter) {
     };
 }
 
-function filterRealizationsByTable(validRealizationNumbers: number[] | null, tableRealizations: number[]): number[] | null {
+function filterRealizationsByTable(
+    validRealizationNumbers: number[] | null,
+    tableRealizations: number[],
+): number[] | null {
     if (!validRealizationNumbers) {
         return null;
     }
@@ -205,4 +208,3 @@ function filterRealizationsByTable(validRealizationNumbers: number[] | null, tab
         return tableRealizationSet.has(realization);
     });
 }
-

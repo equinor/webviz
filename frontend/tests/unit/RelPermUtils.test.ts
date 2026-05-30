@@ -201,7 +201,12 @@ describe("RelPerm layout", () => {
         const shownLegendColorByValues = new Set<string>();
         const traces = [
             ...builder.makeStatisticFanTraces(ColorBy.CURVE, GroupBy.NONE, shownLegendColorByValues),
-            ...builder.makeStatisticLineTraces(ColorBy.CURVE, GroupBy.NONE, [RelPermStatistic.P50], shownLegendColorByValues),
+            ...builder.makeStatisticLineTraces(
+                ColorBy.CURVE,
+                GroupBy.NONE,
+                [RelPermStatistic.P50],
+                shownLegendColorByValues,
+            ),
             ...builder.makeIndividualRealizationTraces(ColorBy.CURVE, GroupBy.NONE, shownLegendColorByValues),
         ];
 
@@ -220,7 +225,12 @@ describe("RelPerm layout", () => {
         );
         const shownLegendColorByValues = new Set<string>();
         const legendTraces = builder.makeLegendTraces(ColorBy.CURVE, shownLegendColorByValues);
-        const statisticTraces = builder.makeStatisticLineTraces(ColorBy.CURVE, GroupBy.NONE, [RelPermStatistic.P50], shownLegendColorByValues);
+        const statisticTraces = builder.makeStatisticLineTraces(
+            ColorBy.CURVE,
+            GroupBy.NONE,
+            [RelPermStatistic.P50],
+            shownLegendColorByValues,
+        );
 
         expect(legendTraces).toHaveLength(2);
         expect(legendTraces[0]).toMatchObject({ name: "KRW", legendgroup: "KRW", showlegend: true });
@@ -229,10 +239,7 @@ describe("RelPerm layout", () => {
     });
 
     it("uses stable color keys for traces", () => {
-        const entries = [
-            makeCurveEntry([0, 1, 1]),
-            { ...makeCurveEntry([0, 1, 1]), curveName: "KROW", satnum: 2 },
-        ];
+        const entries = [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 1, 1]), curveName: "KROW", satnum: 2 }];
         const colorSet = makeColorSet(["#111111", "#222222"]);
 
         expect(makeRelPermColorByValueMap(entries, [], ColorBy.CURVE, colorSet)).toEqual(

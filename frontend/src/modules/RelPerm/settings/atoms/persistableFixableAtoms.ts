@@ -97,11 +97,7 @@ function computeTableNamesQueryDependenciesState({ get }: { get: Getter }): "err
     return "loaded";
 }
 
-function computeTableDefinitionsQueryDependenciesState({
-    get,
-}: {
-    get: Getter;
-}): "error" | "loading" | "loaded" {
+function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
     const tableDefinitionQueries = get(relPermTableDefinitionQueriesAtom);
 
     if (tableDefinitionQueries.some((query: { isFetching: boolean }) => query.isFetching)) {

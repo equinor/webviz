@@ -32,7 +32,10 @@ type SubplotDefinition = {
 };
 
 type DynamicAxisLayout = Partial<Layout> & {
-    [axisName: `xaxis${string}` | `yaxis${string}`]: NonNullable<Layout["xaxis"]> | NonNullable<Layout["yaxis"]> | undefined;
+    [axisName: `xaxis${string}` | `yaxis${string}`]:
+        | NonNullable<Layout["xaxis"]>
+        | NonNullable<Layout["yaxis"]>
+        | undefined;
 };
 type XAxisAnchor = NonNullable<NonNullable<Layout["xaxis"]>["anchor"]>;
 type YAxisAnchor = NonNullable<NonNullable<Layout["yaxis"]>["anchor"]>;
@@ -304,7 +307,7 @@ export class RelPermPlotBuilder {
             const domainBottom = domainTop - subplotHeight;
 
             layoutWithDynamicAxes[`xaxis${suffix}`] = {
-                title: index === subplotDefinitions.length - 1 ? saturationAxisName ?? "Saturation" : undefined,
+                title: index === subplotDefinitions.length - 1 ? (saturationAxisName ?? "Saturation") : undefined,
                 range: [0, 1],
                 domain: [0, 1],
                 anchor: makeYAxisAnchor(axisReferenceSuffix),

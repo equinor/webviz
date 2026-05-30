@@ -88,7 +88,10 @@ export const availableSaturationAxisNamesAtom = atom<string[]>((get) => {
 });
 
 export const selectedSaturationAxisNameAtom = atom<string | null>((get) => {
-    return fixupSelectedOrFirstValue(get(userSelectedSaturationAxisNameAtom).value, get(availableSaturationAxisNamesAtom));
+    return fixupSelectedOrFirstValue(
+        get(userSelectedSaturationAxisNameAtom).value,
+        get(availableSaturationAxisNamesAtom),
+    );
 });
 
 export const availableCurveNamesAtom = atom<string[]>((get) => {
