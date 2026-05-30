@@ -384,15 +384,15 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     );
 
     const handleInputChange = React.useCallback(
-        function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-            let value = Number(event.target.value) * 1000;
+        function handleInputChange(value: string) {
+            let numericValue = Number(value) * 1000;
             const allowedValues = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step);
-            value = allowedValues.reduce((prev, curr) =>
-                Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
+            numericValue = allowedValues.reduce((prev, curr) =>
+                Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
             );
 
-            setLocalValue(value);
-            debouncedOnValueChange(value);
+            setLocalValue(numericValue);
+            debouncedOnValueChange(numericValue);
         },
         [debouncedOnValueChange, min, max, step],
     );
@@ -418,7 +418,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                     value={localValue / 1000}
                     min={min / 1000}
                     max={max / 1000}
-                    onChange={handleInputChange}
+                    onValueChange={handleInputChange}
                     endAdornment="K"
                     className="min-w-20"
                 />

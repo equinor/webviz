@@ -20,7 +20,7 @@ import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/Si
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 
 import { scaleHexColorLightness } from "./colorUtils";
-import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
+import type { EnsemblesParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { getHexColorFromOwner } from "./plotColoring";
 import {
     createHistoricalVectorTrace,
@@ -75,7 +75,7 @@ export class PlotBuilder {
     private _defaultHoverTemplate = "(%{x}, %{y})<br>";
     private _scatterType: "scatter" | "scattergl";
 
-    private _ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null = null;
+    private _ensemblesParameterColoring: EnsemblesParameterColoring | null = null;
     private _parameterFallbackColor = "#808080";
 
     private _traceFallbackColor = "#000000";
@@ -99,7 +99,7 @@ export class PlotBuilder {
         vectorHexColorMap: VectorHexColorMap,
         width: number,
         height: number,
-        ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
+        ensemblesParameterColoring?: EnsemblesParameterColoring,
         limitDirection?: SubplotLimitDirection,
         limitDirectionMaxElements?: number,
         scatterType: "scatter" | "scattergl" = "scatter",

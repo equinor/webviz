@@ -1,12 +1,12 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import type { DataProviderManager } from "@modules/_shared/DataProviderFramework/framework/DataProviderManager/DataProviderManager";
+import type { ViewLayout } from "@modules/_shared/enums/viewLayout";
 
 import { dataProviderManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
-import type { PreferredViewLayout } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     dataProviderManager: DataProviderManager | null;
-    preferredViewLayout: PreferredViewLayout;
+    preferredViewLayout: ViewLayout;
 };
 
 export type Interfaces = {

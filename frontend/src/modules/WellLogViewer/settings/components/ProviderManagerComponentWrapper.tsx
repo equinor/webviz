@@ -195,15 +195,17 @@ export function ProviderManagerComponentWrapper(props: ProviderManagerComponentW
                         ),
                     );
 
-                case RootActionIdents.CONTINUOUS_TRACK:
-                    return groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, dataProviderManager),
-                    );
+                case RootActionIdents.CONTINUOUS_TRACK: {
+                    const track = GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_CONT, dataProviderManager);
+                    groupDelegate.appendChild(track);
+                    return;
+                }
 
-                case RootActionIdents.DISCRETE_TRACK:
-                    return groupDelegate.appendChild(
-                        GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, dataProviderManager),
-                    );
+                case RootActionIdents.DISCRETE_TRACK: {
+                    const track = GroupRegistry.makeGroup(GroupType.WELL_LOG_TRACK_DISC, dataProviderManager);
+                    groupDelegate.appendChild(track);
+                    return;
+                }
 
                 case PlotActionIdents.DIFF_GROUP: {
                     const diffGroup = GroupRegistry.makeGroup(GroupType.WELL_LOG_DIFF_GROUP, dataProviderManager);
