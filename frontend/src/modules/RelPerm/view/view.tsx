@@ -34,10 +34,16 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         statusWriter,
     );
     const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
+    const instanceTitle = makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy);
 
     statusWriter.setLoading(relPermDataAccessorStatus.isFetching);
 
-    viewContext.setInstanceTitle(makeRelPermPlotTitle(curveType, curveNames, visualizationSettings.groupBy));
+    React.useEffect(
+        function updateInstanceTitle() {
+            viewContext.setInstanceTitle(instanceTitle);
+        },
+        [instanceTitle, viewContext],
+    );
 
     function makeContent() {
         if (!tableName) {
