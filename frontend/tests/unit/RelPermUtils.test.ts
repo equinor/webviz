@@ -57,6 +57,7 @@ function makeRegularEnsemble(ensembleIdent: RegularEnsembleIdent, color: string)
         [],
         [],
         null,
+        null,
         color,
     );
 }
@@ -209,7 +210,7 @@ describe("RelPerm layout", () => {
         expect(new Set(traces.map((trace) => trace.legendgroup))).toEqual(new Set(["KRW"]));
     });
 
-    it("uses stable legend proxy traces for color groups", () => {
+    it("shows legend entries from dedicated color group traces", () => {
         const builder = new RelPermPlotBuilder(
             {
                 getEntries: () => [makeCurveEntry([0, 1, 1]), { ...makeCurveEntry([0, 0.5, 1]), curveName: "KROW" }],
