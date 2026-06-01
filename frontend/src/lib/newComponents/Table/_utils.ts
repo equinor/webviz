@@ -7,7 +7,7 @@ import { Head } from "./_components/head";
 import { SortDirection, type ColumnMetaData } from "./typesAndEnums";
 
 export function getNextSortDirection(currentSortDirection: SortDirection) {
-    const directions = Object.values(SortDirection);
+    const directions = [SortDirection.DESC, SortDirection.ASC, SortDirection.NONE];
 
     const currentIndex = directions.indexOf(currentSortDirection);
     const nextIndex = (currentIndex + 1) % directions.length;
