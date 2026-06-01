@@ -3,6 +3,7 @@ import React from "react";
 import { Radio as RadioBase, type RadioRootProps as RadioRootBaseProps } from "@base-ui/react";
 import { RadioButtonChecked, RadioButtonUnchecked } from "@mui/icons-material";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getIconSizeClassNameForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -12,8 +13,8 @@ export type RadioProps = ComponentWrapperProps<Omit<RadioRootBaseProps, "ref">> 
 };
 
 export const Radio = React.forwardRef<HTMLSpanElement, RadioProps>(function Radio(props, ref) {
-    const { size = "default", ...restProps } = props;
-    const baseProps = resolveWrapperProps(restProps);
+    const baseProps = resolveWrapperProps(props, "size");
+    const size = useComponentSize(props);
 
     return (
         <RadioBase.Root

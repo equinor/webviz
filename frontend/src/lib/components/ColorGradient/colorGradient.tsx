@@ -1,8 +1,9 @@
 import type React from "react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
+import type { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
 
 export type ColorGradientProps = LayoutClassProps & {
     colorPalette: ColorPalette;
@@ -35,7 +36,8 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
 }
 
 export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
-    const { layoutClassName, size = "default" } = props;
+    const { layoutClassName } = props;
+    const size = useComponentSize(props);
 
     if (props.steps) {
         return (

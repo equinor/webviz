@@ -1,5 +1,8 @@
 import React from "react";
 
+import { omit } from "lodash";
+
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getDataAttributesForSelectableSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -14,7 +17,8 @@ export type WithLabelProps = CheckboxProps & {
 };
 
 export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(function CheckboxWithLabel(props, ref) {
-    const { label, children, direction = "horizontal", size = "default", layoutClassName, ...checkboxProps } = props;
+    const { label, children, direction = "horizontal", layoutClassName, ...checkboxProps } = omit(props, "size");
+    const size = useComponentSize(props);
 
     return (
         <label
