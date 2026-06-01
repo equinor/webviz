@@ -95,6 +95,9 @@ export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orien
 
     size?: SelectableSize;
 
+    /** Hides the slider indicator */
+    noIndicator?: boolean;
+
     /**
      * Formats the value displayed by the thumbs value tooltip.
      * @param value The current value of the thumb.
@@ -279,6 +282,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         "thumbAriaLabel",
         "valueLabelFormat",
         "inverted",
+        "noIndicator",
         "size",
         "minLocked",
         "maxLocked",
@@ -522,12 +526,14 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             {/* Only show start dot for dual sliders */}
                             <Dot placement="start" />
 
-                            <SliderBase.Indicator
-                                className={resolveClassNames("rounded-lg", {
-                                    [TRACK_CLASS_NAME]: props.inverted,
-                                    [INDICATOR_CLASS_NAME]: !props.inverted,
-                                })}
-                            />
+                            {!props.noIndicator && (
+                                <SliderBase.Indicator
+                                    className={resolveClassNames("rounded-lg", {
+                                        [TRACK_CLASS_NAME]: props.inverted,
+                                        [INDICATOR_CLASS_NAME]: !props.inverted,
+                                    })}
+                                />
+                            )}
 
                             <Thumb
                                 index={0}
