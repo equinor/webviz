@@ -80,7 +80,7 @@ services_config = ServicesConfig(
     enterprise_subscription_key=config.ENTERPRISE_SUBSCRIPTION_KEY,
     surface_query_url=config.SURFACE_QUERY_URL,
     vds_host_address=config.VDS_HOST_ADDRESS,
-    redis_user_session_url=config.REDIS_USER_SESSION_URL,
+    redis_cache_url=config.REDIS_CACHE_URL,
 )
 init_services_config(services_config)
 
