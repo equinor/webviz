@@ -5,13 +5,13 @@ import type {
     IntersectionSeismicStoredData,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/seismicProviders/IntersectionSeismicProvider";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type {
     EsvLayerItemsMaker,
     TransformerArgs,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
 import { createSeismicColorScaleValues } from "../utils/colorScaleUtils";
-import { createValidExtensionLength } from "../utils/extensionLengthUtils";
 
 /**
  * Make a trajectory in the uz-plane of a fence made from a polyline in the xy-plane of a
@@ -64,10 +64,7 @@ export function createSeismicLayerItemsMaker({
     const attribute = getSetting(Setting.ATTRIBUTE);
     const valueRange = getDataValueRange();
 
-    const extensionLength = createValidExtensionLength(
-        getSetting(Setting.INTERSECTION),
-        getSetting(Setting.WELLBORE_EXTENSION_LENGTH),
-    );
+    const extensionLength = createValidExtensionLength(getSetting(Setting.INTERSECTION));
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 
