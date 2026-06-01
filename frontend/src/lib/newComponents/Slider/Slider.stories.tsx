@@ -64,6 +64,15 @@ export const Inverted: Story = {
     ),
 };
 
+export const NoIndicator: Story = {
+    args: { noIndicator: true },
+    render: (args) => (
+        <div className="gap-y-vertical-lg flex flex-col">
+            <Slider defaultValue={25} {...args} />
+        </div>
+    ),
+};
+
 export const Size: Story = {
     argTypes: { size: { table: { disable: true } } },
     render: (args) => (

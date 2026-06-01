@@ -1,5 +1,8 @@
 import React from "react";
 
+import { omit } from "lodash";
+
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getDataAttributesForSelectableSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -18,28 +21,26 @@ const DEFAULT_PROPS = {
 } satisfies Partial<WithLabelProps>;
 
 export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(function RadioWithLabel(props, ref) {
-    const {
-        label,
-        children,
-        direction,
-        layoutClassName,
-        size = "default",
-        ...radioProps
-    } = { ...DEFAULT_PROPS, ...props };
+    const radioProps = omit({ ...DEFAULT_PROPS, ...props }, "label", "children", "direction", "layoutClassName");
+    const size = useComponentSize(props);
 
     return (
         <label
             ref={ref}
             data-disabled={radioProps.disabled || undefined}
-            className={resolveClassNames(layoutClassName, "group selectable gap-horizontal-sm flex items-center", {
-                "flex-col": direction === "vertical",
-            })}
+            className={resolveClassNames(
+                props.layoutClassName,
+                "group selectable gap-horizontal-sm flex items-center",
+                {
+                    "flex-col": props.direction === "vertical",
+                },
+            )}
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}
         >
             <Radio {...radioProps} size={size} />
             <Typography size={getTextSizeForSelectableSize(size)} family="body" data-baseline="center">
-                {children ?? label}
+                {props.children ?? props.label}
             </Typography>
         </label>
     );

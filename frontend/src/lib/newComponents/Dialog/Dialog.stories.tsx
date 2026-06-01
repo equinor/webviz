@@ -177,7 +177,7 @@ export const WithHeader: Story = {
             },
         },
     },
-    render: () => {
+    render: function WithHeaderComp() {
         const [open, setOpen] = React.useState(false);
         return (
             <>
@@ -207,7 +207,7 @@ export const WithHeaderAndCloseIcon: Story = {
             },
         },
     },
-    render: () => {
+    render: function WithHeaderAndCloseIconComponent() {
         const [open, setOpen] = React.useState(false);
         return (
             <>
@@ -237,7 +237,7 @@ export const WithActionsNoHeader: Story = {
             },
         },
     },
-    render: () => {
+    render: function WithActionsNoHeaderComp() {
         const [open, setOpen] = React.useState(false);
         return (
             <>
@@ -272,7 +272,7 @@ export const FullDialog: Story = {
             },
         },
     },
-    render: () => {
+    render: function FullDialogComp() {
         const [open, setOpen] = React.useState(false);
         return (
             <>
@@ -311,7 +311,7 @@ export const ConfirmDelete: Story = {
             },
         },
     },
-    render: () => {
+    render: function ConfirmDeleteComp() {
         const [open, setOpen] = React.useState(false);
         return (
             <>

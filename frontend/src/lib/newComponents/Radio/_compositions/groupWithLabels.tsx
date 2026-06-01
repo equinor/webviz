@@ -1,5 +1,8 @@
 import React from "react";
 
+import { omit } from "lodash";
+
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -20,7 +23,8 @@ export type GroupWithLabels = {
 } & RadioGroupProps;
 
 export const GroupWithLabels = React.forwardRef<HTMLDivElement, GroupWithLabels>(function GroupWithLabels(props, ref) {
-    const { options, layout = "vertical", size = "default", layoutClassName, ...groupProps } = props;
+    const { options, layout = "vertical", layoutClassName, ...groupProps } = omit(props, "size");
+    const size = useComponentSize(props);
 
     return (
         <RadioGroup

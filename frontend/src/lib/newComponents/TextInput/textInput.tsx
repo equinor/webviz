@@ -21,7 +21,7 @@ export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | 
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
     const { inputSize, layoutClassName, ...rest } = props;
-    const baseProps = resolveWrapperProps(rest, "startAdornment", "endAdornment");
+    const baseProps = resolveWrapperProps(rest, "startAdornment", "endAdornment", "size");
 
     const size = useComponentSize(props);
 

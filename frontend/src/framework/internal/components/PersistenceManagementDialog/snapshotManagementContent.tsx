@@ -1,189 +1,45 @@
 import React from "react";
 
-import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { omit } from "lodash";
 
-import type {
-    GetSnapshotAccessLogsData_api,
-    GraphUser_api,
-    SnapshotAccessLog_api,
-    SortDirection_api,
-    Options,
-} from "@api";
+import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, Options } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";
+import type { UseRefreshQueryResult } from "@framework/internal/hooks/useRefreshQuery";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
-import {
-    edsDateRangeToIsoStringRange,
-    isoRangeToEdsDateRange,
-    type EdsDateRange,
-    type IsoStringRange,
-} from "@framework/utils/edsDateUtils";
+import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
+import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Table } from "@lib/components/Table";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
-import type { TableColumns, TableSorting, TContext } from "@lib/components/Table/types";
-import { SortDirection as TableSortDirection } from "@lib/components/Table/types";
 import { Tooltip } from "@lib/components/Tooltip";
-import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { DateRangePicker } from "@lib/newComponents/DateRangePicker";
 import { Field } from "@lib/newComponents/Field";
 import { SwitchCompositions } from "@lib/newComponents/Switch";
+import { Table } from "@lib/newComponents/Table";
+import { TableCompositions } from "@lib/newComponents/Table/compositions";
+import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
+import { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
+import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
 import { TextInput } from "@lib/newComponents/TextInput";
+import { Virtualization } from "@lib/newComponents/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 
-import {
-    HEADER_HEIGHT,
-    NEXT_PAGE_THRESHOLD,
-    QUERY_PAGE_SIZE,
-    ROW_HEIGHT,
-    TABLE_HEIGHT,
-    USE_ALTERNATING_COLUMN_COLORS,
-} from "./constants";
+import { tableSortDirToApiSortDir } from "./_utils";
+import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW, QUERY_PAGE_SIZE } from "./constants";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
     [K in keyof SnapshotAccessLog_api["snapshotMetadata"] as `snapshotMetadata.${Extract<K, string>}`]: SnapshotAccessLog_api["snapshotMetadata"][K];
 };
-
-type TableFilter = {
-    title?: string;
-    visitedAt?: IsoStringRange;
-    ownerId?: string;
-    snapshotDeleted?: boolean;
-};
-
-const makeRowStyle = (context: TContext<FlattenedSnapshotAccessLog_api>): React.CSSProperties => {
-    if (context.entry.snapshotDeleted) {
-        return {
-            textDecoration: "line-through",
-            opacity: 0.6,
-        };
-    }
-    return {};
-};
-
-const TABLE_COLUMNS: TableColumns<FlattenedSnapshotAccessLog_api> = [
-    {
-        _type: "data",
-        label: "Visits",
-        sizeInPercent: 7,
-        columnId: "visits",
-        sortable: false, // The sorting adornments require too much space, so the table looks off
-        filter: false,
-        formatStyle: (v, context) => ({ textAlign: "center", paddingRight: "0.5rem", ...makeRowStyle(context) }),
-    },
-    {
-        _type: "data",
-        label: "Title",
-        sizeInPercent: 24,
-        columnId: "snapshotMetadata.title",
-        filter: false,
-        renderData(value, context) {
-            const style = makeRowStyle(context);
-            return (
-                <span style={{ ...style, textDecoration: "inherit" }}>
-                    {value}
-                    {context.entry.snapshotDeleted && <strong className="text-red-600"> (deleted by owner)</strong>}
-                </span>
-            );
-        },
-    },
-    {
-        _type: "data",
-        columnId: "snapshotMetadata.description",
-        label: "Description",
-        sizeInPercent: 26,
-        filter: false,
-        sortable: false,
-        formatStyle: (value, context) => {
-            let style = makeRowStyle(context);
-            if (!value) {
-                style = {
-                    ...style,
-                    color: "gray",
-                    fontStyle: "italic",
-                };
-            }
-            return style;
-        },
-    },
-    {
-        // TODO: This too could be a "virtual" column
-        _type: "data",
-        columnId: "snapshotId",
-        label: "URL",
-        sortable: false,
-        filter: false,
-        sizeInPercent: 12,
-        renderData: function SnapshotUrlCell(snapshotId, context) {
-            const url = buildSnapshotUrl(snapshotId);
-
-            function handleCopyRequested() {
-                return url;
-            }
-
-            const style = makeRowStyle(context);
-
-            return (
-                <CopyCellValue onCopyRequested={handleCopyRequested}>
-                    <div className="group relative flex h-full min-w-0 items-center" style={style} title={url}>
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
-                    </div>
-                </CopyCellValue>
-            );
-        },
-    },
-    {
-        _type: "data",
-        columnId: "snapshotMetadata.ownerId",
-        label: "Owner",
-        sortable: false,
-        filter: false,
-        sizeInPercent: 11,
-        renderData: function OwnerField(userId: string, context) {
-            const style = makeRowStyle(context);
-            const ownerInfo = useUserGraphInfo(userId);
-            const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
-            const avatarFn = useUserAvatar(name ?? "", ownerInfo?.display_name);
-            return (
-                <div className="gap-horizontal-xs flex items-center" style={style}>
-                    <Avatar userData={avatarFn} size={24} />
-                    {name}
-                </div>
-            );
-        },
-    },
-    {
-        _type: "data",
-        label: "Last visited at",
-        sizeInPercent: 20,
-        columnId: "lastVisitedAt",
-        filter: false,
-        renderData(value) {
-            if (!value) return "N/A";
-            return formatDate(new Date(value));
-        },
-        formatStyle: (value, context) => {
-            const style = makeRowStyle(context);
-            if (!value) {
-                return {
-                    ...style,
-                    color: "gray",
-                    fontStyle: "italic",
-                };
-            }
-            return style;
-        },
-    },
-];
 
 function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
     const userInfoQuery = useQuery({
@@ -210,10 +66,6 @@ function columnIdToApiSortField(columnId: string): SnapshotAccessLogSortBy_api {
     }
 }
 
-function tableSortDirToApiSortDir(sort: TableSortDirection): SortDirection_api {
-    return sort as unknown as SortDirection_api;
-}
-
 export function flattenSnapshotAccessLogEntry(logEntry: SnapshotAccessLog_api): FlattenedSnapshotAccessLog_api {
     const ret = omit(logEntry, ["snapshotMetadata"]) as Record<string, any>;
 
@@ -231,125 +83,40 @@ export type SnapshotOverviewContentProps = {
 };
 
 export function SnapshotManagementContent(props: SnapshotOverviewContentProps): React.ReactNode {
+    const queryRefreshActionRef = React.useRef<UseRefreshQueryResult>(null);
+
     const userId = useAuthProvider().userInfo?.user_id;
-    const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
+
+    const [selectedSnapshot, setSelectedSnapshot] = React.useState<SnapshotAccessLog_api | null>(null);
     const [deletePending, setDeletePending] = React.useState<boolean>(false);
 
-    const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
-    const [tableFilter, setTableFilter] = React.useState<TableFilter>({});
-    const [tableSortState, setTableSortState] = React.useState<TableSorting>([
-        { columnId: "lastVisitedAt", direction: TableSortDirection.DESC },
-    ]);
+    const [titleFilterValue, setTitleFilterValue] = React.useState<string>("");
+    const [visitedAtRange, setVisitedAtRange] = React.useState<EdsDateRange | null>(null);
+    const [onlyShowOwnSnapshots, setOnlyShowOwnSnapshots] = React.useState(false);
+    const [hideDeletedSnapshots, setHideDeletedSnapshots] = React.useState(false);
 
-    const timeoutFunction = useTimeoutFunction();
-
-    const querySortParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
-        if (!tableSortState?.length) return undefined;
-
-        const sortBy = columnIdToApiSortField(tableSortState[0].columnId);
-        const SortDirection = tableSortDirToApiSortDir(tableSortState[0].direction);
-
-        return {
-            sort_by: sortBy,
-            sort_direction: SortDirection,
-            filter_title: tableFilter.title,
-            filter_last_visited_from: tableFilter.visitedAt?.from,
-            filter_last_visited_to: tableFilter.visitedAt?.to,
-            filter_owner_id: tableFilter.ownerId,
-            filter_snapshot_deleted: tableFilter.snapshotDeleted,
-        };
-    }, [tableFilter, tableSortState]);
-
-    const snapshotsQuery = useInfiniteQuery({
-        ...getSnapshotAccessLogsInfiniteOptions({
-            query: { ...querySortParams, page_size: QUERY_PAGE_SIZE },
-        }),
-        // Tanstack requires initialPageParam. The correct option would be `null`, but that causes an
-        // undefined-error in `getVisitedSnapshotsInfiniteOptions(...)` since it thinks it's an object.
-        initialPageParam: "",
-        refetchInterval: 10000,
-        getNextPageParam(lastPage) {
-            return lastPage.pageToken;
-        },
-        enabled: props.active,
-    });
-
-    const { isRefreshing, refresh } = useRefreshQuery(snapshotsQuery);
-
-    const tableData = React.useMemo(() => {
-        if (!snapshotsQuery.data) return [];
-
-        return snapshotsQuery.data?.pages?.flatMap(({ items }) => {
-            return items.map(flattenSnapshotAccessLogEntry);
-        });
-    }, [snapshotsQuery.data]);
-
-    const selectedSnapshot = React.useMemo(() => {
-        if (!selectedSnapshotId) return null;
-        return tableData.find((snapshot) => snapshot.snapshotId === selectedSnapshotId) || null;
-    }, [tableData, selectedSnapshotId]);
-
-    function handleDateFilterRangeChange(newRange: null | EdsDateRange) {
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                visitedAt: edsDateRangeToIsoStringRange(newRange) ?? undefined,
-            };
-        });
-    }
-
-    function handleTitleFilterValueChange(e: React.ChangeEvent<HTMLInputElement>) {
-        timeoutFunction(() => {
-            const newValue = e.target.value;
-            setTableFilter((prev) => {
-                return {
-                    ...prev,
-                    title: newValue ?? undefined,
-                };
-            });
-        }, 800);
-    }
+    const [immediateTitleFilterValue, setDebouncedTitleFilterValue] = useDebouncedOnChange(
+        titleFilterValue,
+        setTitleFilterValue,
+        500,
+    );
 
     function handleClearTitleFilter() {
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                title: undefined,
-            };
-        });
-    }
-
-    function handleShowMySnapshotsOnlyChange(checked: boolean) {
-        if (!userId) return;
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                ownerId: checked ? userId : undefined,
-            };
-        });
-    }
-
-    function handleHideDeletedSnapshotsChange(checked: boolean) {
-        setTableFilter((prev) => {
-            return {
-                ...prev,
-                snapshotDeleted: checked ? false : undefined,
-            };
-        });
+        setTitleFilterValue("");
     }
 
     async function handleDeleteClick() {
         if (!selectedSnapshot || !userId) return;
 
-        const snapshotOwnerId = selectedSnapshot["snapshotMetadata.ownerId"];
+        const snapshotOwnerId = selectedSnapshot.snapshotMetadata.ownerId;
 
         setDeletePending(true);
 
         let success: boolean;
         if (userId === snapshotOwnerId) {
-            success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshotId!);
+            success = await props.workbench.getSessionManager().deleteSnapshot(selectedSnapshot.snapshotId);
         } else {
-            success = await props.workbench.getSessionManager().deleteSnapshotAccessLog(selectedSnapshotId!);
+            success = await props.workbench.getSessionManager().deleteSnapshotAccessLog(selectedSnapshot.snapshotId);
         }
 
         setDeletePending(false);
@@ -358,19 +125,189 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             return;
         }
 
-        setSelectedSnapshotId(null);
+        setSelectedSnapshot(null);
     }
 
     async function handleOpenSnapshotClick() {
-        if (!selectedSnapshotId) return;
+        if (!selectedSnapshot) return;
 
-        await props.workbench.getSessionManager().openSnapshot(selectedSnapshotId);
+        await props.workbench.getSessionManager().openSnapshot(selectedSnapshot.snapshotId);
     }
 
-    const handleTableScrollIndexChange = React.useCallback(function handleTableScrollIndexChange(
-        start: number,
-        end: number,
-    ) {
+    let deleteButtonText = "Delete snapshot";
+    let deleteButtonTooltip = "Delete selected snapshot (permanently removes it for all users)";
+    if (selectedSnapshot && selectedSnapshot.snapshotMetadata.ownerId !== userId) {
+        deleteButtonText = "Remove from list";
+        deleteButtonTooltip =
+            "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
+    }
+    return (
+        <div className="gap-vertical-sm flex h-full flex-col">
+            <div className="gap-horizontal-sm flex">
+                <Field.Root layoutClassName="grow">
+                    <Field.Label>Filter by Title</Field.Label>
+                    <TextInput
+                        value={immediateTitleFilterValue}
+                        placeholder="Search title"
+                        onValueChange={setDebouncedTitleFilterValue}
+                        startAdornment={<Search fontSize="inherit" />}
+                        endAdornment={
+                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
+                                <Close fontSize="inherit" />
+                            </DenseIconButton>
+                        }
+                    />
+                </Field.Root>
+                <Field.Root>
+                    <Field.Label>Last visited</Field.Label>
+                    <DateRangePicker value={visitedAtRange ?? { from: null, to: null }} onChange={setVisitedAtRange} />
+                </Field.Root>
+            </div>
+            <div className="gap-horizontal-xs flex items-center">
+                <SwitchCompositions.WithLabel
+                    checked={onlyShowOwnSnapshots}
+                    label="Show my snapshots only"
+                    size="small"
+                    onCheckedChange={setOnlyShowOwnSnapshots}
+                />
+
+                <SwitchCompositions.WithLabel
+                    checked={hideDeletedSnapshots}
+                    label="Hide deleted snapshots"
+                    size="small"
+                    onCheckedChange={setHideDeletedSnapshots}
+                />
+                <span className="grow" />
+                <Tooltip title={"Open selected snapshot"} placement="bottom" enterDelay="medium">
+                    <Button
+                        variant="ghost"
+                        tone="accent"
+                        disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
+                        onClick={handleOpenSnapshotClick}
+                    >
+                        <FileOpen fontSize="inherit" /> Open
+                    </Button>
+                </Tooltip>
+                <Tooltip title={deleteButtonTooltip} placement="bottom" enterDelay="medium">
+                    <Button
+                        variant="ghost"
+                        tone="danger"
+                        disabled={!selectedSnapshot || deletePending || !userId}
+                        onClick={handleDeleteClick}
+                    >
+                        {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
+                        {deleteButtonText}
+                    </Button>
+                </Tooltip>
+                <Tooltip title="Refresh list" placement="bottom" enterDelay="medium">
+                    <Button variant="ghost" tone="accent" onClick={queryRefreshActionRef.current?.refresh}>
+                        {queryRefreshActionRef.current?.isRefreshing ? (
+                            <CircularProgress size={16} />
+                        ) : (
+                            <Refresh fontSize="inherit" />
+                        )}{" "}
+                        Refresh
+                    </Button>
+                </Tooltip>
+            </div>
+
+            <SnapshotTable
+                selectedSnapshot={selectedSnapshot}
+                active={props.active}
+                titleFilter={titleFilterValue}
+                lastVisitedAtFilter={visitedAtRange}
+                showMySnapshotsOnly={onlyShowOwnSnapshots}
+                hideDeletedSnapshots={hideDeletedSnapshots}
+                refreshActionRef={queryRefreshActionRef}
+                onSelectedSnapshotChange={setSelectedSnapshot}
+            />
+        </div>
+    );
+}
+
+type SnapshotTableProps = {
+    selectedSnapshot: SnapshotAccessLog_api | null;
+    active: boolean;
+    titleFilter: string | null;
+    lastVisitedAtFilter: EdsDateRange | null;
+    showMySnapshotsOnly: boolean;
+    hideDeletedSnapshots: boolean;
+
+    refreshActionRef: React.RefObject<UseRefreshQueryResult | null>;
+
+    onSelectedSnapshotChange: (snapshotId: SnapshotAccessLog_api | null) => void;
+};
+
+function SnapshotTable(props: SnapshotTableProps) {
+    const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+    const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
+    const [tableSortState, setTableSortState] = React.useState<TableSortState>({});
+
+    const queryFilterParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
+        const dateFilterRange = edsDateRangeToIsoStringRange(props.lastVisitedAtFilter) ?? undefined;
+
+        return {
+            filter_title: props.titleFilter,
+            filter_last_visited_from: dateFilterRange?.from,
+            filter_last_visited_to: dateFilterRange?.to,
+            filter_owner_id: props.showMySnapshotsOnly ? props.selectedSnapshot?.snapshotMetadata.ownerId : undefined,
+            filter_snapshot_deleted: props.hideDeletedSnapshots ? false : undefined,
+        };
+    }, [
+        props.titleFilter,
+        props.lastVisitedAtFilter,
+        props.showMySnapshotsOnly,
+        props.hideDeletedSnapshots,
+        props.selectedSnapshot?.snapshotMetadata.ownerId,
+    ]);
+
+    const querySortingParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
+        const [colKey, sortDirection] = Object.entries(tableSortState)[0] ?? [];
+
+        if (!colKey || !sortDirection || sortDirection === TableSortDirection.NONE) return {};
+
+        return {
+            sort_by: columnIdToApiSortField(colKey),
+            sort_direction: tableSortDirToApiSortDir(sortDirection),
+        };
+    }, [tableSortState]);
+
+    const queryCollationParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
+        return {
+            ...queryFilterParams,
+            ...querySortingParams,
+        };
+    }, [queryFilterParams, querySortingParams]);
+
+    const snapshotsQuery = useInfiniteQuery({
+        ...getSnapshotAccessLogsInfiniteOptions({
+            query: { ...queryCollationParams, page_size: QUERY_PAGE_SIZE },
+        }),
+        initialPageParam: "",
+        refetchInterval: 10000,
+        getNextPageParam(lastPage) {
+            return lastPage.pageToken;
+        },
+        enabled: props.active,
+    });
+
+    const queryRefreshAction = useRefreshQuery(snapshotsQuery);
+    React.useImperativeHandle(props.refreshActionRef, () => queryRefreshAction, [queryRefreshAction]);
+
+    const tableData = React.useMemo(() => {
+        if (!snapshotsQuery.data) return [];
+
+        return snapshotsQuery.data.pages?.flatMap(({ items }) => items);
+    }, [snapshotsQuery.data]);
+
+    const tableDataWithPendingRows = React.useMemo(() => {
+        if (!(snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage)) return tableData;
+
+        return [...tableData, ...PENDING_PAGE];
+    }, [snapshotsQuery.isFetchingNextPage, snapshotsQuery.isLoading, tableData]);
+
+    const onTableScrollIndexChange = React.useCallback((start: number, end: number) => {
         setVisibleRowRange({ start, end });
     }, []);
 
@@ -386,97 +323,124 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
         [snapshotsQuery, tableData.length, visibleRowRange],
     );
 
-    let deleteButtonText = "Delete";
-    let deleteButtonTooltip = "";
-    if (selectedSnapshotId) {
-        const isOwner = selectedSnapshot?.["snapshotMetadata.ownerId"] === userId;
-        deleteButtonText = isOwner ? "Delete snapshot" : "Remove from list";
-        deleteButtonTooltip = isOwner
-            ? "Delete selected snapshot (permanently removes it for all users)"
-            : "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
-    }
     return (
-        <div className="gap-vertical-sm flex flex-col">
-            <div className="gap-horizontal-sm mb-4 flex">
-                <Field.Root layoutClassName="grow">
-                    <Field.Label>Filter by Title</Field.Label>
-                    <TextInput
-                        startAdornment={<Search fontSize="inherit" />}
-                        endAdornment={
-                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
-                                <Close fontSize="inherit" />
-                            </DenseIconButton>
+        <Table.Root
+            layoutClassName="h-full"
+            size="small"
+            overflowWrapperRef={wrapperRef}
+            sortable
+            selectable
+            fixed
+            currentSort={tableSortState}
+            selectedRow={props.selectedSnapshot?.snapshotId ?? null}
+            onChangeSortDirection={(col, dir) => setTableSortState({ [col]: dir })}
+            onRowSelect={(snapshotId) =>
+                props.onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
+            }
+        >
+            <Table.Head sticky>
+                <Table.Column
+                    colKey="visits"
+                    widthInPercent={7}
+                    // The sorting adornment require some space, which normally looks a bit weirdly aligned
+                    // for as the column text here is centered. We remove the right side padding to make the
+                    // alignment look more natural in the un-sorted state
+                    layoutClassName="text-center! pr-0!"
+                >
+                    Visits
+                </Table.Column>
+                <Table.Column colKey="snapshotMetadata.title" widthInPercent={24}>
+                    Title
+                </Table.Column>
+                <Table.Column colKey="snapshotMetadata.description" sortable={false} widthInPercent={26}>
+                    Description
+                </Table.Column>
+                <Table.Column colKey="snapshotId" sortable={false} widthInPercent={12}>
+                    URL
+                </Table.Column>
+                <Table.Column colKey="snapshotMetadata.ownerId" sortable={false} widthInPercent={11}>
+                    Owner
+                </Table.Column>
+                <Table.Column colKey="lastVisitedAt" widthInPercent={20}>
+                    Last visited at
+                </Table.Column>
+            </Table.Head>
+            <Table.Body emptyMessage="No snapshots found.">
+                <Virtualization
+                    containerRef={wrapperRef}
+                    placeholderComponent="tr"
+                    items={tableDataWithPendingRows}
+                    itemSize={ROW_HEIGHT_PX["small"]}
+                    direction="vertical"
+                    renderItem={(item, idx) => {
+                        if (item === PENDING_ROW) {
+                            return <TableCompositions.PendingRow key={`pending-row--${idx}`} />;
+                        } else {
+                            return <SnapshotRow key={item.snapshotId} item={item} />;
                         }
-                        value={tableFilter.title ?? ""}
-                        placeholder="Search title"
-                        onChange={handleTitleFilterValueChange}
-                    />
-                </Field.Root>
-                <Field.Root>
-                    <Field.Label>Last visited</Field.Label>
-                    <DateRangePicker
-                        className="webviz-eds-date-range-picker --compact rounded border border-gray-300 focus-within:outline-0"
-                        value={isoRangeToEdsDateRange(tableFilter.visitedAt ?? null)}
-                        onChange={handleDateFilterRangeChange}
-                    />
-                </Field.Root>
-            </div>
-            <div className="gap-horizontal-xs flex items-center">
-                <SwitchCompositions.WithLabel
-                    checked={tableFilter.ownerId === userId}
-                    onCheckedChange={handleShowMySnapshotsOnlyChange}
-                    label="Show my snapshots only"
+                    }}
+                    onScroll={onTableScrollIndexChange}
                 />
+                <TableCompositions.PendingRows
+                    rowCount={snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
+                />
+            </Table.Body>
+        </Table.Root>
+    );
+}
 
-                <SwitchCompositions.WithLabel
-                    checked={tableFilter.snapshotDeleted === false}
-                    onCheckedChange={handleHideDeletedSnapshotsChange}
-                    label="Hide deleted snapshots"
-                />
-                <span className="grow" />
-                <Tooltip title={"Open selected snapshot"} placement="top" enterDelay="medium">
-                    <Button
-                        variant="ghost"
-                        tone="accent"
-                        disabled={!selectedSnapshotId || selectedSnapshot?.snapshotDeleted}
-                        onClick={handleOpenSnapshotClick}
-                    >
-                        <FileOpen fontSize="inherit" /> Open
-                    </Button>
-                </Tooltip>
-                <Tooltip title={deleteButtonTooltip} placement="top" enterDelay="medium">
-                    <Button
-                        variant="ghost"
-                        tone="danger"
-                        disabled={!selectedSnapshotId || deletePending || !userId}
-                        onClick={handleDeleteClick}
-                    >
-                        {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
-                        {deleteButtonText}
-                    </Button>
-                </Tooltip>
-                <Tooltip title="Refresh list" placement="top" enterDelay="medium">
-                    <Button variant="ghost" tone="accent" onClick={refresh}>
-                        {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="inherit" />} Refresh
-                    </Button>
-                </Tooltip>
-            </div>
-            <Table
-                rowIdentifier="snapshotId"
-                alternatingColumnColors={USE_ALTERNATING_COLUMN_COLORS}
-                columns={TABLE_COLUMNS}
-                rows={tableData}
-                numPendingRows={snapshotsQuery.isLoading || snapshotsQuery.isFetchingNextPage ? QUERY_PAGE_SIZE : 0}
-                rowHeight={ROW_HEIGHT}
-                height={TABLE_HEIGHT}
-                headerHeight={HEADER_HEIGHT}
-                sorting={tableSortState}
-                onSortingChange={setTableSortState}
-                selectable
-                controlledCollation
-                onVisibleRowRangeChange={handleTableScrollIndexChange}
-                onSelectedRowsChange={(selection) => setSelectedSnapshotId(selection[0])}
-            />
-        </div>
+function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
+    const { item } = props;
+    const ownerInfo = useUserGraphInfo(item.snapshotMetadata.ownerId);
+    const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+    const avatarFn = useUserAvatar(name ?? "", ownerInfo?.display_name);
+    const url = buildSnapshotUrl(item.snapshotId);
+
+    const isDeleted = item.snapshotDeleted;
+
+    return (
+        <Table.Row
+            rowKey={item.snapshotMetadata.id}
+            layoutClassName="data-deleted:opacity-60 data-deleted:*:line-through"
+            data-deleted={isDeleted ? "" : undefined}
+        >
+            <Table.Cell layoutClassName="text-center!">{item.visits}</Table.Cell>
+            <Table.Cell title={item.snapshotMetadata.title}>
+                <div className="gap-horizontal-4xs flex items-center justify-between">
+                    <span className="truncate overflow-hidden">{item.snapshotMetadata.title}</span>
+                    {isDeleted && (
+                        <strong
+                            title="This snapshot has been deleted by the snapshot owner"
+                            className="text-danger-subtle decoration-transparent! decoration-0"
+                        >
+                            (Deleted)
+                        </strong>
+                    )}
+                </div>
+            </Table.Cell>
+            <Table.Cell>
+                {item.snapshotMetadata.description || <span className="text-current/50 italic">N/A</span>}
+            </Table.Cell>
+            <Table.Cell>
+                <CopyCellValue onCopyRequested={() => url}>
+                    <div className="group relative flex h-full min-w-0 items-center" title={url}>
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
+                    </div>
+                </CopyCellValue>
+            </Table.Cell>
+            <Table.Cell noPadding>
+                <div className="px-horizontal-sm gap-horizontal-xs flex items-center">
+                    <Avatar userData={avatarFn} size={24} />
+                    {name}
+                </div>
+            </Table.Cell>
+            <Table.Cell>
+                {item.lastVisitedAt ? (
+                    formatDate(new Date(item.lastVisitedAt))
+                ) : (
+                    <span className="text-current/50 italic">N/A</span>
+                )}
+            </Table.Cell>
+        </Table.Row>
     );
 }

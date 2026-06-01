@@ -7,18 +7,19 @@ import { TableRootContext, useTableRootContext } from "../_contexts/tableRootCon
 import { useTableSectionContext } from "../_contexts/tableSectionContext";
 
 export type TableRowProps = {
+    selectable?: boolean;
     sortable?: boolean;
     rowKey?: string;
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableRowElement>>;
 
 function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRowElement>): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "rowKey", "sortable");
+    const baseProps = resolveWrapperProps(props, "rowKey", "sortable", "selectable");
 
     const rootContext = useTableRootContext();
     const sectionContext = useTableSectionContext();
 
-    const isSelectable = rootContext.selectable && sectionContext === "body";
+    const isSelectable = (props.selectable ?? rootContext.selectable) && sectionContext === "body";
     const isSelected = isSelectable && rootContext.selectedRow === props.rowKey;
 
     // TODO: Nicely allow text selection AND click select. See old table

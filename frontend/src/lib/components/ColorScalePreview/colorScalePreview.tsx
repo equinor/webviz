@@ -1,3 +1,4 @@
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -23,7 +24,7 @@ const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string
 };
 
 export function ColorScalePreview(props: ColorScalePreviewProps): React.ReactNode {
-    const { size = "default" } = props;
+    const size = useComponentSize(props);
 
     const colorScale = new ColorScale({
         colorPalette: props.colorPalette,

@@ -4,9 +4,6 @@
 export const QUERY_PAGE_SIZE = 30;
 export const NEXT_PAGE_THRESHOLD = 3;
 
-// - Table styling config ---- --- --- --- ---
-// Table style config
-export const USE_ALTERNATING_COLUMN_COLORS = false;
-export const ROW_HEIGHT = 32;
-export const HEADER_HEIGHT = 32;
-export const TABLE_HEIGHT = ROW_HEIGHT * 10;
+// Helper for rendering pending data
+export const PENDING_ROW = Symbol("virtualPendingRow");
+export const PENDING_PAGE = new Array<typeof PENDING_ROW>(QUERY_PAGE_SIZE).fill(PENDING_ROW);

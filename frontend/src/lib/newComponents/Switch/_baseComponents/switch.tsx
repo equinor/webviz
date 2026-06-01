@@ -3,6 +3,7 @@ import React from "react";
 import type { SwitchRootProps } from "@base-ui/react";
 import { Switch as SwitchBase } from "@base-ui/react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -12,8 +13,8 @@ export type SwitchProps = ComponentWrapperProps<Omit<SwitchRootProps, "ref">> & 
 };
 
 export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Switch(props, ref) {
-    const { size = "default", ...rest } = props;
-    const baseProps = resolveWrapperProps(rest);
+    const size = useComponentSize(props);
+    const baseProps = resolveWrapperProps(props, "size");
 
     return (
         <SwitchBase.Root

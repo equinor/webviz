@@ -153,7 +153,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                 </SortableList.NoDropZone>
 
                                 <SortableList.Content>
-                                    <Table.Body>
+                                    <Table.Body emptyMessage="No regular ensembles selected.">
                                         {props.selectedRegularEnsembles.map((item) => (
                                             <RegularEnsembleRow
                                                 key={`${item.ensembleIdent.toString()}`}
@@ -167,11 +167,6 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                             </Table.Root>
                         </SortableList.ScrollContainer>
                     </SortableList>
-                    {props.selectedRegularEnsembles.length === 0 && (
-                        <div className="text-ui-md text-neutral-subtle absolute inset-0 flex items-center justify-center">
-                            No regular ensembles selected.
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -220,7 +215,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                     </Table.Head>
                                 </SortableList.NoDropZone>
                                 <SortableList.Content>
-                                    <Table.Body>
+                                    <Table.Body emptyMessage="No delta ensembles created.">
                                         {props.selectedDeltaEnsembles.map((deltaItem) => (
                                             <DeltaEnsembleRow
                                                 key={deltaItem.uuid}
@@ -240,11 +235,6 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                             </Table.Root>
                         </SortableList.ScrollContainer>
                     </SortableList>
-                    {props.selectedDeltaEnsembles.length === 0 && (
-                        <div className="text-ui-md absolute inset-0 flex items-center justify-center text-gray-500">
-                            No delta ensembles created.
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

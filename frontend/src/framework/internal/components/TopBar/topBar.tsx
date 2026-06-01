@@ -298,7 +298,12 @@ function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React
 
     return (
         <div className="flex items-center gap-4 p-2 text-sm">
-            <TopBarButton onClick={handleClick} title="Make a new session of the current snapshot" variant="contained">
+            <TopBarButton
+                onClick={handleClick}
+                title="Make a new session of the current snapshot"
+                variant="contained"
+                iconOnly={false}
+            >
                 Make session
             </TopBarButton>
         </div>
@@ -422,7 +427,6 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
             {/* ! Workaround required to deal with EDS tooltip overwriting refs */}
             <span>
                 <Button
-                    {...baseProps}
                     ref={ref}
                     variant="ghost"
                     tone="accent"
@@ -430,6 +434,7 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
                     pressed={active}
                     onClick={onClick}
                     disabled={disabled}
+                    {...baseProps}
                 >
                     {props.children}
                 </Button>

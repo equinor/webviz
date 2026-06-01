@@ -1,10 +1,11 @@
 import type React from "react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
+import type { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Tile } from "./tile";
-import { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
 
 export type GroupProps = LayoutClassProps & {
     colorPalette: ColorPalette;
@@ -13,7 +14,8 @@ export type GroupProps = LayoutClassProps & {
 };
 
 export const Group: React.FC<GroupProps> = (props) => {
-    const { layoutClassName, size = "default", gap, colorPalette } = props;
+    const { layoutClassName, gap, colorPalette } = props;
+    const size = useComponentSize(props);
     return (
         <div
             className={resolveClassNames(layoutClassName, "flex", {

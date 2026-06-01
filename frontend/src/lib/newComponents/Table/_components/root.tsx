@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import type { SelectableSize } from "@lib/newComponents/_shared/size";
 import { getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
@@ -35,6 +36,12 @@ export type TableRootProps = {
 function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableElement>): React.ReactNode {
     const { layoutClassName, ...otherProps } = props;
 
+    const innerTableRef = React.useRef<HTMLTableElement>(null);
+    const innerWrapperRef = React.useRef<HTMLDivElement>(null);
+
+    React.useImperativeHandle(ref, () => innerTableRef.current!);
+    React.useImperativeHandle(props.overflowWrapperRef, () => innerWrapperRef.current!);
+
     const size = useComponentSize(props);
     const baseProps = resolveWrapperProps(
         otherProps,
@@ -67,9 +74,34 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         headColumnMetaData = recursivelyProcessColumnChildren(headChild);
     }
 
+    const wrapperSize = useElementSize(innerWrapperRef);
+
+    // Calculate available body height if the table was to fill the wrapper. This is used for the PendingRows "fill" option to automatically fill the remaining space in the table body.
+    // ! This assumes that header and footer sizes are static, and only re-triggers if the wrapper size changes
+    const availableBodyHeight = React.useMemo(() => {
+        if (!innerWrapperRef.current || !innerTableRef.current) return 0;
+
+        const wrapperHeight = wrapperSize.height;
+
+        const tableElement = innerTableRef.current;
+
+        const headerElement = tableElement.querySelector("thead");
+        const footerElement = tableElement.querySelector("tfoot");
+
+        // TODO: Do we actually use the "partial" fill anywhere?
+        const existingRows = tableElement.querySelectorAll("tbody tr:not(.--pending-row)");
+        const existingRowsHeight = Array.from(existingRows).reduce((sum, row) => sum + row.clientHeight, 0);
+
+        const headerHeight = headerElement?.clientHeight ?? 0;
+        const footerHeight = footerElement?.clientHeight ?? 0;
+
+        const bodyHeight = wrapperHeight - headerHeight - footerHeight - existingRowsHeight;
+        return Math.max(bodyHeight, 0);
+    }, [wrapperSize.height]);
+
     return (
         <div
-            ref={props.overflowWrapperRef}
+            ref={innerWrapperRef}
             className={resolveClassNames("relative overflow-auto", layoutClassName)}
             style={{
                 height: props.height,
@@ -83,13 +115,15 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                     "table-fixed": props.fixed,
                 })}
                 as="table"
-                ref={ref}
+                ref={innerTableRef}
                 family="body"
                 size={getTextSizeForSelectableSize(size)}
             >
                 <TableRootContext.Provider
                     value={{
+                        availableBodyHeight: availableBodyHeight,
                         sortable: props.sortable,
+                        fixed: props.fixed,
                         compact: props.compact,
                         selectable: props.selectable,
                         currentSort: props.currentSort,
