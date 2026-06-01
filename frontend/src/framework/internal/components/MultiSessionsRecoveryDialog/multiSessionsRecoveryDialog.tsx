@@ -84,7 +84,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                         either delete them or open one of the sessions below to recover your work.
                     </Dialog.Description>
 
-                    <Table.Root size="small" compact layoutClassName="w-3xl">
+                    <Table.Root size="small" compact layoutClassName="min-w-3xl w-full">
                         <Table.Head>
                             <Table.Column widthInPercent={25}>Name</Table.Column>
                             <Table.Column widthInPercent={20}>Created</Table.Column>
