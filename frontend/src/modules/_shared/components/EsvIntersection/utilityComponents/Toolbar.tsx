@@ -12,9 +12,7 @@ import {
     SyncAlt,
 } from "@mui/icons-material";
 
-import { Button } from "@lib/components/Button";
-import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { ToggleButton } from "@lib/components/ToggleButton";
+import { Button } from "@lib/newComponents/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Menu } from "@lib/newComponents/Menu";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
@@ -61,8 +59,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         props.onFitInView?.();
     }
 
-    function handleGridVisibilityToggle(active: boolean) {
-        props.onGridLinesToggle(active);
+    function handleGridVisibilityToggle() {
+        props.onGridLinesToggle(!props.gridVisible);
     }
 
     function handleVerticalScaleIncrease() {
@@ -85,9 +83,9 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="flex items-center justify-start gap-1">
+            <div className="gap-horizontal-2xs flex items-center justify-start">
                 <Tooltip title="Fit all data in view" placement="bottom">
-                    <Button onClick={handleFitInView}>
+                    <Button onClick={handleFitInView} size="small" iconOnly variant="ghost">
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
                 </Tooltip>
@@ -102,22 +100,17 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         <Menu.Root>
                             <TooltipCompositions.Default content="Link this view with others" side="bottom">
                                 <Menu.Trigger>
-                                    <MuiMenuButton
+                                    <button
                                         className={resolveClassNames(
-                                            "inline-flex items-center rounded-md px-4 py-2 font-medium",
-
+                                            "selectable inline-flex items-center rounded",
                                             isAnyLinked
-                                                ? "text-white hover:text-white hover:opacity-75"
-                                                : "bg-transparent text-indigo-600 hover:bg-indigo-100",
+                                                ? "text-accent-strong-on-emphasis opacity-80 transition-opacity hover:opacity-100"
+                                                : "text-accent-strong",
                                         )}
-                                        slotProps={{
-                                            root: {
-                                                style: { backgroundColor: isAnyLinked ? activeLink.color : undefined },
-                                            },
-                                        }}
+                                        style={{ backgroundColor: isAnyLinked ? activeLink.color : undefined }}
                                     >
                                         <SyncAlt fontSize="inherit" />
-                                    </MuiMenuButton>
+                                    </button>
                                 </Menu.Trigger>
                             </TooltipCompositions.Default>
 
@@ -177,31 +170,33 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                 {expanded && (
                     <>
                         <Tooltip title="Toggle grid visibility" placement="bottom">
-                            <ToggleButton onToggle={handleGridVisibilityToggle} active={props.gridVisible}>
+                            <Button
+                                onClick={handleGridVisibilityToggle}
+                                pressed={props.gridVisible}
+                                size="small"
+                                iconOnly
+                                variant="ghost"
+                            >
                                 <GridOn fontSize="inherit" />
-                            </ToggleButton>
+                            </Button>
                         </Tooltip>
                         <Separator orientation="vertical" />
-                        <Tooltip title="Increase vertical scale" placement="bottom">
-                            <HoldPressedIntervalCallbackButton
-                                onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
-                            >
-                                <Add fontSize="inherit" />
-                            </HoldPressedIntervalCallbackButton>
+                        <Tooltip title="Decrease vertical scale" placement="bottom">
+                            <Button onClick={handleVerticalScaleDecrease} size="small" iconOnly variant="ghost">
+                                <Remove fontSize="inherit" />
+                            </Button>
                         </Tooltip>
                         <span title="Vertical scale">{props.zFactor}</span>
-                        <Tooltip title="Decrease vertical scale" placement="bottom">
-                            <HoldPressedIntervalCallbackButton
-                                onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
-                            >
-                                <Remove fontSize="inherit" />
-                            </HoldPressedIntervalCallbackButton>
+                        <Tooltip title="Increase vertical scale" placement="bottom">
+                            <Button onClick={handleVerticalScaleIncrease} size="small" iconOnly variant="ghost">
+                                <Add fontSize="inherit" />
+                            </Button>
                         </Tooltip>
                     </>
                 )}
                 <Separator orientation="vertical" />
                 <Tooltip title={expanded ? "Collapse toolbar" : "Expand toolbar"} placement="bottom">
-                    <Button onClick={() => setExpanded(!expanded)}>
+                    <Button onClick={() => setExpanded(!expanded)} size="small" iconOnly variant="ghost">
                         {expanded ? (
                             <KeyboardDoubleArrowLeft fontSize="inherit" />
                         ) : (

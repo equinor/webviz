@@ -672,15 +672,17 @@ function Thumb(props: {
                     <Tooltip.Popup
                         data-slider-disabled={props.disabled ? "" : undefined}
                         className="bg-accent-strong data-slider-disabled:bg-disabled px-horizontal-2xs py-vertical-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
-                        render={
+                        render={(popupProps) => (
                             <Typography
                                 as="div"
                                 variant="subtle"
                                 size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
+                                {...popupProps}
+                                layoutClassName={popupProps.className}
                             >
                                 {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
                             </Typography>
-                        }
+                        )}
                     ></Tooltip.Popup>
                 </Tooltip.Positioner>
             </Tooltip.Portal>
