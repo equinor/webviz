@@ -61,10 +61,8 @@ spec:
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
 
-      secrets:
-        - WEBVIZ_SESSION_STORE_ENCRYPTION_KEY
       variables:
-        WEBVIZ_REDIS_USER_SESSION_PASSWORD: DummyUserSessionPwd
+        WEBVIZ_REDIS_AUTH_STORE_PASSWORD: DummyAuthStorePwd
         WEBVIZ_REDIS_CACHE_PASSWORD: DummyCachePwd
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
@@ -163,11 +161,11 @@ spec:
             value: 20
 
 
-    - name: redis-user-session
+    - name: redis-auth-store
       dockerFileName: ./docker/redis/Dockerfile
       runAsUser: 999
       variables:
-        REDIS_REQUIREPASS: DummyUserSessionPwd
+        REDIS_REQUIREPASS: DummyAuthStorePwd
       args: ["--maxmemory", "800mb",  "--maxmemory-policy", "noeviction", "--loglevel", "notice"]
       ports:
         - name: http
@@ -196,7 +194,6 @@ spec:
           cpu: 1000m
         limits:
           memory: 4Gi
-
 
   jobs:
     - name: user-mock

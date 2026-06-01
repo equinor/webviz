@@ -31,12 +31,10 @@ services:
       - WEBVIZ_SUMO_ENV
       - WEBVIZ_VDS_HOST_ADDRESS
       - WEBVIZ_PSEUDONYM_HMAC_KEY
+      - WEBVIZ_REDIS_AUTH_STORE_PASSWORD
+      - WEBVIZ_REDIS_CACHE_PASSWORD
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
-
-      - WEBVIZ_REDIS_USER_SESSION_PASSWORD
-      - WEBVIZ_REDIS_CACHE_PASSWORD
-      - WEBVIZ_SESSION_STORE_ENCRYPTION_KEY
     volumes:
       - ./backend_py/primary/primary:/home/appuser/backend_py/primary/primary
       - ./backend_py/libs:/home/appuser/backend_py/libs
@@ -82,12 +80,12 @@ services:
       - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
       - ./backend_py/libs:/home/appuser/backend_py/libs
 
-  redis-user-session:
+  redis-auth-store:
     build:
       context: .
       dockerfile: docker/redis/Dockerfile
     environment:
-      - REDIS_REQUIREPASS=${WEBVIZ_REDIS_USER_SESSION_PASSWORD}
+      - REDIS_REQUIREPASS=${WEBVIZ_REDIS_AUTH_STORE_PASSWORD}
     expose:
       - 6379
     user: "999:999"

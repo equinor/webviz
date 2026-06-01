@@ -3856,24 +3856,22 @@ full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart 
 
 [[package]]
 name = "starsessions"
-version = "2.3.0a1"
+version = "2.2.1"
 description = "Advanced sessions for Starlette and FastAPI frameworks"
 optional = false
-python-versions = ">=3.9"
+python-versions = "<4.0.0,>=3.8.0"
 groups = ["main"]
 files = [
-    {file = "starsessions-2.3.0a1-py3-none-any.whl", hash = "sha256:ccb39be30321e2ee9f28c2b25583f7dc7cd37f140acf0737d810ca4117542524"},
-    {file = "starsessions-2.3.0a1.tar.gz", hash = "sha256:e60df6c93769e1e305fb7296a9b8bc9cb5d04be486dd5b104332db70aa1302e8"},
+    {file = "starsessions-2.2.1-py3-none-any.whl", hash = "sha256:8097b33d70017b2d2331307f0ea923620b5bfb847118d2e5872805d0c1c16f83"},
+    {file = "starsessions-2.2.1.tar.gz", hash = "sha256:ce5e4448d9bf2c76222e56cd099ad92d22313e8a4def612e22b71a122cc11da0"},
 ]
 
 [package.dependencies]
-itsdangerous = ">=2"
-starlette = ">=0.14"
+itsdangerous = ">=2,<3"
+starlette = "*"
 
 [package.extras]
-all = ["cryptography (>=42)", "redis (>=4.2)"]
-cryptography = ["cryptography (>=42)"]
-redis = ["redis (>=4.2)"]
+redis = ["redis (>=4.2.0rc1)"]
 
 [[package]]
 name = "sumo-wrapper-python"
@@ -4461,4 +4459,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.13"
-content-hash = "7f3ab07987344f6c4e9b475dccca6768fe0415052e44cd94ef23816077fb34ee"
+content-hash = "812cc0a2d8b34981623325397fe6e2233b02b7b03f8758ac530fc059ab186866"
