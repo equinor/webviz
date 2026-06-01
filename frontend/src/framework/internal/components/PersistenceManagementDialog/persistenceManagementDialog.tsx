@@ -44,7 +44,7 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
                 </Tabs.Root>
                 <Dialog.Close />
             </div>
-            <Dialog.Body>
+            <Dialog.Body layoutClassName="h-full">
                 {contentMode === "sessions" && (
                     <SessionManagementContent
                         workbench={props.workbench}
