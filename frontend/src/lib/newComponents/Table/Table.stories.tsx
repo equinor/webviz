@@ -135,6 +135,26 @@ export const Default: Story = {
     ),
 };
 
+export const NoData: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: 'If a table body is empty, it will automatically render a "No data" row',
+            },
+        },
+    },
+    render: (args) => (
+        <Table.Root layoutClassName="w-full" {...args}>
+            <Table.Head>
+                <Table.Column colKey="id">ID</Table.Column>
+                <Table.Column colKey="name">Name</Table.Column>
+                <Table.Column colKey="email">Email</Table.Column>
+            </Table.Head>
+            <Table.Body>{/* Left empty */}</Table.Body>
+        </Table.Root>
+    ),
+};
+
 export const Sorting: Story = {
     args: { sortable: true },
     render: function SortingComp(args) {
