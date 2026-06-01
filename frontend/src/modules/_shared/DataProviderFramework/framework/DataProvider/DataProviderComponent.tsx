@@ -21,6 +21,7 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
 import type { DataProvider } from "./DataProvider";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type DataProviderComponentProps = {
     dataProvider: DataProvider<any, any>;
@@ -85,16 +86,11 @@ function StartActions(props: StartActionProps): React.ReactNode {
     }
     return (
         <div className="flex items-center">
-            <Button
-                onClick={handleToggleExpanded}
-                title={isExpanded ? "Hide settings" : "Show settings"}
-                variant="ghost"
-                tone="neutral"
-                size="small"
-                iconOnly
-            >
-                {isExpanded ? <ExpandLess size={16} /> : <ExpandMore size={16} />}
-            </Button>
+            <TooltipCompositions.Default content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
+                <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
+                    {isExpanded ? <ExpandLess size={16} /> : <ExpandMore size={16} />}
+                </Button>
+            </TooltipCompositions.Default>
             <VisibilityToggle item={props.dataProvider} />
         </div>
     );
@@ -117,45 +113,45 @@ function EndActions(props: EndActionProps): React.ReactNode {
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
             return (
-                <Tooltip title="Subordinated">
+                <TooltipCompositions.Default content="Subordinated" side="bottom">
                     <Difference size={16} />
-                </Tooltip>
+                </TooltipCompositions.Default>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <Tooltip title={progressMessage ?? "Loading"}>
+                <TooltipCompositions.Default content={progressMessage ?? "Loading"} side="bottom">
                     <div className="gap-horizontal-2xs flex min-w-0 items-center">
                         <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
                         <CircularProgress size={16} />
                     </div>
-                </Tooltip>
+                </TooltipCompositions.Default>
             );
         }
         if (status === DataProviderStatus.ERROR) {
             const error = props.dataProvider.getError();
             if (!error) {
                 return (
-                    <Tooltip title="Error">
+                    <TooltipCompositions.Default content="Error" side="bottom">
                         <Error className="text-danger-subtle" size={16} />
-                    </Tooltip>
+                    </TooltipCompositions.Default>
                 );
             }
 
             if (typeof error === "string") {
                 return (
-                    <Tooltip title={error}>
+                    <TooltipCompositions.Default content={error} side="bottom">
                         <Error className="text-danger-subtle" size={16} />
-                    </Tooltip>
+                    </TooltipCompositions.Default>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
-                    <Tooltip title={statusMessage.message}>
+                    <TooltipCompositions.Default content={statusMessage.message} side="bottom">
                         <Error className="text-danger-subtle" size={16} />
-                    </Tooltip>
+                    </TooltipCompositions.Default>
                 );
             }
         }
@@ -171,16 +167,16 @@ function EndActions(props: EndActionProps): React.ReactNode {
             errorMessage += "\nPlease check the settings.";
 
             return (
-                <Tooltip title={errorMessage}>
+                <TooltipCompositions.Default content={errorMessage} side="bottom">
                     <Block className="text-danger-subtle" size={16} />
-                </Tooltip>
+                </TooltipCompositions.Default>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
-                <Tooltip title="Successfully loaded">
+                <TooltipCompositions.Default content="Successfully loaded" side="bottom">
                     <CheckCircle className="text-success-subtle" size={16} />
-                </Tooltip>
+                </TooltipCompositions.Default>
             );
         }
         return null;

@@ -3,6 +3,7 @@ import { Delete } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 
 import type { Item } from "../../interfacesAndTypes/entities";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type RemoveItemButtonProps = {
     item: Item;
@@ -20,9 +21,11 @@ export function RemoveItemButton(props: RemoveItemButtonProps): React.ReactNode 
 
     return (
         <>
-            <Button onClick={handleRemove} title="Remove item" tone="danger" variant="ghost" size="small" iconOnly>
-                <Delete fontSize="inherit" />
-            </Button>
+            <TooltipCompositions.Default content="Remove item" side="bottom">
+                <Button onClick={handleRemove} tone="danger" variant="ghost" size="small" iconOnly>
+                    <Delete fontSize="inherit" />
+                </Button>
+            </TooltipCompositions.Default>
         </>
     );
 }

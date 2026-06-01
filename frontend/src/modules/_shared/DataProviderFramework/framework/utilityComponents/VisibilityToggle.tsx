@@ -5,6 +5,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item } from "../../interfacesAndTypes/entities";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type VisibilityToggleProps = {
     item: Item;
@@ -18,15 +19,10 @@ export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode 
     }
 
     return (
-        <Button
-            onClick={handleToggleVisibility}
-            title="Toggle visibility"
-            variant="ghost"
-            tone="neutral"
-            size="small"
-            iconOnly
-        >
-            {isVisible ? <Visibility fontSize="inherit" /> : <VisibilityOff fontSize="inherit" />}
-        </Button>
+        <TooltipCompositions.Default content={isVisible ? "Hide item in view" : "Show item in view"} side="bottom">
+            <Button onClick={handleToggleVisibility} variant="ghost" tone="neutral" size="small" iconOnly>
+                {isVisible ? <Visibility fontSize="inherit" /> : <VisibilityOff fontSize="inherit" />}
+            </Button>
+        </TooltipCompositions.Default>
     );
 }

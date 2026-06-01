@@ -133,6 +133,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 [0, 0, 1],
             ];
 
+            const [lastAppliedValue, setLastAppliedValue] = React.useState<ValueType>(props.value ?? null);
+
             const [internalValue, setInternalValue] = React.useState<[number, number, number] | null>(
                 props.value?.value ?? null,
             );
@@ -146,6 +148,12 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             const [visible, setVisible] = React.useState<[boolean, boolean, boolean]>(
                 props.value?.visible ?? [true, true, true],
             );
+            const [prevVisible, setPrevVisible] = React.useState<[boolean, boolean, boolean] | null>(null);
+
+            if (!isEqual(prevVisible, props.value?.visible ?? null)) {
+                setVisible(props.value?.visible ?? [true, true, true]);
+                setPrevVisible(props.value?.visible ?? null);
+            }
 
             function handleSliderChange(index: number, val: number) {
                 const newValue: [number, number, number] = [...(internalValue ?? [0, 0, 0])];
@@ -179,9 +187,18 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange({ value: internalValue ?? [0, 0, 0], visible: newVisible, applied: false });
             }
 
+            function handleRevertChanges() {
+                props.onValueChange({
+                    value: lastAppliedValue?.value ?? [0, 0, 0],
+                    visible: lastAppliedValue?.visible ?? [true, true, true],
+                    applied: true,
+                });
+            }
+
             function handleApplyChanges() {
                 if (internalValue) {
                     props.onValueChange({ value: internalValue, visible, applied: true });
+                    setLastAppliedValue({ value: internalValue, visible, applied: true });
                 }
             }
 
@@ -233,9 +250,18 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                             </div>
                         ))}
                     </div>
-                    <div className="mt-vertical-2xs flex justify-end">
+                    <div className="mt-vertical-2xs gap-horizontal-2xs flex justify-end">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            onClick={handleRevertChanges}
+                            disabled={!hasChanges}
+                            size="small"
+                        >
+                            Revert
+                        </Button>
                         <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges} size="small">
-                            Apply Changes
+                            Apply
                         </Button>
                     </div>
                 </>

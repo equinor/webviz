@@ -3,7 +3,7 @@ import React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { TextSize } from "../_shared/size";
-import { type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
 
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
     family?: "header" | "body";
@@ -322,15 +322,16 @@ function TypographyComponent<Element extends HTMLElement>(
         tracking = "normal",
         tone,
         children,
-        layoutClassName,
         italic,
-        ...htmlProps
+        ...rest
     } = props;
+
+    const baseProps = resolveWrapperProps(rest);
 
     const Component = as;
 
     const resolvedClassName = resolveClassNames(
-        layoutClassName,
+        baseProps.className,
         FONT_SIZE_CLASSES[family][size][lineHeight][tracking],
         WEIGHT_CLASSES[weight],
         tone ? TONE_CLASSES[tone][variant] : "",
@@ -338,7 +339,7 @@ function TypographyComponent<Element extends HTMLElement>(
     );
 
     return (
-        <Component ref={ref} {...htmlProps} className={resolvedClassName}>
+        <Component ref={ref} {...baseProps} className={resolvedClassName}>
             {children}
         </Component>
     );

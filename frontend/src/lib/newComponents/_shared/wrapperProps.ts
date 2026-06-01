@@ -21,9 +21,14 @@ export function resolveWrapperProps<
     TBaseUIProps extends Record<string, any>,
     TWrappedProps extends ComponentWrapperProps<TBaseUIProps>,
 >(props: TWrappedProps, ...additionalOmitPaths: Array<Many<keyof TWrappedProps>>): TBaseUIProps {
-    // Also omit "className" to guard against runtime leakage (e.g. via React.cloneElement) since
-    // ComponentWrapperProps intentionally removes className in favor of layoutClassName.
+    // Neither className, render, nor style are omitted here because we might make use of them when using
+    // wrapped components in other library components. By omitting them in the type definition of ComponentWrapperProps,
+    // we prevent implementers from passing these props and bypassing the design system while still allowing us to use them
+    // at runtime when necessary.
     const baseProps = omit(props, "layoutClassName", "className" as keyof TWrappedProps, ...additionalOmitPaths);
 
-    return { className: props.layoutClassName, ...baseProps } as unknown as TBaseUIProps;
+    return {
+        className: `${props.className ?? ""} ${props.layoutClassName ?? ""}`.trim(),
+        ...baseProps,
+    } as unknown as TBaseUIProps;
 }

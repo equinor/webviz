@@ -6,6 +6,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item } from "../../interfacesAndTypes/entities";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 type EditItemNameProps = {
     item: Item;
@@ -38,32 +39,33 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
     }
 
     return (
-        <div
-            className="group/edit-name gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
-            onDoubleClick={handleNameDoubleClick}
-            title="Double-click to edit name"
-        >
-            {editingName ? (
-                <input
-                    type="text"
-                    className="w-full"
-                    value={currentName}
-                    onChange={handleNameChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                />
-            ) : (
-                <>
-                    <div className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
-                    <Edit
-                        fontSize="inherit"
-                        className="cursor-pointer opacity-0 group-hover/edit-name:opacity-50"
-                        onClick={handleNameDoubleClick}
-                        titleAccess="Click to edit name"
+        <TooltipCompositions.Default content="Double-click to edit name" side="bottom">
+            <div
+                className="group/edit-name gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
+                onDoubleClick={handleNameDoubleClick}
+            >
+                {editingName ? (
+                    <input
+                        type="text"
+                        className="w-full"
+                        value={currentName}
+                        onChange={handleNameChange}
+                        onBlur={handleBlur}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
                     />
-                </>
-            )}
-        </div>
+                ) : (
+                    <>
+                        <div className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
+                        <Edit
+                            fontSize="inherit"
+                            className="cursor-pointer opacity-0 group-hover/edit-name:opacity-50"
+                            onClick={handleNameDoubleClick}
+                            titleAccess="Click to edit name"
+                        />
+                    </>
+                )}
+            </div>
+        </TooltipCompositions.Default>
     );
 }
