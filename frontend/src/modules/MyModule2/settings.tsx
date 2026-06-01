@@ -14,7 +14,6 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
@@ -187,7 +186,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                                 checked={isPending}
                                 onChange={(e) => setIsPending(e.target.checked)}
                             />
-                            <PendingWrapper
+                            <StatusWrapper
                                 isPending={isPending}
                                 errorMessage={statusMessage === "This is an error message" ? statusMessage : undefined}
                                 warningMessage={
@@ -196,7 +195,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                                 infoMessage={statusMessage === "This is an info message" ? statusMessage : undefined}
                             >
                                 <div className="h-12">This box is wrapped in a PendingWrapper</div>
-                            </PendingWrapper>
+                            </StatusWrapper>
                         </>
                     </Label>
                 </div>

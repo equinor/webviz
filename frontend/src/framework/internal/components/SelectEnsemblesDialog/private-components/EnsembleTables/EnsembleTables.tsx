@@ -140,7 +140,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         onItemMoved={handleOnRegularEnsembleMoved}
                     >
                         <SortableList.ScrollContainer>
-                            <Table.Root compact fixed size="small">
+                            <Table.Root compact fixed size="small" width="100%">
                                 <SortableList.NoDropZone>
                                     <Table.Head sticky>
                                         <Table.Column layoutClassName="w-5" colKey="handle" />
@@ -208,7 +208,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                 <div className="relative flex-1 overflow-auto">
                     <SortableList isMoveAllowed={() => true} onItemMoved={handleOnDeltaEnsembleMoved}>
                         <SortableList.ScrollContainer>
-                            <Table.Root compact fixed size="small">
+                            <Table.Root compact fixed size="small" width="100%">
                                 <SortableList.NoDropZone>
                                     <Table.Head sticky>
                                         <Table.Column layoutClassName="w-5" colKey="handle" />

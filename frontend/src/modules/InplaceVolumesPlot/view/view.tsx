@@ -7,7 +7,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import type { Interfaces } from "../interfaces";
@@ -72,9 +72,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
+            <StatusWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 {plots ?? <div style={{ height: divBoundingRect.height }} />}
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }

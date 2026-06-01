@@ -9,7 +9,6 @@ import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader"
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -206,7 +205,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
         <div className="gap-vertical-3xs flex h-full min-h-0 flex-col">
             <div className="gap-horizontal-xs flex flex-row">
                 <FieldCompositions.Default gridLayout={true} label="Asset">
-                    <PendingWrapper
+                    <StatusWrapper
                         isPending={assetsQuery.isFetching && !assetsQuery.isRefetching}
                         errorMessage={assetsQuery.error ? "Error loading assets" : undefined}
                     >
@@ -216,7 +215,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             onValueChange={handleAssetChanged}
                             disabled={assetOptions.length === 0}
                         />
-                    </PendingWrapper>
+                    </StatusWrapper>
                 </FieldCompositions.Default>
                 <Tooltip title="Show only cases authored by me" enterDelay="medium">
                     <SwitchCompositions.WithLabel
@@ -232,7 +231,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         label="Only Official cases"
                     />
                 </Tooltip>
-                <PendingWrapper
+                <StatusWrapper
                     isPending={casesQuery.isFetching && !casesQuery.isRefetching}
                     errorMessage={casesQuery.error ? "Error loading cases" : undefined}
                     className="h-full min-h-0 min-w-56 flex-1"
@@ -248,7 +247,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             clearable
                         />
                     </Tooltip>
-                </PendingWrapper>
+                </StatusWrapper>
             </div>
             <StatusWrapper
                 className="min-h-0 grow"

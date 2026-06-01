@@ -2,7 +2,7 @@ import React from "react";
 
 import { Warning } from "@mui/icons-material";
 
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Link } from "@lib/mui-icons";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -107,7 +107,7 @@ export function SettingManagerComponent<
         <React.Fragment key={props.setting.getId()}>
             <div className="px-horizontal-2xs py-vertical-4xs flex w-32 items-center">{props.setting.getLabel()}</div>
             <div className="px-horizontal-2xs py-vertical-4xs w-full">
-                <PendingWrapper isPending={actuallyLoading}>
+                <StatusWrapper isPending={actuallyLoading}>
                     <div className="gap-vertical-3xs flex min-w-0 flex-col">
                         <div
                             className={resolveClassNames("relative", {
@@ -155,7 +155,7 @@ export function SettingManagerComponent<
                             </span>
                         )}
                     </div>
-                </PendingWrapper>
+                </StatusWrapper>
             </div>
         </React.Fragment>
     );

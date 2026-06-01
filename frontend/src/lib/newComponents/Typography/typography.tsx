@@ -338,7 +338,7 @@ function TypographyComponent<Element extends HTMLElement>(
     );
 
     return (
-        <Component ref={ref} className={resolvedClassName} {...htmlProps}>
+        <Component ref={ref} {...htmlProps} className={resolvedClassName}>
             {children}
         </Component>
     );

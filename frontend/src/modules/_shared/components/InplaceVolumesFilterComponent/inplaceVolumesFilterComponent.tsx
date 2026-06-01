@@ -14,7 +14,7 @@ import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framew
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { ContextHelp } from "@lib/components/ContextHelp";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 
@@ -285,7 +285,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">
                 <CollapsibleGroup title="Index filters" expanded>
-                    <PendingWrapper
+                    <StatusWrapper
                         className="flex flex-col gap-2"
                         isPending={props.isPending ?? false}
                         errorMessage={
@@ -316,7 +316,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 />
                             </CollapsibleGroup>
                         ))}
-                    </PendingWrapper>
+                    </StatusWrapper>
                 </CollapsibleGroup>
             </div>
         </>

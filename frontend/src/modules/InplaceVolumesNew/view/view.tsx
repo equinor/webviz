@@ -7,7 +7,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { Table as TableComponent } from "@lib/components/Table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
@@ -85,7 +85,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div ref={divRef} className="w-full h-full relative flex flex-col">
-            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
+            <StatusWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 <div style={{ height: divBoundingRect.height * plotHeightFraction }}>{plots ?? null}</div>
                 {showStatisticsTable && statisticsTableData && tableColumns && (
                     <div className="border-t" style={{ height: divBoundingRect.height * (1 - plotHeightFraction) }}>
@@ -97,7 +97,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         />
                     </div>
                 )}
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }
