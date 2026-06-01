@@ -39,11 +39,10 @@ export function PendingRows(props: PendingRowsProps): React.ReactNode {
     );
 }
 
-function PendingRow(): React.ReactNode {
+export function PendingRow(): React.ReactNode {
     const tableColumnContext = useTableColumnContext();
 
     return (
-        // TODO: Row height
         <Table.Row layoutClassName="--pending-row" title="Data is pending..." selectable={false}>
             {range(tableColumnContext.leafCount).map((i) => (
                 <PendingCell key={i} />
