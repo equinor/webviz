@@ -30,20 +30,24 @@ export type DefaultProps = {
 function DefaultComponent(props: DefaultProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const baseProps = omit(props, "label", "children", "description", "info", "indicator", "singleError", "gridLayout");
 
+    function makeLabel() {
+        return (
+            <Field.Label layoutClassName="--label" indicator={props.indicator}>
+                {props.label}
+            </Field.Label>
+        );
+    }
+
     if (props.gridLayout) {
         return (
             <Field.Root ref={ref} inline {...baseProps}>
                 {props.description ? (
                     <div>
-                        <Field.Label layoutClassName="--label" indicator={props.indicator}>
-                            {props.label}
-                        </Field.Label>
+                        {makeLabel()}
                         <Field.Description layoutClassName="--description">{props.description}</Field.Description>
                     </div>
                 ) : (
-                    <Field.Label layoutClassName="--label" indicator={props.indicator}>
-                        {props.label}
-                    </Field.Label>
+                    makeLabel()
                 )}
 
                 {props.info ? (
@@ -65,15 +69,12 @@ function DefaultComponent(props: DefaultProps, ref: React.ForwardedRef<HTMLDivEl
         <Field.Root ref={ref} {...baseProps}>
             {props.info ? (
                 <div className="gap-horizontal-2xs flex items-center">
-                    <Field.Label layoutClassName="--label" indicator={props.indicator}>
-                        {props.label}
-                    </Field.Label>
+                    {makeLabel()}
+
                     <Field.Info>{props.info}</Field.Info>
                 </div>
             ) : (
-                <Field.Label layoutClassName="--label" indicator={props.indicator}>
-                    {props.label}
-                </Field.Label>
+                makeLabel()
             )}
 
             {props.description && (
