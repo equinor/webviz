@@ -8,6 +8,7 @@ export type TableRootContextType = {
     sortable?: boolean;
     selectable?: boolean;
     compact?: boolean;
+    fixed?: boolean;
 
     selection?: null | string | string[];
 

@@ -68,6 +68,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                 props.layoutClassName,
                 "border-neutral-subtle text-left align-middle whitespace-nowrap",
                 {
+                    "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
                     "border-b-2": sectionContext !== "body",
                     "px-horizontal-sm": !props.noPadding,

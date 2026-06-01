@@ -123,6 +123,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
                     value={{
                         availableBodyHeight: availableBodyHeight,
                         sortable: props.sortable,
+                        fixed: props.fixed,
                         compact: props.compact,
                         selectable: props.selectable,
                         currentSort: props.currentSort,
