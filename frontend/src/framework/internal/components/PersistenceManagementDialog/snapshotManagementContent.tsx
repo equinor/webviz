@@ -167,12 +167,14 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 <SwitchCompositions.WithLabel
                     checked={onlyShowOwnSnapshots}
                     label="Show my snapshots only"
+                    size="small"
                     onCheckedChange={setOnlyShowOwnSnapshots}
                 />
 
                 <SwitchCompositions.WithLabel
                     checked={hideDeletedSnapshots}
                     label="Hide deleted snapshots"
+                    size="small"
                     onCheckedChange={setHideDeletedSnapshots}
                 />
                 <span className="grow" />

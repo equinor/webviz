@@ -1,5 +1,6 @@
 import React from "react";
 
+import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
 import { getDataAttributesForSelectableSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -13,7 +14,8 @@ export type WithLabelProps = Omit<SwitchProps, "ref"> & {
 };
 
 export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(function SwitchWithLabel(props, ref) {
-    const { label, children, layoutClassName, size = "default", ...switchProps } = props;
+    const { label, children, layoutClassName, ...switchProps } = props;
+    const size = useComponentSize(props);
 
     return (
         <label
