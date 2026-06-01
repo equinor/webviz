@@ -7,7 +7,7 @@ import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContex
 import { Table } from "..";
 import { useTableColumnContext } from "../_contexts/tableColumnContext";
 import { useTableRootContext } from "../_contexts/tableRootContext";
-import { ROW_HEIGHT_PX } from "../constants";
+import { ROW_HEIGHT_PX, ROW_HEIGHT_PX_COMPACT } from "../constants";
 
 export type PendingRowsProps = {
     rowCount: number | "fill";
@@ -17,7 +17,8 @@ export type PendingRowsProps = {
 export function PendingRows(props: PendingRowsProps): React.ReactNode {
     const rootContext = useTableRootContext();
     const componentSize = useComponentSize();
-    const rowHeight = ROW_HEIGHT_PX[componentSize];
+
+    const rowHeight = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
 
     const rowCount = React.useMemo(() => {
         if (typeof props.rowCount === "number") {
