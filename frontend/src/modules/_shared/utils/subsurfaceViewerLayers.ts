@@ -162,8 +162,6 @@ function getGroupNameFromPickInfo(info: LayerPickInfo<unknown>): string {
 function getObjectNameFromPickInfo(info: LayerPickInfo<unknown>): string {
     if (info.index === -1) return "";
     if (!info.object) return "";
-    // subsurface-comps uses a name prop for their readout
-    // if("name" in info.layer!) return info.layer.name as string
     const object = info.object as any;
 
     if (typeof object === "object") {

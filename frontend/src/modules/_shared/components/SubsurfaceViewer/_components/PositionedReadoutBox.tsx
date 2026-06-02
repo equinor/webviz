@@ -10,9 +10,6 @@ import type { CategoricalReadout } from "../../Readout/types";
 
 export type PositionedReadoutBoxProps = {
     readouts: CategoricalReadout[];
-    // TODO: As a future task, it'd be cool to make it so the user is free to drag the readout anywhere within the bounds of the viewport
-    // container: VirtualElement;
-    // onChangePosition?: (newPosition: { x: number; y: number }) => void;
     position: { x: number; y: number };
     visible?: boolean;
     stale?: boolean;

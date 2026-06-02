@@ -87,7 +87,6 @@ export class AdjustedWellsLayer extends WellsLayer {
                 id: "colors",
                 lineWidthMinPixels: 1,
                 lineWidthMaxPixels: 5,
-                // autoHighlight: true,
                 onHover: () => {},
             } as GeoJsonLayerProps),
         );
@@ -98,13 +97,16 @@ export class AdjustedWellsLayer extends WellsLayer {
     getPickingInfo({ info, sourceLayer }: GetPickingInfoParams): LayerPickInfoWithReadout<WellFeature> {
         const superInfo = super.getPickingInfo({ info });
         // The well's layer modifies the z-coordinate during picking, so we need to scale it back so readouts are correct
+        // ! Mutates the original coordinate object
         if (superInfo.coordinate && superInfo.coordinate.length === 3) {
             const zScale = this.props.modelMatrix ? this.props.modelMatrix[10] : 1;
             superInfo.coordinate[2] *= zScale;
         }
 
-        // -- Guard
-        if (!info.object || !sourceLayer || info.index === -1) return superInfo;
+        // Return early if there's no relevant information to look at
+        if (!info.object || !sourceLayer || info.index === -1) {
+            return superInfo;
+        }
 
         let wellFeature: WellFeature;
         const properties: ReadoutProperty[] = [];
