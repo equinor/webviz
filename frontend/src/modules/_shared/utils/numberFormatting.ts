@@ -35,3 +35,18 @@ export function formatNumber(value: number, maxNumDecimalPlaces: number = 3): st
     // Omit decimals for integers
     return Number.isInteger(value) ? value.toString() : fixed;
 }
+
+/**
+ * Formats a number and removes trailing zeros from decimals
+ */
+export function formatNumberWithoutTrailingZeros(value: number): string {
+    // Handle values that are essentially zero due to floating point precision
+    if (Math.abs(value) < 1e-10) {
+        return "0";
+    }
+
+    const formatted = formatNumber(value);
+    // Remove trailing zeros after decimal point, and remove decimal point if no digits follow
+    // This handles cases like: "1.000" -> "1", "1.200" -> "1.2", "1.20K" -> "1.2K"
+    return formatted.replace(/(\.\d*?)0+(\D|$)/, "$1$2").replace(/\.$/, "");
+}
