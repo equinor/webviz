@@ -18,6 +18,7 @@ type TableRowData = {
     sensitivity: string;
     deltaLow: string;
     deltaHigh: string;
+    mean: string;
     trueLow: string;
     trueHigh: string;
     lowReals: number;
@@ -40,55 +41,61 @@ const tableColumns: TableColumns<TableRowData> = [
         _type: "data",
         columnId: "response",
         label: "Response",
-        sizeInPercent: 15,
+        sizeInPercent: 14,
     },
     {
         _type: "data",
         columnId: "sensitivity",
         label: "Sensitivity",
-        sizeInPercent: 15,
+        sizeInPercent: 14,
     },
     {
         _type: "data",
         columnId: "deltaLow",
         label: "Delta low",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
     },
     {
         _type: "data",
         columnId: "deltaHigh",
         label: "Delta high",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
+    },
+    {
+        _type: "data",
+        columnId: "mean",
+        label: "Mean",
+        sizeInPercent: 9,
     },
     {
         _type: "data",
         columnId: "trueLow",
         label: "True low",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
     },
     {
         _type: "data",
         columnId: "trueHigh",
         label: "True high",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
     },
     {
         _type: "data",
         columnId: "lowReals",
         label: "Low #reals",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
     },
     {
         _type: "data",
         columnId: "highReals",
         label: "High #reals",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
     },
     {
         _type: "data",
         columnId: "reference",
         label: "Reference",
-        sizeInPercent: 10,
+        sizeInPercent: 9,
     },
 ];
 
@@ -106,6 +113,10 @@ const SensitivityTable: React.FC<SensitivityTableProps> = ({
             sensitivity: sensitivityResponse.sensitivityName,
             deltaLow: numFormat(sensitivityDataScaler.calculateLowLabelValue(sensitivityResponse), isPercentage),
             deltaHigh: numFormat(sensitivityDataScaler.calculateHighLabelValue(sensitivityResponse), isPercentage),
+            mean:
+                sensitivityResponse.sensitivityAverage !== undefined
+                    ? numFormat(sensitivityResponse.sensitivityAverage)
+                    : "",
             trueLow: numFormat(sensitivityResponse.lowCaseAverage),
             trueHigh: numFormat(sensitivityResponse.highCaseAverage),
             lowReals: sensitivityResponse.lowCaseRealizations.length,
