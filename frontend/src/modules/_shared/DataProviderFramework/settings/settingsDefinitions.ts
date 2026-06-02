@@ -9,6 +9,7 @@ import type {
 } from "@api";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ProductionPhase, InjectionPhase } from "@framework/types/wellbore";
 import type { ColorSet } from "@lib/utils/ColorSet";
 
 import type { IntersectionSettingOption, IntersectionSettingValue } from "./implementations/IntersectionSetting";
@@ -71,17 +72,6 @@ export enum Setting {
     REPRESENTATION = "representation",
     FLOW_FILTER_TYPE = "flowFilterType",
     FLOW_FILTER = "flowFilter",
-}
-
-export enum ProductionPhase {
-    OIL = "oil",
-    GAS = "gas",
-    WATER = "water",
-}
-
-export enum InjectionPhase {
-    WATER = "water",
-    GAS = "gas",
 }
 
 /**
