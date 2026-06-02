@@ -11,6 +11,7 @@ import {
     createHighRealizationPointsTrace,
     createLowBarTrace,
     createLowRealizationPointsTrace,
+    createSensitivityMeanPointsTrace,
 } from "../utils/traceUtils";
 
 export enum TraceGroup {
@@ -98,6 +99,7 @@ export class SensitivityChartFigure {
             shapes: [
                 {
                     type: "line",
+                    layer: "below",
                     line: { width: 3, color: "lightgrey" },
                     x0: referencePosition,
                     x1: referencePosition,
@@ -142,6 +144,15 @@ export class SensitivityChartFigure {
                 this._createLowRealizationsLabels(),
                 this.createLowRealizationPointsColors(),
                 this._getLowRealizations(),
+            ),
+        );
+    }
+    public buildMeanPointTrace() {
+        this._figure.addTrace(
+            createSensitivityMeanPointsTrace(
+                this._createSensitivityMeanValues(),
+                this._createSensitivityMeanLabels(),
+                this._createSensitivityMeanHoverValues(),
             ),
         );
     }
@@ -254,6 +265,20 @@ export class SensitivityChartFigure {
     }
     private _createHighRealizationsLabels(): string[] {
         return this._sensitivityResponses.flatMap((s) => s.highCaseRealizationValues.map(() => s.sensitivityName));
+    }
+    private _getResponsesWithSensitivityAverage(): SensitivityResponse[] {
+        return this._sensitivityResponses.filter((sensitivity) => sensitivity.sensitivityAverage !== undefined);
+    }
+    private _createSensitivityMeanValues(): number[] {
+        return this._scaler.createSensitivityAverageValues(this._sensitivityResponses);
+    }
+    private _createSensitivityMeanLabels(): string[] {
+        return this._getResponsesWithSensitivityAverage().map((sensitivity) => sensitivity.sensitivityName);
+    }
+    private _createSensitivityMeanHoverValues(): string[] {
+        return this._getResponsesWithSensitivityAverage().map((sensitivity) =>
+            this._formatter.format(sensitivity.sensitivityAverage ?? 0),
+        );
     }
     // Formatting utility methods
     private _numFormat(number: number): string {

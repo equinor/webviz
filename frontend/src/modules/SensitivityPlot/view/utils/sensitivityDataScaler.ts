@@ -97,6 +97,16 @@ export class SensitivityDataScaler {
         return realizationValues.map((val) => val - this._referenceAverage);
     }
 
+    public scaleValue(value: number): number {
+        return this.scaleRealizationValues([value])[0];
+    }
+
+    public createSensitivityAverageValues(sensitivityResponses: SensitivityResponse[]): number[] {
+        return sensitivityResponses.flatMap((sensitivity) =>
+            sensitivity.sensitivityAverage !== undefined ? [this.scaleValue(sensitivity.sensitivityAverage)] : [],
+        );
+    }
+
     public createLowRealizationsValues(sensitivityResponses: SensitivityResponse[]): number[] {
         return sensitivityResponses.flatMap((s) => this.scaleRealizationValues(s.lowCaseRealizationValues));
     }
@@ -130,6 +140,7 @@ export class SensitivityDataScaler {
         const highRealizationValues = sensitivityResponses.map((s) =>
             this.scaleRealizationValues(s.highCaseRealizationValues),
         );
+        const sensitivityAverageValues = this.createSensitivityAverageValues(sensitivityResponses);
 
         let minVal = this.isAbsolute ? this._referenceAverage : 0;
         let maxVal = this.isAbsolute ? this._referenceAverage : 0;
@@ -146,6 +157,11 @@ export class SensitivityDataScaler {
                 minVal = Math.min(minVal, value);
                 maxVal = Math.max(maxVal, value);
             }
+        }
+
+        for (const value of sensitivityAverageValues) {
+            minVal = Math.min(minVal, value);
+            maxVal = Math.max(maxVal, value);
         }
 
         // Add some space for better visualization
