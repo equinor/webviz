@@ -172,20 +172,25 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                     <>
                         <div className="min-w-0 grow">
                             <ComboboxBase.Value>
-                                {(value) =>
-                                    Array.isArray(value) && value.length > 0 ? (
-                                        <span className="text-neutral-subtle block truncate">
-                                            {`${value.length}/${flatItems.length} selected`}
-                                        </span>
-                                    ) : (
-                                        <span className="text-neutral-subtle block truncate opacity-70">
-                                            {placeholder}
-                                        </span>
-                                    )
-                                }
+                                {(value) => (
+                                    <ComboboxBase.Input
+                                        ref={ref}
+                                        className={resolveClassNames(
+                                            "box-border w-full border-0 bg-transparent focus:outline-0",
+                                            {
+                                                "placeholder:text-neutral-strong!":
+                                                    Array.isArray(value) && value.length > 0,
+                                            },
+                                        )}
+                                        placeholder={
+                                            Array.isArray(value) && value.length > 0
+                                                ? `${value.length}/${flatItems.length} selected`
+                                                : placeholder
+                                        }
+                                    />
+                                )}
                             </ComboboxBase.Value>
                         </div>
-                        <ComboboxBase.Input ref={ref} className="sr-only" />
                     </>
                 ) : (
                     <>
@@ -334,7 +339,7 @@ function ComboboxItem<TValue>({
         <ComboboxBase.Item
             value={item.value}
             disabled={item.disabled}
-            className={`user-select-none py-selectable-y pr-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent ${itemColSpan} data-disabled:text-disabled box-border grid grid-cols-subgrid items-center outline-0 data-disabled:cursor-not-allowed data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']`}
+            className={`user-select-none py-selectable-y pr-selectable-x gap-vertical-xs data-highlighted:text-accent-strong data-highlighted:bg-accent cursor-pointer ${itemColSpan} data-disabled:text-disabled box-border grid grid-cols-subgrid items-center outline-0 data-disabled:cursor-not-allowed data-highlighted:relative data-highlighted:z-0 data-highlighted:before:absolute data-highlighted:before:-z-1 data-highlighted:before:content-['']`}
         >
             <ComboboxBase.ItemIndicator className="pl-selectable-x text-accent-subtle text-body-lg col-start-1 flex items-center">
                 <Check fontSize="inherit" />

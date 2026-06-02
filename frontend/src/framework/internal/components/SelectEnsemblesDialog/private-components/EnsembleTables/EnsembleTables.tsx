@@ -3,6 +3,7 @@ import React from "react";
 import { Add, History } from "@mui/icons-material";
 import { v4 } from "uuid";
 
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SortableList } from "@lib/components/SortableList";
 import { Tag } from "@lib/components/Tag";
 import { InfoOutlined } from "@lib/mui-icons";
@@ -29,7 +30,7 @@ export type EnsembleTablesProps = {
 
     onAddRegularEnsemble: () => void;
     onUpdateRegularEnsemble: (updatedEnsemble: InternalRegularEnsembleSetting) => void;
-    onRemoveRegularEnsemble: (removedEnsemble: InternalRegularEnsembleSetting) => void;
+    onRemoveRegularEnsemble: (removedEnsemble: RegularEnsembleIdent) => void;
     onMoveRegularEnsemble: (movedEnsemble: InternalRegularEnsembleSetting, newIndex: number) => void;
 
     onCreateDeltaEnsemble: (newEnsemble: InternalDeltaEnsembleSetting) => void;

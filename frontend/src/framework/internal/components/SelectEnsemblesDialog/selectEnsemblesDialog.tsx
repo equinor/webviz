@@ -219,10 +219,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     : []
                             }
                             onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                            onRemoveEnsemble={
+                            onRemoveEnsembles={
                                 ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                    ? selectionHandlers.handleRemoveRegularEnsemble
-                                    : () => {}
+                                    ? selectionHandlers.handleRemoveRegularEnsembles
+                                    : undefined
                             }
                             multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
                             onRequestClose={handleCloseEnsembleExplorer}
@@ -247,7 +247,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 selectableEnsemblesForDelta={selectableEnsemblesForDelta}
                                 onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
                                 onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
-                                onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsemble}
+                                onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsembles}
                                 onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
                                 onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
                                 onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}

@@ -141,7 +141,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                 />
             </Table.Head>
 
-            <Table.Body>
+            <Table.Body emptyMessage="No cases found">
                 {props.isPending && <TableCompositions.PendingRows rowCount="fill" />}
                 <Virtualization
                     placeholderComponent="tr"

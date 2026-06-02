@@ -6,20 +6,19 @@ import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { useValidState } from "@lib/hooks/useValidState";
-import { ArrowLeft, ArrowRight, Remove } from "@lib/mui-icons";
+import { useValidArrayState } from "@lib/hooks/useValidArrayState";
+import { ArrowRight, Remove } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
+import { Field } from "@lib/newComponents/Field";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Select, type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 import type { InternalRegularEnsembleSetting } from "../types";
 
 import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
-import { Field } from "@lib/newComponents/Field";
-import { useValidArrayState } from "@lib/hooks/useValidArrayState";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type EnsembleExplorerProps = {
     queriesDisabled: boolean;
@@ -27,7 +26,7 @@ export type EnsembleExplorerProps = {
     selectedEnsembles: UserEnsembleSetting[];
     multiSelect?: boolean;
     onSelectEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
-    onRemoveEnsemble?: (ensembleIdent: InternalRegularEnsembleSetting) => void;
+    onRemoveEnsembles?: (...ensembleIdents: RegularEnsembleIdent[]) => void;
     onRequestClose?: () => void;
 };
 
@@ -35,7 +34,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     const [selectedCaseName, setSelectedCaseName] = React.useState<string | null>(null);
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
     const [ensemblesInSelectedCase, setEnsemblesInSelectedCase] = React.useState<EnsembleInfo_api[]>([]);
-    const [activeSelectedEnsemble, setActiveSelectedEnsemble] = React.useState<string | null>(null);
+    const [activeSelectedEnsembles, setActiveSelectedEnsembles] = React.useState<RegularEnsembleIdent[]>([]);
 
     // --- Derived data ---
     const [activeEnsembleNames, setActiveEnsembleNames] = useValidArrayState<string>({
@@ -101,8 +100,8 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
         setActiveEnsembleNames(ensembleNames);
     }
 
-    function handleActiveSelectedEnsembleChanged(ensembleNames: string[]) {
-        setActiveSelectedEnsemble(ensembleNames[0]);
+    function handleActiveSelectedEnsembleChanged(ensembleIdents: RegularEnsembleIdent[]) {
+        setActiveSelectedEnsembles(ensembleIdents);
     }
 
     function handleSelectRegularEnsembles() {
@@ -126,27 +125,34 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                 customName: null,
             });
         }
+
+        setActiveEnsembleNames([]);
     }
 
     function handleRemoveSelectedEnsembles() {
-        if (!activeSelectedEnsemble || !props.onRemoveEnsemble) {
+        if (!activeSelectedEnsembles || !props.onRemoveEnsembles) {
             return;
         }
 
-        const matchingEnsemble = props.selectedEnsembles.find(
-            (ens) => ens.ensembleIdent.toString() === activeSelectedEnsemble,
+        // Remove all selected ensembles
+        const matchingEnsemble = props.selectedEnsembles.find((ens) =>
+            activeSelectedEnsembles.some((activeEnsemble) => activeEnsemble.equals(ens.ensembleIdent)),
         );
         if (!matchingEnsemble || !matchingEnsemble.caseName) {
             return;
         }
 
-        props.onRemoveEnsemble({
-            ensembleIdent: matchingEnsemble.ensembleIdent,
-            caseName: matchingEnsemble.caseName,
-            color: matchingEnsemble.color,
-            customName: matchingEnsemble.customName ?? null,
-        });
-        setActiveSelectedEnsemble(null);
+        props.onRemoveEnsembles(...activeSelectedEnsembles);
+
+        // Select the first ensemble in the list after removal, or set to null if no ensembles remain
+        const remainingEnsembles = props.selectedEnsembles.filter(
+            (ens) => !activeSelectedEnsembles.some((activeEnsemble) => activeEnsemble.equals(ens.ensembleIdent)),
+        );
+        if (remainingEnsembles.length > 0) {
+            setActiveSelectedEnsembles([remainingEnsembles[0].ensembleIdent]);
+        } else {
+            setActiveSelectedEnsembles([]);
+        }
     }
 
     function handleCaseSelectedChange(caseSelection: CaseSelection | null) {
@@ -184,12 +190,18 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                     />
                     <Separator orientation="horizontal" />
                     <div className="gap-horizontal-sm flex w-full items-center justify-evenly">
-                        <FieldCompositions.Default label="Ensembles" layoutClassName="w-full">
+                        <FieldCompositions.Default
+                            label="Ensembles in case"
+                            indicator={`(${ensemblesInSelectedCase.length})`}
+                            layoutClassName="w-full"
+                        >
                             <StatusWrapper
                                 className={`w-full ${!selectedCaseUuid ? "text-neutral-subtle" : ""}`}
                                 infoMessage={!selectedCaseUuid ? "No case selected" : undefined}
                             >
                                 <Select
+                                    filter
+                                    filterPlaceholder="Filter ensembles..."
                                     options={ensembleOptions}
                                     value={activeEnsembleNames}
                                     onChange={handleRegularEnsembleChanged}
@@ -219,30 +231,35 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                 </div>
                                 <Field.Root layoutClassName="flex flex-col gap-vertical-2xs min-w-1/2">
                                     <div className="gap-horizontal-xs flex w-full items-center justify-between">
-                                        <Field.Label>All selected Ensembles</Field.Label>
-                                        <TooltipCompositions.Default content="Remove selected ensemble">
+                                        <Field.Label indicator={`(${props.selectedEnsembles.length})`}>
+                                            My selected Ensembles
+                                        </Field.Label>
+                                        <TooltipCompositions.Default content="Remove selected ensembles">
                                             <Button
                                                 variant="contained"
                                                 size="small"
                                                 onClick={handleRemoveSelectedEnsembles}
                                                 tone="danger"
                                                 iconOnly
-                                                disabled={!activeSelectedEnsemble}
+                                                disabled={activeSelectedEnsembles.length === 0}
                                             >
                                                 <Remove size={16} />
                                             </Button>
                                         </TooltipCompositions.Default>
                                     </div>
                                     <Select
+                                        filter
+                                        filterPlaceholder="Filter selected ensembles..."
                                         options={props.selectedEnsembles.map((ens) => ({
                                             label: `${ens.ensembleIdent.getEnsembleName()} (${ens.caseName} [${ens.ensembleIdent.getCaseUuid()}])`,
-                                            value: ens.ensembleIdent.toString(),
+                                            value: ens.ensembleIdent,
                                         }))}
-                                        value={activeSelectedEnsemble ? [activeSelectedEnsemble] : []}
+                                        value={activeSelectedEnsembles}
                                         onChange={handleActiveSelectedEnsembleChanged}
                                         size={5}
                                         layoutClassName="w-full"
-                                        placeholder="No ensembles available..."
+                                        placeholder="No ensembles selected..."
+                                        multiple
                                     />
                                 </Field.Root>
                             </>

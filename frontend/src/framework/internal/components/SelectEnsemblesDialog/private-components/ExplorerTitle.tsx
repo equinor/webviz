@@ -2,10 +2,9 @@ import type React from "react";
 
 import { ChevronRight } from "@mui/icons-material";
 
-import { EnsembleExplorerMode } from "../_hooks";
-import { Heading } from "@lib/newComponents/Typography/compositions";
-import { Button } from "@lib/newComponents/Button";
 import { Tooltip } from "@lib/components/Tooltip";
+
+import { EnsembleExplorerMode } from "../_hooks";
 
 export type ExplorerTitleProps = {
     showExplorer: boolean;
@@ -14,7 +13,7 @@ export type ExplorerTitleProps = {
 };
 
 export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, explorerMode, onClose }) => {
-    let explorerTitle = "Add Ensemble";
+    let explorerTitle = "Add Ensembles";
     if (explorerMode === EnsembleExplorerMode.SELECT_OTHER_REFERENCE_ENSEMBLE) {
         explorerTitle = "Select Reference Ensemble";
     } else if (explorerMode === EnsembleExplorerMode.SELECT_OTHER_COMPARISON_ENSEMBLE) {

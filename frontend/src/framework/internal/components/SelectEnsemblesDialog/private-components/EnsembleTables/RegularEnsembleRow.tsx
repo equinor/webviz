@@ -2,6 +2,7 @@ import type React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
 
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SortableList } from "@lib/components/SortableList";
 import { Delete } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
@@ -15,7 +16,7 @@ import type { InternalRegularEnsembleSetting } from "../../types";
 export type RegularEnsembleRowProps = {
     ensembleSetting: InternalRegularEnsembleSetting;
     onUpdate: (newItem: InternalRegularEnsembleSetting) => void;
-    onDelete: (item: InternalRegularEnsembleSetting) => void;
+    onDelete: (item: RegularEnsembleIdent) => void;
 };
 
 export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactNode {
@@ -34,7 +35,7 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
     }
 
     function onDelete() {
-        props.onDelete(props.ensembleSetting);
+        props.onDelete(props.ensembleSetting.ensembleIdent);
     }
 
     return (

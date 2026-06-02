@@ -3,6 +3,7 @@ import React from "react";
 import { Deselect, SelectAll } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
+import { Close } from "@lib/mui-icons";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { LayoutClassProps } from "../_shared/wrapperProps";
@@ -32,6 +33,7 @@ export type SelectProps<TValue = string> = LayoutClassProps & {
     onChange?: (values: TValue[]) => void;
     placeholder?: string;
     filter?: boolean;
+    filterPlaceholder?: string;
     size?: number;
     optionHeight?: number;
     multiple?: boolean;
@@ -113,6 +115,16 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             }, props.debounceTimeMs);
         },
         [onChange, props.debounceTimeMs],
+    );
+
+    const handleSelectAll = React.useCallback(
+        function handleSelectAll() {
+            if (!onChange) {
+                return;
+            }
+            onChange(props.options.map((option) => option.value));
+        },
+        [onChange, props.options],
     );
 
     React.useEffect(function handleMount() {
@@ -279,6 +291,11 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     setVirtualizationStartIndex(Math.max(0, newIndex - sizeWithDefault + 1));
                     makeKeyboardSelection(newIndex, modifiers);
                 }
+
+                if (e.key === "a" && e.ctrlKey) {
+                    e.preventDefault();
+                    handleSelectAll();
+                }
             }
 
             refCurrent?.addEventListener("focus", handleFocus);
@@ -297,6 +314,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             sizeWithDefault,
             multipleWithDefault,
             handleOnChange,
+            handleSelectAll,
             selectionAnchor,
             selectedOptionValues,
             reportedVirtualizationStartIndex,
@@ -367,20 +385,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
     }
 
-    function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setFilterString(event.target.value);
-        filterOptions(options, event.target.value);
+    function handleFilterChange(value: string) {
+        setFilterString(value);
+        filterOptions(options, value);
     }
 
     function handleVirtualizationScroll(index: number) {
         setReportedVirtualizationStartIndex(index);
-    }
-
-    function handleSelectAll() {
-        if (!onChange) {
-            return;
-        }
-        onChange(props.options.map((option) => option.value));
     }
 
     function handleUnselectAll() {
@@ -428,9 +439,22 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         id={props.id}
                         type="text"
                         value={filterString}
-                        onChange={handleFilterChange}
-                        placeholder="Filter options..."
+                        onValueChange={handleFilterChange}
+                        placeholder={props.filterPlaceholder ?? "Filter options..."}
                         disabled={props.disabled}
+                        endAdornment={
+                            filterString && (
+                                <Button
+                                    variant="ghost"
+                                    size="small"
+                                    iconOnly
+                                    disabled={props.disabled}
+                                    onClick={() => handleFilterChange("")}
+                                >
+                                    <Close size={16} />
+                                </Button>
+                            )
+                        }
                     />
                 )}
                 <div
@@ -443,7 +467,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     tabIndex={props.disabled ? -1 : 0}
                 >
                     {filteredOptions.length === 0 && (
-                        <div className="px-horizontal-xs flex items-center select-none">
+                        <div className="px-horizontal-xs flex h-full w-full items-center justify-center select-none">
                             {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}

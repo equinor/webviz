@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
@@ -8,14 +7,16 @@ import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@a
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
+import { Refresh } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Combobox } from "@lib/newComponents/Combobox";
+import { Field } from "@lib/newComponents/Field";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { SwitchCompositions } from "@lib/newComponents/Switch";
 
@@ -202,8 +203,34 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <div className="gap-vertical-3xs flex h-full min-h-0 flex-col">
-            <div className="gap-horizontal-xs flex flex-row">
+        <Field.Root layoutClassName="w-full gap-vertical-3xs flex h-full min-h-0 flex-col">
+            <div className="gap-horizontal-sm flex w-full items-center">
+                <Field.Label indicator={`(${numberOfCases})`} itemID="">
+                    Cases
+                </Field.Label>
+                <span className="grow" />
+                <span className="text-body-xs text-neutral-subtle italic">
+                    Last updated:{" "}
+                    {lastUpdatedMs ? (
+                        <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} />
+                    ) : casesQuery.isFetching ? (
+                        "Loading..."
+                    ) : (
+                        "Never"
+                    )}
+                </span>
+                <Tooltip title="Refresh assets and cases lists" enterDelay="medium">
+                    <Button tone="accent" onClick={handleManualRefetch} variant="ghost">
+                        {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
+                            <CircularProgress size={16} />
+                        ) : (
+                            <Refresh size={16} />
+                        )}
+                        Refresh
+                    </Button>
+                </Tooltip>
+            </div>
+            <div className="gap-horizontal-xs flex w-full flex-row">
                 <FieldCompositions.Default gridLayout={true} label="Asset">
                     <StatusWrapper
                         isPending={assetsQuery.isFetching && !assetsQuery.isRefetching}
@@ -252,50 +279,19 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
             <StatusWrapper
                 className="min-h-0 grow"
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
+                isPending={casesQuery.isFetching && !casesQuery.isRefetching}
             >
-                <div className="gap-vertical-3xs flex h-full flex-col">
-                    <div className="gap-horizontal-sm flex items-center">
-                        <span className="text-neutral-subtle text-body-md gap-horizontal-2xs flex items-center">
-                            Case
-                            <span className="font-light">({numberOfCases})</span>
-                        </span>
-                        <span className="grow" />
-                        <span className="text-body-xs text-neutral-subtle italic">
-                            Last updated:{" "}
-                            {lastUpdatedMs ? (
-                                <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} />
-                            ) : casesQuery.isFetching ? (
-                                "Loading..."
-                            ) : (
-                                "Never"
-                            )}
-                        </span>
-                        <Tooltip title="Refresh assets and cases lists" enterDelay="medium">
-                            <Button tone="accent" onClick={handleManualRefetch} variant="ghost">
-                                {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
-                                    <CircularProgress size="small" />
-                                ) : (
-                                    <Refresh fontSize="inherit" />
-                                )}
-                                Refresh
-                            </Button>
-                        </Tooltip>
-                    </div>
-
-                    <div className="min-h-0 grow">
-                        <CaseTable
-                            caseData={caseData}
-                            isPending={casesQuery.isPending}
-                            selectedCase={selectedCaseUuid}
-                            selectedEnsembles={props.selectedEnsembles}
-                            showOnlyMyCases={showOnlyMyCases}
-                            showOnlyOfficialCases={showOnlyOfficialCases}
-                            onCaseSelected={setSelectedCaseUuid}
-                            onDataCollated={(data) => setNumberOfCases(data.length)}
-                        />
-                    </div>
-                </div>
+                <CaseTable
+                    caseData={caseData}
+                    isPending={casesQuery.isPending}
+                    selectedCase={selectedCaseUuid}
+                    selectedEnsembles={props.selectedEnsembles}
+                    showOnlyMyCases={showOnlyMyCases}
+                    showOnlyOfficialCases={showOnlyOfficialCases}
+                    onCaseSelected={setSelectedCaseUuid}
+                    onDataCollated={(data) => setNumberOfCases(data.length)}
+                />
             </StatusWrapper>
-        </div>
+        </Field.Root>
     );
 }
