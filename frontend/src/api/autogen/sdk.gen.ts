@@ -109,6 +109,15 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
+    GetRelpermRealizationDataData_api,
+    GetRelpermRealizationDataErrors_api,
+    GetRelpermRealizationDataResponses_api,
+    GetRelpermTableDefinitionData_api,
+    GetRelpermTableDefinitionErrors_api,
+    GetRelpermTableDefinitionResponses_api,
+    GetRelpermTableNamesData_api,
+    GetRelpermTableNamesErrors_api,
+    GetRelpermTableNamesResponses_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataErrors_api,
     GetRftRealizationDataResponses_api,
@@ -1230,6 +1239,50 @@ export const getSummaryObservations = <ThrowOnError extends boolean = false>(
             ...options,
         },
     );
+
+/**
+ * Get Relperm Table Names
+ */
+export const getRelpermTableNames = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableNamesData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<GetRelpermTableNamesResponses_api, GetRelpermTableNamesErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/relperm/table_names",
+        ...options,
+    });
+
+/**
+ * Get Relperm Table Definition
+ */
+export const getRelpermTableDefinition = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableDefinitionData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetRelpermTableDefinitionResponses_api,
+        GetRelpermTableDefinitionErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/relperm/table_definition",
+        ...options,
+    });
+
+/**
+ * Get Relperm Realization Data
+ */
+export const getRelpermRealizationData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermRealizationDataData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetRelpermRealizationDataResponses_api,
+        GetRelpermRealizationDataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/relperm/realization_data",
+        ...options,
+    });
 
 /**
  * Get Rft Table Definition
