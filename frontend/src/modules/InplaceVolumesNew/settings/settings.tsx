@@ -86,9 +86,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .map((name) => {
             const isFaciesFractionWithoutFaciesIndex =
                 name === "FACIES_FRACTION" &&
-                !tableDefinitionsAccessor
-                    .getCommonIndicesWithValues()
-                    .some((idx) => idx.indexColumn === "FACIES");
+                !tableDefinitionsAccessor.getCommonIndicesWithValues().some((idx) => idx.indexColumn === "FACIES");
             return {
                 label: name,
                 value: name,
@@ -114,6 +112,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
     }
+
+    const showFaciesFractionGroupingWarning =
+        selectedFirstResultName.value === "FACIES_FRACTION" &&
+        selectedSubplotBy.value !== "FACIES" &&
+        selectedColorBy.value !== "FACIES";
 
     const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
@@ -178,6 +181,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         onChange={setSelectedFirstResultName}
                     />
                 </SettingWrapper>
+                {showFaciesFractionGroupingWarning && (
+                    <div className="py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                        <strong>Note:</strong> FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or
+                        Color by; otherwise every fraction collapses to 1.
+                    </div>
+                )}
                 <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
                     <Dropdown
                         value={selectedSubplotBy.value}
