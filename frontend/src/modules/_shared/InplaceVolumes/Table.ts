@@ -184,7 +184,6 @@ export class Table {
 
     splitByColumn(columnName: string, keepColumn: boolean = false): TableCollection {
         const columnIndex = this._columns.findIndex((column) => column.getName() === columnName);
-        console.log(this._columns);
         if (columnIndex === -1) {
             throw new Error(`Column not found: ${columnName}`);
         }
