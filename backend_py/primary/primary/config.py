@@ -26,7 +26,7 @@ RESOURCE_SCOPES_DICT = {
     "ssdl": ["8b6e5eb9-edc8-4086-83cb-afa5cc185b23/user_impersonation"],
     "pdm": ["f2e415dc-d400-4cd4-a801-fa707138a49c/user_impersonation"],
 }
-REDIS_USER_SESSION_URL = "redis://redis-user-session:6379"
+REDIS_USER_SESSION_URL = "redis://redis-auth-store:6379"
 REDIS_CACHE_URL = "redis://redis-cache:6379"
 
 _is_on_radix_platform = is_running_on_radix_platform()
