@@ -28,8 +28,9 @@ RESOURCE_SCOPES_DICT = {
 }
 
 REDIS_AUTH_STORE_PASSWORD = os.environ["WEBVIZ_REDIS_AUTH_STORE_PASSWORD"]
-REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
 REDIS_AUTH_STORE_URL = f"redis://:{REDIS_AUTH_STORE_PASSWORD}@redis-auth-store:6379"
+
+REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
 REDIS_CACHE_URL = f"redis://:{REDIS_CACHE_PASSWORD}@redis-cache:6379"
 
 _is_on_radix_platform = is_running_on_radix_platform()
