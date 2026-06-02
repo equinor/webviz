@@ -82,9 +82,6 @@ import type {
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataErrors_api,
     GetMisfitSurfaceDataResponses_api,
-    GetObservationsData_api,
-    GetObservationsErrors_api,
-    GetObservationsResponses_api,
     GetObservedSurfacesMetadataData_api,
     GetObservedSurfacesMetadataErrors_api,
     GetObservedSurfacesMetadataResponses_api,
@@ -112,6 +109,15 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataErrors_api,
     GetRealizationsVectorDataResponses_api,
+    GetRelpermRealizationDataData_api,
+    GetRelpermRealizationDataErrors_api,
+    GetRelpermRealizationDataResponses_api,
+    GetRelpermTableDefinitionData_api,
+    GetRelpermTableDefinitionErrors_api,
+    GetRelpermTableDefinitionResponses_api,
+    GetRelpermTableNamesData_api,
+    GetRelpermTableNamesErrors_api,
+    GetRelpermTableNamesResponses_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataErrors_api,
     GetRftRealizationDataResponses_api,
@@ -151,6 +157,9 @@ import type {
     GetStatisticalVectorDataPerSensitivityErrors_api,
     GetStatisticalVectorDataPerSensitivityResponses_api,
     GetStatisticalVectorDataResponses_api,
+    GetSummaryObservationsData_api,
+    GetSummaryObservationsErrors_api,
+    GetSummaryObservationsResponses_api,
     GetSurfaceDataData_api,
     GetSurfaceDataErrors_api,
     GetSurfaceDataResponses_api,
@@ -1216,16 +1225,62 @@ export const getUserPhoto = <ThrowOnError extends boolean = false>(
     });
 
 /**
- * Get Observations
+ * Get Summary Observations
  *
- * Retrieve all observations found in sumo case
+ * Retrieve all summary observations found in ensemble
  */
-export const getObservations = <ThrowOnError extends boolean = false>(
-    options: Options<GetObservationsData_api, ThrowOnError>,
+export const getSummaryObservations = <ThrowOnError extends boolean = false>(
+    options: Options<GetSummaryObservationsData_api, ThrowOnError>,
 ) =>
-    (options.client ?? client).get<GetObservationsResponses_api, GetObservationsErrors_api, ThrowOnError>({
+    (options.client ?? client).get<GetSummaryObservationsResponses_api, GetSummaryObservationsErrors_api, ThrowOnError>(
+        {
+            responseType: "json",
+            url: "/observations/summary_observations",
+            ...options,
+        },
+    );
+
+/**
+ * Get Relperm Table Names
+ */
+export const getRelpermTableNames = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableNamesData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<GetRelpermTableNamesResponses_api, GetRelpermTableNamesErrors_api, ThrowOnError>({
         responseType: "json",
-        url: "/observations/observations/",
+        url: "/relperm/table_names",
+        ...options,
+    });
+
+/**
+ * Get Relperm Table Definition
+ */
+export const getRelpermTableDefinition = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermTableDefinitionData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetRelpermTableDefinitionResponses_api,
+        GetRelpermTableDefinitionErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/relperm/table_definition",
+        ...options,
+    });
+
+/**
+ * Get Relperm Realization Data
+ */
+export const getRelpermRealizationData = <ThrowOnError extends boolean = false>(
+    options: Options<GetRelpermRealizationDataData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<
+        GetRelpermRealizationDataResponses_api,
+        GetRelpermRealizationDataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/relperm/realization_data",
         ...options,
     });
 

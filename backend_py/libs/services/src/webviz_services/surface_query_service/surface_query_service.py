@@ -4,6 +4,7 @@ from typing import List, Optional
 import httpx
 import numpy as np
 from fmu.sumo.explorer.objects import SearchContext
+from sumo.wrapper import SumoClient
 from pydantic import BaseModel
 from webviz_core_utils.perf_metrics import PerfMetrics
 
@@ -39,6 +40,7 @@ class _PointSamplingResponseBody(BaseModel):
     undefLimit: float
 
 
+# pylint: disable-next=too-many-locals
 async def batch_sample_surface_in_points_async(
     sumo_access_token: str,
     case_uuid: str,
@@ -51,8 +53,11 @@ async def batch_sample_surface_in_points_async(
 ) -> List[RealizationSampleResult]:
     perf_metrics = PerfMetrics()
 
+    sumo_client = create_sumo_client(sumo_access_token)
+    perf_metrics.record_lap("sumo-client")
+
     realization_object_ids = await _get_object_uuids_for_surface_realizations_async(
-        sumo_access_token=sumo_access_token,
+        sumo_client=sumo_client,
         case_uuid=case_uuid,
         ensemble_name=ensemble_name,
         surface_name=surface_name,
@@ -61,7 +66,7 @@ async def batch_sample_surface_in_points_async(
     )
     perf_metrics.record_lap("obj-uuids")
 
-    sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(sumo_access_token, case_uuid)
+    sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(sumo_client, case_uuid)
     perf_metrics.record_lap("sas-token")
 
     request_body = _PointSamplingRequestBody(
@@ -98,14 +103,13 @@ async def batch_sample_surface_in_points_async(
 
 
 async def _get_object_uuids_for_surface_realizations_async(
-    sumo_access_token: str,
+    sumo_client: SumoClient,
     case_uuid: str,
     ensemble_name: str,
     surface_name: str,
     surface_attribute: str,
     realizations: Optional[List[int]],
 ) -> List[_RealizationObjectId]:
-    sumo_client = create_sumo_client(sumo_access_token)
 
     # What about time here??
     search_context = SearchContext(sumo_client).surfaces.filter(

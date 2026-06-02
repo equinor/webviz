@@ -11,7 +11,7 @@ import { isVaryingNumericParameter } from "./parameterUtils";
  * Includes varying continuous parameters and varying discrete parameters with numeric values.
  * String-based discrete parameters and constant parameters are excluded.
  */
-export function getNumericAndNonConstantParameterIdentsInEnsembles(
+export function getVaryingNumericParametersIdentsInEnsembles(
     ensembleSet: EnsembleSet,
     selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
 ): ParameterIdent[] {

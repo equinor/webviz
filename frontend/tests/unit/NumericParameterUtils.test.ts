@@ -4,7 +4,7 @@ import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { getNumericAndNonConstantParameterIdentsInEnsembles } from "@modules/_shared/parameterUnions";
+import { getVaryingNumericParametersIdentsInEnsembles } from "@modules/_shared/parameterUnions";
 import type { NumericParameter } from "@modules/_shared/parameterUtils";
 import { getVaryingNumericParameters, isVaryingNumericParameter } from "@modules/_shared/parameterUtils";
 import { createRankedParameterCorrelations } from "@modules/_shared/rankParameter";
@@ -77,6 +77,7 @@ function makeEnsemble(parameters: Parameter[]): RegularEnsemble {
         REALIZATIONS,
         parameters,
         null,
+        null,
         "#000000",
     );
 }
@@ -116,7 +117,7 @@ describe("Numeric parameter utilities", () => {
         ]);
         const ensembleSet = new EnsembleSet([ensemble], []);
 
-        const parameterIdents = getNumericAndNonConstantParameterIdentsInEnsembles(ensembleSet, [ensemble.getIdent()]);
+        const parameterIdents = getVaryingNumericParametersIdentsInEnsembles(ensembleSet, [ensemble.getIdent()]);
 
         expect(parameterIdents).toEqual([
             ParameterIdent.fromNameAndGroup("continuous parameter", null),

@@ -18,16 +18,9 @@ const COLOR_SCHEMES: Record<DenseIconButtonColorScheme, string> = {
 };
 
 export type DenseIconButtonProps = {
-    id?: string;
-    onClick?: (e: React.PointerEvent<HTMLButtonElement>) => void;
-    onPointerDown?: (e: React.PointerEvent<HTMLButtonElement>) => void;
-    onPointerUp?: (e: React.PointerEvent<HTMLButtonElement>) => void;
     colorScheme?: DenseIconButtonColorScheme;
-    children: React.ReactNode;
     title?: string;
-    disabled?: boolean;
-    className?: string;
-};
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 // NOTE: The wrapped EDS `Tooltip` clones its child and replaces the child's `ref`, reading the
 // original ref from `children.props.ref` (React 19 convention). In React 18, refs are not present
@@ -65,27 +58,18 @@ export const DenseIconButton = React.forwardRef(function DenseIconButton(
     props: DenseIconButtonProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
 ): React.ReactNode {
-    const colorScheme = COLOR_SCHEMES[props.colorScheme ?? DenseIconButtonColorScheme.DEFAULT];
-
-    function handleClick(e: React.PointerEvent<HTMLButtonElement>): void {
-        if (props.onClick) {
-            props.onClick(e);
-        }
-    }
+    const { title, colorScheme, ...baseProps } = props;
+    const activeColorScheme = COLOR_SCHEMES[colorScheme ?? DenseIconButtonColorScheme.DEFAULT];
 
     return (
-        <Tooltip title={props.title}>
+        <Tooltip title={title}>
             <InnerButton
+                {...baseProps}
                 outerButtonRef={ref}
-                id={props.id}
                 className={resolveClassNames(props.className, "p-1 text-sm rounded-sm flex gap-1 items-center", {
-                    [colorScheme + "text-gray-600 focus-visible:outline-1 hover:text-gray-900"]: !props.disabled,
+                    [activeColorScheme + "text-gray-600 focus-visible:outline-1 hover:text-gray-900"]: !props.disabled,
                     "text-gray-300": props.disabled,
                 })}
-                disabled={props.disabled}
-                onClick={handleClick as unknown as React.MouseEventHandler<HTMLButtonElement>}
-                onPointerDown={props.onPointerDown}
-                onPointerUp={props.onPointerUp}
             >
                 {props.children}
             </InnerButton>

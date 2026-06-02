@@ -59,10 +59,10 @@ import {
     visualizationModeAtom,
 } from "./atoms/baseAtoms";
 import {
-    continuousAndNonConstantParametersUnionAtom,
     customVectorDefinitionsAtom,
     ensembleVectorListsHelperAtom,
     isVectorListQueriesFetchingAtom,
+    numericAndNonConstantParametersUnionAtom,
     statisticsTypeAtom,
     vectorSelectorDataAtom,
 } from "./atoms/derivedAtoms";
@@ -98,7 +98,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
-    const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
+    const numericAndNonConstantParametersUnion = useAtomValue(numericAndNonConstantParametersUnionAtom);
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
@@ -120,8 +120,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         setSubplotLimitDirection(newLimitDirection);
     }
 
-    function handleSubplotMaxDirectionElementsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setSubplotMaxDirectionElements(parseInt(event.target.value));
+    function handleSubplotMaxDirectionElementsChange(value: string) {
+        setSubplotMaxDirectionElements(parseInt(value, 10));
     }
 
     function handleGroupByChange(newValue: GroupBy) {
@@ -280,7 +280,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             min={1}
                             max={12}
                             debounceTimeMs={150}
-                            onChange={handleSubplotMaxDirectionElementsChange}
+                            onValueChange={handleSubplotMaxDirectionElementsChange}
                         />
                     </div>
                 </Label>
@@ -404,8 +404,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 >
                                     <Label text="Filter parameters on selection">
                                         <ParameterListFilter
-                                            parameters={continuousAndNonConstantParametersUnion}
-                                            initialFilters={["Continuous", "Nonconstant"]}
+                                            parameters={numericAndNonConstantParametersUnion}
+                                            initialFilters={["Nonconstant"]}
                                             onChange={handleParameterListFilterChange}
                                         />
                                     </Label>

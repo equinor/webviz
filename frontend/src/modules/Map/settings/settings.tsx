@@ -182,9 +182,9 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         setAggregation(aggregation);
     }
 
-    function handleRealizationTextChanged(event: React.ChangeEvent<HTMLInputElement>) {
-        console.debug("handleRealizationTextChanged() " + event.target.value);
-        const realNum = parseInt(event.target.value, 10);
+    function handleRealizationTextChanged(value: string) {
+        console.debug("handleRealizationTextChanged() " + value);
+        const realNum = parseInt(value, 10);
         if (realNum >= 0) {
             setRealizationNum(realNum);
         }
@@ -221,7 +221,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     if (aggregation === null) {
         chooseRealizationElement = (
             <Label text="Realization:">
-                <Input type={"number"} value={realizationNum} onChange={handleRealizationTextChanged} />
+                <Input type={"number"} value={realizationNum} onValueChange={handleRealizationTextChanged} />
             </Label>
         );
     }

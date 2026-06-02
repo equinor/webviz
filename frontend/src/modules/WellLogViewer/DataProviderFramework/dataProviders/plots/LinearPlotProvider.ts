@@ -1,11 +1,11 @@
 import type { WellboreLogCurveData_api } from "@api";
 import type { CustomDataProviderImplementation } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
-import type { DefineDependenciesArgs } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
+import type { SetupBasicBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import {
     baseContinuousSettings,
-    defineBaseContinuousDependencies,
+    setupBaseContinuousBindings,
     doSettingsChangesRequireDataRefetch,
     fetchLogCurveData,
     verifyBasePlotSettings,
@@ -22,12 +22,13 @@ export class LinearPlotProvider
     fetchData = fetchLogCurveData<LinearPlotSettingTypes>;
     settings = linearPlotSettings;
 
-    // Uses the same external things as the other types
-    defineDependencies(args: DefineDependenciesArgs<LinearPlotSettingTypes>) {
-        defineBaseContinuousDependencies(args);
+    setupBindings(ctx: SetupBasicBindingsContext<LinearPlotSettingTypes>) {
+        setupBaseContinuousBindings(ctx);
 
-        args.valueConstraintsUpdater(Setting.PLOT_VARIANT, () => {
-            return ["line", "linestep", "dot"];
+        ctx.setting(Setting.PLOT_VARIANT).bindValueConstraints({
+            resolve() {
+                return ["line", "linestep", "dot"];
+            },
         });
     }
 

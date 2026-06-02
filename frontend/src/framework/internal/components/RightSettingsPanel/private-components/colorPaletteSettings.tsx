@@ -92,12 +92,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 min={2}
                                 max={100}
                                 defaultValue={steps[ColorScaleDiscreteSteps.Sequential]}
-                                onChange={(e) =>
-                                    handleColorPaletteStepsChanged(
-                                        parseInt(e.target.value),
-                                        ColorScaleDiscreteSteps.Sequential,
-                                    )
-                                }
+                                onValueChange={(value:string)=> handleColorPaletteStepsChanged(parseInt(value), ColorScaleDiscreteSteps.Sequential)}
                             />
                         </Label>
                     </div>
@@ -127,12 +122,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 min={2}
                                 max={100}
                                 defaultValue={steps[ColorScaleDiscreteSteps.Diverging]}
-                                onChange={(e) =>
-                                    handleColorPaletteStepsChanged(
-                                        parseInt(e.target.value),
-                                        ColorScaleDiscreteSteps.Diverging,
-                                    )
-                                }
+                                onValueChange={(value:string) => handleColorPaletteStepsChanged(parseInt(value), ColorScaleDiscreteSteps.Diverging)}
                             />
                         </Label>
                     </div>

@@ -5,7 +5,7 @@ version = "0.0.0"
 description = "Shared config/tooling for the webviz monorepo"
 
 [tool.poetry]
-requires-poetry = ">=2.1"
+requires-poetry = ">=2.4"
 package-mode = false
 
 [build-system]

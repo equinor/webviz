@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 import polars as pl
 import pyarrow as pa
+from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
 from fmu.datamodels import ErtDistribution
@@ -38,7 +39,7 @@ class ParameterAccess:
     """Access class for retrieving parameters and sensitivities from SUMO.
 
     This class provides methods to fetch and transform parameter data from SUMO,
-    supporting both standard and custom result formats.
+    supporting both standard and legacy result formats.
     """
 
     def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str) -> None:
@@ -69,7 +70,7 @@ class ParameterAccess:
             InvalidDataError: If data format is unexpected
         """
 
-        parameter_context = self._ensemble_context.filter(standard_result="parameters")
+        parameter_context = self._ensemble_context.filter(standard_result=StandardResultName.parameters)
         table_count = await parameter_context.length_async()
         if table_count > 1:
             raise MultipleDataMatchesError(
@@ -80,17 +81,17 @@ class ParameterAccess:
         if table_count == 0:
             LOGGER.debug(
                 f"No Standard result parameter table found for case {self._case_uuid} and ensemble {self._ensemble_name}. "
-                "Attempting custom parameter retrieval."
+                "Attempting legacy parameter retrieval."
             )
-            ensemble_parameters = await self.get_parameters_from_custom_result_async()
+            ensemble_parameters = await self._get_parameters_from_legacy_result_async()
         else:
-            ensemble_parameters = await self.get_parameters_from_standard_result_async(parameter_context)
+            ensemble_parameters = await self._get_parameters_from_standard_result_async(parameter_context)
 
-        sensitivities = create_ensemble_sensitivities(ensemble_parameters)
+        sensitivities = _create_ensemble_sensitivities(ensemble_parameters)
 
         return ensemble_parameters, sensitivities
 
-    async def get_parameters_from_standard_result_async(
+    async def _get_parameters_from_standard_result_async(
         self, parameter_context: SearchContext
     ) -> list[EnsembleParameter]:
         """Retrieve parameters for an ensemble using standard result format.
@@ -104,18 +105,18 @@ class ParameterAccess:
         table = await parameter_table_obj.to_arrow_async()
         perf_metrics.record_lap("to_arrow")
 
-        ensemble_parameters = parameter_table_to_ensemble_parameters(table)
+        ensemble_parameters = _parameter_table_to_ensemble_parameters(table)
         perf_metrics.record_lap("transform")
 
         LOGGER.debug(
-            f"ParameterAccess.get_parameters_from_standard_result_async() took: {perf_metrics.to_string()},"
+            f"ParameterAccess._get_parameters_from_standard_result_async() took: {perf_metrics.to_string()},"
             f" {self._case_uuid=}, {self._ensemble_name=}"
         )
 
         return ensemble_parameters
 
-    async def get_parameters_from_custom_result_async(self) -> list[EnsembleParameter]:
-        """Retrieve parameters for an ensemble using legacy custom result aggregation.
+    async def _get_parameters_from_legacy_result_async(self) -> list[EnsembleParameter]:
+        """Retrieve parameters for an ensemble using legacy legacy result aggregation.
 
         This method is used as a fallback when standard result parameters are not available.
         It aggregates per-realization parameters.
@@ -160,18 +161,18 @@ class ParameterAccess:
         parameter_table = await parameter_agg.to_arrow_async()
         perf_metrics.record_lap("to_arrow")
 
-        ensemble_parameters = parameter_table_to_ensemble_parameters_custom_result(parameter_table)
+        ensemble_parameters = _parameter_table_to_ensemble_parameters_legacy_result(parameter_table)
         perf_metrics.record_lap("transform")
 
         LOGGER.debug(
-            f"ParameterAccess.get_parameters_from_custom_result_async() took: {perf_metrics.to_string()},"
+            f"ParameterAccess._get_parameters_from_legacy_result_async() took: {perf_metrics.to_string()},"
             f" {self._case_uuid=}, {self._ensemble_name=}"
         )
 
         return ensemble_parameters
 
 
-def create_ensemble_sensitivities(
+def _create_ensemble_sensitivities(
     sumo_ensemble_parameters: list[EnsembleParameter],
 ) -> list[EnsembleSensitivity]:
     """Extract sensitivities from ensemble parameters.
@@ -210,7 +211,7 @@ def create_ensemble_sensitivities(
     # Assemble ensemble sensitivities
     sensitivities = []
     for (sens_name,), sens_df in per_sensitivity_df.group_by("name"):
-        sens_type = find_sensitivity_type_from_case_names(sens_df["case"].unique().to_numpy().tolist())
+        sens_type = _find_sensitivity_type_from_case_names(sens_df["case"].unique().to_numpy().tolist())
         sensitivity_cases: list[EnsembleSensitivityCase] = []
         for (case_name,), case_df in sens_df.group_by("case"):
             sensitivity_cases.append(
@@ -226,7 +227,7 @@ def create_ensemble_sensitivities(
     return sensitivities
 
 
-def find_sensitivity_type_from_case_names(sens_case_names: list[str]) -> SensitivityType:
+def _find_sensitivity_type_from_case_names(sens_case_names: list[str]) -> SensitivityType:
     """Determine the sensitivity type based on case names.
 
     Args:
@@ -256,7 +257,7 @@ def _validate_parameter_table(parameter_table: pa.Table) -> None:
         )
 
 
-def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> list[EnsembleParameter]:
+def _parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> list[EnsembleParameter]:
     """Convert a PyArrow parameter table to EnsembleParameters.
 
     Args:
@@ -293,9 +294,9 @@ def create_ensemble_parameter_from_standard_result(
     return EnsembleParameter(
         name=parameter_name,
         group_name=parameter_meta.group_name,
-        is_logarithmic=is_logarithmic_distribution(parameter_meta.distribution),
-        is_discrete=is_discrete_distribution(parameter_meta.distribution),
-        is_numerical=is_numerical_column(field.type),
+        is_logarithmic=_is_logarithmic_distribution(parameter_meta.distribution),
+        is_discrete=_is_discrete_distribution(parameter_meta.distribution),
+        is_numerical=_is_numerical_column(field.type),
         is_constant=len(set(column)) == 1,
         descriptive_name=parameter_name,
         values=column.to_numpy().tolist(),
@@ -312,7 +313,7 @@ def get_parameter_metadata_from_field(field: pa.Field) -> ParameterMetadata:
         ParameterMetadata object with extracted metadata
     """
     metadata = {k.decode(): v.decode().strip('"') for k, v in field.metadata.items()} if field.metadata else {}
-    distribution = get_distribution_type_from_metadata(metadata.get("distribution"))
+    distribution = _get_distribution_type_from_distribution_string(metadata.get("distribution"))
     if distribution is None:
         raise InvalidDataError(f"Parameter {field.name} is missing a valid distribution type in metadata", Service.SUMO)
     min_value = float(metadata["min"]) if "min" in metadata else None
@@ -327,7 +328,7 @@ def get_parameter_metadata_from_field(field: pa.Field) -> ParameterMetadata:
     )
 
 
-def get_distribution_type_from_metadata(distribution_str: str | None) -> ErtDistribution | None:
+def _get_distribution_type_from_distribution_string(distribution_str: str | None) -> ErtDistribution | None:
     """Get the ErtDistribution type from a distribution string.
 
     Args:
@@ -344,11 +345,11 @@ def get_distribution_type_from_metadata(distribution_str: str | None) -> ErtDist
     return None
 
 
-def is_logarithmic_distribution(distribution: ErtDistribution) -> bool:
+def _is_logarithmic_distribution(distribution: ErtDistribution) -> bool:
     return distribution in [ErtDistribution.lognormal, ErtDistribution.logunif]
 
 
-def is_discrete_distribution(distribution: ErtDistribution) -> bool:
+def _is_discrete_distribution(distribution: ErtDistribution) -> bool:
     """Check if a distribution is discrete.
 
     Discrete parameters are identified from non-continuous ERT distributions.
@@ -366,7 +367,7 @@ def is_discrete_distribution(distribution: ErtDistribution) -> bool:
     return False
 
 
-def is_numerical_column(column_type: pa.DataType) -> bool:
+def _is_numerical_column(column_type: pa.DataType) -> bool:
     """Check if a column represents numerical data."""
     return pa.types.is_integer(column_type) or pa.types.is_floating(column_type)
 
@@ -386,8 +387,8 @@ def _cast_datetime_columns_to_string(parameter_table: pa.Table) -> pa.Table:
     return parameter_table
 
 
-def parameter_table_to_ensemble_parameters_custom_result(parameter_table: pa.Table) -> list[EnsembleParameter]:
-    """Convert a custom result parameter table to EnsembleParameters.
+def _parameter_table_to_ensemble_parameters_legacy_result(parameter_table: pa.Table) -> list[EnsembleParameter]:
+    """Convert a legacy result parameter table to EnsembleParameters.
 
     Handles the legacy format where parameters are stored with group prefixes (GROUP:PARAM)
     and LOG10_ group variants for logarithmic parameters.
@@ -409,14 +410,14 @@ def parameter_table_to_ensemble_parameters_custom_result(parameter_table: pa.Tab
             continue
         for parameter_name in parameter_names:
             ensemble_parameters.append(
-                _create_ensemble_parameter_from_custom_result(
+                _create_ensemble_parameter_from_legacy_result(
                     parameter_name, group_name, parameter_group_dict, parameter_table
                 )
             )
     return ensemble_parameters
 
 
-def _create_ensemble_parameter_from_custom_result(
+def _create_ensemble_parameter_from_legacy_result(
     parameter_name: str,
     group_name: str | None,
     parameter_group_dict: dict[str | None, list[str]],
@@ -439,8 +440,8 @@ def _create_ensemble_parameter_from_custom_result(
         name=parameter_name,
         group_name=f"LOG10_{group_name}" if is_logarithmic else group_name,
         is_logarithmic=is_logarithmic,
-        is_discrete=_is_discrete_column_custom_result(parameter_table.schema.field(table_column_name).type),
-        is_numerical=is_numerical_column(parameter_table.schema.field(table_column_name).type),
+        is_discrete=_is_discrete_column_legacy_result(parameter_table.schema.field(table_column_name).type),
+        is_numerical=_is_numerical_column(parameter_table.schema.field(table_column_name).type),
         is_constant=len(set(parameter_table[table_column_name])) == 1,
         descriptive_name=parameter_name,
         values=parameter_table[table_column_name].to_numpy().tolist(),
@@ -448,7 +449,7 @@ def _create_ensemble_parameter_from_custom_result(
     )
 
 
-def _is_discrete_column_custom_result(column_type: pa.DataType) -> bool:
+def _is_discrete_column_legacy_result(column_type: pa.DataType) -> bool:
     """Check if a column represents discrete data.
 
     Discrete parameters are defined as parameters that are either strings or integers.
