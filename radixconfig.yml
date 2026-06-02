@@ -163,13 +163,6 @@ spec:
       identity:
         azure:
           clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
-      secretRefs:
-        azureKeyVaults:
-          - name: webviz
-            useAzureIdentity: true
-            items:
-              - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
-                envVar: NOT_YET_IN_USE
       runAsUser: 999
       command: ["redis-server",  "--loglevel", "notice"]
       ports:
@@ -181,13 +174,6 @@ spec:
       identity:
         azure:
           clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
-      secretRefs:
-        azureKeyVaults:
-          - name: webviz
-            useAzureIdentity: true
-            items:
-              - name: WEBVIZ-REDIS-CACHE-PASSWORD
-                envVar: NOT_YET_IN_USE
       runAsUser: 999
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
