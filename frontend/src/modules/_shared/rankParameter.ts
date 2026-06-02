@@ -1,5 +1,5 @@
-import type { ContinuousParameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { NumericParameter } from "@modules/_shared/parameterUtils";
 import { pearsonCorrelation } from "@modules/_shared/utils/math/pearsonCorrelation";
 
 export type ResponseData = {
@@ -18,7 +18,7 @@ export type RankedParameterData = {
     realizations: number[];
 };
 export function createRankedParameterCorrelations(
-    parameters: ContinuousParameter[],
+    parameters: NumericParameter[],
     responses: ResponseData,
     numParams: number,
     absCutoff: number,
@@ -64,10 +64,10 @@ export function createRankedParameterCorrelations(
 
 export function getRankedParameterData(
     rankedParameterCorrelations: RankedParameterCorrelation[],
-    parameterArr: ContinuousParameter[],
+    parameterArr: NumericParameter[],
 ): RankedParameterData[] {
     const rankedParameters: RankedParameterData[] = [];
-    const parameterDataMap = new Map<string, ContinuousParameter>();
+    const parameterDataMap = new Map<string, NumericParameter>();
 
     parameterArr.forEach((p) => parameterDataMap.set(p.name, p));
 

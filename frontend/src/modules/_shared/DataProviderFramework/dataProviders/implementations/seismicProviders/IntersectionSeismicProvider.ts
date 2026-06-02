@@ -1,7 +1,6 @@
 import { isEqual } from "lodash";
 
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -43,7 +42,6 @@ const intersectionSeismicSettings = [
     Setting.TIME_OR_INTERVAL,
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
-    Setting.WELLBORE_EXTENSION_LENGTH,
 ] as const;
 export type IntersectionSeismicSettings = typeof intersectionSeismicSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionSeismicSettings>;
@@ -74,7 +72,6 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         });
 
         return {
-            [Setting.WELLBORE_EXTENSION_LENGTH]: 500.0,
             [Setting.COLOR_SCALE]: {
                 colorScale: defaultColorScale,
                 areBoundariesUserDefined: false,
@@ -91,7 +88,6 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         return (
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
-            !isEqual(prevSettings.wellboreExtensionLength, newSettings.wellboreExtensionLength) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.representation, newSettings.representation) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
@@ -128,14 +124,8 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         IntersectionSeismicData,
         IntersectionSeismicStoredData
     >): boolean {
-        // Extension has to be set if intersection is wellbore
-        const isValidExtensionLength =
-            getSetting(Setting.INTERSECTION)?.type !== IntersectionType.WELLBORE ||
-            getSetting(Setting.WELLBORE_EXTENSION_LENGTH) !== null;
-
         return (
             getSetting(Setting.INTERSECTION) !== null &&
-            isValidExtensionLength &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.ATTRIBUTE) !== null &&
@@ -150,17 +140,6 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
-        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read(read) {
-                return {
-                    intersection: read.localSetting(Setting.INTERSECTION),
-                };
-            },
-            resolve({ intersection }) {
-                const isEnabled = intersection?.type === IntersectionType.WELLBORE;
-                return { enabled: isEnabled };
-            },
-        });
 
         setting(Setting.REALIZATION).bindAttributes({
             read(read) {
@@ -319,14 +298,12 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersection: read.localSetting(Setting.INTERSECTION),
-                    wellboreExtensionLength: read.localSetting(Setting.WELLBORE_EXTENSION_LENGTH),
                 };
             },
-            async resolve({ fieldIdentifier, intersection, wellboreExtensionLength }, { abortSignal }) {
+            async resolve({ fieldIdentifier, intersection }, { abortSignal }) {
                 return await createIntersectionPolylineWithSectionLengthsForField(
                     fieldIdentifier,
                     intersection,
-                    wellboreExtensionLength ?? 0,
                     workbenchSession,
                     queryClient,
                     abortSignal,

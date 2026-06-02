@@ -97,6 +97,13 @@ async def get_ensemble_details(
     stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     standard_results = await case_inspector.get_standard_results_in_ensemble_async(ensemble_name)
 
+    fip_regions: List[schemas.FipRegion] = []
+    fip_regions_mapping = await case_inspector.get_fip_regions_mapping_async(ensemble_name)
+
+    if fip_regions_mapping is not None:
+        for mapping in fip_regions_mapping.root:
+            fip_regions.append(schemas.FipRegion(fipNumber=mapping.FIPNUM, zone=mapping.ZONE, region=mapping.REGION))
+
     return schemas.EnsembleDetails(
         name=ensemble_name,
         caseName=case_name,
@@ -106,6 +113,7 @@ async def get_ensemble_details(
         fieldIdentifiers=field_identifiers,
         stratigraphicColumnIdentifier=stratigraphic_column_identifier,
         standardResults=standard_results,
+        fipRegions=fip_regions,
     )
 
 

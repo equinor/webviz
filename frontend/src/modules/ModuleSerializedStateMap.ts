@@ -11,16 +11,19 @@ import type { SerializedSettings as InplaceVolumesNewSettings } from "@modules/I
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
+import type { SerializedView as IntersectionView } from "@modules/Intersection/view/persistence";
 import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPlotSettings } from "@modules/ParameterResponseCorrelationParallelCoordsPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
+import type { SerializedSettings as PvtSettings } from "@modules/Pvt/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSensitivitySettings } from "@modules/SimulationTimeSeriesSensitivity/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesSensitivityView } from "@modules/SimulationTimeSeriesSensitivity/view/persistence";
+import type { SerializedSettings as VfpSettings } from "@modules/Vfp/settings/persistence";
 import type { SerializedSettings as WellCompletionsSettings } from "@modules/WellCompletions/settings/persistence";
 import type { SerializedSettings as WellLogViewerSettings } from "@modules/WellLogViewer/settings/persistence";
 
@@ -33,24 +36,12 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<M_3DViewerSettings>,
     view?: Partial<M_3DViewerView>,
   },
-  "DbgWorkbenchSpy": {
-    settings?: never,
-    view?: never,
-  },
   "DistributionPlot": {
     settings?: Partial<DistributionPlotSettings>,
     view?: never,
   },
   "FlowNetwork": {
     settings?: Partial<FlowNetworkSettings>,
-    view?: never,
-  },
-  "Grid3D": {
-    settings?: never,
-    view?: never,
-  },
-  "Grid3DIntersection": {
-    settings?: never,
     view?: never,
   },
   "InplaceVolumesNew": {
@@ -65,29 +56,9 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<InplaceVolumesTableSettings>,
     view?: never,
   },
-  "InplaceVolumetrics": {
-    settings?: never,
-    view?: never,
-  },
   "Intersection": {
     settings?: Partial<IntersectionSettings>,
-    view?: never,
-  },
-  "Map": {
-    settings?: never,
-    view?: never,
-  },
-  "MyModule": {
-    settings?: never,
-    view?: never,
-  },
-  "MyModule2": {
-    settings?: never,
-    view?: never,
-  },
-  "ParameterDistributionMatrix": {
-    settings?: never,
-    view?: never,
+    view?: Partial<IntersectionView>,
   },
   "ParameterDistributions": {
     settings?: Partial<ParameterDistributionsSettings>,
@@ -110,11 +81,7 @@ export type ModuleSerializedStateMap = {
     view?: never,
   },
   "Pvt": {
-    settings?: never,
-    view?: never,
-  },
-  "Rft": {
-    settings?: never,
+    settings?: Partial<PvtSettings>,
     view?: never,
   },
   "SensitivityPlot": {
@@ -125,24 +92,12 @@ export type ModuleSerializedStateMap = {
     settings?: Partial<SimulationTimeSeriesSettings>,
     view?: Partial<SimulationTimeSeriesView>,
   },
-  "SimulationTimeSeriesMatrix": {
-    settings?: never,
-    view?: never,
-  },
   "SimulationTimeSeriesSensitivity": {
     settings?: Partial<SimulationTimeSeriesSensitivitySettings>,
     view?: Partial<SimulationTimeSeriesSensitivityView>,
   },
-  "SubsurfaceMap": {
-    settings?: never,
-    view?: never,
-  },
-  "TimeSeriesParameterDistribution": {
-    settings?: never,
-    view?: never,
-  },
   "Vfp": {
-    settings?: never,
+    settings?: Partial<VfpSettings>,
     view?: never,
   },
   "WellCompletions": {

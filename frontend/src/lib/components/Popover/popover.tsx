@@ -8,15 +8,14 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { DenseIconButton } from "../DenseIconButton";
 
 export type PopoverProps = {
-    /** Trigger content */
+    /** Controls the popover open/close state */
+    open?: boolean;
+    /** The body of the popover message */
+    content?: React.ReactNode;
+    /** The content of the popover trigger */
     children?: React.ReactNode;
-    /** Popover content */
-    content: React.ReactNode;
 
     disableInteraction?: boolean;
-
-    open?: PopoverRootProps["open"];
-    onOpenChange?: PopoverRootProps["onOpenChange"];
 
     align?: PopoverPositionerProps["align"];
     side?: PopoverPositionerProps["side"];
@@ -36,14 +35,25 @@ export type PopoverProps = {
      * Accepts a `ReactElement` or a function that returns the element to render.
      */ // -- copied from base type
     renderTrigger?: PopoverTriggerProps["render"];
+
+    /** Callback for open/close control state */
+    onOpenChange?: (isOpen: boolean) => void;
+
+    /**
+     * Trigger tooltip (Not applied if trigger is manually rendered)
+     */
+    triggerTitle?: string;
 };
 
+/** Show a rich Popover element attached to a trigger element. For simple string tooltips, use Tooltip instead. For larger interactive menus, use Menu */
 export function Popover(props: PopoverProps): React.ReactNode {
-    const triggerRenderOrDefault = props.renderTrigger ?? <DenseIconButton>{props.children}</DenseIconButton>;
+    const triggerRenderOrDefault = props.renderTrigger ?? (
+        <DenseIconButton title={props.triggerTitle}>{props.children}</DenseIconButton>
+    );
 
     return (
-        <BasePopover.Root open={props.open} onOpenChange={props.onOpenChange} actionsRef={props.actionsRef}>
-            <BasePopover.Trigger render={triggerRenderOrDefault} nativeButton={false} />
+        <BasePopover.Root open={props.open} actionsRef={props.actionsRef} onOpenChange={props.onOpenChange}>
+            <BasePopover.Trigger render={triggerRenderOrDefault} />
 
             <BasePopover.Portal>
                 {/* Note the z-index class here. Base-ui assumes a different stacking context, so we need to manually ensure floating elements stay on top */}
