@@ -78,7 +78,7 @@ services:
       - ./backend_py/user_grid3d_ri/user_grid3d_ri:/home/appuser/backend_py/user_grid3d_ri/user_grid3d_ri
       - ./backend_py/libs:/home/appuser/backend_py/libs
 
-  redis-user-session:
+  redis-auth-store:
     image: redis:7.2
     expose:
       - 6379
