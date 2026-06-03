@@ -1,5 +1,9 @@
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
+import { ExpandLess, ExpandMore } from "@lib/mui-icons";
+import { Button } from "@lib/newComponents/Button";
 import { Tabs } from "@lib/newComponents/Tabs";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { StartPanel } from "./_panels/start";
@@ -9,9 +13,17 @@ export type ActionBarProps = {
 };
 
 export function ActionBar(props: ActionBarProps) {
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+
+    // ? Should this be handled by the workbench itself instead of the action bar?
+    const [isActionBarVisible, setIsActionBarVisible] = useGuiState(guiMessageBroker, GuiState.IsActionBarVisible);
+
     return (
-        <div className="border-b-neutral-subtle bg-neutral-canvas shadow-elevation-raised border-b-2">
-            <Tabs.Root defaultValue="start">
+        <div className="border-b-neutral-subtle bg-neutral-canvas shadow-elevation-raised flex border-b-2">
+            <Tabs.Root
+                defaultValue="start"
+                layoutClassName={resolveClassNames("grow", { hidden: !isActionBarVisible })}
+            >
                 <Tabs.List indicatorPosition="end" size="small">
                     <Tab value="start">Start</Tab>
                 </Tabs.List>
@@ -19,6 +31,16 @@ export function ActionBar(props: ActionBarProps) {
                     <StartPanel workbench={props.workbench} />
                 </Panel>
             </Tabs.Root>
+            <div className="bg-surface flex grow flex-col items-end justify-end">
+                <TooltipCompositions.Default
+                    content={isActionBarVisible ? "Collapse action bar" : "Expand action bar"}
+                    side="top"
+                >
+                    <Button variant="ghost" size="small" iconOnly onClick={() => setIsActionBarVisible((v) => !v)}>
+                        {isActionBarVisible ? <ExpandLess size={16} /> : <ExpandMore size={16} />}
+                    </Button>
+                </TooltipCompositions.Default>
+            </div>
         </div>
     );
 }

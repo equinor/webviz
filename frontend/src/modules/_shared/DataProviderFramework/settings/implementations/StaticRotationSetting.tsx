@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Input } from "@lib/components/Input";
+import { NumberInput } from "@lib/newComponents/NumberInput";
 
 import type {
     SettingComponentProps,
@@ -59,13 +59,16 @@ export class StaticRotationSetting implements StaticSettingImplementation<ValueT
         const step = this._step;
         const loopAround = this.loopAround;
 
-        return function DropdownStringSetting(props: SettingComponentProps<ValueType>) {
+        return function LoopNumberInputSetting(props: SettingComponentProps<ValueType>) {
             const { onValueChange } = props;
             const value = props.isOverridden ? props.overriddenValue : props.value;
 
             const handleInputChange = React.useCallback(
-                function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-                    let newVal = event.target.valueAsNumber;
+                function handleInputChange(newVal: number | null) {
+                    if (newVal === null) {
+                        onValueChange(null);
+                        return;
+                    }
 
                     if (loopAround && newVal < min) {
                         const diff = min - newVal;
@@ -83,15 +86,14 @@ export class StaticRotationSetting implements StaticSettingImplementation<ValueT
             );
 
             return (
-                <Input
+                <NumberInput
                     value={value}
-                    type="number"
                     disabled={props.isOverridden}
                     min={loopAround ? undefined : min}
                     max={loopAround ? undefined : max}
                     step={step}
-                    onChange={handleInputChange}
-                    className="grow"
+                    onValueChange={handleInputChange}
+                    layoutClassName="grow"
                 />
             );
         };
