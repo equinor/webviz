@@ -159,11 +159,20 @@ export function usePublishToDataChannels(
                       );
 
                 for (const { table: currentTable, subplotByValue } of tablesToProcess) {
-                    const colorEntries = isStandardColorBy
-                        ? [{ table: currentTable, colorByValue: undefined }]
-                        : Array.from(currentTable.splitByColumn(colorBy).getCollectionMap()).map(
-                              ([colorValue, colorTable]) => ({ table: colorTable, colorByValue: colorValue }),
-                          );
+                    // When subplotBy and colorBy are the same column, the split by subplotBy above
+                    // has already dropped that column (and each subtable holds a single value), so we
+                    // must not split again on it. Reuse the subplot value as the color value instead.
+                    const colorBySameAsSubplotBy = !isStandardColorBy && colorBy === subplotBy;
+                    let colorEntries: { table: Table; colorByValue: string | number | undefined }[];
+                    if (isStandardColorBy) {
+                        colorEntries = [{ table: currentTable, colorByValue: undefined }];
+                    } else if (colorBySameAsSubplotBy) {
+                        colorEntries = [{ table: currentTable, colorByValue: subplotByValue }];
+                    } else {
+                        colorEntries = Array.from(currentTable.splitByColumn(colorBy).getCollectionMap()).map(
+                            ([colorValue, colorTable]) => ({ table: colorTable, colorByValue: colorValue }),
+                        );
+                    }
 
                     for (const { table: finalTable, colorByValue } of colorEntries) {
                         const ctx: ContentContext = { ...baseCtx, subplotByValue, colorByValue };
