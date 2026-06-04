@@ -33,8 +33,10 @@ export const inplaceVolumeAbbreviations: Record<string, { label: string; unit?: 
     ASSOCIATEDGAS: { label: "Associated gas" },
     ASSOCIATEDOIL: { label: "Associated oil" },
     PORO: { label: "Porosity" },
+    PORO_NET: { label: "Porosity (net)" },
     SW: { label: "Water saturation" },
     NTG: { label: "Net to gross" },
     BO: { label: "Oil formation volume factor" },
     BG: { label: "Gas formation volume factor" },
+    FACIES_FRACTION: { label: "Facies fraction" },
 };

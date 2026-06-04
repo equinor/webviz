@@ -78,7 +78,9 @@ jobs:
           docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
           CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 --env WEBVIZ_REDIS_AUTH_STORE_PASSWORD=0 --env WEBVIZ_REDIS_CACHE_PASSWORD=0  backend:latest)
           sleep 10  # Ensure the backend server is up and running exposing /openapi.json
+          curl --retry 10 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
           npm run generate:api --prefix ./frontend
+          docker logs $CONTAINER_ID
           docker stop $CONTAINER_ID
           git diff --exit-code ./frontend/src/api || exit 1
 

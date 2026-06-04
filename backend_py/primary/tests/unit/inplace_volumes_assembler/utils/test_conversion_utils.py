@@ -187,6 +187,11 @@ def test_get_required_volume_names_from_property() -> None:
         InplaceVolumes.VolumetricColumns.GIIP.value,
     ]
 
+    # Test FACIES_FRACTION property
+    assert get_required_volume_names_from_property(Property.FACIES_FRACTION.value) == [
+        InplaceVolumes.VolumetricColumns.BULK.value,
+    ]
+
     # Test invalid property
     with pytest.raises(ValueError, match="Unhandled property: INVALID_PROPERTY"):
         get_required_volume_names_from_property("INVALID_PROPERTY")
@@ -244,6 +249,24 @@ def test_get_available_properties_from_volume_names() -> None:
         InplaceVolumes.VolumetricColumns.BULK.value,
     ]
     assert get_available_properties_from_volume_names(insufficient_volumes) == []
+
+    # FACIES_FRACTION requires BULK and the FACIES index column
+    bulk_only = [InplaceVolumes.VolumetricColumns.BULK.value]
+    assert get_available_properties_from_volume_names(bulk_only) == []
+    assert get_available_properties_from_volume_names(bulk_only, index_columns=["ZONE", "REGION"]) == []
+    assert get_available_properties_from_volume_names(bulk_only, index_columns=["ZONE", "REGION", "FACIES"]) == [
+        Property.FACIES_FRACTION.value
+    ]
+
+    # FACIES_FRACTION is included alongside other properties when BULK and FACIES are available
+    bulk_net_with_facies = get_available_properties_from_volume_names(
+        [
+            InplaceVolumes.VolumetricColumns.BULK.value,
+            InplaceVolumes.VolumetricColumns.NET.value,
+        ],
+        index_columns=["FACIES"],
+    )
+    assert sorted(bulk_net_with_facies) == sorted([Property.NTG.value, Property.FACIES_FRACTION.value])
 
 
 def test_get_required_volume_names_from_calculated_volumes() -> None:
@@ -319,6 +342,20 @@ def test_get_required_volume_names_and_categorized_result_names() -> None:
     assert sorted(categorized_results.volume_names) == ["BULK", "NET", "PORV"]
     assert sorted(categorized_results.property_names) == ["NTG", "PORO"]
     assert categorized_results.calculated_volume_names == ["STOIIP_TOTAL"]
+
+
+def test_get_required_volume_names_and_categorized_result_names_facies_fraction() -> None:
+    """
+    FACIES_FRACTION is a property that requires BULK as its source volume.
+    """
+    result_names = ["FACIES_FRACTION"]
+
+    required_volume_names, categorized_results = get_required_volume_names_and_categorized_result_names(result_names)
+
+    assert required_volume_names == {"BULK"}
+    assert categorized_results.volume_names == []
+    assert categorized_results.calculated_volume_names == []
+    assert categorized_results.property_names == ["FACIES_FRACTION"]
 
 
 def test_create_repeated_table_column_data_from_polars_number_column() -> None:

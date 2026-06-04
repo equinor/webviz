@@ -143,3 +143,33 @@ export const createHighRealizationPointsTrace = (
         },
     };
 };
+
+export const createSensitivityMeanPointsTrace = (
+    xValues: number[],
+    yLabels: string[],
+    meanValues: string[],
+): Partial<PlotData> => {
+    return {
+        x: xValues,
+        y: yLabels,
+        type: "scatter",
+        customdata: meanValues,
+        mode: "markers",
+        name: "Sensitivity Means",
+        showlegend: false,
+        marker: {
+            color: "#111827",
+            size: 10,
+            symbol: "diamond",
+            line: {
+                color: "white",
+                width: 2,
+            },
+        },
+        hovertemplate: "Mean = <b>%{customdata}</b><br>Value = <b>%{x}</b><br>Sensitivity = <b>%{y}</b><extra></extra>",
+        hoverlabel: {
+            bgcolor: "white",
+            font: { size: 12, color: "black" },
+        },
+    };
+};
