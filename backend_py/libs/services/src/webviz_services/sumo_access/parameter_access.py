@@ -1,6 +1,5 @@
 import logging
 from dataclasses import dataclass
-
 import polars as pl
 import pyarrow as pa
 from fmu.datamodels.standard_results.enums import StandardResultName

@@ -59,6 +59,14 @@ export function useBuildPlotAndTable(
 
     const table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
+    // Guard against grouping by a column that is not present in the aggregated table.
+    // This happens when a selector (e.g. FACIES) is only available in some of the selected
+    // tables: the backend is then not asked to group by it, so the column is absent from the
+    // returned data and splitting by it (in GroupedTableData) would throw "Column not found".
+    if (!table.getColumn(subplotBy) || !table.getColumn(colorBy)) {
+        return null;
+    }
+
     const title = makeInplaceVolumesPlotTitle(resultName, subplotBy);
     viewContext.setInstanceTitle(title);
 

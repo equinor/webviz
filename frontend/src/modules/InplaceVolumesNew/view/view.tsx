@@ -35,9 +35,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
     const showStatisticsTable = props.viewContext.useSettingsToViewInterfaceValue("showTable");
+    const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
+    const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
+    const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
-    useMakeViewStatusWriterMessages(statusWriter);
+    useMakeViewStatusWriterMessages(statusWriter, resultName, subplotBy, colorBy);
 
     const plotHeightFraction = showStatisticsTable ? 0.7 : 1;
 

@@ -3,6 +3,7 @@ import { isEqual } from "lodash";
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortTimeOrIntervalArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
@@ -282,13 +283,15 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
                     return [];
                 }
 
-                return Array.from(
-                    new Set(
-                        seismicCubeMetaList
-                            .filter((el) => el.seismicAttribute === attribute)
-                            .map((el) => el.isoDateOrInterval),
+                return sortTimeOrIntervalArray(
+                    Array.from(
+                        new Set(
+                            seismicCubeMetaList
+                                .filter((el) => el.seismicAttribute === attribute)
+                                .map((el) => el.isoDateOrInterval),
+                        ),
                     ),
-                ).sort();
+                );
             },
         });
 

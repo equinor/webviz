@@ -35,3 +35,18 @@ export function sortStringArray(values: string[], valuesByOrder: string[]): stri
         return a.localeCompare(b); // neither in order list
     });
 }
+
+/**
+ * Sort time-or-interval values with NO_TIME first, then alphabetically.
+ *
+ * ISO timestamps and intervals sort chronologically with localeCompare because the
+ * backend returns them in ISO-like string formats.
+ */
+export function sortTimeOrIntervalArray(values: string[]): string[] {
+    return [...values].sort((a, b) => {
+        if (a === "NO_TIME") return -1;
+        if (b === "NO_TIME") return 1;
+
+        return a.localeCompare(b);
+    });
+}
