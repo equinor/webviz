@@ -135,7 +135,9 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
         const parameterArray = buildParameterArrFromApiResponse(ensembleApiData.parameters);
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
-        const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(ensembleApiData.ensembleDetails.fipRegions);
+        const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(
+            ensembleApiData.ensembleDetails.fipRegions,
+        );
         outEnsembleArray.push(
             new RegularEnsemble(
                 ensembleApiData.ensembleDetails.assetName,
@@ -210,36 +212,36 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const comparisonEnsemble = existingComparisonEnsemble
             ? existingComparisonEnsemble
             : new RegularEnsemble(
-                comparisonEnsembleApiData.ensembleDetails.assetName,
-                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
-                comparisonEnsembleApiData.ensembleDetails.caseUuid,
-                comparisonEnsembleApiData.ensembleDetails.caseName,
-                comparisonEnsembleApiData.ensembleDetails.name,
-                comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
-                comparisonEnsembleApiData.ensembleDetails.realizations,
-                emptyParameterArray,
-                nullSensitivityArray,
-                emptyFipRegionsMappingArray,
-                emptyColor,
-                comparisonEnsembleCustomName,
-            );
+                  comparisonEnsembleApiData.ensembleDetails.assetName,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
+                  comparisonEnsembleApiData.ensembleDetails.caseUuid,
+                  comparisonEnsembleApiData.ensembleDetails.caseName,
+                  comparisonEnsembleApiData.ensembleDetails.name,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                  comparisonEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitivityArray,
+                  emptyFipRegionsMappingArray,
+                  emptyColor,
+                  comparisonEnsembleCustomName,
+              );
 
         const referenceEnsemble = existingReferenceEnsemble
             ? existingReferenceEnsemble
             : new RegularEnsemble(
-                comparisonEnsembleApiData.ensembleDetails.assetName,
-                comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
-                referenceEnsembleApiData.ensembleDetails.caseUuid,
-                referenceEnsembleApiData.ensembleDetails.caseName,
-                referenceEnsembleApiData.ensembleDetails.name,
-                comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
-                referenceEnsembleApiData.ensembleDetails.realizations,
-                emptyParameterArray,
-                nullSensitivityArray,
-                emptyFipRegionsMappingArray,
-                emptyColor,
-                referenceEnsembleCustomName,
-            );
+                  comparisonEnsembleApiData.ensembleDetails.assetName,
+                  comparisonEnsembleApiData.ensembleDetails.fieldIdentifiers,
+                  referenceEnsembleApiData.ensembleDetails.caseUuid,
+                  referenceEnsembleApiData.ensembleDetails.caseName,
+                  referenceEnsembleApiData.ensembleDetails.name,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphicColumnIdentifier,
+                  referenceEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitivityArray,
+                  emptyFipRegionsMappingArray,
+                  emptyColor,
+                  referenceEnsembleCustomName,
+              );
 
         outDeltaEnsembleArray.push(
             new DeltaEnsemble(
