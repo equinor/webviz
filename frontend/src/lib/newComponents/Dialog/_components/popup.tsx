@@ -3,8 +3,7 @@ import React from "react";
 import type { DialogPopupProps, DialogRootProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
 
-import type { AlertDialogProps } from "@lib/newComponents/AlertDialog";
-
+import { AlertDialogNestingContext } from "../../../contexts/alertDialogNestingContext";
 import { PortalContainerContext } from "../../_shared/portalContainerContext";
 
 export type PopupProps = {
@@ -17,15 +16,27 @@ export type PopupProps = {
     minHeight?: number | string;
     /** Keeps the dialog mounted in the DOM even when it's closed. Useful for maintaining state or avoiding re-renders. */
     keepMounted?: boolean;
-    /** Array of alert dialogs to be rendered within the popup. */
-    alertDialogs?: React.ReactElement<AlertDialogProps>[];
-    defaultOpen?: boolean;
 } & Pick<DialogRootProps, "defaultOpen" | "open" | "onOpenChange" | "modal"> &
     Pick<DialogPopupProps, "initialFocus" | "finalFocus">;
 
 export function Popup(props: PopupProps) {
     const { open = false, defaultOpen = false, keepMounted = false } = props;
     const [popupContainer, setPopupContainer] = React.useState<HTMLElement | null>(null);
+    const { openCount } = React.useContext(AlertDialogNestingContext);
+
+    React.useEffect(
+        function applyNestedDialogAttributes() {
+            if (!popupContainer || !open) return;
+            if (openCount > 0) {
+                popupContainer.setAttribute("data-nested-dialog-open", "");
+                popupContainer.style.setProperty("--nested-dialogs", String(openCount));
+            } else {
+                popupContainer.removeAttribute("data-nested-dialog-open");
+                popupContainer.style.removeProperty("--nested-dialogs");
+            }
+        },
+        [popupContainer, open, openCount],
+    );
 
     // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
@@ -49,7 +60,6 @@ export function Popup(props: PopupProps) {
                     </PortalContainerContext.Provider>
                 </DialogBase.Popup>
             </DialogBase.Portal>
-            {props.alertDialogs}
         </DialogBase.Root>
     );
 }

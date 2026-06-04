@@ -25,7 +25,7 @@ export function EnsemblesLoadingErrorInfoDialog(props: EnsemblesLoadingErrorInfo
                                 <div className="font-medium">
                                     {descriptionPrefix}: {errorInfo.displayName}
                                 </div>
-                                <ul className="list-disc list-inside">
+                                <ul className="list-inside list-disc">
                                     <li>{errorInfo.errorMessage}</li>
                                 </ul>
                             </div>

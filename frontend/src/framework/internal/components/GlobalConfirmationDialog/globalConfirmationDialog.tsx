@@ -38,8 +38,9 @@ export function GlobalConfirmationDialog(): React.ReactNode {
                 onClick: () => handleAction(action.id),
             }))}
             title={options.title}
-            description={options.message}
-        />
+        >
+            {options.message}
+        </AlertDialog>
     );
 }
 

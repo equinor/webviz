@@ -23,7 +23,7 @@ export const Checkbox = React.forwardRef<HTMLSpanElement, CheckboxProps>(functio
             ref={ref}
             className={resolveClassNames(
                 props.layoutClassName,
-                "selectable group/checkbox text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
+                "selectable group/checkbox text-accent-subtle box-border flex aspect-square w-fit appearance-none items-center justify-center rounded-full",
                 getIconSizeClassNameForSelectableSize(size),
             )}
         >

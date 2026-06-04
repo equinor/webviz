@@ -1,12 +1,10 @@
 import type React from "react";
 
+import { EnsemblesLoadingErrorInfo } from "@framework/components/EnsemblesLoadingErrorInfo/ensemblesLoadingErrorInfo";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { Dialog } from "@lib/components/Dialog";
-import { Button } from "@lib/newComponents/Button";
-
-import { EnsemblesLoadingErrorInfoDialog } from "../../EnsemblesLoadingErrorInfoDialog";
-import type { StateTuple } from "../_hooks";
 import { AlertDialog } from "@lib/newComponents/AlertDialog";
+
+import type { StateTuple } from "../_hooks";
 
 export type SelectEnsemblesConfirmationDialogsProps = {
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
@@ -43,30 +41,26 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
                         tone: "neutral",
                     },
                 ]}
-                description="You have unsaved changes which will be lost. Are you sure you want to cancel?"
-            />
-            <EnsemblesLoadingErrorInfoDialog
+            >
+                You have unsaved changes which will be lost. Are you sure you want to cancel?
+            </AlertDialog>
+            <AlertDialog
                 open={showEnsemblesLoadingErrorDialog}
-                onClose={() => setShowLoadingErrorsDialog(false)}
-                title={"Errors loading some ensembles — continue without them?"}
-                description={
-                    <div>
-                        Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
-                        continue without them?
-                    </div>
-                }
-                ensembleLoadingErrorInfoMap={props.ensembleLoadingErrorInfoMap}
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => setShowLoadingErrorsDialog(false)} tone="neutral">
-                            No, don&apos;t continue
-                        </Button>
-                        <Button onClick={props.onConfirmContinue} tone="accent">
-                            Yes, continue
-                        </Button>
-                    </div>
-                }
-            />
+                onOpenChange={() => setShowLoadingErrorsDialog(false)}
+                title="Error loading some ensembles - continue without them?"
+                primaryAction={{
+                    label: "No, don't continue",
+                    onClick: () => setShowLoadingErrorsDialog(false),
+                    tone: "accent",
+                }}
+                secondaryActions={[{ label: "Yes, continue", onClick: props.onConfirmContinue, tone: "danger" }]}
+            >
+                <div className="gap-vertical-sm flex flex-col">
+                    Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
+                    continue without them?
+                    <EnsemblesLoadingErrorInfo ensembleLoadingErrorInfoMap={props.ensembleLoadingErrorInfoMap} />
+                </div>
+            </AlertDialog>
         </>
     );
 };

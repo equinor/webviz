@@ -16,6 +16,9 @@
 @utility z-modal {
     z-index: var(--z-modal);
 }
+@utility z-alert {
+    z-index: var(--z-alert);
+}
 @utility z-toast {
     z-index: var(--z-toast);
 }

@@ -2,6 +2,7 @@ import React from "react";
 
 import { AlertDialog as AlertDialogBase, type AlertDialogRootProps } from "@base-ui/react";
 
+import { AlertDialogNestingContext } from "../../contexts/alertDialogNestingContext";
 import type { ButtonProps } from "../Button";
 import { Button } from "../Button";
 import { Paragraph, Heading } from "../Typography/compositions";
@@ -13,22 +14,35 @@ export type AlertDialogAction = {
     closesDialog?: boolean;
 };
 
-export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render" | "style"> & {
+export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render" | "style" | "children"> & {
     title: string;
-    description: string;
     primaryAction: AlertDialogAction;
     secondaryActions?: AlertDialogAction[];
+    children: React.ReactNode;
 };
 
 export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(function AlertDialog(props, ref) {
-    const { title, description, primaryAction, secondaryActions, ...rest } = props;
+    const { title, primaryAction, secondaryActions, children, ...rest } = props;
+    const { open } = rest;
+    const { increment, decrement } = React.useContext(AlertDialogNestingContext);
+
+    React.useEffect(
+        function syncNestingCount() {
+            if (!open) return;
+            increment();
+            return function cleanup() {
+                decrement();
+            };
+        },
+        [open, increment, decrement],
+    );
 
     // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
         <AlertDialogBase.Root {...rest}>
             <AlertDialogBase.Portal>
-                <AlertDialogBase.Backdrop className="dialog__backdrop" />
-                <AlertDialogBase.Popup className="dialog__popup z-toast" ref={ref}>
+                <AlertDialogBase.Backdrop className="dialog__backdrop z-alert" />
+                <AlertDialogBase.Popup className="dialog__popup z-alert" ref={ref}>
                     <AlertDialogBase.Title
                         className="dialog__popup__child"
                         render={(baseProps) => (
@@ -41,7 +55,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                         className="dialog__popup__child"
                         render={(baseProps) => (
                             <Paragraph size="md" {...baseProps}>
-                                {description}
+                                {children}
                             </Paragraph>
                         )}
                     />

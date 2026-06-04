@@ -39,7 +39,7 @@ export class BooleanSetting implements CustomSettingImplementation<ValueType, Va
                 props.onValueChange(checked);
             }
 
-            return <Switch checked={props.value} onCheckedChange={handleChange} />;
+            return <Switch checked={props.value} onCheckedChange={handleChange} size="small" />;
         };
     }
 }

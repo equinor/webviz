@@ -27,6 +27,7 @@
     --z-sticky: 20; /* Sticky elements like headers and navbars */
     --z-scrim: 30; /* Scrims and backdrops */
     --z-modal: 40; /* Modals and dialogs */
+    --z-alert: 45; /* Alerts and critical notifications that should appear above modals */
     --z-toast: 50; /* Toasts and notifications */
     --z-tooltip: 60; /* Tooltips and popovers that should appear above modals */
 }

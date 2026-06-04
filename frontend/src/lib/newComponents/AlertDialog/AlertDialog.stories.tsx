@@ -81,32 +81,26 @@ export const WithCancelConfirmation: Story = {
                     Open form
                 </Button>
 
-                <Dialog.Popup
-                    open={dialogOpen}
-                    onOpenChange={setDialogOpen}
-                    alertDialogs={[
-                        <AlertDialog
-                            open={alertOpen}
-                            onOpenChange={setAlertOpen}
-                            title="Discard changes?"
-                            description="You have unsaved changes. Leaving now will permanently discard them."
-                            primaryAction={{
-                                label: "Discard changes",
-                                tone: "danger",
-                                onClick: handleDiscardConfirmed,
+                <Dialog.Popup open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <AlertDialog
+                        open={alertOpen}
+                        onOpenChange={setAlertOpen}
+                        title="Discard changes?"
+                        primaryAction={{
+                            label: "Discard changes",
+                            tone: "danger",
+                            onClick: handleDiscardConfirmed,
+                            closesDialog: true,
+                        }}
+                        secondaryActions={[
+                            {
+                                label: "Keep editing",
+                                onClick: () => setAlertOpen(false),
                                 closesDialog: true,
-                            }}
-                            secondaryActions={[
-                                {
-                                    label: "Keep editing",
-                                    onClick: () => setAlertOpen(false),
-                                    closesDialog: true,
-                                    tone: "neutral",
-                                },
-                            ]}
-                        />,
-                    ]}
-                >
+                                tone: "neutral",
+                            },
+                        ]}
+                    >You have unsaved changes. Leaving now will permanently discard them.</AlertDialog>
                     <Dialog.Header>
                         <Dialog.Title>Edit profile</Dialog.Title>
                     </Dialog.Header>

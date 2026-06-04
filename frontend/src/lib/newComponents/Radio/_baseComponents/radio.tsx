@@ -23,7 +23,7 @@ export const Radio = React.forwardRef<HTMLSpanElement, RadioProps>(function Radi
             value={props.value}
             className={resolveClassNames(
                 props.layoutClassName,
-                "group selectable text-accent-subtle box-border flex aspect-square appearance-none items-center justify-center rounded-full",
+                "group selectable text-accent-subtle box-border flex aspect-square w-fit appearance-none items-center justify-center rounded-full",
                 getIconSizeClassNameForSelectableSize(size),
             )}
         >
