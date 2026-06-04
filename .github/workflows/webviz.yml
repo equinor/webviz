@@ -51,10 +51,24 @@ jobs:
         run: |
           npm run validate
 
+      - name: Cache Playwright browser binaries
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
       - name: Install Playwright Browsers
         working-directory: ./frontend
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
           npx playwright install --with-deps
+
+      - name: Install Playwright system dependencies
+        working-directory: ./frontend
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: |
+          npx playwright install-deps
 
       - name: 🤖 Run unit tests
         working-directory: ./frontend
@@ -73,14 +87,55 @@ jobs:
           path: playwright-report/
           retention-days: 30
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker build layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/buildx-cache
+          # Key covers only the files that drive the expensive layers (poetry install).
+          # Source-only changes (backend_py/primary/**) intentionally do not bust this
+          # cache — the buildx layer cache handles those incrementally via restore-keys,
+          # so only the layers from COPY primary onward are rebuilt on source changes.
+          key: backend-docker-${{ runner.os }}-${{ hashFiles('backend_py/primary/Dockerfile', 'backend_py/primary/pyproject.toml', 'backend_py/primary/poetry.lock', 'backend_py/libs/**') }}
+          restore-keys: |
+            backend-docker-${{ runner.os }}-
+
       - name: 🕵️ Check auto-generated frontend code is in sync with backend
         run: |
-          docker build -f ./backend_py/primary/Dockerfile -t backend:latest .
-          CONTAINER_ID=$(docker run --detach -p 5000:5000 --env UVICORN_PORT=5000 --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true --env WEBVIZ_CLIENT_SECRET=0 --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 --env WEBVIZ_VDS_HOST_ADDRESS=0 --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 backend:latest)
-          sleep 10  # Ensure the backend server is up and running exposing /openapi.json
+          set -euo pipefail
+
+          # Build using the local BuildKit cache for layer-level caching.
+          # Writes to a separate directory to avoid corrupting the restored cache
+          # mid-build; the swap below atomically replaces it for the next run.
+          docker buildx build \
+            -f ./backend_py/primary/Dockerfile \
+            -t backend:latest \
+            --cache-from type=local,src=/tmp/buildx-cache \
+            --cache-to type=local,dest=/tmp/buildx-cache-new,mode=max \
+            --load \
+            .
+
+          # Swap: replace the restored cache with the freshly written one.
+          rm -rf /tmp/buildx-cache
+          mv /tmp/buildx-cache-new /tmp/buildx-cache
+
+          CONTAINER_ID=$(docker run --detach -p 5000:5000 \
+            --env UVICORN_PORT=5000 \
+            --env WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY=true \
+            --env WEBVIZ_CLIENT_SECRET=0 \
+            --env WEBVIZ_SMDA_SUBSCRIPTION_KEY=0 \
+            --env WEBVIZ_VDS_HOST_ADDRESS=0 \
+            --env WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0 \
+            backend:latest)
+
+          # Single-quoted so $CONTAINER_ID is expanded at exit time, not now.
+          trap 'docker stop "$CONTAINER_ID"' EXIT
+
+          sleep 10
           npm run generate:api --prefix ./frontend
-          docker stop $CONTAINER_ID
-          git diff --exit-code ./frontend/src/api || exit 1
+          git diff --exit-code ./frontend/src/api
 
       - name: 🕵️ Check ModuleSerializedStateMap is up to date
         working-directory: ./frontend
