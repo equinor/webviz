@@ -124,6 +124,9 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 # This allows us to import this module and access the app object without running the lifespan handler,
 # which may be desirable in certain contexts such as API code generation.
 if os.getenv("WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY") is not None:
+    LOGGER.warning(
+        "WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY is set to true, skipping lifespan handler and using None instead. This may lead to issues if the app is run without a proper lifespan handler, so ensure this env variable is only set in contexts where the app will not be run (e.g. API code generation)."
+    )
     lifespan_handler_async = None  # type: ignore[assignment]
 
 app = FastAPI(
