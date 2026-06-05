@@ -12,11 +12,13 @@ import {
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { Check, Clear } from "@lib/mui-icons";
+import { Button } from "@lib/newComponents/Button";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { Hidden } from "@lib/newComponents/Hidden";
+import { RadioCompositions } from "@lib/newComponents/Radio";
+import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ByParameterValueFilter } from "./private-components/byParameterValueFilter";
@@ -24,12 +26,6 @@ import type { ByRealizationNumberFilterSelection } from "./private-components/by
 import { ByRealizationNumberFilter } from "./private-components/byRealizationNumberFilter";
 import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
-import { Button } from "@lib/newComponents/Button";
-import { RadioCompositions } from "@lib/newComponents/Radio";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { Check, Clear } from "@lib/mui-icons";
-import { Separator } from "@lib/newComponents/Separator";
 
 export type EnsembleRealizationFilterSelections = {
     realizationNumbers: readonly number[]; // Array of realization numbers to include in the ensemble

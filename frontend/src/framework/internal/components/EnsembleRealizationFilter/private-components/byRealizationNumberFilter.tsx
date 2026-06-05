@@ -3,17 +3,18 @@ import React from "react";
 import { isEqual } from "lodash";
 
 import { RealizationPicker } from "@framework/components/RealizationPicker";
+import type { RealizationNumberLimits } from "@framework/components/RealizationPicker/_utils";
+import { PickedRealizationCounter } from "@framework/components/RealizationPicker/pickedRealizationCounter";
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { missingNumbers } from "@framework/utils/numberUtils";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { RadioCompositions } from "@lib/newComponents/Radio";
 
 import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,
     makeRealizationPickerTagsFromRealizationNumberSelections,
 } from "../private-utils/realizationPickerUtils";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { RadioCompositions } from "@lib/newComponents/Radio";
 
 export interface ByRealizationNumberFilterSelection {
     realizationNumberSelections: RealizationNumberSelection[] | null;
@@ -49,6 +50,15 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
             : [],
     );
+
+    const realizationNumberLimits = React.useMemo<RealizationNumberLimits>(() => {
+        const validRealizations = props.availableRealizationNumbers ?? [];
+        return {
+            min: Math.min(...validRealizations),
+            max: Math.max(...validRealizations),
+            invalid: missingNumbers(validRealizations),
+        };
+    }, [props.availableRealizationNumbers]);
 
     if (!isEqual(props.initialRealizationNumberSelections, prevInitialRealizationNumberSelections)) {
         if (!props.initialRealizationNumberSelections) {
@@ -90,7 +100,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     );
 
     const handleRealizationPickChange = React.useCallback(
-        function handleRealizationPickChange(newRangeTags: string[]) {
+        function handleRealizationPickChange(newRangeTags: readonly string[]) {
             const newRealizationNumberSelections =
                 newRangeTags.length === 0
                     ? null
@@ -125,14 +135,20 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                 />
             </FieldCompositions.Default>
             <FieldCompositions.Default label="Pick Realization Numbers">
-                <RealizationPicker
-                    initialRangeTags={initialRangeTags}
-                    selectedRangeTags={selectedRangeTags}
-                    validRealizations={props.availableRealizationNumbers}
-                    debounceTimeMs={500}
-                    onChange={handleRealizationPickChange}
-                    disabled={props.disabled}
-                />
+                <div className="w-full">
+                    <RealizationPicker
+                        initialRangeValues={initialRangeTags}
+                        rangeValues={selectedRangeTags}
+                        realizationNumberLimits={realizationNumberLimits}
+                        debounceTimeMs={500}
+                        onChange={handleRealizationPickChange}
+                        disabled={props.disabled}
+                    />
+                    <PickedRealizationCounter
+                        rangeValues={selectedRangeTags}
+                        realizationNumberLimits={realizationNumberLimits}
+                    />
+                </div>
             </FieldCompositions.Default>
         </div>
     );

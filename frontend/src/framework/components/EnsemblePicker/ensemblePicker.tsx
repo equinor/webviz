@@ -1,5 +1,6 @@
 import React from "react";
 
+import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -7,7 +8,6 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import { Combobox } from "@lib/newComponents/Combobox";
 
 export type EnsemblePickerProps = (
