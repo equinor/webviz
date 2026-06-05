@@ -1,12 +1,11 @@
 import React from "react";
 
-import { Add, History } from "@mui/icons-material";
+import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SortableList } from "@lib/components/SortableList";
 import { Tag } from "@lib/components/Tag";
-import { InfoOutlined } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { ColorTile } from "@lib/newComponents/ColorTile";
 import { Popover } from "@lib/newComponents/Popover";
@@ -179,7 +178,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                         <div className="fill-indigo-600">
                             <Popover.Root>
                                 <Popover.Trigger variant="ghost" size="small">
-                                    <InfoOutlined size={16} className="cursor-help" />
+                                    <InfoOutlined style={{ fontSize: 16 }} className="cursor-help" />
                                 </Popover.Trigger>
                                 <Popover.Popup>
                                     <Popover.Content>

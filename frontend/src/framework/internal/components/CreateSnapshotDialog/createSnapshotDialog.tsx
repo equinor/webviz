@@ -1,9 +1,11 @@
 import React from "react";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
-import { AddLink } from "@lib/mui-icons";
+import { truncateString } from "@lib/utils/strings";
+import { AddLink } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
@@ -12,6 +14,7 @@ import { useActiveSession } from "../ActiveSessionBoundary";
 
 import { Confirmation } from "./_private-components/confirmation";
 import { Form } from "./_private-components/form";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;
@@ -20,8 +23,28 @@ export type MakeSnapshotDialogProps = {
 export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.ReactNode {
     const activeSession = useActiveSession();
 
+    const sessionTitle = activeSession.getMetadata().title;
+    const sessionDescription = activeSession.getMetadata().description ?? "";
+    const initialTitle = `Snapshot: ${truncateString(sessionTitle, MAX_TITLE_LENGTH)}`;
+    const initialDescription = sessionDescription;
+
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
+    const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
+
+    React.useEffect(
+        function initializeTitle() {
+            setTitle(initialTitle);
+        },
+        [initialTitle],
+    );
+
+    React.useEffect(
+        function initializeDescription() {
+            setDescription(initialDescription);
+        },
+        [initialDescription],
+    );
 
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.MakeSnapshotDialogOpen);
 
@@ -54,8 +77,18 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     }
 
     function handleCancel() {
+        if (!snapshotUrl && (title !== initialTitle || description !== initialDescription)) {
+            setShowConfirmationDialog(true);
+            return;
+        }
+        handleDiscardChanges();
+    }
+
+    function handleDiscardChanges() {
         setIsOpen(false);
         setSnapshotUrl(null);
+        setTitle(initialTitle);
+        setDescription(initialDescription);
     }
 
     if (activeSession.isSnapshot()) {
@@ -86,7 +119,7 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 </Button>
                 <Button tone="accent" disabled={isSaving} type="submit" form={formId}>
                     {isSaving && <CircularProgress size={16} />}
-                    <AddLink size={16} /> Create snapshot
+                    <AddLink style={{ fontSize: 16 }} /> Create snapshot
                 </Button>
             </>
         );
@@ -103,12 +136,35 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
     }
 
     return (
-        <Dialog.Popup open={isOpen} onOpenChange={handleCancel} modal width={600}>
-            <Dialog.Header closeIconVisible>
-                <Dialog.Title>Create Snapshot</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>{content}</Dialog.Body>
-            <Dialog.Actions>{actions}</Dialog.Actions>
-        </Dialog.Popup>
+        <>
+            <Dialog.Popup open={isOpen} onOpenChange={handleCancel} modal width={600}>
+                <Dialog.Header closeIconVisible>
+                    <Dialog.Title>Create Snapshot</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>{content}</Dialog.Body>
+                <Dialog.Actions>{actions}</Dialog.Actions>
+            </Dialog.Popup>
+            <AlertDialog
+                open={showConfirmationDialog}
+                onOpenChange={setShowConfirmationDialog}
+                title="Discard changes?"
+                primaryAction={{
+                    label: "Discard",
+                    onClick: handleDiscardChanges,
+                    tone: "danger",
+                    closesDialog: true,
+                }}
+                secondaryActions={[
+                    {
+                        label: "Keep editing",
+                        onClick: () => setShowConfirmationDialog(false),
+                        tone: "neutral",
+                        closesDialog: true,
+                    },
+                ]}
+            >
+                You have unsaved changes. Are you sure you want to discard them and close the dialog?
+            </AlertDialog>
+        </>
     );
 }

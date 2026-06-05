@@ -4,7 +4,7 @@ import { Key } from "ts-key-enum";
 
 import type { FocusableListItem } from "@lib/hooks/useListFocus";
 import { Direction } from "@lib/hooks/useListFocus";
-import { Close, Error } from "@lib/mui-icons";
+import { Close, Error } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -119,7 +119,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
 
     function makeMatchCounter(): React.ReactNode {
         if (validityInfo.validity === SelectionValidity.InputError) {
-            return <Error size={16} />;
+            return <Error style={{ fontSize: 16 }} />;
         }
 
         if (validityInfo.numMatchedRealizations <= 1) {

@@ -1,9 +1,8 @@
 import React from "react";
 
-import { Warning } from "@mui/icons-material";
+import { Link, Warning } from "@mui/icons-material";
 
 import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { Link } from "@lib/mui-icons";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -93,7 +92,7 @@ export function SettingManagerComponent<
                 <div className="gap-horizontal-2xs py-vertical-4xs px-horizontal-2xs text-accent-subtle flex w-32 items-center">
                     <span>{props.setting.getLabel()}</span>
                     <span className="mb-vertical-2xs text-base">
-                        <Link size={16} titleAccess="This settings is controlled by a shared setting" />
+                        <Link style={{ fontSize: 16 }} titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
                 <div className="gap-horizontal-2xs py-vertical-4xs px-horizontal-2xs flex w-full items-center">

@@ -1,9 +1,8 @@
 import React from "react";
 
-import { Deselect, SelectAll } from "@mui/icons-material";
+import { Close, Deselect, SelectAll } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import { Close } from "@lib/mui-icons";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
@@ -451,7 +450,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                     disabled={props.disabled}
                                     onClick={() => handleFilterChange("")}
                                 >
-                                    <Close size={16} />
+                                    <Close style={{ fontSize: 16 }} />
                                 </Button>
                             )
                         }

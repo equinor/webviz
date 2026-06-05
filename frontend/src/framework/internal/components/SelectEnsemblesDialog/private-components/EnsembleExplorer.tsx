@@ -1,13 +1,12 @@
 import React from "react";
 
-import { Check } from "@mui/icons-material";
+import { ArrowRight, Check, Remove } from "@mui/icons-material";
 
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
-import { ArrowRight, Remove } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Field } from "@lib/newComponents/Field";
@@ -243,7 +242,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                                 iconOnly
                                                 disabled={activeSelectedEnsembles.length === 0}
                                             >
-                                                <Remove size={16} />
+                                                <Remove style={{ fontSize: 16 }} />
                                             </Button>
                                         </TooltipCompositions.Default>
                                     </div>

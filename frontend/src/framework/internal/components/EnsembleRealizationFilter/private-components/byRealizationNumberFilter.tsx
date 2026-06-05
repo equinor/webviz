@@ -132,6 +132,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                     onValueChange={(value) => handleIncludeExcludeFilterChange(value)}
                     disabled={props.disabled}
                     layout="horizontal"
+                    size="small"
                 />
             </FieldCompositions.Default>
             <FieldCompositions.Default label="Pick Realization Numbers">

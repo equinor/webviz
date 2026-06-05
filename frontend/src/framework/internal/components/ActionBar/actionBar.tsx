@@ -1,6 +1,6 @@
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { ExpandLess, ExpandMore } from "@lib/mui-icons";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { Tabs } from "@lib/newComponents/Tabs";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
@@ -37,7 +37,7 @@ export function ActionBar(props: ActionBarProps) {
                     side="top"
                 >
                     <Button variant="ghost" size="small" iconOnly onClick={() => setIsActionBarVisible((v) => !v)}>
-                        {isActionBarVisible ? <ExpandLess size={16} /> : <ExpandMore size={16} />}
+                        {isActionBarVisible ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
                     </Button>
                 </TooltipCompositions.Default>
             </div>

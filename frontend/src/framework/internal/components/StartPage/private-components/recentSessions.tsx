@@ -34,7 +34,7 @@ export function RecentSessions(props: RecentSessionsProps) {
     }
 
     return (
-        <div className="h-56 w-96 min-w-64">
+        <div className="w-96 min-w-64">
             <RecentList
                 title="Recent sessions"
                 useQueryOptions={{

@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { BaseUIEvent } from "@base-ui/react";
-import { Close, WebAsset } from "@mui/icons-material";
+import { Close, CloudOff, Help, HistoryToggleOff, Science, WebAsset } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
@@ -15,7 +15,6 @@ import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/de
 import type { Workbench } from "@framework/Workbench";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { Help, Science, HistoryToggleOff, CloudOff } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { createPortal } from "@lib/utils/createPortal";
@@ -208,7 +207,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     <span className="text-neutral-subtle">{makePersistenceIcon(props.isSerializable)}</span>
                     <Tooltip title="Show details">
                         <Button variant="ghost" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
-                            <Help size={16} />
+                            <Help style={{ fontSize: 16 }} />
                         </Button>
                     </Tooltip>
                 </div>
@@ -231,14 +230,14 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.DEPRECATED) {
         return (
             <span title="Deprecated" className="inline-block align-middle text-base">
-                <HistoryToggleOff size={16} />
+                <HistoryToggleOff style={{ fontSize: 16 }} />
             </span>
         );
     }
     if (devState === ModuleDevState.DEV) {
         return (
             <span title="Experimental" className="inline-block align-middle text-base">
-                <Science size={16} />
+                <Science style={{ fontSize: 16 }} />
             </span>
         );
     }
@@ -250,7 +249,7 @@ function makePersistenceIcon(isSerializable: boolean): React.ReactNode {
     if (!isSerializable) {
         return (
             <span title="Module settings won't be saved" className="inline-block align-middle text-base">
-                <CloudOff size={16} />
+                <CloudOff style={{ fontSize: 16 }} />
             </span>
         );
     }

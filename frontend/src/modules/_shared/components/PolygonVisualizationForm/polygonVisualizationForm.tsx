@@ -1,7 +1,6 @@
 import { parseHex, type Rgb } from "culori";
 import { isNaN } from "lodash";
 
-import { Link, LinkOff } from "@lib/eds-icons";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Combobox } from "@lib/newComponents/Combobox";
@@ -14,6 +13,8 @@ import {
     LabelPositionType,
     type PolygonVisualizationSpec,
 } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
+import { Icon } from "@equinor/eds-core-react";
+import { Link, LinkOff } from "@mui/icons-material";
 
 export type { LabelPositionType, PolygonVisualizationSpec };
 

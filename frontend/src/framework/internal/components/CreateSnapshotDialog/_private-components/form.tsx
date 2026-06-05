@@ -11,8 +11,6 @@ import { TextInput } from "@lib/newComponents/TextInput";
 import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { truncateString } from "@lib/utils/strings";
-
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
 
@@ -28,8 +26,6 @@ export type FormProps = {
 };
 
 export function Form(props: FormProps): React.ReactNode {
-    const { setTitle, setDescription } = props;
-
     const activeSession = useActiveSession();
 
     const isPersisted = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_PERSISTED);
@@ -40,23 +36,6 @@ export function Form(props: FormProps): React.ReactNode {
     );
 
     const hasChanges = (persistenceInfo.hasChanges && persistenceInfo.lastPersistedMs !== null) || !isPersisted;
-
-    const originalTitle = activeSession.getMetadata().title;
-    const originalDescription = activeSession.getMetadata().description ?? "";
-
-    React.useEffect(
-        function propagateTitleChange() {
-            setTitle(`Snapshot: ${truncateString(originalTitle, MAX_TITLE_LENGTH)}`);
-        },
-        [originalTitle, setTitle],
-    );
-
-    React.useEffect(
-        function propagateDescriptionChange() {
-            setDescription(originalDescription);
-        },
-        [originalDescription, setDescription],
-    );
 
     const inputRef = React.useRef<HTMLInputElement>(null);
 

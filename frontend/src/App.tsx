@@ -1,3 +1,4 @@
+import { ThemeProvider, createTheme } from "@mui/material";
 import { AuthenticationBoundary } from "@framework/internal/components/AuthenticationBoundary";
 import { GlobalConfirmationDialog } from "@framework/internal/components/GlobalConfirmationDialog";
 import { WorkbenchWrapper } from "@framework/internal/components/WorkbenchWrapper/workbenchWrapper";
@@ -6,16 +7,28 @@ import { AlertDialogNestingProvider } from "@lib/contexts/alertDialogNestingCont
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
+const theme = createTheme({
+    components: {
+        MuiSvgIcon: {
+            defaultProps: {
+                fontSize: "inherit",
+            },
+        },
+    },
+});
+
 function App() {
     return (
-        <AlertDialogNestingProvider>
-            <div className="bg-canvas h-screen w-screen">
-                <GlobalConfirmationDialog />
-                <AuthenticationBoundary>
-                    <WorkbenchWrapper />
-                </AuthenticationBoundary>
-            </div>
-        </AlertDialogNestingProvider>
+        <ThemeProvider theme={theme}>
+            <AlertDialogNestingProvider>
+                <div className="bg-canvas h-screen w-screen">
+                    <GlobalConfirmationDialog />
+                    <AuthenticationBoundary>
+                        <WorkbenchWrapper />
+                    </AuthenticationBoundary>
+                </div>
+            </AlertDialogNestingProvider>
+        </ThemeProvider>
     );
 }
 

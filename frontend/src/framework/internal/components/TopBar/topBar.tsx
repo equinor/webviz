@@ -2,7 +2,7 @@ import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import { AddLink, Close, Edit, Fullscreen, FullscreenExit, Link, Lock, Refresh, SaveAs } from "@mui/icons-material";
+import { AddLink, ArrowDropDown, Close, Edit, Fullscreen, FullscreenExit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
 
 import { FmuLogo } from "@assets/FmuLogo";
 
@@ -14,7 +14,6 @@ import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSessi
 import { type Workbench } from "@framework/Workbench";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
 import { Tooltip } from "@lib/components/Tooltip";
-import { ArrowDropDown, Save } from "@lib/mui-icons";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
@@ -382,7 +381,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                         // Margin is explicitly added to make the spinner's position width match the save icon
                         <CircularProgress size={16} layoutClassName="mx-[2px]" />
                     ) : (
-                        <Save size={16} />
+                        <Save style={{ fontSize: 16 }} />
                     )}
                 </Button>
 
@@ -404,7 +403,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                 >
                     {/* TODO: Pressed state when menu is open */}
                     <Button {...props} variant="contained" tone="accent" iconOnly compact>
-                        <ArrowDropDown size={16} />
+                        <ArrowDropDown style={{ fontSize: 16 }} />
                     </Button>
                 </MenuCompositions.Default>
             </Button.Group>

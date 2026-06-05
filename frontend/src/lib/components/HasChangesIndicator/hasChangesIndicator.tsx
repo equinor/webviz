@@ -1,4 +1,4 @@
-import { Circle } from "@lib/mui-icons";
+import { Circle } from "@mui/icons-material";
 import type { PixelSize } from "@lib/newComponents/_shared/utils/size";
 
 import { Tooltip } from "../Tooltip";
@@ -14,7 +14,7 @@ export function HasChangesIndicator(props: HasChangesIndicatorProps): React.Reac
     return (
         props.visible !== false && (
             <Tooltip title={props.tooltipText ?? "You have unsaved changes"}>
-                <Circle size={props.iconSize} fontSize={props.size} color="warning" />
+                <Circle style={props.iconSize !== undefined ? { fontSize: props.iconSize } : undefined} fontSize={props.size} color="warning" />
             </Tooltip>
         )
     );

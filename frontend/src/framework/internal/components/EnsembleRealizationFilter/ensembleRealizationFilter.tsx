@@ -13,7 +13,7 @@ import {
     RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { Check, Clear } from "@lib/mui-icons";
+import { Check, Clear } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Hidden } from "@lib/newComponents/Hidden";
@@ -244,7 +244,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     onClick={handleHeaderOnClick}
                 >
                     <EnsembleColorTile
-                        badgeClassName="bg-slate-100"
                         wrapperClassName="w-5 h-5"
                         ensemble={props.ensemble}
                         isRealizationFilterEffective={areRealizationsFiltered}
@@ -270,7 +269,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         variant="ghost"
                         iconOnly
                     >
-                        <Check size={16} />
+                        <Check style={{ fontSize: 16 }} />
                     </Button>
                     <Button
                         tone="danger"
@@ -281,7 +280,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         variant="ghost"
                         iconOnly
                     >
-                        <Clear size={16} />
+                        <Clear style={{ fontSize: 16 }} />
                     </Button>
                 </div>
             </div>
@@ -320,6 +319,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                     })}
                                     onValueChange={(value) => handleActiveFilterTypeChange(value)}
                                     layout="horizontal"
+                                    size="small"
                                 />
                             </FieldCompositions.Default>
                             <Separator orientation="horizontal" />

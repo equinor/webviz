@@ -2,7 +2,7 @@ import type React from "react";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@lib/mui-icons";
+import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -88,7 +88,7 @@ function StartActions(props: StartActionProps): React.ReactNode {
         <div className="flex items-center">
             <TooltipCompositions.Default content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
                 <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
-                    {isExpanded ? <ExpandLess size={16} /> : <ExpandMore size={16} />}
+                    {isExpanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
                 </Button>
             </TooltipCompositions.Default>
             <VisibilityToggle item={props.dataProvider} />
@@ -114,7 +114,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
         if (isSubordinated) {
             return (
                 <TooltipCompositions.Default content="Subordinated" side="bottom">
-                    <Difference size={16} />
+                    <Difference style={{ fontSize: 16 }} />
                 </TooltipCompositions.Default>
             );
         }
@@ -135,7 +135,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             if (!error) {
                 return (
                     <TooltipCompositions.Default content="Error" side="bottom">
-                        <Error className="text-danger-subtle" size={16} />
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </TooltipCompositions.Default>
                 );
             }
@@ -143,14 +143,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
             if (typeof error === "string") {
                 return (
                     <TooltipCompositions.Default content={error} side="bottom">
-                        <Error className="text-danger-subtle" size={16} />
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </TooltipCompositions.Default>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
                     <TooltipCompositions.Default content={statusMessage.message} side="bottom">
-                        <Error className="text-danger-subtle" size={16} />
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </TooltipCompositions.Default>
                 );
             }
@@ -168,14 +168,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
 
             return (
                 <TooltipCompositions.Default content={errorMessage} side="bottom">
-                    <Block className="text-danger-subtle" size={16} />
+                    <Block className="text-danger-subtle" style={{ fontSize: 16 }} />
                 </TooltipCompositions.Default>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
                 <TooltipCompositions.Default content="Successfully loaded" side="bottom">
-                    <CheckCircle className="text-success-subtle" size={16} />
+                    <CheckCircle className="text-success-subtle" style={{ fontSize: 16 }} />
                 </TooltipCompositions.Default>
             );
         }

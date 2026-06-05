@@ -1,6 +1,6 @@
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, grid_layer, settings, surface_layer, timeline, wellbore } from "@equinor/eds-icons";
-import { Panorama, SettingsApplications } from "@mui/icons-material";
+import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -27,7 +27,6 @@ import { MAX_INTERSECTION_VIEWS } from "@modules/Intersection/view/typesAndEnums
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 import { Button } from "@lib/newComponents/Button";
-import { Add } from "@lib/mui-icons";
 
 export type DataProviderManagerWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -198,7 +197,7 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             isMoveAllowed={checkIfItemMoveIsAllowed}
             emptyContentPlaceholder={
                 <Button tone="accent" onClick={() => handleAddView(groupDelegate)}>
-                    <Add size={16} /> Add first view
+                    <Add style={{ fontSize: 16 }} /> Add first view
                 </Button>
             }
         />

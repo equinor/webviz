@@ -2,12 +2,11 @@ import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, timeline, wellbore } from "@equinor/eds-icons";
-import { Panorama, SettingsApplications } from "@mui/icons-material";
+import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { Add } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
@@ -226,7 +225,7 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             isMoveAllowed={checkIfItemMoveAllowed}
             emptyContentPlaceholder={
                 <Button tone="accent" onClick={() => handleAddView(groupDelegate)}>
-                    <Add size={16} /> Add first view
+                    <Add style={{ fontSize: 16 }} /> Add first view
                 </Button>
             }
         />

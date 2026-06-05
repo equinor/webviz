@@ -2,7 +2,7 @@ import React from "react";
 
 import type { CaseInfo_api } from "@api";
 import { edsDateRangeToEpochMsRange } from "@framework/utils/edsDateUtils";
-import { Close } from "@lib/mui-icons";
+import { Close } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { DateRangePicker } from "@lib/newComponents/DateRangePicker";

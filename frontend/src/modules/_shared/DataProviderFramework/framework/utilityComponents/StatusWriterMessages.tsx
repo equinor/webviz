@@ -3,7 +3,7 @@ import type React from "react";
 import type { StatusMessage } from "@framework/types/statusWriter";
 import { StatusMessageType } from "@framework/types/statusWriter";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Info, Warning, Error } from "@lib/mui-icons";
+import { Error, Info, Warning } from "@mui/icons-material";
 
 export type StatusMessagesProps = { statusMessages: readonly StatusMessage[] };
 
@@ -17,15 +17,15 @@ export function StatusMessages(props: StatusMessagesProps) {
     return (
         <>
             <StatusMessage messages={categorizedMessages.info}>
-                <Info className="text-info-subtle" size={16} />
+                <Info className="text-info-subtle" style={{ fontSize: 16 }} />
             </StatusMessage>
 
             <StatusMessage messages={categorizedMessages.warning}>
-                <Warning className="text-warning-subtle" size={16} />
+                <Warning className="text-warning-subtle" style={{ fontSize: 16 }} />
             </StatusMessage>
 
             <StatusMessage messages={categorizedMessages.error}>
-                <Error className="text-danger-subtle" size={16} />
+                <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
             </StatusMessage>
         </>
     );

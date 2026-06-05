@@ -1,10 +1,9 @@
 import type React from "react";
 
-import { DragIndicator, FolderOpen, WarningOutlined } from "@mui/icons-material";
+import { Delete, DragIndicator, FolderOpen, WarningOutlined } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SortableList } from "@lib/components/SortableList";
-import { Delete } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Combobox } from "@lib/newComponents/Combobox";

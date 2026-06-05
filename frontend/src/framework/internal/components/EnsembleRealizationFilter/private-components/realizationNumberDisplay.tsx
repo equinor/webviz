@@ -109,7 +109,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         for (const realization of rowRealizations) {
             const isAvailable = props.availableRealizations.includes(realization);
             const isSelected = props.selectedRealizations.includes(realization);
-            const isClickDisabled = props.disableOnClick || !isAvailable;
+            const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
 
             gridElements.push(
                 <Tooltip
@@ -118,16 +118,17 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                 >
                     <div
                         style={{ width: dotSizePx, height: dotSizePx }}
-                        className={resolveClassNames(
-                            "flex aspect-square items-center justify-center rounded-full hover:outline",
-                            {
-                                "bg-accent-strong hover:bg-accent-strong-hover hover:outline-accent-strong": isSelected,
-                                "bg-accent hover:bg-accent-hover hover:outline-accent": !isSelected && isAvailable,
-                                "bg-disabled": !isSelected && !isAvailable,
-                                "cursor-pointer": !props.disableOnClick && isAvailable,
-                                "cursor-not-allowed": !props.disableOnClick && !isAvailable,
-                            },
-                        )}
+                        className={resolveClassNames("flex aspect-square items-center justify-center rounded-full", {
+                            "bg-accent-strong": isSelected,
+                            "bg-accent": !isSelected && isAvailable,
+                            "bg-disabled": !isSelected && !isAvailable,
+                            "hover:bg-accent-strong-hover hover:outline-accent-strong hover:outline":
+                                !isCompact && isSelected,
+                            "hover:bg-accent-hover hover:outline-accent hover:outline":
+                                !isCompact && !isSelected && isAvailable,
+                            "cursor-pointer": !isCompact && !props.disableOnClick && isAvailable,
+                            "cursor-not-allowed": !isCompact && !props.disableOnClick && !isAvailable,
+                        })}
                         onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
                     />
                 </Tooltip>,

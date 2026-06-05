@@ -290,6 +290,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                         },
                     ]}
                     layout="horizontal"
+                    size="small"
                 />
             </FieldCompositions.Default>
             <FieldCompositions.Default label="Discrete?" gridLayout>
@@ -297,6 +298,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                     <Switch
                         checked={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
                         onCheckedChange={toggleDiscrete}
+                        size="small"
                     />
                     <NumberInput
                         value={colorScaleSpecification.colorScale.getNumSteps()}

@@ -1,10 +1,9 @@
 import type React from "react";
 
-import { DragIndicator } from "@mui/icons-material";
+import { Delete, DragIndicator } from "@mui/icons-material";
 
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SortableList } from "@lib/components/SortableList";
-import { Delete } from "@lib/mui-icons";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Table } from "@lib/newComponents/Table";

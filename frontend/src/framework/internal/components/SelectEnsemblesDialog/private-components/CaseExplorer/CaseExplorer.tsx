@@ -12,7 +12,7 @@ import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
-import { Refresh } from "@lib/mui-icons";
+import { Refresh } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Combobox } from "@lib/newComponents/Combobox";
@@ -224,7 +224,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
                             <CircularProgress size={16} />
                         ) : (
-                            <Refresh size={16} />
+                            <Refresh style={{ fontSize: 16 }} />
                         )}
                         Refresh
                     </Button>

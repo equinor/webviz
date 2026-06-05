@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Check, Error as ErrorIcon } from "@mui/icons-material";
+import { BugReport, Check, Error as ErrorIcon, Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAliveOptions } from "@api";
@@ -11,7 +11,6 @@ import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Button } from "@lib/newComponents/Button";
 import { useSymbolicateStackTrace } from "@lib/hooks/useSymbolicateStackTrace";
-import { BugReport, Refresh } from "@lib/mui-icons";
 
 export type SessionErrorDialogProps = {
     workbench: Workbench;
@@ -112,12 +111,12 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
                         </>
                     ) : (
                         <>
-                            <BugReport size={16} /> Report Issue
+                            <BugReport style={{ fontSize: 16 }} /> Report Issue
                         </>
                     )}
                 </Button>
                 <Button onClick={onTryAgain}>
-                    <Refresh size={16} /> Try again
+                    <Refresh style={{ fontSize: 16 }} /> Try again
                 </Button>
             </Dialog.Actions>
         </Dialog.Popup>

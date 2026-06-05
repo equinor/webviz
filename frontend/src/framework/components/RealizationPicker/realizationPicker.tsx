@@ -6,7 +6,7 @@ import { Key } from "ts-key-enum";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Direction, useListFocus } from "@lib/hooks/useListFocus";
 import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
-import { Close } from "@lib/mui-icons";
+import { Close } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

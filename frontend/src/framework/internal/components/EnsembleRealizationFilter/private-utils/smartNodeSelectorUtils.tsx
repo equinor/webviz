@@ -1,7 +1,7 @@
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
-import { MoreHoriz, Folder } from "@lib/mui-icons";
+import { Folder, MoreHoriz } from "@mui/icons-material";
 
 const NON_GROUPED_PARENT_NODE = "Generic";
 
