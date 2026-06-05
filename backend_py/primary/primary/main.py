@@ -79,7 +79,7 @@ services_config = ServicesConfig(
     enterprise_subscription_key=config.ENTERPRISE_SUBSCRIPTION_KEY,
     surface_query_url=config.SURFACE_QUERY_URL,
     vds_host_address=config.VDS_HOST_ADDRESS,
-    redis_user_session_url=config.REDIS_USER_SESSION_URL,
+    redis_cache_url=config.REDIS_CACHE_URL,
 )
 init_services_config(services_config)
 
@@ -190,7 +190,7 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
-session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
+session_store = RedisStore(config.REDIS_AUTH_STORE_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
 # Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)

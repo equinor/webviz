@@ -8,7 +8,7 @@ class ServicesConfig:
     enterprise_subscription_key: str
     surface_query_url: str
     vds_host_address: str
-    redis_user_session_url: str
+    redis_cache_url: str
 
 
 # Process-wide state (private to package)

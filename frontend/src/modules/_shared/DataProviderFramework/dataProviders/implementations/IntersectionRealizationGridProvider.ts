@@ -2,6 +2,7 @@ import { isEqual } from "lodash";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortTimeOrIntervalArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
@@ -262,19 +263,15 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                 const gridAttributeArr =
                     data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-                const availableTimeOrIntervals = Array.from(
-                    new Set(
-                        gridAttributeArr
-                            .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                return sortTimeOrIntervalArray(
+                    Array.from(
+                        new Set(
+                            gridAttributeArr
+                                .filter((attr) => attr.property_name === gridAttribute)
+                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                        ),
                     ),
-                ).sort((a, b) => {
-                    if (a === "NO_TIME") return -1;
-                    if (b === "NO_TIME") return 1;
-                    return a.localeCompare(b);
-                });
-
-                return availableTimeOrIntervals;
+                );
             },
         });
 

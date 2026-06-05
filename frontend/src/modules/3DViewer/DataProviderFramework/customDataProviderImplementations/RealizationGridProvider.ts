@@ -1,5 +1,6 @@
 import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortTimeOrIntervalArray } from "@lib/utils/arrays";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
@@ -295,15 +296,15 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 const gridAttributeArr =
                     gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
 
-                const availableTimeOrIntervals = [
-                    ...new Set(
-                        gridAttributeArr
-                            .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                return sortTimeOrIntervalArray(
+                    Array.from(
+                        new Set(
+                            gridAttributeArr
+                                .filter((attr) => attr.property_name === gridAttribute)
+                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                        ),
                     ),
-                ];
-
-                return availableTimeOrIntervals;
+                );
             },
         });
     }
