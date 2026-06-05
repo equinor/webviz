@@ -50,6 +50,10 @@ spec:
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
               - name: WEBVIZ-PSEUDONYM-HMAC-KEY
                 envVar: WEBVIZ_PSEUDONYM_HMAC_KEY
+              - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
+                envVar: WEBVIZ_REDIS_AUTH_STORE_PASSWORD
+              - name: WEBVIZ-REDIS-CACHE-PASSWORD
+                envVar: WEBVIZ_REDIS_CACHE_PASSWORD
               # Inject all app insights connection strings as env vars.
               # Our azure monitor setup code will pick the right one based on the radix environment
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
@@ -158,26 +162,48 @@ spec:
           memory:
             value: 20
 
+
     - name: redis-auth-store
-      image: redis:7.2
+      dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
           clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            useAzureIdentity: true
+            items:
+              - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
+                envVar: REDIS_REQUIREPASS
       runAsUser: 999
-      command: ["redis-server",  "--loglevel", "notice"]
+      args: ["--maxmemory", "800mb",  "--maxmemory-policy", "noeviction", "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 500m
+        limits:
+          memory: 1Gi
+
 
     - name: redis-cache
-      image: redis:7.2
+      dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
           clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            useAzureIdentity: true
+            items:
+              - name: WEBVIZ-REDIS-CACHE-PASSWORD
+                envVar: REDIS_REQUIREPASS
       runAsUser: 999
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
-      command: ["redis-server",  "--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--save", "''",  "--appendonly", "no",  "--loglevel", "notice"]
+      args: ["--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--loglevel", "notice"]
       ports:
         - name: http
           port: 6379
@@ -187,6 +213,7 @@ spec:
           cpu: 1000m
         limits:
           memory: 4Gi
+
 
   jobs:
     - name: user-mock
