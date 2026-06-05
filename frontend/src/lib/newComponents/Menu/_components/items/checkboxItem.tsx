@@ -3,8 +3,8 @@ import React from "react";
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuCheckboxItemProps as MenuCheckboxItemBaseProps } from "@base-ui/react";
 
-import { CheckboxIcon } from "@lib/newComponents/_shared/checkboxIcon";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { CheckboxIcon } from "@lib/newComponents/_shared/components/checkboxIcon";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ItemContent, type MenuItemContentProps } from "./itemContent";

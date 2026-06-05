@@ -6,7 +6,7 @@ import { isEqual } from "lodash";
 import { Close } from "@lib/mui-icons";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { LayoutClassProps } from "../_shared/wrapperProps";
+import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 import { TextInput } from "../TextInput";
 import { Virtualization } from "../Virtualization";

@@ -2,7 +2,7 @@ import React from "react";
 
 import { ToggleGroup as ToggleGroupBase, type ToggleGroupProps as ToggleGroupBaseProps } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type GroupProps<TValue extends string> = ComponentWrapperProps<Omit<ToggleGroupBaseProps<TValue>, "ref">>;
@@ -21,7 +21,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps<string>>(functi
                 props.layoutClassName,
                 "flex items-center justify-center",
                 // Bring hovered/focused button outline above its neighbours
-                "*:relative [&>*:hover]:z-10 [&>*:focus-visible]:z-10",
+                "*:relative [&>*:focus-visible]:z-10 [&>*:hover]:z-10",
                 // Middle children are always fully square (! overrides Button's own `rounded` class)
                 "[&>*:not(:first-child):not(:last-child)]:rounded-none!",
                 {

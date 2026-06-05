@@ -2,9 +2,9 @@ import React from "react";
 
 import { Tabs as TabsBase, type TabsListProps as TabsListBaseProps } from "@base-ui/react";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import type { SelectableSize } from "@lib/newComponents/_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ListProps = ComponentWrapperProps<TabsListBaseProps> & {

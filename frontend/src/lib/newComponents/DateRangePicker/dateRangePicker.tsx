@@ -5,9 +5,9 @@ import type { DateRangePickerProps as DateRangePickerBaseProps } from "@equinor/
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useComponentSize } from "../_shared/componentSizeContext";
-import type { SelectableSize } from "../_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "../_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 // ! Base package doesn't export this, so we manually re-export it here
 export type DateRange = NonNullable<DateRangePickerBaseProps["value"]>;

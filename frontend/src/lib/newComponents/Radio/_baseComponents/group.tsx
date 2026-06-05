@@ -2,7 +2,7 @@ import React from "react";
 
 import { RadioGroup as RadioGroupBase, type RadioGroupProps as RadioGroupBaseProps } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 export type RadioGroupProps = ComponentWrapperProps<RadioGroupBaseProps>;
 

@@ -1,8 +1,9 @@
 import React from "react";
 
-import { ContextMenu as ContextMenuBase, ContextMenuSubmenuRootProps } from "@base-ui/react";
+import type { ContextMenuSubmenuRootProps } from "@base-ui/react";
+import { ContextMenu as ContextMenuBase } from "@base-ui/react";
 
-import { PortalContainerContext } from "../../_shared/portalContainerContext";
+import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
 
 export type SubmenuProps = Omit<ContextMenuSubmenuRootProps, "className" | "style"> & {
     children: React.ReactNode;

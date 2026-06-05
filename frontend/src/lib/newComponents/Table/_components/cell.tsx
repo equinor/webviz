@@ -3,9 +3,9 @@ import React from "react";
 import { ArrowDownward, ArrowUpward, Square } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import type { ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
-import { resolveWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useTableRootContext } from "../_contexts/tableRootContext";

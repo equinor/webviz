@@ -11,9 +11,9 @@ import { Key } from "ts-key-enum";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useComponentSize } from "../_shared/componentSizeContext";
-import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "../_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "../_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 import { Typography } from "../Typography";
 

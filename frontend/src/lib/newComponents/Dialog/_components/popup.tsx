@@ -4,7 +4,7 @@ import type { DialogPopupProps, DialogRootProps } from "@base-ui/react";
 import { Dialog as DialogBase } from "@base-ui/react";
 
 import { AlertDialogNestingContext } from "../../../contexts/alertDialogNestingContext";
-import { PortalContainerContext } from "../../_shared/portalContainerContext";
+import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
 
 export type PopupProps = {
     children?: React.ReactNode;

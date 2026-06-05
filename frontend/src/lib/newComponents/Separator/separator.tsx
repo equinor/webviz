@@ -4,7 +4,7 @@ import { Separator as SeparatorBase, type SeparatorProps as SeparatorBaseProps }
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { LayoutClassProps } from "../_shared/wrapperProps";
+import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 
 export type SeparatorProps = Pick<SeparatorBaseProps, "orientation"> & LayoutClassProps;
 

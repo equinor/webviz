@@ -3,7 +3,7 @@ import React from "react";
 import type { ToggleProps as ToggleBaseProps } from "@base-ui/react";
 import { Toggle as ToggleBase } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 import { Button as Button_, type ButtonProps as ButtonProps_ } from "../../Button";
 

@@ -6,11 +6,11 @@ import { Check, Clear, UnfoldMore } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useComponentSize } from "../_shared/componentSizeContext";
-import { PortalContainerContext } from "../_shared/portalContainerContext";
-import type { SelectableSize } from "../_shared/size";
-import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import { PortalContainerContext } from "../_shared/contexts/portalContainerContext";
+import type { SelectableSize } from "../_shared/utils/size";
+import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
 import { Typography } from "../Typography";
 

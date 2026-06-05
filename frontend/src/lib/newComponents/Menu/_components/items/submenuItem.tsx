@@ -4,8 +4,8 @@ import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuSubmenuRootProps as SubmenuRootBaseProps } from "@base-ui/react";
 import { ChevronRight } from "@mui/icons-material";
 
-import type { ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
-import { resolveWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 import { Popup } from "../popup";
 

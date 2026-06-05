@@ -3,7 +3,7 @@ import React from "react";
 import type { TooltipPositionerProps as TooltipPositionerBaseProps } from "@base-ui/react/tooltip";
 import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
 
-import { PortalContainerContext } from "@lib/newComponents/_shared/portalContainerContext";
+import { PortalContainerContext } from "@lib/newComponents/_shared/contexts/portalContainerContext";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 export type PopupProps = {

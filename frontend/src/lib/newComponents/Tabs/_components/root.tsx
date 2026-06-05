@@ -2,7 +2,7 @@ import React from "react";
 
 import { Tabs as TabsBase, type TabsRootProps as TabsRootBaseProps } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type RootProps = ComponentWrapperProps<Omit<TabsRootBaseProps, "ref">>;

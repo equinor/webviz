@@ -9,7 +9,7 @@ import { Add, Remove } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBaseProps, "className">> & {
     unitIcon?: React.ReactNode;

@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
+import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ScrollAreaProps = LayoutClassProps & {

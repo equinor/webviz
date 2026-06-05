@@ -2,8 +2,8 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { TextSize } from "../_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import type { TextSize } from "../_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
     family?: "header" | "body";

@@ -5,8 +5,8 @@ import PersonIcon from "@mui/icons-material/Person";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { PixelSize } from "../_shared/size";
-import { type LayoutClassProps } from "../_shared/wrapperProps";
+import type { PixelSize } from "../_shared/utils/size";
+import { type LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
 
 export type AvatarUserData = {

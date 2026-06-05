@@ -1,7 +1,7 @@
 import { ArrowDownward, Circle, Square, Star } from "@mui/icons-material";
 import type { Meta, StoryObj } from "@storybook/react";
 
-import type { SelectableSize } from "../_shared/size";
+import type { SelectableSize } from "../_shared/utils/size";
 import { Button } from "../Button";
 
 import type { MenuPopupProps } from ".";

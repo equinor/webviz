@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { SelectableSize } from "./size";
+import type { SelectableSize } from "../utils/size";
 
 export const ComponentSizeContext = React.createContext<SelectableSize>("default");
 

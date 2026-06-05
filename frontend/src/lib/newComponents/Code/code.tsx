@@ -1,6 +1,9 @@
 import React from "react";
-import { ComponentWrapperProps, resolveWrapperProps } from "../_shared/wrapperProps";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import type { ComponentWrapperProps } from "../_shared/utils/wrapperProps";
+import { resolveWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type CodeProps = ComponentWrapperProps<React.HTMLAttributes<HTMLDivElement>>;
 

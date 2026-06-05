@@ -1,7 +1,7 @@
 import type { FieldLabelProps as FieldLabelBaseProps } from "@base-ui/react";
 import { Field as FieldBase } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 
 export type LabelProps = ComponentWrapperProps<FieldLabelBaseProps> & {

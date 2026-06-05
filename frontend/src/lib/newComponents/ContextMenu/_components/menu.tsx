@@ -3,7 +3,7 @@ import React from "react";
 import type { ContextMenuPopupProps } from "@base-ui/react";
 import { ContextMenu as ContextMenuBase } from "@base-ui/react";
 
-import { PortalContainerContext } from "../../_shared/portalContainerContext";
+import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
 
 export type MenuProps = Omit<ContextMenuPopupProps, "className" | "style"> & {
     children: React.ReactNode;
