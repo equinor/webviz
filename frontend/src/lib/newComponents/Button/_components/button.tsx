@@ -12,7 +12,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/w
 export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & {
     variant?: "contained" | "outlined" | "ghost";
     size?: SelectableSize;
-    tone?: "accent" | "neutral" | "danger";
+    tone?: "accent" | "neutral" | "danger" | "warning";
     disabled?: boolean;
     round?: boolean;
     iconOnly?: boolean;
@@ -32,6 +32,9 @@ const VARIANT_TONE_CLASSES: Record<
 
         danger: "bg-danger-strong text-danger-strong-on-emphasis hover:bg-danger-strong-hover active:bg-danger-strong-active border-transparent data-pressed:bg-danger-strong-active",
 
+        warning:
+            "bg-warning-strong text-warning-strong-on-emphasis hover:bg-warning-strong-hover active:bg-warning-strong-active border-transparent data-pressed:bg-warning-strong-active",
+
         disabled: "bg-disabled text-disabled border-disabled cursor-not-allowed! opacity-50",
     },
     outlined: {
@@ -40,6 +43,8 @@ const VARIANT_TONE_CLASSES: Record<
             "outline -outline-offset-1 outline-neutral-strong text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active bg-transparent data-pressed:bg-neutral-active",
 
         danger: "outline -outline-offset-1 outline-danger-strong text-danger-subtle hover:bg-danger-hover active:bg-danger-active bg-transparent data-pressed:bg-danger-active",
+        warning:
+            "outline -outline-offset-1 outline-warning-strong text-warning-subtle hover:bg-warning-hover active:bg-warning-active bg-transparent data-pressed:bg-warning-active",
 
         disabled:
             "outline -outline-offset-1 outline-disabled text-disabled cursor-not-allowed! opacity-50 bg-transparent",
@@ -51,6 +56,8 @@ const VARIANT_TONE_CLASSES: Record<
             "text-neutral-subtle hover:bg-neutral-hover active:bg-neutral-active data-pressed:bg-neutral-active bg-transparent",
 
         danger: "text-danger-subtle hover:bg-danger-hover active:bg-danger-active  data-pressed:bg-danger-active bg-transparent",
+        warning:
+            "text-warning-subtle hover:bg-warning-hover active:bg-warning-active  data-pressed:bg-warning-active bg-transparent",
 
         disabled: "text-disabled cursor-not-allowed! opacity-50",
     },

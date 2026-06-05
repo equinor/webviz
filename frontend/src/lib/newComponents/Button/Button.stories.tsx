@@ -21,7 +21,7 @@ multiple buttons into a unified control — including split buttons with a dropd
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | \`variant\` | \`"contained" \\| "outlined" \\| "ghost"\` | \`"contained"\` | Visual style of the button |
-| \`tone\` | \`"accent" \\| "neutral" \\| "danger"\` | \`"accent"\` | Colour tone — conveys intent |
+| \`tone\` | \`"accent" \\| "neutral" \\| "danger"\` | \`"accent"\` | \`"warning"\` Colour tone — conveys intent |
 | \`size\` | \`"small" \\| "default" \\| "large"\` | \`"default"\` | Height and font-size |
 | \`round\` | \`boolean\` | — | Fully rounded pill shape |
 | \`iconOnly\` | \`boolean\` | — | Square aspect ratio; hide the label span |
@@ -134,11 +134,12 @@ export const AllTones: Story = {
     },
     render: () => {
         const variants = ["contained", "outlined", "ghost"] as const;
-        const tones = ["accent", "neutral", "danger"] as const;
+        const tones = ["accent", "neutral", "danger", "warning"] as const;
         const labels: Record<(typeof tones)[number], string> = {
             accent: "Confirm",
             neutral: "Cancel",
             danger: "Delete",
+            warning: "Warn",
         };
 
         return (
@@ -219,7 +220,7 @@ export const Pressed: Story = {
             },
         },
     },
-    render: () => {
+    render: function PressedComp() {
         const [on, setOn] = React.useState(false);
         return (
             <Button variant="outlined" tone="accent" pressed={on} onClick={() => setOn((v) => !v)}>
@@ -319,7 +320,7 @@ export const GroupSplit: Story = {
             },
         },
     },
-    render: () => {
+    render: function GroupSplitComp() {
         const [saved, setSaved] = React.useState(false);
 
         return (
