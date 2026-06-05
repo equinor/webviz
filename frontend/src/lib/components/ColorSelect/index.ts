@@ -1,1 +1,0 @@
-export { ColorSelect } from "./colorSelect";

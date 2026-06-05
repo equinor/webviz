@@ -46,7 +46,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                     <AlertDialogBase.Title
                         className="dialog__popup__child"
                         render={(baseProps) => (
-                            <Heading as="h6" {...baseProps}>
+                            <Heading as="h5" {...baseProps}>
                                 {title}
                             </Heading>
                         )}

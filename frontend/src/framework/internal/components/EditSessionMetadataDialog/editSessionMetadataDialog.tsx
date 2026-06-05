@@ -4,7 +4,7 @@ import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
@@ -182,7 +182,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                         Cancel
                     </Button>
                     <Button variant="contained" disabled={isSaving} type="submit" form={formId}>
-                        {isSaving && <CircularProgress size="small" />} Save
+                        {isSaving && <CircularProgress size={16} />} Save
                     </Button>
                 </Dialog.Actions>
             </form>

@@ -11,25 +11,19 @@ export type ColorTileWithBadgeProps = ColorTileProps & {
     badgeIcon: React.ComponentType<SvgIconProps>;
 };
 
-export const ColorTileWithBadge: React.FC<ColorTileWithBadgeProps> = (props) => {
+export function ColorTileWithBadge(props: ColorTileWithBadgeProps): React.ReactNode {
     return (
-        <div className="relative mr-4 inline-flex items-center bg-inherit">
+        <div className="mr-vertical-xs relative inline-flex items-center bg-inherit">
             {/* The colored tile */}
             <ColorTile.Tile {...props} />
 
             {/* The badge icon, positioned top-right */}
             {props.showBadge && (
                 <props.badgeIcon
-                    className={`${props.badgeClassName ?? "bg-white"} text-neutral-strong absolute -top-1 -right-1.5 rounded-full p-px`}
+                    className={`${props.badgeClassName ?? "bg-surface"} text-neutral-strong absolute -top-1 -right-1.5 rounded-full p-px`}
                     fontSize="inherit"
-                    style={{
-                        fontSize: "1rem",
-                        stroke: "var(--eds-color-bg-neutral-canvas)",
-                        strokeWidth: "3px",
-                        paintOrder: "stroke fill",
-                    }}
                 />
             )}
         </div>
     );
-};
+}

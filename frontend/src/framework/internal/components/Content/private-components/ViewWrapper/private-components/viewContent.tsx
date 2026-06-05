@@ -16,10 +16,11 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 
 import { CrashView } from "./crashView";
 import { Button } from "@lib/newComponents/Button";
+import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -47,14 +48,18 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
 
     function makeStateRelatedContent(): React.ReactNode {
         if (importState === ImportStatus.NotImported) {
-            return "Module not imported. Please check the spelling when registering and initializing the module.";
+            return (
+                <Paragraph size="md" tone="warning">
+                    Module not imported. Please check the spelling when registering and initializing the module.
+                </Paragraph>
+            );
         }
 
         if (importState === ImportStatus.Importing) {
             return (
                 <>
-                    <CircularProgress />
-                    <div className="mt-4">Importing...</div>
+                    <CircularProgress size={32} />
+                    <Paragraph size="md">Importing...</Paragraph>
                 </>
             );
         }
@@ -62,14 +67,19 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         if (!props.moduleInstance.isInitialized()) {
             return (
                 <>
-                    <CircularProgress />
-                    <div className="mt-4">Initializing...</div>
+                    <CircularProgress size={32} />
+                    <Paragraph size="md">Initializing...</Paragraph>
                 </>
             );
         }
 
         if (importState === ImportStatus.Failed) {
-            return "Module could not be imported. Please check the spelling when registering and initializing the module.";
+            return (
+                <Paragraph size="md" tone="warning">
+                    Module could not be imported. Please check the spelling when registering and initializing the
+                    module.
+                </Paragraph>
+            );
         }
 
         if (
@@ -82,8 +92,8 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     : "Resetting...";
             return (
                 <>
-                    <CircularProgress />
-                    <div className="mt-4">{text}</div>
+                    <CircularProgress size={32} />
+                    <Paragraph size="md">{text}</Paragraph>
                 </>
             );
         }
@@ -93,17 +103,25 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
 
     const stateRelatedContent = makeStateRelatedContent();
     if (stateRelatedContent) {
-        return <div className="flex h-full w-full flex-col items-center justify-center">{stateRelatedContent}</div>;
+        return (
+            <div className="gap-vertical-xs flex h-full w-full flex-col items-center justify-center">
+                {stateRelatedContent}
+            </div>
+        );
     }
 
     if (moduleInstanceViewStateInvalid) {
         return (
             <div className="gap-vertical-xs px-horizontal-xs py-vertical-xs flex h-full w-full flex-col items-center justify-center">
-                <div className="mx-horizontal-2xs my-vertical-2xs text-warning-subtle max-w-96 text-center">
+                <Paragraph
+                    size="sm"
+                    tone="warning"
+                    layoutClassName="mx-horizontal-2xs my-vertical-2xs text-center max-w-96"
+                >
                     The persisted view state for this module&apos;s view is invalid and could not be applied. It has
                     most likely been outdated by a module update. You can reset the module to its default view to
                     continue using it.
-                </div>
+                </Paragraph>
                 <Button onClick={() => props.moduleInstance.resetInvalidPersistedFlags()} size="small">
                     Reset module
                 </Button>

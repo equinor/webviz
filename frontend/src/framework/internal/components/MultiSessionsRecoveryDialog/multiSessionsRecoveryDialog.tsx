@@ -18,6 +18,7 @@ import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Table } from "@lib/newComponents/Table";
 import { formatDate } from "@lib/utils/dates";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export type MultiSessionsRecoveryDialogProps = {
     workbench: Workbench;
@@ -73,51 +74,50 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
     }
 
     return (
-        <Dialog.Popup open={isOpen}>
-            <Dialog.Header>
-                <Dialog.Title>Multiple unsaved local sessions found</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-                <div className="gap-vertical-md flex w-full flex-col">
-                    <Dialog.Description>
-                        We found one or more previous sessions with unsaved changes in your local browser. You can
-                        either delete them or open one of the sessions below to recover your work.
-                    </Dialog.Description>
+        <AlertDialog
+            title="Multiple unsaved local sessions found"
+            open={isOpen}
+            onOpenChange={setIsOpen}
+            primaryAction={{ label: "Not now", onClick: handleCancel }}
+            secondaryActions={[
+                {
+                    label: "Delete all and close",
+                    onClick: handleDiscardAll,
+                    tone: "danger",
+                },
+            ]}
+        >
+            <div className="gap-vertical-md flex w-full flex-col">
+                <Dialog.Description>
+                    We found one or more previous sessions with unsaved changes in your local browser. You can either
+                    delete them or open one of the sessions below to recover your work.
+                </Dialog.Description>
 
-                    <Table.Root size="small" compact layoutClassName="min-w-3xl w-full">
-                        <Table.Head>
-                            <Table.Column widthInPercent={25}>Name</Table.Column>
-                            <Table.Column widthInPercent={20}>Created</Table.Column>
-                            <Table.Column widthInPercent={20}>Last modified</Table.Column>
-                            <Table.Column widthInPercent={20}>Last saved</Table.Column>
-                            <Table.Column widthInPercent={15} layoutClassName="text-right">
-                                Actions
-                            </Table.Column>
-                        </Table.Head>
+                <Table.Root size="small" compact layoutClassName="min-w-3xl w-full">
+                    <Table.Head>
+                        <Table.Column widthInPercent={25}>Name</Table.Column>
+                        <Table.Column widthInPercent={20}>Created</Table.Column>
+                        <Table.Column widthInPercent={20}>Last modified</Table.Column>
+                        <Table.Column widthInPercent={20}>Last saved</Table.Column>
+                        <Table.Column widthInPercent={15} layoutClassName="text-right">
+                            Actions
+                        </Table.Column>
+                    </Table.Head>
 
-                        <Table.Body>
-                            {sessions.map((session, i) => (
-                                <SessionRecoveryRow
-                                    key={session.id ?? i}
-                                    session={session}
-                                    onOpenInNewTab={handleOpenInNewTab}
-                                    onOpen={handleOpen}
-                                    onDiscard={handleDiscard}
-                                />
-                            ))}
-                        </Table.Body>
-                    </Table.Root>
-                </div>
-            </Dialog.Body>
-            <Dialog.Actions>
-                <Button onClick={handleDiscardAll} variant="ghost" tone="danger">
-                    Delete all and close
-                </Button>
-                <Button onClick={handleCancel} variant="contained">
-                    Not now
-                </Button>
-            </Dialog.Actions>
-        </Dialog.Popup>
+                    <Table.Body>
+                        {sessions.map((session, i) => (
+                            <SessionRecoveryRow
+                                key={session.id ?? i}
+                                session={session}
+                                onOpenInNewTab={handleOpenInNewTab}
+                                onOpen={handleOpen}
+                                onDiscard={handleDiscard}
+                            />
+                        ))}
+                    </Table.Body>
+                </Table.Root>
+            </div>
+        </AlertDialog>
     );
 }
 

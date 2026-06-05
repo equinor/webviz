@@ -24,7 +24,6 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Badge } from "@lib/newComponents/Badge";
 import { Button } from "@lib/newComponents/Button";
@@ -34,6 +33,7 @@ import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -481,7 +481,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         stateIndicators.push(
             <Tooltip key="header-loading" title="This module is currently loading new content.">
                 <div className="flex cursor-help items-center justify-center px-1">
-                    <CircularProgress size="small" />
+                    <CircularProgress size={16} />
                 </div>
             </Tooltip>,
         );

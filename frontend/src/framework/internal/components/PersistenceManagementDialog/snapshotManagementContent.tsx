@@ -14,9 +14,7 @@ import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
@@ -35,6 +33,7 @@ import { formatDate } from "@lib/utils/dates";
 
 import { tableSortDirToApiSortDir } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW, QUERY_PAGE_SIZE } from "./constants";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -152,9 +151,17 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         onValueChange={setDebouncedTitleFilterValue}
                         startAdornment={<Search fontSize="inherit" />}
                         endAdornment={
-                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
-                                <Close fontSize="inherit" />
-                            </DenseIconButton>
+                            <TooltipCompositions.Default content="Clear title filter" side="top">
+                                <Button
+                                    onClick={handleClearTitleFilter}
+                                    size="small"
+                                    variant="ghost"
+                                    iconOnly
+                                    tone="neutral"
+                                >
+                                    <Close fontSize="inherit" />
+                                </Button>
+                            </TooltipCompositions.Default>
                         }
                     />
                 </Field.Root>
@@ -163,7 +170,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     <DateRangePicker value={visitedAtRange ?? { from: null, to: null }} onChange={setVisitedAtRange} />
                 </Field.Root>
             </div>
-            <div className="gap-horizontal-xs flex items-center">
+            <div className="gap-horizontal-4xs flex items-center">
                 <SwitchCompositions.WithLabel
                     checked={onlyShowOwnSnapshots}
                     label="Show my snapshots only"
@@ -178,7 +185,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     onCheckedChange={setHideDeletedSnapshots}
                 />
                 <span className="grow" />
-                <Tooltip title={"Open selected snapshot"} placement="bottom" enterDelay="medium">
+                <TooltipCompositions.Default content="Open selected snapshot" side="bottom">
                     <Button
                         variant="ghost"
                         tone="accent"
@@ -187,8 +194,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     >
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
-                </Tooltip>
-                <Tooltip title={deleteButtonTooltip} placement="bottom" enterDelay="medium">
+                </TooltipCompositions.Default>
+                <TooltipCompositions.Default content={deleteButtonTooltip} side="bottom">
                     <Button
                         variant="ghost"
                         tone="danger"
@@ -198,8 +205,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
                         {deleteButtonText}
                     </Button>
-                </Tooltip>
-                <Tooltip title="Refresh list" placement="bottom" enterDelay="medium">
+                </TooltipCompositions.Default>
+                <TooltipCompositions.Default content="Refresh list" side="bottom">
                     <Button variant="ghost" tone="accent" onClick={queryRefreshActionRef.current?.refresh}>
                         {queryRefreshActionRef.current?.isRefreshing ? (
                             <CircularProgress size={16} />
@@ -208,7 +215,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         )}{" "}
                         Refresh
                     </Button>
-                </Tooltip>
+                </TooltipCompositions.Default>
             </div>
 
             <SnapshotTable

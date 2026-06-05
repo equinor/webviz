@@ -1,6 +1,6 @@
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
 
 export const ParameterParentNodeNames = {
     NAME: "Name",

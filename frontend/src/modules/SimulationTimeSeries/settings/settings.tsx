@@ -16,7 +16,7 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Label } from "@lib/components/Label";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
-import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorSelection } from "@lib/newComponents/SmartNodeSelector";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
 import { Collapsible } from "@lib/newComponents/Collapsible";

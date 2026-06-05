@@ -9,8 +9,6 @@ import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
@@ -29,6 +27,7 @@ import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
 import { tableSortDirToApiSortDir, useInfiniteSessionMetadataQuery } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW } from "./constants";
+import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type SessionOverviewContentProps = {
     workbench: Workbench;
@@ -97,9 +96,17 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         onValueChange={setDebouncedTitleFilterValue}
                         startAdornment={<Search fontSize="inherit" />}
                         endAdornment={
-                            <DenseIconButton onClick={handleClearTitleFilter} title="Clear filter">
-                                <Close fontSize="inherit" />
-                            </DenseIconButton>
+                            <TooltipCompositions.Default content="Clear title filter" side="top">
+                                <Button
+                                    onClick={handleClearTitleFilter}
+                                    size="small"
+                                    variant="ghost"
+                                    tone="neutral"
+                                    iconOnly
+                                >
+                                    <Close fontSize="inherit" />
+                                </Button>
+                            </TooltipCompositions.Default>
                         }
                     />
                 </Field.Root>
@@ -108,24 +115,24 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     <DateRangePicker value={updatedAtRange ?? { from: null, to: null }} onChange={setUpdatedAtRange} />
                 </Field.Root>
             </div>
-            <div className="gap-horizontal-xs flex items-center">
-                <Tooltip title="Start and open new session" placement="bottom" enterDelay="medium">
+            <div className="gap-horizontal-4xs flex items-center">
+                <TooltipCompositions.Default content="Start and open new session" side="bottom">
                     <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
                         <Add fontSize="inherit" /> New session
                     </Button>
-                </Tooltip>
+                </TooltipCompositions.Default>
                 <span className="grow" />
-                <Tooltip title="Edit the selected session" placement="bottom" enterDelay="medium">
+                <TooltipCompositions.Default content="Edit the selected session" side="bottom">
                     <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleEditClick}>
                         <Edit fontSize="inherit" /> Edit
                     </Button>
-                </Tooltip>
-                <Tooltip title="Open the selected session" placement="bottom" enterDelay="medium">
+                </TooltipCompositions.Default>
+                <TooltipCompositions.Default content="Open the selected session" side="bottom">
                     <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleOpenSessionClick}>
                         <FileOpen fontSize="inherit" /> Open
                     </Button>
-                </Tooltip>
-                <Tooltip title="Delete the selected session" placement="bottom" enterDelay="medium">
+                </TooltipCompositions.Default>
+                <TooltipCompositions.Default content="Delete the selected session" side="bottom">
                     <Button
                         tone="danger"
                         disabled={!selectedSession || deletePending}
@@ -134,9 +141,9 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     >
                         {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
                     </Button>
-                </Tooltip>
+                </TooltipCompositions.Default>
 
-                <Tooltip title="Refresh list" placement="top" enterDelay="medium">
+                <TooltipCompositions.Default content="Refresh list" side="top">
                     <Button tone="accent" onClick={queryRefreshActionRef.current?.refresh} variant="ghost">
                         {queryRefreshActionRef.current?.isRefreshing ? (
                             <CircularProgress size={16} />
@@ -145,7 +152,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         )}{" "}
                         Refresh
                     </Button>
-                </Tooltip>
+                </TooltipCompositions.Default>
             </div>
 
             <SessionTable

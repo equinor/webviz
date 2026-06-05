@@ -80,15 +80,17 @@ export function SettingWrapper(props: SettingWrapperProps) {
     }
 
     return (
-        <Field.Root layoutClassName="w-full">
-            {props.label && <Field.Label>{props.label}</Field.Label>}
+        <Field.Root layoutClassName="w-full" inline>
+            <div className="gap-horizontal-2xs flex items-center">
+                {props.label && <Field.Label>{props.label}</Field.Label>}
+                {props.help && (
+                    <Field.Info>
+                        <Heading as="h6">{props.help.title}</Heading>
+                        {props.help.content}
+                    </Field.Info>
+                )}
+            </div>
             {props.description && <Field.Description>{props.description}</Field.Description>}
-            {props.help && (
-                <Field.Info>
-                    <Heading as="h6">{props.help.title}</Heading>
-                    {props.help.content}
-                </Field.Info>
-            )}
             <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
                 {props.children}
                 <Overlay type={overlayType} message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay} />

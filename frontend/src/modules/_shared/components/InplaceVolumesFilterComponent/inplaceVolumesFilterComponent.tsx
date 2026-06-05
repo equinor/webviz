@@ -261,16 +261,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         size={3}
                     />
                 </SettingWrapper>
-
-                <div className="flex flex-row gap-2">
-                    <Checkbox
-                        label="Allow table intersections"
-                        checked={props.selectedAllowIndicesValuesIntersection}
-                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                    />
-                    <ContextHelp
-                        title="Allow table intersections"
-                        content={
+                <SettingWrapper
+                    label="Allow table source intersections"
+                    help={{
+                        title: "Allow table source intersections",
+                        content: (
                             <>
                                 When active allows comparison of tables where available zones, regions, facies, fluids
                                 or responses differs.
@@ -278,9 +273,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 Only the <b>intersection</b> of options will then be available for filtering. <br />
                                 Identifiers not present in all tables will be <b>filtered out</b>.
                             </>
-                        }
+                        ),
+                    }}
+                >
+                    <Checkbox
+                        checked={props.selectedAllowIndicesValuesIntersection}
+                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                        label="Allow table source intersections"
                     />
-                </div>
+                </SettingWrapper>
             </CollapsibleGroup>
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">

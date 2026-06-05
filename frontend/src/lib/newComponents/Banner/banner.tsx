@@ -35,7 +35,7 @@ export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(function Ban
         >
             <span className="grow">{props.children}</span>
             {dismissable && (
-                <Button variant="ghost" tone="neutral" size="small" onClick={props.onDismiss}>
+                <Button variant="ghost" tone="neutral" size="small" onClick={props.onDismiss} iconOnly>
                     <Close fontSize="inherit" />
                 </Button>
             )}

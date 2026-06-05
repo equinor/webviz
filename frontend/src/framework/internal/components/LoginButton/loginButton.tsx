@@ -4,7 +4,7 @@ import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
 import { Popover } from "@lib/newComponents/Popover";
@@ -45,7 +45,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
         } else if (authState === AuthState.NotLoggedIn) {
             return <Login fontSize="small" />;
         } else {
-            return <CircularProgress size="medium-small" />;
+            return <CircularProgress size={16} />;
         }
     }
 
