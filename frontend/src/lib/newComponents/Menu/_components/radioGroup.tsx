@@ -3,7 +3,7 @@ import React from "react";
 import type { MenuRadioGroupProps as MenuRadioGroupBaseProps } from "@base-ui/react";
 import { Menu as MenuBase } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 export type MenuRadioGroupProps = ComponentWrapperProps<MenuRadioGroupBaseProps>;
 

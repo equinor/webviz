@@ -3,8 +3,8 @@ import React from "react";
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuItemProps as MenuBaseItemProps } from "@base-ui/react";
 
-import type { ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
-import { resolveWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { MenuItemContentProps } from "./itemContent";

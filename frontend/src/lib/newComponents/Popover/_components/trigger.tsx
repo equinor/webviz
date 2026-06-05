@@ -2,10 +2,11 @@ import type React from "react";
 
 import type { PopoverTriggerProps as PopoverTriggerBaseProps } from "@base-ui/react/popover";
 import { Popover as PopoverBase } from "@base-ui/react/popover";
-import { omit } from "lodash";
 
-import { Button, ButtonProps } from "@lib/newComponents/Button";
-import { ComponentWrapperProps, resolveWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import type { ButtonProps } from "@lib/newComponents/Button";
+import { Button } from "@lib/newComponents/Button";
 
 export type TriggerProps = ComponentWrapperProps<
     Pick<ButtonProps, "variant" | "size" | "tone" | "round" | "iconOnly" | "compact">

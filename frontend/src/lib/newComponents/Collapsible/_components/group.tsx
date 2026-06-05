@@ -4,8 +4,8 @@ import { Collapsible } from "@base-ui/react";
 import type { CollapsibleRootProps } from "@base-ui/react";
 import { ExpandMore } from "@mui/icons-material";
 
-import type { Tone } from "@lib/newComponents/_shared/tones";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import type { Tone } from "@lib/newComponents/_shared/types/tones";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

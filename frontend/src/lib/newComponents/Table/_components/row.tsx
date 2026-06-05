@@ -1,6 +1,6 @@
 import React from "react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { TableRootContext, useTableRootContext } from "../_contexts/tableRootContext";

@@ -1,10 +1,10 @@
 import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import type { SelectableSize } from "@lib/newComponents/_shared/size";
-import { getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { getTextSizeForSelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

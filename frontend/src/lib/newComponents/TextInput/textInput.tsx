@@ -6,10 +6,10 @@ import { Error } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useComponentSize } from "../_shared/componentSizeContext";
-import type { SelectableSize } from "../_shared/size";
-import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "../_shared/utils/size";
+import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size" | "type">> & {
     startAdornment?: React.ReactNode;

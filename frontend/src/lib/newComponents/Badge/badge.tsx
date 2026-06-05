@@ -2,7 +2,7 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { Tone } from "../_shared/tones";
+import type { Tone } from "../_shared/types/tones";
 
 export type BadgeProps = {
     tone?: Tone;

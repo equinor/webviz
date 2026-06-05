@@ -2,7 +2,7 @@ import React from "react";
 
 import { Field as FieldBase, type FieldErrorProps } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 export type ErrorProps = ComponentWrapperProps<FieldErrorProps>;

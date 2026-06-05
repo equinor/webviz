@@ -1,4 +1,4 @@
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

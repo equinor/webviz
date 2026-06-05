@@ -1,7 +1,7 @@
 import { Field as FieldBase } from "@base-ui/react";
 import type { FieldDescriptionProps as FieldDescriptionBaseProps } from "@base-ui/react";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

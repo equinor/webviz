@@ -1,7 +1,10 @@
 import React from "react";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import { getDataAttributesForSelectableSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/size";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import {
+    getDataAttributesForSelectableSize,
+    getTextSizeForSelectableSize,
+} from "@lib/newComponents/_shared/utils/size";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

@@ -3,8 +3,8 @@ import React from "react";
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuRadioItemProps as MenuRadioItemBaseProps } from "@base-ui/react";
 
-import { RadioButtonIcon } from "@lib/newComponents/_shared/radioButtonIcon";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { RadioButtonIcon } from "@lib/newComponents/_shared/components/radioButtonIcon";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ItemContent, type MenuItemContentProps } from "./itemContent";

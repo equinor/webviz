@@ -1,7 +1,7 @@
 import { Circle } from "@lib/mui-icons";
+import type { PixelSize } from "@lib/newComponents/_shared/utils/size";
 
 import { Tooltip } from "../Tooltip";
-import { PixelSize } from "@lib/newComponents/_shared/size";
 
 export type HasChangesIndicatorProps = {
     visible?: boolean;

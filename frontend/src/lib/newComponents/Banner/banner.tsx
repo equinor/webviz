@@ -4,7 +4,7 @@ import { Close } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { LayoutClassProps } from "../_shared/wrapperProps";
+import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 
 export type BannerProps = LayoutClassProps & {

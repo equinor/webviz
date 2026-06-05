@@ -3,11 +3,11 @@ import React from "react";
 import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/utils/wrapperProps";
 
 export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & {
     variant?: "contained" | "outlined" | "ghost";

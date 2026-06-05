@@ -2,7 +2,7 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TextAreaProps = {
     onValueChange?: (value: string) => void;

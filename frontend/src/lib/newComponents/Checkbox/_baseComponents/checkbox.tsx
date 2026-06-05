@@ -4,9 +4,9 @@ import type { CheckboxRootProps } from "@base-ui/react";
 import { Checkbox as CheckboxBase } from "@base-ui/react";
 import { CheckBox, CheckBoxOutlineBlank, IndeterminateCheckBox } from "@mui/icons-material";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import { getIconSizeClassNameForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { getIconSizeClassNameForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type CheckboxProps = ComponentWrapperProps<Omit<CheckboxRootProps, "ref">> & {

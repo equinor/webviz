@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import type { LayoutClassProps } from "@lib/newComponents/_shared/wrapperProps";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

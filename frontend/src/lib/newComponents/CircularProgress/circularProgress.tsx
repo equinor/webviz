@@ -1,6 +1,6 @@
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { PIXEL_SIZES_CLASSNAMES, type PixelSize } from "../_shared/size";
+import { PIXEL_SIZES_CLASSNAMES, type PixelSize } from "../_shared/utils/size";
 
 export type CircularProgressProps = {
     size?: PixelSize;

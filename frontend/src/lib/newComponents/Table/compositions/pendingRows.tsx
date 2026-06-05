@@ -2,7 +2,7 @@ import React from "react";
 
 import { random, range } from "lodash";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 
 import { Table } from "..";
 import { useTableColumnContext } from "../_contexts/tableColumnContext";

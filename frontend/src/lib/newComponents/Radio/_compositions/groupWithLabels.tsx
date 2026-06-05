@@ -2,8 +2,8 @@ import React from "react";
 
 import { omit } from "lodash";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import { type SelectableSize } from "@lib/newComponents/_shared/size";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { type SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { RadioGroup, type RadioGroupProps } from "../_baseComponents/group";

@@ -7,9 +7,9 @@ import type {
 } from "@base-ui/react";
 import { defaults } from "lodash";
 
-import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

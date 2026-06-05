@@ -3,7 +3,7 @@ import type React from "react";
 import type { TooltipTriggerProps as TooltipTriggerBaseProps } from "@base-ui/react/tooltip";
 import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
 
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 type WrappedTriggerProps = Omit<ComponentWrapperProps<TooltipTriggerBaseProps>, "delay">;
 

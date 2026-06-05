@@ -3,9 +3,9 @@ import React from "react";
 import type { SwitchRootProps } from "@base-ui/react";
 import { Switch as SwitchBase } from "@base-ui/react";
 
-import { useComponentSize } from "@lib/newComponents/_shared/componentSizeContext";
-import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/wrapperProps";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { getDataAttributesForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SwitchProps = ComponentWrapperProps<Omit<SwitchRootProps, "ref">> & {
