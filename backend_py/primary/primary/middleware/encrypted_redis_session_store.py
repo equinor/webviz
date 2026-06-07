@@ -1,10 +1,13 @@
+import logging
 import typing
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 from redis.asyncio.client import Redis
 from starsessions.stores.base import SessionStore
 from starsessions.stores.redis import RedisStore
+
+LOGGER = logging.getLogger(__name__)
 
 
 class EncryptedRedisSessionStore(SessionStore):
@@ -39,7 +42,12 @@ class EncryptedRedisSessionStore(SessionStore):
         if not encrypted_payload:
             return b""
 
-        return self._fernet.decrypt(encrypted_payload)
+        try:
+            return self._fernet.decrypt(encrypted_payload)
+        except InvalidToken:
+            # Probably either unencrypted session data or key rotation; treat as missing session.
+            LOGGER.warning(f"Failed to decrypt data for session_id={session_id[:8]}, treating as missing session.")
+            return b""
 
     async def write(self, session_id: str, data: bytes, lifetime: int, ttl: int) -> str:
         encrypted_payload = self._fernet.encrypt(data)
