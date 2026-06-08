@@ -9,6 +9,8 @@ import { Add, Remove } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBaseProps, "className">> & {
@@ -16,6 +18,7 @@ export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBasePro
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
 
+    size?: SelectableSize;
 
     /**
      * @default "start"
@@ -40,6 +43,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
         "endAdornment",
         "scrubAreaPosition",
         "placeholder",
+        "size",
     );
 
     const wrappedScrubAdornment = makeScrubAdornment(defaultedProps.scrubAdornment);
@@ -53,9 +57,12 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 "bg-canvas text-body-md",
                 "gap-vertical-xs flex items-center pr-0",
                 "data-invalid:outline-danger data-invalid:bg-danger-surface",
+                SELECTABLE_SIZES_CLASSNAMES[size],
                 {
                     "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,
                     "outline-transparent": defaultedProps.disabled,
+                    "pr-horizontal-3xs": size === "small",
+                    "pr-horizontal-sm": size !== "small",
                 },
             )}
         >

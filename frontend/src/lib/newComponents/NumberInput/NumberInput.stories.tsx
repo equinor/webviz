@@ -44,9 +44,9 @@ export const Sizing: Story = {
     },
     render: (args) => (
         <div className="max-w-full">
-            <NumberInput {...args} defaultValue={0} scrubAdornment={<Percent fontSize="inherit" />} />
-            <NumberInput {...args} defaultValue={0} startAdornment={<Percent fontSize="inherit" />} />
-            <NumberInput {...args} defaultValue={0} scrubAdornment={<Percent fontSize="inherit" />} />
+            <NumberInput {...args} defaultValue={0} size="small" scrubAdornment={<Percent fontSize="inherit" />} />
+            <NumberInput {...args} defaultValue={0} size="default" startAdornment={<Percent fontSize="inherit" />} />
+            <NumberInput {...args} defaultValue={0} size="large" scrubAdornment={<Percent fontSize="inherit" />} />
         </div>
     ),
 };
