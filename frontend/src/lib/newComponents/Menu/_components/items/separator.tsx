@@ -16,7 +16,7 @@ function SeparatorComponent(props: MenuSeparatorProps, ref: React.ForwardedRef<H
         <BaseMenu.Separator
             {...baseProps}
             ref={ref}
-            className={resolveClassNames("bg-neutral my-horizontal-3xs h-px", props.layoutClassName)}
+            className={resolveClassNames("menu__separator", props.layoutClassName)}
         />
     );
 }

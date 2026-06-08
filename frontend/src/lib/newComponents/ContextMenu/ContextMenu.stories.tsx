@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react";
 import React from "react";
+
+import type { Meta, StoryObj } from "@storybook/react";
 
 import { ContextMenu } from "./index";
 
@@ -58,7 +59,7 @@ type Story = StoryObj;
 
 function RightClickZone({ label = "Right-click here" }: { label?: string }) {
     return (
-        <div className="w-80 h-40 flex items-center justify-center rounded border-2 border-dashed border-neutral-400 text-neutral-500 select-none text-sm">
+        <div className="flex h-40 w-80 items-center justify-center rounded border-2 border-dashed border-neutral-400 text-sm text-neutral-500 select-none">
             {label}
         </div>
     );
@@ -176,7 +177,7 @@ export const SubCheckboxItem: Story = {
             },
         },
     },
-    render: () => {
+    render: function SubCheckboxItem() {
         const [showGrid, setShowGrid] = React.useState(false);
         const [snapToGrid, setSnapToGrid] = React.useState(true);
         const [showRulers, setShowRulers] = React.useState(false);
@@ -210,7 +211,7 @@ export const SubRadioGroup: Story = {
             },
         },
     },
-    render: () => {
+    render: function SubRadioGroup() {
         const [zoom, setZoom] = React.useState("100");
         return (
             <ContextMenu.Root>
@@ -249,7 +250,7 @@ export const SubSubmenu: Story = {
                 <ContextMenu.Item>Copy</ContextMenu.Item>
                 <ContextMenu.Item>Paste</ContextMenu.Item>
                 <ContextMenu.Separator />
-                <ContextMenu.Submenu>
+                <ContextMenu.Submenu triggerContent="Share">
                     <ContextMenu.Item>Email</ContextMenu.Item>
                     <ContextMenu.Item>Slack</ContextMenu.Item>
                     <ContextMenu.Item>Copy Link</ContextMenu.Item>
@@ -269,7 +270,7 @@ export const DynamicItems: Story = {
             },
         },
     },
-    render: () => {
+    render: function DynamicItems() {
         const [selectedNode, setSelectedNode] = React.useState<string | null>(null);
 
         const nodes = ["Node A", "Node B", "Node C"];
@@ -278,12 +279,12 @@ export const DynamicItems: Story = {
             <ContextMenu.Root>
                 <ContextMenu.Trigger
                     render={
-                        <div className="w-80 h-48 rounded border border-neutral-300 relative select-none">
+                        <div className="relative h-48 w-80 rounded border border-neutral-300 select-none">
                             {nodes.map((node, i) => (
                                 <button
                                     key={node}
                                     className={[
-                                        "absolute px-3 py-1 rounded text-sm border",
+                                        "absolute rounded border px-3 py-1 text-sm",
                                         selectedNode === node
                                             ? "border-blue-500 bg-blue-50 text-blue-700"
                                             : "border-neutral-300 bg-white text-neutral-700",
@@ -295,7 +296,7 @@ export const DynamicItems: Story = {
                                     {node}
                                 </button>
                             ))}
-                            <span className="absolute bottom-2 right-3 text-xs text-neutral-400">
+                            <span className="absolute right-3 bottom-2 text-xs text-neutral-400">
                                 {selectedNode ? `Selected: ${selectedNode}` : "Right-click a node or the canvas"}
                             </span>
                         </div>
@@ -337,7 +338,7 @@ export const FileExplorer: Story = {
             },
         },
     },
-    render: () => {
+    render: function FileExplorer() {
         const [showHidden, setShowHidden] = React.useState(false);
         const [showExtensions, setShowExtensions] = React.useState(true);
         return (
@@ -349,7 +350,7 @@ export const FileExplorer: Story = {
                     <ContextMenu.Item>Open</ContextMenu.Item>
                     <ContextMenu.Item>Open With…</ContextMenu.Item>
                     <ContextMenu.Separator />
-                    <ContextMenu.Submenu>
+                    <ContextMenu.Submenu triggerContent="Send / Download">
                         <ContextMenu.Item>Desktop (shortcut)</ContextMenu.Item>
                         <ContextMenu.Item>Mail Recipient</ContextMenu.Item>
                         <ContextMenu.Item>Compressed Folder</ContextMenu.Item>
@@ -382,7 +383,7 @@ export const TextEditor: Story = {
             },
         },
     },
-    render: () => {
+    render: function TextEditor() {
         const [zoom, setZoom] = React.useState("100");
         const [wordWrap, setWordWrap] = React.useState(true);
         const [lineNumbers, setLineNumbers] = React.useState(true);

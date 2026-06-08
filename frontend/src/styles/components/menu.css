@@ -8,6 +8,11 @@
         }
     }
 
+    .menu__separator {
+        /* my-vertical-xs */
+        @apply bg-neutral my-horizontal-3xs h-px;
+    }
+
     .menu__item {
         @apply gap-horizontal-xs px-vertical-md py-horizontal-xs text-neutral-subtle flex max-w-md items-center;
     }
@@ -20,6 +25,9 @@
         @apply cursor-pointer;
         @apply not-data-disabled:hover:bg-accent-hover focus:outline-focus;
         @apply data-popup-open:bg-accent-hover;
+    }
+    .menu__submenu_trigger {
+        @apply pr-vertical-xs gap-horizontal-2xs flex;
     }
 
     .menu__toggle_indicator {

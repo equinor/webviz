@@ -151,7 +151,7 @@ export const SubMenu: Story = {
                 <Menu.Item>Option 1</Menu.Item>
                 <Menu.Item>Option 2</Menu.Item>
                 <Menu.Separator />
-                <Menu.SubmenuItem disabled triggerContent={"Sub menu"}>
+                <Menu.SubmenuItem triggerContent={"Sub menu"}>
                     <Menu.Item>Option 3</Menu.Item>
                     <Menu.Item>Option 4</Menu.Item>
                     <Menu.Item>Option 5</Menu.Item>
