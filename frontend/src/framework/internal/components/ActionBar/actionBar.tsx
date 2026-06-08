@@ -1,9 +1,10 @@
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { Tabs } from "@lib/newComponents/Tabs";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { StartPanel } from "./_panels/start";
@@ -32,14 +33,15 @@ export function ActionBar(props: ActionBarProps) {
                 </Panel>
             </Tabs.Root>
             <div className="bg-surface flex grow flex-col items-end justify-end">
-                <TooltipCompositions.Default
-                    content={isActionBarVisible ? "Collapse action bar" : "Expand action bar"}
-                    side="top"
-                >
+                <Tooltip content={isActionBarVisible ? "Collapse action bar" : "Expand action bar"} side="top">
                     <Button variant="ghost" size="small" iconOnly onClick={() => setIsActionBarVisible((v) => !v)}>
-                        {isActionBarVisible ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
+                        {isActionBarVisible ? (
+                            <ExpandLess style={{ fontSize: 16 }} />
+                        ) : (
+                            <ExpandMore style={{ fontSize: 16 }} />
+                        )}
                     </Button>
-                </TooltipCompositions.Default>
+                </Tooltip>
             </div>
         </div>
     );

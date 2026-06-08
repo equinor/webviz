@@ -2,7 +2,7 @@ import React from "react";
 
 import { defaults, omit } from "lodash";
 
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { MenuItemProps, MenuPopupProps, MenuRootProps, MenuTriggerProps } from "..";
 import { Menu } from "..";
@@ -99,7 +99,7 @@ function ActionItem(props: { action: Action }) {
     }
 
     return (
-        <TooltipCompositions.Default content={props.action.tooltip} side="right">
+        <Tooltip content={props.action.tooltip} side="right">
             <ItemComp
                 closeOnClick={rootProps?.closeOnClick}
                 checked={props.action.checked}
@@ -110,7 +110,7 @@ function ActionItem(props: { action: Action }) {
             >
                 {props.action.label}
             </ItemComp>
-        </TooltipCompositions.Default>
+        </Tooltip>
     );
 }
 

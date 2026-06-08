@@ -8,9 +8,10 @@ import { Banner } from "@lib/newComponents/Banner";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { TextArea } from "@lib/newComponents/TextArea";
 import { TextInput } from "@lib/newComponents/TextInput";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
 
@@ -85,7 +86,7 @@ export function Form(props: FormProps): React.ReactNode {
                             autoFocus
                             required
                             endAdornment={
-                                <TooltipCompositions.Default
+                                <Tooltip
                                     content={`Your title is currently using ${props.title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
                                 >
                                     <Typography
@@ -93,7 +94,7 @@ export function Form(props: FormProps): React.ReactNode {
                                         family="body"
                                         tone="neutral"
                                     >{`${props.title.length}/${MAX_TITLE_LENGTH}`}</Typography>
-                                </TooltipCompositions.Default>
+                                </Tooltip>
                             }
                         />
                         <FieldCompositions.GenericErrors />
@@ -106,7 +107,7 @@ export function Form(props: FormProps): React.ReactNode {
                             placeholder="Enter session description"
                             rows={3}
                             bottomAdornment={
-                                <TooltipCompositions.Default
+                                <Tooltip
                                     content={`Your descriptions is currently using ${props.description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
                                 >
                                     <Typography
@@ -114,7 +115,7 @@ export function Form(props: FormProps): React.ReactNode {
                                         family="body"
                                         tone="neutral"
                                     >{`${props.description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
-                                </TooltipCompositions.Default>
+                                </Tooltip>
                             }
                         />
                     </FieldCompositions.Default>

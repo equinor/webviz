@@ -4,11 +4,10 @@ import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-
 
 import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/_hooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Banner } from "@lib/newComponents/Banner";
 import { Button } from "@lib/newComponents/Button";
 import { Tabs } from "@lib/newComponents/Tabs";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type ModuleSettingsHeaderProps = {
@@ -55,11 +54,11 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                         {tabKeys.map((key) => {
                             const config = props.availableTabs[key];
                             return (
-                                <TooltipCompositions.Default key={key} content={config.title} side="bottom">
+                                <Tooltip key={key} content={config.title} side="bottom">
                                     <Tabs.Tab key={key} value={key}>
                                         {config.icon}
                                     </Tabs.Tab>
-                                </TooltipCompositions.Default>
+                                </Tooltip>
                             );
                         })}
                     </Tabs.List>
@@ -102,10 +101,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
                     {activeModuleTitle ?? "No module selected"}
                 </span>
                 {warningText && (
-                    <Tooltip
-                        title={`Module has warning${highlightWarning ? " (click to view)" : ""}`}
-                        enterDelay="medium"
-                    >
+                    <Tooltip content={`Module has warning${highlightWarning ? " (click to view)" : ""}`} delay="medium">
                         <Button
                             variant="ghost"
                             disabled={!highlightWarning}

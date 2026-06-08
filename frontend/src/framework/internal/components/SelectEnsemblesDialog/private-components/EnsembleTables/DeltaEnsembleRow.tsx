@@ -10,7 +10,7 @@ import { Combobox } from "@lib/newComponents/Combobox";
 import type { ComboboxItem } from "@lib/newComponents/Combobox/combobox";
 import { Table } from "@lib/newComponents/Table";
 import { TextInput } from "@lib/newComponents/TextInput";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalDeltaEnsembleSetting } from "../../types";
 
@@ -183,21 +183,21 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                             renderItemAdornment={renderEnsembleIdentAdornment}
                         />
                         {isValid && props.isDuplicate && (
-                            <TooltipCompositions.Default content="This delta ensemble is a duplicate of another delta ensemble in the selection.">
+                            <Tooltip content="This delta ensemble is a duplicate of another delta ensemble in the selection.">
                                 <span tabIndex={0} className="text-warning-subtle inline-block rounded">
                                     <WarningOutlined fontSize="small" />
                                 </span>
-                            </TooltipCompositions.Default>
+                            </Tooltip>
                         )}
                     </div>
                 </Table.Cell>
                 <Table.Cell>
                     <div className="flex flex-row">
-                        <TooltipCompositions.Default content="Remove delta ensemble from selection">
+                        <Tooltip content="Remove delta ensemble from selection">
                             <Button variant="ghost" tone="danger" size="small" iconOnly onClick={onDelete}>
                                 <Delete fontSize="inherit" />
                             </Button>
-                        </TooltipCompositions.Default>
+                        </Tooltip>
                     </div>
                 </Table.Cell>
             </Table.Row>

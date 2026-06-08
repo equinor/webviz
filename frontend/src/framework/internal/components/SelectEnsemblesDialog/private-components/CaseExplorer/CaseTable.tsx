@@ -9,7 +9,7 @@ import { Table } from "@lib/newComponents/Table";
 import { TableCompositions } from "@lib/newComponents/Table/compositions";
 import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
 import { SortDirection, type TableSortState } from "@lib/newComponents/Table/typesAndEnums";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Virtualization } from "@lib/newComponents/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -156,7 +156,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                         return (
                             <Table.Row key={caseRow.uuid} rowKey={caseRow.uuid}>
                                 <Table.Cell>
-                                    <TooltipCompositions.Default
+                                    <Tooltip
                                         content={`${numSelectedEnsemblesInCase} ensemble(s) selected in this case`}
                                     >
                                         <div
@@ -167,7 +167,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                         >
                                             {numSelectedEnsemblesInCase}/{caseRow.ensembles.length}
                                         </div>
-                                    </TooltipCompositions.Default>
+                                    </Tooltip>
                                 </Table.Cell>
                                 <Table.Cell>
                                     <CaseNameAndIdCell

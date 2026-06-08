@@ -20,6 +20,7 @@ import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
 import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
 import { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
 import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Virtualization } from "@lib/newComponents/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 
@@ -27,7 +28,6 @@ import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 
 import { tableSortDirToApiSortDir, useInfiniteSessionMetadataQuery } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW } from "./constants";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type SessionOverviewContentProps = {
     workbench: Workbench;
@@ -96,7 +96,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                         onValueChange={setDebouncedTitleFilterValue}
                         startAdornment={<Search fontSize="inherit" />}
                         endAdornment={
-                            <TooltipCompositions.Default content="Clear title filter" side="top">
+                            <Tooltip content="Clear title filter" side="top">
                                 <Button
                                     onClick={handleClearTitleFilter}
                                     size="small"
@@ -106,7 +106,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                                 >
                                     <Close fontSize="inherit" />
                                 </Button>
-                            </TooltipCompositions.Default>
+                            </Tooltip>
                         }
                     />
                 </Field.Root>
@@ -116,43 +116,50 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Field.Root>
             </div>
             <div className="gap-horizontal-4xs flex items-center">
-                <TooltipCompositions.Default content="Start and open new session" side="bottom">
-                    <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
-                        <Add fontSize="inherit" /> New session
-                    </Button>
-                </TooltipCompositions.Default>
-                <span className="grow" />
-                <TooltipCompositions.Default content="Edit the selected session" side="bottom">
-                    <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleEditClick}>
-                        <Edit fontSize="inherit" /> Edit
-                    </Button>
-                </TooltipCompositions.Default>
-                <TooltipCompositions.Default content="Open the selected session" side="bottom">
-                    <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleOpenSessionClick}>
-                        <FileOpen fontSize="inherit" /> Open
-                    </Button>
-                </TooltipCompositions.Default>
-                <TooltipCompositions.Default content="Delete the selected session" side="bottom">
-                    <Button
-                        tone="danger"
-                        disabled={!selectedSession || deletePending}
-                        onClick={handleDeleteClick}
-                        variant="ghost"
-                    >
-                        {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
-                    </Button>
-                </TooltipCompositions.Default>
+                <Tooltip.Provider>
+                    <Tooltip content="Start and open new session" side="bottom">
+                        <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
+                            <Add fontSize="inherit" /> New session
+                        </Button>
+                    </Tooltip>
+                    <span className="grow" />
+                    <Tooltip content="Edit the selected session" side="bottom">
+                        <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleEditClick}>
+                            <Edit fontSize="inherit" /> Edit
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Open the selected session" side="bottom">
+                        <Button
+                            tone="accent"
+                            variant="ghost"
+                            disabled={!selectedSession}
+                            onClick={handleOpenSessionClick}
+                        >
+                            <FileOpen fontSize="inherit" /> Open
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete the selected session" side="bottom">
+                        <Button
+                            tone="danger"
+                            disabled={!selectedSession || deletePending}
+                            onClick={handleDeleteClick}
+                            variant="ghost"
+                        >
+                            {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
+                        </Button>
+                    </Tooltip>
 
-                <TooltipCompositions.Default content="Refresh list" side="top">
-                    <Button tone="accent" onClick={queryRefreshActionRef.current?.refresh} variant="ghost">
-                        {queryRefreshActionRef.current?.isRefreshing ? (
-                            <CircularProgress size={16} />
-                        ) : (
-                            <Refresh fontSize="inherit" />
-                        )}{" "}
-                        Refresh
-                    </Button>
-                </TooltipCompositions.Default>
+                    <Tooltip content="Refresh list" side="top">
+                        <Button tone="accent" onClick={queryRefreshActionRef.current?.refresh} variant="ghost">
+                            {queryRefreshActionRef.current?.isRefreshing ? (
+                                <CircularProgress size={16} />
+                            ) : (
+                                <Refresh fontSize="inherit" />
+                            )}{" "}
+                            Refresh
+                        </Button>
+                    </Tooltip>
+                </Tooltip.Provider>
             </div>
 
             <SessionTable

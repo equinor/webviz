@@ -2,13 +2,11 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { Button } from "../Button";
 
-import { TooltipCompositions } from "./compositions";
-
 import { Tooltip } from "./index";
 
-const meta: Meta<typeof Tooltip.Root> = {
+const meta: Meta<typeof Tooltip> = {
     title: "Components/Tooltip",
-    component: Tooltip.Root,
+    component: Tooltip,
     parameters: {
         layout: "centered",
     },
@@ -16,54 +14,34 @@ const meta: Meta<typeof Tooltip.Root> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof Tooltip.Root>;
+type Story = StoryObj<typeof Tooltip>;
 
 export const Default: Story = {
     render: () => (
-        <Tooltip.Root>
-            <Tooltip.Trigger>
-                <Button>Hover me</Button>
-            </Tooltip.Trigger>
-
-            <Tooltip.Popup>This is a tooltip</Tooltip.Popup>
-        </Tooltip.Root>
+        <Tooltip content="This is a tooltip">
+            <Button>Hover me</Button>
+        </Tooltip>
     ),
 };
 
 export const Positioning: Story = {
     render: () => (
         <div className="gap-horizontal-xs grid grid-cols-4 text-center">
-            <Tooltip.Root>
-                <Tooltip.Trigger>
-                    <Button>Top</Button>
-                </Tooltip.Trigger>
+            <Tooltip content="Top tooltip" side="top">
+                <Button>Top</Button>
+            </Tooltip>
 
-                <Tooltip.Popup side="top">Top tooltip</Tooltip.Popup>
-            </Tooltip.Root>
+            <Tooltip content="Right tooltip" side="right">
+                <Button>Right</Button>
+            </Tooltip>
 
-            <Tooltip.Root>
-                <Tooltip.Trigger>
-                    <Button>Right</Button>
-                </Tooltip.Trigger>
+            <Tooltip content="Bottom tooltip" side="bottom">
+                <Button>Bottom</Button>
+            </Tooltip>
 
-                <Tooltip.Popup side="right">Right tooltip</Tooltip.Popup>
-            </Tooltip.Root>
-
-            <Tooltip.Root>
-                <Tooltip.Trigger>
-                    <Button>Bottom</Button>
-                </Tooltip.Trigger>
-
-                <Tooltip.Popup side="bottom">Bottom tooltip</Tooltip.Popup>
-            </Tooltip.Root>
-
-            <Tooltip.Root>
-                <Tooltip.Trigger>
-                    <Button>Left</Button>
-                </Tooltip.Trigger>
-
-                <Tooltip.Popup side="left">Left tooltip</Tooltip.Popup>
-            </Tooltip.Root>
+            <Tooltip content="Left tooltip" side="left">
+                <Button>Left</Button>
+            </Tooltip>
         </div>
     ),
 };
@@ -71,66 +49,45 @@ export const Positioning: Story = {
 export const Delay: Story = {
     render: () => (
         <div className="gap-horizontal-xs grid grid-cols-3 text-center">
-            <Tooltip.Root>
-                <Tooltip.Trigger delay="short">
-                    <Button>Short</Button>
-                </Tooltip.Trigger>
-                <Tooltip.Popup>Tooltip with a short delay</Tooltip.Popup>
-            </Tooltip.Root>
+            <Tooltip content="Tooltip with a short delay" delay="short">
+                <Button>Short</Button>
+            </Tooltip>
 
-            <Tooltip.Root>
-                <Tooltip.Trigger delay="medium">
-                    <Button>Medium</Button>
-                </Tooltip.Trigger>
-                <Tooltip.Popup>Tooltip with a medium delay</Tooltip.Popup>
-            </Tooltip.Root>
+            <Tooltip content="Tooltip with a medium delay" delay="medium">
+                <Button>Medium</Button>
+            </Tooltip>
 
-            <Tooltip.Root>
-                <Tooltip.Trigger delay="long">
-                    <Button>Long</Button>
-                </Tooltip.Trigger>
-                <Tooltip.Popup>Tooltip with a long delay</Tooltip.Popup>
-            </Tooltip.Root>
+            <Tooltip content="Tooltip with a long delay" delay="long">
+                <Button>Long</Button>
+            </Tooltip>
         </div>
     ),
 };
 
-export const MultipleTooltips: Story = {
+export const TooltipProvider: Story = {
+    name: "Tooltip.Provider",
+    parameters: {
+        docs: {
+            description: {
+                story: "Use `Tooltip.Provider` to wrap multiple tooltips and provide shared context. This means that only one opens at a time, and the tooltip opens without delay when moving to the next sibling",
+            },
+        },
+    },
     render: () => (
         <Tooltip.Provider>
             <div className="gap-horizontal-xs grid grid-cols-3 text-center">
-                <Tooltip.Root>
-                    <Tooltip.Trigger>
-                        <Button>Button 1</Button>
-                    </Tooltip.Trigger>
+                <Tooltip content="First tooltip">
+                    <Button>Button 1</Button>
+                </Tooltip>
 
-                    <Tooltip.Popup>First tooltip</Tooltip.Popup>
-                </Tooltip.Root>
+                <Tooltip content="Second tooltip">
+                    <Button>Button 2</Button>
+                </Tooltip>
 
-                <Tooltip.Root>
-                    <Tooltip.Trigger>
-                        <Button>Button 2</Button>
-                    </Tooltip.Trigger>
-
-                    <Tooltip.Popup>Second tooltip</Tooltip.Popup>
-                </Tooltip.Root>
-
-                <Tooltip.Root>
-                    <Tooltip.Trigger>
-                        <Button>Button 3</Button>
-                    </Tooltip.Trigger>
-
-                    <Tooltip.Popup>Third tooltip</Tooltip.Popup>
-                </Tooltip.Root>
+                <Tooltip content="Third tooltip">
+                    <Button>Button 3</Button>
+                </Tooltip>
             </div>
         </Tooltip.Provider>
-    ),
-};
-
-export const DefaultComposition: Story = {
-    render: () => (
-        <TooltipCompositions.Default content="This tooltip is from a composition!">
-            <Button>Hover me</Button>
-        </TooltipCompositions.Default>
     ),
 };

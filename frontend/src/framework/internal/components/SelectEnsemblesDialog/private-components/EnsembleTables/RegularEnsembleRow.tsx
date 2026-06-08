@@ -8,7 +8,7 @@ import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Table } from "@lib/newComponents/Table";
 import { TextInput } from "@lib/newComponents/TextInput";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
 
@@ -68,11 +68,11 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                     </div>
                 </Table.Cell>
                 <Table.Cell>
-                    <TooltipCompositions.Default content="Remove this ensemble from the list" delay="medium">
+                    <Tooltip content="Remove this ensemble from the list" delay="medium">
                         <Button variant="ghost" tone="danger" onClick={onDelete} size="small" iconOnly>
                             <Delete fontSize="inherit" />
                         </Button>
-                    </TooltipCompositions.Default>
+                    </Tooltip>
                 </Table.Cell>
             </Table.Row>
         </SortableList.Item>

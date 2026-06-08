@@ -13,7 +13,7 @@ import { Field } from "@lib/newComponents/Field";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Select, type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../types";
 
@@ -233,7 +233,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                         <Field.Label indicator={`(${props.selectedEnsembles.length})`}>
                                             My selected Ensembles
                                         </Field.Label>
-                                        <TooltipCompositions.Default content="Remove selected ensembles">
+                                        <Tooltip content="Remove selected ensembles">
                                             <Button
                                                 variant="contained"
                                                 size="small"
@@ -244,7 +244,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                             >
                                                 <Remove style={{ fontSize: 16 }} />
                                             </Button>
-                                        </TooltipCompositions.Default>
+                                        </Tooltip>
                                     </div>
                                     <Select
                                         filter
