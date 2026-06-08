@@ -37,6 +37,7 @@ class EncryptedRedisSessionStore(SessionStore):
         redis_client = Redis.from_url(redis_url)
         self._store = RedisStore(connection=redis_client, prefix=prefix, gc_ttl=gc_ttl)
 
+    # pylint: disable-next=async-suffix
     async def read(self, session_id: str, lifetime: int) -> bytes:
         encrypted_payload = await self._store.read(session_id, lifetime)
         if not encrypted_payload:
@@ -49,9 +50,11 @@ class EncryptedRedisSessionStore(SessionStore):
             LOGGER.warning(f"Failed to decrypt data for session_id={session_id[:8]}, treating as missing session.")
             return b""
 
+    # pylint: disable-next=async-suffix
     async def write(self, session_id: str, data: bytes, lifetime: int, ttl: int) -> str:
         encrypted_payload = self._fernet.encrypt(data)
         return await self._store.write(session_id, encrypted_payload, lifetime, ttl)
 
+    # pylint: disable-next=async-suffix
     async def remove(self, session_id: str) -> None:
         await self._store.remove(session_id)
