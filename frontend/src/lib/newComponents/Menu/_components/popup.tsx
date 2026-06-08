@@ -8,6 +8,7 @@ import type {
 import { defaults } from "lodash";
 
 import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { PortalContainerContext } from "@lib/newComponents/_shared/contexts/portalContainerContext";
 import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
@@ -28,10 +29,12 @@ const DEFAULT_PROPS = {
 function PopupComponent(props: MenuPopupProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const defaultedProps = defaults({}, props, DEFAULT_PROPS);
     const baseProps = resolveWrapperProps(defaultedProps, "side", "align", "itemSize");
+
+    const portalContainer = React.useContext(PortalContainerContext);
     const itemSize = useComponentSize({ size: props.itemSize });
 
     return (
-        <MenuBase.Portal>
+        <MenuBase.Portal container={portalContainer}>
             <MenuBase.Positioner
                 className="z-modal"
                 side={defaultedProps.side}
