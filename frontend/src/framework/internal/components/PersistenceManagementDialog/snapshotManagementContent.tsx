@@ -28,12 +28,12 @@ import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
 import { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
 import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
 import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Virtualization } from "@lib/newComponents/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 
 import { tableSortDirToApiSortDir } from "./_utils";
 import { NEXT_PAGE_THRESHOLD, PENDING_PAGE, PENDING_ROW, QUERY_PAGE_SIZE } from "./constants";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 // The table comp doesn't support nested object key paths, so we transform the data into a flattened object
 type FlattenedSnapshotAccessLog_api = Omit<SnapshotAccessLog_api, "snapshotMetadata"> & {
@@ -151,7 +151,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         onValueChange={setDebouncedTitleFilterValue}
                         startAdornment={<Search fontSize="inherit" />}
                         endAdornment={
-                            <TooltipCompositions.Default content="Clear title filter" side="top">
+                            <Tooltip content="Clear title filter" side="top">
                                 <Button
                                     onClick={handleClearTitleFilter}
                                     size="small"
@@ -161,7 +161,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                                 >
                                     <Close fontSize="inherit" />
                                 </Button>
-                            </TooltipCompositions.Default>
+                            </Tooltip>
                         }
                     />
                 </Field.Root>
@@ -185,37 +185,39 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     onCheckedChange={setHideDeletedSnapshots}
                 />
                 <span className="grow" />
-                <TooltipCompositions.Default content="Open selected snapshot" side="bottom">
-                    <Button
-                        variant="ghost"
-                        tone="accent"
-                        disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
-                        onClick={handleOpenSnapshotClick}
-                    >
-                        <FileOpen fontSize="inherit" /> Open
-                    </Button>
-                </TooltipCompositions.Default>
-                <TooltipCompositions.Default content={deleteButtonTooltip} side="bottom">
-                    <Button
-                        variant="ghost"
-                        tone="danger"
-                        disabled={!selectedSnapshot || deletePending || !userId}
-                        onClick={handleDeleteClick}
-                    >
-                        {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
-                        {deleteButtonText}
-                    </Button>
-                </TooltipCompositions.Default>
-                <TooltipCompositions.Default content="Refresh list" side="bottom">
-                    <Button variant="ghost" tone="accent" onClick={queryRefreshActionRef.current?.refresh}>
-                        {queryRefreshActionRef.current?.isRefreshing ? (
-                            <CircularProgress size={16} />
-                        ) : (
-                            <Refresh fontSize="inherit" />
-                        )}{" "}
-                        Refresh
-                    </Button>
-                </TooltipCompositions.Default>
+                <Tooltip.Provider>
+                    <Tooltip content="Open selected snapshot" side="bottom">
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
+                            onClick={handleOpenSnapshotClick}
+                        >
+                            <FileOpen fontSize="inherit" /> Open
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content={deleteButtonTooltip} side="bottom">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            disabled={!selectedSnapshot || deletePending || !userId}
+                            onClick={handleDeleteClick}
+                        >
+                            {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
+                            {deleteButtonText}
+                        </Button>
+                    </Tooltip>
+                    <Tooltip content="Refresh list" side="bottom">
+                        <Button variant="ghost" tone="accent" onClick={queryRefreshActionRef.current?.refresh}>
+                            {queryRefreshActionRef.current?.isRefreshing ? (
+                                <CircularProgress size={16} />
+                            ) : (
+                                <Refresh fontSize="inherit" />
+                            )}{" "}
+                            Refresh
+                        </Button>
+                    </Tooltip>
+                </Tooltip.Provider>
             </div>
 
             <SnapshotTable

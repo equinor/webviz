@@ -5,6 +5,7 @@ const portalRoot = document.createElement("div");
 portalRoot.id = "portal-root";
 document.body.appendChild(portalRoot);
 
+import { ThemeProvider, createTheme } from "@mui/material";
 import type { Preview } from "@storybook/react";
 
 import { DarkModeButton } from "../src/framework/internal/components/DarkModeButton";
@@ -12,6 +13,16 @@ import { DensityModeToggle } from "../src/framework/internal/components/DensityM
 
 import "../src/styles/index.css";
 import "./preview.css";
+
+const theme = createTheme({
+    components: {
+        MuiSvgIcon: {
+            defaultProps: {
+                fontSize: "inherit",
+            },
+        },
+    },
+});
 
 const preview: Preview = {
     tags: ["autodocs"],
@@ -37,6 +48,11 @@ const preview: Preview = {
                     <Story />
                 </div>
             </>
+        ),
+        (Story) => (
+            <ThemeProvider theme={theme}>
+                <Story />
+            </ThemeProvider>
         ),
     ],
 

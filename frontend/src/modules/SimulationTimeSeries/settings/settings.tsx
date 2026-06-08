@@ -16,7 +16,6 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Label } from "@lib/components/Label";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
-import type { SmartNodeSelectorSelection } from "@lib/newComponents/SmartNodeSelector";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
 import { Collapsible } from "@lib/newComponents/Collapsible";
@@ -27,9 +26,10 @@ import { NumberInput } from "@lib/newComponents/NumberInput";
 import { RadioCompositions } from "@lib/newComponents/Radio";
 import { Select } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
+import type { SmartNodeSelectorSelection } from "@lib/newComponents/SmartNodeSelector";
 import { Switch } from "@lib/newComponents/Switch";
 import { Toggle } from "@lib/newComponents/Toggle";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
@@ -407,12 +407,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     title="Color realizations by parameter"
                     defaultOpen
                     adornment={
-                        <TooltipCompositions.Default content="Enable to color the individual realizations based on the value of a selected parameter. The parameter can be selected in the collapsible section below.">
+                        <Tooltip content="Enable to color the individual realizations based on the value of a selected parameter. The parameter can be selected in the collapsible section below.">
                             <Switch
                                 checked={colorRealizationsByParameter}
                                 onCheckedChange={setColorRealizationsByParameter}
                             />
-                        </TooltipCompositions.Default>
+                        </Tooltip>
                     }
                 >
                     <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">

@@ -2,11 +2,11 @@ import React from "react";
 
 import { Edit } from "@mui/icons-material";
 
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import type { Item } from "../../interfacesAndTypes/entities";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 type EditItemNameProps = {
     item: Item;
@@ -39,7 +39,7 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
     }
 
     return (
-        <TooltipCompositions.Default content="Double-click to edit name" side="bottom">
+        <Tooltip content="Double-click to edit name" side="bottom">
             <div
                 className="group/edit-name gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
                 onDoubleClick={handleNameDoubleClick}
@@ -66,6 +66,6 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
                     </>
                 )}
             </div>
-        </TooltipCompositions.Default>
+        </Tooltip>
     );
 }

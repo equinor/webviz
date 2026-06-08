@@ -5,45 +5,49 @@ import type {
     NumberFieldRootProps as NumberFieldRootBaseProps,
 } from "@base-ui/react/number-field";
 import { NumberField as NumberFieldBase } from "@base-ui/react/number-field";
-import { Add, Remove } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { BrowseButtons } from "../_shared/components/browseButtons";
+import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBaseProps, "className">> & {
-    unitIcon?: React.ReactNode;
-
+    scrubAdornment?: React.ReactNode;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
 
-    disableUnitScrubArea?: boolean;
+    size?: SelectableSize;
+
     /**
      * @default "start"
      */
-    unitPlacement?: "start" | "end";
+    scrubAreaPosition?: "start" | "end";
 
     // Exposed parts-props
     placeholder?: NumberFieldInputBaseProps["placeholder"];
 };
 
 const DEFAULT_PROPS = {
-    unitPlacement: "start",
+    scrubAreaPosition: "start",
+    placeholder: "Enter a number...",
 } satisfies Partial<NumberInputProps>;
 
 function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const size = useComponentSize(props);
     const baseRootProps = resolveWrapperProps(
         defaultedProps,
-        "unitIcon",
+        "scrubAdornment",
         "startAdornment",
         "endAdornment",
-        "disableUnitScrubArea",
-        "unitPlacement",
+        "scrubAreaPosition",
         "placeholder",
+        "size",
     );
 
-    const wrappedUnitIcon = makeUnitIcon(defaultedProps.unitIcon, defaultedProps.disableUnitScrubArea);
+    const wrappedScrubAdornment = makeScrubAdornment(defaultedProps.scrubAdornment);
 
     return (
         <NumberFieldBase.Root
@@ -51,46 +55,51 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
             className={resolveClassNames(
                 props.layoutClassName,
                 "form-element",
-                "bg-canvas text-body-md",
-                "gap-vertical-xs flex items-center pr-0",
+                "bg-canvas grow",
+                "px-vertical-xs gap-vertical-xs flex items-center",
                 "data-invalid:outline-danger data-invalid:bg-danger-surface",
+                SELECTABLE_SIZES_CLASSNAMES[size],
                 {
                     "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,
                     "outline-transparent": defaultedProps.disabled,
                 },
             )}
-        >
-            <NumberFieldBase.Group className="gap-vertical-3xs pl-vertical-xs flex min-w-0 grow items-center">
-                {defaultedProps.startAdornment}
-                {defaultedProps.unitPlacement === "start" && wrappedUnitIcon}
+            render={
+                <NumberFieldBase.Group>
+                    {defaultedProps.startAdornment}
+                    {defaultedProps.scrubAreaPosition === "start" && wrappedScrubAdornment}
 
-                <NumberFieldBase.Input
-                    className="py-vertical-3xs w-full min-w-0 grow outline-0 data-disabled:cursor-not-allowed"
-                    ref={ref}
-                    placeholder={defaultedProps.placeholder}
-                />
+                    <NumberFieldBase.Input
+                        ref={ref}
+                        className="py-vertical-3xs w-full min-w-0 grow self-stretch outline-0 data-disabled:cursor-not-allowed"
+                        placeholder={defaultedProps.placeholder}
+                    />
 
-                {defaultedProps.unitPlacement === "end" && wrappedUnitIcon}
-                {defaultedProps.endAdornment}
+                    {defaultedProps.scrubAreaPosition === "end" && wrappedScrubAdornment}
+                    {defaultedProps.endAdornment}
 
-                <div className="text-body-xs max-h-full shrink-0 flex-col">
-                    <NumberFieldBase.Increment className="size-icon-xs not-disabled:hover:bg-accent-hover disabled:text-disabled text-accent-subtle block shrink not-disabled:cursor-pointer">
-                        <Add fontSize="inherit" className="h-1/2" />
-                    </NumberFieldBase.Increment>
-                    <NumberFieldBase.Decrement className="size-icon-xs not-disabled:hover:bg-accent-hover text-accent-subtle disabled:text-disabled block shrink not-disabled:cursor-pointer">
-                        <Remove fontSize="inherit" className="h-1/2" />
-                    </NumberFieldBase.Decrement>
-                </div>
-            </NumberFieldBase.Group>
-        </NumberFieldBase.Root>
+                    <BrowseButtons
+                        size={size}
+                        disabled={defaultedProps.disabled}
+                        prevTitle="Increase"
+                        nextTitle="Decrease"
+                        renderPrev={<NumberFieldBase.Increment />}
+                        renderNext={<NumberFieldBase.Decrement />}
+                    />
+                </NumberFieldBase.Group>
+            }
+        ></NumberFieldBase.Root>
     );
 }
 
-function makeUnitIcon(unitIcon: React.ReactNode, disableUnitScrubArea: boolean | undefined): React.ReactNode {
-    const wrapperClassName = "flex aspect-square h-6 items-center justify-center text-accent";
+function makeScrubAdornment(scrubAdornment: React.ReactNode): React.ReactNode {
+    const wrapperClassName =
+        "flex items-center justify-center text-accent" +
+        // Adding a bit of padding and negative margin here to make it easier to hit the scrub area without icon
+        // ! Padding matches the gap.
+        " -mx-vertical-xs px-vertical-xs aspect-square";
 
-    if (!unitIcon) return null;
-    if (disableUnitScrubArea) return <span className={wrapperClassName}>{unitIcon}</span>;
+    if (!scrubAdornment) return null;
 
     return (
         <NumberFieldBase.ScrubArea
@@ -99,8 +108,8 @@ function makeUnitIcon(unitIcon: React.ReactNode, disableUnitScrubArea: boolean |
                 return `${wrapperClassName} cursor-ew-resize`;
             }}
         >
-            {unitIcon}
-            <NumberFieldBase.ScrubAreaCursor className="drop-shadow-[0_1px_1px_#0008] filter">
+            {scrubAdornment}
+            <NumberFieldBase.ScrubAreaCursor className="z-9999 drop-shadow-[0_1px_1px_#0008] filter">
                 <CursorGrowIcon />
             </NumberFieldBase.ScrubAreaCursor>
         </NumberFieldBase.ScrubArea>

@@ -3,9 +3,9 @@ import type React from "react";
 import { UnfoldLessDouble, UnfoldMoreDouble } from "@mui/icons-material";
 
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type ExpandCollapseAllButtonProps = {
     group: ItemGroup;
@@ -29,16 +29,16 @@ export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): Re
 
     return (
         <>
-            <TooltipCompositions.Default content="Expand all descendants" side="bottom">
+            <Tooltip content="Expand all descendants" side="bottom">
                 <Button onClick={expandAllChildren} iconOnly variant="ghost" size="small" tone="neutral">
                     <UnfoldMoreDouble fontSize="inherit" />
                 </Button>
-            </TooltipCompositions.Default>
-            <TooltipCompositions.Default content="Collapse all descendants" side="bottom">
+            </Tooltip>
+            <Tooltip content="Collapse all descendants" side="bottom">
                 <Button onClick={collapseAllChildren} iconOnly variant="ghost" size="small" tone="neutral">
                     <UnfoldLessDouble fontSize="inherit" />
                 </Button>
-            </TooltipCompositions.Default>
+            </Tooltip>
         </>
     );
 }

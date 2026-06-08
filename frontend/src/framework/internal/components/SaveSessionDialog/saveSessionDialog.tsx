@@ -3,28 +3,24 @@ import React from "react";
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import type { Workbench } from "@framework/Workbench";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import { Banner } from "@lib/newComponents/Banner";
+import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { TextArea } from "@lib/newComponents/TextArea";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Typography } from "@lib/newComponents/Typography";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { Button } from "@lib/newComponents/Button";
-import { Banner } from "@lib/newComponents/Banner";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
-import { Typography } from "@lib/newComponents/Typography";
-import { TextArea } from "@lib/newComponents/TextArea";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
     saveAsNew?: boolean;
-};
-
-type SaveSessionDialogInputFeedback = {
-    title?: string;
 };
 
 export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
@@ -122,7 +118,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                                     autoFocus
                                     required
                                     endAdornment={
-                                        <TooltipCompositions.Default
+                                        <Tooltip
                                             content={`Your title is currently using ${title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
                                         >
                                             <Typography
@@ -130,7 +126,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                                                 family="body"
                                                 tone="neutral"
                                             >{`${title.length}/${MAX_TITLE_LENGTH}`}</Typography>
-                                        </TooltipCompositions.Default>
+                                        </Tooltip>
                                     }
                                 />
                                 <FieldCompositions.GenericErrors />
@@ -143,7 +139,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                                     placeholder="Enter session description"
                                     rows={3}
                                     bottomAdornment={
-                                        <TooltipCompositions.Default
+                                        <Tooltip
                                             content={`Your description is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
                                         >
                                             <Typography
@@ -151,7 +147,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                                                 family="body"
                                                 tone="neutral"
                                             >{`${description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
-                                        </TooltipCompositions.Default>
+                                        </Tooltip>
                                     }
                                 />
                             </FieldCompositions.Default>

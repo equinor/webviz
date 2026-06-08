@@ -302,11 +302,11 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                     />
                     <NumberInput
                         value={colorScaleSpecification.colorScale.getNumSteps()}
-                        onValueChange={handleNumStepsChange}
                         disabled={colorScaleSpecification.colorScale.getType() !== ColorScaleType.Discrete}
                         min={2}
-                        unitIcon="steps"
-                        unitPlacement="end"
+                        scrubAdornment="steps"
+                        scrubAreaPosition="end"
+                        onValueChange={handleNumStepsChange}
                     />
                 </div>
             </FieldCompositions.Default>

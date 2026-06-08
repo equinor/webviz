@@ -4,19 +4,19 @@ import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { TextArea } from "@lib/newComponents/TextArea";
 import { TextInput } from "@lib/newComponents/TextInput";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -156,7 +156,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                                     autoFocus
                                     required
                                     endAdornment={
-                                        <TooltipCompositions.Default
+                                        <Tooltip
                                             content={`Your title is currently using ${title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
                                         >
                                             <Typography
@@ -164,7 +164,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                                                 family="body"
                                                 tone="neutral"
                                             >{`${title.length}/${MAX_TITLE_LENGTH}`}</Typography>
-                                        </TooltipCompositions.Default>
+                                        </Tooltip>
                                     }
                                 />
                             </FieldCompositions.Default>
@@ -176,7 +176,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                                     placeholder="Enter session description"
                                     rows={3}
                                     bottomAdornment={
-                                        <TooltipCompositions.Default
+                                        <Tooltip
                                             content={`Your descriptions is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
                                         >
                                             <Typography
@@ -184,7 +184,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                                                 family="body"
                                                 tone="neutral"
                                             >{`${description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
-                                        </TooltipCompositions.Default>
+                                        </Tooltip>
                                     }
                                 />
                             </FieldCompositions.Default>

@@ -90,11 +90,16 @@ export const Controlled: Story = {
             description: { story: "Fully controlled — external state owns the selected value." },
         },
     },
-    render: () => {
+    render: function ControlledComp() {
         const [value, setValue] = React.useState<string | null>("spring");
         return (
             <div className="flex flex-col gap-3">
-                <WithBrowseButtons items={SEASONS} value={value} onValueChange={setValue} placeholder="Select a season" />
+                <WithBrowseButtons
+                    items={SEASONS}
+                    value={value}
+                    onValueChange={setValue}
+                    placeholder="Select a season"
+                />
                 <p className="text-body-sm text-neutral-subtle">
                     Selected: {value ? (SEASONS.find((s) => s.value === value)?.label ?? value) : "none"}
                 </p>

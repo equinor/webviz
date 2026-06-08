@@ -1,10 +1,11 @@
 import type React from "react";
 
-import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
+
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -21,7 +22,6 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 
 import { DataProviderStatus, DataProviderTopic } from "./DataProvider";
 import type { DataProvider } from "./DataProvider";
-import { TooltipCompositions } from "@lib/newComponents/Tooltip/compositions";
 
 export type DataProviderComponentProps = {
     dataProvider: DataProvider<any, any>;
@@ -86,11 +86,11 @@ function StartActions(props: StartActionProps): React.ReactNode {
     }
     return (
         <div className="flex items-center">
-            <TooltipCompositions.Default content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
+            <Tooltip content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
                 <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
                     {isExpanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
                 </Button>
-            </TooltipCompositions.Default>
+            </Tooltip>
             <VisibilityToggle item={props.dataProvider} />
         </div>
     );
@@ -113,45 +113,45 @@ function EndActions(props: EndActionProps): React.ReactNode {
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
             return (
-                <TooltipCompositions.Default content="Subordinated" side="bottom">
+                <Tooltip content="Subordinated" side="bottom">
                     <Difference style={{ fontSize: 16 }} />
-                </TooltipCompositions.Default>
+                </Tooltip>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <TooltipCompositions.Default content={progressMessage ?? "Loading"} side="bottom">
+                <Tooltip content={progressMessage ?? "Loading"} side="bottom">
                     <div className="gap-horizontal-2xs flex min-w-0 items-center">
                         <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
                         <CircularProgress size={16} />
                     </div>
-                </TooltipCompositions.Default>
+                </Tooltip>
             );
         }
         if (status === DataProviderStatus.ERROR) {
             const error = props.dataProvider.getError();
             if (!error) {
                 return (
-                    <TooltipCompositions.Default content="Error" side="bottom">
+                    <Tooltip content="Error" side="bottom">
                         <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
-                    </TooltipCompositions.Default>
+                    </Tooltip>
                 );
             }
 
             if (typeof error === "string") {
                 return (
-                    <TooltipCompositions.Default content={error} side="bottom">
+                    <Tooltip content={error} side="bottom">
                         <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
-                    </TooltipCompositions.Default>
+                    </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
-                    <TooltipCompositions.Default content={statusMessage.message} side="bottom">
+                    <Tooltip content={statusMessage.message} side="bottom">
                         <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
-                    </TooltipCompositions.Default>
+                    </Tooltip>
                 );
             }
         }
@@ -167,16 +167,16 @@ function EndActions(props: EndActionProps): React.ReactNode {
             errorMessage += "\nPlease check the settings.";
 
             return (
-                <TooltipCompositions.Default content={errorMessage} side="bottom">
+                <Tooltip content={errorMessage} side="bottom">
                     <Block className="text-danger-subtle" style={{ fontSize: 16 }} />
-                </TooltipCompositions.Default>
+                </Tooltip>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
-                <TooltipCompositions.Default content="Successfully loaded" side="bottom">
+                <Tooltip content="Successfully loaded" side="bottom">
                     <CheckCircle className="text-success-subtle" style={{ fontSize: 16 }} />
-                </TooltipCompositions.Default>
+                </Tooltip>
             );
         }
         return null;
