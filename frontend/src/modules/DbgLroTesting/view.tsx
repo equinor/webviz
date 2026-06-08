@@ -15,7 +15,7 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
     const viewInputData = props.viewContext.useSettingsToViewInterfaceValue("viewInputData");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
-    statusWriter.setLoading(displayableData ? displayableData.settingsIsLoading : false);
+    statusWriter.setLoading(displayableData ? displayableData.settings_isLoadingDerivedTableHandle || displayableData.settings_isLoadingCalc : false);
 
     const theText = displayableData ? displayableData.infoString : "N/A";
 
@@ -24,33 +24,39 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
     const derivedTableHandle = viewInputData?.derivedTableHandle ?? null;
     const calculationParams = viewInputData?.calculationParams ?? null;
 
-    //console.log(`DbgLroTestingView: caseUuid=${caseUuid}, ensembleName=${ensembleName}, derivedTableHandle=${derivedTableHandle}, calculationParams=${calculationParams}`);
-    const calcQuery = useQuery({
-        ...getCalcSomethingOnDerivedTableOptions({
-            query: {
-                case_uuid: caseUuid ?? "DUMMY",
-                ensemble_name: ensembleName ?? "DUMMY",
-                derived_table_handle: derivedTableHandle ?? "DUMMY",
-                calculation_params: calculationParams ?? "DUMMY",
-            },
-        }),
-        enabled: Boolean(caseUuid && ensembleName && derivedTableHandle && calculationParams),
-    });
-
-    calcQuery.isLoading && statusWriter.setLoading(true);
+    // //console.log(`DbgLroTestingView: caseUuid=${caseUuid}, ensembleName=${ensembleName}, derivedTableHandle=${derivedTableHandle}, calculationParams=${calculationParams}`);
+    // const calcQuery = useQuery({
+    //     ...getCalcSomethingOnDerivedTableOptions({
+    //         query: {
+    //             case_uuid: caseUuid ?? "DUMMY",
+    //             ensemble_name: ensembleName ?? "DUMMY",
+    //             derived_table_handle: derivedTableHandle ?? "DUMMY",
+    //             calculation_params: calculationParams ?? "DUMMY",
+    //         },
+    //     }),
+    //     enabled: Boolean(caseUuid && ensembleName && derivedTableHandle && calculationParams),
+    // });
+    // calcQuery.isLoading && statusWriter.setLoading(true);
 
     // if (calcQuery.isError) {
     //     console.log("Calc query error:", calcQuery.error);
     // }
 
-    let statusStr = "DISABLED";
-    if (calcQuery.isEnabled) {
-        statusStr = calcQuery.status;
+    let calcQueryStatusStr = "---";
+    let calcQueryDataStr = "---";
 
-        if (calcQuery.error && isAxiosError(calcQuery.error)) {
-            statusStr += ` (${calcQuery.error.response?.status})`;
-        }
-    }
+    // if (calcQuery.isEnabled) {
+    //     calcQueryStatusStr = calcQuery.status;
+
+    //     if (calcQuery.error && isAxiosError(calcQuery.error)) {
+    //         calcQueryStatusStr += ` (${calcQuery.error.response?.status})`;
+    //     }
+    // }
+    // else {
+    //     calcQueryStatusStr = "disabled";
+    // }
+
+    // calcQueryDataStr = calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A";
 
     return (
         <div className="relative w-full h-full flex flex-col">
@@ -67,7 +73,9 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
             <br />
             Settings progress:
             <br />
-            {displayableData?.settingsProgressText ?? "N/A"}
+            Hybrid: {displayableData?.settings_hybridProgressText ?? "N/A"}
+            <br />
+            Calculation: {displayableData?.settings_calcStatusStr ?? "N/A"}
             
             <br />
             <br />
@@ -83,11 +91,11 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
             
             <br />
             <br />
-            Calc query:
+            View calc query:
             <br />
-            Status: {statusStr}
+            Status: {calcQueryStatusStr}
             <br />
-            Data: {calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A"}
+            Data: {calcQueryDataStr}
         </div>
     );
 }

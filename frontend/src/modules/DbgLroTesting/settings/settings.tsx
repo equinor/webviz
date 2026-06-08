@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { useQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 
 import type { Options, GetDerivedVectorTableHybridData_api } from "@api";
 import { getDerivedVectorTableHybrid, getDerivedVectorTableHybridQueryKey } from "@api";
@@ -12,6 +13,7 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { getCalcSomethingOnDerivedTableOptions } from "@api/@tanstack/react-query.gen";
 
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
@@ -36,6 +38,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     const [calculationParamString, setCalculationParamString] = useState<string>("");
 
     const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
+    const [calcProgressText, setCalcProgressText] = React.useState<string | null>(null);
 
     const setViewInputData = useSetAtom(viewInputDataAtom);
     const setViewDisplayableData = useSetAtom(viewDisplayableDataAtom);
@@ -61,20 +64,66 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         enabled: selectedEnsembleIdent ? true : false,
     });
 
-    function handleProgress(progressMessage: string | null) {
+    function handleHybridProgress(progressMessage: string | null) {
         if (progressMessage) {
             console.debug(`HYBRID PROGRESS: ${progressMessage}`);
             setHybridProgressText(progressMessage);
         }
     }
-    useLroProgress(hybrid_derivedTableQueryOptions.queryKey, handleProgress);
+    useLroProgress(hybrid_derivedTableQueryOptions.queryKey, handleHybridProgress);
 
     const isLoadingDerivedTableHandle = hybrid_derivedTableQuery.isFetching;
     if (!isLoadingDerivedTableHandle && hybridProgressText) {
         setHybridProgressText(null);
     }
 
-    const derivedTableHandle = hybrid_derivedTableQuery.data?.table_handle ?? null;
+    const derivedTableHandle = hybrid_derivedTableQuery.isFetching ? null : (hybrid_derivedTableQuery.data?.table_handle ?? null);
+
+
+    const case_uuid = selectedEnsembleIdent?.value?.getCaseUuid() ?? null;
+    const ensemble_name = selectedEnsembleIdent?.value?.getEnsembleName() ?? null;
+    console.log(`VIEW: case_uuid: ${case_uuid}, ensemble_name: ${ensemble_name}, derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
+
+    const calcQuery = useQuery({
+        ...getCalcSomethingOnDerivedTableOptions({
+            query: {
+                case_uuid: case_uuid ?? "DUMMY",
+                ensemble_name: ensemble_name ?? "DUMMY",
+                derived_table_handle: derivedTableHandle ?? "DUMMY",
+                calculation_params: calculationParamString ?? "DUMMY",
+            },
+        }),
+        enabled: Boolean(selectedEnsembleIdent && derivedTableHandle && calculationParamString),
+    });
+
+    const isLoadingCalc = calcQuery.isFetching;
+
+    let calcStatusStr = "disabled";
+    if (calcQuery.isEnabled) {
+        calcStatusStr = calcQuery.status;
+        if (calcQuery.error && isAxiosError(calcQuery.error)) {
+            calcStatusStr += ` (${calcQuery.error.response?.status})`;
+        }
+    }
+
+    //console.log(`calcQuery: isEnabled=${calcQuery.isEnabled}, status=${calcQuery.status}, error=${calcQuery.error}`);
+
+    const calcDataStr = calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A";
+
+
+    useEffect(
+        function refetchDerivedTableOn410() {
+            if (calcQuery.error && isAxiosError(calcQuery.error)) {
+                const statusCode = calcQuery.error.response?.status;
+                if (statusCode === 410) {
+                    console.debug("Calc query returned 410, refetching derived table...");
+                    hybrid_derivedTableQuery.refetch();
+                }
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [calcQuery.error],
+    );
 
 
     useEffect(
@@ -83,11 +132,14 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
             infoString += `\nSelected vectors: ${selectedVectors.length > 0 ? selectedVectors.join(", ") : "none"}`;
             setViewDisplayableData({
                 infoString: infoString,
-                settingsIsLoading: isLoadingDerivedTableHandle,
-                settingsProgressText: hybridProgressText,
+                settings_isLoadingDerivedTableHandle: isLoadingDerivedTableHandle,
+                settings_hybridProgressText: hybridProgressText,
+                settings_isLoadingCalc: isLoadingCalc,
+                settings_calcStatusStr: calcStatusStr,
+                settings_calcDataStr: calcDataStr,
             });
         },
-        [selectedEnsembleIdent, selectedVectors, isLoadingDerivedTableHandle, hybridProgressText, setViewDisplayableData],
+        [selectedEnsembleIdent, selectedVectors, isLoadingDerivedTableHandle, hybridProgressText, isLoadingCalc, calcStatusStr, calcDataStr, setViewDisplayableData],
     );
 
     useEffect(
