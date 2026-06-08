@@ -287,7 +287,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             value={selectedEnsembleIdents.value ?? []}
                             allowDeltaEnsembles={true}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                            onChange={handleEnsembleSelectChange}
+                            onValueChange={handleEnsembleSelectChange}
                         />
                     </SettingWrapper>
                     <Separator orientation="horizontal" />

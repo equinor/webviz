@@ -15,20 +15,20 @@ export type EnsemblePickerProps = (
           ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
           allowDeltaEnsembles: true;
           value: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
-          onChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
+          onValueChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
       }
     | {
           ensembles: readonly RegularEnsemble[];
           allowDeltaEnsembles?: false | undefined;
           value: RegularEnsembleIdent[];
-          onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
+          onValueChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
       }
 ) & {
     ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
 };
 
 export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
-    const { onChange, ensembles, value, allowDeltaEnsembles, ensembleRealizationFilterFunction } = props;
+    const { onValueChange: onChange, ensembles, value, allowDeltaEnsembles, ensembleRealizationFilterFunction } = props;
 
     const selectedArray = React.useMemo<string[]>(() => {
         return value.map((ident) => ident.toString());

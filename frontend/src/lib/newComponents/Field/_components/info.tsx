@@ -18,7 +18,7 @@ export function Info(props: InfoProps): React.ReactNode {
             <Popover.Trigger size="small" tone="neutral" variant="ghost" iconOnly round>
                 <InfoIcon fontSize="small" />
             </Popover.Trigger>
-            <Popover.Popup side={props.side} align={props.align}>
+            <Popover.Popup side={props.side} align={props.align} sticky={false}>
                 {props.children}
             </Popover.Popup>
         </Popover.Root>

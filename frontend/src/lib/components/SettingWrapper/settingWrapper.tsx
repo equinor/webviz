@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { Field } from "@lib/newComponents/Field";
 import { Heading } from "@lib/newComponents/Typography/compositions";
@@ -8,6 +8,7 @@ import { type ContextHelpProps } from "../ContextHelp";
 
 import { Annotations } from "./_components/Annotations";
 import { Overlay, type OverlayProps } from "./_components/Overlay";
+import { SettingsLayoutContext } from ".";
 
 export type SettingAnnotation = {
     type: "warning" | "info" | "error";
@@ -29,6 +30,7 @@ type PlainAnnotationStrings = {
  */
 export type SettingWrapperProps = {
     children: React.ReactElement;
+    layout?: "inline" | "stacked";
     errorOverlay?: string;
     warningOverlay?: string;
     infoOverlay?: string;
@@ -60,6 +62,7 @@ function isNotAnnotationList(props: SettingWrapperProps): props is SettingWrappe
  * These two approaches are mutually exclusive and cannot be combined.
  */
 export function SettingWrapper(props: SettingWrapperProps) {
+    const groupContext = React.useContext(SettingsLayoutContext);
     const annotations: SettingAnnotation[] = isNotAnnotationList(props)
         ? ([
               props.errorAnnotation && { type: "error", message: props.errorAnnotation },
@@ -79,23 +82,80 @@ export function SettingWrapper(props: SettingWrapperProps) {
         overlayType = "info";
     }
 
+    const isStacked = props.layout === "stacked" || groupContext === "stacked";
+
+    if (isStacked) {
+        return (
+            <Field.Root layoutClassName="w-full col-span-2">
+                <div className="gap-horizontal-2xs flex items-center">
+                    {props.label && <Field.Label>{props.label}</Field.Label>}
+                    {props.help && (
+                        <Field.Info side="right">
+                            <Heading as="h6">{props.help.title}</Heading>
+                            {props.help.content}
+                        </Field.Info>
+                    )}
+                </div>
+                {props.description && <Field.Description>{props.description}</Field.Description>}
+                <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
+                    {props.children}
+                    <Overlay
+                        type={overlayType}
+                        message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay}
+                    />
+                </div>
+                <Annotations annotations={annotations} />
+            </Field.Root>
+        );
+    }
+
+    if (!props.label) {
+        return (
+            <Field.Root inline>
+                <div className="gap-x-horizontal-xs col-span-2 flex items-center">
+                    <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
+                        {props.children}
+                        <Overlay
+                            type={overlayType}
+                            message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay}
+                        />
+                    </div>
+                    <Annotations annotations={annotations} />
+                    {props.help && (
+                        <Field.Info side="right">
+                            <Heading as="h6">{props.help.title}</Heading>
+                            {props.help.content}
+                        </Field.Info>
+                    )}
+                </div>
+            </Field.Root>
+        );
+    }
+
     return (
-        <Field.Root layoutClassName="w-full" inline>
-            <div className="gap-horizontal-2xs flex items-center">
-                {props.label && <Field.Label>{props.label}</Field.Label>}
-                {props.help && (
-                    <Field.Info>
-                        <Heading as="h6">{props.help.title}</Heading>
-                        {props.help.content}
-                    </Field.Info>
-                )}
+        <Field.Root inline>
+            <div className="gap-vertical-4xs flex flex-col justify-center">
+                <div className="gap-horizontal-2xs flex items-center">
+                    {props.label && <Field.Label>{props.label}</Field.Label>}
+                    {props.help && (
+                        <Field.Info side="right">
+                            <Heading as="h6">{props.help.title}</Heading>
+                            {props.help.content}
+                        </Field.Info>
+                    )}
+                </div>
+                {props.description && <Field.Description>{props.description}</Field.Description>}
             </div>
-            {props.description && <Field.Description>{props.description}</Field.Description>}
-            <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
-                {props.children}
-                <Overlay type={overlayType} message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay} />
+            <div className="flex flex-col items-center">
+                <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
+                    {props.children}
+                    <Overlay
+                        type={overlayType}
+                        message={props.errorOverlay ?? props.warningOverlay ?? props.infoOverlay}
+                    />
+                </div>
+                <Annotations annotations={annotations} />
             </div>
-            <Annotations annotations={annotations} />
         </Field.Root>
     );
 }

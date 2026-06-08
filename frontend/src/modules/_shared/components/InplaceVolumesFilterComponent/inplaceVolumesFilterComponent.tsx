@@ -240,7 +240,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         value={ensembleIdents}
                         allowDeltaEnsembles={false}
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleIdentsChange}
+                        onValueChange={handleEnsembleIdentsChange}
                     />
                 </SettingWrapper>
 
