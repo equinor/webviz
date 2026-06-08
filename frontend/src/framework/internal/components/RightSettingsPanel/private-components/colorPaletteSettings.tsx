@@ -45,7 +45,6 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     }
 
     function handleColorPaletteStepsChanged(newSteps: number | null, type: ColorScaleDiscreteSteps) {
-        console.debug(newSteps);
         if (newSteps === null) return;
         props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings().setStepsForType(type, newSteps);
         setSteps({
@@ -107,10 +106,10 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                         min={2}
                                         max={100}
                                         value={steps[ColorScaleDiscreteSteps.Sequential]}
+                                        scrubAdornment={<Numbers fontSize="inherit" />}
                                         onValueChange={(value) =>
                                             handleColorPaletteStepsChanged(value, ColorScaleDiscreteSteps.Sequential)
                                         }
-                                        unitIcon={<Numbers fontSize="inherit" />}
                                     />
                                 </span>
                             </div>
@@ -148,10 +147,10 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                         min={2}
                                         max={100}
                                         value={steps[ColorScaleDiscreteSteps.Diverging]}
+                                        scrubAdornment={<Numbers fontSize="inherit" />}
                                         onValueChange={(value) =>
                                             handleColorPaletteStepsChanged(value, ColorScaleDiscreteSteps.Diverging)
                                         }
-                                        unitIcon={<Numbers fontSize="inherit" />}
                                     />
                                 </span>
                             </div>

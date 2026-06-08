@@ -131,9 +131,9 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                         min={0}
                         max={100}
                         step={1}
-                        unitIcon="%"
+                        scrubAdornment="%"
                         onValueChange={handleStrokeOpacityChange}
-                        unitPlacement="end"
+                        scrubAreaPosition="end"
                         layoutClassName="grow max-w-48"
                         disabled={!props.value.hasStroke}
                     />
@@ -144,8 +144,8 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                         value={props.value.strokeWeight}
                         onValueChange={handleStrokeWeightChange}
                         layoutClassName="w-24"
-                        unitIcon="px"
-                        unitPlacement="end"
+                        scrubAdornment="px"
+                        scrubAreaPosition="end"
                         disabled={!props.value.hasStroke}
                     />
                 </div>
@@ -168,8 +168,8 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     step={1}
                     value={props.value.fillOpacity * 100}
                     onValueChange={handleFillOpacityChange}
-                    unitIcon="%"
-                    unitPlacement="end"
+                    scrubAdornment="%"
+                    scrubAreaPosition="end"
                     layoutClassName="w-full"
                     disabled={!props.value.hasFill}
                 />

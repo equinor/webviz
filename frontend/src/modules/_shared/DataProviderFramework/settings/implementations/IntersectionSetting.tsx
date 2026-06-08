@@ -294,8 +294,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                                 min={extensionLengthConfig?.min}
                                 max={extensionLengthConfig?.max}
                                 onValueChange={handleExtensionLengthChange}
-                                unitIcon="m"
-                                unitPlacement="end"
+                                scrubAdornment="m"
+                                scrubAreaPosition="end"
                             />
                         </>
                     )}

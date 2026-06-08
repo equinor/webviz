@@ -197,8 +197,8 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                             min={min}
                             max={max}
                             onValueChange={handleInputChange}
-                            unitIcon="%"
-                            unitPlacement="end"
+                            scrubAdornment="%"
+                            scrubAreaPosition="end"
                         />
                     </div>
                 </div>
