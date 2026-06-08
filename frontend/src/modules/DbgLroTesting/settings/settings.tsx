@@ -119,6 +119,8 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
 
     function handleRefetchDerivedTable() {
         console.debug(`handleRefetchDerivedTable`);
+        // !!!!!!!!!!!
+        // !!!!!!!!!!!
         hybrid_derivedTableQuery.refetch();
     }
 

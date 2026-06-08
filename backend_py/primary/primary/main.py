@@ -112,7 +112,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
-    UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_USER_SESSION_URL)
+    UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_CACHE_URL)
 
     # This part, after the yield, will be executed after the application has finished.
     yield

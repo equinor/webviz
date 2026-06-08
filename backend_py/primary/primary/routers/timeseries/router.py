@@ -824,7 +824,7 @@ async def get_calc_something_on_derived_table(
     table_info: DerivedTableInfo | None = await user_cache.get_pydantic_model_async(derived_table_handle, DerivedTableInfo, "json")
     perf_metrics.record_lap("get-from-cache")
     if not table_info:
-        raise HTTPException(status_code=404, detail="Derived table not found in cache")
+        raise HTTPException(status_code=410, detail="Derived table not found in cache")
     
     return f"Did some calculation with {calculation_params=} on derived table with vectors {table_info.vector_names} (retrieved from cache in {perf_metrics.to_string()})"
 

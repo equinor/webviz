@@ -1,5 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 
 import { getCalcSomethingOnDerivedTableOptions } from "@api/@tanstack/react-query.gen";
 
@@ -23,6 +24,7 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
     const derivedTableHandle = viewInputData?.derivedTableHandle ?? null;
     const calculationParams = viewInputData?.calculationParams ?? null;
 
+    //console.log(`DbgLroTestingView: caseUuid=${caseUuid}, ensembleName=${ensembleName}, derivedTableHandle=${derivedTableHandle}, calculationParams=${calculationParams}`);
     const calcQuery = useQuery({
         ...getCalcSomethingOnDerivedTableOptions({
             query: {
@@ -40,6 +42,15 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
     // if (calcQuery.isError) {
     //     console.log("Calc query error:", calcQuery.error);
     // }
+
+    let statusStr = "DISABLED";
+    if (calcQuery.isEnabled) {
+        statusStr = calcQuery.status;
+
+        if (calcQuery.error && isAxiosError(calcQuery.error)) {
+            statusStr += ` (${calcQuery.error.response?.status})`;
+        }
+    }
 
     return (
         <div className="relative w-full h-full flex flex-col">
@@ -74,7 +85,7 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
             <br />
             Calc query:
             <br />
-            Status: {calcQuery.status}
+            Status: {statusStr}
             <br />
             Data: {calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A"}
         </div>
