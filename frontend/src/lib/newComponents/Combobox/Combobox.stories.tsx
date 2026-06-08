@@ -1,7 +1,7 @@
 import React from "react";
 
-import type { Meta, StoryObj } from "@storybook/react";
 import { Public, Search } from "@mui/icons-material";
+import type { Meta, StoryObj } from "@storybook/react";
 
 import { Field } from "@lib/newComponents/Field";
 
@@ -141,14 +141,18 @@ export const WithDefaultValue: Story = {
 };
 
 export const MultipleSelect: Story = {
+    args: { selectionMode: "chips", items: COUNTRIES },
+    argTypes: {
+        selectionMode: { control: "select", options: ["count", "chips"] },
+    },
     parameters: {
         docs: {
             description: { story: "Pass `multiple` to allow selecting more than one item." },
         },
     },
-    render: () => (
+    render: (args) => (
         <div className="w-64">
-            <Combobox items={COUNTRIES} multiple clearable placeholder="Select countries" />
+            <Combobox multiple clearable placeholder="Select countries" {...args} />
         </div>
     ),
 };
@@ -174,7 +178,7 @@ export const Controlled: Story = {
             description: { story: "Fully controlled — external state owns the selected value." },
         },
     },
-    render: () => {
+    render: function ControlledComp() {
         const [value, setValue] = React.useState<string | null>(null);
         return (
             <div className="flex w-64 flex-col gap-3">
@@ -357,7 +361,7 @@ export const AsyncFetchOnOpen: Story = {
             },
         },
     },
-    render: () => {
+    render: function AsyncFetchOnOpenComp() {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
         const [open, setOpen] = React.useState(false);
@@ -402,7 +406,7 @@ export const AsyncSearchAsYouType: Story = {
             },
         },
     },
-    render: () => {
+    render: function AsyncSearchAsYouTypeComp() {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
         const [query, setQuery] = React.useState("");
@@ -450,7 +454,7 @@ export const AsyncFetchError: Story = {
             },
         },
     },
-    render: () => {
+    render: function AsyncFetchErrorComp() {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
         const [errorText, setErrorText] = React.useState<string | undefined>(undefined);
