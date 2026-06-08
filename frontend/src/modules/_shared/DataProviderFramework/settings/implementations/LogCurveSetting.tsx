@@ -3,8 +3,8 @@ import type React from "react";
 import { chain, isEqual, sortBy } from "lodash";
 
 import type { WellboreLogCurveHeader_api } from "@api";
-import type { ComboboxGroup, ComboboxItem } from "@lib/newComponents/Combobox/combobox";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { ComboboxItem, ComboboxGroup } from "@lib/newComponents/Combobox/types";
 import { makeSelectValueForCurveHeader } from "@modules/_shared/utils/wellLog";
 
 import type {
