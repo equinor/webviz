@@ -1,0 +1,39 @@
+import React from "react";
+
+import type { ContextMenuItemProps, MenuItemProps } from "@base-ui/react";
+import { Menu as MenuBase, ContextMenu as ContextMenuBase, mergeProps } from "@base-ui/react";
+import { ChevronRight } from "@mui/icons-material";
+
+import type { MenuVariant } from "../../contexts/menuVariantContext";
+import { useMenuVariant } from "../../contexts/menuVariantContext";
+
+import type { MenuItemContentProps } from "./itemContent";
+
+export type MenuVariantItemProps = ContextMenuItemProps | MenuItemProps;
+
+function SubMenuTriggerItemComponent<TProps extends MenuVariantItemProps>(
+    props: TProps & MenuItemContentProps,
+    ref: React.ForwardedRef<HTMLElement>,
+): React.ReactNode {
+    const menuVariant = useMenuVariant();
+    const BaseComp = getBaseComponent(menuVariant);
+    const mergedProps = mergeProps({ className: "menu__item menu__interactable menu__submenu_trigger" }, props);
+
+    return (
+        <BaseComp ref={ref} {...mergedProps}>
+            <span className="grow">{props.children}</span>
+            <ChevronRight fontSize="inherit" className="ml-vertical-2xs" />
+        </BaseComp>
+    );
+}
+
+function getBaseComponent(variant: MenuVariant) {
+    switch (variant) {
+        case "contextMenu":
+            return ContextMenuBase.SubmenuTrigger;
+        case "menu":
+            return MenuBase.SubmenuTrigger;
+    }
+}
+
+export const SubMenuTriggerItem = React.forwardRef(SubMenuTriggerItemComponent);

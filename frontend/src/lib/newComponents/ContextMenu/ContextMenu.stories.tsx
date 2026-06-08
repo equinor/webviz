@@ -249,7 +249,7 @@ export const SubSubmenu: Story = {
                 <ContextMenu.Item>Copy</ContextMenu.Item>
                 <ContextMenu.Item>Paste</ContextMenu.Item>
                 <ContextMenu.Separator />
-                <ContextMenu.Submenu>
+                <ContextMenu.Submenu triggerContent="Share">
                     <ContextMenu.Item>Email</ContextMenu.Item>
                     <ContextMenu.Item>Slack</ContextMenu.Item>
                     <ContextMenu.Item>Copy Link</ContextMenu.Item>
@@ -349,7 +349,7 @@ export const FileExplorer: Story = {
                     <ContextMenu.Item>Open</ContextMenu.Item>
                     <ContextMenu.Item>Open With…</ContextMenu.Item>
                     <ContextMenu.Separator />
-                    <ContextMenu.Submenu>
+                    <ContextMenu.Submenu triggerContent="Send / Download">
                         <ContextMenu.Item>Desktop (shortcut)</ContextMenu.Item>
                         <ContextMenu.Item>Mail Recipient</ContextMenu.Item>
                         <ContextMenu.Item>Compressed Folder</ContextMenu.Item>

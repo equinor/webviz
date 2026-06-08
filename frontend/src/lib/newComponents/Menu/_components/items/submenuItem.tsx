@@ -2,33 +2,23 @@ import React from "react";
 
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuSubmenuRootProps as SubmenuRootBaseProps } from "@base-ui/react";
-import { ChevronRight } from "@mui/icons-material";
 
+import { SubMenuTriggerItem } from "@lib/newComponents/_shared/components/menus/subMenuTriggerItem";
 import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 import { Popup } from "../popup";
-
-import { ItemContent } from "./itemContent";
 
 export type SubmenuItemProps = ComponentWrapperProps<SubmenuRootBaseProps> & {
     triggerContent: React.ReactNode;
     children: React.ReactNode;
 };
 
-function SubmenuItemCompontent(props: SubmenuItemProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+function SubmenuItemComponent(props: SubmenuItemProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "triggerContent", "children");
     return (
         <MenuBase.SubmenuRoot {...baseProps}>
-            <MenuBase.SubmenuTrigger
-                className="menu__item menu__interactable pr-vertical-xs gap-horizontal-2xs flex"
-                ref={ref}
-            >
-                <span className="grow">
-                    <ItemContent>{props.triggerContent}</ItemContent>
-                </span>
-                <ChevronRight fontSize="inherit" className="ml-vertical-2xs" />
-            </MenuBase.SubmenuTrigger>
+            <SubMenuTriggerItem ref={ref}>{props.triggerContent}</SubMenuTriggerItem>
             <Popup side="right" align="start">
                 {props.children}
             </Popup>
@@ -36,4 +26,4 @@ function SubmenuItemCompontent(props: SubmenuItemProps, ref: React.ForwardedRef<
     );
 }
 
-export const SubmenuItem = React.forwardRef(SubmenuItemCompontent);
+export const SubmenuItem = React.forwardRef(SubmenuItemComponent);
