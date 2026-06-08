@@ -29,7 +29,7 @@ export type SelectProps<TValue = string> = LayoutClassProps & {
     disabled?: boolean;
     options: SelectOption<TValue>[];
     value?: TValue[];
-    onChange?: (values: TValue[]) => void;
+    onValueChange?: (values: TValue[]) => void;
     placeholder?: string;
     filter?: boolean;
     filterPlaceholder?: string;
@@ -59,7 +59,7 @@ function ensureKeyboardSelectionInView(
 }
 
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
-    const { onChange } = props;
+    const { onValueChange: onChange } = props;
 
     const sizeWithDefault = props.size ?? 1;
     const multipleWithDefault = props.multiple ?? false;

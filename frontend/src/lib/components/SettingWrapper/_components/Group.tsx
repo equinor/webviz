@@ -1,4 +1,5 @@
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
 
 export type GroupProps = {
@@ -29,10 +30,25 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>((props, ref) =
         [size.width],
     );
 
+    const children = React.Children.map(props.children, (child, index) => (
+        <div
+            key={index}
+            className={resolveClassNames(
+                "px-horizontal-xs py-vertical-2xs col-span-2 grid grid-cols-subgrid",
+                index % 2 === 0 ? "bg-canvas" : "",
+            )}
+        >
+            {child}
+        </div>
+    ));
+
     return (
         <LayoutContext.Provider value={layout}>
-            <div ref={localRef} className="gap-y-vertical-sm gap-x-horizontal-md grid grid-cols-[auto_1fr]">
-                {props.children}
+            <div
+                ref={localRef}
+                className={resolveClassNames("gap-x-horizontal-md gap-y-vertical grid grid-cols-[auto_1fr]")}
+            >
+                {children}
             </div>
         </LayoutContext.Provider>
     );

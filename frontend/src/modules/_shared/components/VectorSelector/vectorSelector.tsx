@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { vectorDefinitions } from "@assets/vectorDefinitions";
@@ -264,7 +264,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
     }
 }
 
-export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
+export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorProps>((props, ref) => {
     const adjustedProps: VectorSelectorComponentProps = {
         id: props.id ?? "",
         data: props.data,
@@ -284,10 +284,11 @@ export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
         lineBreakAfterTag: props.lineBreakAfterTag ?? false,
         caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
         useBetaFeatures: props.useBetaFeatures ?? false,
+        inputRef: props.inputRef ?? ref,
     };
 
     return <VectorSelectorComponent {...adjustedProps} />;
-};
+});
 
 /**
  * Add vector to existing vector selector data tree node list.

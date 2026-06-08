@@ -180,7 +180,7 @@ export const WithQuickSelectButtons: Story = {
                 <Select
                     options={FRUITS}
                     value={value}
-                    onChange={setValue}
+                    onValueChange={setValue}
                     multiple
                     showQuickSelectButtons
                     size={6}
@@ -205,7 +205,7 @@ export const Controlled: Story = {
         const [value, setValue] = React.useState<string[]>(["banana"]);
         return (
             <div className="flex flex-col gap-2">
-                <Select options={FRUITS} value={value} onChange={setValue} size={5} />
+                <Select options={FRUITS} value={value} onValueChange={setValue} size={5} />
                 <p className="text-sm text-neutral-500">Selected: {value[0] ?? "none"}</p>
             </div>
         );
@@ -275,9 +275,7 @@ export const LargeList: Story = {
     parameters: {
         docs: {
             description: {
-                story:
-                    "The list is virtualized — only visible rows are rendered. " +
-                    "This story renders 500 options.",
+                story: "The list is virtualized — only visible rows are rendered. " + "This story renders 500 options.",
             },
         },
     },

@@ -109,6 +109,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);
     const [selectedParameterIdentStr, setSelectedParameterIdentStr] = useAtom(selectedParameterIdentStringAtom);
 
+    const vectorSelectorRef = React.useRef<HTMLInputElement>(null);
+
     // Receive global parameter string and update local state if different
     useSyncSetting({
         workbenchServices: props.workbenchServices,
@@ -280,8 +282,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     return (
         <Collapsible.ScrollArea>
             <Collapsible.Group title="Data" defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
-                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations}>
+                <SettingWrapper.Group>
+                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getEnsembleArray()}
                             value={selectedEnsembleIdents.value ?? []}
@@ -290,7 +292,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={handleEnsembleSelectChange}
                         />
                     </SettingWrapper>
-                    <Separator orientation="horizontal" />
                     <SettingWrapper
                         label={
                             <span className="gap-horizontal-2xs flex items-center">
@@ -300,23 +301,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 </span>
                             </span>
                         }
-                        loadingOverlay={
+                        overlay={
                             isVectorListQueriesFetching || vectorListQueries.some((query) => query.isFetching)
+                                ? { type: "loading", message: "Loading vectors..." }
+                                : undefined
                         }
                         errorAnnotation={vectorListQueriesErrorAnnotation}
                         contentClassName="flex flex-col gap-vertical-3xs"
+                        stacked
+                        labelFor={vectorSelectorRef}
                     >
                         <>
                             <div className="gap-y-vertical-xs gap-x-horizontal-xs flex flex-wrap">
                                 <CheckboxCompositions.WithLabel
-                                    label="Show historical"
+                                    label="Historical"
                                     checked={showHistorical}
                                     disabled={!selectedVectorNamesHasHistorical}
                                     onCheckedChange={(checked) => handleShowHistorical(checked)}
                                     size="small"
                                 />
                                 <CheckboxCompositions.WithLabel
-                                    label="Show observations"
+                                    label="Observations"
                                     checked={showObservations}
                                     onCheckedChange={handleShowObservations}
                                     size="small"
@@ -330,10 +335,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 onChange={handleVectorSelectionChange}
                                 customVectorDefinitions={customVectorDefinitions ?? undefined}
                                 selectedTags={selectedVectorTags}
+                                inputRef={vectorSelectorRef}
                             />
                         </>
                     </SettingWrapper>
-                    <Separator orientation="horizontal" />
                     <SettingWrapper label="Resampling frequency" warningAnnotation={resampleFrequencyWarningAnnotation}>
                         <Combobox
                             items={[
@@ -346,20 +351,22 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={handleFrequencySelectionChange}
                         />
                     </SettingWrapper>
-                </Collapsible.Content>
+                </SettingWrapper.Group>
             </Collapsible.Group>
             <Collapsible.Group title="Plot settings" defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
-                    <FieldCompositions.Default label="Limit subplots by">
+                <SettingWrapper.Group>
+                    <SettingWrapper label="Limit subplots by">
                         <div className="gap-horizontal-xs flex w-full min-w-0 items-center">
-                            <Combobox
-                                items={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
-                                    return { value: val, label: SubplotLimitDirectionEnumToStringMapping[val] };
-                                })}
-                                value={subplotLimitDirection}
-                                onValueChange={handleSubplotLimitDirectionChange}
-                            />
-                            <div className="min-w-0 grow">
+                            <div className="w-28 shrink-0">
+                                <Combobox
+                                    items={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
+                                        return { value: val, label: SubplotLimitDirectionEnumToStringMapping[val] };
+                                    })}
+                                    value={subplotLimitDirection}
+                                    onValueChange={handleSubplotLimitDirectionChange}
+                                />
+                            </div>
+                            <div className="min-w-0 flex-1">
                                 <NumberInput
                                     value={subplotMaxDirectionElements}
                                     disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
@@ -369,9 +376,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 />
                             </div>
                         </div>
-                    </FieldCompositions.Default>
-                    <Separator orientation="horizontal" />
-                    <FieldCompositions.Default label="Group by">
+                    </SettingWrapper>
+                    <SettingWrapper label="Group by">
                         <RadioCompositions.GroupWithLabels
                             value={groupBy}
                             options={Object.values(GroupBy).map((val: GroupBy) => {
@@ -381,8 +387,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             layout="horizontal"
                             size="small"
                         />
-                    </FieldCompositions.Default>
-                </Collapsible.Content>
+                    </SettingWrapper>
+                </SettingWrapper.Group>
             </Collapsible.Group>
             <Collapsible.Group title="Visualization" defaultOpen>
                 <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
@@ -455,7 +461,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                                     ? [selectedParameterIdentStr.value]
                                                     : undefined
                                             }
-                                            onChange={handleColorByParameterChange}
+                                            onValueChange={handleColorByParameterChange}
                                         />
                                     </SettingWrapper>
                                 </div>

@@ -123,7 +123,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         >
             <ComboboxBase.InputGroup
                 className={resolveClassNames(
-                    "form-element gap-horizontal-sm pl-horizontal-sm flex w-full cursor-text items-center",
+                    "form-element gap-horizontal-sm pl-horizontal-sm flex cursor-text items-center",
                     size !== "small" || (props.multiple && selectionMode === "chips") ? "py-vertical-xs" : undefined,
                     SELECTABLE_SIZES_CLASSNAMES[size],
                 )}

@@ -2,27 +2,33 @@ import { Error, Info, Warning } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { SettingAnnotation } from "../settingWrapper";
+import type { SettingAnnotation } from "./SettingWrapper";
+import { Field } from "@lib/newComponents/Field";
+import { Paragraph, ParagraphProps } from "@lib/newComponents/Typography/compositions";
 
 export type AnnotationsProps = {
     annotations: SettingAnnotation[];
+};
+
+const ANNOTATION_TYPE_TONE_MAP: Record<SettingAnnotation["type"], ParagraphProps["tone"]> = {
+    error: "danger",
+    warning: "warning",
+    info: "neutral",
 };
 
 export function Annotations(props: AnnotationsProps) {
     return (
         <>
             {props.annotations.map((a, i) => (
-                <div
+                <Paragraph
+                    size="sm"
                     key={i}
-                    className={resolveClassNames("flex gap-2 items-center text-sm", {
-                        "text-red-600": a.type === "error",
-                        "text-yellow-600": a.type === "warning",
-                        "text-blue-600": a.type === "info",
-                    })}
+                    tone={ANNOTATION_TYPE_TONE_MAP[a.type]}
+                    layoutClassName="flex items-center gap-horizontal-2xs"
                 >
                     <AnnotationIcon type={a.type} />
                     {a.message}
-                </div>
+                </Paragraph>
             ))}
         </>
     );

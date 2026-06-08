@@ -88,7 +88,7 @@ export class DrilledWellborePicksSetting implements CustomSettingImplementation<
                         filter
                         options={options}
                         value={props.value ?? []}
-                        onChange={handleChange}
+                        onValueChange={handleChange}
                         showQuickSelectButtons={true}
                         disabled={props.isOverridden}
                         multiple={true}

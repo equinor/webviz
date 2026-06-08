@@ -46,9 +46,19 @@ export type SmartNodeSelectorProps = {
     lineBreakAfterTag?: boolean;
     caseInsensitiveMatching?: boolean;
     useBetaFeatures?: boolean;
+    inputRef?: React.Ref<HTMLInputElement>;
 };
 
 export type SmartNodeSelectorComponentProps = { [K in keyof SmartNodeSelectorProps]-?: SmartNodeSelectorProps[K] };
+
+function assignRef<T>(ref: React.Ref<T> | undefined, value: T | null): void {
+    if (!ref) return;
+    if (typeof ref === "function") {
+        ref(value);
+    } else {
+        (ref as React.MutableRefObject<T | null>).current = value;
+    }
+}
 
 type SmartNodeSelectorStateType = {
     nodeSelections: TreeNodeSelection[];
@@ -227,6 +237,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         if (!this.state.hasError) {
             this.updateSelectedTagsAndNodes(true);
         }
+        this.updateInputRef();
     }
 
     componentWillUnmount(): void {
@@ -237,6 +248,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         document.removeEventListener("mouseup", this.handleMouseUp, true);
         document.removeEventListener("mousemove", this.handleMouseMove, true);
         document.removeEventListener("keydown", this.handleGlobalKeyDown, true);
+        assignRef(this.props.inputRef, null);
     }
 
     componentDidUpdate(prevProps: SmartNodeSelectorProps): void {
@@ -296,6 +308,13 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             this.updateState({ nodeSelections: nodeSelections });
         }
         this.justUpdated = true;
+        this.updateInputRef();
+    }
+
+    protected updateInputRef(): void {
+        const lastSelection = this.state.nodeSelections[this.state.nodeSelections.length - 1];
+        const lastInput = (lastSelection?.getRef() as React.RefObject<HTMLInputElement>)?.current;
+        assignRef(this.props.inputRef, lastInput ?? null);
     }
 
     protected createNewNodeSelection(nodePath: string[] = [""]): TreeNodeSelection {
@@ -1765,7 +1784,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 }
 
-export const SmartNodeSelector: React.FC<SmartNodeSelectorProps> = (props) => {
+export const SmartNodeSelector = React.forwardRef<HTMLInputElement, SmartNodeSelectorProps>((props, ref) => {
     const adjustedProps: SmartNodeSelectorComponentProps = {
         id: props.id ?? "",
         data: props.data,
@@ -1784,7 +1803,8 @@ export const SmartNodeSelector: React.FC<SmartNodeSelectorProps> = (props) => {
         lineBreakAfterTag: props.lineBreakAfterTag ?? false,
         caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
         useBetaFeatures: props.useBetaFeatures ?? false,
+        inputRef: props.inputRef ?? ref,
     };
 
     return <SmartNodeSelectorComponent {...adjustedProps} />;
-};
+});

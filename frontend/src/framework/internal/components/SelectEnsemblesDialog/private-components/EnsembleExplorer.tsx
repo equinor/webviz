@@ -203,7 +203,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                     filterPlaceholder="Filter ensembles..."
                                     options={ensembleOptions}
                                     value={activeEnsembleNames}
-                                    onChange={handleRegularEnsembleChanged}
+                                    onValueChange={handleRegularEnsembleChanged}
                                     disabled={!selectedCaseUuid}
                                     size={5}
                                     width="100%"
@@ -254,7 +254,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                             value: ens.ensembleIdent,
                                         }))}
                                         value={activeSelectedEnsembles}
-                                        onChange={handleActiveSelectedEnsembleChanged}
+                                        onValueChange={handleActiveSelectedEnsembleChanged}
                                         size={5}
                                         layoutClassName="w-full"
                                         placeholder="No ensembles selected..."
