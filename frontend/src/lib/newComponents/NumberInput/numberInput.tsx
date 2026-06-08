@@ -31,6 +31,7 @@ export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBasePro
 
 const DEFAULT_PROPS = {
     scrubAreaPosition: "start",
+    placeholder: "Enter a number...",
 } satisfies Partial<NumberInputProps>;
 
 function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {

@@ -1,4 +1,4 @@
-import { Percent } from "@mui/icons-material";
+import { Percent, Warning } from "@mui/icons-material";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { NumberInput } from "./index";
@@ -33,20 +33,22 @@ export default meta;
 type Story = StoryObj<typeof NumberInput>;
 
 export const Default: Story = {
-    args: {
-        placeholder: "Enter a number...",
-    },
+    args: {},
 };
 
 export const Sizing: Story = {
-    args: {
-        placeholder: "Enter a number...",
-    },
+    argTypes: { size: { table: { disable: true } } },
     render: (args) => (
         <div className="max-w-full">
-            <NumberInput {...args} defaultValue={0} size="small" scrubAdornment={<Percent fontSize="inherit" />} />
-            <NumberInput {...args} defaultValue={0} size="default" startAdornment={<Percent fontSize="inherit" />} />
-            <NumberInput {...args} defaultValue={0} size="large" scrubAdornment={<Percent fontSize="inherit" />} />
+            <NumberInput {...args} defaultValue={0} size="small" scrubAdornment={<Percent />} />
+            <NumberInput {...args} defaultValue={0} size="default" scrubAdornment={<Percent />} />
+            <NumberInput
+                {...args}
+                defaultValue={0}
+                size="large"
+                startAdornment={<Warning />}
+                scrubAdornment={<Percent />}
+            />
         </div>
     ),
 };
@@ -60,7 +62,7 @@ export const ScrubAdornment: Story = {
         <NumberInput
             {...args}
             defaultValue={0}
-            scrubAdornment={<Percent fontSize="inherit" />}
+            scrubAdornment={<Percent />}
             endAdornment={
                 <span className="px-horizontal-xs py-vertical-4xs bg-accent text-body-xs block rounded">Adornment</span>
             }
