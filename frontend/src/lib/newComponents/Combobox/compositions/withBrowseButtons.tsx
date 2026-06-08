@@ -3,7 +3,8 @@ import React from "react";
 import { BrowseButtons } from "@lib/newComponents/_shared/components/browseButtons";
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 
-import { Combobox, type ComboboxGroup, type ComboboxItem, type ComboboxProps } from "../combobox";
+import { Combobox, type ComboboxProps } from "../combobox";
+import type { ComboboxItem, ComboboxGroup } from "../types";
 
 function flattenItems<TValue>(items: ComboboxItem<TValue>[] | ComboboxGroup<TValue>[]): ComboboxItem<TValue>[] {
     if (items.length > 0 && "items" in Object(items[0])) {

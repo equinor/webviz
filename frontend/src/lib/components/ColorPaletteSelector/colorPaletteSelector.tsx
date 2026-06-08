@@ -3,7 +3,7 @@ import React from "react";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorTile } from "@lib/newComponents/ColorTile";
 import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/combobox";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export enum ColorPaletteSelectorType {

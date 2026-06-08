@@ -7,7 +7,7 @@ import { SortableList } from "@lib/components/SortableList";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/combobox";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 import { Table } from "@lib/newComponents/Table";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { Tooltip } from "@lib/newComponents/Tooltip";
