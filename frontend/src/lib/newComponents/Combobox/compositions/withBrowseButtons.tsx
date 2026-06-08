@@ -1,8 +1,7 @@
 import React from "react";
 
-import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
-
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { BrowseButtons } from "@lib/newComponents/_shared/components/browseButtons";
+import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 
 import { Combobox, type ComboboxGroup, type ComboboxItem, type ComboboxProps } from "../combobox";
 
@@ -20,7 +19,8 @@ export type WithBrowseButtonsProps<TValue> = Omit<
 
 export const WithBrowseButtons = React.forwardRef<HTMLInputElement, WithBrowseButtonsProps<any>>(
     function WithBrowseButtons(props, ref) {
-        const { value, onValueChange, defaultValue, disabled, items, size, ...rest } = props;
+        const { value, onValueChange, defaultValue, disabled, items, ...rest } = props;
+        const componentSize = useComponentSize(rest);
 
         const isControlled = value !== undefined;
         const [internalValue, setInternalValue] = React.useState<any>(defaultValue ?? null);
@@ -57,48 +57,15 @@ export const WithBrowseButtons = React.forwardRef<HTMLInputElement, WithBrowseBu
                 value={currentValue}
                 onValueChange={handleValueChange}
                 disabled={disabled}
-                size={size}
                 endAdornment={
-                    <div
-                        className={resolveClassNames("flex h-full flex-col items-center", {
-                            "flex-row": size === "small",
-                        })}
-                    >
-                        <ArrowButton onClick={handlePrev} disabled={buttonsDisabled} title="Previous option">
-                            <KeyboardArrowUp fontSize="inherit" />
-                        </ArrowButton>
-                        <ArrowButton onClick={handleNext} disabled={buttonsDisabled} title="Next option">
-                            <KeyboardArrowDown fontSize="inherit" />
-                        </ArrowButton>
-                    </div>
+                    <BrowseButtons
+                        size={componentSize}
+                        disabled={buttonsDisabled}
+                        onClickNext={handleNext}
+                        onClickPrev={handlePrev}
+                    />
                 }
             />
         );
     },
 );
-
-type ArrowButtonProps = {
-    children: React.ReactNode;
-    onClick: () => void;
-    disabled?: boolean;
-    title?: string;
-};
-
-function ArrowButton(props: ArrowButtonProps) {
-    return (
-        <button
-            className={resolveClassNames(
-                "focusable text-body-xs bg-neutral hover:bg-neutral-hover active:bg-neutral-active px-horizontal-4xs flex flex-1 items-center justify-center focus:outline-0",
-                {
-                    "pointer-events-none": props.disabled,
-                },
-            )}
-            disabled={props.disabled}
-            onClick={props.onClick}
-            aria-label={props.title}
-            title={props.title}
-        >
-            {props.children}
-        </button>
-    );
-}
