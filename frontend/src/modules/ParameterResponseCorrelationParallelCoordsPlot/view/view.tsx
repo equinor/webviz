@@ -2,8 +2,6 @@ import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
 
-import type { ContinuousParameter } from "@framework/EnsembleParameters";
-import { ParameterType } from "@framework/EnsembleParameters";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
@@ -12,6 +10,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { getVaryingNumericParameters } from "@modules/_shared/parameterUtils";
 import type { ResponseData } from "@modules/_shared/rankParameter";
 import { createRankedParameterCorrelations, getRankedParameterData } from "@modules/_shared/rankParameter";
 
@@ -103,16 +102,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
                 );
                 return;
             }
-            const parameterArr = ensemble.getParameters().getParameterArr();
-            const parameters: ContinuousParameter[] = [];
-            if (parameterArr) {
-                parameterArr.forEach((parameter) => {
-                    if (parameter.isConstant || parameter.type !== ParameterType.CONTINUOUS) {
-                        return;
-                    }
-                    parameters.push(parameter);
-                });
-            }
+            const parameters = getVaryingNumericParameters(ensemble);
 
             if (!parameters) {
                 setContent(

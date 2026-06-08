@@ -11,12 +11,14 @@ import type { SerializedSettings as InplaceVolumesNewSettings } from "@modules/I
 import type { SerializedSettings as InplaceVolumesPlotSettings } from "@modules/InplaceVolumesPlot/settings/persistence";
 import type { SerializedSettings as InplaceVolumesTableSettings } from "@modules/InplaceVolumesTable/settings/persistence";
 import type { SerializedSettings as IntersectionSettings } from "@modules/Intersection/settings/persistence";
+import type { SerializedView as IntersectionView } from "@modules/Intersection/view/persistence";
 import type { SerializedSettings as ParameterDistributionsSettings } from "@modules/ParameterDistributions/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationBarPlotSettings } from "@modules/ParameterResponseCorrelationBarPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationMatrixPlotSettings } from "@modules/ParameterResponseCorrelationMatrixPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPlotSettings } from "@modules/ParameterResponseCorrelationParallelCoordsPlot/settings/persistence";
 import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
 import type { SerializedSettings as PvtSettings } from "@modules/Pvt/settings/persistence";
+import type { SerializedSettings as RelPermSettings } from "@modules/RelPerm/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
@@ -57,7 +59,7 @@ export type ModuleSerializedStateMap = {
   },
   "Intersection": {
     settings?: Partial<IntersectionSettings>,
-    view?: never,
+    view?: Partial<IntersectionView>,
   },
   "ParameterDistributions": {
     settings?: Partial<ParameterDistributionsSettings>,
@@ -81,6 +83,10 @@ export type ModuleSerializedStateMap = {
   },
   "Pvt": {
     settings?: Partial<PvtSettings>,
+    view?: never,
+  },
+  "RelPerm": {
+    settings?: Partial<RelPermSettings>,
     view?: never,
   },
   "SensitivityPlot": {

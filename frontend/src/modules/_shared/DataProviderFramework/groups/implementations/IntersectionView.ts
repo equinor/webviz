@@ -1,5 +1,4 @@
 import { getDrilledWellboreHeadersOptions } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
 
 import { Setting } from "../..//settings/settingsDefinitions";
 import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
@@ -7,7 +6,7 @@ import type { CustomGroupImplementationWithSettings } from "../../interfacesAndT
 import type { SetupBasicBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 
-const intersectionViewSettings = [Setting.INTERSECTION, Setting.WELLBORE_EXTENSION_LENGTH] as const;
+const intersectionViewSettings = [Setting.INTERSECTION] as const;
 export type IntersectionViewSettings = typeof intersectionViewSettings;
 type SettingTypes = MakeSettingTypesMap<IntersectionViewSettings>;
 
@@ -23,18 +22,6 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
         makeSharedResult,
         queryClient,
     }: SetupBasicBindingsContext<IntersectionViewSettings, SettingTypes>): void {
-        setting(Setting.WELLBORE_EXTENSION_LENGTH).bindAttributes({
-            read(read) {
-                return {
-                    intersection: read.localSetting(Setting.INTERSECTION),
-                };
-            },
-            resolve({ intersection }) {
-                const enableExtensionLength = intersection?.type === IntersectionType.WELLBORE;
-                return { enabled: enableExtensionLength };
-            },
-        });
-
         const wellboreHeaders = makeSharedResult({
             debugName: "wellboreHeaders",
             read(read) {
@@ -77,7 +64,6 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
     getDefaultSettingsValues() {
         return {
             intersection: null,
-            wellboreExtensionLength: 500.0,
         };
     }
 }

@@ -22,7 +22,6 @@ DataProviderRegistry.registerDataProvider(
 DataProviderRegistry.registerDataProvider(
     DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,
     IntersectionRealizationGridProvider,
-    [{ enableWellboreExtensionLength: true }],
 );
 
 DataProviderRegistry.registerDataProvider(DataProviderType.INTERSECTION_SEISMIC, IntersectionSeismicProvider);

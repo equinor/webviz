@@ -409,6 +409,10 @@ export type EnsembleParameter_api = {
      */
     isConstant: boolean;
     /**
+     * Isnumerical
+     */
+    isNumerical: boolean;
+    /**
      * Groupname
      */
     groupName?: string | null;
@@ -1094,22 +1098,6 @@ export enum NodeType_api {
 }
 
 /**
- * Observations
- *
- * A collection of observations associated with a field/case/ensemble
- */
-export type Observations_api = {
-    /**
-     * Summary
-     */
-    summary?: Array<SummaryVectorObservations_api>;
-    /**
-     * Rft
-     */
-    rft?: Array<RftObservations_api>;
-};
-
-/**
  * Page[SessionMetadata]
  */
 export type PageSessionMetadata_api = {
@@ -1320,6 +1308,110 @@ export type PvtData_api = {
 };
 
 /**
+ * RelpermCurveData
+ */
+export type RelpermCurveData_api = {
+    /**
+     * Curve Name
+     */
+    curve_name: string;
+    /**
+     * Curve Values
+     */
+    curve_values: Array<number>;
+};
+
+/**
+ * RelpermRealizationData
+ */
+export type RelpermRealizationData_api = {
+    /**
+     * Realization
+     */
+    realization: number;
+    /**
+     * Satnum
+     */
+    satnum: number;
+    /**
+     * Curve Data
+     */
+    curve_data: Array<RelpermCurveData_api>;
+};
+
+/**
+ * RelpermRealizationDataResponse
+ */
+export type RelpermRealizationDataResponse_api = {
+    /**
+     * Saturation Name
+     */
+    saturation_name: string;
+    /**
+     * Saturation Values By Satnum
+     */
+    saturation_values_by_satnum: Array<RelpermSaturationValues_api>;
+    /**
+     * Realization Data
+     */
+    realization_data: Array<RelpermRealizationData_api>;
+};
+
+/**
+ * RelpermSaturationAxis
+ */
+export type RelpermSaturationAxis_api = {
+    /**
+     * Saturation Name
+     */
+    saturation_name: string;
+    /**
+     * Relperm Curve Names
+     */
+    relperm_curve_names: Array<string>;
+    /**
+     * Capillary Pressure Curve Names
+     */
+    capillary_pressure_curve_names: Array<string>;
+};
+
+/**
+ * RelpermSaturationValues
+ */
+export type RelpermSaturationValues_api = {
+    /**
+     * Satnum
+     */
+    satnum: number;
+    /**
+     * Saturation Values
+     */
+    saturation_values: Array<number>;
+};
+
+/**
+ * RelpermTableDefinition
+ */
+export type RelpermTableDefinition_api = {
+    /**
+     * Table Name
+     */
+    table_name: string;
+    /**
+     * Saturation Axes
+     */
+    saturation_axes: Array<RelpermSaturationAxis_api>;
+    /**
+     * Satnums
+     */
+    satnums: Array<number>;
+    /**
+     * Realizations
+     */
+    realizations: Array<number>;
+};
+
+/**
  * RepeatedTableColumnData
  *
  * Data for a single column in a volumetric table
@@ -1342,86 +1434,6 @@ export type RepeatedTableColumnData_api = {
      * Indices
      */
     indices: Array<number>;
-};
-
-/**
- * RftObservation
- *
- * A specific RFT (Repeat Formation Tester) observation.
- *
- * Attributes:
- * value (float): The measured value of the observation.
- * comment (Optional[str]): An optional comment associated with the observation.
- * error (float): The measurement error associated with the observation.
- * zone (str): The zone or region associated with the observation.
- * md_msl (float): Measured depth from mean sea level.
- * x (float): X utm coordinate of the observation.
- * y (float): Y utm coordinate of the observation.
- * z (float): Z utm coordinate of the observation.
- */
-export type RftObservation_api = {
-    /**
-     * Value
-     */
-    value: number;
-    /**
-     * Comment
-     */
-    comment?: string | null;
-    /**
-     * Error
-     */
-    error: number;
-    /**
-     * Zone
-     */
-    zone: string;
-    /**
-     * Md Msl
-     */
-    md_msl: number;
-    /**
-     * X
-     */
-    x: number;
-    /**
-     * Y
-     */
-    y: number;
-    /**
-     * Z
-     */
-    z: number;
-};
-
-/**
- * RftObservations
- *
- * A collection of RFT (Repeat Formation Tester) observations for a specific well at a specific date.
- *
- * Attributes:
- * well (str): Unique well identifier
- * date (str): Observation date
- * comment (Optional[str]): An optional comment associated with the collection of observations.
- * observations (List[RftObservation]): A list of RFT observations associated with this collection.
- */
-export type RftObservations_api = {
-    /**
-     * Well
-     */
-    well: string;
-    /**
-     * Date
-     */
-    date: string;
-    /**
-     * Comment
-     */
-    comment?: string | null;
-    /**
-     * Observations
-     */
-    observations: Array<RftObservation_api>;
 };
 
 /**
@@ -1966,13 +1978,9 @@ export type StratigraphicColumn_api = {
  */
 export type SummaryVectorDateObservation_api = {
     /**
-     * Date
+     * Timestamp Utc Ms
      */
-    date: string;
-    /**
-     * Comment
-     */
-    comment?: string | null;
+    timestamp_utc_ms: number;
     /**
      * Value
      */
@@ -1997,10 +2005,6 @@ export type SummaryVectorObservations_api = {
      * Vector Name
      */
     vector_name: string;
-    /**
-     * Comment
-     */
-    comment?: string | null;
     /**
      * Observations
      */
@@ -6144,7 +6148,7 @@ export type GetUserPhotoResponses_api = {
 
 export type GetUserPhotoResponse_api = GetUserPhotoResponses_api[keyof GetUserPhotoResponses_api];
 
-export type GetObservationsData_api = {
+export type GetSummaryObservationsData_api = {
     body?: never;
     path?: never;
     query: {
@@ -6154,28 +6158,197 @@ export type GetObservationsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/observations/observations/";
+    url: "/observations/summary_observations";
 };
 
-export type GetObservationsErrors_api = {
+export type GetSummaryObservationsErrors_api = {
     /**
      * Validation Error
      */
     422: HTTPValidationError_api;
 };
 
-export type GetObservationsError_api = GetObservationsErrors_api[keyof GetObservationsErrors_api];
+export type GetSummaryObservationsError_api = GetSummaryObservationsErrors_api[keyof GetSummaryObservationsErrors_api];
 
-export type GetObservationsResponses_api = {
+export type GetSummaryObservationsResponses_api = {
+    /**
+     * Response Get Summary Observations
+     *
+     * Successful Response
+     */
+    200: Array<SummaryVectorObservations_api>;
+};
+
+export type GetSummaryObservationsResponse_api =
+    GetSummaryObservationsResponses_api[keyof GetSummaryObservationsResponses_api];
+
+export type GetRelpermTableNamesData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        zCacheBust?: string;
+    };
+    url: "/relperm/table_names";
+};
+
+export type GetRelpermTableNamesErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRelpermTableNamesError_api = GetRelpermTableNamesErrors_api[keyof GetRelpermTableNamesErrors_api];
+
+export type GetRelpermTableNamesResponses_api = {
+    /**
+     * Response Get Relperm Table Names
+     *
+     * Successful Response
+     */
+    200: Array<string>;
+};
+
+export type GetRelpermTableNamesResponse_api =
+    GetRelpermTableNamesResponses_api[keyof GetRelpermTableNamesResponses_api];
+
+export type GetRelpermTableDefinitionData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Table Name
+         *
+         * Relperm table name
+         */
+        table_name: string;
+        zCacheBust?: string;
+    };
+    url: "/relperm/table_definition";
+};
+
+export type GetRelpermTableDefinitionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRelpermTableDefinitionError_api =
+    GetRelpermTableDefinitionErrors_api[keyof GetRelpermTableDefinitionErrors_api];
+
+export type GetRelpermTableDefinitionResponses_api = {
     /**
      * Successful Response
      */
-    200: Observations_api;
+    200: RelpermTableDefinition_api;
 };
 
-export type GetObservationsResponse_api = GetObservationsResponses_api[keyof GetObservationsResponses_api];
+export type GetRelpermTableDefinitionResponse_api =
+    GetRelpermTableDefinitionResponses_api[keyof GetRelpermTableDefinitionResponses_api];
+
+export type GetRelpermRealizationDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Table Name
+         *
+         * Relperm table name
+         */
+        table_name: string;
+        /**
+         * Saturation Axis Name
+         *
+         * Saturation axis name
+         */
+        saturation_axis_name: string;
+        /**
+         * Curve Names
+         *
+         * Curve names
+         */
+        curve_names: Array<string>;
+        /**
+         * Satnums
+         *
+         * SATNUM values
+         */
+        satnums: Array<number>;
+        /**
+         * Realizations Encoded As Uint List Str
+         *
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/relperm/realization_data";
+};
+
+export type GetRelpermRealizationDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRelpermRealizationDataError_api =
+    GetRelpermRealizationDataErrors_api[keyof GetRelpermRealizationDataErrors_api];
+
+export type GetRelpermRealizationDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: RelpermRealizationDataResponse_api;
+};
+
+export type GetRelpermRealizationDataResponse_api =
+    GetRelpermRealizationDataResponses_api[keyof GetRelpermRealizationDataResponses_api];
 
 export type GetRftTableDefinitionData_api = {
     body?: never;

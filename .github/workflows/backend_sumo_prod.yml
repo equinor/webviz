@@ -43,7 +43,7 @@ jobs:
         working-directory: ./backend_py
         run: |
           pip install --upgrade pip
-          pip install poetry==2.1.4
+          pip install poetry==2.4.1
           poetry config virtualenvs.create false
 
           # Check that lock files are consistent with pyproject.toml
@@ -63,6 +63,8 @@ jobs:
           WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
           WEBVIZ_VDS_HOST_ADDRESS: 0
           WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+          WEBVIZ_REDIS_AUTH_STORE_PASSWORD: 0
+          WEBVIZ_REDIS_CACHE_PASSWORD: 0
           WEBVIZ_SUMU_ENV: prod
         run: |
           pytest -s --timeout=300 ./tests/integration

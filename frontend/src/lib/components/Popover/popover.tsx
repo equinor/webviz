@@ -1,15 +1,24 @@
 import type React from "react";
 
-import type { PopoverRootProps, PopoverTriggerProps } from "@base-ui/react/popover";
+import type { PopoverPositionerProps, PopoverRootProps, PopoverTriggerProps } from "@base-ui/react/popover";
 import { Popover as BasePopover } from "@base-ui/react/popover";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DenseIconButton } from "../DenseIconButton";
 
 export type PopoverProps = {
-    /** Trigger content */
-    children: React.ReactNode;
-    /** Popover content */
-    content: React.ReactNode;
+    /** Controls the popover open/close state */
+    open?: boolean;
+    /** The body of the popover message */
+    content?: React.ReactNode;
+    /** The content of the popover trigger */
+    children?: React.ReactNode;
+
+    disableInteraction?: boolean;
+
+    align?: PopoverPositionerProps["align"];
+    side?: PopoverPositionerProps["side"];
 
     /**
      * A ref to imperative actions.
@@ -26,18 +35,34 @@ export type PopoverProps = {
      * Accepts a `ReactElement` or a function that returns the element to render.
      */ // -- copied from base type
     renderTrigger?: PopoverTriggerProps["render"];
+
+    /** Callback for open/close control state */
+    onOpenChange?: (isOpen: boolean) => void;
+
+    /**
+     * Trigger tooltip (Not applied if trigger is manually rendered)
+     */
+    triggerTitle?: string;
 };
 
+/** Show a rich Popover element attached to a trigger element. For simple string tooltips, use Tooltip instead. For larger interactive menus, use Menu */
 export function Popover(props: PopoverProps): React.ReactNode {
-    const triggerRenderOrDefault = props.renderTrigger ?? <DenseIconButton>{props.children}</DenseIconButton>;
+    const triggerRenderOrDefault = props.renderTrigger ?? (
+        <DenseIconButton title={props.triggerTitle}>{props.children}</DenseIconButton>
+    );
 
     return (
-        <BasePopover.Root actionsRef={props.actionsRef}>
+        <BasePopover.Root open={props.open} actionsRef={props.actionsRef} onOpenChange={props.onOpenChange}>
             <BasePopover.Trigger render={triggerRenderOrDefault} />
 
             <BasePopover.Portal>
                 {/* Note the z-index class here. Base-ui assumes a different stacking context, so we need to manually ensure floating elements stay on top */}
-                <BasePopover.Positioner className="z-9999" sideOffset={4} align="end" side="bottom">
+                <BasePopover.Positioner
+                    className={resolveClassNames("z-9999", { "pointer-events-none": props.disableInteraction })}
+                    sideOffset={4}
+                    align={props.align}
+                    side={props.side}
+                >
                     <BasePopover.Popup className="bg-white shadow-md border border-gray-200 rounded-sm transition-opacity">
                         <BasePopover.Arrow
                             className="
@@ -56,7 +81,9 @@ export function Popover(props: PopoverProps): React.ReactNode {
                             data-[side=top]:-bottom-1.5
                         "
                         />
-                        <BasePopover.Viewport className=" py-2">{props.content}</BasePopover.Viewport>
+                        <BasePopover.Description render={<div />} className="py-1 px-2">
+                            {props.content}
+                        </BasePopover.Description>
                     </BasePopover.Popup>
                 </BasePopover.Positioner>
             </BasePopover.Portal>

@@ -41,7 +41,6 @@ import {
     getLogCurveData,
     getLoggedInUser,
     getMisfitSurfaceData,
-    getObservations,
     getObservedSurfacesMetadata,
     getParametersAndSensitivities,
     getPolygonsData,
@@ -51,6 +50,9 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationsVectorData,
+    getRelpermRealizationData,
+    getRelpermTableDefinition,
+    getRelpermTableNames,
     getRftRealizationData,
     getRftTableDefinition,
     getSeismicCubeMetaList,
@@ -64,6 +66,7 @@ import {
     getStatisticalSurfaceDataHybrid,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
+    getSummaryObservations,
     getSurfaceData,
     getUserInfo,
     getUserPhoto,
@@ -176,9 +179,6 @@ import type {
     GetMisfitSurfaceDataData_api,
     GetMisfitSurfaceDataError_api,
     GetMisfitSurfaceDataResponse_api,
-    GetObservationsData_api,
-    GetObservationsError_api,
-    GetObservationsResponse_api,
     GetObservedSurfacesMetadataData_api,
     GetObservedSurfacesMetadataError_api,
     GetObservedSurfacesMetadataResponse_api,
@@ -206,6 +206,15 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
+    GetRelpermRealizationDataData_api,
+    GetRelpermRealizationDataError_api,
+    GetRelpermRealizationDataResponse_api,
+    GetRelpermTableDefinitionData_api,
+    GetRelpermTableDefinitionError_api,
+    GetRelpermTableDefinitionResponse_api,
+    GetRelpermTableNamesData_api,
+    GetRelpermTableNamesError_api,
+    GetRelpermTableNamesResponse_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataError_api,
     GetRftRealizationDataResponse_api,
@@ -245,6 +254,9 @@ import type {
     GetStatisticalVectorDataPerSensitivityError_api,
     GetStatisticalVectorDataPerSensitivityResponse_api,
     GetStatisticalVectorDataResponse_api,
+    GetSummaryObservationsData_api,
+    GetSummaryObservationsError_api,
+    GetSummaryObservationsResponse_api,
     GetSurfaceDataData_api,
     GetSurfaceDataError_api,
     GetSurfaceDataResponse_api,
@@ -2226,23 +2238,23 @@ export const getUserPhotoOptions = (options: Options<GetUserPhotoData_api>) =>
         queryKey: getUserPhotoQueryKey(options),
     });
 
-export const getObservationsQueryKey = (options: Options<GetObservationsData_api>) =>
-    createQueryKey("getObservations", options);
+export const getSummaryObservationsQueryKey = (options: Options<GetSummaryObservationsData_api>) =>
+    createQueryKey("getSummaryObservations", options);
 
 /**
- * Get Observations
+ * Get Summary Observations
  *
- * Retrieve all observations found in sumo case
+ * Retrieve all summary observations found in ensemble
  */
-export const getObservationsOptions = (options: Options<GetObservationsData_api>) =>
+export const getSummaryObservationsOptions = (options: Options<GetSummaryObservationsData_api>) =>
     queryOptions<
-        GetObservationsResponse_api,
-        AxiosError<GetObservationsError_api>,
-        GetObservationsResponse_api,
-        ReturnType<typeof getObservationsQueryKey>
+        GetSummaryObservationsResponse_api,
+        AxiosError<GetSummaryObservationsError_api>,
+        GetSummaryObservationsResponse_api,
+        ReturnType<typeof getSummaryObservationsQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getObservations({
+            const { data } = await getSummaryObservations({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -2250,7 +2262,82 @@ export const getObservationsOptions = (options: Options<GetObservationsData_api>
             });
             return data;
         },
-        queryKey: getObservationsQueryKey(options),
+        queryKey: getSummaryObservationsQueryKey(options),
+    });
+
+export const getRelpermTableNamesQueryKey = (options: Options<GetRelpermTableNamesData_api>) =>
+    createQueryKey("getRelpermTableNames", options);
+
+/**
+ * Get Relperm Table Names
+ */
+export const getRelpermTableNamesOptions = (options: Options<GetRelpermTableNamesData_api>) =>
+    queryOptions<
+        GetRelpermTableNamesResponse_api,
+        AxiosError<GetRelpermTableNamesError_api>,
+        GetRelpermTableNamesResponse_api,
+        ReturnType<typeof getRelpermTableNamesQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermTableNames({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermTableNamesQueryKey(options),
+    });
+
+export const getRelpermTableDefinitionQueryKey = (options: Options<GetRelpermTableDefinitionData_api>) =>
+    createQueryKey("getRelpermTableDefinition", options);
+
+/**
+ * Get Relperm Table Definition
+ */
+export const getRelpermTableDefinitionOptions = (options: Options<GetRelpermTableDefinitionData_api>) =>
+    queryOptions<
+        GetRelpermTableDefinitionResponse_api,
+        AxiosError<GetRelpermTableDefinitionError_api>,
+        GetRelpermTableDefinitionResponse_api,
+        ReturnType<typeof getRelpermTableDefinitionQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermTableDefinition({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermTableDefinitionQueryKey(options),
+    });
+
+export const getRelpermRealizationDataQueryKey = (options: Options<GetRelpermRealizationDataData_api>) =>
+    createQueryKey("getRelpermRealizationData", options);
+
+/**
+ * Get Relperm Realization Data
+ */
+export const getRelpermRealizationDataOptions = (options: Options<GetRelpermRealizationDataData_api>) =>
+    queryOptions<
+        GetRelpermRealizationDataResponse_api,
+        AxiosError<GetRelpermRealizationDataError_api>,
+        GetRelpermRealizationDataResponse_api,
+        ReturnType<typeof getRelpermRealizationDataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRelpermRealizationData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRelpermRealizationDataQueryKey(options),
     });
 
 export const getRftTableDefinitionQueryKey = (options: Options<GetRftTableDefinitionData_api>) =>

@@ -92,7 +92,19 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
         return tableDefinitionsAccessor.getCommonIndicesWithValues();
     },
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
-        return value.length > 0 && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
+        // Require the selection to cover every available index column. When a new index column
+        // becomes available (e.g. switching to a table that has FACIES), an otherwise valid
+        // subset that omits it must be treated as invalid so the SELECT_ALL fixup runs and
+        // auto-selects all of its values. Otherwise the column stays unselected (empty filter),
+        // which breaks group-by/color-by on that column.
+        const coversAllAvailableColumns = availableIndicesWithValues.every((available) =>
+            value.some((selected) => selected.indexColumn === available.indexColumn),
+        );
+        return (
+            value.length > 0 &&
+            coversAllAvailableColumns &&
+            isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues)
+        );
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
         return fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL);

@@ -16,7 +16,7 @@ def pytest_sessionstart(session):
         enterprise_subscription_key="DUMMY_KEY",
         surface_query_url="DUMMY_URL",
         vds_host_address="DUMMY_URL",
-        redis_user_session_url="DUMMY_URL",
+        redis_cache_url="DUMMY_URL",
     )
     init_services_config(services_config)
 

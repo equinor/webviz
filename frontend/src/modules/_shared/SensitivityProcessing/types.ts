@@ -18,6 +18,7 @@ export type EnsemblePerRealizationResponse = {
 export interface SensitivityResponse {
     sensitivityName: string;
     sensitivityType: SensitivityType;
+    sensitivityAverage?: number;
     lowCaseName: string;
     lowCaseAverage: number;
     lowCaseReferenceDifference: number;
