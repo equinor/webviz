@@ -269,8 +269,8 @@ export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorP
         id: props.id ?? "",
         data: props.data,
         customVectorDefinitions: props.customVectorDefinitions ?? {},
-        onChange:
-            props.onChange ??
+        onValueChange:
+            props.onValueChange ??
             (() => {
                 return;
             }),
@@ -285,6 +285,8 @@ export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorP
         caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
         useBetaFeatures: props.useBetaFeatures ?? false,
         inputRef: props.inputRef ?? ref,
+        disabled: props.disabled ?? false,
+        fieldStateDataAttributes: props.fieldStateDataAttributes ?? {},
     };
 
     return <VectorSelectorComponent {...adjustedProps} />;

@@ -26,6 +26,7 @@ export type ParameterListFilterProps = {
     initialFilters?: InitialParameterFilter[];
     showTitle?: boolean;
     onChange?: (filteredParameters: Parameter[]) => void;
+    disabled?: boolean;
 };
 
 export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: ParameterListFilterProps) => {
@@ -86,8 +87,9 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
                     delimiter={smartNodeSelectorDelimiter}
                     data={treeDataNodeList}
                     selectedTags={selectedTags}
-                    onChange={handleSmartNodeSelectorChange}
+                    onValueChange={handleSmartNodeSelectorChange}
                     placeholder="Add new filter condition..."
+                    disabled={props.disabled}
                 />
                 <div className={resolveClassNames("relative mt-2 w-full text-right text-sm text-slate-600")}>
                     Number of matches: {numberOfMatchingParameters}

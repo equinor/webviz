@@ -3,6 +3,10 @@ import React from "react";
 import { Close } from "@mui/icons-material";
 import _ from "lodash";
 
+import {
+    type FieldStateDataAttributes,
+    useFieldStateDataAttributes,
+} from "@lib/newComponents/Field/_components/FieldStateContext";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { Suggestions } from "./private-components/suggestions";
@@ -39,7 +43,7 @@ export type SmartNodeSelectorProps = {
     numMetaNodes?: number;
     data: TreeDataNode[];
     showSuggestions?: boolean;
-    onChange?: (selection: SmartNodeSelectorSelection) => void;
+    onValueChange?: (selection: SmartNodeSelectorSelection) => void;
     selectedTags?: string[];
     placeholder?: string;
     numSecondsUntilSuggestionsAreShown?: number;
@@ -47,6 +51,8 @@ export type SmartNodeSelectorProps = {
     caseInsensitiveMatching?: boolean;
     useBetaFeatures?: boolean;
     inputRef?: React.Ref<HTMLInputElement>;
+    disabled?: boolean;
+    fieldStateDataAttributes?: FieldStateDataAttributes;
 };
 
 export type SmartNodeSelectorComponentProps = { [K in keyof SmartNodeSelectorProps]-?: SmartNodeSelectorProps[K] };
@@ -127,6 +133,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         lineBreakAfterTag: false,
         caseInsensitiveMatching: false,
         useBetaFeatures: false,
+        disabled: false,
     };
 
     constructor(props: SmartNodeSelectorComponentProps) {
@@ -1011,7 +1018,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     protected updateSelectedTagsAndNodes(initialUpdate = false): void {
-        const { onChange, maxNumSelectedNodes } = this.props;
+        const { onValueChange: onChange, maxNumSelectedNodes } = this.props;
         const selectedTags: SmartNodeSelectorTag[] = [];
         const selectedNodes: string[] = [];
         const selectedIds: string[] = [];
@@ -1679,7 +1686,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     render(): React.ReactNode {
-        const { id, maxNumSelectedNodes, placeholder, showSuggestions, lineBreakAfterTag } = this.props;
+        const { id, maxNumSelectedNodes, placeholder, showSuggestions, lineBreakAfterTag, disabled } = this.props;
         const { nodeSelections, suggestionsVisible, showAllSuggestions, hasError, error } = this.state;
 
         if (hasError) {
@@ -1703,13 +1710,16 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         const duplicateFlags = this.computeDuplicateFlags(nodeSelections);
 
         return (
-            <div id={id} ref={this.ref}>
+            <div id={id} ref={this.ref} className={resolveClassNames({ "cursor-not-allowed": disabled ?? false })}>
                 <div
+                    {...(this.props.fieldStateDataAttributes ?? {})}
+                    data-disabled={disabled || undefined}
                     className={resolveClassNames(
                         "form-element text-body-md py-vertical-xs px-horizontal-sm relative flex min-w-48 cursor-text rounded",
                         {
                             "border-0 p-0": frameless,
                             "border-danger": maxNumSelectedNodes > 0 && this.numValidSelections > maxNumSelectedNodes,
+                            "text-disabled! pointer-events-none": disabled ?? false,
                         },
                     )}
                     onClick={this.selectLastInput}
@@ -1747,6 +1757,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                                     updateSelectedTagsAndNodes={this.updateSelectedTagsAndNodes}
                                     shake={this.state.currentTagShaking && index === this.currentTagIndex()}
                                     maxNumSelectedNodes={numSelectedNodes === -1 ? -1 : numSelectedNodes}
+                                    disabled={disabled ?? false}
                                 />
                             );
                             if (maxNumSelectedNodes !== -1) {
@@ -1761,7 +1772,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                             type="button"
                             title="Clear all"
                             onClick={this.clearAllTags}
-                            disabled={this.countTags() <= 1 && this.hasLastEmptyTag()}
+                            disabled={(this.countTags() <= 1 && this.hasLastEmptyTag()) || (disabled ?? false)}
                         >
                             <Close fontSize="inherit" />
                         </button>
@@ -1785,11 +1796,12 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 }
 
 export const SmartNodeSelector = React.forwardRef<HTMLInputElement, SmartNodeSelectorProps>((props, ref) => {
+    const fieldStateDataAttributes = useFieldStateDataAttributes();
     const adjustedProps: SmartNodeSelectorComponentProps = {
         id: props.id ?? "",
         data: props.data,
-        onChange:
-            props.onChange ??
+        onValueChange:
+            props.onValueChange ??
             (() => {
                 return;
             }),
@@ -1804,6 +1816,8 @@ export const SmartNodeSelector = React.forwardRef<HTMLInputElement, SmartNodeSel
         caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
         useBetaFeatures: props.useBetaFeatures ?? false,
         inputRef: props.inputRef ?? ref,
+        disabled: props.disabled ?? false,
+        fieldStateDataAttributes,
     };
 
     return <SmartNodeSelectorComponent {...adjustedProps} />;

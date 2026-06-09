@@ -150,8 +150,8 @@ export const WithChangeCallback: Story = {
 
         return (
             <div className="flex flex-col gap-4">
-                <SmartNodeSelector {...args} onChange={setSelection} />
-                <div className="text-sm text-slate-600 border rounded p-3">
+                <SmartNodeSelector {...args} onValueChange={setSelection} />
+                <div className="rounded border p-3 text-sm text-slate-600">
                     <div>
                         <strong>Selected nodes:</strong>{" "}
                         {selection.selectedNodes.length > 0 ? selection.selectedNodes.join(", ") : "none"}

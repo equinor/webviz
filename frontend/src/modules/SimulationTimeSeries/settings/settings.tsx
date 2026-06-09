@@ -1,6 +1,5 @@
 import React from "react";
 
-import { FilterAlt } from "@mui/icons-material";
 import { useAtom, useAtomValue } from "jotai";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
@@ -14,23 +13,17 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Label } from "@lib/components/Label";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Hidden } from "@lib/newComponents/Hidden";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { RadioCompositions } from "@lib/newComponents/Radio";
 import { Select } from "@lib/newComponents/Select";
-import { Separator } from "@lib/newComponents/Separator";
 import type { SmartNodeSelectorSelection } from "@lib/newComponents/SmartNodeSelector";
-import { Switch } from "@lib/newComponents/Switch";
-import { Toggle } from "@lib/newComponents/Toggle";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { SwitchCompositions } from "@lib/newComponents/Switch";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
@@ -84,8 +77,6 @@ import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStat
 export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
-
-    const [showParameterListFilter, setShowParameterListFilter] = React.useState(false);
 
     const [resampleFrequency, setResamplingFrequency] = useAtom(resampleFrequencyAtom);
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
@@ -182,7 +173,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     function handleVisualizationModeChange(value: VisualizationMode) {
         setVisualizationMode(value);
-        setShowParameterListFilter(false);
     }
 
     function handleFanchartStatisticsSelectionChange(checked: boolean, statistic: FanchartStatisticOption) {
@@ -281,8 +271,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
 
     return (
         <Collapsible.ScrollArea>
-            <Collapsible.Group title="Data" defaultOpen>
-                <SettingWrapper.Group>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Data" defaultOpen>
                     <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getEnsembleArray()}
@@ -332,7 +322,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 placeholder="Add new vector..."
                                 maxNumSelectedNodes={50}
                                 numSecondsUntilSuggestionsAreShown={0.5}
-                                onChange={handleVectorSelectionChange}
+                                onValueChange={handleVectorSelectionChange}
                                 customVectorDefinitions={customVectorDefinitions ?? undefined}
                                 selectedTags={selectedVectorTags}
                                 inputRef={vectorSelectorRef}
@@ -351,10 +341,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={handleFrequencySelectionChange}
                         />
                     </SettingWrapper>
-                </SettingWrapper.Group>
-            </Collapsible.Group>
-            <Collapsible.Group title="Plot settings" defaultOpen>
-                <SettingWrapper.Group>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Plot settings" defaultOpen>
                     <SettingWrapper label="Limit subplots by">
                         <div className="gap-horizontal-xs flex w-full min-w-0 items-center">
                             <div className="w-28 shrink-0">
@@ -388,88 +376,57 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             size="small"
                         />
                     </SettingWrapper>
-                </SettingWrapper.Group>
-            </Collapsible.Group>
-            <Collapsible.Group title="Visualization" defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-sm">
-                    <RadioCompositions.GroupWithLabels
-                        value={visualizationMode}
-                        options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
-                            return { value: val, label: VisualizationModeEnumToStringMapping[val] };
-                        })}
-                        onValueChange={(value) => handleVisualizationModeChange(value)}
-                        size="small"
-                    />
+                    <SettingWrapper label="Visualization mode" stacked>
+                        <RadioCompositions.GroupWithLabels
+                            value={visualizationMode}
+                            options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
+                                return { value: val, label: VisualizationModeEnumToStringMapping[val] };
+                            })}
+                            onValueChange={(value) => handleVisualizationModeChange(value)}
+                            size="small"
+                        />
+                    </SettingWrapper>
                     <Hidden hidden={visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS}>
-                        <Separator orientation="horizontal" />
-                        <SettingWrapper label="Statistic options">
+                        <SettingWrapper label="Statistic options" stacked>
                             <>{makeStatisticCheckboxes()}</>
                         </SettingWrapper>
                     </Hidden>
-                </Collapsible.Content>
-            </Collapsible.Group>
-            <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}>
-                <Collapsible.Group
-                    title="Color realizations by parameter"
-                    defaultOpen
-                    adornment={
-                        <Tooltip content="Enable to color the individual realizations based on the value of a selected parameter. The parameter can be selected in the collapsible section below.">
-                            <Switch
-                                checked={colorRealizationsByParameter}
-                                onCheckedChange={setColorRealizationsByParameter}
-                            />
-                        </Tooltip>
-                    }
-                >
-                    <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">
-                        <div
-                            className={resolveClassNames({
-                                "pointer-events-none opacity-70":
-                                    !colorRealizationsByParameter ||
-                                    visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
-                            })}
+                    <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS} keepMounted>
+                        <SettingWrapper
+                            label="Color realizations by parameter"
+                            stacked
+                            annotations={selectedParameterIdentStringAnnotations}
                         >
                             <div className="gap-vertical-xs flex flex-col">
-                                <div className="gap-horizontal-xs flex items-center justify-center shadow-xs">
-                                    <h3 className="grow text-sm leading-none font-semibold">Select Parameter</h3>
-                                    <Toggle.Button
-                                        title="Filter list of parameters"
-                                        pressed={showParameterListFilter}
-                                        buttonProps={{ size: "small", iconOnly: true }}
-                                        onClick={() => setShowParameterListFilter((prev) => !prev)}
-                                    >
-                                        <FilterAlt fontSize="small" />
-                                    </Toggle.Button>
-                                </div>
-                                <Label text="Filter parameters on selection">
-                                    <ParameterListFilter
-                                        parameters={continuousAndNonConstantParametersUnion}
-                                        initialFilters={["Continuous", "Nonconstant"]}
-                                        onChange={handleParameterListFilterChange}
-                                    />
-                                </Label>
-                                <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
-                                    <SettingWrapper annotations={selectedParameterIdentStringAnnotations}>
-                                        <Select
-                                            options={filteredParameterIdentList.map((elm) => ({
-                                                value: elm.toString(),
-                                                label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
-                                            }))}
-                                            size={6}
-                                            value={
-                                                selectedParameterIdentStr.value
-                                                    ? [selectedParameterIdentStr.value]
-                                                    : undefined
-                                            }
-                                            onValueChange={handleColorByParameterChange}
-                                        />
-                                    </SettingWrapper>
-                                </div>
+                                <SwitchCompositions.WithLabel
+                                    label="Enable"
+                                    checked={colorRealizationsByParameter}
+                                    onCheckedChange={setColorRealizationsByParameter}
+                                    size="small"
+                                />
+                                <ParameterListFilter
+                                    parameters={numericAndNonConstantParametersUnion}
+                                    initialFilters={["Continuous", "Nonconstant"]}
+                                    onChange={handleParameterListFilterChange}
+                                    disabled={!colorRealizationsByParameter}
+                                />
+                                <Select
+                                    options={filteredParameterIdentList.map((elm) => ({
+                                        value: elm.toString(),
+                                        label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                                    }))}
+                                    size={6}
+                                    value={
+                                        selectedParameterIdentStr.value ? [selectedParameterIdentStr.value] : undefined
+                                    }
+                                    onValueChange={handleColorByParameterChange}
+                                    disabled={!colorRealizationsByParameter}
+                                />
                             </div>
-                        </div>
-                    </Collapsible.Content>
-                </Collapsible.Group>
-            </Hidden>
+                        </SettingWrapper>
+                    </Hidden>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
         </Collapsible.ScrollArea>
     );
 }

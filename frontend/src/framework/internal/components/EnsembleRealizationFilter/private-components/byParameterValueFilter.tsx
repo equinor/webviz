@@ -370,7 +370,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             <SmartNodeSelector
                                 data={smartNodeSelectorTreeDataNodes ?? []}
                                 selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
-                                onChange={handleParameterNameSelectionChanged}
+                                onValueChange={handleParameterNameSelectionChanged}
                                 placeholder="Add parameter..."
                                 caseInsensitiveMatching={true}
                             />

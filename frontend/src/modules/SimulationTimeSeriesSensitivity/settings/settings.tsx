@@ -157,7 +157,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         maxNumSelectedNodes={1}
                         numSecondsUntilSuggestionsAreShown={0.5}
                         lineBreakAfterTag={true}
-                        onChange={handleVectorSelectChange}
+                        onValueChange={handleVectorSelectChange}
                     />
                 </SettingWrapper>
                 <Label text="Frequency">

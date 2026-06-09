@@ -27,6 +27,7 @@ type TagProps = {
     updateSelectedTagsAndNodes: () => void;
     shake: boolean;
     maxNumSelectedNodes: number;
+    disabled?: boolean;
 };
 
 /**
@@ -351,6 +352,7 @@ export class Tag extends React.Component<TagProps> {
             inputSelect,
             inputBlur,
             removeTag,
+            disabled,
         } = this.props;
 
         const displayText = treeNodeSelection.displayText();
@@ -372,7 +374,7 @@ export class Tag extends React.Component<TagProps> {
                 onMouseLeave={(): void => this.setState({ hovered: false })}
                 onClick={(e): void => this.handleClickEvent(e)}
             >
-                {this.displayAsTag() && !frameless && (
+                {this.displayAsTag() && !frameless && !disabled && (
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
@@ -413,6 +415,7 @@ export class Tag extends React.Component<TagProps> {
                                 width: this.calculateInputWidth(),
                             }}
                             ref={treeNodeSelection.getRef()}
+                            disabled={disabled}
                             onInput={(e): void => this.handleInput(e)}
                             onClick={(e): void => e.stopPropagation()}
                             onChange={(e): void => inputChange(e)}
