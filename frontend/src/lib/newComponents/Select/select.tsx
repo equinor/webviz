@@ -7,6 +7,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
+import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
 import { TextInput } from "../TextInput";
 import { Virtualization } from "../Virtualization";
 
@@ -60,6 +61,7 @@ function ensureKeyboardSelectionInView(
 
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
     const { onValueChange: onChange } = props;
+    const fieldStateAttrs = useFieldStateDataAttributes();
 
     const sizeWithDefault = props.size ?? 1;
     const multipleWithDefault = props.multiple ?? false;
@@ -460,6 +462,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     className={resolveClassNames("form-element group w-full overflow-y-auto", {
                         "text-disabled! pointer-events-none overflow-hidden!": !!props.disabled,
                     })}
+                    {...fieldStateAttrs}
                     data-disabled={props.disabled === true ? true : undefined}
                     style={{ height: sizeWithDefault * (props.optionHeight ?? 24) + 2 }}
                     ref={virtualizationRef}

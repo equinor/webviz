@@ -6,6 +6,7 @@ import type {
 } from "@base-ui/react/number-field";
 import { NumberField as NumberFieldBase } from "@base-ui/react/number-field";
 
+import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { BrowseButtons } from "../_shared/components/browseButtons";
@@ -37,6 +38,7 @@ const DEFAULT_PROPS = {
 function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
     const size = useComponentSize(props);
+    const fieldStateAttrs = useFieldStateDataAttributes();
     const baseRootProps = resolveWrapperProps(
         defaultedProps,
         "scrubAdornment",
@@ -52,12 +54,12 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
     return (
         <NumberFieldBase.Root
             {...baseRootProps}
+            {...fieldStateAttrs}
             className={resolveClassNames(
                 props.layoutClassName,
                 "form-element",
                 "bg-canvas grow",
                 "px-vertical-xs gap-vertical-xs flex items-center",
-                "data-invalid:outline-danger data-invalid:bg-danger-surface",
                 SELECTABLE_SIZES_CLASSNAMES[size],
                 {
                     "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,

@@ -15,8 +15,8 @@ export const Field = {
 };
 
 export type { RootProps as FieldRootProps } from "./_components/root";
-export { useFieldState } from "./_components/FieldStateContext";
-export type { FieldState } from "./_components/FieldStateContext";
+export { useFieldState, useFieldStateDataAttributes } from "./_components/FieldStateContext";
+export type { FieldState, FieldStateDataAttributes } from "./_components/FieldStateContext";
 export type { LabelProps as FieldLabelProps } from "./_components/label";
 export type { DescriptionProps as FieldDescriptionProps } from "./_components/description";
 export type { ErrorProps as FieldErrorProps } from "./_components/error";

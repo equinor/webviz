@@ -35,6 +35,7 @@ export type Overlay = {
  */
 export type SettingWrapperProps = {
     children: React.ReactElement;
+    /** When true, forces the setting to use a stacked layout regardless of the group context. */
     stacked?: boolean;
     label?: React.ReactNode;
     /** When the setting contains multiple inputs, pass a ref to the specific input the label should activate. */
@@ -183,7 +184,11 @@ export function SettingWrapper(props: SettingWrapperProps) {
                 </div>
                 {props.description && <Field.Description>{props.description}</Field.Description>}
             </div>
-            <div className={resolveClassNames(props.contentClassName, "relative w-full items-center")}>
+            <div
+                className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
+                    "col-span-2": !props.help,
+                })}
+            >
                 <div
                     style={{ display: "contents" }}
                     ref={(el) => {
@@ -203,7 +208,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
                 </div>
             )}
             {annotations.length > 0 && (
-                <div className="col-start-2 flex flex-col">
+                <div className={resolveClassNames("col-start-2 flex flex-col", { "col-span-2": !props.help })}>
                     <Annotations annotations={annotations} />
                 </div>
             )}

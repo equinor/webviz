@@ -9,7 +9,7 @@ import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Select } from "@lib/newComponents/Select";
-import { Switch } from "@lib/newComponents/Switch";
+import { Switch, SwitchCompositions } from "@lib/newComponents/Switch";
 import { TextInput } from "@lib/newComponents/TextInput/textInput";
 
 import type { Interfaces } from "../interfaces";
@@ -18,6 +18,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const [ensembles, setEnsembles] = React.useState<RegularEnsembleIdent[]>([]);
+    const [setting4Enabled, setSetting4Enabled] = React.useState(false);
+    const [setting5Enabled, setSetting5Enabled] = React.useState(false);
 
     return (
         <Collapsible.ScrollArea>
@@ -67,6 +69,41 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         }}
                     >
                         <Switch onCheckedChange={() => {}} checked={false} size="small" />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Fourth setting"
+                        help={{
+                            title: "Fourth setting",
+                            content: "An inline setting with enabling switch.",
+                        }}
+                    >
+                        <div className="gap-horizontal-xs flex">
+                            <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} size="small" />
+                            <NumberInput value={0} onValueChange={() => {}} disabled={!setting4Enabled} />
+                        </div>
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Fifth setting"
+                        help={{
+                            title: "Fifth setting",
+                            content: "A stacked setting with enabling switch.",
+                        }}
+                        stacked
+                    >
+                        <div className="gap-vertical-xs flex flex-col">
+                            <SwitchCompositions.WithLabel
+                                onCheckedChange={setSetting5Enabled}
+                                checked={setting5Enabled}
+                                size="small"
+                                label="Enable option"
+                            />
+                            <Select
+                                options={[{ label: "Option 1", value: "option1" }]}
+                                onValueChange={() => {}}
+                                size={5}
+                                disabled={!setting5Enabled}
+                            />
+                        </div>
                     </SettingWrapper>
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Settings with overlays" defaultOpen>
@@ -129,7 +166,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             title: "First setting",
                             content: "This is the first setting.",
                         }}
-                        errorAnnotation="Do not use large settings as inline - use stacked"
+                        errorAnnotation="Do not use large settings as inline - use stacked layout instead."
                     >
                         <Select onValueChange={() => {}} options={[]} size={5} />
                     </SettingWrapper>
