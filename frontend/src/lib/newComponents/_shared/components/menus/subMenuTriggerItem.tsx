@@ -33,6 +33,8 @@ function getBaseComponent(variant: MenuVariant) {
             return ContextMenuBase.SubmenuTrigger;
         case "menu":
             return MenuBase.SubmenuTrigger;
+        case "combobox":
+            throw new Error("Combobox has no sub-menu equivalent");
     }
 }
 

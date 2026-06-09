@@ -8,10 +8,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 
 export type MenuCheckboxItemProps = ComponentWrapperProps<MenuCheckboxItemBaseProps> & MenuItemContentProps;
 
-function CheckboxItemComponent(
-    props: MenuCheckboxItemProps,
-    ref: React.ForwardedRef<HTMLButtonElement>,
-): React.ReactNode {
+function CheckboxItemComponent(props: MenuCheckboxItemProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props);
 
     return <SharedCheckboxItem ref={ref} {...baseProps} />;

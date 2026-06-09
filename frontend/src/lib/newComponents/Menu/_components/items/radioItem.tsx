@@ -8,7 +8,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 
 export type MenuRadioItemProps = ComponentWrapperProps<MenuRadioItemBaseProps> & MenuItemContentProps;
 
-function RadioItemComponent(props: MenuRadioItemProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
+function RadioItemComponent(props: MenuRadioItemProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props) as MenuRadioItemBaseProps;
 
     return <SharedRadioItem ref={ref} {...baseProps} />;
