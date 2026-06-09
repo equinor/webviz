@@ -1,32 +1,18 @@
 import React from "react";
 
-import { useAtom } from "jotai";
-
+import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { useContinuousColorScale, useDiscreteColorScale } from "@framework/WorkbenchSettings";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Select } from "@lib/newComponents/Select";
+import { Switch } from "@lib/newComponents/Switch";
+import { TextInput } from "@lib/newComponents/TextInput/textInput";
 
 import type { Interfaces } from "../interfaces";
-
-import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./atoms/baseAtoms";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { TextInput } from "@lib/newComponents/TextInput/textInput";
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { EnsemblePicker } from "@framework/components/EnsemblePicker";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { SwitchCompositions } from "@lib/newComponents/Switch";
-import { Select } from "@lib/newComponents/Select";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -35,8 +21,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     return (
         <Collapsible.ScrollArea>
-            <Collapsible.Group title="First setting group" defaultOpen>
-                <SettingWrapper.Group>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="First setting group" defaultOpen>
                     <SettingWrapper
                         label="Ensembles"
                         help={{
@@ -55,7 +41,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </SettingWrapper>
                     <SettingWrapper
                         label="Second setting"
-                        description="This is the second setting"
                         help={{
                             title: "Second setting",
                             content: "Smaller settings should be displayed in an inline layout.",
@@ -64,21 +49,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         <NumberInput value={0} onValueChange={() => {}} />
                     </SettingWrapper>
                     <SettingWrapper
+                        label="Second setting"
+                        description="Use a stacked layout if a description is necessary - otherwise, move the description to the help section."
+                        help={{
+                            title: "Second setting",
+                            content: "Smaller settings should be displayed in an inline layout.",
+                        }}
+                        stacked
+                    >
+                        <NumberInput value={0} onValueChange={() => {}} />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Third setting"
                         help={{
                             title: "Third setting",
                             content: "This setting has no label or description. The input spans the whole width.",
                         }}
                     >
-                        <SwitchCompositions.WithLabel
-                            label="Third setting"
-                            onCheckedChange={() => {}}
-                            checked={false}
-                        />
+                        <Switch onCheckedChange={() => {}} checked={false} size="small" />
                     </SettingWrapper>
-                </SettingWrapper.Group>
-            </Collapsible.Group>
-            <Collapsible.Group title="Settings with overlays" defaultOpen>
-                <SettingWrapper.Group>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Settings with overlays" defaultOpen>
                     <SettingWrapper
                         label="First setting"
                         help={{
@@ -130,22 +121,40 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     >
                         <TextInput value="" onValueChange={() => {}} />
                     </SettingWrapper>
-                </SettingWrapper.Group>
-            </Collapsible.Group>
-            <Collapsible.Group title="Settings with annotations" defaultOpen>
-                <SettingWrapper.Group>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Settings with annotations" defaultOpen>
                     <SettingWrapper
                         label="First setting"
                         help={{
                             title: "First setting",
                             content: "This is the first setting.",
                         }}
-                        errorAnnotation="This is an error annotation."
+                        errorAnnotation="Do not use large settings as inline - use stacked"
+                    >
+                        <Select onValueChange={() => {}} options={[]} size={5} />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Second setting"
+                        help={{
+                            title: "Second setting",
+                            content: "This is the second setting.",
+                        }}
+                        warningAnnotation="This is a warning annotation."
                     >
                         <TextInput value="" onValueChange={() => {}} />
                     </SettingWrapper>
-                </SettingWrapper.Group>
-            </Collapsible.Group>
+                    <SettingWrapper
+                        label="Third setting"
+                        help={{
+                            title: "Third setting",
+                            content: "This is the third setting.",
+                        }}
+                        infoAnnotation="This is an info annotation."
+                    >
+                        <TextInput value="" onValueChange={() => {}} />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
         </Collapsible.ScrollArea>
     );
 }

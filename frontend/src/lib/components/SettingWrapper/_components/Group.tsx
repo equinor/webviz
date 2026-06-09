@@ -1,6 +1,6 @@
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import React from "react";
+
+import { useElementSize } from "@lib/hooks/useElementSize";
 
 export type GroupProps = {
     children?: React.ReactNode;
@@ -8,11 +8,11 @@ export type GroupProps = {
 
 export type Layout = "inline" | "stacked";
 
-const LAYOUT_BREAKPOINT = 300;
+const LAYOUT_BREAKPOINT = 350;
 
 export const LayoutContext = React.createContext<Layout>("inline");
 
-export const Group = React.forwardRef<HTMLDivElement, GroupProps>((props, ref) => {
+export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group(props, ref) {
     const [layout, setLayout] = React.useState<Layout>("stacked");
     const localRef = React.useRef<HTMLDivElement>(null);
     const size = useElementSize(localRef);
@@ -30,25 +30,13 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>((props, ref) =
         [size.width],
     );
 
-    const children = React.Children.map(props.children, (child, index) => (
-        <div
-            key={index}
-            className={resolveClassNames(
-                "px-horizontal-xs py-vertical-2xs col-span-2 grid grid-cols-subgrid",
-                index % 2 === 0 ? "bg-canvas" : "",
-            )}
-        >
-            {child}
-        </div>
-    ));
-
     return (
         <LayoutContext.Provider value={layout}>
             <div
                 ref={localRef}
-                className={resolveClassNames("gap-x-horizontal-md gap-y-vertical grid grid-cols-[auto_1fr]")}
+                className="gap-x-horizontal-md grid grid-cols-[auto_1fr_auto]"
             >
-                {children}
+                {props.children}
             </div>
         </LayoutContext.Provider>
     );

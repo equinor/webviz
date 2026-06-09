@@ -4,11 +4,11 @@ import { Field } from "@lib/newComponents/Field";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { SettingsLayoutContext } from "..";
 import { type ContextHelpProps } from "../../ContextHelp";
 
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
-import { SettingsLayoutContext } from "..";
 
 export type SettingAnnotation = {
     type: "warning" | "info" | "error";
@@ -114,9 +114,12 @@ export function SettingWrapper(props: SettingWrapperProps) {
                     ? { type: "info", message: props.infoOverlay }
                     : undefined;
 
+    const isInvalid = annotations.some((a) => a.type === "error");
+    const isWarning = annotations.some((a) => a.type === "warning");
+
     if (!props.label) {
         return (
-            <Field.Root inline>
+            <Field.Root inline invalid={isInvalid} warning={isWarning}>
                 <div className="gap-x-horizontal-xs col-span-2 flex items-center">
                     <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
                         <div
@@ -145,8 +148,8 @@ export function SettingWrapper(props: SettingWrapperProps) {
 
     if (isStacked) {
         return (
-            <Field.Root layoutClassName="w-full col-span-2">
-                <div className="gap-horizontal-2xs flex items-center">
+            <Field.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
+                <div className="gap-horizontal-2xs flex w-full items-center justify-between">
                     {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
                     {props.help && (
                         <Field.Info side="right">
@@ -173,33 +176,37 @@ export function SettingWrapper(props: SettingWrapperProps) {
     }
 
     return (
-        <Field.Root inline>
+        <Field.Root inline invalid={isInvalid} warning={isWarning}>
             <div className="gap-vertical-4xs flex flex-col justify-center">
                 <div className="gap-horizontal-2xs flex items-center">
                     {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
-                    {props.help && (
-                        <Field.Info side="right">
-                            <Heading as="h6">{props.help.title}</Heading>
-                            {props.help.content}
-                        </Field.Info>
-                    )}
                 </div>
                 {props.description && <Field.Description>{props.description}</Field.Description>}
             </div>
-            <div className="gap-vertical-4xs flex flex-col">
-                <div className={resolveClassNames(props.contentClassName, "relative w-full items-center")}>
-                    <div
-                        style={{ display: "contents" }}
-                        ref={(el) => {
-                            if (el) el.inert = !!overlay;
-                        }}
-                    >
-                        {props.children}
-                    </div>
-                    {overlay && <Overlay type={overlay.type} message={overlay.message} />}
+            <div className={resolveClassNames(props.contentClassName, "relative w-full items-center")}>
+                <div
+                    style={{ display: "contents" }}
+                    ref={(el) => {
+                        if (el) el.inert = !!overlay;
+                    }}
+                >
+                    {props.children}
                 </div>
-                <Annotations annotations={annotations} />
+                {overlay && <Overlay type={overlay.type} message={overlay.message} />}
             </div>
+            {props.help && (
+                <div className="self-center">
+                    <Field.Info side="right">
+                        <Heading as="h6">{props.help.title}</Heading>
+                        {props.help.content}
+                    </Field.Info>
+                </div>
+            )}
+            {annotations.length > 0 && (
+                <div className="col-start-2 flex flex-col">
+                    <Annotations annotations={annotations} />
+                </div>
+            )}
         </Field.Root>
     );
 }
