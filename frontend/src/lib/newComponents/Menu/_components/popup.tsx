@@ -44,7 +44,7 @@ function PopupComponent(props: MenuPopupProps, ref: React.ForwardedRef<HTMLDivEl
                 <Typography
                     {...baseProps}
                     as={MenuBase.Popup}
-                    size={getTextSizeForSelectableSize(defaultedProps.itemSize)}
+                    size={getTextSizeForSelectableSize(itemSize)}
                     ref={ref}
                     layoutClassName={resolveClassNames("menu__popup", baseProps.className)}
                 >

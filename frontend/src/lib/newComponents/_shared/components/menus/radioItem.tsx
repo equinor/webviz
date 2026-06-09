@@ -13,7 +13,7 @@ export type MenuVariantItemProps = ContextMenuRadioItemProps | MenuRadioItemProp
 
 function SharedRadioItemComponent<TProps extends MenuVariantItemProps>(
     props: TProps & MenuItemContentProps,
-    ref: React.ForwardedRef<HTMLElement>,
+    ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactNode {
     const { text, description, icon, value, ...otherProps } = props;
     const menuVariant = useMenuVariant();
@@ -51,6 +51,8 @@ function getBaseIndicatorComponent(variant: MenuVariant) {
             return ContextMenuBase.RadioItemIndicator;
         case "menu":
             return MenuBase.RadioItemIndicator;
+        case "combobox":
+            throw new Error("Combobox has no Radio-item equivalent");
     }
 }
 
@@ -60,6 +62,8 @@ function getBaseComponent(variant: MenuVariant) {
             return ContextMenuBase.RadioItem;
         case "menu":
             return MenuBase.RadioItem;
+        case "combobox":
+            throw new Error("Combobox has no Radio-item equivalent");
     }
 }
 

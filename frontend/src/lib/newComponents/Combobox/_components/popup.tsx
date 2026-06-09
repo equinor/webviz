@@ -2,9 +2,14 @@ import React from "react";
 
 import { Combobox as ComboboxBase } from "@base-ui/react";
 
+import { ComponentSizeContext } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { MenuVariantContext } from "@lib/newComponents/_shared/contexts/menuVariantContext";
 import { PortalContainerContext } from "@lib/newComponents/_shared/contexts/portalContainerContext";
+import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import { Typography } from "@lib/newComponents/Typography";
 
 export type ComboBoxPopupProps = {
+    itemSize: SelectableSize;
     children?: React.ReactNode;
 };
 
@@ -14,9 +19,17 @@ export function ComboBoxPopup(props: ComboBoxPopupProps): React.ReactNode {
     return (
         <ComboboxBase.Portal container={portalContainer}>
             <ComboboxBase.Positioner className="z-tooltip outline-0" sideOffset={4}>
-                <ComboboxBase.Popup className="bg-floating shadow-elevation-floating box-border max-h-96 max-w-(--available-width) min-w-(--anchor-width) origin-(--transform-origin) rounded transition-transform data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
-                    {props.children}
-                </ComboboxBase.Popup>
+                <Typography
+                    as={ComboboxBase.Popup}
+                    size={getTextSizeForSelectableSize(props.itemSize)}
+                    layoutClassName="menu__popup max-h-96 max-w-(--available-width) min-w-(--anchor-width) "
+                >
+                    <MenuVariantContext.Provider value="combobox">
+                        <ComponentSizeContext.Provider value={props.itemSize}>
+                            {props.children}
+                        </ComponentSizeContext.Provider>
+                    </MenuVariantContext.Provider>
+                </Typography>
             </ComboboxBase.Positioner>
         </ComboboxBase.Portal>
     );

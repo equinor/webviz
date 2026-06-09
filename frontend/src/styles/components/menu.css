@@ -1,7 +1,8 @@
 @layer components {
-    /* The menu styles are reused for both menu and context-menu */
+    /* The menu styles are reused for both menu, context-menu and combobox */
     .menu__popup {
         @apply bg-floating shadow-elevation-overlay py-vertical-xs min-w-20 rounded-sm outline-0 transition-all;
+        @apply max-h-[min(var(--available-height),24rem)] scroll-p-px overflow-y-auto overscroll-contain;
 
         &[data-ending-style] {
             opacity: 0;
@@ -10,11 +11,17 @@
 
     .menu__separator {
         /* my-vertical-xs */
-        @apply bg-neutral my-horizontal-3xs h-px;
+        @apply bg-neutral my-horizontal-xs h-px first:hidden [:where(&+&)]:hidden;
     }
 
     .menu__item {
         @apply gap-horizontal-xs px-vertical-md py-horizontal-xs text-neutral-subtle flex max-w-md items-center;
+    }
+
+    .menu__label {
+        @apply bg-floating z-elevated text-neutral-strong font-bolder! sticky;
+        /* This should match the popup's vertical padding */
+        @apply -top-vertical-xs;
     }
 
     .menu__interactable {
@@ -22,8 +29,8 @@
             @apply text-disabled! cursor-not-allowed bg-transparent opacity-75;
         }
 
-        @apply cursor-pointer;
-        @apply not-data-disabled:hover:bg-accent-hover focus:outline-focus;
+        @apply cursor-pointer outline-none;
+        @apply not-data-disabled:data-highlighted:bg-accent-hover;
         @apply data-popup-open:bg-accent-hover;
     }
     .menu__submenu_trigger {
@@ -31,6 +38,6 @@
     }
 
     .menu__toggle_indicator {
-        @apply text-body-2xl -ml-horizontal-3xs text-accent-subtle data-disabled:text-fill-disabled;
+        @apply -ml-horizontal-3xs text-accent-subtle data-disabled:text-fill-disabled flex items-center;
     }
 }

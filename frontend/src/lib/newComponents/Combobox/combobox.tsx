@@ -70,8 +70,6 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     const baseProps = resolveWrapperProps(rest, "items", "loading", "errorText", "size");
 
     const hasGroups = isGroupedItems(props.items);
-    const listCols = renderItemAdornment ? "grid-cols-[1.5rem_auto_1fr]" : "grid-cols-[1.5rem_1fr]";
-    const itemColSpan = renderItemAdornment ? "col-span-3" : "col-span-2";
     const size = useComponentSize(props);
 
     const flatItems = React.useMemo(() => {
@@ -108,7 +106,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
             <ComboboxListItem
                 key={getItemValueKey(item)}
                 item={item}
-                itemColSpan={itemColSpan}
+                isMultiSelect={props.multiple}
                 renderItemAdornment={renderItemAdornment}
             />
         );
@@ -170,7 +168,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 </div>
             </ComboboxBase.InputGroup>
 
-            <ComboBoxPopup>
+            <ComboBoxPopup itemSize={size}>
                 <ComboboxBase.Status className="sr-only">
                     {props.loading ? loadingText : props.errorText}
                 </ComboboxBase.Status>
@@ -185,14 +183,13 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                             </div>
                         </ComboboxBase.Empty>
 
-                        <ComboboxBase.List
-                            className={`gap-x-horizontal-xs box-border grid max-h-[min(var(--available-height),24rem)] scroll-p-px overflow-y-auto overscroll-contain outline-0 data-empty:p-0 ${listCols}`}
-                        >
+                        <ComboboxBase.List>
                             {hasGroups
                                 ? (group) => (
-                                      <ComboboxListGroup group={group} spanCols={!!renderItemAdornment}>
-                                          {renderValueItem}
-                                      </ComboboxListGroup>
+                                      <React.Fragment key={group.value}>
+                                          <ComboboxBase.Separator className="menu__separator" />
+                                          <ComboboxListGroup group={group}>{renderValueItem}</ComboboxListGroup>
+                                      </React.Fragment>
                                   )
                                 : renderValueItem}
                         </ComboboxBase.List>
