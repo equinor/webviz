@@ -5,6 +5,9 @@ import type { Meta, StoryObj } from "@storybook/react";
 
 import { Field } from "@lib/newComponents/Field";
 
+import type { ComboboxItem } from "./types";
+
+import type { ComboboxProps } from "./index";
 import { Combobox } from "./index";
 
 const COUNTRIES_BY_CONTINENT = [
@@ -57,7 +60,7 @@ const COUNTRIES_BY_CONTINENT = [
     },
 ];
 
-const COUNTRIES = COUNTRIES_BY_CONTINENT.flatMap((group) => group.items);
+const COUNTRIES = COUNTRIES_BY_CONTINENT.flatMap<ComboboxItem<string>>((group) => group.items);
 
 const CONTINENT_COLORS: Record<string, string> = {
     africa: "#f59e0b",
@@ -92,6 +95,7 @@ const meta: Meta<typeof Combobox> = {
         ),
     ],
     argTypes: {
+        size: { control: "radio", options: ["small", "default", "large"] },
         placeholder: { control: "text" },
         noMatchesText: { control: "text" },
         clearable: { control: "boolean" },
@@ -165,9 +169,14 @@ export const GroupedItems: Story = {
             },
         },
     },
-    render: () => (
+    args: {
+        items: COUNTRIES_BY_CONTINENT,
+        placeholder: "Select a country",
+        clearable: true,
+    },
+    render: (args) => (
         <div className="w-64">
-            <Combobox items={COUNTRIES_BY_CONTINENT} placeholder="Select a country" clearable />
+            <Combobox {...args} />
         </div>
     ),
 };
@@ -178,17 +187,16 @@ export const Controlled: Story = {
             description: { story: "Fully controlled — external state owns the selected value." },
         },
     },
-    render: function ControlledComp() {
+    args: {
+        items: COUNTRIES,
+        clearable: true,
+        placeholder: "Select a country",
+    },
+    render: function ControlledComp(args: ComboboxProps<any, any>) {
         const [value, setValue] = React.useState<string | null>(null);
         return (
             <div className="flex w-64 flex-col gap-3">
-                <Combobox
-                    items={COUNTRIES}
-                    value={value}
-                    onValueChange={setValue}
-                    clearable
-                    placeholder="Select a country"
-                />
+                <Combobox<string> {...args} value={value} onValueChange={setValue} />
                 <p className="text-body-sm text-neutral-subtle">
                     Selected: {value ? (COUNTRIES.find((c) => c.value === value)?.label ?? value) : "none"}
                 </p>
@@ -231,12 +239,17 @@ export const WithField: Story = {
             },
         },
     },
-    render: () => (
+    args: {
+        items: COUNTRIES,
+        clearable: true,
+        placeholder: "Select a country",
+    },
+    render: (args) => (
         <div className="w-64">
             <Field.Root>
                 <Field.Label>Country</Field.Label>
                 <Field.Description>Select your country of residence.</Field.Description>
-                <Combobox items={COUNTRIES} clearable placeholder="Select a country" />
+                <Combobox {...args} />
             </Field.Root>
         </div>
     ),
@@ -250,7 +263,12 @@ export const WithItemAdornment: Story = {
             },
         },
     },
-    render: () => {
+    args: {
+        items: COUNTRIES,
+        placeholder: "Select a country",
+        clearable: true,
+    },
+    render: (args: ComboboxProps<any, any>) => {
         function ContinentDot({ countryCode }: { countryCode: string }) {
             const continent = COUNTRY_CONTINENT[countryCode];
             const color = CONTINENT_COLORS[continent] ?? "#6b7280";
@@ -259,17 +277,11 @@ export const WithItemAdornment: Story = {
 
         return (
             <div className="flex w-64 flex-col gap-6">
+                <Combobox {...args} renderItemAdornment={(item) => <ContinentDot countryCode={item} />} />
                 <Combobox
-                    items={COUNTRIES}
-                    placeholder="Select a country"
-                    clearable
-                    renderItemAdornment={(item) => <ContinentDot countryCode={item} />}
-                />
-                <Combobox
-                    items={COUNTRIES}
+                    {...args}
                     placeholder="Select countries"
                     multiple
-                    clearable
                     renderItemAdornment={(item) => <ContinentDot countryCode={item} />}
                 />
             </div>
@@ -285,14 +297,15 @@ export const WithStartAdornment: Story = {
             },
         },
     },
-    render: () => (
+    args: {
+        items: COUNTRIES,
+        placeholder: "Select a country",
+        clearable: true,
+        startAdornment: <Search fontSize="small" />,
+    },
+    render: (args) => (
         <div className="w-64">
-            <Combobox
-                items={COUNTRIES}
-                placeholder="Select a country"
-                clearable
-                startAdornment={<Search fontSize="small" />}
-            />
+            <Combobox {...args} />
         </div>
     ),
 };
@@ -305,14 +318,15 @@ export const WithEndAdornment: Story = {
             },
         },
     },
-    render: () => (
+    args: {
+        items: COUNTRIES,
+        placeholder: "Select a country",
+        clearable: true,
+        endAdornment: <Public fontSize="small" />,
+    },
+    render: (args) => (
         <div className="w-64">
-            <Combobox
-                items={COUNTRIES}
-                placeholder="Select a country"
-                clearable
-                endAdornment={<Public fontSize="small" />}
-            />
+            <Combobox {...args} />
         </div>
     ),
 };
@@ -361,7 +375,11 @@ export const AsyncFetchOnOpen: Story = {
             },
         },
     },
-    render: function AsyncFetchOnOpenComp() {
+    args: {
+        clearable: true,
+        placeholder: "Select a country",
+    },
+    render: function AsyncFetchOnOpenComp(args) {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
         const [open, setOpen] = React.useState(false);
@@ -381,14 +399,7 @@ export const AsyncFetchOnOpen: Story = {
 
         return (
             <div className="w-64">
-                <Combobox
-                    items={items}
-                    loading={loading}
-                    open={open}
-                    onOpenChange={handleOpenChange}
-                    clearable
-                    placeholder="Select a country"
-                />
+                <Combobox {...args} items={items} loading={loading} open={open} onOpenChange={handleOpenChange} />
             </div>
         );
     },
@@ -406,7 +417,12 @@ export const AsyncSearchAsYouType: Story = {
             },
         },
     },
-    render: function AsyncSearchAsYouTypeComp() {
+    args: {
+        filter: null,
+        clearable: true,
+        placeholder: "Type to search countries…",
+    },
+    render: function AsyncSearchAsYouTypeComp(args) {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
         const [query, setQuery] = React.useState("");
@@ -433,11 +449,9 @@ export const AsyncSearchAsYouType: Story = {
         return (
             <div className="w-64">
                 <Combobox
+                    {...args}
                     items={items}
                     loading={loading}
-                    filter={null}
-                    clearable
-                    placeholder="Type to search countries…"
                     noMatchesText={query ? "No matches found" : "Type to search…"}
                     onInputValueChange={handleInputValueChange}
                 />
@@ -454,7 +468,11 @@ export const AsyncFetchError: Story = {
             },
         },
     },
-    render: function AsyncFetchErrorComp() {
+    args: {
+        clearable: true,
+        placeholder: "Select a country",
+    },
+    render: function AsyncFetchErrorComp(args) {
         const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
         const [loading, setLoading] = React.useState(false);
         const [errorText, setErrorText] = React.useState<string | undefined>(undefined);
@@ -486,6 +504,7 @@ export const AsyncFetchError: Story = {
         return (
             <div className="flex w-64 flex-col gap-3">
                 <Combobox
+                    {...args}
                     items={items}
                     loading={loading}
                     errorText={
@@ -506,8 +525,6 @@ export const AsyncFetchError: Story = {
                     }
                     open={open}
                     onOpenChange={handleOpenChange}
-                    clearable
-                    placeholder="Select a country"
                 />
             </div>
         );
