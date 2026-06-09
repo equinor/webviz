@@ -118,6 +118,9 @@ import type {
     GetRelpermTableNamesData_api,
     GetRelpermTableNamesErrors_api,
     GetRelpermTableNamesResponses_api,
+    GetRftObservationsData_api,
+    GetRftObservationsErrors_api,
+    GetRftObservationsResponses_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataErrors_api,
     GetRftRealizationDataResponses_api,
@@ -1309,6 +1312,20 @@ export const getRftRealizationData = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GetRftRealizationDataResponses_api, GetRftRealizationDataErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/rft/rft_realization_data",
+        ...options,
+    });
+
+/**
+ * Get Rft Observations
+ *
+ * Get RFT observations per well and date for a given ensemble.
+ */
+export const getRftObservations = <ThrowOnError extends boolean = false>(
+    options: Options<GetRftObservationsData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<GetRftObservationsResponses_api, GetRftObservationsErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/rft/rft_observations",
         ...options,
     });
 

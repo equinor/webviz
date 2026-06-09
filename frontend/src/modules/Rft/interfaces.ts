@@ -1,41 +1,33 @@
-import type { UseQueryResult } from "@tanstack/react-query";
-
-import type { RftRealizationData_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { validRealizationNumbersAtom } from "./settings/atoms/baseAtoms";
 import {
-    selectedRftResponseNameAtom,
-    selectedRftTimestampsUtcMsAtom,
-    selectedRftWellNameAtom,
+    rftDataAccessorStatusAtom,
+    rftObservationsStatusAtom,
+    selectedResponseNameAtom,
+    selectedTimestampUtcMsAtom,
+    selectedWellNameAtom,
+    visualizationSettingsAtom,
 } from "./settings/atoms/derivedAtoms";
-import { rftRealizationDataQueryAtom } from "./settings/atoms/queryAtoms";
+import type { RftDataAccessorStatus, RftObservationsStatus, VisualizationSettings } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
-    rftDataQuery: UseQueryResult<RftRealizationData_api[], Error>;
     wellName: string | null;
     responseName: string | null;
-    timeStampsUtcMs: number | null;
-    realizationNums: number[] | null;
+    timestampUtcMs: number | null;
+    visualizationSettings: VisualizationSettings;
+    rftDataAccessorStatus: RftDataAccessorStatus;
+    rftObservationsStatus: RftObservationsStatus;
 };
+
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    rftDataQuery: (get) => {
-        return get(rftRealizationDataQueryAtom);
-    },
-    wellName: (get) => {
-        return get(selectedRftWellNameAtom);
-    },
-    responseName: (get) => {
-        return get(selectedRftResponseNameAtom);
-    },
-    timeStampsUtcMs: (get) => {
-        return get(selectedRftTimestampsUtcMsAtom);
-    },
-    realizationNums: (get) => {
-        return get(validRealizationNumbersAtom);
-    },
+    wellName: (get) => get(selectedWellNameAtom),
+    responseName: (get) => get(selectedResponseNameAtom),
+    timestampUtcMs: (get) => get(selectedTimestampUtcMsAtom),
+    visualizationSettings: (get) => get(visualizationSettingsAtom),
+    rftDataAccessorStatus: (get) => get(rftDataAccessorStatusAtom),
+    rftObservationsStatus: (get) => get(rftObservationsStatusAtom),
 };

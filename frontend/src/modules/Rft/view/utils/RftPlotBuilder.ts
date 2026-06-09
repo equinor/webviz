@@ -1,0 +1,417 @@
+import type { Layout, PlotData } from "plotly.js";
+
+import type { RftObservation_api } from "@api";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Size2D } from "@lib/utils/geometry";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
+
+import {
+    RFT_STATISTIC_LABELS,
+    type RftDataAccessorLike,
+    type RftRealizationCurve,
+    RftStatistic,
+} from "../../typesAndEnums";
+
+type EnsembleStatisticGroup = {
+    ensembleIdent: RegularEnsembleIdent;
+    entries: RftRealizationCurve[];
+};
+
+export type RftFanchartStatistics = {
+    depths: number[];
+    minValues: number[];
+    p90Values: number[];
+    p50Values: number[];
+    meanValues: number[];
+    p10Values: number[];
+    maxValues: number[];
+};
+
+export class RftPlotBuilder {
+    private _dataAccessor: RftDataAccessorLike;
+    private _selectedEnsembles: RegularEnsemble[];
+    private _colorSet: ColorSet;
+
+    constructor(dataAccessor: RftDataAccessorLike, selectedEnsembles: RegularEnsemble[], colorSet: ColorSet) {
+        this._dataAccessor = dataAccessor;
+        this._selectedEnsembles = selectedEnsembles;
+        this._colorSet = colorSet;
+    }
+
+    makeLegendTraces(shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
+        const firstEntryByEnsemble = new Map<string, RftRealizationCurve>();
+
+        for (const entry of this._dataAccessor.getEntries()) {
+            const ensembleKey = entry.ensembleIdent.toString();
+            if (!firstEntryByEnsemble.has(ensembleKey)) {
+                firstEntryByEnsemble.set(ensembleKey, entry);
+            }
+        }
+
+        return Array.from(firstEntryByEnsemble.entries()).map(([ensembleKey, entry]) => {
+            shownLegendEnsembles.add(ensembleKey);
+            return {
+                x: [null],
+                y: [null],
+                type: "scatter",
+                mode: "lines",
+                name: this.makeEnsembleDisplayName(entry.ensembleIdent),
+                legendgroup: ensembleKey,
+                showlegend: true,
+                line: { color: this.makeEnsembleColor(entry.ensembleIdent), width: 2.5 },
+                hoverinfo: "skip",
+            };
+        });
+    }
+
+    makeIndividualRealizationTraces(responseName: string, shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
+        return this._dataAccessor.getEntries().map((entry) => {
+            const ensembleKey = entry.ensembleIdent.toString();
+            const ensembleDisplayName = this.makeEnsembleDisplayName(entry.ensembleIdent);
+            const showLegend = shouldShowLegend(ensembleKey, shownLegendEnsembles);
+
+            return {
+                x: entry.values,
+                y: entry.depths,
+                type: "scatter",
+                mode: "lines",
+                name: ensembleDisplayName,
+                legendgroup: ensembleKey,
+                showlegend: showLegend,
+                opacity: 0.35,
+                line: { color: this.makeEnsembleColor(entry.ensembleIdent), width: 0.75 },
+                hovertemplate:
+                    `<b>${ensembleDisplayName}</b>` +
+                    `<br>Realization: ${entry.realization}` +
+                    `<br>${responseName}: %{x}` +
+                    "<br>Depth: %{y}<extra></extra>",
+            };
+        });
+    }
+
+    makeStatisticLineTraces(
+        responseName: string,
+        selectedStatistics: RftStatistic[],
+        shownLegendEnsembles = new Set<string>(),
+    ): Partial<PlotData>[] {
+        const traces: Partial<PlotData>[] = [];
+
+        for (const group of this.makeStatisticGroups()) {
+            const statistics = calculateFanchartStatistics(group.entries);
+            if (!statistics) {
+                continue;
+            }
+
+            const ensembleKey = group.ensembleIdent.toString();
+            const color = this.makeEnsembleColor(group.ensembleIdent);
+            const ensembleDisplayName = this.makeEnsembleDisplayName(group.ensembleIdent);
+            const showLegend = shouldShowLegend(ensembleKey, shownLegendEnsembles);
+
+            selectedStatistics.forEach((statistic, index) => {
+                traces.push({
+                    x: getStatisticValues(statistics, statistic),
+                    y: statistics.depths,
+                    type: "scatter",
+                    mode: "lines",
+                    name: ensembleDisplayName,
+                    line: {
+                        color,
+                        width: statistic === RftStatistic.MEAN ? 3 : 2.25,
+                        dash: getStatisticLineDash(statistic),
+                    },
+                    legendgroup: ensembleKey,
+                    showlegend: index === 0 && showLegend,
+                    customdata: statistics.depths.map(() => RFT_STATISTIC_LABELS[statistic]),
+                    hovertemplate:
+                        `<b>${ensembleDisplayName}</b>` +
+                        "<br>Statistic: %{customdata}" +
+                        `<br>${responseName}: %{x}` +
+                        "<br>Depth: %{y}<extra></extra>",
+                });
+            });
+        }
+
+        return traces;
+    }
+
+    makeStatisticFanTraces(shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
+        const traces: Partial<PlotData>[] = [];
+
+        for (const group of this.makeStatisticGroups()) {
+            const statistics = calculateFanchartStatistics(group.entries);
+            if (!statistics) {
+                continue;
+            }
+
+            const ensembleKey = group.ensembleIdent.toString();
+            const color = this.makeEnsembleColor(group.ensembleIdent);
+            const showLegend = shouldShowLegend(ensembleKey, shownLegendEnsembles);
+
+            traces.push({
+                x: statistics.minValues,
+                y: statistics.depths,
+                type: "scatter",
+                mode: "lines",
+                line: { color, width: 0 },
+                hoverinfo: "skip",
+                showlegend: false,
+                legendgroup: ensembleKey,
+            });
+            traces.push({
+                x: statistics.p90Values,
+                y: statistics.depths,
+                type: "scatter",
+                mode: "lines",
+                fill: "tonextx",
+                fillcolor: makeTransparentColor(color, 0.12),
+                line: { color, width: 0 },
+                hoverinfo: "skip",
+                showlegend: false,
+                legendgroup: ensembleKey,
+            });
+            traces.push({
+                x: statistics.p10Values,
+                y: statistics.depths,
+                type: "scatter",
+                mode: "lines",
+                fill: "tonextx",
+                fillcolor: makeTransparentColor(color, 0.28),
+                line: { color, width: 0 },
+                hoverinfo: "skip",
+                showlegend: false,
+                legendgroup: ensembleKey,
+            });
+            traces.push({
+                x: statistics.maxValues,
+                y: statistics.depths,
+                type: "scatter",
+                mode: "lines",
+                fill: "tonextx",
+                fillcolor: makeTransparentColor(color, 0.12),
+                line: { color, width: 0 },
+                hoverinfo: "skip",
+                name: this.makeEnsembleDisplayName(group.ensembleIdent),
+                showlegend: showLegend,
+                legendgroup: ensembleKey,
+            });
+        }
+
+        return traces;
+    }
+
+    makeObservationTraces(observations: RftObservation_api[], responseName: string): Partial<PlotData>[] {
+        if (observations.length === 0) {
+            return [];
+        }
+
+        return [
+            {
+                x: observations.map((observation) => observation.value),
+                y: observations.map((observation) => observation.tvd),
+                type: "scatter",
+                mode: "markers",
+                name: "Observations",
+                marker: { color: "black", size: 8, symbol: "diamond" },
+                error_x: {
+                    type: "data",
+                    array: observations.map((observation) => observation.error),
+                    visible: true,
+                    color: "black",
+                    thickness: 1,
+                    width: 4,
+                },
+                customdata: observations.map((observation) => [observation.error, observation.zone ?? "N/A"]),
+                hovertemplate:
+                    "<b>Observation</b>" +
+                    `<br>${responseName}: %{x}` +
+                    "<br>Depth: %{y}" +
+                    "<br>Error: %{customdata[0]}" +
+                    "<br>Zone: %{customdata[1]}<extra></extra>",
+            },
+        ];
+    }
+
+    makeLayout(size: Size2D, responseName: string, valueRange: [number, number] | null): Partial<Layout> {
+        return {
+            height: size.height,
+            width: size.width,
+            margin: { l: 60, r: 20, t: 20, b: 50 },
+            hovermode: "closest",
+            showlegend: true,
+            xaxis: {
+                title: responseName,
+                range: valueRange ?? undefined,
+            },
+            yaxis: {
+                title: "Depth (TVD)",
+                autorange: "reversed",
+            },
+        };
+    }
+
+    private makeStatisticGroups(): EnsembleStatisticGroup[] {
+        const groups = new Map<string, EnsembleStatisticGroup>();
+
+        for (const entry of this._dataAccessor.getEntries()) {
+            const key = entry.ensembleIdent.toString();
+            const group = groups.get(key);
+            if (group) {
+                group.entries.push(entry);
+                continue;
+            }
+
+            groups.set(key, { ensembleIdent: entry.ensembleIdent, entries: [entry] });
+        }
+
+        return Array.from(groups.values());
+    }
+
+    private makeEnsembleColor(ensembleIdent: RegularEnsembleIdent): string {
+        const ensemble = this._selectedEnsembles.find(
+            (candidate) => candidate.getIdent().toString() === ensembleIdent.toString(),
+        );
+        return ensemble?.getColor() ?? this._colorSet.getFirstColor();
+    }
+
+    private makeEnsembleDisplayName(ensembleIdent: RegularEnsembleIdent): string {
+        return makeDistinguishableEnsembleDisplayName(ensembleIdent, this._selectedEnsembles);
+    }
+}
+
+function shouldShowLegend(ensembleKey: string, shownLegendEnsembles: Set<string>): boolean {
+    if (shownLegendEnsembles.has(ensembleKey)) {
+        return false;
+    }
+
+    shownLegendEnsembles.add(ensembleKey);
+    return true;
+}
+
+function resampleEntriesToCommonDepths(entries: RftRealizationCurve[]): RftRealizationCurve[] {
+    const commonDepths = makeCommonDepthGrid(entries);
+    if (commonDepths.length === 0) {
+        return [];
+    }
+
+    return entries.map((entry) => {
+        const sorted = sortCurveByDepth(entry.depths, entry.values);
+        return {
+            ...entry,
+            depths: commonDepths,
+            values: commonDepths.map((depth) => interpolateValueAtDepth(sorted.depths, sorted.values, depth)),
+        };
+    });
+}
+
+function makeCommonDepthGrid(entries: RftRealizationCurve[]): number[] {
+    const depthSet = new Set<number>();
+    for (const entry of entries) {
+        for (const depth of entry.depths) {
+            depthSet.add(depth);
+        }
+    }
+    return Array.from(depthSet).sort((left, right) => left - right);
+}
+
+function sortCurveByDepth(depths: number[], values: number[]): { depths: number[]; values: number[] } {
+    const orderedIndices = depths.map((_, index) => index).sort((left, right) => depths[left] - depths[right]);
+    return {
+        depths: orderedIndices.map((index) => depths[index]),
+        values: orderedIndices.map((index) => values[index]),
+    };
+}
+
+function interpolateValueAtDepth(sortedDepths: number[], sortedValues: number[], targetDepth: number): number {
+    if (sortedDepths.length === 0) {
+        return Number.NaN;
+    }
+    if (targetDepth < sortedDepths[0] || targetDepth > sortedDepths[sortedDepths.length - 1]) {
+        return Number.NaN;
+    }
+
+    for (let index = 0; index < sortedDepths.length - 1; index++) {
+        const lowerDepth = sortedDepths[index];
+        const upperDepth = sortedDepths[index + 1];
+        if (targetDepth >= lowerDepth && targetDepth <= upperDepth) {
+            if (upperDepth === lowerDepth) {
+                return sortedValues[index];
+            }
+            const fraction = (targetDepth - lowerDepth) / (upperDepth - lowerDepth);
+            return sortedValues[index] + fraction * (sortedValues[index + 1] - sortedValues[index]);
+        }
+    }
+
+    return sortedValues[sortedDepths.length - 1];
+}
+
+export function calculateFanchartStatistics(entries: RftRealizationCurve[]): RftFanchartStatistics | null {
+    if (entries.length === 0) {
+        return null;
+    }
+
+    const resampledEntries = resampleEntriesToCommonDepths(entries);
+    if (resampledEntries.length === 0) {
+        return null;
+    }
+
+    return {
+        depths: resampledEntries[0].depths,
+        minValues: calculateStatisticValues(resampledEntries, (values) => Math.min(...values)),
+        p90Values: calculateStatisticValues(resampledEntries, computeReservesP90),
+        p50Values: calculateStatisticValues(resampledEntries, computeP50),
+        meanValues: calculateStatisticValues(resampledEntries, calculateMean),
+        p10Values: calculateStatisticValues(resampledEntries, computeReservesP10),
+        maxValues: calculateStatisticValues(resampledEntries, (values) => Math.max(...values)),
+    };
+}
+
+export function calculateStatisticValues(
+    entries: RftRealizationCurve[],
+    statisticFunction: (values: number[]) => number,
+): number[] {
+    const numValues = entries[0]?.values.length ?? 0;
+    const values: number[] = [];
+
+    for (let valueIndex = 0; valueIndex < numValues; valueIndex++) {
+        const finiteValues = entries
+            .map((entry) => entry.values[valueIndex])
+            .filter((value) => Number.isFinite(value));
+        values.push(finiteValues.length > 0 ? statisticFunction(finiteValues) : Number.NaN);
+    }
+
+    return values;
+}
+
+function calculateMean(values: number[]): number {
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function getStatisticValues(statistics: RftFanchartStatistics, statistic: RftStatistic): number[] {
+    if (statistic === RftStatistic.MIN) return statistics.minValues;
+    if (statistic === RftStatistic.P90) return statistics.p90Values;
+    if (statistic === RftStatistic.P50) return statistics.p50Values;
+    if (statistic === RftStatistic.MEAN) return statistics.meanValues;
+    if (statistic === RftStatistic.P10) return statistics.p10Values;
+    return statistics.maxValues;
+}
+
+function getStatisticLineDash(statistic: RftStatistic): PlotData["line"]["dash"] {
+    if (statistic === RftStatistic.MEAN) return "solid";
+    if (statistic === RftStatistic.P50) return "dot";
+    if (statistic === RftStatistic.MIN || statistic === RftStatistic.MAX) return "dash";
+    return "dashdot";
+}
+
+function makeTransparentColor(color: string, opacity: number): string {
+    if (!color.startsWith("#") || color.length !== 7) {
+        return color;
+    }
+
+    const red = parseInt(color.slice(1, 3), 16);
+    const green = parseInt(color.slice(3, 5), 16);
+    const blue = parseInt(color.slice(5, 7), 16);
+    return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}

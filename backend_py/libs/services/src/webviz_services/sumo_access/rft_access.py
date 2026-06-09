@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import List, Optional, Sequence, cast
 
 import pyarrow as pa
@@ -63,16 +64,22 @@ class RftAccess:
         table_loader.require_content_type("rft")
         table_loader.require_table_name(table_names[0])
         table = await table_loader.get_aggregated_multiple_columns_async(available_response_names)
+        
+        pl_table: pl.DataFrame = pl.from_arrow(table) 
 
         timer.record_lap("load_aggregated_arrow_table")
 
         rft_well_infos: list[RftWellInfo] = []
         # ! We assume that list never has None
-        well_names = cast(list[str], table["WELL"].unique().to_numpy().tolist())
+        # well_names = cast(list[str], table["WELL"].unique().to_numpy().tolist())
 
+        well_names = pl_table["WELL"].unique().to_list()
         for well_name in well_names:
-            well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
-            timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
+            # well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
+            well_table = pl_table.filter(pl.col("WELL") == well_name).select("DATE").unique()
+            # timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
+            date_list = well_table["DATE"].to_list()
+            timestamps_utc_ms = sorted([int(dt.timestamp() * 1000) for dt in date_list])
 
             rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 
