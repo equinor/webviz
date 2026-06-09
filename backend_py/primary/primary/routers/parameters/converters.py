@@ -14,6 +14,7 @@ def to_api_parameters(parameters: list[EnsembleParameter]) -> list[schemas.Ensem
                 isLogarithmic=parameter.is_logarithmic,
                 isDiscrete=parameter.is_discrete,
                 isConstant=parameter.is_constant,
+                isNumerical=parameter.is_numerical,
                 groupName=parameter.group_name,
                 descriptiveName=parameter.descriptive_name,
                 realizations=parameter.realizations,

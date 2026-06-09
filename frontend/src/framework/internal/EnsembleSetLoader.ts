@@ -432,6 +432,7 @@ function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_a
                 groupName: apiPar.groupName ?? null,
                 description: apiPar.descriptiveName ?? null,
                 isConstant: apiPar.isConstant,
+                isNumerical: apiPar.isNumerical,
                 realizations: apiPar.realizations,
                 values: apiPar.values,
             };

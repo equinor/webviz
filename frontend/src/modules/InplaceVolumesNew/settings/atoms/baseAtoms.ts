@@ -12,12 +12,12 @@ export const plotOptionsAtom = atom<InplaceVolumesPlotOptions>({
     histogramType: HistogramType.Overlay,
     histogramBins: 10,
     barSortBy: BarSortBy.Yvalues,
-    showStatisticalMarkers: true,
+    showStatisticalMarkers: false,
     showRealizationPoints: false,
     sharedXAxis: false,
     sharedYAxis: false,
     hideConstants: false,
     showPercentageInHistogram: true,
-    showStatisticalLabels: true,
+    showStatisticalLabels: false,
 });
-export const showTableAtom = atom<boolean>(false);
+export const showTableAtom = atom<boolean>(true);

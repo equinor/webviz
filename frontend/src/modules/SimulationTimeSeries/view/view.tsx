@@ -24,7 +24,7 @@ import { useMakeResampleFrequencyWarningMessage } from "./hooks/useMakeResampleF
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
-import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
+import { EnsemblesParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 import { SubplotOwner } from "./utils/PlotBuilder";
 
 export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
@@ -64,7 +64,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     // Create parameter color scale helper
     const ensemblesParameterColoring =
         colorByParameter && parameterIdent
-            ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
+            ? new EnsemblesParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
             : null;
 
     const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];

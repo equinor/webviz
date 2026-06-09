@@ -22,6 +22,7 @@ export type DiscreteParameter = {
     readonly groupName: string | null;
     readonly description: string | null;
     readonly isConstant: boolean;
+    readonly isNumerical: boolean;
     readonly realizations: number[]; // The two arrays, realizations and values, must always be same length
     readonly values: number[] | string[]; // Array items can be string or int. Should maybe utilize Int32Array or string[] instead?
 };

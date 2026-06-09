@@ -35,6 +35,7 @@ from primary.routers.observations.router import router as observations_router
 from primary.routers.parameters.router import router as parameters_router
 from primary.routers.polygons.router import router as polygons_router
 from primary.routers.pvt.router import router as pvt_router
+from primary.routers.relperm.router import router as relperm_router
 from primary.routers.rft.router import router as rft_router
 from primary.routers.seismic.router import router as seismic_router
 from primary.routers.surface.router import router as surface_router
@@ -78,7 +79,7 @@ services_config = ServicesConfig(
     enterprise_subscription_key=config.ENTERPRISE_SUBSCRIPTION_KEY,
     surface_query_url=config.SURFACE_QUERY_URL,
     vds_host_address=config.VDS_HOST_ADDRESS,
-    redis_user_session_url=config.REDIS_USER_SESSION_URL,
+    redis_cache_url=config.REDIS_CACHE_URL,
 )
 init_services_config(services_config)
 
@@ -153,6 +154,7 @@ app.include_router(seismic_router, prefix="/seismic", tags=["seismic"])
 app.include_router(polygons_router, prefix="/polygons", tags=["polygons"])
 app.include_router(graph_router, prefix="/graph", tags=["graph"])
 app.include_router(observations_router, prefix="/observations", tags=["observations"])
+app.include_router(relperm_router, prefix="/relperm", tags=["relperm"])
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
@@ -188,7 +190,7 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
-session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
+session_store = RedisStore(config.REDIS_AUTH_STORE_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
 # Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)

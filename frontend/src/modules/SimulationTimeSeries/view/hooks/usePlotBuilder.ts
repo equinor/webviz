@@ -15,7 +15,7 @@ import {
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
 import { activeTimestampUtcMsAtom } from "../atoms/persistableFixableAtoms";
-import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
+import type { EnsemblesParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { PlotBuilder } from "../utils/PlotBuilder";
 import type { SubplotOwner } from "../utils/PlotBuilder";
 import {
@@ -30,7 +30,7 @@ export function usePlotBuilder(
     wrapperDivSize: Size2D,
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
-    ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
+    ensemblesParameterColoring: EnsemblesParameterColoring | null,
 ): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -58,7 +58,7 @@ export function usePlotBuilder(
 
     const scatterType =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
-        visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
+            visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS
             ? "scattergl"
             : "scatter";
 

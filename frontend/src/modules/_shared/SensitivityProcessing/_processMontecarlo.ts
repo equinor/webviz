@@ -1,7 +1,7 @@
 import { SensitivityType, type Sensitivity } from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@modules/_shared/utils/math/statistics";
 
-import { extractResponseValues, extractSensitivityRealizations } from "./_helpers";
+import { computeAverage, extractResponseValues, extractSensitivityRealizations } from "./_helpers";
 import type { EnsemblePerRealizationResponse, SensitivityResponse } from "./types";
 
 // Monte Carlo sensitivity processor
@@ -16,6 +16,7 @@ export const processMonteCarloSensitivity = (
 
     const sensitivityCase = sensitivity.cases[0];
     const responseValues = extractResponseValues(ensemblePerRealResponse, sensitivityCase.realizations);
+    const sensitivityAverage = computeAverage(responseValues);
     const p90 = computeP90(responseValues);
     const p10 = computeP10(responseValues);
 
@@ -25,6 +26,7 @@ export const processMonteCarloSensitivity = (
     return {
         sensitivityName: sensitivity.name,
         sensitivityType: SensitivityType.MONTECARLO,
+        sensitivityAverage,
         lowCaseName: "P90",
         lowCaseAverage: p90,
         lowCaseReferenceDifference: p90 - referenceAverage,

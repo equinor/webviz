@@ -64,10 +64,10 @@ import {
     visualizationModeAtom,
 } from "./atoms/baseAtoms";
 import {
-    continuousAndNonConstantParametersUnionAtom,
     customVectorDefinitionsAtom,
     ensembleVectorListsHelperAtom,
     isVectorListQueriesFetchingAtom,
+    numericAndNonConstantParametersUnionAtom,
     statisticsTypeAtom,
     vectorSelectorDataAtom,
 } from "./atoms/derivedAtoms";
@@ -103,7 +103,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
-    const continuousAndNonConstantParametersUnion = useAtomValue(continuousAndNonConstantParametersUnionAtom);
+    const numericAndNonConstantParametersUnion = useAtomValue(numericAndNonConstantParametersUnionAtom);
     const vectorListQueries = useAtomValue(vectorListQueriesAtom);
     const ensembleVectorListsHelper = useAtomValue(ensembleVectorListsHelperAtom);
     const isVectorListQueriesFetching = useAtomValue(isVectorListQueriesFetchingAtom);

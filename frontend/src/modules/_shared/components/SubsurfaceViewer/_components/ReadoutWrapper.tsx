@@ -3,23 +3,24 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LayerPickInfo, LightsType, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
-import { WellLabelLayer } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
-import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import type { Feature } from "geojson";
-import { debounce, isEqual, uniqBy } from "lodash";
+import type { LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
+import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { isEqual } from "lodash";
+import { Key } from "ts-key-enum";
 
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { PositionReadout, type PositionCoordinates } from "@modules/_shared/components/PositionReadout";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
-import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import {
     DeckGlInstanceManagerTopic,
     type DeckGlInstanceManager,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import type { ExtendedWellFeature, LayerPickInfoWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import { isPickWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
@@ -30,6 +31,8 @@ import {
 } from "./SubsurfaceViewerWithCameraState";
 
 type PickingInfoWithStaleInfo = PickingInfo & { isStale?: boolean };
+
+type PickingInfoPerView = Record<string, PickingInfoWithStaleInfo[]>;
 
 export type ReadoutWrapperProps = {
     views: ViewsTypeExtended;
@@ -42,7 +45,7 @@ export type ReadoutWrapperProps = {
     children?: React.ReactNode;
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
-    onPickingInfoChange?: (pickingInfoPerView: Record<string, PickingInfoWithStaleInfo[]>) => void;
+    onPickingInfoChange?: (pickingInfoPerView: PickingInfoPerView) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
@@ -61,7 +64,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const id = React.useId();
     const [hideReadout, setHideReadout] = React.useState<boolean>(false);
     const [pickingCoordinate, setPickingCoordinate] = React.useState<PositionCoordinates | null>(null);
-    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<Record<string, PickingInfoWithStaleInfo[]>>({});
+    const [pickingInfoPerView, setPickingInfoPerView] = React.useState<PickingInfoPerView>({});
     const [readoutMode, setReadoutMode] = React.useState<"hover" | "click">("hover");
 
     const [storedDeckGlViews, setStoredDeckGlViews] =
@@ -87,40 +90,22 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         };
     }, []);
 
-    React.useEffect(
-        function mountKeyboardHandlersEffect() {
-            function handleKeydown(event: KeyboardEvent) {
-                if (event.key === "Escape") {
-                    setReadoutMode("hover");
-                    onPickingInfoChange?.({});
-                }
-            }
-
-            window.addEventListener("keydown", handleKeydown);
-
-            return function unmountKeyboardHandlersEffect() {
-                window.removeEventListener("keydown", handleKeydown);
-            };
-        },
-        [onPickingInfoChange],
-    );
-
     const pickAtWorldCoordinates = React.useCallback(
         function pickAtWorldCoordinates(
             worldCoordinates: number[],
-            initialPickingInfo: Record<string, PickingInfoWithStaleInfo[]> = {},
             maxPickingDepth: number,
-        ): Record<string, PickingInfoWithStaleInfo[]> {
+            initialPickingInfo: PickingInfoPerView,
+        ): PickingInfoPerView {
             const [x, y, z] = worldCoordinates;
 
-            if (!deckGlRef.current?.deck?.isInitialized) return initialPickingInfo;
+            if (!deckGlRef.current?.deck?.isInitialized) return {};
 
             const deck = deckGlRef.current?.deck;
             const viewports = deck?.getViewports();
 
-            if (!deck || !viewports?.length || x === undefined || y === undefined) return initialPickingInfo;
+            if (!deck || !viewports?.length || x === undefined || y === undefined) return {};
 
-            const pickingInfo: Record<string, PickingInfoWithStaleInfo[]> = { ...initialPickingInfo };
+            const pickingInfo: PickingInfoPerView = { ...initialPickingInfo };
 
             // Prepare coordinate for picking by applying vertical scale if z is defined
             const coord = z !== undefined ? [x, y, z * props.verticalScale] : [x, y];
@@ -141,11 +126,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     unproject3D: true,
                 });
 
-                // For some reason, the map layers gets picked multiple times, so we need to filter out duplicates.
-                // See issue #webviz-subsurface-components/2320
-                const uniquePicks = uniqBy(picks, (pick) => pick.sourceLayer?.id);
+                // WellsLayer has multiple pick-able sub layers, and each pick shows up a distinct info object.
+                const mergedPicks = consolidateWellsLayerReadouts(picks);
 
-                pickingInfo[viewport.id] = uniquePicks;
+                pickingInfo[viewport.id] = mergedPicks;
             }
             return pickingInfo;
         },
@@ -155,28 +139,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const collectReadoutInformationFromAllViewports = React.useCallback(
         function collectReadoutInformationFromAllViewports(
             worldCoordinates: number[],
-            initialPickingInfo: Record<string, PickingInfoWithStaleInfo[]>,
             pickingDepth: number,
-        ): Record<string, PickingInfoWithStaleInfo[]> {
-            const newPickInfoDict = pickAtWorldCoordinates(worldCoordinates, initialPickingInfo, pickingDepth);
+            initialPickingInfo: PickingInfoPerView,
+        ): PickingInfoPerView {
+            const newPickInfoDict = pickAtWorldCoordinates(worldCoordinates, pickingDepth, initialPickingInfo);
+
             setPickingInfoPerView(newPickInfoDict);
             return newPickInfoDict;
         },
         [pickAtWorldCoordinates],
     );
 
-    const debouncedMultiViewPicking = React.useMemo(
-        () => debounce(collectReadoutInformationFromAllViewports, DEBOUNCED_HOVER_DELAY_MS),
-        [collectReadoutInformationFromAllViewports],
-    );
-
-    React.useEffect(
-        function mountCancelDebouncedPickingEffect() {
-            return function unmountCancelDebouncedPickingEffect() {
-                debouncedMultiViewPicking.cancel();
-            };
-        },
-        [debouncedMultiViewPicking],
+    const debouncedMultiViewPicking = useDebouncedFunction(
+        collectReadoutInformationFromAllViewports,
+        DEBOUNCED_HOVER_DELAY_MS,
     );
 
     const clearReadout = React.useCallback(
@@ -198,19 +174,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             // No picks - clear readout
-            if (!event.infos.length) {
+            if (!event.infos.length || event.infos[0].index === -1) {
                 clearReadout();
                 return;
             }
+            const info = event.infos[0];
 
             // We need a viewport - if none, clear readout
-            const hoveredViewPort = event.infos[0]?.viewport;
+            const hoveredViewPort = info.viewport;
             if (!hoveredViewPort) {
                 clearReadout();
                 return;
             }
 
-            const coordinate = event.infos[0]?.coordinate ?? undefined;
+            const coordinate = info?.coordinate ?? undefined;
             const pickingCoordinate = coordinate ? { x: coordinate[0], y: coordinate[1], z: coordinate[2] } : null;
             setPickingCoordinate(pickingCoordinate);
 
@@ -248,15 +225,14 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             // Now, initiate debounce for picking across all viewports
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
-            if (!pickingInfoWithCoordinates?.coordinate) {
-                return;
-            }
 
-            debouncedMultiViewPicking(
-                pickingInfoWithCoordinates.coordinate,
-                { ...updatedPickingInfoPerView },
-                DEBOUNCED_HOVER_PICKING_DEPTH,
-            );
+            if (pickingInfoWithCoordinates?.coordinate) {
+                debouncedMultiViewPicking(
+                    pickingInfoWithCoordinates.coordinate,
+                    DEBOUNCED_HOVER_PICKING_DEPTH,
+                    updatedPickingInfoPerView,
+                );
+            }
         },
         [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
     );
@@ -290,8 +266,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             const newPickInfoDict = collectReadoutInformationFromAllViewports(
                 pickingInfoWithCoordinates.coordinate,
-                {},
                 userPickingDepth,
+                {},
             );
 
             const yieldedPicks = Object.values(newPickInfoDict).some((picks) => picks.length > 0);
@@ -359,23 +335,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         [handleClickEvent, handleHoverEvent],
     );
 
-    function getTooltip(info: PickingInfo): string {
-        if (
-            (info.layer?.constructor === WellLabelLayer || info.sourceLayer?.constructor === WellLabelLayer) &&
-            info.object?.wellLabels
-        ) {
-            return info.object.wellLabels?.join("\n");
-        } else if ((info as WellsPickInfo)?.logName) {
-            return (info as WellsPickInfo)?.logName ?? "";
-        } else if (info.layer?.id === "drawing-layer") {
-            return (info as LayerPickInfo).propertyValue?.toFixed(2) ?? "";
-        } else if (info.layer?.constructor === PolylinesLayer) {
-            return info?.object?.name;
-        }
-        const feat = info.object as Feature;
-        return feat?.properties?.["name"];
-    }
-
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
@@ -398,6 +357,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 top: 10,
             },
         },
+
         showReadout: false,
         triggerHome: props.triggerHome,
         // We will do deeper picking manually in the onMouseEvent callback
@@ -405,7 +365,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         pickingRadius: PICKING_RADIUS,
         layers: props.layers,
         onMouseEvent: handleMouseEvent,
-        getTooltip: getTooltip,
+        getTooltip: () => null, // Remove name on hover
     });
 
     // Append overlay layers after main layers so they render on top
@@ -428,12 +388,23 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
 
+    const handleKeyDown = React.useCallback(
+        function handleKeydown(event: React.KeyboardEvent<HTMLDivElement>) {
+            if (event.key === Key.Escape) {
+                setReadoutMode("hover");
+                onPickingInfoChange?.({});
+            }
+        },
+        [onPickingInfoChange],
+    );
+
     return (
         <div
             ref={mainDivRef}
             className="relative h-full w-full"
             onMouseEnter={handleMainDivEnter}
             onMouseLeave={handleMainDivLeave}
+            onKeyDown={handleKeyDown}
         >
             {props.children}
             <PositionReadout coordinates={pickingCoordinate} visible={!hideReadout} />
@@ -454,14 +425,33 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                             position="left"
                         />
 
-                        <ReadoutBoxWrapper
-                            compact={props.views.viewports.length > 1}
-                            viewportPicks={pickingInfoPerView[viewport.id]}
-                            visible={readoutMode === "click" ? true : !hideReadout}
-                            stale={pickingInfoPerView[viewport.id]?.some((pick) => pick.isStale)}
-                            verticalScale={props.verticalScale}
-                            onClose={readoutMode === "click" ? handleCloseReadout : undefined}
-                        />
+                        {pickingInfoPerView[viewport.id] && (
+                            <div
+                                // Allow interacting with the readout box
+                                onPointerDownCapture={(e) => {
+                                    if (readoutMode !== "click") return;
+                                    e.stopPropagation();
+                                }}
+                                onPointerUpCapture={(e) => {
+                                    if (readoutMode !== "click") return;
+                                    e.stopPropagation();
+                                }}
+                                onPointerMoveCapture={(e) => {
+                                    if (readoutMode !== "click") return;
+                                    e.stopPropagation();
+                                }}
+                            >
+                                <ReadoutBoxWrapper
+                                    picks={pickingInfoPerView[viewport.id]}
+                                    visible={readoutMode === "click" ? true : !hideReadout}
+                                    compact={true}
+                                    stale={pickingInfoPerView[viewport.id]?.some((pick) => pick.isStale)}
+                                    verticalScale={props.verticalScale}
+                                    pinned={readoutMode === "click"}
+                                    onClose={readoutMode === "click" ? handleCloseReadout : undefined}
+                                />
+                            </div>
+                        )}
                     </DeckGlView>
                 ))}
             </SubsurfaceViewerWithCameraState>
@@ -501,3 +491,59 @@ const LIGHTS_3D: LightsType = {
     },
     ambientLight: { intensity: 1.5, color: [255, 255, 255] },
 } as const;
+
+/**
+ * The wells-layer returns trajectory, label, and layer as distinct picks, causing readouts to appear multiple times.
+ * As a workaround, we manually merge these readouts into a single pick..
+ * @param picks A list of picks
+ * @returns A new list of picks, with picks from the same wellbore merged into a single pick
+ * @remark This is a temporary solution, awaiting a fix in the subsurface components library
+ */
+function consolidateWellsLayerReadouts(picks: PickingInfo[]): PickingInfo[] {
+    const mergedPicks: PickingInfo[] = [];
+
+    const wellsLayerPickIndexMap: Map<string, number> = new Map();
+
+    for (const pick of picks) {
+        if (!(pick.layer instanceof WellsLayer) || !isPickWithReadout<ExtendedWellFeature>(pick) || !pick.readout) {
+            mergedPicks.push(pick);
+            continue;
+        }
+
+        const wellName = pick.readout.name;
+
+        const existingIndex = wellsLayerPickIndexMap.get(wellName);
+
+        if (existingIndex === undefined) {
+            wellsLayerPickIndexMap.set(wellName, mergedPicks.length);
+            mergedPicks.push(pick);
+            continue;
+        }
+
+        // Merge subsequent well layer readouts for the same well
+        const prevPick = mergedPicks[existingIndex] as LayerPickInfoWithReadout<WellFeature>;
+
+        if (prevPick.readout?.properties && pick.readout?.properties) {
+            const mergedProperties = [...prevPick.readout.properties];
+
+            for (const newProp of pick.readout.properties) {
+                const existingPropIndex = mergedProperties.findIndex((p) => p.name === newProp.name);
+
+                if (existingPropIndex === -1) {
+                    // Property doesn't exist, add it
+                    mergedProperties.push(newProp);
+                } else {
+                    const existingValue = mergedProperties[existingPropIndex].value;
+                    // Replace if existing value is empty
+                    if (existingValue == null) {
+                        mergedProperties[existingPropIndex] = newProp;
+                    }
+                }
+            }
+
+            prevPick.readout.properties = mergedProperties;
+        }
+    }
+
+    return mergedPicks;
+}
