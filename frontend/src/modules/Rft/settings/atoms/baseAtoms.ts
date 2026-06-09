@@ -9,3 +9,4 @@ export const showStatisticalLinesAtom = atom<boolean>(true);
 export const showStatisticalFanAtom = atom<boolean>(true);
 export const showObservationsAtom = atom<boolean>(false);
 export const selectedStatisticsAtom = atom<RftStatistic[]>([RftStatistic.P50, RftStatistic.MEAN]);
+export const dataChannelDepthAtom = atom<number | null>(null);

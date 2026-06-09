@@ -67,7 +67,10 @@ export class RftPlotBuilder {
         });
     }
 
-    makeIndividualRealizationTraces(responseName: string, shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
+    makeIndividualRealizationTraces(
+        responseName: string,
+        shownLegendEnsembles = new Set<string>(),
+    ): Partial<PlotData>[] {
         return this._dataAccessor.getEntries().map((entry) => {
             const ensembleKey = entry.ensembleIdent.toString();
             const ensembleDisplayName = this.makeEnsembleDisplayName(entry.ensembleIdent);
@@ -324,6 +327,11 @@ function sortCurveByDepth(depths: number[], values: number[]): { depths: number[
     };
 }
 
+export function interpolateCurveValueAtDepth(depths: number[], values: number[], targetDepth: number): number {
+    const sorted = sortCurveByDepth(depths, values);
+    return interpolateValueAtDepth(sorted.depths, sorted.values, targetDepth);
+}
+
 function interpolateValueAtDepth(sortedDepths: number[], sortedValues: number[], targetDepth: number): number {
     if (sortedDepths.length === 0) {
         return Number.NaN;
@@ -376,9 +384,7 @@ export function calculateStatisticValues(
     const values: number[] = [];
 
     for (let valueIndex = 0; valueIndex < numValues; valueIndex++) {
-        const finiteValues = entries
-            .map((entry) => entry.values[valueIndex])
-            .filter((value) => Number.isFinite(value));
+        const finiteValues = entries.map((entry) => entry.values[valueIndex]).filter((value) => Number.isFinite(value));
         values.push(finiteValues.length > 0 ? statisticFunction(finiteValues) : Number.NaN);
     }
 

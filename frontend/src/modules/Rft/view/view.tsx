@@ -1,7 +1,11 @@
 import React from "react";
 
+import { useAtom } from "jotai";
+import type { Config, Layout } from "plotly.js";
+
 import type { RftObservation_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -10,13 +14,18 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
+import { dataChannelDepthAtom } from "../settings/atoms/baseAtoms";
 import type { RftEnsembleObservationsData } from "../typesAndEnums";
 
+import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { makeRftPlotTitle } from "./utils/createTitle";
 import { RftPlotBuilder } from "./utils/RftPlotBuilder";
+
+const PLOT_CONFIG: Partial<Config> = { scrollZoom: true, edits: { shapePosition: true } };
 
 export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -32,11 +41,59 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const rftDataAccessorStatus = viewContext.useSettingsToViewInterfaceValue("rftDataAccessorStatus");
     const rftObservationsStatus = viewContext.useSettingsToViewInterfaceValue("rftObservationsStatus");
 
+    const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
+
     const propagatedErrorMessages = usePropagateAllApiErrorsToStatusWriter(rftDataAccessorStatus.errors, statusWriter);
     const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
     const instanceTitle = makeRftPlotTitle(wellName, responseName, timestampUtcMs);
 
     statusWriter.setLoading(rftDataAccessorStatus.isFetching);
+
+    const entries = rftDataAccessorStatus.dataAccessor?.getEntries() ?? [];
+    const selectedEnsembles = entries.flatMap((entry) => {
+        const ensemble = ensembleSet.findEnsemble(entry.ensembleIdent);
+        return ensemble ? [ensemble] : [];
+    });
+
+    const dataChannelDepthRange = makeDepthRange(entries);
+    const effectiveDataChannelDepth =
+        dataChannelDepth ??
+        (dataChannelDepthRange ? (dataChannelDepthRange[0] + dataChannelDepthRange[1]) / 2 : null);
+
+    usePublishToDataChannels(viewContext, {
+        entries,
+        responseName,
+        dataChannelDepth: effectiveDataChannelDepth,
+        makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) =>
+            makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles),
+        isFetching: rftDataAccessorStatus.isFetching,
+    });
+
+    const handleRelayout = React.useCallback(
+        function handleRelayout(event: Record<string, unknown>) {
+            // Plotly fires "relayout" for many reasons (resize, autosize, pan/zoom). Only react to a
+            // deliberate drag of the depth line, i.e. an event that carries shape coordinates and nothing
+            // else. Reacting to resize/autosize echoes would create a re-render <-> redraw feedback loop.
+            const keys = Object.keys(event);
+            const isShapeEdit = keys.length > 0 && keys.every((key) => key.startsWith("shapes["));
+            if (!isShapeEdit) {
+                return;
+            }
+
+            const y0 = event["shapes[0].y0"];
+            const y1 = event["shapes[0].y1"];
+            const newDepth =
+                typeof y0 === "number" && typeof y1 === "number"
+                    ? (y0 + y1) / 2
+                    : typeof y0 === "number"
+                      ? y0
+                      : null;
+            if (newDepth !== null && newDepth !== dataChannelDepth) {
+                setDataChannelDepth(newDepth);
+            }
+        },
+        [dataChannelDepth, setDataChannelDepth],
+    );
 
     React.useEffect(
         function updateInstanceTitle() {
@@ -66,21 +123,17 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
         }
 
-        if (!rftDataAccessorStatus.dataAccessor || rftDataAccessorStatus.dataAccessor.getEntries().length === 0) {
+        if (!rftDataAccessorStatus.dataAccessor || entries.length === 0) {
             return <ContentMessage type={ContentMessageType.INFO}>No RFT data loaded.</ContentMessage>;
         }
 
         const dataAccessor = rftDataAccessorStatus.dataAccessor;
-        const selectedEnsembles = dataAccessor.getEntries().flatMap((entry) => {
-            const ensemble = ensembleSet.findEnsemble(entry.ensembleIdent);
-            return ensemble ? [ensemble] : [];
-        });
         const plotBuilder = new RftPlotBuilder(dataAccessor, selectedEnsembles, colorSet);
 
         const observationRows = visualizationSettings.showObservations
             ? extractObservationRows(rftObservationsStatus.observationsData, wellName, timestampUtcMs, responseName)
             : [];
-        const valueRange = makeValueRange(dataAccessor.getEntries(), observationRows);
+        const valueRange = makeValueRange(entries, observationRows);
 
         const shownLegendEnsembles = new Set<string>();
         const plotData = [
@@ -103,13 +156,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                 : []),
         ];
 
-        return (
-            <Plot
-                data={plotData}
-                layout={plotBuilder.makeLayout(wrapperDivSize, responseName, valueRange)}
-                config={{ scrollZoom: true }}
-            />
-        );
+        const layout = plotBuilder.makeLayout(wrapperDivSize, responseName, valueRange);
+        layout.shapes = makeDataChannelDepthShapes(effectiveDataChannelDepth);
+
+        return <Plot data={plotData} layout={layout} config={PLOT_CONFIG} onRelayout={handleRelayout} />;
     }
 
     return (
@@ -118,6 +168,49 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         </div>
     );
 }
+
+function makeDataChannelDepthShapes(dataChannelDepth: number | null): Partial<Layout>["shapes"] {
+    if (dataChannelDepth === null) {
+        return [];
+    }
+
+    return [
+        {
+            type: "line",
+            xref: "paper",
+            x0: 0,
+            x1: 1,
+            yref: "y",
+            y0: dataChannelDepth,
+            y1: dataChannelDepth,
+            line: { color: "rgba(33, 102, 172, 0.9)", width: 3, dash: "dot" },
+            label: {
+                text: `Data channel depth: ${dataChannelDepth.toFixed(1)}`,
+                textposition: "top right",
+                font: { size: 10, color: "rgba(33, 102, 172, 0.9)" },
+            },
+        },
+    ];
+}
+
+function makeDepthRange(entries: { depths: number[] }[]): [number, number] | null {
+    let minDepth = Number.POSITIVE_INFINITY;
+    let maxDepth = Number.NEGATIVE_INFINITY;
+
+    for (const entry of entries) {
+        for (const depth of entry.depths) {
+            minDepth = Math.min(minDepth, depth);
+            maxDepth = Math.max(maxDepth, depth);
+        }
+    }
+
+    if (!Number.isFinite(minDepth) || !Number.isFinite(maxDepth)) {
+        return null;
+    }
+
+    return [minDepth, maxDepth];
+}
+
 
 function extractObservationRows(
     observationsData: RftEnsembleObservationsData[],

@@ -10,6 +10,7 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
@@ -22,6 +23,7 @@ import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
 
 import {
+    dataChannelDepthAtom,
     selectedStatisticsAtom,
     showIndividualRealizationsAtom,
     showObservationsAtom,
@@ -61,6 +63,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [showStatisticalFan, setShowStatisticalFan] = useAtom(showStatisticalFanAtom);
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
     const [selectedStatistics, setSelectedStatistics] = useAtom(selectedStatisticsAtom);
+    const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
 
     const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedEnsembleIdentsAtom);
     const selectedResponseNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedResponseNameAtom);
@@ -116,6 +119,16 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     function handleStatisticsChange(statistics: string[]) {
         setSelectedStatistics(statistics as RftStatistic[]);
+    }
+
+    function handleDataChannelDepthChange(value: string) {
+        const trimmedValue = value.trim();
+        if (trimmedValue === "") {
+            setDataChannelDepth(null);
+            return;
+        }
+        const parsedValue = Number(trimmedValue);
+        setDataChannelDepth(Number.isFinite(parsedValue) ? parsedValue : null);
     }
 
     const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
@@ -248,6 +261,23 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onChange={handleStatisticsChange}
                             placeholder="Select statistics..."
                         />
+                    </SettingWrapper>
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={false} title="Data channel" contentClassName="flex flex-col gap-2">
+                    <SettingWrapper label="Depth (TVD)">
+                        <div className="flex flex-col gap-1">
+                            <Input
+                                type="number"
+                                value={dataChannelDepth ?? ""}
+                                onValueChange={handleDataChannelDepthChange}
+                                placeholder="No depth selected"
+                                debounceTimeMs={500}
+                            />
+                            <span className="text-xs text-gray-500">
+                                Publishes the response value interpolated at this depth, per realization, as a data
+                                channel. The depth can also be dragged in the plot.
+                            </span>
+                        </div>
                     </SettingWrapper>
                 </CollapsibleGroup>
             </PendingWrapper>

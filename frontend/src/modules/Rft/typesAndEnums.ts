@@ -61,4 +61,3 @@ export type RftObservationsStatus = {
     isError: boolean;
     errors: Error[];
 };
-

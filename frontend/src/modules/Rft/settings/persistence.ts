@@ -6,6 +6,7 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import { RftStatistic } from "../typesAndEnums";
 
 import {
+    dataChannelDepthAtom,
     selectedStatisticsAtom,
     showIndividualRealizationsAtom,
     showObservationsAtom,
@@ -29,6 +30,7 @@ export type SerializedSettings = {
     showStatisticalFan: boolean;
     showObservations: boolean;
     selectedStatistics: RftStatistic[];
+    dataChannelDepth: number | null;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -42,6 +44,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showStatisticalFan: { type: "boolean" },
         showObservations: { type: "boolean" },
         selectedStatistics: { elements: { enum: Object.values(RftStatistic) } },
+        dataChannelDepth: { type: "float64", nullable: true },
     },
 }));
 
@@ -59,6 +62,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     showStatisticalFan: get(showStatisticalFanAtom),
     showObservations: get(showObservationsAtom),
     selectedStatistics: get(selectedStatisticsAtom),
+    dataChannelDepth: get(dataChannelDepthAtom),
 });
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
@@ -77,4 +81,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, showStatisticalFanAtom, raw.showStatisticalFan);
     setIfDefined(set, showObservationsAtom, raw.showObservations);
     setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
+    setIfDefined(set, dataChannelDepthAtom, raw.dataChannelDepth);
 };

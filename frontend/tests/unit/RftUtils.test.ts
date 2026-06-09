@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { makeRftDepthDataGenerator } from "@modules/Rft/dataGenerators";
 import { RftDataAccessor } from "@modules/Rft/utils/RftDataAccessor";
 import { makeRftPlotTitle } from "@modules/Rft/view/utils/createTitle";
 import { calculateFanchartStatistics, calculateStatisticValues } from "@modules/Rft/view/utils/RftPlotBuilder";
@@ -73,6 +74,39 @@ describe("RftPlotBuilder helpers", () => {
             expect(statistics?.minValues).toEqual([10, 20, 30]);
             expect(statistics?.maxValues).toEqual([10, 40, 60]);
         });
+    });
+});
+
+describe("makeRftDepthDataGenerator", () => {
+    const metaData = { ensembleIdentString: ENSEMBLE_IDENT.toString() };
+
+    it("interpolates the response value per realization at the selected depth", () => {
+        const entries: RftRealizationCurve[] = [
+            { ensembleIdent: ENSEMBLE_IDENT, realization: 0, depths: [0, 100], values: [10, 30] },
+            { ensembleIdent: ENSEMBLE_IDENT, realization: 1, depths: [0, 100], values: [20, 60] },
+        ];
+        const { data } = makeRftDepthDataGenerator(entries, 50, metaData)();
+        expect(data).toEqual([
+            { key: 0, value: 20 },
+            { key: 1, value: 40 },
+        ]);
+    });
+
+    it("omits realizations that do not cover the selected depth", () => {
+        const entries: RftRealizationCurve[] = [
+            { ensembleIdent: ENSEMBLE_IDENT, realization: 0, depths: [0, 100], values: [10, 30] },
+            { ensembleIdent: ENSEMBLE_IDENT, realization: 1, depths: [60, 100], values: [40, 60] },
+        ];
+        const { data } = makeRftDepthDataGenerator(entries, 50, metaData)();
+        expect(data).toEqual([{ key: 0, value: 20 }]);
+    });
+
+    it("sorts unordered depth samples before interpolating", () => {
+        const entries: RftRealizationCurve[] = [
+            { ensembleIdent: ENSEMBLE_IDENT, realization: 0, depths: [100, 0], values: [30, 10] },
+        ];
+        const { data } = makeRftDepthDataGenerator(entries, 50, metaData)();
+        expect(data).toEqual([{ key: 0, value: 20 }]);
     });
 });
 
