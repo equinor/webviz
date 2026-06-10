@@ -42,7 +42,7 @@ const DEFAULT_LAYOUT: Partial<Plotly.Layout> = {
     // By default, we try to keep the ui changes stable
     uirevision: "revision_stable",
     modebar: { orientation: "v" },
-    // dragmode: "pan",
+    dragmode: "pan",
     legend: {
         x: 0.98,
         y: 0,
