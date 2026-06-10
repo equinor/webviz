@@ -1,5 +1,7 @@
+import { WithCopyButton } from "./withCopyButton";
+
 export const TextInputCompositions = {
-    WithCopyButton: "WithCopyButton",
+    WithCopyButton,
 };
 
-export type { WithCopyButtonProps as TextInputWithCopyButtonProps } from "./copyInputField";
+export type { WithCopyButtonProps as TextInputWithCopyButtonProps } from "./withCopyButton";
