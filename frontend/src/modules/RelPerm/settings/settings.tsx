@@ -7,15 +7,17 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import { SettingWrapper, type SettingAnnotation } from "@lib/components/SettingWrapper";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+import type { SettingAnnotation } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { Hidden } from "@lib/newComponents/Hidden";
+import { RadioCompositions } from "@lib/newComponents/Radio";
+import type { SelectOption } from "@lib/newComponents/Select";
+import { Select } from "@lib/newComponents/Select";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -174,7 +176,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setUserSelectedTableName(tableNames[0] ?? null);
     }
 
-    function handleSaturationAxisChange(_: React.ChangeEvent<HTMLInputElement>, saturationAxisName: string) {
+    function handleSaturationAxisChange(saturationAxisName: string) {
         setUserSelectedSaturationAxisName(saturationAxisName);
     }
 
@@ -182,20 +184,26 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setUserSelectedCurveNames(curveNames);
     }
 
-    function handleSatnumsChange(satnums: string[]) {
-        const parsedSatnums = satnums.map((satnum) => parseInt(satnum));
-        setUserSelectedSatnums(parsedSatnums);
-        if (parsedSatnums.length > 1 && selectedGroupBy !== GroupBy.SATNUM) {
+    function handleSatnumsChange(satnums: number[]) {
+        setUserSelectedSatnums(satnums);
+        if (satnums.length > 1 && selectedGroupBy !== GroupBy.SATNUM) {
             setSelectedColorBy(ColorBy.SATNUM);
         }
     }
+    const handleSatnumsChangeDebounced = useDebouncedFunction(handleSatnumsChange, SATNUM_QUERY_DEBOUNCE_MS);
 
-    function handleColorByChange(colorBy: ColorBy) {
+    function handleColorByChange(colorBy: ColorBy | null) {
+        if (colorBy === null) {
+            return;
+        }
         const shouldForceSatnumColor = selectedSatnums.length > 1 && selectedGroupBy !== GroupBy.SATNUM;
         setSelectedColorBy(shouldForceSatnumColor ? ColorBy.SATNUM : colorBy);
     }
 
-    function handleGroupByChange(nextGroupBy: GroupBy) {
+    function handleGroupByChange(nextGroupBy: GroupBy | null) {
+        if (nextGroupBy === null) {
+            return;
+        }
         setSelectedGroupBy(nextGroupBy);
         if (selectedSatnums.length > 1 && nextGroupBy !== GroupBy.SATNUM) {
             setSelectedColorBy(ColorBy.SATNUM);
@@ -260,144 +268,140 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup expanded={true} title="Data source" contentClassName="flex flex-col gap-2">
-                <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations}>
-                    <EnsemblePicker
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        value={selectedEnsembleIdents}
-                        allowDeltaEnsembles={false}
-                        ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                        onValueChange={handleEnsembleSelectionChange}
-                    />
-                </SettingWrapper>
-                <StatusWrapper isPending={tableNamesArePending} errorMessage={tableNamesErrorMessage}>
-                    {showTableSetting && (
-                        <SettingWrapper label="Table" annotations={tableNameAnnotations}>
-                            {showTableSelector ? (
-                                <Select
-                                    options={makeStringOptions(availableTableNames)}
-                                    value={selectedTableName ? [selectedTableName] : []}
-                                    onChange={handleTableNameChange}
-                                    filter={availableTableNames.length > 6}
-                                    size={1}
-                                />
-                            ) : (
-                                <div className="h-9" />
-                            )}
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Data" defaultOpen>
+                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
+                        <EnsemblePicker
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={selectedEnsembleIdents}
+                            allowDeltaEnsembles={false}
+                            ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
+                            onValueChange={handleEnsembleSelectionChange}
+                        />
+                    </SettingWrapper>
+                    <Hidden hidden={!showTableSetting}>
+                        <SettingWrapper
+                            label="Table"
+                            annotations={tableNameAnnotations}
+                            overlay={
+                                tableNamesArePending ? { type: "loading", message: "Loading vectors..." } : undefined
+                            }
+                        >
+                            <Select
+                                options={makeStringItems(availableTableNames)}
+                                value={selectedTableName ? [selectedTableName] : []}
+                                onValueChange={handleTableNameChange}
+                                filter={availableTableNames.length > 6}
+                                size={1}
+                            />
                         </SettingWrapper>
-                    )}
-                </StatusWrapper>
-            </CollapsibleGroup>
-            <StatusWrapper isPending={tableDefinitionsArePending} errorMessage={tableDefinitionsErrorMessage}>
-                <CollapsibleGroup expanded={true} title="Curve selection" contentClassName="flex flex-col gap-2">
+                    </Hidden>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Selection">
                     <SettingWrapper label="Curve type">
-                        <RadioGroup
+                        <RadioCompositions.GroupWithLabels
                             options={makeEnumOptions(CURVE_TYPE_LABELS)}
                             value={selectedCurveType}
-                            onChange={(_, value) => setSelectedCurveType(value as CurveType)}
+                            onValueChange={setSelectedCurveType}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Curves" annotations={selectedCurveNamesAnnotations}>
-                        <TagPicker
-                            tagOptions={makeStringTagOptions(availableCurveNames)}
-                            selection={selectedCurveNames}
-                            onChange={handleCurveNamesChange}
+                        <Combobox
+                            items={makeStringItems(availableCurveNames)}
+                            value={selectedCurveNames}
+                            onValueChange={handleCurveNamesChange}
                             placeholder="Select curves..."
+                            multiple
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Saturation axis" annotations={selectedSaturationAxisNameAnnotations}>
-                        <RadioGroup
-                            options={makeStringOptions(availableSaturationAxisNames)}
-                            value={selectedSaturationAxisName ?? ""}
-                            onChange={handleSaturationAxisChange}
-                            direction="horizontal"
+                        <RadioCompositions.GroupWithLabels
+                            options={makeStringItems(availableSaturationAxisNames)}
+                            value={selectedSaturationAxisName}
+                            onValueChange={handleSaturationAxisChange}
+                            layout="horizontal"
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="SATNUM" help={SATURATION_AXIS_HELP} annotations={selectedSatnumsAnnotations}>
-                        <TagPicker
-                            tagOptions={makeNumberTagOptions(availableSatnums)}
-                            selection={selectedSatnums.map((satnum) => satnum.toString())}
-                            onChange={handleSatnumsChange}
-                            debounceTimeMs={SATNUM_QUERY_DEBOUNCE_MS}
+                    <SettingWrapper label="SatNum" help={SATURATION_AXIS_HELP} annotations={selectedSatnumsAnnotations}>
+                        <Combobox
+                            items={makeNumberItems(availableSatnums)}
+                            value={selectedSatnums}
+                            onValueChange={handleSatnumsChangeDebounced}
                             placeholder="Select SATNUMs..."
+                            multiple
                         />
                     </SettingWrapper>
-                </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Plot" contentClassName="flex flex-col gap-2">
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Plot">
                     <SettingWrapper label="Display">
-                        <div className="flex flex-col gap-1">
-                            <Checkbox
+                        <div className="gap-vertical-xs flex flex-col">
+                            <CheckboxCompositions.WithLabel
                                 label="Individual realizations"
                                 checked={showIndividualRealizations}
-                                onChange={(_, checked) => setShowIndividualRealizations(checked)}
+                                onCheckedChange={setShowIndividualRealizations}
                             />
-                            <Checkbox
+                            <CheckboxCompositions.WithLabel
                                 label="Statistic lines"
                                 checked={showStatisticalLines}
-                                onChange={(_, checked) => setShowStatisticalLines(checked)}
+                                onCheckedChange={setShowStatisticalLines}
                             />
-                            <Checkbox
+                            <CheckboxCompositions.WithLabel
                                 label="Statistic fan"
                                 checked={showStatisticalFan}
-                                onChange={(_, checked) => setShowStatisticalFan(checked)}
+                                onCheckedChange={setShowStatisticalFan}
                             />
                         </div>
                     </SettingWrapper>
                     <SettingWrapper label="Statistic lines">
-                        <TagPicker
-                            tagOptions={makeEnumOptions(REL_PERM_STATISTIC_LABELS)}
-                            selection={selectedStatistics}
-                            onChange={handleStatisticsChange}
+                        <Combobox
+                            items={makeEnumItems(REL_PERM_STATISTIC_LABELS)}
+                            value={selectedStatistics}
+                            onValueChange={handleStatisticsChange}
                             placeholder="Select statistics..."
+                            multiple
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Color by">
-                        <Dropdown<ColorBy>
-                            options={makeEnumDropdownOptions(COLOR_BY_LABELS)}
+                        <Combobox<ColorBy>
+                            items={makeEnumItems(COLOR_BY_LABELS)}
                             value={selectedColorBy}
-                            onChange={handleColorByChange}
+                            onValueChange={handleColorByChange}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Subplot by">
-                        <Dropdown<GroupBy>
-                            options={makeEnumDropdownOptions(GROUP_BY_LABELS)}
+                        <Combobox<GroupBy>
+                            items={makeEnumItems(GROUP_BY_LABELS)}
                             value={selectedGroupBy}
-                            onChange={handleGroupByChange}
+                            onValueChange={handleGroupByChange}
                         />
                     </SettingWrapper>
                     {selectedCurveType === CurveType.RELPERM && (
                         <SettingWrapper label="Y-axis">
-                            <Checkbox
+                            <CheckboxCompositions.WithLabel
                                 label="Logarithmic scale"
                                 checked={selectedYAxisScale === YAxisScale.LOG}
-                                onChange={(_, checked) =>
-                                    setSelectedYAxisScale(checked ? YAxisScale.LOG : YAxisScale.LINEAR)
-                                }
+                                onCheckedChange={(checked) => {
+                                    setSelectedYAxisScale(checked ? YAxisScale.LOG : YAxisScale.LINEAR);
+                                }}
                             />
                         </SettingWrapper>
                     )}
-                </CollapsibleGroup>
-            </StatusWrapper>
-        </div>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }
 
-function makeStringOptions(values: string[]): SelectOption[] {
+function makeStringItems(values: string[]): SelectOption[] {
     return values.map(function makeStringOption(value) {
         return { label: value, value };
     });
 }
 
-function makeNumberTagOptions(values: number[]): TagOption[] {
+function makeNumberItems(values: number[]): ComboboxItem<number>[] {
     return values.map(function makeNumberTagOption(value) {
-        return { label: value.toString(), value: value.toString() };
-    });
-}
-
-function makeStringTagOptions(values: string[]): TagOption[] {
-    return values.map(function makeStringTagOption(value) {
-        return { label: value, value };
+        return { label: value.toString(), value };
     });
 }
 
@@ -407,8 +411,8 @@ function makeEnumOptions<T extends string>(labels: Record<T, string>): SelectOpt
     });
 }
 
-function makeEnumDropdownOptions<T extends string>(labels: Record<T, string>): DropdownOption<T>[] {
-    return Object.entries(labels).map(function makeEnumDropdownOption([value, label]) {
+function makeEnumItems<T extends string>(labels: Record<T, string>): ComboboxItem<T>[] {
+    return Object.entries(labels).map(function makeEnumItem([value, label]) {
         return { label: label as string, value: value as T };
     });
 }
