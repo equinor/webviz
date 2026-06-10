@@ -40,20 +40,25 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
     const isSortable = (props.sortable ?? rootContext.sortable) && sectionContext === "head";
 
     let currentSortDirection = SortDirection.NONE;
-    if (isSortable && props.colKey && rootContext.currentSort && props.colKey in rootContext.currentSort) {
-        currentSortDirection = rootContext.currentSort[props.colKey];
+    let sortingIndex = -1;
+    if (isSortable && props.colKey && rootContext.columnSort) {
+        const idx = rootContext.columnSort.findIndex(({ columnKey }) => columnKey === props.colKey);
+
+        currentSortDirection = rootContext.columnSort[idx]?.direction ?? SortDirection.NONE;
+        sortingIndex = rootContext.columnSort.length > 1 ? idx : -1;
     }
 
+    const isMultiSort = rootContext.sortable === "multiple";
     const isSorted = currentSortDirection !== SortDirection.NONE;
     const percentWidth = props.widthInPercent ? `${props.widthInPercent}%` : undefined;
 
     const cellHeightPx = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
 
-    function toggleSort() {
+    function toggleSort(additive: boolean) {
         if (!isSortable) return;
         if (!props.colKey) return console.warn("Missing column identifier key");
 
-        rootContext.onColumnSort?.(props.colKey, getNextSortDirection(currentSortDirection));
+        rootContext.onColumnSort(props.colKey, getNextSortDirection(currentSortDirection), additive);
     }
 
     return (
@@ -79,7 +84,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                 },
             )}
             onClick={(evt) => {
-                toggleSort();
+                toggleSort(evt.shiftKey);
                 props.onClick?.(evt);
             }}
             onKeyDown={(evt) => {
@@ -88,12 +93,21 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
 
                 evt.preventDefault();
 
-                toggleSort();
+                toggleSort(evt.shiftKey);
                 props.onKeyDown?.(evt);
             }}
         >
             {props.children}
             {isSortable && <SortingIcon direction={currentSortDirection} />}
+            {isSortable && isMultiSort && (
+                // Alway mounted to avoid layout shifts
+                <span
+                    data-single-sort={sortingIndex === -1 ? "" : undefined}
+                    className="bg-accent-strong text-accent-strong-on-emphasis text-body-xs z-elevated px-horizontal-2xs -my-horizontal-2xs box-border inline-flex aspect-square h-4 w-fit min-w-4 items-center justify-center rounded leading-none whitespace-nowrap data-single-sort:invisible"
+                >
+                    {sortingIndex + 1}
+                </span>
+            )}
         </CellTag>
     );
 }

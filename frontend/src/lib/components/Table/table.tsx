@@ -136,7 +136,6 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
     }, [colgroupDefinitions]);
 
     const [selectedRows, setSelectedRows] = useOptInControlledValue([], props.selectedRows, props.onSelectedRowsChange);
-
     const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
     const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 

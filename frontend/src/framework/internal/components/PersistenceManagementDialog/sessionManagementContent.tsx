@@ -194,7 +194,7 @@ function SessionTable(props: SessionTableProps) {
     const wrapperRef = React.useRef<HTMLDivElement>(null);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
-    const [tableSortState, setTableSortState] = React.useState<TableSortState>({});
+    const [tableSortState, setTableSortState] = React.useState<TableSortState | null>(null);
 
     const queryFilterParams = React.useMemo<Options<GetSessionsMetadataData_api>["query"]>(() => {
         const dateFilterRange = edsDateRangeToIsoStringRange(props.updatedAtFilter) ?? undefined;
@@ -207,13 +207,13 @@ function SessionTable(props: SessionTableProps) {
     }, [props.titleFilter, props.updatedAtFilter]);
 
     const querySortingParams = React.useMemo<Options<GetSessionsMetadataData_api>["query"]>(() => {
-        const [colKey, sortDirection] = Object.entries(tableSortState)[0] ?? [];
+        const { columnKey, direction } = tableSortState ?? {};
 
-        if (!colKey || !sortDirection || sortDirection === TableSortDirection.NONE) return {};
+        if (!columnKey || !direction || direction === TableSortDirection.NONE) return {};
 
         return {
-            sort_by: columnIdToApiSortField(colKey),
-            sort_direction: tableSortDirToApiSortDir(sortDirection),
+            sort_by: columnIdToApiSortField(columnKey),
+            sort_direction: tableSortDirToApiSortDir(direction),
         };
     }, [tableSortState]);
 
@@ -273,10 +273,10 @@ function SessionTable(props: SessionTableProps) {
             sortable
             selectable
             fixed
-            currentSort={tableSortState}
-            selectedRow={props.selectedSession?.id ?? null}
-            onChangeSortDirection={(col, dir) => setTableSortState({ [col]: dir })}
-            onRowSelect={(sessionId) =>
+            columnSorting={tableSortState}
+            rowSelection={props.selectedSession?.id ?? null}
+            onChangeColumnSort={setTableSortState}
+            onChangeRowSelection={(sessionId) =>
                 props.onSelectedSessionChange(tableData.find((s) => s.id === sessionId) ?? null)
             }
         >

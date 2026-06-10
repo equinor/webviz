@@ -251,7 +251,7 @@ function SnapshotTable(props: SnapshotTableProps) {
     const wrapperRef = React.useRef<HTMLDivElement>(null);
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
-    const [tableSortState, setTableSortState] = React.useState<TableSortState>({});
+    const [tableSortState, setTableSortState] = React.useState<TableSortState | null>(null);
 
     const queryFilterParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
         const dateFilterRange = edsDateRangeToIsoStringRange(props.lastVisitedAtFilter) ?? undefined;
@@ -272,13 +272,13 @@ function SnapshotTable(props: SnapshotTableProps) {
     ]);
 
     const querySortingParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
-        const [colKey, sortDirection] = Object.entries(tableSortState)[0] ?? [];
+        const { columnKey, direction } = tableSortState ?? {};
 
-        if (!colKey || !sortDirection || sortDirection === TableSortDirection.NONE) return {};
+        if (!columnKey || !direction || direction === TableSortDirection.NONE) return {};
 
         return {
-            sort_by: columnIdToApiSortField(colKey),
-            sort_direction: tableSortDirToApiSortDir(sortDirection),
+            sort_by: columnIdToApiSortField(columnKey),
+            sort_direction: tableSortDirToApiSortDir(direction),
         };
     }, [tableSortState]);
 
@@ -340,10 +340,10 @@ function SnapshotTable(props: SnapshotTableProps) {
             sortable
             selectable
             fixed
-            currentSort={tableSortState}
-            selectedRow={props.selectedSnapshot?.snapshotId ?? null}
-            onChangeSortDirection={(col, dir) => setTableSortState({ [col]: dir })}
-            onRowSelect={(snapshotId) =>
+            columnSorting={tableSortState}
+            rowSelection={props.selectedSnapshot?.snapshotId ?? null}
+            onChangeColumnSort={setTableSortState}
+            onChangeRowSelection={(snapshotId) =>
                 props.onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
             }
         >

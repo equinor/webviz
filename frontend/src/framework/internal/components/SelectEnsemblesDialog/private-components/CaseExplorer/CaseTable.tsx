@@ -30,7 +30,7 @@ export type CaseTableProps = {
     showOnlyMyCases?: boolean;
     showOnlyOfficialCases?: boolean;
 
-    onCaseSelected?: (selectedCase: string) => void;
+    onCaseSelected?: (selectedCase: string | null) => void;
     onDataCollated?: (collatedData: CaseInfo_api[]) => void;
 };
 
@@ -43,8 +43,11 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         return userInfo?.username.replace("@equinor.com", "").toLowerCase() ?? "";
     }, [userInfo]);
 
-    const [tableSortState, setTableSortState] = React.useState<TableSortState>({ updatedAtUtcMs: SortDirection.DESC });
     const [tableFilterState, setTableFilterState] = React.useState<CaseTableFilterState>({});
+    const [tableSortState, setTableSortState] = React.useState<TableSortState | null>({
+        columnKey: "updatedAtUtcMs",
+        direction: SortDirection.DESC,
+    });
 
     const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState(props.showOnlyMyCases);
     const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState(props.showOnlyOfficialCases);
@@ -73,8 +76,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         function sortCaseData() {
             if (!filteredCaseData) return [];
 
-            const sortKey = Object.keys(tableSortState)[0] as keyof CaseInfo_api | undefined;
-            const sortDirection = sortKey ? tableSortState[sortKey] : undefined;
+            const { columnKey: sortKey, direction: sortDirection } = tableSortState ?? {};
 
             if (!sortKey || !sortDirection) return filteredCaseData;
 
@@ -100,10 +102,10 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             fixed
             sortable
             selectable
-            currentSort={tableSortState}
-            onChangeSortDirection={(col, dir) => setTableSortState({ [col]: dir })}
-            selectedRow={props.selectedCase}
-            onRowSelect={props.onCaseSelected}
+            columnSorting={tableSortState}
+            rowSelection={props.selectedCase}
+            onChangeColumnSort={setTableSortState}
+            onChangeRowSelection={props.onCaseSelected}
         >
             <Table.Head sticky>
                 <Table.Column colKey="#" width={56} sortable={false}></Table.Column>

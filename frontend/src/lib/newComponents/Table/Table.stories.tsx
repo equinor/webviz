@@ -1,7 +1,7 @@
 import React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryContext, StoryObj } from "@storybook/react";
 import { flatMap, orderBy, range } from "lodash";
 
 import { SortableList } from "@lib/components/SortableList";
@@ -12,8 +12,10 @@ import { Typography } from "../Typography";
 import { Virtualization } from "../Virtualization";
 
 import { TableCompositions } from "./compositions";
+import type { TableSortState } from "./typesAndEnums";
 import { SortDirection } from "./typesAndEnums";
 
+import type { TableRootProps } from ".";
 import { Table } from ".";
 
 type TExampleData = { id: number; email: string; name: string };
@@ -28,11 +30,10 @@ const EXAMPLE_DATA: TExampleData[] = [
     { id: 7, name: "Emma Davis", email: "e.davis@example.com" },
     { id: 8, name: "Carol Williams", email: "c.williams@example.com" },
     { id: 9, name: "Frank Miller", email: "millerf@example.com" },
+    { id: 10, name: "David Brown", email: "brown.david@example.com" },
+    { id: 11, name: "David Brown", email: "a.brown@example.com" },
+    { id: 12, name: "Alice Johnson", email: "johnson.a@example.com" },
 ];
-
-type SortingConf = {
-    [colKey: string]: SortDirection;
-};
 
 const meta: Meta<typeof Table.Root> = {
     title: "Components/Table",
@@ -42,8 +43,8 @@ const meta: Meta<typeof Table.Root> = {
         layout: "centered",
     },
     argTypes: {
-        sortable: { control: "boolean" },
-        selectable: { control: "boolean" },
+        sortable: { control: "radio", options: [false, true, "multiple"] },
+        selectable: { control: "radio", options: [false, true, "multiple"] },
         size: { control: "select", options: ["small", "default", "large"] },
     },
 
@@ -57,23 +58,24 @@ const meta: Meta<typeof Table.Root> = {
             );
         },
         // Add state variables to keep track of sorting and selection state
-        function SortableAndSelectable(Story, ctx) {
-            const [tableSortingState, setTableSortingState] = React.useState<SortingConf>({});
-            const [selectedRow, setSelectedRow] = React.useState<string | null>(null);
-
-            function handleChangeSortDirection(colKey: string, direction: SortDirection) {
-                setTableSortingState({ [colKey]: direction });
-            }
+        function SortableAndSelectable(Story, ctx: StoryContext<TableRootProps>) {
+            const [rowSelection, setRowSelection] = React.useState<string[] | string | null>(null);
+            const [tableSortingState, setTableSortingState] = React.useState<TableSortState | TableSortState[] | null>(
+                null,
+            );
 
             return (
                 <>
                     <Story
                         args={{
                             ...ctx.args,
-                            currentSort: tableSortingState,
-                            selectedRow: selectedRow,
-                            onRowSelect: setSelectedRow,
-                            onChangeSortDirection: handleChangeSortDirection,
+                            // @ts-expect-error -- Storybook typing struggles a bit with the "multiple" narrowing
+                            columnSorting: tableSortingState,
+                            onChangeColumnSort: setTableSortingState,
+
+                            // @ts-expect-error -- Storybook typing struggles a bit with the "multiple" narrowing
+                            rowSelection: rowSelection,
+                            onChangeRowSelection: setRowSelection,
                         }}
                     />
 
@@ -87,7 +89,7 @@ const meta: Meta<typeof Table.Root> = {
 
                             {ctx.args.selectable && (
                                 <Typography family="body" size="xs" as="p">
-                                    <strong>Selected Row:</strong> {selectedRow ?? "None"}
+                                    <strong>Selected Row:</strong> {JSON.stringify(rowSelection ?? "None")}
                                 </Typography>
                             )}
                         </Banner>
@@ -157,14 +159,58 @@ export const NoData: Story = {
 
 export const Sorting: Story = {
     args: { sortable: true },
+    parameters: {
+        docs: {
+            description: {
+                story: "Demonstrates table sorting functionality. **Note:** Sorting state is purely visual - the actual data sorting must be handled externally by the parent component. The `columnSorting` prop controls the visual state, but you are responsible for sorting the table rows correctly",
+            },
+        },
+    },
     render: function SortingComp(args) {
         const sortedTableData = React.useMemo(() => {
-            const [key, direction] = Object.entries(args.currentSort ?? {})[0] ?? [];
+            if (Array.isArray(args.columnSorting)) return EXAMPLE_DATA;
+            const { columnKey, direction } = args.columnSorting ?? {};
 
-            if (!direction || direction === SortDirection.NONE) return EXAMPLE_DATA;
+            if (!columnKey || !direction || direction === SortDirection.NONE) return EXAMPLE_DATA;
 
-            return orderBy(EXAMPLE_DATA, key, direction);
-        }, [args.currentSort]);
+            return orderBy(EXAMPLE_DATA, columnKey, direction);
+        }, [args.columnSorting]);
+
+        return (
+            <Table.Root {...args} layoutClassName="w-[80vw]">
+                <Table.Head>
+                    <Table.Column colKey="id">ID</Table.Column>
+                    <Table.Column colKey="name">Name</Table.Column>
+                    <Table.Column colKey="email">Email</Table.Column>
+                </Table.Head>
+                <Table.Body>
+                    <ExampleTableDataRows data={sortedTableData} />
+                </Table.Body>
+            </Table.Root>
+        );
+    },
+};
+
+export const SortingMultiple: Story = {
+    args: { sortable: "multiple" },
+    parameters: {
+        docs: {
+            description: {
+                story: "Demonstrates table sorting functionality. **Note:** Sorting state is purely visual - the actual data sorting must be handled externally by the parent component. The `columnSorting` prop controls the visual state, but you are responsible for sorting the table rows correctly",
+            },
+        },
+    },
+    render: function SortingComp(args) {
+        const sortedTableData = React.useMemo(() => {
+            if (!Array.isArray(args.columnSorting)) return EXAMPLE_DATA;
+            if (!args.columnSorting.length) return EXAMPLE_DATA;
+
+            return orderBy(
+                EXAMPLE_DATA,
+                args.columnSorting.map((s) => s.columnKey),
+                args.columnSorting.map((s) => s.direction as "asc" | "desc"),
+            );
+        }, [args.columnSorting]);
 
         return (
             <Table.Root {...args} layoutClassName="w-[80vw]">

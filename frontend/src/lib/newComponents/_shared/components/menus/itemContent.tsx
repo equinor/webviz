@@ -26,7 +26,12 @@ export function ItemContent(props: MenuItemContentProps) {
                     <Typography as="p" size={getTextSizeForSelectableSize(size)} weight="bolder">
                         {props.children ?? props.text}
                     </Typography>
-                    <Typography as="p" size={getNextTextSize(getTextSizeForSelectableSize(size), -1)} weight="lighter">
+                    <Typography
+                        as="p"
+                        size={getNextTextSize(getTextSizeForSelectableSize(size), -1)}
+                        weight="lighter"
+                        layoutClassName="max-w-sm"
+                    >
                         {props.description}
                     </Typography>
                 </div>
