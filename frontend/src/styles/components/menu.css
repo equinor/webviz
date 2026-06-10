@@ -15,7 +15,7 @@
     }
 
     .menu__item {
-        @apply gap-horizontal-xs px-vertical-md py-horizontal-xs text-neutral-subtle flex max-w-md items-center;
+        @apply gap-horizontal-xs px-vertical-md py-horizontal-xs text-neutral-subtle flex items-center;
     }
 
     .menu__label {
