@@ -8,8 +8,8 @@ import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@a
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";

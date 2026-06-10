@@ -1,5 +1,5 @@
-import { CopyInputField } from "@lib/components/CopyInputField";
 import { Banner } from "@lib/newComponents/Banner";
+import { TextInputCompositions } from "@lib/newComponents/TextInput/compositions";
 import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
 
 export type ConfirmationProps = {
@@ -16,7 +16,7 @@ export function Confirmation(props: ConfirmationProps): React.ReactNode {
                 By sharing the following link you can give others access to your snapshot. <br />
                 You can find all your created and visited snapshots in the snapshots dialog.
             </Paragraph>
-            <CopyInputField value={props.snapshotUrl} className="w-full" />
+            <TextInputCompositions.WithCopyButton value={props.snapshotUrl} className="w-full" />
             <Banner tone="warning">
                 <ul className="pl-sm list-outside list-disc">
                     <li>Snapshots are not guaranteed to persist, as underlying data or module states may change.</li>

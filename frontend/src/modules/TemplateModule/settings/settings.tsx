@@ -5,12 +5,12 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Select } from "@lib/newComponents/Select";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Switch, SwitchCompositions } from "@lib/newComponents/Switch";
-import { TextInput } from "@lib/newComponents/TextInput/textInput";
+import { TextInput } from "@lib/newComponents/TextInput/_components/textInput";
 
 import type { Interfaces } from "../interfaces";
 

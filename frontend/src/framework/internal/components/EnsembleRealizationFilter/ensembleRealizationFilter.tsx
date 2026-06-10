@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Check, Clear } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
@@ -12,10 +13,9 @@ import {
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
-import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { Check, Clear } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator/hasChangesIndicator";
 import { Hidden } from "@lib/newComponents/Hidden";
 import { RadioCompositions } from "@lib/newComponents/Radio";
 import { Separator } from "@lib/newComponents/Separator";
@@ -256,9 +256,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     </div>
                     <HasChangesIndicator
                         visible={props.hasUnsavedSelections}
-                        tooltipText="You have unapplied changes"
-                        size="small"
-                        iconSize={16}
+                        tooltip="You have unapplied changes"
+                        size={16}
                     />
                     <Button
                         tone="accent"

@@ -7,8 +7,7 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import type { SettingAnnotation } from "@lib/components/SettingWrapper";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
 import { Collapsible } from "@lib/newComponents/Collapsible";
@@ -61,6 +60,7 @@ import {
     userSelectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
 import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper/_components/SettingWrapper";
 
 const CURVE_TYPE_LABELS: Record<CurveType, string> = {
     [CurveType.RELPERM]: "Relative permeability",

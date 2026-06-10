@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link, Warning } from "@mui/icons-material";
 
-import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -67,9 +67,7 @@ export function SettingManagerComponent<
     if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="py-4xs px-2xs flex w-32 items-center">
-                    {props.setting.getLabel()}
-                </div>
+                <div className="py-4xs px-2xs flex w-32 items-center">{props.setting.getLabel()}</div>
                 <div className="text-warning-strong px-4xs py-4xs gap-x-2xs flex w-full items-center italic">
                     Empty intersection
                 </div>

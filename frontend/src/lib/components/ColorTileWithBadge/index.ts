@@ -1,1 +1,0 @@
-export { ColorTileWithBadge } from "./colorTileWithBadge";

@@ -1,7 +1,7 @@
-import type React from "react";
+import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type StatusWrapperProps = {
     children: React.ReactNode;
@@ -12,7 +12,7 @@ export type StatusWrapperProps = {
     className?: string;
 };
 
-export const StatusWrapper: React.FC<StatusWrapperProps> = (props) => {
+export const StatusWrapper = React.forwardRef<HTMLDivElement, StatusWrapperProps>(function StatusWrapper(props, ref) {
     const activeMessage = !props.isPending && (props.errorMessage ?? props.warningMessage ?? props.infoMessage);
 
     let outlineColorClass = "";
@@ -28,12 +28,13 @@ export const StatusWrapper: React.FC<StatusWrapperProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("relative rounded-sm", props.className, {
+            ref={ref}
+            className={resolveClassNames("relative rounded", props.className, {
                 [`outline outline-offset-2 ${outlineColorClass}`]: Boolean(activeMessage || props.isPending),
             })}
         >
             {props.isPending && (
-                <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-xs">
+                <div className="z-overlay bg-surface/80 absolute inset-0 flex items-center justify-center backdrop-blur-xs">
                     <CircularProgress size={24} />
                 </div>
             )}
@@ -42,7 +43,14 @@ export const StatusWrapper: React.FC<StatusWrapperProps> = (props) => {
                     {activeMessage}
                 </div>
             )}
-            <div style={{ display: "contents" }} ref={(el) => { if (el) el.inert = Boolean(activeMessage || props.isPending); }}>{props.children}</div>
+            <div
+                style={{ display: "contents" }}
+                ref={(el) => {
+                    if (el) el.inert = Boolean(activeMessage || props.isPending);
+                }}
+            >
+                {props.children}
+            </div>
         </div>
     );
-};
+});

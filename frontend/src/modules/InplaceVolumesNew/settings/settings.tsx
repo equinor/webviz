@@ -10,7 +10,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Slider } from "@lib/components/Slider";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { HistogramType } from "@modules/_shared/histogram";
@@ -182,7 +182,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     />
                 </SettingWrapper>
                 {showFaciesFractionGroupingWarning && (
-                    <div className="py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                    <div className="rounded border border-yellow-300 bg-yellow-100 px-3 py-2 text-sm text-yellow-800">
                         <strong>Note:</strong> FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or
                         Color by; otherwise every fraction collapses to 1.
                     </div>

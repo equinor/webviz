@@ -2,7 +2,19 @@ import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
-import { AddLink, ArrowDropDown, Close, Edit, Fullscreen, FullscreenExit, Link, Lock, Refresh, Save, SaveAs } from "@mui/icons-material";
+import {
+    AddLink,
+    ArrowDropDown,
+    Close,
+    Edit,
+    Fullscreen,
+    FullscreenExit,
+    Link,
+    Lock,
+    Refresh,
+    Save,
+    SaveAs,
+} from "@mui/icons-material";
 
 import { FmuLogo } from "@assets/FmuLogo";
 
@@ -12,7 +24,7 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
+import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator/hasChangesIndicator";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";

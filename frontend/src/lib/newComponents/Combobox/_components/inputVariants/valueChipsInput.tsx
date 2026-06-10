@@ -36,7 +36,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                                 {props.renderItemAdornment(item)}
                                             </div>
                                         )}
-                                        <span className="px-3xs flex items-center">{label}</span>
+                                        <span className="px-3xs py-3xs flex min-w-0 items-center">{label}</span>
                                         <ComboboxBase.ChipRemove
                                             aria-label={`Remove ${label}`}
                                             className="selectable text-body-xs py-0"

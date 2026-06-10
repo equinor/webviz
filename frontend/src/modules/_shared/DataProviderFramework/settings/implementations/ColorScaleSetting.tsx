@@ -3,7 +3,7 @@ import type React from "react";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorScalePreview } from "@lib/components/ColorScalePreview";
+import { ColorScalePreview } from "@lib/newComponents/ColorScalePreview";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import type {

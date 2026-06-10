@@ -188,10 +188,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div
-                    className="px-xs gap-x-xs text-body-sm flex h-full items-center"
-                    title={props.displayName}
-                >
+                <div className="px-xs gap-x-xs text-body-sm flex h-full items-center" title={props.displayName}>
                     <div className="border-neutral-subtle bg-canvas h-10 w-10 min-w-10 shrink-0 overflow-hidden border">
                         {makePreviewImage(40, props.drawPreviewFunc)}
                     </div>
@@ -319,7 +316,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="z-tooltip border-neutral-subtle bg-floating py-md text-body-md gap-x-sm absolute flex w-96 items-center border shadow-lg"
+            className="z-tooltip border-neutral-subtle bg-floating p-sm text-body-md gap-x-sm absolute flex w-96 items-center border shadow-lg"
             style={style}
         >
             <div className="min-w-20">{makePreviewImage(80, props.module.getDrawPreviewFunc())}</div>

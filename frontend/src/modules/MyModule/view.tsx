@@ -2,7 +2,7 @@ import React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
 
-import { SortableList } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
 
 type ItemOrGroup = {
     id: string;

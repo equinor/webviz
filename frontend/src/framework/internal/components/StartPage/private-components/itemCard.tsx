@@ -5,12 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
-import { Heading } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Typography } from "@lib/newComponents/Typography";
 
 export type ItemCardProps = {
     id: string;

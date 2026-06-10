@@ -2,7 +2,7 @@ import type React from "react";
 
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { SortableList } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
 import { Button } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

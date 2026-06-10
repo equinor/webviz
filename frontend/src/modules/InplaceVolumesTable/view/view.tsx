@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { TableDeprecated as TableComponent } from "@lib/components/TableDeprecated";
 import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";

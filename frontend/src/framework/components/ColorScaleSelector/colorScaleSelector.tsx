@@ -4,8 +4,8 @@ import { isEqual } from "lodash";
 
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
-import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
-import { ColorScalePreview } from "@lib/components/ColorScalePreview";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
+import { ColorScalePreview } from "@lib/newComponents/ColorScalePreview";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
@@ -318,7 +318,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                             getPaletteTypeFromColorScale(colorScaleSpecification.colorScale)
                         ]
                     }
-                    onChange={handleColorPaletteChange}
+                    onValueChange={handleColorPaletteChange}
                     type={convertColorScaleToColorPaletteSelectorType(colorScaleSpecification.colorScale)}
                     steps={colorScaleSpecification.colorScale.getNumSteps()}
                 />

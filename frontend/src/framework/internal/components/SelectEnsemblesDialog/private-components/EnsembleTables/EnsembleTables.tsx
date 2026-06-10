@@ -4,8 +4,8 @@ import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SortableList } from "@lib/components/SortableList";
-import { Tag } from "@lib/components/Tag";
+import { SortableList } from "@lib/newComponents/SortableList";
+import { Tag } from "@lib/newComponents/Tag";
 import { Button } from "@lib/newComponents/Button";
 import { ColorTile } from "@lib/newComponents/ColorTile";
 import { Popover } from "@lib/newComponents/Popover";

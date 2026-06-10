@@ -27,7 +27,7 @@ export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(pr
             className={resolveClassNames(props.layoutClassName, "relative flex data-[orientation=vertical]:flex-col")}
         >
             {props.children}
-            <TabsBase.Indicator className="tabs__indicator bg-accent-strong" />
+            <TabsBase.Indicator className="tabs__indicator" />
         </TabsBase.List>
     );
 });

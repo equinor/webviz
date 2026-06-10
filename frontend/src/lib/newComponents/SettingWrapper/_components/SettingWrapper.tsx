@@ -5,7 +5,7 @@ import { Heading } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SettingsLayoutContext } from "..";
-import { type ContextHelpProps } from "../../ContextHelp";
+import { type ContextHelpProps } from "../../../components/ContextHelp";
 
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";

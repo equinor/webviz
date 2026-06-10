@@ -5,7 +5,7 @@ import { Input, Warning } from "@mui/icons-material";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { Tag } from "@lib/components/Tag";
+import { Tag } from "@lib/newComponents/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
@@ -135,7 +135,7 @@ export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfac
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {content}
         </div>
     );

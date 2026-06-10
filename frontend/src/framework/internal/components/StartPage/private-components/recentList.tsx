@@ -7,7 +7,7 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
@@ -110,9 +110,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>
-            <div className="mt-xs gap-y-xs gap-x-xs gap-y-xs min-h-16 min-w-0">
-                {makeContent()}
-            </div>
+            <div className="mt-xs gap-y-xs gap-x-xs gap-y-xs min-h-16 min-w-0">{makeContent()}</div>
         </section>
     );
 }

@@ -6,8 +6,8 @@ import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessage
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
-import { ColorGradient } from "@lib/components/ColorGradient";
-import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
+import { ColorGradient } from "@lib/newComponents/ColorGradient";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { NumberInput } from "@lib/newComponents/NumberInput";
@@ -68,7 +68,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}
                                 colorPalettes={colorPalettes[ColorPaletteSelectorType.Categorical]}
                                 type={ColorPaletteSelectorType.Categorical}
-                                onChange={(palette) =>
+                                onValueChange={(palette) =>
                                     handleColorPaletteSelected(palette, ColorPaletteType.Categorical)
                                 }
                             />
@@ -82,7 +82,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]}
                                 colorPalettes={colorPalettes[ColorPaletteType.ContinuousSequential]}
                                 type={ColorPaletteSelectorType.Continuous}
-                                onChange={(palette) =>
+                                onValueChange={(palette) =>
                                     handleColorPaletteSelected(palette, ColorPaletteType.ContinuousSequential)
                                 }
                             />
@@ -123,7 +123,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]}
                                 colorPalettes={colorPalettes[ColorPaletteType.ContinuousDiverging]}
                                 type={ColorPaletteSelectorType.Continuous}
-                                onChange={(palette) =>
+                                onValueChange={(palette) =>
                                     handleColorPaletteSelected(palette, ColorPaletteType.ContinuousDiverging)
                                 }
                             />
