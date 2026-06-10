@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { CheckboxCompositions, CheckboxGroup } from "../index";
+import { CheckboxGroup } from "../_components/checkboxGroup";
+
+import { CheckboxCompositions } from "./index";
 
 const meta: Meta<typeof CheckboxCompositions.WithLabel> = {
     title: "Components/Checkbox/Compositions/With Label",

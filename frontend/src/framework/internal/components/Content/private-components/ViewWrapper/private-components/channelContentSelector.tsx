@@ -8,7 +8,7 @@ import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelRe
 import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
 import { Overlay } from "@lib/components/Overlay";
 import { Button } from "@lib/newComponents/Button";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 

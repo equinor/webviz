@@ -6,7 +6,7 @@ import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentS
 import { type SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { RadioGroup, type RadioGroupProps } from "../_baseComponents/group";
+import { RadioGroup, type RadioGroupProps } from "../_components/group";
 
 import { WithLabel } from "./withLabel";
 

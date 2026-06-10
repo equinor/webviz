@@ -178,6 +178,77 @@ export const IndicatorStart: Story = {
     ),
 };
 
+// ─── Size stories ─────────────────────────────────────────────────────────────
+
+export const SizeSmall: Story = {
+    name: "Size: Small",
+    parameters: {
+        docs: {
+            description: {
+                story: "Pass `size=\"small\"` to `Tabs.List` for compact tabs.",
+            },
+        },
+    },
+    render: () => (
+        <Tabs.Root defaultValue="a">
+            <Tabs.List size="small">
+                <Tabs.Tab value="a">Overview</Tabs.Tab>
+                <Tabs.Tab value="b">Details</Tabs.Tab>
+                <Tabs.Tab value="c">Settings</Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
+            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
+            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+        </Tabs.Root>
+    ),
+};
+
+export const SizeDefault: Story = {
+    name: "Size: Default",
+    parameters: {
+        docs: {
+            description: {
+                story: "The default tab size — used when no `size` prop is provided.",
+            },
+        },
+    },
+    render: () => (
+        <Tabs.Root defaultValue="a">
+            <Tabs.List size="default">
+                <Tabs.Tab value="a">Overview</Tabs.Tab>
+                <Tabs.Tab value="b">Details</Tabs.Tab>
+                <Tabs.Tab value="c">Settings</Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
+            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
+            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+        </Tabs.Root>
+    ),
+};
+
+export const SizeLarge: Story = {
+    name: "Size: Large",
+    parameters: {
+        docs: {
+            description: {
+                story: "Pass `size=\"large\"` to `Tabs.List` for larger, more prominent tabs.",
+            },
+        },
+    },
+    render: () => (
+        <Tabs.Root defaultValue="a">
+            <Tabs.List size="large">
+                <Tabs.Tab value="a">Overview</Tabs.Tab>
+                <Tabs.Tab value="b">Details</Tabs.Tab>
+                <Tabs.Tab value="c">Settings</Tabs.Tab>
+            </Tabs.List>
+            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
+            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
+            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+        </Tabs.Root>
+    ),
+};
+
 // ─── Orientation stories ──────────────────────────────────────────────────────
 
 export const Horizontal: Story = {

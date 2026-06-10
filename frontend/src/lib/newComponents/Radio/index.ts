@@ -1,15 +1,5 @@
-export { RadioGroup } from "./_baseComponents/group";
-export { Radio } from "./_baseComponents/radio";
-import { GroupWithLabels } from "./_compositions/groupWithLabels";
-import { WithLabel } from "./_compositions/withLabel";
+export { RadioGroup } from "./_components/group";
+export { Radio } from "./_components/radio";
 
-export const RadioCompositions = {
-    WithLabel,
-    GroupWithLabels,
-};
-
-export type { WithLabelProps as RadioWithLabelProps } from "./_compositions/withLabel";
-export type { GroupWithLabels as RadioGroupWithLabelsProps, RadioOption } from "./_compositions/groupWithLabels";
-
-export type { RadioGroupProps } from "./_baseComponents/group";
-export type { RadioProps } from "./_baseComponents/radio";
+export type { RadioGroupProps } from "./_components/group";
+export type { RadioProps } from "./_components/radio";

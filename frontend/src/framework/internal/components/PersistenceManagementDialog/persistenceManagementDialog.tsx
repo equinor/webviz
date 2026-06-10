@@ -35,8 +35,13 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
 
     return (
         <Dialog.Popup open={isDialogOpen} onOpenChange={setIsOpen} minWidth={800} width="80vw" height={700}>
-            <div className="py-md gap-y-md border-neutral pb- pb- flex items-start justify-between border-b pb-0">
-                <Tabs.Root value={contentMode} onValueChange={setContentMode} orientation="horizontal">
+            <div className="p-sm gap-y-md border-neutral-subtle flex items-start justify-between border-b-2 pb-0">
+                <Tabs.Root
+                    value={contentMode}
+                    onValueChange={setContentMode}
+                    orientation="horizontal"
+                    layoutClassName="-mb-[2px]"
+                >
                     <Tabs.List indicatorPosition="end">
                         <Tabs.Tab value="sessions">Sessions</Tabs.Tab>
                         <Tabs.Tab value="snapshots">Snapshots</Tabs.Tab>

@@ -9,10 +9,11 @@ import { Collapsible } from "@lib/newComponents/Collapsible";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Switch, SwitchCompositions } from "@lib/newComponents/Switch";
+import { Switch } from "@lib/newComponents/Switch";
 import { TextInput } from "@lib/newComponents/TextInput/_components/textInput";
 
 import type { Interfaces } from "../interfaces";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

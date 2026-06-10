@@ -9,7 +9,7 @@ import type { RealizationNumberSelection } from "@framework/types/realizationFil
 import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
 import { missingNumbers } from "@framework/utils/numberUtils";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { RadioCompositions } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 
 import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,

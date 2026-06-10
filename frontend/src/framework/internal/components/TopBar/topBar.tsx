@@ -24,10 +24,10 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator/hasChangesIndicator";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator";
 import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
@@ -365,15 +365,21 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
-    const handleSaveClick = () => {
+    const saveEnabled = persistenceInfo.hasChanges || !isPersisted;
+
+    function handleSaveClick() {
+        if (!isPersisted) {
+            setSaveSessionDialogOpen(true);
+            return;
+        }
         // The save button is disabled on new sessions, so the "maybe"
         // is technically unnecessary, but we'll use it for brevity
         props.workbench.getSessionManager().maybeSaveSession();
-    };
+    }
 
-    const handleSaveAsClick = () => {
+    function handleSaveAsClick() {
         setSaveSessionDialogOpen(true);
-    };
+    }
 
     function handleSaveMenuAction(actionId: string) {
         if (actionId === "save") {
@@ -383,12 +389,10 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         }
     }
 
-    const saveEnabled = persistenceInfo.hasChanges && isPersisted;
-
     return (
         <div className="gap-x-xs flex items-center justify-center p-2 text-sm">
             <Button.Group split>
-                <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled} iconOnly>
+                <Button variant="contained" tone="accent" disabled={!saveEnabled} onClick={handleSaveClick} iconOnly>
                     {isSaving ? (
                         // Margin is explicitly added to make the spinner's position width match the save icon
                         <CircularProgress size={16} layoutClassName="mx-[2px]" />
@@ -404,7 +408,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                             id: "save",
                             label: "Save session",
                             icon: <Save fontSize="small" />,
-                            disabled: !saveEnabled,
+                            disabled: !isPersisted || !persistenceInfo.hasChanges,
                         },
                         {
                             id: "save-as",

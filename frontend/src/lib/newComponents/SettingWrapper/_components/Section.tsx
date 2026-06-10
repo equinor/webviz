@@ -32,10 +32,7 @@ export function Section(props: SectionProps) {
     const children = React.Children.map(props.children, (child, index) => (
         <div
             key={index}
-            className={resolveClassNames(
-                "px-xs py-2xs col-span-3 grid grid-cols-subgrid",
-                index % 2 === 0 ? "bg-canvas" : "",
-            )}
+            className="px-xs py-2xs col-span-3 grid grid-cols-subgrid empty:hidden [&:nth-child(odd_of_:not(:empty))]:bg-canvas"
         >
             {child}
         </div>

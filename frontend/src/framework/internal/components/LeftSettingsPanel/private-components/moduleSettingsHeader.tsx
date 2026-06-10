@@ -50,7 +50,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
         return (
             <div className="flex h-full items-center pl-px">
                 <Tabs.Root onValueChange={handleTabChange}>
-                    <Tabs.List>
+                    <Tabs.List size="small">
                         {tabKeys.map((key) => {
                             const config = props.availableTabs[key];
                             return (
