@@ -24,7 +24,9 @@ export const Popup = React.forwardRef<HTMLDivElement, PopupProps>(function Popup
                     className="bg-floating-inverted px-sm py-xs text-neutral-strong-on-emphasis! relative rounded"
                 >
                     <TooltipBase.Arrow className="floating__arrow" />
-                    <Paragraph size="sm">{props.children}</Paragraph>
+                    <Paragraph size="sm" layoutClassName="whitespace-pre-line">
+                        {props.children}
+                    </Paragraph>
                 </TooltipBase.Popup>
             </TooltipBase.Positioner>
         </TooltipBase.Portal>

@@ -4,7 +4,7 @@ import { DragIndicator } from "@mui/icons-material";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react";
 import { flatMap, orderBy, range } from "lodash";
 
-import { SortableList } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
 
 import { Banner } from "../Banner";

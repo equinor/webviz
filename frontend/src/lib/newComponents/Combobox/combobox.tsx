@@ -174,13 +174,11 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 </ComboboxBase.Status>
 
                 {props.errorText ? (
-                    <div className="py-selectable px-selectable italic">{props.errorText}</div>
+                    <div className="p-selectable italic">{props.errorText}</div>
                 ) : (
                     <React.Fragment>
                         <ComboboxBase.Empty>
-                            <div className="py-selectable px-selectable italic">
-                                {props.loading ? loadingText : noMatchesText}
-                            </div>
+                            <div className="p-selectable italic">{props.loading ? loadingText : noMatchesText}</div>
                         </ComboboxBase.Empty>
 
                         <ComboboxBase.List>

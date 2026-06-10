@@ -14,9 +14,9 @@ import {
 import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { NavBarButton } from "@lib/components/NavBarComponents";
 import { Badge } from "@lib/newComponents/Badge";
-import { Tabs } from "@lib/newComponents/Tabs";
+import { Tabs, type TabsTabProps } from "@lib/newComponents/Tabs";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -81,7 +81,7 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
         <SideBar position="right" className="">
             <Tabs.Root value={drawerContent} onValueChange={handleSelectPanelContent} orientation="vertical">
                 <Tabs.List indicatorPosition="start">
-                    <NavBarButton
+                    <Toggle
                         value={RightDrawerContent.ModulesList}
                         tooltip="Show modules list"
                         icon={<WebAssetOutlined fontSize="small" />}
@@ -89,7 +89,7 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                         disabled={isSnapshot}
                         disabledTooltip="Modules cannot be changed in snapshot mode"
                     />
-                    <NavBarButton
+                    <Toggle
                         value={RightDrawerContent.RealizationFilterSettings}
                         tooltip={RealizationFilterButtonTooltip(
                             numberOfUnsavedRealizationFilters,
@@ -108,13 +108,13 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                         disabled={isSnapshot}
                         disabledTooltip="Realization filters cannot be changed in snapshot mode"
                     />
-                    <NavBarButton
+                    <Toggle
                         value={RightDrawerContent.ModuleInstanceLog}
                         icon={<HistoryOutlined fontSize="small" />}
                         activeIcon={<History fontSize="small" />}
                         tooltip="Open module log"
                     />
-                    <NavBarButton
+                    <Toggle
                         value={RightDrawerContent.ColorPaletteSettings}
                         tooltip="Show color settings"
                         icon={<PaletteOutlined fontSize="small" />}
@@ -126,30 +126,62 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     );
 };
 
+type ToggleProps = TabsTabProps & {
+    value: string;
+    /**
+     * The icon rendered on the left side of the text
+     */
+    icon: React.ReactElement;
+    /**
+     * An alternate icon to use when the button is in it's "active" state
+     */
+    activeIcon?: React.ReactElement;
+    /**
+     * Tooltip text
+     */
+    tooltip?: string;
+    /**
+     * Tooltip text when disabled
+     */
+    disabledTooltip?: string;
+};
+
+function resolveTabIcon(
+    icon: React.ReactElement,
+    activeIcon: React.ReactElement | undefined,
+    isActive: boolean,
+): React.ReactNode {
+    if (isActive) return activeIcon ?? icon;
+    return icon;
+}
+
+function Toggle(props: ToggleProps) {
+    const { icon, activeIcon, disabledTooltip, tooltip, ...baseProps } = props;
+    return (
+        <Tooltip content={props.disabled ? disabledTooltip : tooltip} side="left">
+            {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+            <span>
+                <Tabs.Tab {...baseProps}>{({ isActive }) => resolveTabIcon(icon, activeIcon, isActive)}</Tabs.Tab>
+            </span>
+        </Tooltip>
+    );
+}
+
 function RealizationFilterButtonTooltip(
     numberOfUnsavedRealizationFilters: number,
     numberOfEffectiveRealizationFilters: number,
-): React.ReactNode {
-    return (
-        <div>
-            Open realization filter panel
-            {numberOfUnsavedRealizationFilters ? (
-                <>
-                    <br />
-                    {`* ${numberOfUnsavedRealizationFilters} unsaved filter${
-                        numberOfUnsavedRealizationFilters > 1 ? "s" : ""
-                    }`}
-                </>
-            ) : numberOfEffectiveRealizationFilters ? (
-                <>
-                    <br />
-                    {`* ${numberOfEffectiveRealizationFilters} effective filter${
-                        numberOfEffectiveRealizationFilters > 1 ? "s" : ""
-                    }`}
-                </>
-            ) : null}
-        </div>
-    );
+): string {
+    let tooltip = "Open realization filter panel";
+    if (numberOfUnsavedRealizationFilters) {
+        tooltip += `\n* ${numberOfUnsavedRealizationFilters} unsaved filter${
+            numberOfUnsavedRealizationFilters > 1 ? "s" : ""
+        }`;
+    } else if (numberOfEffectiveRealizationFilters) {
+        tooltip += `\n* ${numberOfEffectiveRealizationFilters} effective filter${
+            numberOfEffectiveRealizationFilters > 1 ? "s" : ""
+        }`;
+    }
+    return tooltip;
 }
 
 function RealizationFilterButtonIcon(

@@ -1,4 +1,5 @@
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -14,7 +15,7 @@ export type ColorScalePreviewProps = {
     max: number;
     divMidPoint: number;
     id: string;
-    size?: "small" | "default" | "large";
+    size?: SelectableSize;
 };
 
 const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string> = {

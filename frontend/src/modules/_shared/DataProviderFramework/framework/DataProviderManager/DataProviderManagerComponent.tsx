@@ -2,8 +2,8 @@ import React from "react";
 
 import { Add } from "@mui/icons-material";
 
-import { SortableList } from "@lib/components/SortableList";
-import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
+import type { IsMoveAllowedArgs } from "@lib/newComponents/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";

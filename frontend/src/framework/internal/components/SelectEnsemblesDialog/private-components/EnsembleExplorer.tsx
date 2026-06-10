@@ -5,7 +5,7 @@ import { ArrowRight, Check, Remove } from "@mui/icons-material";
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";

@@ -4,14 +4,13 @@ import type { HTMLProps, InputProps as InputBaseProps, InputState } from "@base-
 import { Input } from "@base-ui/react";
 import { Error } from "@mui/icons-material";
 
+import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
-
-import { useComponentSize } from "../_shared/contexts/componentSizeContext";
-import type { SelectableSize } from "../_shared/utils/size";
-import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/utils/size";
-import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
+import { useComponentSize } from "../../_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "../../_shared/utils/size";
+import { SELECTABLE_SIZES_CLASSNAMES } from "../../_shared/utils/size";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/utils/wrapperProps";
 
 export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size" | "type">> & {
     startAdornment?: React.ReactNode;

@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -8,7 +9,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 export type ColorGradientProps = LayoutClassProps & {
     colorPalette: ColorPalette;
     steps?: number;
-    size?: "small" | "default" | "large";
+    size?: SelectableSize;
 };
 
 const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string> = {

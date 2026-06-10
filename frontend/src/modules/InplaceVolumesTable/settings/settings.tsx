@@ -13,7 +13,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import type { TagOption } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";

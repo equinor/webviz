@@ -13,7 +13,7 @@ import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import type { SelectOption } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -99,34 +99,37 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const wellboreSettingAnnotations = useMakePersistableFixableAtomAnnotations(selectedWellboreUuidAtom);
 
     return (
-        <div className="flex flex-col h-full">
-            <Collapsible.Group title={`Wellbore${selectedWellboreHeader ? `: ${selectedWellboreHeader.uniqueWellboreIdentifier}` : ""}`} defaultOpen>
+        <div className="flex h-full flex-col">
+            <Collapsible.Group
+                title={`Wellbore${selectedWellboreHeader ? `: ${selectedWellboreHeader.uniqueWellboreIdentifier}` : ""}`}
+                defaultOpen
+            >
                 <Collapsible.Content layoutClassName="flex flex-col gap-y-xs">
-                <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
-                    <FieldDropdown
-                        value={selectedField.value}
-                        ensembleSet={ensembleSet}
-                        fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
-                        onChange={setSelectedField}
-                    />
-                </SettingWrapper>
+                    <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
+                        <FieldDropdown
+                            value={selectedField.value}
+                            ensembleSet={ensembleSet}
+                            fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
+                            onChange={setSelectedField}
+                        />
+                    </SettingWrapper>
 
-                <SettingWrapper
-                    label="Wellbore"
-                    annotations={wellboreSettingAnnotations}
-                    errorOverlay={wellboreHeadersErrorMessage}
-                >
-                    <Combobox
-                        items={makeWellHeaderOptions(wellboreHeadersQuery.data ?? [])}
-                        value={selectedWellboreHeader ? selectedWellboreHeader.wellboreUuid : null}
-                        onValueChange={handleWellboreSelectionChange}
-                    />
-                </SettingWrapper>
+                    <SettingWrapper
+                        label="Wellbore"
+                        annotations={wellboreSettingAnnotations}
+                        errorOverlay={wellboreHeadersErrorMessage}
+                    >
+                        <Combobox
+                            items={makeWellHeaderOptions(wellboreHeadersQuery.data ?? [])}
+                            value={selectedWellboreHeader ? selectedWellboreHeader.wellboreUuid : null}
+                            onValueChange={handleWellboreSelectionChange}
+                        />
+                    </SettingWrapper>
                 </Collapsible.Content>
             </Collapsible.Group>
             <Collapsible.Group title="Log viewer settings" defaultOpen>
                 <Collapsible.Content>
-                <ViewerSettings />
+                    <ViewerSettings />
                 </Collapsible.Content>
             </Collapsible.Group>
 

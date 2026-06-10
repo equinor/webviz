@@ -5,35 +5,36 @@ import { AssignmentTurnedIn, ContentPaste } from "@mui/icons-material";
 import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { Button } from "@lib/newComponents/Button";
 import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { Tooltip } from "../Tooltip";
-
-export type CopyInputFieldProps = {
+export type WithCopyButtonProps = {
     value: string;
     className?: string;
 };
 
-export function CopyInputField(props: CopyInputFieldProps): React.ReactNode {
-    const [showCopySuccess, setShowCopySuccess] = React.useState<boolean>(false);
-    const timeoutFunction = useTimeoutFunction();
+export const WithCopyButton = React.forwardRef<HTMLInputElement, WithCopyButtonProps>(
+    function WithCopyButton(props, ref) {
+        const [showCopySuccess, setShowCopySuccess] = React.useState<boolean>(false);
+        const timeoutFunction = useTimeoutFunction();
 
-    function copyToClipboard() {
-        navigator.clipboard.writeText(props.value).then(() => {
-            setShowCopySuccess(true);
-            timeoutFunction(() => {
-                setShowCopySuccess(false);
-            }, 2000);
-        });
-    }
+        function copyToClipboard() {
+            navigator.clipboard.writeText(props.value).then(() => {
+                setShowCopySuccess(true);
+                timeoutFunction(() => {
+                    setShowCopySuccess(false);
+                }, 2000);
+            });
+        }
 
-    return (
-        <div className={props.className}>
+        return (
             <TextInput
+                ref={ref}
                 value={props.value}
                 readOnly
-                layoutClassName="w-full"
+                layoutClassName={resolveClassNames("w-full", props.className)}
                 endAdornment={
-                    <Tooltip title={showCopySuccess ? "Copied!" : "Copy to clipboard"}>
+                    <Tooltip content={showCopySuccess ? "Copied!" : "Copy to clipboard"}>
                         <Button
                             variant="contained"
                             onClick={copyToClipboard}
@@ -50,6 +51,6 @@ export function CopyInputField(props: CopyInputFieldProps): React.ReactNode {
                     </Tooltip>
                 }
             />
-        </div>
-    );
-}
+        );
+    },
+);

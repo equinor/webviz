@@ -7,7 +7,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Table as TableComponent } from "@lib/components/Table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
@@ -87,7 +87,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isPending = aggregatedTableDataQueries.isFetching && areSelectedTablesComparable;
 
     return (
-        <div ref={divRef} className="w-full h-full relative flex flex-col">
+        <div ref={divRef} className="relative flex h-full w-full flex-col">
             <StatusWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 <div style={{ height: divBoundingRect.height * plotHeightFraction }}>{plots ?? null}</div>
                 {showStatisticsTable && statisticsTableData && tableColumns && (

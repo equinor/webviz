@@ -2,7 +2,7 @@ import type React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
 
-import { SortableList } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SortableListItemProps = {

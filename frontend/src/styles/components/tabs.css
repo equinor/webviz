@@ -1,6 +1,6 @@
 @layer components {
     .tabs__tab {
-        @apply focusable font-bolder py-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center outline-0;
+        @apply focusable font-bolder p-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center outline-0;
         min-height: var(--size-selectable-md);
         font-size: var(--text-body-md);
 
@@ -13,7 +13,7 @@
         }
 
         [data-size="large"] & {
-            @apply py-sm px-sm text-body-lg min-h-[var(--size-selectable-lg)];
+            @apply p-sm text-body-lg min-h-[var(--size-selectable-lg)];
         }
 
         &[data-orientation="horizontal"] {
@@ -35,7 +35,7 @@
         }
     }
     .tabs__indicator {
-        @apply absolute top-0 left-0 rounded transition-all duration-150;
+        @apply bg-accent-strong absolute top-0 left-0 rounded transition-all duration-150;
         transition-property: translate, width, height;
         transition-duration: 200ms;
         transition-timing-function: ease-in-out;
