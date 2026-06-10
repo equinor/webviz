@@ -60,7 +60,7 @@ import {
     userSelectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
 import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper/_components/SettingWrapper";
+import { SettingAnnotation, SettingWrapper } from "@lib/newComponents/SettingWrapper";
 
 const CURVE_TYPE_LABELS: Record<CurveType, string> = {
     [CurveType.RELPERM]: "Relative permeability",
