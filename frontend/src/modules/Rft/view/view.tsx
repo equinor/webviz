@@ -1,17 +1,15 @@
 import React from "react";
 
 import { useAtom } from "jotai";
-import type { Config, Layout } from "plotly.js";
+import type { Config } from "plotly.js";
 
-import type { RftObservation_api } from "@api";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { useElementSize } from "@lib/hooks/useElementSize";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
@@ -19,17 +17,19 @@ import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/u
 
 import type { Interfaces } from "../interfaces";
 import { dataChannelDepthAtom } from "../settings/atoms/baseAtoms";
-import type { RftEnsembleObservationsData } from "../typesAndEnums";
 
+import { DepthLineOverlay } from "./components/DepthLineOverlay";
+import { usePlotOverlay } from "./hooks/usePlotOverlay";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
+import { useRftPlotBuilder } from "./hooks/useRftPlotBuilder";
 import { makeRftPlotTitle } from "./utils/createTitle";
-import { RftPlotBuilder } from "./utils/RftPlotBuilder";
+import { makeDepthRange } from "./utils/plotData";
 
-const PLOT_CONFIG: Partial<Config> = { scrollZoom: true, edits: { shapePosition: true } };
+const PLOT_CONFIG: Partial<Config> = { scrollZoom: true };
 
 export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
-    const wrapperDivSize = useElementSize(wrapperDivRef);
+    const wrapperDivSize = useElementBoundingRect(wrapperDivRef);
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
     const colorSet = useColorSet(workbenchSettings);
@@ -38,10 +38,12 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const responseName = viewContext.useSettingsToViewInterfaceValue("responseName");
     const timestampUtcMs = viewContext.useSettingsToViewInterfaceValue("timestampUtcMs");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
+    const showDepthLine = viewContext.useSettingsToViewInterfaceValue("showDepthLine");
     const rftDataAccessorStatus = viewContext.useSettingsToViewInterfaceValue("rftDataAccessorStatus");
     const rftObservationsStatus = viewContext.useSettingsToViewInterfaceValue("rftObservationsStatus");
 
     const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
+    const depthLineOverlay = usePlotOverlay();
 
     const propagatedErrorMessages = usePropagateAllApiErrorsToStatusWriter(rftDataAccessorStatus.errors, statusWriter);
     const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
@@ -49,51 +51,53 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     statusWriter.setLoading(rftDataAccessorStatus.isFetching);
 
-    const entries = rftDataAccessorStatus.dataAccessor?.getEntries() ?? [];
-    const selectedEnsembles = entries.flatMap((entry) => {
-        const ensemble = ensembleSet.findEnsemble(entry.ensembleIdent);
-        return ensemble ? [ensemble] : [];
-    });
+    const dataAccessor = rftDataAccessorStatus.dataAccessor;
+    const entries = React.useMemo(() => dataAccessor?.getEntries() ?? [], [dataAccessor]);
+    const selectedEnsembles = React.useMemo(
+        () =>
+            entries.flatMap((entry) => {
+                const ensemble = ensembleSet.findEnsemble(entry.ensembleIdent);
+                return ensemble ? [ensemble] : [];
+            }),
+        [entries, ensembleSet],
+    );
 
-    const dataChannelDepthRange = makeDepthRange(entries);
-    const effectiveDataChannelDepth =
-        dataChannelDepth ??
-        (dataChannelDepthRange ? (dataChannelDepthRange[0] + dataChannelDepthRange[1]) / 2 : null);
+    const depthRange = makeDepthRange(entries);
+    // Derive the applied depth from the persisted user value. The atom holds the user's intent and is
+    // left untouched, but the value actually used for the line and the data channel is clamped into the
+    // current data's depth range. This keeps the line on-plot (and the published value meaningful) when
+    // the underlying data changes, e.g. switching to a well whose depth range excludes the stored depth.
+    const effectiveDepth = depthRange
+        ? Math.min(Math.max(dataChannelDepth ?? (depthRange[0] + depthRange[1]) / 2, depthRange[0]), depthRange[1])
+        : dataChannelDepth;
+
+    const plotContent = useRftPlotBuilder({
+        dataAccessor,
+        selectedEnsembles,
+        colorSet,
+        wellName,
+        responseName,
+        timestampUtcMs,
+        visualizationSettings,
+        observationsData: rftObservationsStatus.observationsData,
+        size: wrapperDivSize,
+    });
 
     usePublishToDataChannels(viewContext, {
         entries,
         responseName,
-        dataChannelDepth: effectiveDataChannelDepth,
+        dataChannelDepth: effectiveDepth,
+        timestampUtcMs,
         makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) =>
             makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles),
+        makeEnsembleColor: (ensembleIdent: RegularEnsembleIdent) => {
+            const ensemble = selectedEnsembles.find(
+                (candidate) => candidate.getIdent().toString() === ensembleIdent.toString(),
+            );
+            return ensemble?.getColor() ?? colorSet.getFirstColor();
+        },
         isFetching: rftDataAccessorStatus.isFetching,
     });
-
-    const handleRelayout = React.useCallback(
-        function handleRelayout(event: Record<string, unknown>) {
-            // Plotly fires "relayout" for many reasons (resize, autosize, pan/zoom). Only react to a
-            // deliberate drag of the depth line, i.e. an event that carries shape coordinates and nothing
-            // else. Reacting to resize/autosize echoes would create a re-render <-> redraw feedback loop.
-            const keys = Object.keys(event);
-            const isShapeEdit = keys.length > 0 && keys.every((key) => key.startsWith("shapes["));
-            if (!isShapeEdit) {
-                return;
-            }
-
-            const y0 = event["shapes[0].y0"];
-            const y1 = event["shapes[0].y1"];
-            const newDepth =
-                typeof y0 === "number" && typeof y1 === "number"
-                    ? (y0 + y1) / 2
-                    : typeof y0 === "number"
-                      ? y0
-                      : null;
-            if (newDepth !== null && newDepth !== dataChannelDepth) {
-                setDataChannelDepth(newDepth);
-            }
-        },
-        [dataChannelDepth, setDataChannelDepth],
-    );
 
     React.useEffect(
         function updateInstanceTitle() {
@@ -123,138 +127,33 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
         }
 
-        if (!rftDataAccessorStatus.dataAccessor || entries.length === 0) {
+        if (!plotContent) {
             return <ContentMessage type={ContentMessageType.INFO}>No RFT data loaded.</ContentMessage>;
         }
 
-        const dataAccessor = rftDataAccessorStatus.dataAccessor;
-        const plotBuilder = new RftPlotBuilder(dataAccessor, selectedEnsembles, colorSet);
-
-        const observationRows = visualizationSettings.showObservations
-            ? extractObservationRows(rftObservationsStatus.observationsData, wellName, timestampUtcMs, responseName)
-            : [];
-        const valueRange = makeValueRange(entries, observationRows);
-
-        const shownLegendEnsembles = new Set<string>();
-        const plotData = [
-            ...plotBuilder.makeLegendTraces(shownLegendEnsembles),
-            ...(visualizationSettings.showStatisticalFan
-                ? plotBuilder.makeStatisticFanTraces(shownLegendEnsembles)
-                : []),
-            ...(visualizationSettings.showStatisticalLines
-                ? plotBuilder.makeStatisticLineTraces(
-                      responseName,
-                      visualizationSettings.selectedStatistics,
-                      shownLegendEnsembles,
-                  )
-                : []),
-            ...(visualizationSettings.showIndividualRealizations
-                ? plotBuilder.makeIndividualRealizationTraces(responseName, shownLegendEnsembles)
-                : []),
-            ...(visualizationSettings.showObservations
-                ? plotBuilder.makeObservationTraces(observationRows, responseName)
-                : []),
-        ];
-
-        const layout = plotBuilder.makeLayout(wrapperDivSize, responseName, valueRange);
-        layout.shapes = makeDataChannelDepthShapes(effectiveDataChannelDepth);
-
-        return <Plot data={plotData} layout={layout} config={PLOT_CONFIG} onRelayout={handleRelayout} />;
+        return (
+            <Plot
+                data={plotContent.plotData}
+                layout={plotContent.layout}
+                config={PLOT_CONFIG}
+                onInitialized={depthLineOverlay.handlePlotRendered}
+                onUpdate={depthLineOverlay.handlePlotRendered}
+            />
+        );
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
-            {makeContent()}
+        <div className="w-full h-full relative overflow-hidden" ref={wrapperDivRef}>
+            <div style={{ height: wrapperDivSize.height }}>{makeContent()}</div>
+            {showDepthLine && (
+                <DepthLineOverlay
+                    graphDiv={depthLineOverlay.graphDiv}
+                    depth={effectiveDepth}
+                    depthRange={depthRange}
+                    onChange={setDataChannelDepth}
+                    revision={depthLineOverlay.revision}
+                />
+            )}
         </div>
     );
-}
-
-function makeDataChannelDepthShapes(dataChannelDepth: number | null): Partial<Layout>["shapes"] {
-    if (dataChannelDepth === null) {
-        return [];
-    }
-
-    return [
-        {
-            type: "line",
-            xref: "paper",
-            x0: 0,
-            x1: 1,
-            yref: "y",
-            y0: dataChannelDepth,
-            y1: dataChannelDepth,
-            line: { color: "rgba(33, 102, 172, 0.9)", width: 3, dash: "dot" },
-            label: {
-                text: `Data channel depth: ${dataChannelDepth.toFixed(1)}`,
-                textposition: "top right",
-                font: { size: 10, color: "rgba(33, 102, 172, 0.9)" },
-            },
-        },
-    ];
-}
-
-function makeDepthRange(entries: { depths: number[] }[]): [number, number] | null {
-    let minDepth = Number.POSITIVE_INFINITY;
-    let maxDepth = Number.NEGATIVE_INFINITY;
-
-    for (const entry of entries) {
-        for (const depth of entry.depths) {
-            minDepth = Math.min(minDepth, depth);
-            maxDepth = Math.max(maxDepth, depth);
-        }
-    }
-
-    if (!Number.isFinite(minDepth) || !Number.isFinite(maxDepth)) {
-        return null;
-    }
-
-    return [minDepth, maxDepth];
-}
-
-
-function extractObservationRows(
-    observationsData: RftEnsembleObservationsData[],
-    wellName: string,
-    timestampUtcMs: number,
-    responseName: string,
-): RftObservation_api[] {
-    const dateString = timestampUtcMsToCompactIsoString(timestampUtcMs).split("T")[0];
-
-    for (const ensembleObservations of observationsData) {
-        const matchingGroup = ensembleObservations.observations.find(
-            (group) => group.well_name === wellName && group.date.split("T")[0] === dateString,
-        );
-        if (matchingGroup) {
-            return matchingGroup.observations.filter(
-                (observation) => observation.property.toUpperCase() === responseName.toUpperCase(),
-            );
-        }
-    }
-
-    return [];
-}
-
-function makeValueRange(
-    entries: { values: number[] }[],
-    observationRows: RftObservation_api[],
-): [number, number] | null {
-    let minValue = Number.POSITIVE_INFINITY;
-    let maxValue = Number.NEGATIVE_INFINITY;
-
-    for (const entry of entries) {
-        for (const value of entry.values) {
-            minValue = Math.min(minValue, value);
-            maxValue = Math.max(maxValue, value);
-        }
-    }
-    for (const observation of observationRows) {
-        minValue = Math.min(minValue, observation.value - observation.error);
-        maxValue = Math.max(maxValue, observation.value + observation.error);
-    }
-
-    if (!Number.isFinite(minValue) || !Number.isFinite(maxValue)) {
-        return null;
-    }
-
-    return [minValue, maxValue];
 }

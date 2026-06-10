@@ -8,6 +8,7 @@ import { RftStatistic } from "../typesAndEnums";
 import {
     dataChannelDepthAtom,
     selectedStatisticsAtom,
+    showDepthLineAtom,
     showIndividualRealizationsAtom,
     showObservationsAtom,
     showStatisticalFanAtom,
@@ -31,6 +32,7 @@ export type SerializedSettings = {
     showObservations: boolean;
     selectedStatistics: RftStatistic[];
     dataChannelDepth: number | null;
+    showDepthLine: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -45,6 +47,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         showObservations: { type: "boolean" },
         selectedStatistics: { elements: { enum: Object.values(RftStatistic) } },
         dataChannelDepth: { type: "float64", nullable: true },
+        showDepthLine: { type: "boolean" },
     },
 }));
 
@@ -63,6 +66,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     showObservations: get(showObservationsAtom),
     selectedStatistics: get(selectedStatisticsAtom),
     dataChannelDepth: get(dataChannelDepthAtom),
+    showDepthLine: get(showDepthLineAtom),
 });
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
@@ -82,4 +86,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, showObservationsAtom, raw.showObservations);
     setIfDefined(set, selectedStatisticsAtom, raw.selectedStatistics);
     setIfDefined(set, dataChannelDepthAtom, raw.dataChannelDepth);
+    setIfDefined(set, showDepthLineAtom, raw.showDepthLine);
 };

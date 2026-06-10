@@ -25,6 +25,7 @@ import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
 import {
     dataChannelDepthAtom,
     selectedStatisticsAtom,
+    showDepthLineAtom,
     showIndividualRealizationsAtom,
     showObservationsAtom,
     showStatisticalFanAtom,
@@ -64,6 +65,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [showObservations, setShowObservations] = useAtom(showObservationsAtom);
     const [selectedStatistics, setSelectedStatistics] = useAtom(selectedStatisticsAtom);
     const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
+    const [showDepthLine, setShowDepthLine] = useAtom(showDepthLineAtom);
 
     const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedEnsembleIdentsAtom);
     const selectedResponseNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedResponseNameAtom);
@@ -264,6 +266,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </SettingWrapper>
                 </CollapsibleGroup>
                 <CollapsibleGroup expanded={false} title="Data channel" contentClassName="flex flex-col gap-2">
+                    <SettingWrapper label="Depth line">
+                        <Checkbox
+                            label="Show depth line in plot"
+                            checked={showDepthLine}
+                            onChange={(_, checked) => setShowDepthLine(checked)}
+                        />
+                    </SettingWrapper>
                     <SettingWrapper label="Depth (TVD)">
                         <div className="flex flex-col gap-1">
                             <Input

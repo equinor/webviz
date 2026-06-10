@@ -7,6 +7,7 @@ import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
 import {
     selectedStatisticsAtom,
+    showDepthLineAtom,
     showIndividualRealizationsAtom,
     showObservationsAtom,
     showStatisticalFanAtom,
@@ -122,3 +123,5 @@ export const visualizationSettingsAtom = atom((get) => {
         selectedStatistics: get(selectedStatisticsAtom),
     };
 });
+
+export const showDepthLineSettingAtom = atom((get) => get(showDepthLineAtom));

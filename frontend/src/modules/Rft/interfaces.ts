@@ -6,6 +6,7 @@ import {
     selectedResponseNameAtom,
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
+    showDepthLineSettingAtom,
     visualizationSettingsAtom,
 } from "./settings/atoms/derivedAtoms";
 import type { RftDataAccessorStatus, RftObservationsStatus, VisualizationSettings } from "./typesAndEnums";
@@ -15,6 +16,7 @@ type SettingsToViewInterface = {
     responseName: string | null;
     timestampUtcMs: number | null;
     visualizationSettings: VisualizationSettings;
+    showDepthLine: boolean;
     rftDataAccessorStatus: RftDataAccessorStatus;
     rftObservationsStatus: RftObservationsStatus;
 };
@@ -28,6 +30,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     responseName: (get) => get(selectedResponseNameAtom),
     timestampUtcMs: (get) => get(selectedTimestampUtcMsAtom),
     visualizationSettings: (get) => get(visualizationSettingsAtom),
+    showDepthLine: (get) => get(showDepthLineSettingAtom),
     rftDataAccessorStatus: (get) => get(rftDataAccessorStatusAtom),
     rftObservationsStatus: (get) => get(rftObservationsStatusAtom),
 };
