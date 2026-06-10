@@ -60,7 +60,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             style={{ fontWeight: "inherit", height: `${cellHeightPx}px` }}
             className={resolveClassNames(
                 props.layoutClassName,
-                "border-neutral-subtle text-left align-middle whitespace-nowrap",
+                "border-neutral-subtle group/cell relative text-left align-middle whitespace-nowrap",
                 {
                     "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
@@ -87,7 +87,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             }}
         >
             {props.children}
-            <Separator orientation="vertical" layoutClassName="h-full" />
+
             {isSortable && <SortingIcon direction={currentSortDirection} />}
             {isSortable && isMultiSort && (
                 // Alway mounted to avoid layout shifts
@@ -97,6 +97,12 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                 >
                     {sortingIndex + 1}
                 </span>
+            )}
+            {sectionContext !== "body" && (
+                <Separator
+                    orientation="vertical"
+                    layoutClassName="absolute inset-y-1/3 right-0 mx-0! group-last/cell:invisible"
+                />
             )}
         </CellTag>
     );
