@@ -29,7 +29,7 @@ export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(function Ban
             ref={ref}
             className={resolveClassNames(
                 props.layoutClassName,
-                "py-md gap-x-sm flex items-center rounded border",
+                "p-sm gap-x-sm flex items-center rounded border",
                 TONE_TO_CLASSNAMES[tone],
             )}
         >
