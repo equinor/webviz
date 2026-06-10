@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, FetchStatus } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 
 import type { Options, GetDerivedVectorTableHybridData_api } from "@api";
@@ -64,6 +64,9 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         enabled: selectedEnsembleIdent ? true : false,
     });
 
+    console.log(`hybrQuery: isEnabled=${hybrid_derivedTableQuery.isEnabled}, isFetching=${hybrid_derivedTableQuery.isFetching}, status=${hybrid_derivedTableQuery.status}, fetchStatus=${hybrid_derivedTableQuery.fetchStatus}, error=${hybrid_derivedTableQuery.error}`);
+
+
     function handleHybridProgress(progressMessage: string | null) {
         if (progressMessage) {
             console.debug(`HYBRID PROGRESS: ${progressMessage}`);
@@ -77,24 +80,28 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         setHybridProgressText(null);
     }
 
-    const derivedTableHandle = hybrid_derivedTableQuery.isFetching ? null : (hybrid_derivedTableQuery.data?.table_handle ?? null);
-
+    //const derivedTableHandle = hybrid_derivedTableQuery.isFetching ? null : (hybrid_derivedTableQuery.data?.table_handle ?? null);
+    const derivedTableHandle = hybrid_derivedTableQuery.data?.table_handle ?? null;
 
     const case_uuid = selectedEnsembleIdent?.value?.getCaseUuid() ?? null;
     const ensemble_name = selectedEnsembleIdent?.value?.getEnsembleName() ?? null;
-    console.log(`VIEW: case_uuid: ${case_uuid}, ensemble_name: ${ensemble_name}, derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
+    //console.log(`VIEW: case_uuid: ${case_uuid}, ensemble_name: ${ensemble_name}, derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
+    console.log(`VIEW: derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
 
+    const calcQueryOptions = getCalcSomethingOnDerivedTableOptions({
+        query: {
+            case_uuid: case_uuid ?? "DUMMY",
+            ensemble_name: ensemble_name ?? "DUMMY",
+            derived_table_handle: derivedTableHandle ?? "DUMMY",
+            calculation_params: calculationParamString ?? "DUMMY",
+        },
+    });
     const calcQuery = useQuery({
-        ...getCalcSomethingOnDerivedTableOptions({
-            query: {
-                case_uuid: case_uuid ?? "DUMMY",
-                ensemble_name: ensemble_name ?? "DUMMY",
-                derived_table_handle: derivedTableHandle ?? "DUMMY",
-                calculation_params: calculationParamString ?? "DUMMY",
-            },
-        }),
+        ...calcQueryOptions,
         enabled: Boolean(selectedEnsembleIdent && derivedTableHandle && calculationParamString),
     });
+
+    console.log(`calcQuery: isEnabled=${calcQuery.isEnabled}, isFetching=${calcQuery.isFetching}, status=${calcQuery.status}, fetchStatus=${calcQuery.fetchStatus}, error=${calcQuery.error}`);
 
     const isLoadingCalc = calcQuery.isFetching;
 
@@ -110,21 +117,48 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
 
     const calcDataStr = calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A";
 
+    const queryClient = useQueryClient();
 
-    useEffect(
-        function refetchDerivedTableOn410() {
-            if (calcQuery.error && isAxiosError(calcQuery.error)) {
-                const statusCode = calcQuery.error.response?.status;
-                if (statusCode === 410) {
-                    console.debug("Calc query returned 410, refetching derived table...");
-                    hybrid_derivedTableQuery.refetch();
-                }
-            }
-        },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [calcQuery.error],
-    );
+    // It seems that also error responses are cached by TanStack Query!!
+    // We may have to add a check to see if the calcQuery is actually enabled here
+    if (calcQuery.error && isAxiosError(calcQuery.error)) {
+        console.log("calcQuery - HAS ERROR");
+        const statusCode = calcQuery.error.response?.status;
+        if (statusCode === 410) {
+            console.log("Calc query returned 410, refetching derived table ----------------------");
 
+            // Notes:
+            // * queryClient.invalidateQueries does not work here since it still lets TanStack Query return old/stale data
+            // * queryClient.setQueryData with undefined does not work, it is a no-op (could set to null)
+
+            // The fetchStatus: "idle" should help avoid race conditions
+            queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
+
+            // Take a look here:
+            // https://tanstack.com/query/latest/docs/reference/QueryClient#queryclientresetqueries
+            // https://tanstack.com/query/latest/docs/framework/react/guides/filters#query-filters
+
+            // Do we need to reset the calcQuery also??
+            //queryClient.resetQueries({ queryKey: calcQueryOptions.queryKey, exact: true });
+        }
+    }
+
+    // useEffect(
+    //     function refetchDerivedTableOn410() {
+    //         if (calcQuery.error && isAxiosError(calcQuery.error)) {
+    //             const statusCode = calcQuery.error.response?.status;
+    //             if (statusCode === 410) {
+    //                 console.log("Calc query returned 410, refetching derived table...");
+    //                 queryClient.setQueryData(hybrid_derivedTableQueryKey, undefined);
+    //                 queryClient.setQueryData(calcQueryOptions.queryKey, undefined);
+    //                 queryClient.invalidateQueries({ queryKey: hybrid_derivedTableQueryKey, exact: true });
+    //                 queryClient.invalidateQueries({ queryKey: calcQueryOptions.queryKey, exact: true });
+    //             }
+    //         }
+    //     },
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    //     [calcQuery.error],
+    // );
 
     useEffect(
         function propagateChangesToDisplayableData() {
@@ -139,7 +173,16 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                 settings_calcDataStr: calcDataStr,
             });
         },
-        [selectedEnsembleIdent, selectedVectors, isLoadingDerivedTableHandle, hybridProgressText, isLoadingCalc, calcStatusStr, calcDataStr, setViewDisplayableData],
+        [
+            selectedEnsembleIdent,
+            selectedVectors,
+            isLoadingDerivedTableHandle,
+            hybridProgressText,
+            isLoadingCalc,
+            calcStatusStr,
+            calcDataStr,
+            setViewDisplayableData,
+        ],
     );
 
     useEffect(
@@ -190,7 +233,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                 <Label text="Vectors:">
                     <Select
                         options={vectorNameOptions}
-                        size={20}
+                        size={10}
                         multiple={true}
                         value={selectedVectors}
                         onChange={handleVectorSelectionChange}
@@ -216,7 +259,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                 <Label text="Calculation Parameters:">
                     <Input
                         value={calculationParamString}
-                        onChange={(e) => setCalculationParamString(e.target.value as string ?? "")}
+                        onChange={(e) => setCalculationParamString((e.target.value as string) ?? "")}
                     />
                 </Label>
             </div>
