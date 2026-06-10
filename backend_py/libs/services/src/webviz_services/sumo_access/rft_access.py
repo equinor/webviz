@@ -1,10 +1,10 @@
 import logging
-from datetime import datetime
 from typing import List, Optional, Sequence, cast
 
 import pyarrow as pa
 import pyarrow.compute as pc
 import polars as pl
+from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_core_utils.perf_metrics import PerfMetrics
@@ -61,25 +61,19 @@ class RftAccess:
         available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
-        table_loader.require_content_type("rft")
+        table_loader.require_standard_result(StandardResultName.rft)
         table_loader.require_table_name(table_names[0])
         table = await table_loader.get_aggregated_multiple_columns_async(available_response_names)
-        
-        pl_table: pl.DataFrame = pl.from_arrow(table) 
 
         timer.record_lap("load_aggregated_arrow_table")
 
         rft_well_infos: list[RftWellInfo] = []
         # ! We assume that list never has None
-        # well_names = cast(list[str], table["WELL"].unique().to_numpy().tolist())
+        well_names = cast(list[str], table["WELL"].unique().to_numpy().tolist())
 
-        well_names = pl_table["WELL"].unique().to_list()
         for well_name in well_names:
-            # well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
-            well_table = pl_table.filter(pl.col("WELL") == well_name).select("DATE").unique()
-            # timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
-            date_list = well_table["DATE"].to_list()
-            timestamps_utc_ms = sorted([int(dt.timestamp() * 1000) for dt in date_list])
+            well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
+            timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
 
             rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 
@@ -99,7 +93,7 @@ class RftAccess:
         column_names = [response_name, "DEPTH"]
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._ensemble_name)
-        table_loader.require_content_type("rft")
+        table_loader.require_standard_result(StandardResultName.rft)
 
         table = await table_loader.get_aggregated_multiple_columns_async(column_names)
 
