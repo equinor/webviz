@@ -100,7 +100,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
             title={
-                <div className="gap-horizontal-2xs relative flex min-w-0 items-center">
+                <div className="gap-x-2xs relative flex min-w-0 items-center">
                     {color && <ColorSelect onChange={handleColorChange} value={color} size="small" variant="ghost" />}
                     <div className="min-w-0 grow">
                         <EditName item={props.group} />
@@ -119,7 +119,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                 sharedSettingsDelegate ? (
                     <div className="relative">
                         <ErrorOverlay itemDelegate={props.group.getItemDelegate()} isExpanded={isExpanded} />
-                        <div className="gap-vertical-2xs border-neutral-subtle bg-canvas! text-body-xs grid grid-cols-[auto_1fr] items-center border">
+                        <div className="gap-y-2xs border-neutral-subtle bg-canvas! text-body-xs grid grid-cols-[auto_1fr] items-center border">
                             {makeSettings(Object.values(props.group.getWrappedSettings()))}
                         </div>
                     </div>

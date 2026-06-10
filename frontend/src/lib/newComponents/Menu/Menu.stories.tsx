@@ -66,7 +66,7 @@ export const Default: Story = {
 
 export const Sizes: Story = {
     render: ({ side, align, ...rootArgs }) => (
-        <div className="gap-horizontal-sm flex items-center">
+        <div className="gap-x-sm flex items-center">
             <Menu.Root {...rootArgs}>
                 <Menu.Trigger>
                     <Button size="small">

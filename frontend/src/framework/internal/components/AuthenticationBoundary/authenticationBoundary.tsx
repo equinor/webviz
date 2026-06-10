@@ -23,7 +23,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
     let content: React.ReactNode = null;
     if (authState === AuthState.NotLoggedIn) {
         content = (
-            <div className="gap-vertical-xl flex w-1/2 flex-col items-center">
+            <div className="gap-y-xl flex w-1/2 flex-col items-center">
                 <img src={FmuLogo} alt="FMU Analysis logo" className="h-32 w-32" />
                 <Heading as="h1">FMU Analysis</Heading>
                 <DataSharingLabel />
@@ -47,7 +47,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
         <div className="relative">
             <div
                 className={resolveClassNames(
-                    "gap-vertical-lg absolute inset-0 z-1 flex h-screen w-screen flex-col items-center justify-center transition-opacity duration-1000 ease-in-out",
+                    "gap-y-lg absolute inset-0 z-1 flex h-screen w-screen flex-col items-center justify-center transition-opacity duration-1000 ease-in-out",
                     {
                         "pointer-events-none opacity-0": authState === AuthState.LoggedIn,
                         "opacity-100": authState !== AuthState.LoggedIn,

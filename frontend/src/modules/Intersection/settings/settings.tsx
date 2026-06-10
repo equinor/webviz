@@ -52,7 +52,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const selectedFieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(selectedFieldIdentifierAtom);
 
     return (
-        <div className="gap-vertical-xs px-horizontal-xs py-vertical-xs flex h-full flex-col">
+        <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
             <SettingWrapper label="Field" annotations={selectedFieldIdentifierAnnotations}>
                 <FieldDropdown
                     ensembleSet={ensembleSet}

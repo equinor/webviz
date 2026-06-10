@@ -87,7 +87,7 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                 },
             ]}
         >
-            <div className="gap-vertical-md flex w-full flex-col">
+            <div className="gap-y-md flex w-full flex-col">
                 <Dialog.Description>
                     We found one or more previous sessions with unsaved changes in your local browser. You can either
                     delete them or open one of the sessions below to recover your work.
@@ -152,7 +152,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
 
         if (backendSession.isLoading) {
             return (
-                <span className="text-neutral-subtle gap-horizontal-xs flex items-center italic">
+                <span className="text-neutral-subtle gap-x-xs flex items-center italic">
                     <CircularProgress size={16} /> Checking...
                 </span>
             );
@@ -161,7 +161,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
         if (backendSession.isError) {
             return (
                 <Tooltip title="An error occurred while checking the session. No data could be loaded from the backend, but you can still open the session and recover unsaved work.">
-                    <span className="text-warning-subtle gap-horizontal-xs flex items-center italic">
+                    <span className="text-warning-subtle gap-x-xs flex items-center italic">
                         <Warning fontSize="inherit" /> Error checking session
                     </span>
                 </Tooltip>
@@ -169,7 +169,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
         }
 
         return (
-            <span className="gap-horizontal-xs flex items-center">
+            <span className="gap-x-xs flex items-center">
                 {backendSession.data ? formatDate(new Date(backendSession.data.updatedAt)) : "Never saved"}
             </span>
         );
@@ -184,7 +184,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
             <Table.Cell>{formatDate(session.metadata.lastModifiedMs)}</Table.Cell>
             <Table.Cell>{makeSessionSaveStateMessage()}</Table.Cell>
             <Table.Cell noPadding>
-                <div className="px-horizontal-xs gap-horizontal-xs flex justify-end">
+                <div className="px-xs gap-x-xs flex justify-end">
                     <Tooltip
                         title={
                             sessionId

@@ -60,11 +60,11 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                         layoutClassName,
                         "form-element",
                         "w-full",
-                        "pl-horizontal-sm",
-                        "gap-vertical-xs flex items-center",
+                        "pl-sm",
+                        "gap-y-xs flex items-center",
                         "text-neutral-strong",
                         SELECTABLE_SIZES_CLASSNAMES[size],
-                        size === "small" ? "pr-horizontal-3xs" : "pr-horizontal-sm",
+                        size === "small" ? "pr-3xs" : "pr-sm",
                     )}
                 >
                     {makeStartAdornment(state)}

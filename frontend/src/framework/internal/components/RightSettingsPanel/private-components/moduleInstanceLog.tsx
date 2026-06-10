@@ -138,7 +138,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
                 onClose={handleClose}
                 actions={makeActions()}
             >
-                <div className="px-horizontal-xs py-vertical-xs gap-vertical-4xs text-body-sm flex h-full flex-col overflow-y-auto">
+                <div className="px-xs py-xs gap-y-4xs text-body-sm flex h-full flex-col overflow-y-auto">
                     {moduleInstance ? (
                         <LogList
                             moduleInstance={moduleInstance}
@@ -196,7 +196,7 @@ function LogList(props: LogListProps): React.ReactNode {
                 return (
                     <React.Fragment key={entry.id}>
                         {showDatetime && (
-                            <div className="border-b-neutral px-horizontal-xs py-vertical-4xs text-neutral-subtle text-body-xs sticky border-b text-right">
+                            <div className="border-b-neutral px-xs py-4xs text-neutral-subtle text-body-xs sticky border-b text-right">
                                 {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}
                             </div>
                         )}
@@ -309,7 +309,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "py-vertical-3xs px-horizontal-2xs group/log-item gap-horizontal-2xs hover:bg-accent flex items-center",
+                "py-3xs px-2xs group/log-item gap-x-2xs hover:bg-accent flex items-center",
                 {
                     "cursor-help": Boolean(detailsObject),
                 },

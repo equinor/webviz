@@ -10,7 +10,7 @@ export function Content(props: ContentProps) {
         <div
             className={resolveClassNames(
                 props.layoutClassName,
-                "group-data-[state=open]/scrollareaGroup:animate-slideDown group-data-[state=closed]/scrollareaGroup:animate-slideUp px-horizontal-xs py-vertical-xs",
+                "group-data-[state=open]/scrollareaGroup:animate-slideDown group-data-[state=closed]/scrollareaGroup:animate-slideUp px-xs py-xs",
             )}
         >
             {props.children}

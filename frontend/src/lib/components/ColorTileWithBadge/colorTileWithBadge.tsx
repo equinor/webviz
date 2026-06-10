@@ -13,7 +13,7 @@ export type ColorTileWithBadgeProps = ColorTileProps & {
 
 export function ColorTileWithBadge(props: ColorTileWithBadgeProps): React.ReactNode {
     return (
-        <div className="mr-vertical-xs relative inline-flex items-center bg-inherit">
+        <div className="mr-xs relative inline-flex items-center bg-inherit">
             {/* The colored tile */}
             <ColorTile.Tile {...props} />
 

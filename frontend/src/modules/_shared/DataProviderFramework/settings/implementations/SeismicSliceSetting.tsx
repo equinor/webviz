@@ -214,8 +214,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 <>
                     <div className={resolveClassNames({ "outline-accent rounded outline-2": hasChanges })} ref={divRef}>
                         {labels.map((label, index) => (
-                            <div key={`setting-${index}`} className="gap-x-horizontal-sm flex items-center">
-                                <div className="pl-horizontal-2xs flex w-8 flex-col items-start">{label}</div>
+                            <div key={`setting-${index}`} className="gap-x-sm flex items-center">
+                                <div className="pl-2xs flex w-8 flex-col items-start">{label}</div>
                                 <div className="min-w-4">
                                     <Button
                                         title="Toggle visibility"
@@ -250,7 +250,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                             </div>
                         ))}
                     </div>
-                    <div className="mt-vertical-2xs gap-horizontal-2xs flex justify-end">
+                    <div className="mt-2xs gap-x-2xs flex justify-end">
                         <Button
                             variant="ghost"
                             tone="danger"

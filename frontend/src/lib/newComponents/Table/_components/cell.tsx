@@ -4,8 +4,8 @@ import { ArrowDownward, ArrowUpward, Square } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
-import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useTableRootContext } from "../_contexts/tableRootContext";
@@ -14,18 +14,7 @@ import { getNextSortDirection } from "../_utils";
 import { ROW_HEIGHT_PX, ROW_HEIGHT_PX_COMPACT } from "../constants";
 import { SortDirection } from "../typesAndEnums";
 
-export type TableCellProps = {
-    colKey?: string;
-    children?: React.ReactNode;
-
-    sortable?: boolean;
-
-    // Don't understand why, but these don't get included by the native type, for some reason...
-    colSpan?: number;
-    rowSpan?: number;
-    noPadding?: boolean;
-    widthInPercent?: number;
-} & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;
+import type { TableCellProps } from "./types";
 
 function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableCellElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
@@ -40,20 +29,25 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
     const isSortable = (props.sortable ?? rootContext.sortable) && sectionContext === "head";
 
     let currentSortDirection = SortDirection.NONE;
-    if (isSortable && props.colKey && rootContext.currentSort && props.colKey in rootContext.currentSort) {
-        currentSortDirection = rootContext.currentSort[props.colKey];
+    let sortingIndex = -1;
+    if (isSortable && props.colKey && rootContext.columnSort) {
+        const idx = rootContext.columnSort.findIndex(({ columnKey }) => columnKey === props.colKey);
+
+        currentSortDirection = rootContext.columnSort[idx]?.direction ?? SortDirection.NONE;
+        sortingIndex = rootContext.columnSort.length > 1 ? idx : -1;
     }
 
+    const isMultiSort = rootContext.sortable === "multiple";
     const isSorted = currentSortDirection !== SortDirection.NONE;
     const percentWidth = props.widthInPercent ? `${props.widthInPercent}%` : undefined;
 
     const cellHeightPx = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
 
-    function toggleSort() {
+    function toggleSort(additive: boolean) {
         if (!isSortable) return;
         if (!props.colKey) return console.warn("Missing column identifier key");
 
-        rootContext.onColumnSort?.(props.colKey, getNextSortDirection(currentSortDirection));
+        rootContext.onColumnSort(props.colKey, getNextSortDirection(currentSortDirection), additive);
     }
 
     return (
@@ -71,15 +65,15 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                     "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
                     "border-b-2": sectionContext !== "body",
-                    "px-horizontal-sm": !props.noPadding,
-                    "py-vertical-sm": !rootContext.compact && !props.noPadding,
-                    "py-vertical-2xs": rootContext.compact && !props.noPadding,
+                    "px-sm": !props.noPadding,
+                    "py-sm": !rootContext.compact && !props.noPadding,
+                    "py-2xs": rootContext.compact && !props.noPadding,
                     "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
                     "border-accent! text-accent-subtle": isSorted,
                 },
             )}
             onClick={(evt) => {
-                toggleSort();
+                toggleSort(evt.shiftKey);
                 props.onClick?.(evt);
             }}
             onKeyDown={(evt) => {
@@ -88,12 +82,22 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
 
                 evt.preventDefault();
 
-                toggleSort();
+                toggleSort(evt.shiftKey);
                 props.onKeyDown?.(evt);
             }}
         >
             {props.children}
+            <Separator orientation="vertical" layoutClassName="h-full" />
             {isSortable && <SortingIcon direction={currentSortDirection} />}
+            {isSortable && isMultiSort && (
+                // Alway mounted to avoid layout shifts
+                <span
+                    data-single-sort={sortingIndex === -1 ? "" : undefined}
+                    className="bg-accent-strong text-accent-strong-on-emphasis text-body-xs z-elevated px-horizontal-2xs -my-horizontal-2xs box-border inline-flex aspect-square h-4 w-fit min-w-4 items-center justify-center rounded leading-none whitespace-nowrap data-single-sort:invisible"
+                >
+                    {sortingIndex + 1}
+                </span>
+            )}
         </CellTag>
     );
 }
@@ -104,10 +108,10 @@ function SortingIcon(props: { direction: SortDirection }): React.ReactNode {
     switch (props.direction) {
         case SortDirection.NONE:
             // ! We add an invisible icon to keep spacing consistent as you toggle
-            return <Square fontSize="inherit" className="ml-vertical-4xs invisible" />;
+            return <Square fontSize="inherit" className="ml-4xs invisible" />;
         case SortDirection.ASC:
-            return <ArrowUpward fontSize="inherit" className="ml-vertical-4xs" />;
+            return <ArrowUpward fontSize="inherit" className="ml-4xs" />;
         case SortDirection.DESC:
-            return <ArrowDownward fontSize="inherit" className="ml-vertical-4xs" />;
+            return <ArrowDownward fontSize="inherit" className="ml-4xs" />;
     }
 }

@@ -114,7 +114,7 @@ export class Tag extends React.Component<TagProps> {
                 <span
                     key={"TagMatchesCounter_" + index}
                     className={resolveClassNames(
-                        "mr-horizontal-2xs px-horizontal-3xs text-accent-strong-on-emphasis relative flex h-5 min-w-5 items-center justify-center rounded-full text-center text-xs leading-none outline-hidden",
+                        "mr-2xs px-3xs text-accent-strong-on-emphasis relative flex h-5 min-w-5 items-center justify-center rounded-full text-center text-xs leading-none outline-hidden",
                         {
                             "bg-info-strong text-info-strong-on-emphasis":
                                 matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
@@ -150,7 +150,7 @@ export class Tag extends React.Component<TagProps> {
             return (
                 <div
                     key={"TagBrowseButton_" + index}
-                    className="text-body-xs mr-horizontal-3xs border-r-neutral flex h-full max-h-6 w-4 flex-col border-r"
+                    className="text-body-xs mr-3xs border-r-neutral flex h-full max-h-6 w-4 flex-col border-r"
                 >
                     <button
                         key={"TagPreviousButton_" + index}
@@ -388,17 +388,17 @@ export class Tag extends React.Component<TagProps> {
                 {this.createBrowseButtons(treeNodeSelection, index)}
                 <div key={"InnerTag_" + index} className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}>
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
-                        <Error fontSize="small" className="mr-horizontal-3xs" />
+                        <Error fontSize="small" className="mr-3xs" />
                     )}
                     {this.addAdditionalClasses(!valid) && valid && isDuplicate && (
-                        <Warning fontSize="small" className="mr-horizontal-3xs" />
+                        <Warning fontSize="small" className="mr-3xs" />
                     )}
                     {this.addAdditionalClasses(!valid) &&
                         (valid || currentTag) &&
                         !isDuplicate &&
-                        treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-horizontal-3xs" />}
+                        treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-3xs" />}
                     {(valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1 && (
-                        <span className="mr-horizontal-3xs flex h-4 w-4 shrink-0 items-center justify-center">
+                        <span className="mr-3xs flex h-4 w-4 shrink-0 items-center justify-center">
                             {treeNodeSelection.icons()[0]}
                         </span>
                     )}

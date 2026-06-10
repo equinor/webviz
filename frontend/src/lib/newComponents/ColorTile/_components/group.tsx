@@ -19,7 +19,7 @@ export const Group: React.FC<GroupProps> = (props) => {
     return (
         <div
             className={resolveClassNames(layoutClassName, "flex", {
-                "gap-horizontal-xs": gap,
+                "gap-x-xs": gap,
                 "border-neutral rounded": !gap,
             })}
         >

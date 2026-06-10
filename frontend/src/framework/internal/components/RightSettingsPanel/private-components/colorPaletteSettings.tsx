@@ -62,7 +62,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
         >
             <Collapsible.ScrollArea>
                 <Collapsible.Group title="Categorical colors" defaultOpen>
-                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-horizontal-xs gap-y-vertical-xs">
+                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-xs gap-y-xs">
                         <FieldCompositions.Default label="Palette" gridLayout>
                             <ColorPaletteSelector
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}
@@ -76,7 +76,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                     </Collapsible.Content>
                 </Collapsible.Group>
                 <Collapsible.Group title="Sequential colors" defaultOpen>
-                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-horizontal-xs gap-y-vertical-xs">
+                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-xs gap-y-xs">
                         <FieldCompositions.Default label="Gradient" gridLayout>
                             <ColorPaletteSelector
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]}
@@ -88,7 +88,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                             />
                         </FieldCompositions.Default>
                         <FieldCompositions.Default label="Discrete steps" gridLayout>
-                            <div className="gap-horizontal-xs flex w-full items-center">
+                            <div className="gap-x-xs flex w-full items-center">
                                 <span className="min-w-40 grow">
                                     <ColorGradient
                                         colorPalette={
@@ -117,7 +117,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                     </Collapsible.Content>
                 </Collapsible.Group>
                 <Collapsible.Group title="Diverging colors" defaultOpen>
-                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-horizontal-2xs gap-y-vertical-xs">
+                    <Collapsible.Content layoutClassName="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2xs gap-y-xs">
                         <FieldCompositions.Default label="Gradient" gridLayout>
                             <ColorPaletteSelector
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]}
@@ -129,7 +129,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                             />
                         </FieldCompositions.Default>
                         <FieldCompositions.Default label="Discrete steps" gridLayout>
-                            <div className="gap-horizontal-xs flex w-full items-center">
+                            <div className="gap-x-xs flex w-full items-center">
                                 <span className="min-w-40 grow">
                                     <ColorGradient
                                         colorPalette={

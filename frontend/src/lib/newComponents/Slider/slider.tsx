@@ -436,7 +436,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         <SliderBase.Root
             {...baseProps}
             className={resolveClassNames(
-                "gap-horizontal-2xs px-horizontal-2xs flex items-center data-disabled:cursor-not-allowed",
+                "gap-x-2xs px-2xs flex items-center data-disabled:cursor-not-allowed",
                 props.layoutClassName,
             )}
             ref={wrapperRef}
@@ -467,7 +467,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                     <SliderBase.Control
                         ref={ref}
                         className={resolveClassNames(
-                            "group py-horizontal-xs flex w-full touch-none items-center select-none",
+                            "group py-xs flex w-full touch-none items-center select-none",
                             {
                                 "pl-(--lock-gutter-size)": showMinLock,
                                 "pr-(--lock-gutter-size)": showMaxLock,
@@ -677,7 +677,7 @@ function Thumb(props: {
                 <Tooltip.Positioner sideOffset={5}>
                     <Tooltip.Popup
                         data-slider-disabled={props.disabled ? "" : undefined}
-                        className="bg-accent-strong data-slider-disabled:bg-disabled px-horizontal-2xs py-vertical-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
+                        className="bg-accent-strong data-slider-disabled:bg-disabled px-2xs py-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
                         render={
                             <Typography
                                 as="div"

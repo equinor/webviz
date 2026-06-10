@@ -38,7 +38,7 @@ export const StatusWrapper: React.FC<StatusWrapperProps> = (props) => {
                 </div>
             )}
             {activeMessage && (
-                <div className="z-overlay bg-surface/80 px-horizontal-xs py-vertical-xs absolute right-0 left-0 flex h-full w-full items-center justify-center text-center backdrop-blur-xs">
+                <div className="z-overlay bg-surface/80 px-xs py-xs absolute right-0 left-0 flex h-full w-full items-center justify-center text-center backdrop-blur-xs">
                     {activeMessage}
                 </div>
             )}

@@ -60,9 +60,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 ? "Initializing..."
                 : "Resetting...";
         return (
-            <div className="mx-horizontal-2xs my-vertical-2xs flex h-full w-full flex-col items-center justify-center">
+            <div className="mx-2xs my-2xs flex h-full w-full flex-col items-center justify-center">
                 <CircularProgress />
-                <div className="mt-vertical-xs">{text}</div>
+                <div className="mt-xs">{text}</div>
             </div>
         );
     }
@@ -72,7 +72,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="mx-horizontal-2xs my-vertical-2xs text-danger-subtle"
+                    className="mx-2xs my-2xs text-danger-subtle"
                     style={{
                         display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
@@ -86,8 +86,8 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     function makeContent() {
         if (moduleInstanceSettingsStateInvalid) {
             return (
-                <div className="gap-horizontal-xs flex h-full w-full flex-col items-center justify-center">
-                    <div className="m-vertical-2xs text-danger-subtle text-center">
+                <div className="gap-x-xs flex h-full w-full flex-col items-center justify-center">
+                    <div className="my-2xs text-danger-subtle text-center">
                         The persisted settings for this module&apos;s settings are invalid and could not be applied.
                         They have most likely been outdated by a module update. You can reset the module to its default
                         values to continue using it.

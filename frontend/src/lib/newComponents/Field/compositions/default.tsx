@@ -51,7 +51,7 @@ function DefaultComponent(props: DefaultProps, ref: React.ForwardedRef<HTMLDivEl
                 )}
 
                 {props.info ? (
-                    <div className="gap-horizontal-2xs flex items-center">
+                    <div className="gap-x-2xs flex items-center">
                         {props.children}
                         <Field.Info>{props.info}</Field.Info>
                     </div>
@@ -68,7 +68,7 @@ function DefaultComponent(props: DefaultProps, ref: React.ForwardedRef<HTMLDivEl
     return (
         <Field.Root ref={ref} {...baseProps}>
             {props.info ? (
-                <div className="gap-horizontal-2xs flex items-center">
+                <div className="gap-x-2xs flex items-center">
                     {makeLabel()}
 
                     <Field.Info>{props.info}</Field.Info>

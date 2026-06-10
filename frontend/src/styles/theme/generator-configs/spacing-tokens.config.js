@@ -16,37 +16,41 @@
  */
 const semanticSpacingTokens = {
     // Vertical spacing scale (derived from EDS)
-    "vertical-4xs": { negative: true, value: "var(--eds-spacing-vertical-4xs)", groups: ["semantic-spacing", "position"] },
-    "vertical-3xs": { negative: true, value: "var(--eds-spacing-vertical-3xs)", groups: ["semantic-spacing", "position"] },
-    "vertical-2xs": { negative: true, value: "var(--eds-spacing-vertical-2xs)", groups: ["semantic-spacing", "position"] },
-    "vertical-xs": { negative: true, value: "var(--eds-spacing-vertical-xs)", groups: ["semantic-spacing", "position"] },
-    "vertical-sm": { negative: true, value: "var(--eds-spacing-vertical-sm)", groups: ["semantic-spacing", "position"] },
-    "vertical-md": { negative: true, value: "var(--eds-spacing-vertical-md)", groups: ["semantic-spacing", "position"] },
-    "vertical-lg": { negative: true, value: "var(--eds-spacing-vertical-lg)", groups: ["semantic-spacing", "position"] },
-    "vertical-xl": { negative: true, value: "var(--eds-spacing-vertical-xl)", groups: ["semantic-spacing", "position"] },
-    "vertical-2xl": { negative: true, value: "var(--eds-spacing-vertical-2xl)", groups: ["semantic-spacing", "position"] },
-    "vertical-3xl": { negative: true, value: "var(--eds-spacing-vertical-3xl)", groups: ["semantic-spacing", "position"] },
+    "vertical-4xs": { axis: "y", className: "4xs", negative: true, value: "var(--eds-spacing-vertical-4xs)", groups: ["semantic-spacing", "position"] },
+    "vertical-3xs": { axis: "y", className: "3xs", negative: true, value: "var(--eds-spacing-vertical-3xs)", groups: ["semantic-spacing", "position"] },
+    "vertical-2xs": { axis: "y", className: "2xs", negative: true, value: "var(--eds-spacing-vertical-2xs)", groups: ["semantic-spacing", "position"] },
+    "vertical-xs":  { axis: "y", className: "xs",  negative: true, value: "var(--eds-spacing-vertical-xs)",  groups: ["semantic-spacing", "position"] },
+    "vertical-sm":  { axis: "y", className: "sm",  negative: true, value: "var(--eds-spacing-vertical-sm)",  groups: ["semantic-spacing", "position"] },
+    "vertical-md":  { axis: "y", className: "md",  negative: true, value: "var(--eds-spacing-vertical-md)",  groups: ["semantic-spacing", "position"] },
+    "vertical-lg":  { axis: "y", className: "lg",  negative: true, value: "var(--eds-spacing-vertical-lg)",  groups: ["semantic-spacing", "position"] },
+    "vertical-xl":  { axis: "y", className: "xl",  negative: true, value: "var(--eds-spacing-vertical-xl)",  groups: ["semantic-spacing", "position"] },
+    "vertical-2xl": { axis: "y", className: "2xl", negative: true, value: "var(--eds-spacing-vertical-2xl)", groups: ["semantic-spacing", "position"] },
+    "vertical-3xl": { axis: "y", className: "3xl", negative: true, value: "var(--eds-spacing-vertical-3xl)", groups: ["semantic-spacing", "position"] },
 
     // Horizontal spacing scale (derived from EDS)
-    "horizontal-4xs": { negative: true, value: "var(--eds-spacing-horizontal-4xs)", groups: ["semantic-spacing", "position"] },
-    "horizontal-3xs": { negative: true, value: "var(--eds-spacing-horizontal-3xs)", groups: ["semantic-spacing", "position"] },
-    "horizontal-2xs": { negative: true, value: "var(--eds-spacing-horizontal-2xs)", groups: ["semantic-spacing", "position"] },
-    "horizontal-xs": { negative: true, value: "var(--eds-spacing-horizontal-xs)", groups: ["semantic-spacing", "position"] },
-    "horizontal-sm": { negative: true, value: "var(--eds-spacing-horizontal-sm)", groups: ["semantic-spacing", "position"] },
-    "horizontal-md": { negative: true, value: "var(--eds-spacing-horizontal-md)", groups: ["semantic-spacing", "position"] },
-    "horizontal-lg": { negative: true, value: "var(--eds-spacing-horizontal-lg)", groups: ["semantic-spacing", "position"] },
-    "horizontal-xl": { negative: true, value: "var(--eds-spacing-horizontal-xl)", groups: ["semantic-spacing", "position"] },
-    "horizontal-2xl": { negative: true, value: "var(--eds-spacing-horizontal-2xl)", groups: ["semantic-spacing", "position"] },
-    "horizontal-3xl": { negative: true, value: "var(--eds-spacing-horizontal-3xl)", groups: ["semantic-spacing", "position"] },
+    "horizontal-4xs": { axis: "x", className: "4xs", negative: true, value: "var(--eds-spacing-horizontal-4xs)", groups: ["semantic-spacing", "position"] },
+    "horizontal-3xs": { axis: "x", className: "3xs", negative: true, value: "var(--eds-spacing-horizontal-3xs)", groups: ["semantic-spacing", "position"] },
+    "horizontal-2xs": { axis: "x", className: "2xs", negative: true, value: "var(--eds-spacing-horizontal-2xs)", groups: ["semantic-spacing", "position"] },
+    "horizontal-xs":  { axis: "x", className: "xs",  negative: true, value: "var(--eds-spacing-horizontal-xs)",  groups: ["semantic-spacing", "position"] },
+    "horizontal-sm":  { axis: "x", className: "sm",  negative: true, value: "var(--eds-spacing-horizontal-sm)",  groups: ["semantic-spacing", "position"] },
+    "horizontal-md":  { axis: "x", className: "md",  negative: true, value: "var(--eds-spacing-horizontal-md)",  groups: ["semantic-spacing", "position"] },
+    "horizontal-lg":  { axis: "x", className: "lg",  negative: true, value: "var(--eds-spacing-horizontal-lg)",  groups: ["semantic-spacing", "position"] },
+    "horizontal-xl":  { axis: "x", className: "xl",  negative: true, value: "var(--eds-spacing-horizontal-xl)",  groups: ["semantic-spacing", "position"] },
+    "horizontal-2xl": { axis: "x", className: "2xl", negative: true, value: "var(--eds-spacing-horizontal-2xl)", groups: ["semantic-spacing", "position"] },
+    "horizontal-3xl": { axis: "x", className: "3xl", negative: true, value: "var(--eds-spacing-horizontal-3xl)", groups: ["semantic-spacing", "position"] },
 
     // Selectable spacing (dynamic — responds to density overrides)
     "selectable-x": {
+        axis: "x",
+        className: "selectable",
         value: "var(--eds-selectable-space-horizontal)",
         dynamic: true,
         negative: true,
         groups: ["semantic-spacing", "dimension", "position"],
     },
     "selectable-y": {
+        axis: "y",
+        className: "selectable",
         value: "var(--eds-selectable-space-vertical)",
         dynamic: true,
         negative: true,
@@ -149,52 +153,74 @@ export const densityOverrides = {
 
 /**
  * CSS utility prefixes to generate for every spacing token.
- * Each entry maps a Tailwind-style prefix to its CSS property.
  *
- * @type {Record<string, string>}
+ * Prefix entry types:
+ *   - { property, axis }: axis-specific. Only tokens whose `axis` matches generate a
+ *     utility. Uses `token.className` as the class suffix.
+ *   - { type: "combined", inlineProperty, blockProperty, shorthandProperty, negative }:
+ *     for tokens with a matching x/y pair (same `className`), generates a two-property
+ *     utility: `p-xs { padding-inline: …horiz-xs; padding-block: …vert-xs; }`
+ *     for axis-agnostic tokens, generates a single shorthand: `p-0 { padding: 0; }`
+ *
+ * @type {Record<string, Record<string, string | object>>}
  */
 export const propertyGroups = {
     "semantic-spacing": {
-        // Padding
-        p: "padding",
-        pt: "padding-top",
-        pr: "padding-right",
-        pb: "padding-bottom",
-        pl: "padding-left",
-        px: "padding-inline",
-        py: "padding-block",
+        // Padding (x-axis)
+        pl: { property: "padding-left",   axis: "x" },
+        pr: { property: "padding-right",  axis: "x" },
+        px: { property: "padding-inline", axis: "x" },
 
-        // Margin
-        m: "margin",
-        mt: "margin-top",
-        mr: "margin-right",
-        mb: "margin-bottom",
-        ml: "margin-left",
-        mx: "margin-inline",
-        my: "margin-block",
+        // Padding (y-axis)
+        pt: { property: "padding-top",    axis: "y" },
+        pb: { property: "padding-bottom", axis: "y" },
+        py: { property: "padding-block",  axis: "y" },
 
-        // Gap
-        gap: "gap",
-        "gap-x": "column-gap",
-        "gap-y": "row-gap",
+        // Margin (x-axis)
+        ml: { property: "margin-left",   axis: "x" },
+        mr: { property: "margin-right",  axis: "x" },
+        mx: { property: "margin-inline", axis: "x" },
+
+        // Margin (y-axis)
+        mt: { property: "margin-top",    axis: "y" },
+        mb: { property: "margin-bottom", axis: "y" },
+        my: { property: "margin-block",  axis: "y" },
+
+        // Gap (x-axis)
+        "gap-x": { property: "column-gap", axis: "x" },
+
+        // Gap (y-axis)
+        "gap-y": { property: "row-gap", axis: "y" },
+
+        // Combined: two properties from x/y token pairs; shorthand for axis-agnostic tokens
+        p:   { type: "combined", inlineProperty: "padding-inline", blockProperty: "padding-block", shorthandProperty: "padding", negative: false },
+        m:   { type: "combined", inlineProperty: "margin-inline",  blockProperty: "margin-block",  shorthandProperty: "margin",  negative: true  },
+        gap: { type: "combined", inlineProperty: "column-gap",     blockProperty: "row-gap",       shorthandProperty: "gap",     negative: false },
     },
 
     dimension: {
-        w: "width",
-        h: "height",
-        "min-w": "min-width",
-        "max-w": "max-width",
-        "min-h": "min-height",
-        "max-h": "max-height",
+        // Width properties use x-axis tokens; height properties use y-axis tokens.
+        // Axis-agnostic tokens (fractions, numeric) still generate for all prefixes.
+        w:       { property: "width",      axis: "x" },
+        "min-w": { property: "min-width",  axis: "x" },
+        "max-w": { property: "max-width",  axis: "x" },
+        h:       { property: "height",     axis: "y" },
+        "min-h": { property: "min-height", axis: "y" },
+        "max-h": { property: "max-height", axis: "y" },
     },
 
     position: {
-        top: "top",
-        right: "right",
-        bottom: "bottom",
-        left: "left",
-        inset: "inset",
-        "inset-x": "inset-inline",
-        "inset-y": "inset-block",
+        // Physical axis-specific properties
+        top:    { property: "top",    axis: "y" },
+        right:  { property: "right",  axis: "x" },
+        bottom: { property: "bottom", axis: "y" },
+        left:   { property: "left",   axis: "x" },
+
+        // Logical axis-specific properties
+        "inset-x": { property: "inset-inline", axis: "x" },
+        "inset-y": { property: "inset-block",  axis: "y" },
+
+        // Combined: inset-inline + inset-block for x/y pairs; inset shorthand for axis-agnostic
+        inset: { type: "combined", inlineProperty: "inset-inline", blockProperty: "inset-block", shorthandProperty: "inset", negative: true },
     },
 };

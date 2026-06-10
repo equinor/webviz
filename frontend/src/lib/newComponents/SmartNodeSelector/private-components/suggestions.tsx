@@ -335,7 +335,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             data-use={option.nodeName}
                             data-index={i}
                             className={resolveClassNames(
-                                "Suggestions__Suggestion py-selectable-y px-selectable-x gap-vertical-xs text-body-sm box-border flex cursor-pointer items-center overflow-hidden leading-6",
+                                "Suggestions__Suggestion py-selectable px-selectable gap-y-xs text-body-sm box-border flex cursor-pointer items-center overflow-hidden leading-6",
                                 {
                                     "Suggestions__Suggestion--Selected bg-accent":
                                         i === this._currentlySelectedSuggestionIndex - this.state.fromIndex,
@@ -355,7 +355,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             title={`${option.nodeName} - ${option.metaData.description}`}
                         >
                             {option.metaData.icon !== undefined && (
-                                <span className="mr-horizontal-3xs flex h-5 w-5 flex-shrink-0 items-center justify-center text-base leading-none">
+                                <span className="mr-3xs flex h-5 w-5 flex-shrink-0 items-center justify-center text-base leading-none">
                                     {option.metaData.icon}
                                 </span>
                             )}
@@ -363,7 +363,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                         </div>
                     ))}
                     {options.length === 0 && (
-                        <div className="px-selectable-x py-selectable-y italic">No options available...</div>
+                        <div className="px-selectable py-selectable italic">No options available...</div>
                     )}
                 </>
             );

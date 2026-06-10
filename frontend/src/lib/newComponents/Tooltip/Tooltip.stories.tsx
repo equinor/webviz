@@ -26,7 +26,7 @@ export const Default: Story = {
 
 export const Positioning: Story = {
     render: () => (
-        <div className="gap-horizontal-xs grid grid-cols-4 text-center">
+        <div className="gap-x-xs grid grid-cols-4 text-center">
             <Tooltip content="Top tooltip" side="top">
                 <Button>Top</Button>
             </Tooltip>
@@ -48,7 +48,7 @@ export const Positioning: Story = {
 
 export const Delay: Story = {
     render: () => (
-        <div className="gap-horizontal-xs grid grid-cols-3 text-center">
+        <div className="gap-x-xs grid grid-cols-3 text-center">
             <Tooltip content="Tooltip with a short delay" delay="short">
                 <Button>Short</Button>
             </Tooltip>
@@ -75,7 +75,7 @@ export const TooltipProvider: Story = {
     },
     render: () => (
         <Tooltip.Provider>
-            <div className="gap-horizontal-xs grid grid-cols-3 text-center">
+            <div className="gap-x-xs grid grid-cols-3 text-center">
                 <Tooltip content="First tooltip">
                     <Button>Button 1</Button>
                 </Tooltip>

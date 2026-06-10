@@ -179,7 +179,7 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             }
 
             return (
-                <div className="gap-horizontal-2xs flex items-center">
+                <div className="gap-x-2xs flex items-center">
                     <Switch checked={enabled} onCheckedChange={handleBooleanChange} size="small" />
                     <NumberInput
                         value={value}

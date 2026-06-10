@@ -122,9 +122,9 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     }
 
     return (
-        <div className="gap-vertical-sm flex h-full min-h-0 flex-col">
-            <div className="gap-vertical-xs flex min-h-0 flex-1 flex-col">
-                <div className="gap-horizontal-sm flex shrink-0 items-center">
+        <div className="gap-y-sm flex h-full min-h-0 flex-col">
+            <div className="gap-y-xs flex min-h-0 flex-1 flex-col">
+                <div className="gap-x-sm flex shrink-0 items-center">
                     <Heading as="h6">Regular Ensembles</Heading>
                     <Button variant="contained" size="small" onClick={handleAddRegularEnsemble}>
                         <Add fontSize="inherit" />
@@ -171,9 +171,9 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             </div>
 
             {/* Delta-ensemble table */}
-            <div className="gap-vertical-xs flex min-h-0 flex-1 flex-col">
-                <div className="gap-horizontal-2xs flex shrink-0 items-center">
-                    <div className="gap-horizontal-sm flex items-center">
+            <div className="gap-y-xs flex min-h-0 flex-1 flex-col">
+                <div className="gap-x-2xs flex shrink-0 items-center">
+                    <div className="gap-x-sm flex items-center">
                         <Heading as="h6">Delta Ensembles</Heading>
                         <div className="fill-indigo-600">
                             <Popover.Root>
@@ -182,7 +182,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
                                 </Popover.Trigger>
                                 <Popover.Popup>
                                     <Popover.Content>
-                                        <div className="gap-vertical-2xs flex flex-col">
+                                        <div className="gap-y-2xs flex flex-col">
                                             Create delta ensemble:
                                             <div className="whitespace-nowrap">
                                                 <Tag label="Delta Ensemble" /> = <Tag label="Comparison Ensemble" /> -{" "}

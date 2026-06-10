@@ -14,7 +14,7 @@ export function Label(props: LabelProps) {
     return (
         <FieldBase.Label
             {...baseProps}
-            className="gap-x-selectable-x flex items-center"
+            className="gap-x-selectable flex items-center"
             render={<Typography as="label" family="body" variant="strong" size="md" tone="neutral" />}
         >
             {props.children}

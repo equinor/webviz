@@ -72,7 +72,7 @@ export function TableRow<T extends Record<string, any>>(props: TableRowProps<T>)
                 return (
                     <td
                         key={String(cellDef.columnId)}
-                        className="border-neutral-subtle p-vertical-xs truncate border whitespace-nowrap"
+                        className="border-neutral-subtle py-xs truncate border whitespace-nowrap"
                         title={cellDef.showTooltip ? cellData : undefined}
                         style={{ height: props.height, ...style }}
                     >

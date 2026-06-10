@@ -7,7 +7,7 @@
     transition: background-color 150ms;
 
     &[data-selectable-wrapper] {
-        @apply px-selectable-x py-selectable-y;
+        @apply px-selectable py-selectable;
     }
     .selectable[data-selectable-wrapper] & {
         @apply -mx-[4.8px]! -my-[6px]! p-0! focus:shadow-none! focus:outline-0;

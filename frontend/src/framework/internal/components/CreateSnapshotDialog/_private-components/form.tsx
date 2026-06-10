@@ -64,13 +64,13 @@ export function Form(props: FormProps): React.ReactNode {
     return (
         <>
             {hasChanges && (
-                <Banner tone="warning" layoutClassName="mb-vertical-2xs">
+                <Banner tone="warning" layoutClassName="mb-2xs">
                     There are unsaved changes in the current session. These changes will be included in the snapshot.
                 </Banner>
             )}
-            <form id={props.id} className="gap-horizontal-sm flex items-center" onSubmit={props.onSubmit}>
+            <form id={props.id} className="gap-x-sm flex items-center" onSubmit={props.onSubmit}>
                 <DashboardPreview height={220} width={150} layout={layout} />
-                <div className="gap-vertical-sm flex min-w-0 grow flex-col">
+                <div className="gap-y-sm flex min-w-0 grow flex-col">
                     <FieldCompositions.Default
                         label="Title"
                         indicator="(Required)"

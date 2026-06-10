@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
@@ -12,7 +13,6 @@ import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
-import { Refresh } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Combobox } from "@lib/newComponents/Combobox";
@@ -203,8 +203,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <Field.Root layoutClassName="w-full gap-vertical-3xs flex h-full min-h-0 flex-col">
-            <div className="gap-horizontal-sm flex w-full items-center">
+        <Field.Root layoutClassName="w-full gap-y-3xs flex h-full min-h-0 flex-col">
+            <div className="gap-x-sm flex w-full items-center">
                 <Field.Label indicator={`(${numberOfCases})`} itemID="">
                     Cases
                 </Field.Label>
@@ -230,7 +230,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     </Button>
                 </Tooltip>
             </div>
-            <div className="gap-horizontal-xs flex w-full flex-row">
+            <div className="gap-x-xs flex w-full flex-row">
                 <FieldCompositions.Default gridLayout={true} label="Asset">
                     <StatusWrapper
                         isPending={assetsQuery.isFetching && !assetsQuery.isRefetching}

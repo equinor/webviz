@@ -55,7 +55,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
         >
             <a
                 className={resolveClassNames(
-                    "gap-vertical-xs px-selectable-x py-selectable-y h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
+                    "gap-y-xs px-selectable py-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
                     {
                         "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
                         "hover:bg-accent-hover": !props.isDeleted,
@@ -79,7 +79,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
 
     return (
-        <div className="gap-vertical-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
+        <div className="gap-y-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
             <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
             <span className="min-w-0 flex-1 truncate">{name}</span>
         </div>
@@ -104,10 +104,10 @@ function TooltipContent(
     return (
         <div className="w-2xs text-base whitespace-normal">
             <h6>{props.title}</h6>
-            <hr className="mb-vertical-xs bg-floating h-px" />
+            <hr className="mb-xs bg-floating h-px" />
             {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-vertical-sm truncate text-sm">
+                <ul className="mt-sm truncate text-sm">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -115,7 +115,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-neutral mt-vertical-xs text-body-sm block italic">Click to open</span>
+            <span className="text-neutral mt-xs text-body-sm block italic">Click to open</span>
         </div>
     );
 }

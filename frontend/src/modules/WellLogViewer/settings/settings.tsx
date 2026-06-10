@@ -101,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     return (
         <div className="flex flex-col h-full">
             <Collapsible.Group title={`Wellbore${selectedWellboreHeader ? `: ${selectedWellboreHeader.uniqueWellboreIdentifier}` : ""}`} defaultOpen>
-                <Collapsible.Content layoutClassName="flex flex-col gap-vertical-xs">
+                <Collapsible.Content layoutClassName="flex flex-col gap-y-xs">
                 <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
                     <FieldDropdown
                         value={selectedField.value}

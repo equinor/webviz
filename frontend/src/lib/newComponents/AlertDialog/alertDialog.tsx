@@ -59,7 +59,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                             </Paragraph>
                         )}
                     />
-                    <div className="dialog__popup__child gap-horizontal-md flex items-center justify-end">
+                    <div className="dialog__popup__child gap-x-md flex items-center justify-end">
                         {secondaryActions?.map((action, index) =>
                             action.closesDialog ? (
                                 <AlertDialogBase.Close

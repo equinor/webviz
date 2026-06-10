@@ -17,9 +17,10 @@ export const Table = {
 };
 
 export type { TableBodyProps } from "./_components/body";
-export type { TableCellProps } from "./_components/cell";
 export type { TableHeadProps } from "./_components/head";
 export type { TableRootProps } from "./_components/root";
 export type { TableRowProps } from "./_components/row";
 export type { TableColumnProps } from "./_components/column";
 export type { TableFootProps } from "./_components/foot";
+
+export type { TableCellProps } from "./_components/types";

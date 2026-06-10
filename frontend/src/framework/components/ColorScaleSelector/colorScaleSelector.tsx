@@ -274,7 +274,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
     );
 
     return (
-        <div className="gap-vertical-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
+        <div className="gap-y-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
             <FieldCompositions.Default label="Gradient type" gridLayout>
                 <RadioCompositions.GroupWithLabels
                     value={colorScaleSpecification.colorScale.getGradientType()}
@@ -294,7 +294,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                 />
             </FieldCompositions.Default>
             <FieldCompositions.Default label="Discrete?" gridLayout>
-                <div className="gap-horizontal-2xs flex items-center">
+                <div className="gap-x-2xs flex items-center">
                     <Switch
                         checked={colorScaleSpecification.colorScale.getType() === ColorScaleType.Discrete}
                         onCheckedChange={toggleDiscrete}
@@ -420,7 +420,7 @@ function ColorScaleSetter(props: ColorScaleSetterProps): React.ReactNode {
                 "cursor-not-allowed opacity-50": !props.areBoundariesUserDefined,
             })}
         >
-            <div className={resolveClassNames("gap-vertical-sm flex flex-col")}>
+            <div className={resolveClassNames("gap-y-sm flex flex-col")}>
                 <ColorScalePreview
                     {...props}
                     colorPalette={props.selectedColorPalette}
@@ -636,7 +636,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     <div className="bg-neutral-strong h-1 w-full" />
                 </div>
             </div>
-            <div className="gap-horizontal-2xs flex justify-between">
+            <div className="gap-x-2xs flex justify-between">
                 <NumberInput
                     value={min}
                     onValueChange={handleMinChange}
@@ -665,7 +665,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     layoutClassName="grow"
                 />
             </div>
-            <div className="gap-horizontal-2xs flex justify-evenly">
+            <div className="gap-x-2xs flex justify-evenly">
                 <Typography size="sm" tone="neutral" variant="subtle" layoutClassName="grow text-center">
                     Min
                 </Typography>

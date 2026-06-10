@@ -284,7 +284,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     </SettingWrapper>
                     <SettingWrapper
                         label={
-                            <span className="gap-horizontal-2xs flex items-center">
+                            <span className="gap-x-2xs flex items-center">
                                 Vectors
                                 <span className="font-light">
                                     ({selectedVectorNames.length}/{50})
@@ -297,12 +297,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 : undefined
                         }
                         errorAnnotation={vectorListQueriesErrorAnnotation}
-                        contentClassName="flex flex-col gap-vertical-3xs"
+                        contentClassName="flex flex-col gap-y-3xs"
                         stacked
                         labelFor={vectorSelectorRef}
                     >
                         <>
-                            <div className="gap-y-vertical-xs gap-x-horizontal-xs flex flex-wrap">
+                            <div className="gap-y-xs gap-x-xs flex flex-wrap">
                                 <CheckboxCompositions.WithLabel
                                     label="Historical"
                                     checked={showHistorical}
@@ -344,7 +344,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Plot settings" defaultOpen>
                     <SettingWrapper label="Limit subplots by">
-                        <div className="gap-horizontal-xs flex w-full min-w-0 items-center">
+                        <div className="gap-x-xs flex w-full min-w-0 items-center">
                             <div className="w-28 shrink-0">
                                 <Combobox
                                     items={Object.values(SubplotLimitDirection).map((val: SubplotLimitDirection) => {
@@ -391,13 +391,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             <>{makeStatisticCheckboxes()}</>
                         </SettingWrapper>
                     </Hidden>
-                    <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS} keepMounted>
+                    <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}>
                         <SettingWrapper
                             label="Color realizations by parameter"
                             stacked
                             annotations={selectedParameterIdentStringAnnotations}
                         >
-                            <div className="gap-vertical-xs flex flex-col">
+                            <div className="gap-y-xs flex flex-col">
                                 <SwitchCompositions.WithLabel
                                     label="Enable"
                                     checked={colorRealizationsByParameter}

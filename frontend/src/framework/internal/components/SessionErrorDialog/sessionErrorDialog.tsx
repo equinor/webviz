@@ -86,9 +86,9 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
                     <ErrorIcon className="text-danger-subtle inline-block" fontSize="inherit" /> {title}
                 </Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body layoutClassName="flex flex-col gap-vertical-2xs">
+            <Dialog.Body layoutClassName="flex flex-col gap-y-2xs">
                 <p>{body}</p>
-                <p className="bg-canvas px-horizontal-sm py-vertical-sm overflow-x-scroll rounded font-mono text-sm whitespace-nowrap">
+                <p className="bg-canvas px-sm py-sm overflow-x-scroll rounded font-mono text-sm whitespace-nowrap">
                     <strong>{errorEventPayload?.error?.name}</strong>: {errorEventPayload?.error?.message}
                 </p>
                 <p>

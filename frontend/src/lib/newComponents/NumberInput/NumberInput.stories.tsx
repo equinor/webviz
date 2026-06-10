@@ -64,7 +64,7 @@ export const ScrubAdornment: Story = {
             defaultValue={0}
             scrubAdornment={<Percent />}
             endAdornment={
-                <span className="px-horizontal-xs py-vertical-4xs bg-accent text-body-xs block rounded">Adornment</span>
+                <span className="px-xs py-4xs bg-accent text-body-xs block rounded">Adornment</span>
             }
         />
     ),

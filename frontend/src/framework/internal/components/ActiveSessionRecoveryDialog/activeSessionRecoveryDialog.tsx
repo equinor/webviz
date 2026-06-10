@@ -69,21 +69,21 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
             <Dialog.Header>
                 <Dialog.Title>Do you want to recover your session?</Dialog.Title>
             </Dialog.Header>
-            <Dialog.Body layoutClassName="flex flex-col gap-vertical-xs">
+            <Dialog.Body layoutClassName="flex flex-col gap-y-xs">
                 We found an unsaved version of your current session in your local storage. You can either delete or
                 recover it.
-                <div className="gap-horizontal-sm flex">
+                <div className="gap-x-sm flex">
                     <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
-                    <div className="gap-vertical-xs flex flex-col">
-                        <div className="gap-vertical-3xs flex flex-col">
+                    <div className="gap-y-xs flex flex-col">
+                        <div className="gap-y-3xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Title</strong>
                             {sessionData.metadata.title}
                         </div>
-                        <div className="gap-vertical-3xs flex flex-col">
+                        <div className="gap-y-3xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Last modified</strong>
                             {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
                         </div>
-                        <div className="gap-vertical-3xs flex flex-col">
+                        <div className="gap-y-3xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Last persisted</strong>
                             {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
                         </div>

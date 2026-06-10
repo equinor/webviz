@@ -331,7 +331,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                 <>
                     <div
                         className={resolveClassNames(
-                            "gap-x-horizontal-3xs gap-y-vertical-2xs grid grid-cols-[auto_1fr] items-center",
+                            "gap-x-3xs gap-y-2xs grid grid-cols-[auto_1fr] items-center",
                             {
                                 "outline-accent-strong rounded outline-2": hasChanges,
                             },
@@ -340,8 +340,8 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                     >
                         {labels.map((label) => (
                             <React.Fragment key={`setting-${label}`}>
-                                <div className="pl-horizontal-3xs w-8">{label.toUpperCase()}</div>
-                                <div className="gap-x-horizontal-3xs flex items-center">
+                                <div className="pl-3xs w-8">{label.toUpperCase()}</div>
+                                <div className="gap-x-3xs flex items-center">
                                     <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                         <NumberInput
                                             min={valueConstraints.range[label][0]}
@@ -383,7 +383,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                 </div>
                             </React.Fragment>
                         ))}
-                        <div className="pl-horizontal-3xs row-span-2 w-8 self-center">K</div>
+                        <div className="pl-3xs row-span-2 w-8 self-center">K</div>
                         <div>
                             <RadioCompositions.GroupWithLabels
                                 value={internalValue?.["k"].type ?? "range"}
@@ -398,7 +398,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                         </div>
                         <div className="flex h-8 items-center">
                             {internalValue?.k.type !== "zone" ? (
-                                <div className="gap-x-horizontal-3xs flex w-full items-center">
+                                <div className="gap-x-3xs flex w-full items-center">
                                     <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
                                         <NumberInput
                                             min={valueConstraints.range["k"][0]}
@@ -467,7 +467,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                             )}
                         </div>
                     </div>
-                    <div className="mt-vertical-2xs flex justify-end">
+                    <div className="mt-2xs flex justify-end">
                         <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges} size="small">
                             Apply Changes
                         </Button>

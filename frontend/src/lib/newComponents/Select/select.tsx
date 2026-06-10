@@ -405,10 +405,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     return (
         <div
             ref={ref}
-            className={resolveClassNames(props.layoutClassName, "gap-vertical-xs text-body-sm flex flex-col")}
+            className={resolveClassNames(props.layoutClassName, "gap-y-xs text-body-sm flex flex-col")}
         >
             {props.showQuickSelectButtons && (
-                <div className="gap-horizontal-3xs flex items-center">
+                <div className="gap-x-3xs flex items-center">
                     <Button
                         onClick={handleSelectAll}
                         variant="ghost"
@@ -469,7 +469,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     tabIndex={props.disabled ? -1 : 0}
                 >
                     {filteredOptions.length === 0 && (
-                        <div className="px-horizontal-xs flex h-full w-full items-center justify-center select-none">
+                        <div className="px-xs flex h-full w-full items-center justify-center select-none">
                             {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}
@@ -483,7 +483,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                 <div
                                     key={String(option.value)}
                                     className={resolveClassNames(
-                                        "px-horizontal-xs py-vertical-xs group-data-disabled:text-disabled! gap-horizontal-2xs flex items-center select-none",
+                                        "px-xs py-xs group-data-disabled:text-disabled! gap-x-2xs flex items-center select-none",
                                         {
                                             "hover:bg-accent-hover": !selectedOptionValues.includes(option.value),
                                             "bg-accent-strong text-accent-strong-on-emphasis hover:bg-accent-strong-hover group-data-disabled:bg-disabled! box-border":

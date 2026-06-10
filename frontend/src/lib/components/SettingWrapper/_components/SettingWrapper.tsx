@@ -121,7 +121,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
     if (!props.label) {
         return (
             <Field.Root inline invalid={isInvalid} warning={isWarning}>
-                <div className="gap-x-horizontal-xs col-span-2 flex items-center">
+                <div className="gap-x-xs col-span-2 flex items-center">
                     <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
                         <div
                             style={{ display: "contents" }}
@@ -150,7 +150,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
     if (isStacked) {
         return (
             <Field.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
-                <div className="gap-horizontal-2xs flex w-full items-center justify-between">
+                <div className="gap-x-2xs flex w-full items-center justify-between">
                     {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
                     {props.help && (
                         <Field.Info side="right">
@@ -178,8 +178,8 @@ export function SettingWrapper(props: SettingWrapperProps) {
 
     return (
         <Field.Root inline invalid={isInvalid} warning={isWarning}>
-            <div className="gap-vertical-4xs flex flex-col justify-center">
-                <div className="gap-horizontal-2xs flex items-center">
+            <div className="gap-y-4xs flex flex-col justify-center">
+                <div className="gap-x-2xs flex items-center">
                     {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
                 </div>
                 {props.description && <Field.Description>{props.description}</Field.Description>}

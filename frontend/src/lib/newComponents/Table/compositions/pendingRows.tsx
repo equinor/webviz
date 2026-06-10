@@ -55,7 +55,7 @@ function PendingCell(): React.ReactNode {
     const animationDelay = React.useMemo(() => `${random(-1, 0, true)}s`, []);
 
     return (
-        <Table.Cell noPadding layoutClassName="h-full px-horizontal-4xs py-vertical-2xs">
+        <Table.Cell noPadding layoutClassName="h-full px-4xs py-2xs">
             <div
                 className="bg-hover bg-neutral/50 block h-full w-full animate-pulse rounded-4xl transition-opacity duration-4000"
                 style={{ animationDelay }}

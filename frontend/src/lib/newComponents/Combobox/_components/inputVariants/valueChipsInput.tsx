@@ -17,7 +17,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
     ref: React.ForwardedRef<HTMLInputElement>,
 ): React.ReactNode {
     return (
-        <ComboboxBase.Chips className="gap-x-horizontal-3xs gap-y-vertical-3xs flex w-full grow flex-wrap items-center">
+        <ComboboxBase.Chips className="gap-x-3xs gap-y-3xs flex w-full grow flex-wrap items-center">
             <ComboboxBase.Value>
                 {(value) => (
                     <>
@@ -29,14 +29,14 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                     <ComboboxBase.Chip
                                         key={key}
                                         aria-label={label}
-                                        className="gap-horizontal-3xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover data-highlighted:outline-focus not-data-highlighted:hover:outline-accent focus-within:bg-accent-hover flex items-center overflow-hidden rounded outline-2 outline-offset-1 outline-transparent"
+                                        className="gap-x-3xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover data-highlighted:outline-focus not-data-highlighted:hover:outline-accent focus-within:bg-accent-hover flex items-center overflow-hidden rounded outline-2 outline-offset-1 outline-transparent"
                                     >
                                         {props.renderItemAdornment && (
-                                            <div className="pl-horizontal-xs flex shrink-0 items-center">
+                                            <div className="pl-xs flex shrink-0 items-center">
                                                 {props.renderItemAdornment(item)}
                                             </div>
                                         )}
-                                        <span className="px-horizontal-3xs flex items-center">{label}</span>
+                                        <span className="px-3xs flex items-center">{label}</span>
                                         <ComboboxBase.ChipRemove
                                             aria-label={`Remove ${label}`}
                                             className="selectable text-body-xs py-0"

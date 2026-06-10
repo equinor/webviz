@@ -26,7 +26,7 @@ function formatStackLine(line: string): React.ReactNode {
     const path = parts[2];
 
     return (
-        <div className="ml-horizontal-sm gap-horizontal-2xs flex">
+        <div className="ml-sm gap-x-2xs flex">
             <span>{at}</span>
             <strong>{location}</strong>
             {path && (
@@ -103,7 +103,7 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
 
     return (
         <div className="flex h-full w-full flex-col">
-            <div className="px-horizontal-md py-vertical-md gap-vertical-sm bg-danger flex min-h-[55%] flex-col items-center justify-center overflow-hidden text-center">
+            <div className="px-md py-md gap-y-sm bg-danger flex min-h-[55%] flex-col items-center justify-center overflow-hidden text-center">
                 <img
                     src={crashIllustration}
                     alt="Broken module"
@@ -114,7 +114,7 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
                     {props.error.message}
                 </Paragraph>
             </div>
-            <div className="px-horizontal-md py-vertical-xs gap-vertical-sm flex h-[45%] flex-col items-center justify-center overflow-hidden text-center">
+            <div className="px-md py-xs gap-y-sm flex h-[45%] flex-col items-center justify-center overflow-hidden text-center">
                 <Paragraph
                     size="xs"
                     layoutClassName="w-full line-clamp-3"
@@ -124,7 +124,7 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
                     You can try to reset the instance to its initial state in order to start over.
                 </Paragraph>
                 <Separator orientation="horizontal" />
-                <div className="gap-horizontal-sm flex">
+                <div className="gap-x-sm flex">
                     <Button onClick={handleReload} size="small">
                         <Refresh fontSize="inherit" /> Reset to initial state
                     </Button>
@@ -148,7 +148,7 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Error Details</Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Body layoutClassName="flex flex-col gap-vertical-2xs max-h-[70vh] overflow-y-auto">
+                    <Dialog.Body layoutClassName="flex flex-col gap-y-2xs max-h-[70vh] overflow-y-auto">
                         <Heading as="h6" weight="bolder">
                             {props.moduleName} crashed with the following error:
                         </Heading>

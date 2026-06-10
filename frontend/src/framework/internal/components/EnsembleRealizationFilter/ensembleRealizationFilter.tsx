@@ -235,7 +235,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             <div className="bg-neutral flex items-center justify-center rounded-t-md">
                 <div
                     className={resolveClassNames(
-                        "group px-horizontal-2xs py-vertical-3xs gap-horizontal-2xs flex h-full min-w-0 grow items-center",
+                        "group px-2xs py-3xs gap-x-2xs flex h-full min-w-0 grow items-center",
                         {
                             "opacity-50 transition-opacity duration-100 group-hover:opacity-75":
                                 !props.isActive && props.isAnotherFilterActive,
@@ -293,7 +293,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 onClickCapture={handleBodyOnClickCapture}
             >
                 <div className="border-neutral-subtle flex flex-col gap-2 rounded-b border p-2">
-                    <div className="py-vertical-2xs px-horizontal-2xs">
+                    <div className="py-2xs px-2xs">
                         <RealizationNumberDisplay
                             selectedRealizations={props.selections.realizationNumbers}
                             availableRealizations={props.ensemble.getRealizations()}
@@ -306,7 +306,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         />
                     </div>
                     <div className={resolveClassNames({ hidden: !props.isActive })}>
-                        <div className="border-neutral-subtle px-horizontal-2xs py-vertical-2xs">
+                        <div className="border-neutral-subtle px-2xs py-2xs">
                             <Separator orientation="horizontal" />
                             <FieldCompositions.Default label="Active Filter Type">
                                 <RadioCompositions.GroupWithLabels

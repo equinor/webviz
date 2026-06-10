@@ -34,7 +34,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group
         <LayoutContext.Provider value={layout}>
             <div
                 ref={localRef}
-                className="gap-x-horizontal-md grid grid-cols-[auto_1fr_auto]"
+                className="gap-x-md grid grid-cols-[auto_1fr_auto]"
             >
                 {props.children}
             </div>

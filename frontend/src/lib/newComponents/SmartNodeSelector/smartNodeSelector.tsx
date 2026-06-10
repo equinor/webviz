@@ -1715,7 +1715,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     {...(this.props.fieldStateDataAttributes ?? {})}
                     data-disabled={disabled || undefined}
                     className={resolveClassNames(
-                        "form-element text-body-md py-vertical-xs px-horizontal-sm relative flex min-w-48 cursor-text rounded",
+                        "form-element text-body-md py-xs px-sm relative flex min-w-48 cursor-text rounded",
                         {
                             "border-0 p-0": frameless,
                             "border-danger": maxNumSelectedNodes > 0 && this.numValidSelections > maxNumSelectedNodes,
@@ -1726,8 +1726,8 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     onMouseDown={this.handleMouseDown}
                 >
                     <ul
-                        className={resolveClassNames("gap-horizontal-xs grow", {
-                            "gap-horizontal-xs inline-flex flex-wrap": !lineBreakAfterTag,
+                        className={resolveClassNames("gap-x-xs grow", {
+                            "gap-x-xs inline-flex flex-wrap": !lineBreakAfterTag,
                             "w-full": frameless,
                         })}
                         ref={this.tagFieldRef}

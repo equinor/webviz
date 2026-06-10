@@ -6,9 +6,11 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { TableRootContext, useTableRootContext } from "../_contexts/tableRootContext";
 import { useTableSectionContext } from "../_contexts/tableSectionContext";
 
+import type { TableRootProps } from "./root";
+
 export type TableRowProps = {
     selectable?: boolean;
-    sortable?: boolean;
+    sortable?: TableRootProps["sortable"];
     rowKey?: string;
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableRowElement>>;
@@ -20,7 +22,7 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
     const sectionContext = useTableSectionContext();
 
     const isSelectable = (props.selectable ?? rootContext.selectable) && sectionContext === "body";
-    const isSelected = isSelectable && rootContext.selectedRow === props.rowKey;
+    const isSelected = !!props.rowKey && isSelectable && rootContext.rowSelection.includes(props.rowKey);
 
     // TODO: Nicely allow text selection AND click select. See old table
 
@@ -40,7 +42,7 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
                 if (!isSelectable) return;
                 if (!props.rowKey) return console.warn("Missing row identifier key");
 
-                rootContext.onRowSelect?.(props.rowKey);
+                rootContext.onRowSelect(props.rowKey);
                 props?.onClick?.(evt);
             }}
         >

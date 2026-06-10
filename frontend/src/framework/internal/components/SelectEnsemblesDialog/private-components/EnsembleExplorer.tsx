@@ -181,14 +181,14 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     return (
         <>
             <Dialog.Body layoutClassName="grow min-h-0">
-                <div className="gap-vertical-sm relative flex h-full w-full flex-col">
+                <div className="gap-y-sm relative flex h-full w-full flex-col">
                     <CaseExplorer
                         queriesDisabled={props.queriesDisabled}
                         selectedEnsembles={props.selectedEnsembles}
                         onCaseSelectionChange={handleCaseSelectedChange}
                     />
                     <Separator orientation="horizontal" />
-                    <div className="gap-horizontal-sm flex w-full items-center justify-evenly">
+                    <div className="gap-x-sm flex w-full items-center justify-evenly">
                         <FieldCompositions.Default
                             label="Ensembles in case"
                             indicator={`(${ensemblesInSelectedCase.length})`}
@@ -214,7 +214,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                         </FieldCompositions.Default>
                         {props.multiSelect && (
                             <>
-                                <div className="gap-vertical-2xs flex flex-col">
+                                <div className="gap-y-2xs flex flex-col">
                                     <Button
                                         variant="contained"
                                         size="small"
@@ -228,8 +228,8 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                         </span>
                                     </Button>
                                 </div>
-                                <Field.Root layoutClassName="flex flex-col gap-vertical-2xs min-w-1/2">
-                                    <div className="gap-horizontal-xs flex w-full items-center justify-between">
+                                <Field.Root layoutClassName="flex flex-col gap-y-2xs min-w-1/2">
+                                    <div className="gap-x-xs flex w-full items-center justify-between">
                                         <Field.Label indicator={`(${props.selectedEnsembles.length})`}>
                                             My selected Ensembles
                                         </Field.Label>

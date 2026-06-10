@@ -17,7 +17,7 @@ export function PickedRealizationCounter(props: PickedRealizationCounterProps): 
     );
 
     return (
-        <Paragraph size="sm" tone="neutral" variant="subtle" layoutClassName="text-right opacity-75 mr-horizontal-3xs">
+        <Paragraph size="sm" tone="neutral" variant="subtle" layoutClassName="text-right opacity-75 mr-3xs">
             {pluralize("realization", numSelectedRealizations)} selected
         </Paragraph>
     );

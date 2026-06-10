@@ -18,7 +18,7 @@ export function ControlsInfoBox() {
     return (
         <div
             className={resolveClassNames(
-                "bg-surface/50 z-elevated px-horizontal-2xs py-vertical-2xs hover:outline-accent-strong absolute top-16 right-4 rounded hover:outline-2",
+                "bg-surface/50 z-elevated px-2xs py-2xs hover:outline-accent-strong absolute top-16 right-4 rounded hover:outline-2",
                 {
                     "w-64": expanded,
                     "w-10": !expanded,
@@ -31,9 +31,9 @@ export function ControlsInfoBox() {
             <Mouse fontSize="medium" />
             <Info fontSize="medium" />
             {expanded && (
-                <div className="mt-vertical-2xs text-body-sm">
+                <div className="mt-2xs text-body-sm">
                     <p className="font-bolder">Mouse controls:</p>
-                    <ul className="pl-horizontal-md list-disc">
+                    <ul className="pl-md list-disc">
                         {context.visualizationMode === "2D" ? <ControlsInfo2D /> : <ControlsInfo3D />}
                     </ul>
                 </div>

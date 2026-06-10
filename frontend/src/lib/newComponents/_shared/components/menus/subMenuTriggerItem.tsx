@@ -22,7 +22,7 @@ function SubMenuTriggerItemComponent<TProps extends MenuVariantItemProps>(
     return (
         <BaseComp ref={ref} {...mergedProps}>
             <span className="grow">{props.children}</span>
-            <ChevronRight fontSize="inherit" className="ml-vertical-2xs" />
+            <ChevronRight fontSize="inherit" className="ml-2xs" />
         </BaseComp>
     );
 }

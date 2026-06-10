@@ -130,7 +130,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             {props.changingLayout && (
                 <div
                     className={resolveClassNames("absolute box-border", {
-                        "px-horizontal-4xs py-vertical-4xs": !props.isMinimized,
+                        "px-4xs py-4xs": !props.isMinimized,
                     })}
                     style={{
                         width: props.width,
@@ -149,7 +149,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             <div
                 ref={ref}
                 className={resolveClassNames("absolute box-border contain-content", {
-                    "px-horizontal-4xs py-vertical-4xs": !props.isMinimized,
+                    "px-4xs py-4xs": !props.isMinimized,
                     invisible: props.changingLayout,
                 })}
                 style={{

@@ -217,7 +217,7 @@ export class SliderRangeSetting implements CustomSettingImplementation<
             );
 
             return (
-                <div className="gap-x-horizontal-2xs flex flex-row items-center" ref={divRef}>
+                <div className="gap-x-2xs flex flex-row items-center" ref={divRef}>
                     <div className={resolveClassNames("min-w-16 flex-1", { hidden: !inputVisible })}>
                         <NumberInput
                             value={localValue[0] === "min" ? min : localValue[0]}

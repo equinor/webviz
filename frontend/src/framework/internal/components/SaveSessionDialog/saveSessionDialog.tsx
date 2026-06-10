@@ -97,12 +97,12 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                     <Dialog.Title>{props.saveAsNew ? "Save session as ..." : "Save session"}</Dialog.Title>
                 </Dialog.Header>
                 <Dialog.Body>
-                    <Banner tone="warning" layoutClassName="mb-vertical-2xs">
+                    <Banner tone="warning" layoutClassName="mb-2xs">
                         Sessions are not guaranteed to persist, as underlying data or module states may change.
                     </Banner>
-                    <form id={formId} className="gap-horizontal-sm flex items-center" onSubmit={handleSave}>
+                    <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
                         <DashboardPreview height={220} width={150} layout={layout} />
-                        <div className="gap-vertical-sm flex min-w-0 grow flex-col">
+                        <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"
                                 indicator="(Required)"

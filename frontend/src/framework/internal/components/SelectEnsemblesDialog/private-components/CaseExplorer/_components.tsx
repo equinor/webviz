@@ -26,7 +26,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
                 className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
             >
-                <div className="gap-horizontal-2xs flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
+                <div className="gap-x-2xs flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
                     {props.caseName}
                     <span
                         className={resolveClassNames("text-body-xs text-neutral-subtle", {
@@ -74,7 +74,7 @@ export function AuthorCell(props: AuthorCellProps): React.ReactNode {
     const avatarSrc = useUserAvatar(`${props.author}@equinor.com`, props.author);
 
     return (
-        <div className="gap-horizontal-xs flex items-center">
+        <div className="gap-x-xs flex items-center">
             <Avatar key={props.author} size={24} userData={avatarSrc} />
             <span className="block w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={props.author}>
                 {props.author}

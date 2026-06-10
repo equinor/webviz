@@ -181,12 +181,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     return (
         <div
-            className="gap-horizontal-2xs form-element px-horizontal-xs py-vertical-xs flex w-full items-center"
+            className="gap-x-2xs form-element px-xs py-xs flex w-full items-center"
             data-disabled={props.disabled ? "" : undefined}
         >
             <ul
                 className={resolveClassNames(
-                    "gap-horizontal-3xs flex w-full flex-wrap",
+                    "gap-x-3xs flex w-full flex-wrap",
                     // Equivalent to SELECTABLE_SIZES_CLASSNAMES["small"],
                     "h-selectable-sm text-body-sm",
                 )}
@@ -205,7 +205,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                 }}
             >
                 {/* ! We place the input first, and then move it to the end with CSS. This is to allow the Field component automatically associate with it, as well as making it get focused first when tabbing into the picker. */}
-                <li className="py-vertical-4xs order-1 grow align-middle">
+                <li className="py-4xs order-1 grow align-middle">
                     <AutoFitInput
                         ref={inputRef}
                         disabled={props.disabled}

@@ -121,7 +121,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
         if (status === DataProviderStatus.LOADING) {
             return (
                 <Tooltip content={progressMessage ?? "Loading"} side="bottom">
-                    <div className="gap-horizontal-2xs flex min-w-0 items-center">
+                    <div className="gap-x-2xs flex min-w-0 items-center">
                         <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
