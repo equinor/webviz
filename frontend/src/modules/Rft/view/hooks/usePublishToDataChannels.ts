@@ -15,6 +15,11 @@ type PublishToDataChannelsParams = {
     timestampUtcMs: number | null;
     makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string;
     makeEnsembleColor: (ensembleIdent: RegularEnsembleIdent) => string;
+    // Reactive values that `makeEnsembleDisplayName`/`makeEnsembleColor` close over (e.g. the selected
+    // ensembles and the color set). They must participate in the publish dependency list, otherwise the
+    // generated display names/colors can go stale when those inputs change without any of the other
+    // dependencies changing.
+    metaDependencies: unknown[];
     isFetching: boolean;
 };
 
@@ -27,6 +32,7 @@ export function usePublishToDataChannels(
         timestampUtcMs,
         makeEnsembleDisplayName,
         makeEnsembleColor,
+        metaDependencies,
         isFetching,
     }: PublishToDataChannelsParams,
 ): void {
@@ -64,7 +70,7 @@ export function usePublishToDataChannels(
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.RESPONSE_AT_DEPTH,
-        dependencies: [entries, responseName, dataChannelDepth, timestampUtcMs],
+        dependencies: [entries, responseName, dataChannelDepth, timestampUtcMs, ...metaDependencies],
         enabled: !isFetching && dataChannelDepth !== null && Boolean(responseName),
         contents,
     });

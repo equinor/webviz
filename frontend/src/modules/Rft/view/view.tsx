@@ -96,6 +96,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             );
             return ensemble?.getColor() ?? colorSet.getFirstColor();
         },
+        metaDependencies: [selectedEnsembles, colorSet],
         isFetching: rftDataAccessorStatus.isFetching,
     });
 
