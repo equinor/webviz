@@ -1,22 +1,20 @@
 import React from "react";
 
-import type { SortDirection } from "../typesAndEnums";
+import type { SortDirection, TableSortState } from "../typesAndEnums";
 
 export type TableRootContextType = {
     availableBodyHeight: number;
+    selectable?: boolean | "multiple";
+    sortable?: boolean | "multiple";
 
-    sortable?: boolean;
-    selectable?: boolean;
     compact?: boolean;
     fixed?: boolean;
 
-    selection?: null | string | string[];
+    rowSelection: string[];
+    columnSort: TableSortState[];
 
-    currentSort?: { [colKey: string]: SortDirection };
-    onColumnSort?: (columnKey: string, direction: SortDirection) => void;
-
-    selectedRow?: string | null;
-    onRowSelect?: (rowKey: string) => void;
+    onColumnSort: (columnKey: string, direction: SortDirection, additive: boolean) => void;
+    onRowSelect: (rowKey: string) => void;
 };
 
 export const TableRootContext = React.createContext<TableRootContextType | null>(null);
