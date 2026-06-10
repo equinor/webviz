@@ -257,7 +257,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 : createValidExtensionLength(props.overriddenValue, defaultExtensionLength);
 
             return (
-                <div className="gap-x-horizontal-3xs gap-y-vertical-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
+                <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
                     <span>Type</span>
                     <RadioCompositions.GroupWithLabels
                         layout="horizontal"

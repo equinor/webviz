@@ -95,7 +95,7 @@ function HeaderCell(props: HeaderCellProps) {
 
     return (
         <th
-            className={resolveClassNames(headerColorClass, "border-neutral-subtle px-horizontal-xs border-b-2", {
+            className={resolveClassNames(headerColorClass, "border-neutral-subtle px-xs border-b-2", {
                 "cursor-pointer hover:brightness-95": props.sortable,
             })}
             rowSpan={props.rowSpan}

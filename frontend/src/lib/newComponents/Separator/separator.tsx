@@ -12,7 +12,7 @@ export const Separator = React.forwardRef<HTMLDivElement, SeparatorProps>(functi
     const resolvedClassNames = resolveClassNames(
         props.layoutClassName,
         "bg-neutral [:where(&+&)]:hidden shrink-0 self-stretch",
-        props.orientation === "vertical" ? "w-px  mx-horizontal-3xs" : "h-px my-vertical-3xs",
+        props.orientation === "vertical" ? "w-px  mx-3xs" : "h-px my-3xs",
     );
     return <SeparatorBase {...props} className={resolvedClassNames} ref={ref} />;
 });

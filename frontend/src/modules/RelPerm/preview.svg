@@ -1,12 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
-  <rect width="320" height="180" fill="#f8fafc"/>
-  <line x1="42" y1="142" x2="284" y2="142" stroke="#334155" stroke-width="2"/>
-  <line x1="42" y1="142" x2="42" y2="28" stroke="#334155" stroke-width="2"/>
-  <path d="M48 136 C92 130 126 108 154 84 C186 56 226 38 278 34" fill="none" stroke="#007079" stroke-width="5" stroke-linecap="round"/>
-  <path d="M48 38 C94 42 132 60 162 84 C194 110 230 130 278 136" fill="none" stroke="#d55e00" stroke-width="5" stroke-linecap="round"/>
-  <path d="M52 118 C96 108 136 92 174 76 C210 60 246 52 278 50" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="8 5"/>
-  <circle cx="92" cy="130" r="4" fill="#007079"/>
-  <circle cx="186" cy="56" r="4" fill="#007079"/>
-  <circle cx="132" cy="60" r="4" fill="#d55e00"/>
-  <circle cx="230" cy="130" r="4" fill="#d55e00"/>
+<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+  <line x1="12" y1="42" x2="143" y2="42" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="12" y1="72" x2="143" y2="72" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="12" y1="102" x2="143" y2="102" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="42" y1="12" x2="42" y2="142" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="82" y1="12" x2="82" y2="142" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="122" y1="12" x2="122" y2="142" stroke="#e1e1e1" stroke-width="0.5"/>
+  <polyline points="12,12 12,142 143,142" fill="none" stroke="#626467" stroke-width="0.8"/>
+  <path fill="none" stroke="#6b7280" stroke-width="1" stroke-dasharray="6 4" d="M14,124 C38,112 58,100 77,92 C97,83 118,70 141,55"/>
+  <path fill="none" stroke="#206f77" stroke-width="1.5" d="M14,140 C36,138 58,128 77,92 C97,55 112,18 141,16"/>
+  <path fill="none" stroke="#207720" stroke-width="1.5" d="M14,16 C40,18 58,55 77,92 C97,128 118,138 141,140"/>
+  <circle cx="37" cy="136" r="2.5" fill="#206f77"/>
+  <circle cx="115" cy="29" r="2.5" fill="#206f77"/>
+  <circle cx="45" cy="38" r="2.5" fill="#207720"/>
+  <circle cx="111" cy="128" r="2.5" fill="#207720"/>
 </svg>

@@ -78,7 +78,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                         ensemble,
                         ensembleRealizationFilterFunction,
                     )}
-                    wrapperClassName="w-2 h-2 mr-horizontal-xs"
+                    wrapperClassName="w-2 h-2 mr-xs"
                     size="small"
                 />
             );

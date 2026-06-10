@@ -51,14 +51,14 @@ function Header(props: HeaderProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "gap-horizontal-3xs bg-neutral-canvas border-b-neutral-subtle text-body-sm px-horizontal-3xs flex h-8 w-full items-center border-b",
+                "gap-x-3xs bg-neutral-canvas border-b-neutral-subtle text-body-sm px-3xs flex h-8 w-full items-center border-b",
                 props.headerClassNames ?? "",
             )}
         >
             <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </SortableList.DragHandle>
-            <div className="gap-horizontal-3xs flex min-w-0 grow items-center">
+            <div className="gap-x-3xs flex min-w-0 grow items-center">
                 {props.startAdornment}
                 <div className="min-w-0 grow">{props.title}</div>
                 {props.endAdornment}

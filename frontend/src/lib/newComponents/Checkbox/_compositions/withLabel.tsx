@@ -30,7 +30,7 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             data-readonly={checkboxProps.readOnly || undefined}
             className={resolveClassNames(
                 layoutClassName,
-                "group/checkbox border-box selectable gap-horizontal-sm flex items-center",
+                "group/checkbox border-box selectable gap-x-sm flex items-center",
                 {
                     "flex-col": direction === "vertical",
                 },

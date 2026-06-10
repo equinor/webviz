@@ -173,7 +173,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                     />
                 </Table.Cell>
                 <Table.Cell>
-                    <div className="gap-vertical-2xs flex items-center">
+                    <div className="gap-y-2xs flex items-center">
                         <Combobox
                             size="small"
                             value={referenceEnsValue ?? ""}

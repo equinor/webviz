@@ -99,7 +99,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             className={resolveClassNames(
                 props.layoutClassName,
                 BUTTON_SIZE_CLASSES[size],
-                "px-selectable-x inline-flex cursor-pointer items-center rounded",
+                "px-selectable inline-flex cursor-pointer items-center rounded",
                 "transition-colors duration-150",
                 "focusable focus-visible:outline-0",
                 "group-data-group/button-group:not-first-of-type:rounded-l-none group-data-group/button-group:not-last-of-type:rounded-r-none",
@@ -108,7 +108,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
                     rounded: !props.round,
                     "aspect-square justify-center p-0!": props.iconOnly,
                     [ICON_SIZE_CLASSES[size]]: props.iconOnly,
-                    "px-horizontal-3xs! aspect-auto!": props.compact,
+                    "px-3xs! aspect-auto!": props.compact,
                 },
                 // SELECTABLE_SIZES_CLASSNAMES[size],
                 VARIANT_TONE_CLASSES[variant][props.disabled ? "disabled" : tone],
@@ -119,7 +119,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             ) : (
                 <span
                     className={resolveClassNames(
-                        "gap-x-horizontal-2xs inline-flex h-full w-full items-center",
+                        "gap-x-2xs inline-flex h-full w-full items-center",
                         LABEL_SIZE_CLASSES[size],
                     )}
                 >

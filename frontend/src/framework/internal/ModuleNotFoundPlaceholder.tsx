@@ -40,8 +40,8 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
         }
 
         return (
-            <div className="gap-vertical-md flex h-full w-full flex-col items-center">
-                <div className="bg-danger px-horizontal-md py-vertical-md gap-vertical-sm flex w-full flex-col items-center text-center">
+            <div className="gap-y-md flex h-full w-full flex-col items-center">
+                <div className="bg-danger px-md py-md gap-y-sm flex w-full flex-col items-center text-center">
                     <img
                         src={notFoundIllustration}
                         alt="Module not found"
@@ -66,7 +66,7 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
                     module has been removed, please get in touch with us on GitHub.
                 </Paragraph>
                 <Separator orientation="horizontal" />
-                <div className="gap-horizontal-2xs flex">
+                <div className="gap-x-2xs flex">
                     <Button variant="ghost" onClick={reportIssue} size="small">
                         <BugReport fontSize="inherit" /> Report issue
                     </Button>
@@ -80,7 +80,7 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
 
     settingsFC = () => {
         return (
-            <div className="px-horizontal-xs py-vertical-xs gap-vertical-md flex h-full flex-col items-center justify-center text-center">
+            <div className="px-xs py-xs gap-y-md flex h-full flex-col items-center justify-center text-center">
                 <img
                     src={notFoundIllustration}
                     alt="Module not found"

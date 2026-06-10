@@ -8,7 +8,7 @@ export type ConfirmationProps = {
 
 export function Confirmation(props: ConfirmationProps): React.ReactNode {
     return (
-        <div className="gap-vertical-sm flex flex-col">
+        <div className="gap-y-sm flex flex-col">
             <Heading as="h6" tone="success" weight="bolder">
                 Snapshot created successfully!
             </Heading>
@@ -18,7 +18,7 @@ export function Confirmation(props: ConfirmationProps): React.ReactNode {
             </Paragraph>
             <CopyInputField value={props.snapshotUrl} className="w-full" />
             <Banner tone="warning">
-                <ul className="pl-horizontal-sm list-outside list-disc">
+                <ul className="pl-sm list-outside list-disc">
                     <li>Snapshots are not guaranteed to persist, as underlying data or module states may change.</li>
                     <li>
                         All Equinor-onboarded users with the link can access the snapshot settings; access to the data

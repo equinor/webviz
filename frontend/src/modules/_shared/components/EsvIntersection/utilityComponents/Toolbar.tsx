@@ -81,7 +81,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="gap-horizontal-2xs flex items-center justify-start">
+            <div className="gap-x-2xs flex items-center justify-start">
                 <Tooltip.Provider>
                     <Tooltip content="Fit all data in view" side="bottom">
                         <Button onClick={handleFitInView} size="small" iconOnly variant="ghost">

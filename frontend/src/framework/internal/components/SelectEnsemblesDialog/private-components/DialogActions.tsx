@@ -23,7 +23,7 @@ export const DialogActions: React.FC<DialogActionsProps> = (props: DialogActions
     };
 
     return (
-        <div className="gap-x-horizontal-xs flex">
+        <div className="gap-x-xs flex">
             <Button onClick={props.onDiscard} tone="danger" variant="ghost" disabled={props.disableDiscard}>
                 Discard changes
             </Button>

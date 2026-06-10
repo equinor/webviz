@@ -6,7 +6,7 @@ export type EmptyContentProps = {
 
 export function EmptyContent(props: EmptyContentProps): React.ReactNode {
     return (
-        <div className="bg-surface! px-horizontal-3xs py-vertical-3xs text-body-sm border-neutral-subtle flex h-16 items-center justify-center border">
+        <div className="bg-surface! px-3xs py-3xs text-body-sm border-neutral-subtle flex h-16 items-center justify-center border">
             {props.children}
         </div>
     );

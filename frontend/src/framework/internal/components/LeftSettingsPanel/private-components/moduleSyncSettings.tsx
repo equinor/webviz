@@ -97,13 +97,13 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                 <thead>
                     <tr className="border-neutral-subtle border-b">
                         <th
-                            className="border-neutral-subtle px-horizontal-xs py-vertical-xs w-4 border-r"
+                            className="border-neutral-subtle px-xs py-xs w-4 border-r"
                             title="Sync for all module instances"
                         >
                             Global
                         </th>
                         <th
-                            className="border-neutral-subtle px-horizontal-xs py-vertical-xs w-4 border-r"
+                            className="border-neutral-subtle px-xs py-xs w-4 border-r"
                             title="Sync for active module instance"
                         >
                             Local
@@ -117,7 +117,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                         return (
                             <tr key={setting} className="hover:bg-neutral-subtle">
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
-                                    <td className="border-neutral-subtle px-horizontal-xs py-vertical-3xs align-center border-r">
+                                    <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
                                             checked={globallySynced}
                                             onCheckedChange={(checked) =>
@@ -129,7 +129,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                                     </td>
                                 </Tooltip>
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
-                                    <td className="border-neutral-subtle px-horizontal-xs py-vertical-3xs align-center border-r">
+                                    <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
                                             checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
                                             onCheckedChange={(checked) => handleSyncSettingChange(setting, checked)}
@@ -140,7 +140,7 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                                 </Tooltip>
 
                                 <td
-                                    className={resolveClassNames("px-horizontal-xs py-vertical-3xs", {
+                                    className={resolveClassNames("px-xs py-3xs", {
                                         "opacity-50": isSnapshot,
                                     })}
                                 >

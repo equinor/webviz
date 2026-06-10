@@ -88,7 +88,7 @@ export const PersistentPopover: Story = {
                         ]}
                     />
 
-                    <div className="mt-vertical-md flex">
+                    <div className="mt-md flex">
                         <Button layoutClassName="w-full" onClick={() => setPopoverOpen(false)}>
                             Ok
                         </Button>
@@ -108,7 +108,7 @@ export const Alignment: Story = {
         },
     },
     render: () => (
-        <div className="mt-horizontal-2xl gap-horizontal-sm px-horizontal-3xl py- m-auto grid h-8 grid-cols-4">
+        <div className="mt-2xl gap-x-sm px-3xl py- m-auto grid h-8 grid-cols-4">
             <Popover.Root>
                 <Popover.Trigger size="small" tone="accent" variant="contained">
                     Left

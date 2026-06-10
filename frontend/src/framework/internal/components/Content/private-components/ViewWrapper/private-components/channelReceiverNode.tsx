@@ -231,7 +231,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
-                "mx-horizontal-2xs z-overlay my-vertical-2xs text-body-sm gap-vertical-2xs flex h-20 max-h-[25%] w-40 max-w-[25%] flex-col items-center justify-center rounded-sm border text-center",
+                "mx-2xs z-overlay my-2xs text-body-sm gap-y-2xs flex h-20 max-h-[25%] w-40 max-w-[25%] flex-col items-center justify-center rounded-sm border text-center",
                 {
                     "border-accent bg-accent-canvas":
                         (hoveredAndHoverable && connectable) ||
@@ -250,7 +250,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             <div className="flex h-16 items-center">{props.displayName}</div>
             <div
                 className={resolveClassNames(
-                    "bg-neutral-subtle px-horizontal-3xs py-vertical-3xs gap-horizontal-2xs flex w-full items-center justify-center rounded-b",
+                    "bg-neutral-subtle px-3xs py-3xs gap-x-2xs flex w-full items-center justify-center rounded-b",
                     {
                         hidden: !editDataChannelConnections || isSnapshot,
                     },

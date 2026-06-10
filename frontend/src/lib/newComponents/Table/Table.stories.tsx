@@ -78,7 +78,7 @@ const meta: Meta<typeof Table.Root> = {
                     />
 
                     {(ctx.args.sortable || ctx.args.selectable) && (
-                        <Banner layoutClassName="mt-horizontal-md gap-vertical-3xs flex rounded bg-gray-100 p-4 text-sm fixed py-vertical-2xs px-horizontal-2xs">
+                        <Banner layoutClassName="mt-md gap-y-3xs flex rounded bg-gray-100 p-4 text-sm fixed py-2xs px-2xs">
                             {ctx.args.sortable && (
                                 <Typography family="body" size="xs" as="p">
                                     <strong>Sort State:</strong> {JSON.stringify(tableSortingState, null, 2)}

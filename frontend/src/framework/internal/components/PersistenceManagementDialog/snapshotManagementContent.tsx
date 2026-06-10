@@ -141,8 +141,8 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
             "Remove snapshot from list (you are not the owner, snapshot will remain accessible to other users)";
     }
     return (
-        <div className="gap-vertical-sm flex h-full flex-col">
-            <div className="gap-horizontal-sm flex">
+        <div className="gap-y-sm flex h-full flex-col">
+            <div className="gap-x-sm flex">
                 <Field.Root layoutClassName="grow">
                     <Field.Label>Filter by Title</Field.Label>
                     <TextInput
@@ -170,7 +170,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     <DateRangePicker value={visitedAtRange ?? { from: null, to: null }} onChange={setVisitedAtRange} />
                 </Field.Root>
             </div>
-            <div className="gap-horizontal-4xs flex items-center">
+            <div className="gap-x-4xs flex items-center">
                 <SwitchCompositions.WithLabel
                     checked={onlyShowOwnSnapshots}
                     label="Show my snapshots only"
@@ -415,7 +415,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
         >
             <Table.Cell layoutClassName="text-center!">{item.visits}</Table.Cell>
             <Table.Cell title={item.snapshotMetadata.title}>
-                <div className="gap-horizontal-4xs flex items-center justify-between">
+                <div className="gap-x-4xs flex items-center justify-between">
                     <span className="truncate overflow-hidden">{item.snapshotMetadata.title}</span>
                     {isDeleted && (
                         <strong
@@ -438,7 +438,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
                 </CopyCellValue>
             </Table.Cell>
             <Table.Cell noPadding>
-                <div className="px-horizontal-sm gap-horizontal-xs flex items-center">
+                <div className="px-sm gap-x-xs flex items-center">
                     <Avatar userData={avatarFn} size={24} />
                     {name}
                 </div>

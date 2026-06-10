@@ -138,7 +138,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
 
         return (
             <span
-                className="text-info-strong-on-emphasis data-[tone=warning]:text-warning-strong bg-info-strong data-[tone=warning]:bg-warning-active px-vertical-xs rounded-lg font-light"
+                className="text-info-strong-on-emphasis data-[tone=warning]:text-warning-strong bg-info-strong data-[tone=warning]:bg-warning-active px-xs rounded-lg font-light"
                 title={title}
                 data-tone={colorTone}
             >
@@ -153,7 +153,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
             className={resolveClassNames(
                 "relative rounded-sm",
                 "flex items-center overflow-hidden",
-                "pl-horizontal-2xs",
+                "pl-2xs",
                 "data-disabled:opacity-75",
                 "text-neutral-strong data-[tone=warning]:text-warning-subtle data-[tone=danger]:text-danger-subtle",
                 "bg-neutral data-[tone=warning]:bg-warning data-[tone=danger]:bg-danger",
@@ -170,7 +170,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
                 aria-label="Range"
                 type="text"
                 disabled={props.selected || props.disabled}
-                wrapperClassName="mx-horizontal-3xs"
+                wrapperClassName="mx-3xs"
                 className="focus:border-neutral-strong -mb-px border-b border-dashed border-transparent bg-transparent outline-hidden"
                 onChange={handleChange}
                 onBlur={handleBlur}

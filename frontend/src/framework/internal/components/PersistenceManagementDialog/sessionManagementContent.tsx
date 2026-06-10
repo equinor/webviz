@@ -86,8 +86,8 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
     }
 
     return (
-        <div className="gap-vertical-sm flex h-full flex-col">
-            <div className="gap-horizontal-sm flex">
+        <div className="gap-y-sm flex h-full flex-col">
+            <div className="gap-x-sm flex">
                 <Field.Root layoutClassName="grow">
                     <Field.Label>Filter by Title</Field.Label>
                     <TextInput
@@ -115,7 +115,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     <DateRangePicker value={updatedAtRange ?? { from: null, to: null }} onChange={setUpdatedAtRange} />
                 </Field.Root>
             </div>
-            <div className="gap-horizontal-4xs flex items-center">
+            <div className="gap-x-4xs flex items-center">
                 <Tooltip.Provider>
                     <Tooltip content="Start and open new session" side="bottom">
                         <Button tone="accent" onClick={handleNewSessionClick} variant="contained">

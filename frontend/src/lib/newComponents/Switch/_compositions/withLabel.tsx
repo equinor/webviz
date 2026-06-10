@@ -27,7 +27,7 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             data-readonly={switchProps.readOnly || undefined}
             className={resolveClassNames(
                 layoutClassName,
-                "group/switch selectable gap-horizontal-sm flex items-center",
+                "group/switch selectable gap-x-sm flex items-center",
             )}
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}

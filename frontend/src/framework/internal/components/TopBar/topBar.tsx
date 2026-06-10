@@ -44,7 +44,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-horizontal-3xl py-vertical-2xs px-vertical-xs flex flex-row items-center border-b-2",
+                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-x-3xl py-2xs px-xs flex flex-row items-center border-b-2",
                     {
                         "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
@@ -52,7 +52,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 )}
             >
                 <LogoWithText />
-                <div className="gap-horizontal-xs flex min-w-0 grow items-center">
+                <div className="gap-x-xs flex min-w-0 grow items-center">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -74,13 +74,13 @@ export function TopBar(props: TopBarProps): React.ReactNode {
 }
 function LogoWithText(): React.ReactNode {
     return (
-        <div className="gap-horizontal-sm flex flex-row items-center">
+        <div className="gap-x-sm flex flex-row items-center">
             <FmuLogo className="h-8 w-8" />
             <Heading as="h6" weight="bolder">
                 FMU Analysis
             </Heading>
             <div
-                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm px-horizontal-xs py-vertical-3xs cursor-help rounded-sm text-center"
+                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm px-xs py-3xs cursor-help rounded-sm text-center"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA
@@ -197,7 +197,7 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return <div className="gap-horizontal-sm flex grow items-center overflow-hidden">{content}</div>;
+    return <div className="gap-x-sm flex grow items-center overflow-hidden">{content}</div>;
 }
 
 type SnapshotTitleProps = {
@@ -374,7 +374,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     const saveEnabled = persistenceInfo.hasChanges && isPersisted;
 
     return (
-        <div className="gap-horizontal-xs flex items-center justify-center p-2 text-sm">
+        <div className="gap-x-xs flex items-center justify-center p-2 text-sm">
             <Button.Group split>
                 <Button variant="contained" tone="accent" onClick={handleSaveClick} disabled={!saveEnabled} iconOnly>
                     {isSaving ? (

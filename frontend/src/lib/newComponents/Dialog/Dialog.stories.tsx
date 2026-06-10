@@ -364,7 +364,7 @@ export const WithSlider: Story = {
                     </Dialog.Header>
                     <Dialog.Body>
                         <Dialog.Description>Use the slider to select a value between 0 and 100.</Dialog.Description>
-                        <div className="px-horizontal-md pt-vertical-md">
+                        <div className="px-md pt-md">
                             <Slider
                                 min={0}
                                 max={100}

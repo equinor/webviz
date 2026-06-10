@@ -115,7 +115,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     );
 
     return (
-        <div className="gap-vertical-2xs flex flex-col">
+        <div className="gap-y-2xs flex flex-col">
             <FieldCompositions.Default label="Filtering Option">
                 <RadioCompositions.GroupWithLabels
                     value={props.selectedIncludeOrExcludeFilter}

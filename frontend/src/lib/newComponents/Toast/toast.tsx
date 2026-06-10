@@ -69,17 +69,17 @@ function ToastList() {
             {toast.type && toast.type !== "default" && (
                 <span
                     className={resolveClassNames(
-                        "px-horizontal-sm py-vertical-sm rounded-l-rounded flex h-full items-center justify-center",
+                        "px-sm py-sm rounded-l-rounded flex h-full items-center justify-center",
                         TOAST_TYPE_TO_TONE_CLASSNAME[toast.type],
                     )}
                 >
                     {TOAST_TYPE_TO_ICON[toast.type]}
                 </span>
             )}
-            <ToastBase.Content className="toast__content text-header-sm font-heading gap-horizontal-sm flex items-center">
+            <ToastBase.Content className="toast__content text-header-sm font-heading gap-x-sm flex items-center">
                 <ToastBase.Title
                     render={(subProps) => (
-                        <span {...subProps} className="px-horizontal-sm py-vertical-sm whitespace-nowrap">
+                        <span {...subProps} className="px-sm py-sm whitespace-nowrap">
                             {toast.title}
                         </span>
                     )}

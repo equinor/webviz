@@ -378,7 +378,7 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
 
     return (
         <div
-            className={resolveClassNames("z-elevated gap-horizontal-2xs absolute bottom-8 flex", {
+            className={resolveClassNames("z-elevated gap-x-2xs absolute bottom-8 flex", {
                 "left-0": props.position === "left" || props.position === undefined,
                 "right-0": props.position === "right",
             })}

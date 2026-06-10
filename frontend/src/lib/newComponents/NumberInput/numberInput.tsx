@@ -59,7 +59,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 props.layoutClassName,
                 "form-element",
                 "bg-canvas grow",
-                "px-vertical-xs gap-vertical-xs flex items-center",
+                "px-xs gap-y-xs flex items-center",
                 SELECTABLE_SIZES_CLASSNAMES[size],
                 {
                     "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,
@@ -73,7 +73,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
 
                     <NumberFieldBase.Input
                         ref={ref}
-                        className="py-vertical-3xs w-full min-w-0 grow self-stretch outline-0 data-disabled:cursor-not-allowed"
+                        className="py-3xs w-full min-w-0 grow self-stretch outline-0 data-disabled:cursor-not-allowed"
                         placeholder={defaultedProps.placeholder}
                     />
 
@@ -99,7 +99,7 @@ function makeScrubAdornment(scrubAdornment: React.ReactNode): React.ReactNode {
         "flex items-center justify-center text-accent" +
         // Adding a bit of padding and negative margin here to make it easier to hit the scrub area without icon
         // ! Padding matches the gap.
-        " -mx-vertical-xs px-vertical-xs aspect-square";
+        " -mx-xs px-xs aspect-square";
 
     if (!scrubAdornment) return null;
 

@@ -71,7 +71,7 @@ function ArrowButton(props: ArrowButtonProps) {
         large: " text-body-sm",
     }[size];
 
-    const className = `focusable bg-neutral not-disabled:hover:bg-neutral-hover active:bg-neutral-active px-horizontal-4xs flex flex-1 items-center justify-center focus:outline-0 ${textSizeClass}`;
+    const className = `focusable bg-neutral not-disabled:hover:bg-neutral-hover active:bg-neutral-active px-4xs flex flex-1 items-center justify-center focus:outline-0 ${textSizeClass}`;
 
     const element = useRender({
         defaultTagName: "button",

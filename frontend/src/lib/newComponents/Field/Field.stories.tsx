@@ -79,7 +79,7 @@ export const WithDescription: Story = {
 export const WithInfo: Story = {
     render: () => (
         <Field.Root>
-            <div className="gap-horizontal-xs flex w-full justify-between">
+            <div className="gap-x-xs flex w-full justify-between">
                 <Field.Label>API Key</Field.Label>
                 <Field.Info>Your secret API key. Keep this safe and never share it.</Field.Info>
             </div>
@@ -146,10 +146,10 @@ export const Inline: Story = {
         },
     },
     render: () => (
-        <div className="gap-x-horizontal-sm gap-y-vertical-xs grid w-sm grid-cols-2 items-center">
+        <div className="gap-x-sm gap-y-xs grid w-sm grid-cols-2 items-center">
             <Field.Root inline validationMode="onChange">
                 <Field.Label indicator="(Required)">Password</Field.Label>
-                <div className="gap-horizontal-2xs flex items-center">
+                <div className="gap-x-2xs flex items-center">
                     <TextInput
                         minLength={8}
                         required
@@ -194,8 +194,8 @@ export const DefaultComposition: StoryObj<FieldCompositionsDefaultProps> = {
     },
     render: (args) => (
         <div
-            className={resolveClassNames("gap-x-vertical-md gap-y-horizontal-sm w-sm", {
-                "**:[.--errorWrapper]:-mt-horizontal-xs grid grid-cols-2 items-center": args.gridLayout,
+            className={resolveClassNames("gap-x-md gap-y-sm w-sm", {
+                "**:[.--errorWrapper]:-mt-xs grid grid-cols-2 items-center": args.gridLayout,
                 "flex flex-col": !args.gridLayout,
             })}
         >
@@ -241,7 +241,7 @@ export const DefaultComposition: StoryObj<FieldCompositionsDefaultProps> = {
 
 export const FullForm: Story = {
     render: () => (
-        <div className="gap-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <Field.Root>
                 <Field.Label indicator="(Required)">Full name</Field.Label>
                 <TextInput required placeholder="Jane Doe" />
@@ -252,7 +252,7 @@ export const FullForm: Story = {
                 <TextInput placeholder="jane@example.com" />
             </Field.Root>
 
-            <div className="gap-x-horizontal-sm gap-y-vertical-xs grid w-sm grid-cols-2 items-center">
+            <div className="gap-x-sm gap-y-xs grid w-sm grid-cols-2 items-center">
                 <Field.Root
                     inline
                     validationMode="onChange"
@@ -267,7 +267,7 @@ export const FullForm: Story = {
                     }}
                 >
                     <Field.Label indicator="(Required)">Password</Field.Label>
-                    <div className="gap-horizontal-2xs flex items-center">
+                    <div className="gap-x-2xs flex items-center">
                         <TextInput
                             minLength={8}
                             required

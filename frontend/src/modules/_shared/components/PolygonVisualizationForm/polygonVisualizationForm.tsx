@@ -87,17 +87,17 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
     ];
 
     return (
-        <div className="gap-x-horizontal-sm flex items-stretch">
+        <div className="gap-x-sm flex items-stretch">
             <PolylinePreview spec={props.value} className="h-auto w-24" />
             {/* 6 cols: switch | label | link-button | brace | color | inputs */}
-            <div className="gap-x-horizontal-sm gap-y-vertical-2xs grid grid-cols-[auto_auto_auto_auto_auto_auto] items-center">
+            <div className="gap-x-sm gap-y-2xs grid grid-cols-[auto_auto_auto_auto_auto_auto] items-center">
                 {/* Stroke row */}
                 <Switch checked={props.value.hasStroke} onCheckedChange={handleStrokeEnabledChange} />
                 <Typography family="body" variant="strong" size="md" tone="neutral">
                     Stroke
                 </Typography>
                 {/* Link button — row-span-2, col 3 */}
-                <div className="pl-horizontal-sm row-span-2 flex h-full items-center">
+                <div className="pl-sm row-span-2 flex h-full items-center">
                     <Button
                         iconOnly
                         size="small"
@@ -125,7 +125,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     disabled={!props.value.hasStroke}
                 />
                 {/* Opacity + stroke weight share the column 50/50 */}
-                <div className="gap-x-horizontal-sm flex">
+                <div className="gap-x-sm flex">
                     <NumberInput
                         value={props.value.strokeOpacity * 100}
                         min={0}

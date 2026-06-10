@@ -76,7 +76,7 @@ type PanelProps = {
 function Panel(props: PanelProps) {
     return (
         <Tabs.Panel value={props.value}>
-            <div className="bg-surface px-horizontal-xs py-vertical-xs gap-horizontal-xs flex">{props.children}</div>
+            <div className="bg-surface px-xs py-xs gap-x-xs flex">{props.children}</div>
         </Tabs.Panel>
     );
 }

@@ -30,7 +30,7 @@ function RootComponent(props: RootProps, ref: React.ForwardedRef<HTMLDivElement>
                 className={
                     props.inline
                         ? resolveClassNames("contents", props.layoutClassName)
-                        : resolveClassNames("gap-vertical-xs flex flex-col items-start", props.layoutClassName)
+                        : resolveClassNames("gap-y-xs flex flex-col items-start", props.layoutClassName)
                 }
             >
                 {props.children}

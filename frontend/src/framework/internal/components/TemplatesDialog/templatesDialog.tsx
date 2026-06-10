@@ -65,9 +65,9 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
             </Dialog.Header>
             <Dialog.Body layoutClassName="grow min-h-0">
                 <div className="flex h-full flex-col">
-                    <div className="gap-horizontal-2xs flex min-h-0 grow">
-                        <div className="gap-vertical-xs flex max-h-full min-h-0 grow flex-col overflow-y-auto">
-                            <div className="px-horizontal-3xs py-vertical-3xs">
+                    <div className="gap-x-2xs flex min-h-0 grow">
+                        <div className="gap-y-xs flex max-h-full min-h-0 grow flex-col overflow-y-auto">
+                            <div className="px-3xs py-3xs">
                                 <TextInput
                                     startAdornment={<Search fontSize="small" />}
                                     value={searchQuery}
@@ -104,7 +104,7 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                             {template && (
                                 <div className="absolute bottom-0 left-1 h-32 w-full">
                                     <div className="h-12 w-full bg-linear-to-t from-white to-transparent" />
-                                    <div className="px-horizontal-xs py-vertical-xs bg-surface h-20 w-full">
+                                    <div className="px-xs py-xs bg-surface h-20 w-full">
                                         <Button
                                             onClick={() => applyTemplate(template)}
                                             disabled={!template}
@@ -138,13 +138,13 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     }
 
     return (
-        <div className="gap-vertical-sm px-horizontal-sm py-vertical-xs flex flex-col">
+        <div className="gap-y-sm px-sm py-xs flex flex-col">
             <Heading as="h6">{props.template.name}</Heading>
             {drawTemplatePreview(props.template, 180, 150)}
             <div className="text-neutral-subtle text-sm">{props.template.description}</div>
             <div>
                 <strong>Modules:</strong>
-                <ul className="pl-horizontal-md list-disc text-sm">
+                <ul className="pl-md list-disc text-sm">
                     {props.template.moduleInstances.map((instance, idx) => {
                         const module = ModuleRegistry.getModule(instance.moduleName);
                         if (!module) {
@@ -223,7 +223,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
         <>
             <div
                 className={resolveClassNames(
-                    "group selectable hpx-horizontal-2xs py-vertical-2xs gap-horizontal-xs box-border flex w-full cursor-pointer items-center text-sm select-none",
+                    "group selectable hpx-2xs py-2xs gap-x-xs box-border flex w-full cursor-pointer items-center text-sm select-none",
                     {
                         "bg-accent-strong text-neutral-strong-on-emphasis hover:bg-accent-strong-hover active:bg-accent-strong-active":
                             props.selected,
@@ -240,7 +240,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
                     <div className="text-body-xs line-clamp-1" title={props.template?.description}>
                         {props.template?.description}
                     </div>
-                    <div className="text-bolder mt-vertical-xs gap-horizontal-2xs flex flex-wrap text-xs">
+                    <div className="text-bolder mt-xs gap-x-2xs flex flex-wrap text-xs">
                         {makeDataTags(dataTagIds)}
                     </div>
                 </div>

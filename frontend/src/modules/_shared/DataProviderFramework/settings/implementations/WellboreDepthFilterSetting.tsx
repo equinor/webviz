@@ -255,7 +255,7 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
             );
 
             return (
-                <div className="gap-vertical-2xs text-body-sm flex w-full flex-col">
+                <div className="gap-y-2xs text-body-sm flex w-full flex-col">
                     <FieldCompositions.Default label="Top Surface">
                         <ComboboxCompositions.WithBrowseButtons
                             items={topSurfaceOptions}

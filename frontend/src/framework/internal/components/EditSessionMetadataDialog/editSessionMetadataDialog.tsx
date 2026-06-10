@@ -137,9 +137,9 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                     <Dialog.Title>Edit session metadata</Dialog.Title>
                 </Dialog.Header>
                 <form id={formId} onSubmit={handleSave}>
-                    <Dialog.Body layoutClassName="flex items-center gap-horizontal-sm">
+                    <Dialog.Body layoutClassName="flex items-center gap-x-sm">
                         <DashboardPreview height={220} width={150} layout={layout} />
-                        <div className="gap-vertical-sm flex min-w-0 grow flex-col">
+                        <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"
                                 indicator="(Required)"

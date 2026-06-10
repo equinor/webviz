@@ -41,7 +41,7 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
     return (
         <Tooltip content="Double-click to edit name" side="bottom">
             <div
-                className="group/edit-name gap-horizontal-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
+                className="group/edit-name gap-x-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
                 onDoubleClick={handleNameDoubleClick}
             >
                 {editingName ? (

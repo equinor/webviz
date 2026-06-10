@@ -180,7 +180,7 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
 
             const displayValue = !props.isOverridden ? localValue : (props.overriddenValue ?? min);
             return (
-                <div className="gap-horizontal-sm flex items-center" ref={divRef}>
+                <div className="gap-x-sm flex items-center" ref={divRef}>
                     <div className="grow">
                         <Slider
                             min={min}

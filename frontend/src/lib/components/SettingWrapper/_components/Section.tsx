@@ -33,7 +33,7 @@ export function Section(props: SectionProps) {
         <div
             key={index}
             className={resolveClassNames(
-                "px-horizontal-xs py-vertical-2xs col-span-3 grid grid-cols-subgrid",
+                "px-xs py-2xs col-span-3 grid grid-cols-subgrid",
                 index % 2 === 0 ? "bg-canvas" : "",
             )}
         >
@@ -49,13 +49,13 @@ export function Section(props: SectionProps) {
         >
             <div
                 className={resolveClassNames(
-                    "col-span-3 gap-vertical-md shadow-elevation-raised flex items-center justify-between border-b",
+                    "col-span-3 gap-y-md shadow-elevation-raised flex items-center justify-between border-b",
                     "group-data-collapsible-scroll-area/scrollarea:sticky group-data-collapsible-scroll-area/scrollarea:top-0 group-data-collapsible-scroll-area/scrollarea:z-sticky",
                     TONE_TO_CLASSNAMES[disabled ? "disabled" : tone],
                     { "pointer-events-none cursor-not-allowed": disabled },
                 )}
             >
-                <Collapsible.Trigger className="focusable gap-vertical-xs px-selectable-x py-selectable-y flex grow cursor-pointer items-center">
+                <Collapsible.Trigger className="focusable gap-y-xs px-selectable py-selectable flex grow cursor-pointer items-center">
                     <ExpandMore
                         className="transition-transform group-data-closed/settingsSection:-rotate-90"
                         fontSize="inherit"
@@ -64,7 +64,7 @@ export function Section(props: SectionProps) {
                         {props.title}
                     </Typography>
                 </Collapsible.Trigger>
-                {props.adornment && <span className="px-selectable-x py-selectable-y">{props.adornment}</span>}
+                {props.adornment && <span className="px-selectable py-selectable">{props.adornment}</span>}
             </div>
             <Collapsible.Panel className="col-span-3 grid grid-cols-subgrid h-(--collapsible-panel-height) overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [[hidden]:not([hidden='until-found'])]:hidden">
                 {children}

@@ -15,5 +15,5 @@ export function Actions(props: ActionsProps) {
     );
 
     // The "dialog__popup__child" class can be found in the dialog.css file in the styles/components folder
-    return <div className="dialog__popup__child gap-vertical-xs flex justify-end">{withFocus}</div>;
+    return <div className="dialog__popup__child gap-y-xs flex justify-end">{withFocus}</div>;
 }

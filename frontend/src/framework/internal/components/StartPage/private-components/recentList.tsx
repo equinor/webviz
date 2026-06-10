@@ -54,7 +54,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
         if (isFirstTimeFetching) {
             if (itemsQuery.status === "pending") {
                 return (
-                    <span className="gap-selectable-x text-neutral-subtle flex items-center">
+                    <span className="gap-selectable text-neutral-subtle flex items-center">
                         <CircularProgress size={24} /> Loading recent items...
                     </span>
                 );
@@ -90,8 +90,8 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="gap-horizontal-xs flex min-w-0 flex-col">
-            <div className="gap-vertical-xs flex items-center">
+        <section className="gap-x-xs flex min-w-0 flex-col">
+            <div className="gap-y-xs flex items-center">
                 <Heading as="h4" layoutClassName="grow">
                     {props.title}
                 </Heading>
@@ -110,7 +110,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>
-            <div className="mt-vertical-xs gap-vertical-xs gap-x-horizontal-xs gap-y-vertical-xs min-h-16 min-w-0">
+            <div className="mt-xs gap-y-xs gap-x-xs gap-y-xs min-h-16 min-w-0">
                 {makeContent()}
             </div>
         </section>

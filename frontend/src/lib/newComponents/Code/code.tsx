@@ -17,7 +17,7 @@ export const Code = React.forwardRef<HTMLDivElement, CodeProps>(function CodeCom
             {...baseProps}
             className={resolveClassNames(
                 props.layoutClassName,
-                "bg-neutral p-horizontal-md py-vertical-sm flex flex-col rounded",
+                "bg-neutral px-md py-sm flex flex-col rounded",
             )}
         >
             <div className="min-h-0 flex-1 overflow-auto">

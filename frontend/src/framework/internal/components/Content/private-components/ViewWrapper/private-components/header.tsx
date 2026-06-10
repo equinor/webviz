@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "px-horizontal-xs gap-horizontal-xs shadow-elevation-raised py-vertical-4xs relative flex touch-none items-center text-lg select-none",
+                "px-xs gap-x-xs shadow-elevation-raised py-4xs relative flex touch-none items-center text-lg select-none",
                 {
                     "bg-danger-canvas": hasErrors || invalidPersistedState,
                     "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
@@ -249,7 +249,7 @@ function ModuleTitle(props: ModuleTitleProps) {
     return (
         <div
             className={resolveClassNames(
-                "py-vertical-3xs text-body-sm font-bolder gap-horizontal-sm flex min-w-0 grow items-center",
+                "py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center",
                 {
                     "cursor-grabbing": props.isDragged,
                     "cursor-move": !props.isDragged && !props.isSnapshotMode,
@@ -280,13 +280,13 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
 
     return (
-        <div className="gap-x-horizontal-2xs flex items-center">
+        <div className="gap-x-2xs flex items-center">
             {syncedSettings.map((setting) => (
                 <Tooltip
                     title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
                     key={setting}
                 >
-                    <span className="bg-info-strong px-horizontal-3xs py-vertical-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
+                    <span className="bg-info-strong px-3xs py-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
                         {SyncSettingsMeta[setting].abbreviation}
                     </span>
                 </Tooltip>
@@ -455,15 +455,15 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <ul className="gap-vertical-2xs px-horizontal-2xs py-vertical-2xs flex flex-col">
+            <ul className="gap-y-2xs px-2xs py-2xs flex flex-col">
                 {hotStatusMessages.map((entry, i) => (
-                    <li key={`${entry.message}-${i}`} className="px-horizontal-3xs py-vertical-4xs">
+                    <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
                         <Typography
                             as="span"
                             size="xs"
                             title={entry.message}
                             tone="neutral"
-                            layoutClassName="gap-horizontal-2xs flex items-center"
+                            layoutClassName="gap-x-2xs flex items-center"
                         >
                             {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
                             {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}

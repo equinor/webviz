@@ -106,8 +106,8 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             className={resolveClassNames(
                 "z-elevated border-neutral-subtle bg-surface/75 pointer-events-none absolute grid items-center rounded-sm border backdrop-blur-xs",
                 {
-                    "px-horizontal-2xs py-vertical-3xs text-body-sm w-72 gap-2": !props.compact,
-                    "gap-x-horizontal-2xs gap-y-vertical-2xs px-horizontal-2xs py-vertical-2xs text-body-xs min-w-52":
+                    "px-2xs py-3xs text-body-sm w-72 gap-2": !props.compact,
+                    "gap-x-2xs gap-y-2xs px-2xs py-2xs text-body-xs min-w-52":
                         props.compact,
                     "text-neutral-subtle": props.textGrayedOut,
                 },
@@ -141,7 +141,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             ))}
 
             {props.readoutItems.length > maxNumItemsOrDefault && (
-                <div className="gap-horizontal-2xs col-span-4 flex items-center">
+                <div className="gap-x-2xs col-span-4 flex items-center">
                     ...and {props.readoutItems.length - maxNumItemsOrDefault} more
                 </div>
             )}
@@ -151,7 +151,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
 
 function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean; compact?: boolean }): React.ReactNode {
     return (
-        <div className="gap-horizontal-2xs font-bolder col-span-4 flex items-center">
+        <div className="gap-x-2xs font-bolder col-span-4 flex items-center">
             {!props.noLabelColor && (
                 <div
                     className="border-neutral-subtle h-3 w-3 rounded-full border"

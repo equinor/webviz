@@ -21,7 +21,7 @@ export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, expl
     }
 
     return (
-        <div className="gap-horizontal-xs flex items-center">
+        <div className="gap-x-xs flex items-center">
             {showExplorer ? (
                 <>
                     <Tooltip title="Back to selected ensembles" placement="bottom">
@@ -30,10 +30,10 @@ export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, expl
                         </button>
                     </Tooltip>
                     <ChevronRight />
-                    <span className="text-header-md py-vertical-2xs px-horizontal-3xs">{explorerTitle}</span>
+                    <span className="text-header-md py-2xs px-3xs">{explorerTitle}</span>
                 </>
             ) : (
-                <span className="text-header-md py-vertical-2xs px-horizontal-3xs">Selected Ensembles</span>
+                <span className="text-header-md py-2xs px-3xs">Selected Ensembles</span>
             )}
         </div>
     );

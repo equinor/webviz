@@ -47,7 +47,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                 <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={props.expanded} hovered={false} />
                 <SortableList.GroupContent>
                     <div
-                        className={resolveClassNames("pl-horizontal-3xs border-b-neutral-subtle bg-surface border-b", {
+                        className={resolveClassNames("pl-3xs border-b-neutral-subtle bg-surface border-b", {
                             hidden: !props.expanded,
                         })}
                         style={props.contentStyle}
@@ -76,7 +76,7 @@ function Header(props: HeaderProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "bg-neutral-canvas sortable-list-item-header border-b-neutral-subtle px-horizontal-3xs gap-horizontal-3xs text-body-sm flex h-8 w-full items-center border-b",
+                "bg-neutral-canvas sortable-list-item-header border-b-neutral-subtle px-3xs gap-x-3xs text-body-sm flex h-8 w-full items-center border-b",
                 {
                     "bg-neutral-hovered!": props.hovered,
                 },
@@ -96,7 +96,7 @@ function Header(props: HeaderProps): React.ReactNode {
             >
                 {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </Button>
-            <div className="gap-horizontal-3xs flex min-w-0 grow items-center">
+            <div className="gap-x-3xs flex min-w-0 grow items-center">
                 {props.startAdornment}
                 <div className="font-bolder min-w-0 grow">{props.title}</div>
                 {props.endAdornment}

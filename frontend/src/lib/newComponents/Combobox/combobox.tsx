@@ -57,7 +57,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         placeholder = "Select an option",
         noMatchesText = "No matches found",
         loadingText = (
-            <span className="gap-horizontal-sm flex items-center">
+            <span className="gap-x-sm flex items-center">
                 <CircularProgress size={16} />
                 Loading options
             </span>
@@ -120,8 +120,8 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         >
             <ComboboxBase.InputGroup
                 className={resolveClassNames(
-                    "form-element gap-horizontal-sm pl-horizontal-sm flex cursor-text items-center",
-                    size !== "small" || (props.multiple && selectionMode === "chips") ? "py-vertical-xs" : undefined,
+                    "form-element gap-x-sm pl-sm flex cursor-text items-center",
+                    size !== "small" || (props.multiple && selectionMode === "chips") ? "py-xs" : undefined,
                     SELECTABLE_SIZES_CLASSNAMES[size],
                 )}
             >
@@ -147,10 +147,10 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 )}
 
                 {/* --- Controls --- */}
-                <div className="pr-horizontal-xs gap-selectable-x box-border flex h-full shrink-0 items-center justify-center">
+                <div className="pr-xs gap-selectable box-border flex h-full shrink-0 items-center justify-center">
                     {clearable && (
                         <ComboboxBase.Clear
-                            className="Clear selectable text-body-sm py-vertical-3xs! box-border flex items-center justify-center"
+                            className="Clear selectable text-body-sm py-3xs! box-border flex items-center justify-center"
                             aria-label="Clear selection"
                         >
                             <Clear fontSize="inherit" />
@@ -174,11 +174,11 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 </ComboboxBase.Status>
 
                 {props.errorText ? (
-                    <div className="py-selectable-y px-selectable-x italic">{props.errorText}</div>
+                    <div className="py-selectable px-selectable italic">{props.errorText}</div>
                 ) : (
                     <React.Fragment>
                         <ComboboxBase.Empty>
-                            <div className="py-selectable-y px-selectable-x italic">
+                            <div className="py-selectable px-selectable italic">
                                 {props.loading ? loadingText : noMatchesText}
                             </div>
                         </ComboboxBase.Empty>

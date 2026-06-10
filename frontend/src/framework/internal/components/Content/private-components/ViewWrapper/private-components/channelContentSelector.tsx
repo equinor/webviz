@@ -37,8 +37,8 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
     }
 
     return (
-        <div className="py-vertical-2xs flex flex-col">
-            <div className="px-horizontal-2xs font-bolder text-body-sm flex cursor-pointer items-center">
+        <div className="py-2xs flex flex-col">
+            <div className="px-2xs font-bolder text-body-sm flex cursor-pointer items-center">
                 <CheckboxCompositions.WithLabel
                     onCheckedChange={handleChannelToggle}
                     label={props.channel.displayName}
@@ -57,9 +57,9 @@ const ChannelContentSelector: React.FC<ChannelContentSelectorProps> = (props) =>
                 {props.channel.contents.map((content, index) => (
                     <div
                         key={content.contentIdString}
-                        className="ml-horizontal-2xl border-neutral-strong text-body-sm gap-horizontal-3xs px-horizontal-2xs flex cursor-pointer items-center border-l pl-0"
+                        className="ml-2xl border-neutral-strong text-body-sm gap-x-3xs px-2xs flex cursor-pointer items-center border-l pl-0"
                     >
-                        <span className="bg-neutral-strong -mr-horizontal-2xs inline-block h-px w-2" />
+                        <span className="bg-neutral-strong -mr-2xs inline-block h-px w-2" />
                         <CheckboxCompositions.WithLabel
                             onCheckedChange={(checked) => handleContentToggle(content.contentIdString, checked)}
                             label={content.displayName}
@@ -230,7 +230,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             >
                 <div
                     id="channel-selector-header"
-                    className="bg-neutral px-horizontal-2xs text-body-sm font-bolder flex h-12 items-center"
+                    className="bg-neutral px-2xs text-body-sm font-bolder flex h-12 items-center"
                 >
                     <div className="grow">
                         Make <i className="text-accent-subtle font-bold">{props.receiver.getDisplayName()}</i> subscribe
@@ -257,7 +257,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                         />
                     ))}
                 </div>
-                <div className="gap-horizontal-2xs bg-canvas px-horizontal-2xs flex h-16 items-center justify-end">
+                <div className="gap-x-2xs bg-canvas px-2xs flex h-16 items-center justify-end">
                     <Button variant="ghost" tone="neutral" onClick={handleCancelChannelSelection}>
                         Cancel
                     </Button>

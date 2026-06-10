@@ -18,7 +18,7 @@ export function Annotations(props: AnnotationsProps) {
     return (
         <>
             {props.annotations.map((a, i) => (
-                <Paragraph size="sm" key={i} tone="neutral" layoutClassName="flex items-center gap-horizontal-2xs">
+                <Paragraph size="sm" key={i} tone="neutral" layoutClassName="flex items-center gap-x-2xs">
                     <AnnotationIcon type={a.type} />
                     {a.message}
                 </Paragraph>

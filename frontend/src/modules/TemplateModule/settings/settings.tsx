@@ -77,7 +77,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             content: "An inline setting with enabling switch.",
                         }}
                     >
-                        <div className="gap-horizontal-xs flex">
+                        <div className="gap-x-xs flex">
                             <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} size="small" />
                             <NumberInput value={0} onValueChange={() => {}} disabled={!setting4Enabled} />
                         </div>
@@ -90,7 +90,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         }}
                         stacked
                     >
-                        <div className="gap-vertical-xs flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <SwitchCompositions.WithLabel
                                 onCheckedChange={setSetting5Enabled}
                                 checked={setting5Enabled}

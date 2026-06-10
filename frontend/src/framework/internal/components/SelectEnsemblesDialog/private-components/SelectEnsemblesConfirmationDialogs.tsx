@@ -55,7 +55,7 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
                 }}
                 secondaryActions={[{ label: "Yes, continue", onClick: props.onConfirmContinue, tone: "danger" }]}
             >
-                <div className="gap-vertical-sm flex flex-col">
+                <div className="gap-y-sm flex flex-col">
                     Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
                     continue without them?
                     <EnsemblesLoadingErrorInfo ensembleLoadingErrorInfoMap={props.ensembleLoadingErrorInfoMap} />

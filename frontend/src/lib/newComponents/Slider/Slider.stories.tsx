@@ -38,7 +38,7 @@ type Story = StoryObj<typeof Slider>;
 
 export const Default: Story = {
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <Slider defaultValue={25} {...args} />
             <Slider defaultValue={[25, 75]} {...args} />
             <Slider defaultValue={75} {...args} inverted={!args.inverted} />
@@ -49,7 +49,7 @@ export const Default: Story = {
 export const Disabled: Story = {
     args: { disabled: true },
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <Slider defaultValue={25} {...args} />
         </div>
     ),
@@ -58,7 +58,7 @@ export const Disabled: Story = {
 export const Inverted: Story = {
     args: { inverted: true },
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <Slider defaultValue={25} {...args} />
         </div>
     ),
@@ -67,7 +67,7 @@ export const Inverted: Story = {
 export const NoIndicator: Story = {
     args: { noIndicator: true },
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <Slider defaultValue={25} {...args} />
         </div>
     ),
@@ -76,7 +76,7 @@ export const NoIndicator: Story = {
 export const Size: Story = {
     argTypes: { size: { table: { disable: true } } },
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <Slider defaultValue={25} valueLabelDisplay="always" {...args} size="small" />
             <Slider defaultValue={50} valueLabelDisplay="always" {...args} size="default" />
             <Slider defaultValue={75} valueLabelDisplay="always" {...args} size="large" />
@@ -96,9 +96,9 @@ export const Controlled: Story = {
         const [sliderValue, setSliderValue] = React.useState<number[]>([10, 75]);
 
         return (
-            <div className="gap-y-vertical-lg flex flex-col">
+            <div className="gap-y-lg flex flex-col">
                 <div className="flex justify-between">
-                    <div className="text-body-xs bg-accent-subtle border-neutral-strong px-vertical-2xs w-fit rounded border">
+                    <div className="text-body-xs bg-accent-subtle border-neutral-strong px-2xs w-fit rounded border">
                         Value: {Array.isArray(sliderValue) ? sliderValue.join(" - ") : sliderValue}
                         <br />
                         Range lock: {String(lockMin)} - {String(lockMax)}
@@ -114,7 +114,7 @@ export const Controlled: Story = {
                     </Button>
                 </div>
 
-                <div className="gap-horizontal-xs flex">
+                <div className="gap-x-xs flex">
                     <Slider
                         {...args}
                         layoutClassName="w-full grow"
@@ -139,7 +139,7 @@ export const Controlled: Story = {
                     />
                 </div>
 
-                <div className="gap-horizontal-xs flex">
+                <div className="gap-x-xs flex">
                     <Slider
                         {...args}
                         layoutClassName="w-full grow"
@@ -170,7 +170,7 @@ export const Controlled: Story = {
 export const SnapRangeLimit: Story = {
     args: { min: 0, max: 100 },
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
+        <div className="gap-y-lg flex flex-col">
             <SliderController
                 initialValue={25}
                 renderChildren={(props) => <Slider showRangeLocks {...args} {...props} />}
@@ -207,18 +207,18 @@ export const SnapRangeLimit: Story = {
 export const ValueLabelDisplaySettings: Story = {
     args: { min: 0, max: 100 },
     render: (args) => (
-        <div className="gap-y-vertical-lg flex flex-col">
-            <code className="bg-canvas text-body-xs border-neutral-strong px-vertical-2xs ml-auto w-fit rounded border">
+        <div className="gap-y-lg flex flex-col">
+            <code className="bg-canvas text-body-xs border-neutral-strong px-2xs ml-auto w-fit rounded border">
                 valueLabelDisplay=&quot;auto&quot; (default)
             </code>
             <Slider {...args} defaultValue={25} valueLabelDisplay="auto" />
 
-            <code className="bg-canvas text-body-xs border-neutral-strong px-vertical-2xs ml-auto w-fit rounded border">
+            <code className="bg-canvas text-body-xs border-neutral-strong px-2xs ml-auto w-fit rounded border">
                 valueLabelDisplay=&quot;always&quot;
             </code>
             <Slider {...args} defaultValue={[25, 75]} valueLabelDisplay="always" />
 
-            <code className="bg-canvas text-body-xs border-neutral-strong px-vertical-2xs ml-auto w-fit rounded border">
+            <code className="bg-canvas text-body-xs border-neutral-strong px-2xs ml-auto w-fit rounded border">
                 valueLabelDisplay=&quot;off&quot;
             </code>
             <Slider {...args} defaultValue={[25, 75]} valueLabelDisplay="off" />
@@ -229,7 +229,7 @@ export const ValueLabelDisplaySettings: Story = {
 export const ValueLabelFormatting: Story = {
     args: { min: 0, max: 100 },
     render: (args) => (
-        <div className="gap-y-vertical-3xl flex flex-col">
+        <div className="gap-y-3xl flex flex-col">
             <Slider {...args} defaultValue={25} valueLabelDisplay="always" valueLabelFormat={(v) => `${v} %`} />
 
             <Slider
@@ -240,7 +240,7 @@ export const ValueLabelFormatting: Story = {
                     return (
                         <>
                             {v}
-                            {v > 50 && <Warning fontSize="inherit" className="ml-horizontal-xs align-sub" />}
+                            {v > 50 && <Warning fontSize="inherit" className="ml-xs align-sub" />}
                         </>
                     );
                 }}

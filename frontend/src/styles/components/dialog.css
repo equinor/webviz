@@ -30,6 +30,6 @@
     }
 
     .dialog__popup__child {
-        @apply px-horizontal-sm py-vertical-sm min-h-0 shrink-0;
+        @apply px-sm py-sm min-h-0 shrink-0;
     }
 }

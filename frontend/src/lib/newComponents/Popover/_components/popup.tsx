@@ -36,7 +36,7 @@ export function Popup(props: PopupProps): React.ReactNode {
             >
                 <PopoverBase.Popup className="bg-floating border-neutral relative rounded-sm border shadow-md transition-opacity">
                     <PopoverBase.Arrow className="floating__arrow border-neutral border border-r-0 border-b-0" />
-                    <PopoverBase.Viewport className="py-vertical-xs px-horizontal-sm max-h-[80vh] max-w-md">
+                    <PopoverBase.Viewport className="py-xs px-sm max-h-[80vh] max-w-md">
                         {props.children}
                     </PopoverBase.Viewport>
                 </PopoverBase.Popup>

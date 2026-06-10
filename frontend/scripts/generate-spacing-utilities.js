@@ -36,10 +36,9 @@ const GROUP_OUTPUTS = {
 };
 
 /**
- * Prefixes that support negative variants.
+ * Regular (non-combined) prefixes that support negative variants.
  */
 const NEGATIVE_PREFIXES = new Set([
-    "m",
     "mt",
     "mr",
     "mb",
@@ -50,7 +49,6 @@ const NEGATIVE_PREFIXES = new Set([
     "right",
     "bottom",
     "left",
-    "inset",
     "inset-x",
     "inset-y",
 ]);
@@ -72,8 +70,8 @@ function utilityLine(name, property, value) {
     return `@utility ${name} { ${property}: ${value}; }`;
 }
 
-function formatSectionTitle(tokenName) {
-    return `/* ${tokenName} */`;
+function formatSectionTitle(name) {
+    return `/* ${name} */`;
 }
 
 function getTokenClassName(tokenName, token) {
@@ -127,6 +125,38 @@ function validateConfig() {
         if (token.negative != null && typeof token.negative !== "boolean") {
             throw new Error(`Token "${tokenName}" has invalid \`negative\` flag.`);
         }
+
+        if (token.axis != null && token.axis !== "x" && token.axis !== "y") {
+            throw new Error(`Token "${tokenName}" has invalid \`axis\` (must be "x" or "y").`);
+        }
+    }
+
+    for (const [groupName, groupProperties] of Object.entries(propertyGroups)) {
+        for (const [prefix, prefixDef] of Object.entries(groupProperties)) {
+            if (typeof prefixDef !== "string" && typeof prefixDef !== "object") {
+                throw new Error(`Property group "${groupName}" prefix "${prefix}" must be a string or object.`);
+            }
+            if (typeof prefixDef === "object") {
+                if (prefixDef.type === "combined") {
+                    if (typeof prefixDef.inlineProperty !== "string") {
+                        throw new Error(`Combined prefix "${groupName}.${prefix}" is missing \`inlineProperty\`.`);
+                    }
+                    if (typeof prefixDef.blockProperty !== "string") {
+                        throw new Error(`Combined prefix "${groupName}.${prefix}" is missing \`blockProperty\`.`);
+                    }
+                    if (typeof prefixDef.shorthandProperty !== "string") {
+                        throw new Error(`Combined prefix "${groupName}.${prefix}" is missing \`shorthandProperty\`.`);
+                    }
+                } else {
+                    if (typeof prefixDef.property !== "string") {
+                        throw new Error(`Property group "${groupName}" prefix "${prefix}" is missing a \`property\` string.`);
+                    }
+                    if (prefixDef.axis != null && prefixDef.axis !== "x" && prefixDef.axis !== "y") {
+                        throw new Error(`Property group "${groupName}" prefix "${prefix}" has invalid \`axis\`.`);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -142,13 +172,26 @@ function generateGroupFile(groupName) {
     const groupProperties = propertyGroups[groupName];
     const tokenEntries = Object.entries(tokens).filter(([, token]) => token.groups.includes(groupName));
 
+    const regularPrefixEntries = Object.entries(groupProperties).filter(
+        ([, def]) => typeof def !== "object" || def.type !== "combined"
+    );
+    const combinedPrefixEntries = Object.entries(groupProperties).filter(
+        ([, def]) => typeof def === "object" && def.type === "combined"
+    );
+
+    // --- Pass 1: regular (non-combined) prefixes, one section per token ---
     for (const [tokenName, token] of tokenEntries) {
         const className = getTokenClassName(tokenName, token);
         const value = getTokenValue(tokenName, token);
 
         lines.push(formatSectionTitle(className));
 
-        for (const [prefix, cssProperty] of Object.entries(groupProperties)) {
+        for (const [prefix, prefixDef] of regularPrefixEntries) {
+            const cssProperty = typeof prefixDef === "string" ? prefixDef : prefixDef.property;
+            const prefixAxis = typeof prefixDef === "object" ? prefixDef.axis : undefined;
+
+            if (token.axis && prefixAxis && token.axis !== prefixAxis) continue;
+
             lines.push(utilityLine(`${prefix}-${className}`, cssProperty, value));
 
             if (token.negative === true && NEGATIVE_PREFIXES.has(prefix) && value !== "0" && value !== "0px") {
@@ -157,6 +200,54 @@ function generateGroupFile(groupName) {
         }
 
         lines.push("");
+    }
+
+    // --- Pass 2: combined prefixes, grouped by className ---
+    if (combinedPrefixEntries.length > 0) {
+        const byClassName = new Map();
+        for (const [tokenName, token] of tokenEntries) {
+            const key = getTokenClassName(tokenName, token);
+            if (!byClassName.has(key)) byClassName.set(key, []);
+            byClassName.get(key).push([tokenName, token]);
+        }
+
+        for (const [sectionName, group] of byClassName) {
+            const xToken = group.find(([, t]) => t.axis === "x")?.[1];
+            const yToken = group.find(([, t]) => t.axis === "y")?.[1];
+            const noAxisEntry = group.find(([, t]) => !t.axis);
+
+            lines.push(formatSectionTitle(sectionName));
+
+            for (const [prefix, prefixDef] of combinedPrefixEntries) {
+                if (xToken && yToken) {
+                    lines.push(
+                        `@utility ${prefix}-${sectionName} { ${prefixDef.inlineProperty}: ${xToken.value}; ${prefixDef.blockProperty}: ${yToken.value}; }`
+                    );
+                    if (prefixDef.negative === true &&
+                        xToken.negative === true && yToken.negative === true &&
+                        xToken.value !== "0" && xToken.value !== "0px") {
+                        lines.push(
+                            `@utility -${prefix}-${sectionName} { ${prefixDef.inlineProperty}: calc(${xToken.value} * -1); ${prefixDef.blockProperty}: calc(${yToken.value} * -1); }`
+                        );
+                    }
+                } else if (noAxisEntry) {
+                    const [noAxisTokenName, noAxisToken] = noAxisEntry;
+                    const value = noAxisToken.value;
+                    const className = noAxisToken.className ?? noAxisTokenName;
+                    lines.push(
+                        `@utility ${prefix}-${className} { ${prefixDef.shorthandProperty}: ${value}; }`
+                    );
+                    if (prefixDef.negative === true && noAxisToken.negative === true &&
+                        value !== "0" && value !== "0px") {
+                        lines.push(
+                            `@utility -${prefix}-${className} { ${prefixDef.shorthandProperty}: calc(${value} * -1); }`
+                        );
+                    }
+                }
+            }
+
+            lines.push("");
+        }
     }
 
     return `${lines.join("\n")}\n`;

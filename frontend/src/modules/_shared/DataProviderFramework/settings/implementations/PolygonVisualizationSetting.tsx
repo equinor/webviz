@@ -168,7 +168,7 @@ function VisualizationPreview({ value }: { value: PolygonVisualizationSpec }) {
     }
 
     return (
-        <div className="gap-horizontal-xs text-body-sm flex items-center">
+        <div className="gap-x-xs text-body-sm flex items-center">
             <PolylinePreview spec={value} className="h-4 w-auto shrink-0" />
             <span className="shrink truncate">{parts.length > 0 ? parts.join(" · ") : "none"}</span>
         </div>

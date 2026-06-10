@@ -4,7 +4,7 @@ import { Paragraph } from "@lib/newComponents/Typography/compositions";
 export function DataSharingLabel() {
     return (
         <Banner tone="warning">
-            <div className="gap-vertical-md flex flex-col">
+            <div className="gap-y-md flex flex-col">
                 <Paragraph size="md">
                     <strong>Disclaimer:</strong> Webviz is a service provided by Equinor and is not a way of sharing
                     official data. Data should continue to be shared through L2S, FTP and/or Dasha.

@@ -189,7 +189,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 onMouseOver={handleHover}
             >
                 <div
-                    className="px-horizontal-xs gap-horizontal-xs text-body-sm flex h-full items-center"
+                    className="px-xs gap-x-xs text-body-sm flex h-full items-center"
                     title={props.displayName}
                 >
                     <div className="border-neutral-subtle bg-canvas h-10 w-10 min-w-10 shrink-0 overflow-hidden border">
@@ -267,7 +267,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="text-warning-subtle gap-horizontal-xs text-body-xs flex items-center">
+                <div className="text-warning-subtle gap-x-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
@@ -275,7 +275,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="text-danger-subtle gap-horizontal-xs text-body-xs flex items-center">
+                <div className="text-danger-subtle gap-x-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Experimental</span>
                 </div>
@@ -288,7 +288,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             return null;
         }
         return (
-            <div className="text-disabled gap-horizontal-xs text-body-xs flex items-center">
+            <div className="text-disabled gap-x-xs text-body-xs flex items-center">
                 {makePersistenceIcon(isSerializable)}
                 <span className="mt-[0.2rem]">Module settings won&apos;t be saved</span>
             </div>
@@ -319,11 +319,11 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="z-tooltip border-neutral-subtle bg-floating p-vertical-md text-body-md gap-horizontal-sm absolute flex w-96 items-center border shadow-lg"
+            className="z-tooltip border-neutral-subtle bg-floating py-md text-body-md gap-x-sm absolute flex w-96 items-center border shadow-lg"
             style={style}
         >
             <div className="min-w-20">{makePreviewImage(80, props.module.getDrawPreviewFunc())}</div>
-            <div className="gap-vertical-2xs flex grow flex-col">
+            <div className="gap-y-2xs flex grow flex-col">
                 <div className="flex items-start">
                     <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
                     <Button variant="ghost" tone="neutral" size="small" onClick={props.onClose} iconOnly>
@@ -335,7 +335,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                     {makePersistenceState(props.module.canBeSerialized())}
                 </div>
                 <div className="text-body-sm">{props.module.getDescription()}</div>
-                <div className="text-bolder gap-horizontal-2xs text-body-xs flex flex-wrap">{makeDataTags()}</div>
+                <div className="text-bolder gap-x-2xs text-body-xs flex flex-wrap">{makeDataTags()}</div>
             </div>
         </div>
     );

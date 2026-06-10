@@ -95,17 +95,17 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             return (
                 <div className="bg-danger-canvas flex h-screen w-screen items-center justify-center">
                     <div className="bg-surface flex w-1/2 min-w-[600px] flex-col shadow-sm">
-                        <div className="bg-danger-strong text-danger-strong-on-emphasis px-horizontal-xs py-vertical-xs flex w-full items-center shadow-sm">
+                        <div className="bg-danger-strong text-danger-strong-on-emphasis px-xs py-xs flex w-full items-center shadow-sm">
                             Application terminated with error
                         </div>
-                        <div className="px-horizontal-sm py-vertical-sm gap-vertical-sm flex w-full grow flex-col">
+                        <div className="px-sm py-sm gap-y-sm flex w-full grow flex-col">
                             The application was terminated due to the following error:
-                            <div className="bg-neutral text-body-sm px-horizontal-xs py-vertical-xs my-2 overflow-x-scroll font-mono whitespace-nowrap">
+                            <div className="bg-neutral text-body-sm px-xs py-xs my-2 overflow-x-scroll font-mono whitespace-nowrap">
                                 <strong>{this.state.error.name}</strong>: {this.state.error.message}
                             </div>
                             You can use the following URL to start a clean session:
                             <div>
-                                <div className="bg-neutral text-body-sm px-horizontal-xs py-vertical-xs my-2 flex items-center font-mono whitespace-nowrap">
+                                <div className="bg-neutral text-body-sm px-xs py-xs my-2 flex items-center font-mono whitespace-nowrap">
                                     <a href={freshStartUrl.toString()} className="grow">
                                         {freshStartUrl.toString()}
                                     </a>
@@ -131,7 +131,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                 </div>
                             </div>
                         </div>
-                        <div className="gap-horizontal-xs px-horizontal-sm py-vertical-sm flex bg-slate-100 shadow-sm">
+                        <div className="gap-x-xs px-sm py-sm flex bg-slate-100 shadow-sm">
                             <Button
                                 onClick={() => this.state.error && reportIssue(this.state.error)}
                                 disabled={this.state.symbolicatingStack}

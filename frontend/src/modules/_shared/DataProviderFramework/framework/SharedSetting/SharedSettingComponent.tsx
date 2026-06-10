@@ -38,7 +38,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
                 </div>
             }
             startAdornment={
-                <div className="gap-horizontal-2xs flex items-center">
+                <div className="gap-x-2xs flex items-center">
                     <Button
                         onClick={handleToggleExpanded}
                         title={isExpanded ? "Hide settings" : "Show settings"}

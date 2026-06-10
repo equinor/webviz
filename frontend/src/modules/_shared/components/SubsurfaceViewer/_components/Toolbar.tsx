@@ -174,7 +174,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                 </div>
                 {polylineEditingMode !== PolylineEditingMode.DISABLED && expanded && (
                     <>
-                        <div className="text-md gap-horizontal-3xs bg-canvas py-vertical-3xs flex w-full items-center">
+                        <div className="text-md gap-x-3xs bg-canvas py-3xs flex w-full items-center">
                             <Button
                                 pressed={polylineEditingMode === PolylineEditingMode.DRAW}
                                 title="Draw polyline"

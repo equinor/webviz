@@ -71,9 +71,9 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                     "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
                     "border-b-2": sectionContext !== "body",
-                    "px-horizontal-sm": !props.noPadding,
-                    "py-vertical-sm": !rootContext.compact && !props.noPadding,
-                    "py-vertical-2xs": rootContext.compact && !props.noPadding,
+                    "px-sm": !props.noPadding,
+                    "py-sm": !rootContext.compact && !props.noPadding,
+                    "py-2xs": rootContext.compact && !props.noPadding,
                     "hover:bg-neutral-hover cursor-pointer select-none": isSortable,
                     "border-accent! text-accent-subtle": isSorted,
                 },
@@ -104,10 +104,10 @@ function SortingIcon(props: { direction: SortDirection }): React.ReactNode {
     switch (props.direction) {
         case SortDirection.NONE:
             // ! We add an invisible icon to keep spacing consistent as you toggle
-            return <Square fontSize="inherit" className="ml-vertical-4xs invisible" />;
+            return <Square fontSize="inherit" className="ml-4xs invisible" />;
         case SortDirection.ASC:
-            return <ArrowUpward fontSize="inherit" className="ml-vertical-4xs" />;
+            return <ArrowUpward fontSize="inherit" className="ml-4xs" />;
         case SortDirection.DESC:
-            return <ArrowDownward fontSize="inherit" className="ml-vertical-4xs" />;
+            return <ArrowDownward fontSize="inherit" className="ml-4xs" />;
     }
 }

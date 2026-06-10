@@ -203,8 +203,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <Field.Root layoutClassName="w-full gap-vertical-3xs flex h-full min-h-0 flex-col">
-            <div className="gap-horizontal-sm flex w-full items-center">
+        <Field.Root layoutClassName="w-full gap-y-3xs flex h-full min-h-0 flex-col">
+            <div className="gap-x-sm flex w-full items-center">
                 <Field.Label indicator={`(${numberOfCases})`} itemID="">
                     Cases
                 </Field.Label>
@@ -230,7 +230,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     </Button>
                 </Tooltip>
             </div>
-            <div className="gap-horizontal-xs flex w-full flex-row">
+            <div className="gap-x-xs flex w-full flex-row">
                 <FieldCompositions.Default gridLayout={true} label="Asset">
                     <StatusWrapper
                         isPending={assetsQuery.isFetching && !assetsQuery.isRefetching}

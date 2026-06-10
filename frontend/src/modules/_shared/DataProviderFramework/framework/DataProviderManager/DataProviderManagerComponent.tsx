@@ -150,7 +150,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
     return (
         <div className="flex min-h-0 grow flex-col">
             <div className="flex min-h-0 w-full grow flex-col" ref={listRef}>
-                <div className="gap-x-horizontal-2xs border-neutral-subtle bg-neutral px-horizontal-3xs pl-horizontal-xs py-vertical-2xs flex items-center border-b">
+                <div className="gap-x-2xs border-neutral-subtle bg-neutral px-3xs pl-xs py-2xs flex items-center border-b">
                     <div className="font-bolder grow text-sm">{props.title}</div>
                     <Actions actionGroups={actions} onActionClick={handleActionClick} />
                     <ExpandCollapseAllButton group={props.dataProviderManager} />
@@ -169,7 +169,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                             <SortableList.ScrollContainer>
                                 <div className="bg-canvas relative h-full min-h-0 grow overflow-auto">
                                     {items.length === 0 && (
-                                        <div className="gap-horizontal-3xs -mt-vertical3xs text-body-sm flex h-full items-center justify-center">
+                                        <div className="gap-x-3xs -mt-3xs text-body-sm flex h-full items-center justify-center">
                                             {props.emptyContentPlaceholder ?? (
                                                 <>
                                                     Click on <Add fontSize="inherit" /> to add an item.

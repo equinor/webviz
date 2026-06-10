@@ -41,7 +41,7 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
     function makeSettingsTabs() {
         if (tabKeys.length === 0) {
             return (
-                <div className="px-horizontal-2xs flex h-full items-center justify-center">
+                <div className="px-2xs flex h-full items-center justify-center">
                     <Settings fontSize="small" />
                 </div>
             );
@@ -130,8 +130,8 @@ export function ModuleSettingsHeader(props: ModuleSettingsHeaderProps): React.Re
     return (
         <div className="flex flex-col">
             <div
-                className={resolveClassNames("gap-horizontal-md pr-horizontal-2xs bg-canvas flex h-10 items-center", {
-                    "pl-horizontal-xs": props.isCollapsed,
+                className={resolveClassNames("gap-x-md pr-2xs bg-canvas flex h-10 items-center", {
+                    "pl-xs": props.isCollapsed,
                 })}
             >
                 {makeHeaderContent()}
@@ -150,7 +150,7 @@ type WarningBannerProps = {
 
 function WarningBanner(props: WarningBannerProps): React.ReactNode {
     return (
-        <div className="px-horizontal-2xs py-vertical-2xs">
+        <div className="px-2xs py-2xs">
             <Banner tone="warning" dismissable={true} onDismiss={props.onDismiss}>
                 <strong>Note:</strong> {props.text}
             </Banner>

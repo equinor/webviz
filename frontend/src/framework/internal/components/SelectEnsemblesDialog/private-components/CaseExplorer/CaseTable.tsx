@@ -161,7 +161,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                     >
                                         <div
                                             className={resolveClassNames(
-                                                "px-horizontal-3xs py-vertical-4xs bg-canvas text-neutral-strong text-body-xs w-full cursor-help rounded-full text-center",
+                                                "px-3xs py-4xs bg-canvas text-neutral-strong text-body-xs w-full cursor-help rounded-full text-center",
                                                 { "bg-accent!": numSelectedEnsemblesInCase > 0 },
                                             )}
                                         >

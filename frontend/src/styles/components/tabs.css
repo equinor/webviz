@@ -1,6 +1,6 @@
 @layer components {
     .tabs__tab {
-        @apply focusable font-bolder p-vertical-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center outline-0;
+        @apply focusable font-bolder py-xs hover:bg-accent-hover active:bg-accent-active data-active:text-accent-subtle flex cursor-pointer items-center justify-center outline-0;
         min-height: var(--size-selectable-md);
         font-size: var(--text-body-md);
 
@@ -9,11 +9,11 @@
         }
 
         [data-size="small"] & {
-            @apply py-vertical-3xs px-horizontal-xs text-body-sm;
+            @apply py-3xs px-xs text-body-sm;
         }
 
         [data-size="large"] & {
-            @apply py-vertical-sm px-horizontal-sm text-body-lg min-h-[var(--size-selectable-lg)];
+            @apply py-sm px-sm text-body-lg min-h-[var(--size-selectable-lg)];
         }
 
         &[data-orientation="horizontal"] {

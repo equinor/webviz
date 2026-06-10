@@ -277,7 +277,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
 
             return (
                 <div
-                    className="gap-x-horizontal-2xs gap-y-vertical-3xs grid items-center"
+                    className="gap-x-2xs gap-y-3xs grid items-center"
                     ref={divRef}
                     style={{ gridTemplateColumns: inputVisible ? "24px 40px 3fr 1fr" : "24px 40px auto" }}
                 >

@@ -33,7 +33,7 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             data-disabled={radioProps.disabled || undefined}
             className={resolveClassNames(
                 props.layoutClassName,
-                "group selectable gap-horizontal-sm flex items-center",
+                "group selectable gap-x-sm flex items-center",
                 {
                     "flex-col": props.direction === "vertical",
                 },
