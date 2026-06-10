@@ -4,8 +4,8 @@ import { ArrowDownward, ArrowUpward, Square } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
-import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useTableRootContext } from "../_contexts/tableRootContext";
@@ -14,18 +14,7 @@ import { getNextSortDirection } from "../_utils";
 import { ROW_HEIGHT_PX, ROW_HEIGHT_PX_COMPACT } from "../constants";
 import { SortDirection } from "../typesAndEnums";
 
-export type TableCellProps = {
-    colKey?: string;
-    children?: React.ReactNode;
-
-    sortable?: boolean;
-
-    // Don't understand why, but these don't get included by the native type, for some reason...
-    colSpan?: number;
-    rowSpan?: number;
-    noPadding?: boolean;
-    widthInPercent?: number;
-} & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;
+import type { TableCellProps } from "./types";
 
 function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableCellElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
@@ -98,6 +87,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             }}
         >
             {props.children}
+            <Separator orientation="vertical" layoutClassName="h-full" />
             {isSortable && <SortingIcon direction={currentSortDirection} />}
             {isSortable && isMultiSort && (
                 // Alway mounted to avoid layout shifts
