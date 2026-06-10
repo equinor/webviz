@@ -2,7 +2,7 @@ import React from "react";
 
 import type { InputProps as InputBaseProps } from "@base-ui/react";
 import { Input as InputBase } from "@base-ui/react";
-import { defaults } from "lodash";
+import { defaults, omit } from "lodash";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -19,6 +19,7 @@ const DEFAULT_PROPS = {
 
 function AutoFitInputComponent(props: AutoFitInputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {
     const defaultedProps = defaults({}, props, DEFAULT_PROPS);
+    const baseProps = omit(props, "wrapperClassName", "minCharacterWidth");
 
     let fitterValue = String(props.value);
     if (fitterValue.length < defaultedProps.minCharacterWidth) {
@@ -36,7 +37,7 @@ function AutoFitInputComponent(props: AutoFitInputProps, ref: React.ForwardedRef
                 {fitterValue}
             </span>
             <InputBase
-                {...props}
+                {...baseProps}
                 ref={ref}
                 className={resolveClassNames("absolute inset-0 min-w-0 outline-none", props.className)}
                 value={props.value}

@@ -4,8 +4,8 @@ import { ArrowDownward, ArrowUpward, Square } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
-import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
+import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useTableRootContext } from "../_contexts/tableRootContext";
@@ -14,18 +14,7 @@ import { getNextSortDirection } from "../_utils";
 import { ROW_HEIGHT_PX, ROW_HEIGHT_PX_COMPACT } from "../constants";
 import { SortDirection } from "../typesAndEnums";
 
-export type TableCellProps = {
-    colKey?: string;
-    children?: React.ReactNode;
-
-    sortable?: boolean;
-
-    // Don't understand why, but these don't get included by the native type, for some reason...
-    colSpan?: number;
-    rowSpan?: number;
-    noPadding?: boolean;
-    widthInPercent?: number;
-} & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableCellElement>>;
+import type { TableCellProps } from "./types";
 
 function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableCellElement>): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
@@ -71,7 +60,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             style={{ fontWeight: "inherit", height: `${cellHeightPx}px` }}
             className={resolveClassNames(
                 props.layoutClassName,
-                "border-neutral-subtle text-left align-middle whitespace-nowrap",
+                "border-neutral-subtle group/cell relative text-left align-middle whitespace-nowrap",
                 {
                     "truncate overflow-hidden": rootContext.fixed,
                     "border-b": sectionContext === "body",
@@ -98,6 +87,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             }}
         >
             {props.children}
+
             {isSortable && <SortingIcon direction={currentSortDirection} />}
             {isSortable && isMultiSort && (
                 // Alway mounted to avoid layout shifts
@@ -107,6 +97,12 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
                 >
                     {sortingIndex + 1}
                 </span>
+            )}
+            {sectionContext !== "body" && (
+                <Separator
+                    orientation="vertical"
+                    layoutClassName="absolute inset-y-1/3 right-0 mx-0! group-last/cell:invisible"
+                />
             )}
         </CellTag>
     );

@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { ColumnMetaData } from "../typesAndEnums";
+import type { ColumnMetaData } from "../_components/column";
 
 export type TableColumnContextType = {
     columns: ColumnMetaData[];
