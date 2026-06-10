@@ -85,9 +85,7 @@ async def get_rft_observations(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> list[schemas.RftObservations]:
     """Get RFT observations per well and date for a given ensemble."""
-    access = ObservationAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = ObservationAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     observations = await access.get_rft_observations_async()
 
     return converters.to_api_rft_observations(observations)
