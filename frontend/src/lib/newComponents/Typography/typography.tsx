@@ -6,7 +6,7 @@ import type { TextSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
-    family?: "header" | "body";
+    family?: "header" | "body" | "mono";
     size: TextSize;
     // If tone is set, variant must be set as well. If tone is not set, variant is ignored.
     // The text color is inherited by default, but setting tone to e.g. "danger" will apply a danger color. The variant controls the intensity of the color.
@@ -20,7 +20,7 @@ export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLEle
 };
 
 const FONT_SIZE_CLASSES: Record<
-    NonNullable<TypographyProps["family"]>,
+    NonNullable<Exclude<TypographyProps["family"], "mono">>,
     Record<
         TypographyProps["size"],
         Record<NonNullable<TypographyProps["lineHeight"]>, Record<NonNullable<TypographyProps["tracking"]>, string>>
@@ -308,6 +308,12 @@ const WEIGHT_CLASSES: Record<Required<TypographyProps>["weight"], string> = {
     bolder: "font-bolder",
 };
 
+const FAMILY_CLASSES: Record<NonNullable<TypographyProps["family"]>, string> = {
+    header: "font-heading",
+    body: "font-sans",
+    mono: "font-mono",
+};
+
 function TypographyComponent<Element extends HTMLElement>(
     props: TypographyProps,
     ref: React.ForwardedRef<Element>,
@@ -332,7 +338,8 @@ function TypographyComponent<Element extends HTMLElement>(
 
     const resolvedClassName = resolveClassNames(
         baseProps.className,
-        FONT_SIZE_CLASSES[family][size][lineHeight][tracking],
+        FAMILY_CLASSES[family],
+        FONT_SIZE_CLASSES[family === "header" ? "header" : "body"][size][lineHeight][tracking],
         WEIGHT_CLASSES[weight],
         tone ? TONE_CLASSES[tone][variant] : "",
         { italic: italic },

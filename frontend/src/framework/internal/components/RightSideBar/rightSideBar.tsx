@@ -78,9 +78,14 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     }
 
     return (
-        <SideBar position="right" className="">
-            <Tabs.Root value={drawerContent} onValueChange={handleSelectPanelContent} orientation="vertical">
-                <Tabs.List indicatorPosition="start">
+        <SideBar position="right" className="border-neutral-subtle border-l-2">
+            <Tabs.Root
+                value={drawerContent}
+                onValueChange={handleSelectPanelContent}
+                orientation="vertical"
+                layoutClassName="-ml-[2px]"
+            >
+                <Tabs.List indicatorPosition="start" size="small">
                     <Toggle
                         value={RightDrawerContent.ModulesList}
                         tooltip="Show modules list"
