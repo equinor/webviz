@@ -49,16 +49,7 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
             if (!dataAccessor || !wellName || !responseName || timestampUtcMs === null) {
                 return null;
             }
-            console.log("Building RFT plot content with", {
-                selectedEnsembles,
-                colorSet,
-                wellName,
-                responseName,
-                timestampUtcMs,
-                visualizationSettings,
-                observationsData,
-                size,
-            });
+
             const entries = dataAccessor.getEntries();
             if (entries.length === 0) {
                 return null;
