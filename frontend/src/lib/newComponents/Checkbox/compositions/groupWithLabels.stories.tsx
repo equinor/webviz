@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { CheckboxCompositions } from "../index";
+import { CheckboxCompositions } from "./index";
 
 const OPTIONS = [
     { value: "mon", label: "Monday" },

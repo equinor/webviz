@@ -8,8 +8,8 @@ import {
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { SwitchProps } from "../_baseComponents/switch";
-import { Switch } from "../_baseComponents/switch";
+import type { SwitchProps } from "../_components/switch";
+import { Switch } from "../_components/switch";
 
 export type WithLabelProps = Omit<SwitchProps, "ref"> & {
     label?: string;
@@ -25,10 +25,7 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             ref={ref}
             data-disabled={switchProps.disabled || undefined}
             data-readonly={switchProps.readOnly || undefined}
-            className={resolveClassNames(
-                layoutClassName,
-                "group/switch selectable gap-x-sm flex items-center",
-            )}
+            className={resolveClassNames(layoutClassName, "group/switch selectable gap-x-sm flex items-center")}
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}
         >

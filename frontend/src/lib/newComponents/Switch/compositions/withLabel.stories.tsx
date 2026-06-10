@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { SwitchCompositions } from "../index";
+import { SwitchCompositions } from "./index";
 
 const meta: Meta<typeof SwitchCompositions.WithLabel> = {
     title: "Components/Switch/Compositions/With Label",

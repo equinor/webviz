@@ -10,8 +10,8 @@ import {
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { CheckboxProps } from "../_baseComponents/checkbox";
-import { Checkbox } from "../_baseComponents/checkbox";
+import type { CheckboxProps } from "../_components/checkbox";
+import { Checkbox } from "../_components/checkbox";
 
 export type WithLabelProps = CheckboxProps & {
     label?: string;

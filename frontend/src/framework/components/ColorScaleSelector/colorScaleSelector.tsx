@@ -4,13 +4,13 @@ import { isEqual } from "lodash";
 
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
+import { Button } from "@lib/newComponents/Button";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
 import { ColorScalePreview } from "@lib/newComponents/ColorScalePreview";
-import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { NumberInput } from "@lib/newComponents/NumberInput";
-import { RadioCompositions } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { Switch } from "@lib/newComponents/Switch";
 import { Typography } from "@lib/newComponents/Typography";
 import type { ColorPalette } from "@lib/utils/ColorPalette";

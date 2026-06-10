@@ -7,7 +7,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { NumberInput } from "@lib/newComponents/NumberInput";
-import { RadioCompositions } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -330,12 +330,9 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             return (
                 <>
                     <div
-                        className={resolveClassNames(
-                            "gap-x-3xs gap-y-2xs grid grid-cols-[auto_1fr] items-center",
-                            {
-                                "outline-accent-strong rounded outline-2": hasChanges,
-                            },
-                        )}
+                        className={resolveClassNames("gap-x-3xs gap-y-2xs grid grid-cols-[auto_1fr] items-center", {
+                            "outline-accent-strong rounded outline-2": hasChanges,
+                        })}
                         ref={divRef}
                     >
                         {labels.map((label) => (

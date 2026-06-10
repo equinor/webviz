@@ -2,7 +2,7 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { CheckboxGroup, type CheckboxGroupProps } from "../_baseComponents/checkboxGroup";
+import { CheckboxGroup, type CheckboxGroupProps } from "../_components/checkboxGroup";
 
 import { WithLabel } from "./withLabel";
 

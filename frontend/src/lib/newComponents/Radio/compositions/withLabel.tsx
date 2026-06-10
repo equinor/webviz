@@ -10,8 +10,8 @@ import {
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { RadioProps } from "../_baseComponents/radio";
-import { Radio } from "../_baseComponents/radio";
+import type { RadioProps } from "../_components/radio";
+import { Radio } from "../_components/radio";
 
 export type WithLabelProps = RadioProps & {
     label?: string;
@@ -31,13 +31,9 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
         <label
             ref={ref}
             data-disabled={radioProps.disabled || undefined}
-            className={resolveClassNames(
-                props.layoutClassName,
-                "group selectable gap-x-sm flex items-center",
-                {
-                    "flex-col": props.direction === "vertical",
-                },
-            )}
+            className={resolveClassNames(props.layoutClassName, "group selectable gap-x-sm flex items-center", {
+                "flex-col": props.direction === "vertical",
+            })}
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}
         >

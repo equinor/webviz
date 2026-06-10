@@ -21,7 +21,7 @@ import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { DateRangePicker } from "@lib/newComponents/DateRangePicker";
 import { Field } from "@lib/newComponents/Field";
-import { SwitchCompositions } from "@lib/newComponents/Switch";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { Table } from "@lib/newComponents/Table";
 import { TableCompositions } from "@lib/newComponents/Table/compositions";
 import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";

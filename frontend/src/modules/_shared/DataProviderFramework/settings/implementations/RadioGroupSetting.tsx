@@ -1,4 +1,4 @@
-import { Radio, RadioCompositions, RadioGroup } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {

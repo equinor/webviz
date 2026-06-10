@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { RadioCompositions, RadioGroup } from "../index";
+import { RadioGroup } from "../_components/group";
+
+import { RadioCompositions } from "./index";
 
 const meta: Meta<typeof RadioCompositions.WithLabel> = {
     title: "Components/Radio/Compositions/With Label",

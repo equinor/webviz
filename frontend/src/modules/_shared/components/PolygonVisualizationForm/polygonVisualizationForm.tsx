@@ -13,7 +13,6 @@ import {
     LabelPositionType,
     type PolygonVisualizationSpec,
 } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
-import { Icon } from "@equinor/eds-core-react";
 import { Link, LinkOff } from "@mui/icons-material";
 
 export type { LabelPositionType, PolygonVisualizationSpec };

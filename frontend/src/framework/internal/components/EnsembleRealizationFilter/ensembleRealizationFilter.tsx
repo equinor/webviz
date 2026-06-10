@@ -17,7 +17,7 @@ import { Button } from "@lib/newComponents/Button";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator/hasChangesIndicator";
 import { Hidden } from "@lib/newComponents/Hidden";
-import { RadioCompositions } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
