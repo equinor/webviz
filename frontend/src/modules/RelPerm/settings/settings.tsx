@@ -9,12 +9,12 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 import { Hidden } from "@lib/newComponents/Hidden";
-import { RadioCompositions } from "@lib/newComponents/Radio";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import type { SelectOption } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
