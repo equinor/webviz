@@ -1,6 +1,5 @@
 import React from "react";
 
-import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
 import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
@@ -12,25 +11,21 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Button } from "@lib/components/Button";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { DiscreteSlider } from "@lib/components/DiscreteSlider";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import { Switch } from "@lib/components/Switch";
+import { SortAscendingIcon, SortDescendingIcon } from "@lib/icons";
+import { Button } from "@lib/newComponents/Button";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Slider } from "@lib/newComponents/Slider";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
-import {
-    RealizationMode,
-    RealizationModeEnumToStringMapping,
-    TimeAggregationMode,
-    TimeAggregationModeEnumToStringMapping,
-} from "../typesAndEnums";
+import { RealizationMode, TimeAggregationMode, TimeAggregationModeEnumToStringMapping } from "../typesAndEnums";
 
 import {
     selectedStratigraphyColorSetAtom,
@@ -51,6 +46,7 @@ import {
     selectedRealizationAtom,
 } from "./atoms/persistableFixableAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
+import { useMakeTimeStepSliderSettingProps } from "./hooks/useMakeTimeStepSettingProps";
 
 export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -109,11 +105,14 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         }
     }
 
-    function handleSelectedRealizationNumberChange(realizationNumber: string) {
+    function handleSelectedRealizationNumberChange(realizationNumber: string | null) {
+        if (realizationNumber === null) {
+            return;
+        }
         setSelectedRealization(parseInt(realizationNumber));
     }
 
-    function handleDateIndexSelectionChange(newIndex: number | number[]) {
+    function handleDateIndexSelectionChange(newIndex: number | readonly number[]) {
         if (typeof newIndex === "number") {
             setSelectedCompletionDateIndex(newIndex);
             return;
@@ -122,7 +121,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         throw new Error("Invalid time step index selection, expected single number, got: " + newIndex);
     }
 
-    function handleDateIndexRangeSelectionChange(newIndex: number | number[]) {
+    function handleDateIndexRangeSelectionChange(newIndex: number | readonly number[]) {
         if (typeof newIndex === "number") {
             setSelectedCompletionDateIndexRange([newIndex, newIndex]);
             return;
@@ -146,17 +145,21 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         setWellSearchText(value);
     }
 
-    function handleHideZeroCompletionsChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const checked = e.target.checked;
+    function handleHideZeroCompletionsChange(checked: boolean) {
         setIsZeroCompletionsHidden(checked);
     }
 
-    function handleSetAscendingSortDirection() {
-        setWellSortDirection(SortDirection.ASCENDING);
+    function handleSortWellsByChange(value: SortWellsBy | null) {
+        if (value === null) {
+            return;
+        }
+        setSortWellsBy(value);
     }
 
-    function handleSetDescendingSortDirection() {
-        setWellSortDirection(SortDirection.DESCENDING);
+    function handleToggleSortDirection() {
+        setWellSortDirection(
+            wellSortDirection === SortDirection.ASCENDING ? SortDirection.DESCENDING : SortDirection.ASCENDING,
+        );
     }
 
     const createValueLabelFormat = React.useCallback(
@@ -174,164 +177,130 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     );
 
     const isSingleRealizationMode = realizationMode === RealizationMode.SINGLE;
+    const isSingleTimeStepMode = timeAggregationMode === TimeAggregationMode.NONE;
 
     const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
     const selectedRealizationAnnotations = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
-    const selectedCompletionDateIndexAnnotations = useMakePersistableFixableAtomAnnotations(
-        selectedCompletionDateIndexAtom,
-    );
-    const selectedCompletionDateIndexRangeAnnotations = useMakePersistableFixableAtomAnnotations(
-        selectedCompletionDateIndexRangeAtom,
-    );
+
+    // Props for setting wrapper and slider based on selected TimeAggregationMode
+    const timeStepSettingProps = useMakeTimeStepSliderSettingProps({
+        isSingleTimeStepMode,
+        sortedCompletionDates,
+        selectedCompletionDateIndex,
+        selectedCompletionDateIndexRange,
+    });
 
     return (
-        <div className="flex flex-col gap-2 overflow-y-auto">
-            <CollapsibleGroup expanded={true} title="Ensemble">
-                <SettingWrapper annotations={selectedEnsembleIdentAnnotations}>
-                    <EnsembleDropdown
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        value={selectedEnsembleIdent.value}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Realization mode">
-                <div className="flex flex-col gap-2 overflow-y-auto">
-                    <RadioGroup
-                        options={Object.values(RealizationMode).map((elm: RealizationMode) => {
-                            return { value: elm, label: RealizationModeEnumToStringMapping[elm] };
-                        })}
-                        value={realizationMode}
-                        onChange={(_, value) => setRealizationMode(value)}
-                    />
-                    <div className={isSingleRealizationMode ? "" : "pointer-events-none"}>
-                        <SettingWrapper
-                            label={isSingleRealizationMode ? "Realization" : "Realization (disabled)"}
-                            annotations={selectedRealizationAnnotations}
-                        >
-                            <Dropdown
-                                disabled={!isSingleRealizationMode}
-                                options={availableRealizations.map((realization: number) => {
-                                    return {
-                                        label: realization.toString(),
-                                        value: realization.toString(),
-                                    };
-                                })}
-                                value={selectedRealization.value?.toString() ?? undefined}
-                                onChange={handleSelectedRealizationNumberChange}
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Data" defaultOpen>
+                    <SettingWrapper label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
+                        <EnsembleDropdown
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={selectedEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                            onChange={handleEnsembleSelectionChange}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Realization" stacked annotations={selectedRealizationAnnotations}>
+                        <div className="flex flex-col">
+                            <SwitchCompositions.WithLabel
+                                label="Aggregate over all realizations"
+                                onCheckedChange={(checked) =>
+                                    setRealizationMode(checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE)
+                                }
                             />
-                        </SettingWrapper>
-                    </div>
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Completions selections">
-                <div className="flex flex-col gap-2 overflow-y-auto">
-                    <Label text="Time Aggregation">
-                        <RadioGroup
+                            <Tooltip content="Only available in single realization mode." side="bottom">
+                                <Combobox
+                                    items={availableRealizations.map((realization: number) => {
+                                        return {
+                                            label: realization.toString(),
+                                            value: realization.toString(),
+                                        };
+                                    })}
+                                    value={selectedRealization.value?.toString() ?? undefined}
+                                    onValueChange={(value) => handleSelectedRealizationNumberChange(value)}
+                                    disabled={!isSingleRealizationMode}
+                                    placeholder="Select realization..."
+                                />
+                            </Tooltip>
+                        </div>
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Plot settings" defaultOpen>
+                    <SettingWrapper label="Time Aggregation" stacked annotations={selectedEnsembleIdentAnnotations}>
+                        <RadioCompositions.GroupWithLabels
+                            value={timeAggregationMode}
                             options={Object.values(TimeAggregationMode).map((elm: TimeAggregationMode) => {
                                 return { value: elm, label: TimeAggregationModeEnumToStringMapping[elm] };
                             })}
-                            direction={"horizontal"}
-                            value={timeAggregationMode}
-                            onChange={(_, value) => setTimeAggregationMode(value)}
+                            onValueChange={(value) => setTimeAggregationMode(value)}
+                            size="small"
+                            layout="horizontal"
                         />
-                    </Label>
-                    {timeAggregationMode === TimeAggregationMode.NONE && (
-                        <SettingWrapper
-                            label={
-                                selectedCompletionDateIndex.value === null || !sortedCompletionDates
-                                    ? "Time Step"
-                                    : `Time Step: (${sortedCompletionDates[selectedCompletionDateIndex.value]})`
+                    </SettingWrapper>
+                    <SettingWrapper
+                        stacked
+                        label={timeStepSettingProps.settingWrapper.label}
+                        annotations={timeStepSettingProps.settingWrapper.annotations}
+                        loadingOverlay={timeStepSettingProps.settingWrapper.loadingOverlay}
+                        errorOverlay={timeStepSettingProps.settingWrapper.errorOverlay}
+                    >
+                        <Slider
+                            valueLabelDisplay="auto"
+                            value={timeStepSettingProps.sliderValue}
+                            min={0}
+                            max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
+                            valueLabelFormat={createValueLabelFormat}
+                            onValueChange={(value) =>
+                                isSingleTimeStepMode
+                                    ? handleDateIndexSelectionChange(value)
+                                    : handleDateIndexRangeSelectionChange(value)
                             }
-                            annotations={selectedCompletionDateIndexAnnotations}
-                            loadingOverlay={selectedCompletionDateIndex.isLoading}
-                            errorOverlay={
-                                selectedCompletionDateIndex.depsHaveError ? "Error loading time steps" : undefined
-                            }
-                        >
-                            <DiscreteSlider
-                                valueLabelDisplay="auto"
-                                value={selectedCompletionDateIndex.value ?? undefined}
-                                values={
-                                    sortedCompletionDates?.map((_, index) => {
-                                        return index;
-                                    }) ?? []
-                                }
-                                valueLabelFormat={createValueLabelFormat}
-                                onChange={(_, value) => handleDateIndexSelectionChange(value)}
-                            />
-                        </SettingWrapper>
-                    )}
-                    {timeAggregationMode !== TimeAggregationMode.NONE && (
-                        <SettingWrapper
-                            label={
-                                selectedCompletionDateIndexRange.value === null || !sortedCompletionDates
-                                    ? "Time Steps"
-                                    : `Time Steps: (${
-                                          sortedCompletionDates[selectedCompletionDateIndexRange.value[0]]
-                                      }, ${sortedCompletionDates[selectedCompletionDateIndexRange.value[1]]})`
-                            }
-                            annotations={selectedCompletionDateIndexRangeAnnotations}
-                            loadingOverlay={selectedCompletionDateIndexRange.isLoading}
-                            errorOverlay={
-                                selectedCompletionDateIndexRange.depsHaveError ? "Error loading time steps" : undefined
-                            }
-                        >
-                            <DiscreteSlider
-                                valueLabelDisplay="auto"
-                                value={selectedCompletionDateIndexRange.value ?? undefined}
-                                values={
-                                    sortedCompletionDates?.map((_, index) => {
-                                        return index;
-                                    }) ?? []
-                                }
-                                valueLabelFormat={createValueLabelFormat}
-                                onChange={(_, value) => handleDateIndexRangeSelectionChange(value)}
-                            />
-                        </SettingWrapper>
-                    )}
-                    <Label text="Filter by completions">
-                        <Switch checked={isZeroCompletionsHidden} onChange={handleHideZeroCompletionsChange} />
-                    </Label>
-                    <Label text="Exclude well names">
-                        <Input value={wellExclusionText} onChange={handleWellExclusionChange} placeholder={"..."} />
-                    </Label>
-                    <Label text="Search well names">
-                        <Input value={wellSearchText} onChange={handleWellSearchChange} placeholder={"..."} />
-                    </Label>
-                    <Label text="Sort wells by">
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper>
+                        <SwitchCompositions.WithLabel
+                            label="Filter by completions"
+                            checked={isZeroCompletionsHidden}
+                            onCheckedChange={handleHideZeroCompletionsChange}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Exclude well names">
+                        <TextInput value={wellExclusionText} onChange={handleWellExclusionChange} placeholder={"..."} />
+                    </SettingWrapper>
+                    <SettingWrapper label="Search well names">
+                        <TextInput value={wellSearchText} onChange={handleWellSearchChange} placeholder={"..."} />
+                    </SettingWrapper>
+                    <SettingWrapper label="Sort wells by">
                         <div className="flex items-center gap-2">
                             <div className="grow">
-                                <Dropdown
-                                    options={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
+                                <Combobox
+                                    items={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
                                         return { value: elm, label: SortWellsByEnumToStringMapping[elm] };
                                     })}
                                     value={sortWellsBy}
-                                    onChange={setSortWellsBy}
+                                    onValueChange={handleSortWellsByChange}
                                 />
                             </div>
-                            <div className="flex items-center">
-                                <Button
-                                    onClick={handleSetAscendingSortDirection}
-                                    title="Sort ascending"
-                                    startIcon={<ArrowUpwardSharp />}
-                                    variant={wellSortDirection === SortDirection.ASCENDING ? "contained" : undefined}
-                                    size="medium"
-                                />
-                                <Button
-                                    onClick={handleSetDescendingSortDirection}
-                                    title="Sort descending"
-                                    startIcon={<ArrowDownwardSharp />}
-                                    variant={wellSortDirection === SortDirection.DESCENDING ? "contained" : undefined}
-                                    size="medium"
-                                    name="test"
-                                />
-                            </div>
+                            <Button
+                                onClick={handleToggleSortDirection}
+                                title={
+                                    wellSortDirection === SortDirection.ASCENDING ? "Sort descending" : "Sort ascending"
+                                }
+                                iconOnly
+                                variant="contained"
+                            >
+                                {wellSortDirection === SortDirection.ASCENDING ? (
+                                    <SortAscendingIcon />
+                                ) : (
+                                    <SortDescendingIcon />
+                                )}
+                            </Button>
                         </div>
-                    </Label>
-                </div>
-            </CollapsibleGroup>
-        </div>
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 };
