@@ -102,7 +102,7 @@ function doRecursivelyBuildTableCellDefinitions<TData extends Record<string, any
         } else {
             const filterDef = tableColumn.filter;
 
-            const filterEnabled = filterDef === undefined || !!tableColumn.filter;
+            const filterEnabled = filterDef !== undefined && !!tableColumn.filter;
 
             const customImpl = typeof filterDef === "object";
             const filterRender = customImpl ? filterDef.render : undefined;

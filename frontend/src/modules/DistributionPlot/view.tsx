@@ -8,7 +8,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { ChannelReceiverChannelContent, ChannelReceiverReturnData } from "@framework/types/dataChannnel";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
-import { Tag } from "@lib/components/Tag";
+import { Tag } from "@lib/newComponents/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -152,7 +152,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             {content}
         </div>
     );

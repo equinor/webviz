@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { TableDeprecated as TableComponent } from "@lib/components/TableDeprecated";
 import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
@@ -84,8 +84,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isPending = isQueryFetching && areSelectedTablesComparable;
 
     return (
-        <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
+        <div ref={divRef} className="relative h-full w-full">
+            <StatusWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 <TableComponent
                     headings={headings}
                     data={tableRows}
@@ -93,7 +93,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     onHover={handleTableHover}
                     alternatingColumnColors
                 />
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }

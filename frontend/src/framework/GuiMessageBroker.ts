@@ -43,6 +43,7 @@ export enum GuiState {
     SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
     EnsemblesLoadingErrorInfoMap = "ensemblesLoadingErrorInfoMap",
     EnsembleLoadingErrorInfoDialogOpen = "ensembleLoadingErrorInfoDialogOpen",
+    IsActionBarVisible = "isActionBarVisible",
 }
 
 export enum GuiEvent {
@@ -136,6 +137,7 @@ type GuiStateValueTypes = {
     [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
     [GuiState.EnsemblesLoadingErrorInfoMap]: EnsembleLoadingErrorInfoMap;
     [GuiState.EnsembleLoadingErrorInfoDialogOpen]: boolean;
+    [GuiState.IsActionBarVisible]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -164,6 +166,7 @@ defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
 defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
+defaultStates.set(GuiState.IsActionBarVisible, true);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelIsCollapsed,
@@ -172,6 +175,7 @@ const persistentStates: GuiState[] = [
     GuiState.RightSettingsPanelIsCollapsed,
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
+    GuiState.IsActionBarVisible,
 ];
 
 export class GuiMessageBroker {

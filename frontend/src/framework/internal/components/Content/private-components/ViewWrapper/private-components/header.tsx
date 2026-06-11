@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { PopoverRootActions } from "@base-ui/react";
+import type { BaseUIEvent, PopoverRootActions } from "@base-ui/react";
 import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
 
 import {
@@ -24,14 +24,16 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/components/Badge";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
-import { Popover } from "@lib/components/Popover";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Badge } from "@lib/newComponents/Badge";
+import { Button } from "@lib/newComponents/Button";
+import { LinearProgress } from "@lib/newComponents/LinearProgress";
+import { Popover } from "@lib/newComponents/Popover";
+import { Separator } from "@lib/newComponents/Separator";
+import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 
 export type HeaderProps = {
     workbench: Workbench;
@@ -122,11 +124,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "flex items-center gap-0.5 px-1 select-none shadow-sm relative touch-none text-lg",
+                "px-xs gap-x-xs shadow-elevation-raised py-4xs relative flex touch-none items-center text-lg select-none",
                 {
-                    "bg-red-100": hasErrors || invalidPersistedState,
-                    "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
-                    "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState,
+                    "bg-danger-canvas": hasErrors || invalidPersistedState,
+                    "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
+                    "bg-neutral-canvas": !hasErrors && !props.isMinimized && !invalidPersistedState,
                 },
             )}
             onDoubleClick={handleDoubleClick}
@@ -140,10 +142,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isSnapshotMode={isSnapshot}
                 onPointerDown={props.onPointerDown}
             />
-
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
 
-            <HeaderSeparator />
+            <Separator orientation="vertical" />
 
             <StatusIndicator
                 workbench={props.workbench}
@@ -151,7 +152,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isMinimized={props.isMinimized}
             />
 
-            <HeaderSeparator />
+            <Separator orientation="vertical" />
 
             <DataChannelButtons
                 workbench={props.workbench}
@@ -161,35 +162,53 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isSnapshotMode={isSnapshot}
             />
 
-            <HeaderSeparator />
+            <Separator orientation="vertical" />
 
             {props.isMaximized ? (
-                <DenseIconButton onPointerDown={handleRestoreClick} onPointerUp={handlePointerUp} title="Restore">
-                    <CloseFullscreen fontSize="inherit" />
-                </DenseIconButton>
+                <Tooltip title="Restore">
+                    <Button
+                        onPointerDown={handleRestoreClick}
+                        onPointerUp={handlePointerUp}
+                        title="Restore"
+                        variant="ghost"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <CloseFullscreen fontSize="inherit" />
+                    </Button>
+                </Tooltip>
             ) : (
-                <DenseIconButton onPointerDown={handleMaximizeClick} onPointerUp={handlePointerUp} title="Maximize">
-                    <OpenInFull fontSize="inherit" />
-                </DenseIconButton>
+                <Tooltip title="Maximize">
+                    <Button
+                        onPointerDown={handleMaximizeClick}
+                        onPointerUp={handlePointerUp}
+                        title="Maximize"
+                        variant="ghost"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <OpenInFull fontSize="inherit" />
+                    </Button>
+                </Tooltip>
             )}
-
-            <DenseIconButton
-                onPointerDown={handleRemoveClick}
-                onPointerUp={handlePointerUp}
-                disabled={isSnapshot}
-                title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}
-                colorScheme={DenseIconButtonColorScheme.DANGER}
-            >
-                <Close fontSize="inherit" />
-            </DenseIconButton>
+            <Tooltip title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
+                <Button
+                    onPointerDown={handleRemoveClick}
+                    onPointerUp={handlePointerUp}
+                    disabled={isSnapshot}
+                    tone="danger"
+                    variant="ghost"
+                    size="small"
+                    iconOnly
+                >
+                    <Close fontSize="inherit" />
+                </Button>
+            </Tooltip>
         </div>
     );
 };
-
-function HeaderSeparator(): React.ReactNode {
-    // The funky-looking class selector hides all separators that directly follows another separator
-    return <div className="[:where(&+&)]:hidden bg-slate-300 w-px h-1/2 mx-1" />;
-}
 
 type ModuleLoadingBarProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -200,11 +219,11 @@ function ModuleLoadingBar(props: ModuleLoadingBarProps) {
 
     return (
         <div
-            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
+            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full", {
                 hidden: !isLoading,
             })}
         >
-            <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
+            <LinearProgress variant="indeterminate" />
         </div>
     );
 }
@@ -229,19 +248,22 @@ function ModuleTitle(props: ModuleTitleProps) {
 
     return (
         <div
-            className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
-                "cursor-grabbing": props.isDragged,
-                "cursor-move": !props.isDragged && !props.isSnapshotMode,
-            })}
+            className={resolveClassNames(
+                "py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center",
+                {
+                    "cursor-grabbing": props.isDragged,
+                    "cursor-move": !props.isDragged && !props.isSnapshotMode,
+                },
+            )}
             onPointerDown={handlePointerDown}
         >
-            <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
+            <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>
                 {title}
             </span>
             {devToolsVisible && (
                 <span
                     title={props.moduleInstance.getId()}
-                    className="font-light text-xs ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
+                    className="text-body-xs min-w-0 overflow-hidden font-light text-ellipsis whitespace-nowrap"
                 >
                     {props.moduleInstance.getId()}
                 </span>
@@ -258,18 +280,18 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
 
     return (
-        <>
+        <div className="gap-x-2xs flex items-center">
             {syncedSettings.map((setting) => (
                 <Tooltip
-                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
+                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
                     key={setting}
                 >
-                    <span className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help font-bold">
+                    <span className="bg-info-strong px-3xs py-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
                         {SyncSettingsMeta[setting].abbreviation}
                     </span>
                 </Tooltip>
             ))}
-        </>
+        </div>
     );
 }
 
@@ -358,29 +380,37 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     return (
         <>
             {hasDataChannel && (
-                <DenseIconButton
+                <Button
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="cursor-grab touch-none"
+                    layoutClassName="cursor-grab! touch-none"
                     title={makeChannelOutButtonTitle()}
                     disabled={props.isSnapshotMode}
                     onPointerDown={handleDataChannelOriginPointerDown}
+                    iconOnly
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
                 >
-                    <Badge badgeContent={numOutgoingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                    <Badge badgeContent={numOutgoingConnections} invisible={props.isMinimized}>
                         <Output fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
             {hasDataReceiver && (
-                <DenseIconButton
+                <Button
                     title={makeChannelInButtonTitle()}
                     onPointerDown={handleReceiverPointerDown}
                     onPointerUp={handleReceiversPointerUp}
+                    iconOnly
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
                 >
-                    <Badge badgeContent={numIncomingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                    <Badge badgeContent={numIncomingConnections} invisible={props.isMinimized}>
                         <Input fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
         </>
     );
@@ -410,7 +440,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         GuiState.RightSettingsPanelWidthInPercent,
     );
 
-    function handleShowLogClick(e: React.PointerEvent<HTMLButtonElement>) {
+    function handleShowLogClick(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -425,17 +455,20 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <ul className="flex flex-col p-2 gap-2">
+            <ul className="gap-y-2xs px-2xs py-2xs flex flex-col">
                 {hotStatusMessages.map((entry, i) => (
-                    <li key={`${entry.message}-${i}`} className="text-xs text-gray-500 tracking-wider px-3 py-1">
-                        {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
-                        {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
-                        <span
-                            className="ml-2 overflow-hidden text-ellipsis min-w-0 whitespace-nowrap"
+                    <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
+                        <Typography
+                            as="span"
+                            size="xs"
                             title={entry.message}
+                            tone="neutral"
+                            layoutClassName="gap-x-2xs flex items-center"
                         >
+                            {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
+                            {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
                             {entry.message}
-                        </span>
+                        </Typography>
                     </li>
                 ))}
             </ul>
@@ -447,8 +480,8 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (isLoading) {
         stateIndicators.push(
             <Tooltip key="header-loading" title="This module is currently loading new content.">
-                <div className="flex items-center justify-center px-1 cursor-help">
-                    <CircularProgress size="small" />
+                <div className="flex cursor-help items-center justify-center px-1">
+                    <CircularProgress size={16} />
                 </div>
             </Tooltip>,
         );
@@ -467,59 +500,58 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
-            <Popover
-                actionsRef={popoverActionRef}
-                triggerTitle="Show status messages"
-                content={
-                    <>
+            <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
+                <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
+                    <Tooltip title={badgeTitle} placement="bottom">
+                        <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
+                            <Error
+                                fontSize="inherit"
+                                color="error"
+                                style={{ display: numErrors === 0 ? "none" : "block" }}
+                            />
+                            <div className="overflow-hidden">
+                                <Warning
+                                    fontSize="inherit"
+                                    color="warning"
+                                    style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                    className={resolveClassNames({
+                                        "-ml-3": numErrors > 0,
+                                    })}
+                                />
+                            </div>
+                        </Badge>
+                    </Tooltip>
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
                         {makeHotStatusMessages()}
                         {log.length > 0 && (
                             <>
-                                <div className="bg-gray-300 h-0.5 w-full my-1" />
-                                <li>
-                                    <button
-                                        className="text-sm w-full text-left hover:bg-blue-100 cursor-pointer flex items-center gap-2 py-2 px-4"
-                                        onClick={handleShowLogClick}
-                                    >
-                                        <History fontSize="inherit" /> Show complete log
-                                    </button>
-                                </li>
+                                <Separator orientation="horizontal" />
+                                <Button
+                                    variant="ghost"
+                                    tone="neutral"
+                                    size="small"
+                                    onClick={handleShowLogClick}
+                                    layoutClassName="w-full"
+                                >
+                                    <History fontSize="inherit" /> Show complete log
+                                </Button>
                             </>
                         )}
-                    </>
-                }
-            >
-                <Badge
-                    badgeContent={numErrors + numWarnings}
-                    className="flex p-0.5"
-                    invisible={props.isMinimized}
-                    title={badgeTitle}
-                >
-                    <Error fontSize="inherit" color="error" style={{ display: numErrors === 0 ? "none" : "block" }} />
-                    <div className="overflow-hidden">
-                        <Warning
-                            fontSize="inherit"
-                            color="warning"
-                            style={{ display: numWarnings === 0 ? "none" : "block" }}
-                            className={resolveClassNames({
-                                "-ml-3": numErrors > 0,
-                            })}
-                        />
-                    </div>
-                </Badge>
-            </Popover>,
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>,
         );
     }
 
     if (stateIndicators.length === 0) {
         stateIndicators.push(
-            <DenseIconButton
-                key="header-module-log"
-                onPointerDown={handleShowLogClick}
-                title="Show complete log for this module"
-            >
-                <History fontSize="inherit" />
-            </DenseIconButton>,
+            <Tooltip title="Show complete log for this module" key="header-module-log">
+                <Button onPointerDown={handleShowLogClick} variant="ghost" tone="neutral" size="small" iconOnly>
+                    <History fontSize="inherit" />
+                </Button>
+            </Tooltip>,
         );
     }
 

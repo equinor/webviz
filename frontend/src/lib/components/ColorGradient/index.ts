@@ -1,1 +1,0 @@
-export { ColorGradient } from "./colorGradient";

@@ -1,18 +1,21 @@
 import type React from "react";
 
-import { DragIndicator, Remove } from "@mui/icons-material";
+import { Delete, DragIndicator } from "@mui/icons-material";
 
-import { ColorSelect } from "@lib/components/ColorSelect";
-import { IconButton } from "@lib/components/IconButton";
-import { Input } from "@lib/components/Input";
-import { SortableList } from "@lib/components/SortableList";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { SortableList } from "@lib/newComponents/SortableList";
+import { Button } from "@lib/newComponents/Button";
+import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { Table } from "@lib/newComponents/Table";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
 
 export type RegularEnsembleRowProps = {
     ensembleSetting: InternalRegularEnsembleSetting;
     onUpdate: (newItem: InternalRegularEnsembleSetting) => void;
-    onDelete: (item: InternalRegularEnsembleSetting) => void;
+    onDelete: (item: RegularEnsembleIdent) => void;
 };
 
 export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactNode {
@@ -31,7 +34,7 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
     }
 
     function onDelete() {
-        props.onDelete(props.ensembleSetting);
+        props.onDelete(props.ensembleSetting.ensembleIdent);
     }
 
     return (
@@ -39,38 +42,39 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
             key={props.ensembleSetting.ensembleIdent.toString()}
             id={props.ensembleSetting.ensembleIdent.toString()}
         >
-            <tr className="hover:bg-slate-100 odd:bg-slate-50 align-center">
-                <td>
-                    <SortableList.DragHandle className="flex justify-center items-center">
+            <Table.Row>
+                <Table.Cell layoutClassName="*:justify-center">
+                    <SortableList.DragHandle>
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </SortableList.DragHandle>
-                </td>
-                <td className="p-2">
-                    <ColorSelect value={props.ensembleSetting.color} onChange={onColorChange} />
-                </td>
-                <td className="p-2">
-                    <Input
+                </Table.Cell>
+                <Table.Cell>
+                    <ColorSelect size="small" value={props.ensembleSetting.color} onChange={onColorChange} />
+                </Table.Cell>
+                <Table.Cell>
+                    <TextInput
+                        size="small"
                         value={props.ensembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
                         onValueChange={onNameChange}
                     />
-                </td>
-                <td className="p-2">
-                    <div className="truncate" title={props.ensembleSetting.caseName}>
-                        {props.ensembleSetting.caseName}
-                    </div>
-                </td>
-                <td className="p-2">
+                </Table.Cell>
+                <Table.Cell layoutClassName="truncate" title={props.ensembleSetting.caseName}>
+                    {props.ensembleSetting.caseName}
+                </Table.Cell>
+                <Table.Cell>
                     <div className="truncate" title={props.ensembleSetting.ensembleIdent.getEnsembleName()}>
                         {props.ensembleSetting.ensembleIdent.getEnsembleName()}
                     </div>
-                </td>
-                <td className="p-2">
-                    <IconButton title="Remove ensemble from selection" color="danger" onClick={onDelete}>
-                        <Remove fontSize="small" />
-                    </IconButton>
-                </td>
-            </tr>
+                </Table.Cell>
+                <Table.Cell>
+                    <Tooltip content="Remove this ensemble from the list" delay="medium">
+                        <Button variant="ghost" tone="danger" onClick={onDelete} size="small" iconOnly>
+                            <Delete fontSize="inherit" />
+                        </Button>
+                    </Tooltip>
+                </Table.Cell>
+            </Table.Row>
         </SortableList.Item>
     );
 }

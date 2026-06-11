@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -9,7 +9,11 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arraySingleSelect";
 
 type ValueType = number | null;
 type ValueConstraintsType = number[];
@@ -51,12 +55,11 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
             });
 
             return (
-                <Dropdown
-                    options={options}
+                <ComboboxCompositions.WithBrowseButtons
+                    items={options}
                     value={!props.isOverridden ? props.value : props.overriddenValue}
-                    onChange={props.onValueChange}
+                    onValueChange={props.onValueChange}
                     disabled={props.isOverridden}
-                    showArrows
                 />
             );
         };

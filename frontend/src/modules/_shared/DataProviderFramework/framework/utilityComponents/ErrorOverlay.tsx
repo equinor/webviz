@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -51,8 +51,8 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
                     </ul>
                 </div>
             </Dialog>
-            <div className="absolute z-20 inset-0 bg-red-100/80 h-full w-full flex flex-col gap-2 p-4 overflow-hidden items-center justify-center">
-                <Button onClick={() => setDialogOpen(true)} variant="contained" size="small" color="danger">
+            <div className="absolute inset-0 z-20 flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden bg-red-100/80 p-4">
+                <Button onClick={() => setDialogOpen(true)} variant="contained" size="small" tone="danger">
                     Error loading - click for details
                 </Button>
             </div>

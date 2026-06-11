@@ -10,12 +10,12 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper, type SettingAnnotation } from "@lib/components/SettingWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+import { SettingWrapper, type SettingAnnotation } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -268,10 +268,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         value={selectedEnsembleIdents}
                         allowDeltaEnsembles={false}
                         ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                        onChange={handleEnsembleSelectionChange}
+                        onValueChange={handleEnsembleSelectionChange}
                     />
                 </SettingWrapper>
-                <PendingWrapper isPending={tableNamesArePending} errorMessage={tableNamesErrorMessage}>
+                <StatusWrapper isPending={tableNamesArePending} errorMessage={tableNamesErrorMessage}>
                     {showTableSetting && (
                         <SettingWrapper label="Table" annotations={tableNameAnnotations}>
                             {showTableSelector ? (
@@ -287,9 +287,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             )}
                         </SettingWrapper>
                     )}
-                </PendingWrapper>
+                </StatusWrapper>
             </CollapsibleGroup>
-            <PendingWrapper isPending={tableDefinitionsArePending} errorMessage={tableDefinitionsErrorMessage}>
+            <StatusWrapper isPending={tableDefinitionsArePending} errorMessage={tableDefinitionsErrorMessage}>
                 <CollapsibleGroup expanded={true} title="Curve selection" contentClassName="flex flex-col gap-2">
                     <SettingWrapper label="Curve type">
                         <RadioGroup
@@ -378,7 +378,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         </SettingWrapper>
                     )}
                 </CollapsibleGroup>
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }

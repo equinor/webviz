@@ -3,7 +3,6 @@ import React from "react";
 import {
     Add,
     Check,
-    CropSquare,
     FilterCenterFocus,
     KeyboardDoubleArrowLeft,
     KeyboardDoubleArrowRight,
@@ -11,14 +10,13 @@ import {
     Remove,
 } from "@mui/icons-material";
 
-import { Button } from "@lib/components/Button";
-import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { Input } from "@lib/components/Input";
-import { ToggleButton } from "@lib/components/ToggleButton";
-import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
+import { AddPathPointIcon, AxesLayerIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
+import { Button } from "@lib/newComponents/Button";
+import { Separator } from "@lib/newComponents/Separator";
+import { TextInput } from "@lib/newComponents/TextInput";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
+import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
 import { type PolylinesPlugin, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 
@@ -97,50 +95,75 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="flex flex-col items-left gap-1 text-md justify-start">
-                <div className="flex items-center gap-1 justify-start">
-                    <Button onClick={handleFitInViewClick} title="Reset view to fit all objects">
+            <div className="items-left text-md flex flex-col justify-start gap-1">
+                <div className="flex items-center justify-start gap-1">
+                    <Button
+                        onClick={handleFitInViewClick}
+                        title="Reset view to fit all objects"
+                        iconOnly
+                        size="small"
+                        variant="ghost"
+                    >
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
                     <div
-                        className={resolveClassNames("gap-1 items-center justify-start", expanded ? "flex" : "hidden")}
+                        className={resolveClassNames("items-center justify-start gap-1", expanded ? "flex" : "hidden")}
                     >
-                        <ToggleButton onToggle={handleGridToggle} title="Toggle bounding box" active={gridVisible}>
-                            <CropSquare fontSize="inherit" />
-                        </ToggleButton>
-                        <ToolBarDivider />
-                        <ToggleButton
-                            onToggle={handleTogglePolylineEditing}
+                        <Button
+                            onClick={handleGridToggle}
+                            title="Toggle axes visibility"
+                            pressed={gridVisible}
+                            iconOnly
+                            size="small"
+                            variant="ghost"
+                        >
+                            <AxesLayerIcon fontSize="inherit" />
+                        </Button>
+                        <Separator orientation="vertical" />
+                        <Button
+                            onClick={handleTogglePolylineEditing}
                             title="Edit polylines"
-                            active={polylineEditingMode !== PolylineEditingMode.DISABLED}
+                            pressed={polylineEditingMode !== PolylineEditingMode.DISABLED}
+                            iconOnly
+                            size="small"
+                            variant="ghost"
                         >
                             <Polyline fontSize="inherit" />
-                        </ToggleButton>
+                        </Button>
                         {!props.hideVerticalScaleControls && (
                             <>
-                                <ToolBarDivider />
-                                <HoldPressedIntervalCallbackButton
-                                    onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
+                                <Separator orientation="vertical" />
+                                <Button
+                                    onClick={handleVerticalScaleDecrease}
                                     title="Decrease vertical scale"
+                                    iconOnly
+                                    size="small"
+                                    variant="ghost"
                                 >
                                     <Remove fontSize="inherit" />
-                                </HoldPressedIntervalCallbackButton>
+                                </Button>
                                 <span title="Vertical scale" className="w-8 text-center">
                                     {props.verticalScale}
                                 </span>
-                                <HoldPressedIntervalCallbackButton
-                                    onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
+                                <Button
+                                    onClick={handleVerticalScaleIncrease}
                                     title="Increase vertical scale"
+                                    iconOnly
+                                    size="small"
+                                    variant="ghost"
                                 >
                                     <Add fontSize="inherit" />
-                                </HoldPressedIntervalCallbackButton>
+                                </Button>
                             </>
                         )}
                     </div>
-                    <ToolBarDivider />
+                    <Separator orientation="vertical" />
                     <Button
                         title={expanded ? "Collapse toolbar" : "Expand toolbar"}
                         onClick={() => setExpanded(!expanded)}
+                        iconOnly
+                        size="small"
+                        variant="ghost"
                     >
                         {expanded ? (
                             <KeyboardDoubleArrowLeft fontSize="inherit" />
@@ -151,51 +174,71 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                 </div>
                 {polylineEditingMode !== PolylineEditingMode.DISABLED && expanded && (
                     <>
-                        <div className="flex w-full items-center gap-1 text-md py-1 bg-slate-100">
-                            <ToggleButton
-                                active={polylineEditingMode === PolylineEditingMode.DRAW}
+                        <div className="text-md gap-x-3xs bg-canvas py-3xs flex w-full items-center">
+                            <Button
+                                pressed={polylineEditingMode === PolylineEditingMode.DRAW}
                                 title="Draw polyline"
-                                onToggle={(active) =>
+                                onClick={() =>
                                     handlePolylineEditingModeChange(
-                                        active ? PolylineEditingMode.DRAW : PolylineEditingMode.IDLE,
+                                        polylineEditingMode === PolylineEditingMode.DRAW
+                                            ? PolylineEditingMode.IDLE
+                                            : PolylineEditingMode.DRAW,
                                     )
                                 }
+                                iconOnly
+                                size="small"
+                                variant="ghost"
                             >
                                 <DrawPathIcon fontSize="inherit" />
-                            </ToggleButton>
-                            <ToggleButton
-                                active={polylineEditingMode === PolylineEditingMode.ADD_POINT}
+                            </Button>
+                            <Button
+                                pressed={polylineEditingMode === PolylineEditingMode.ADD_POINT}
                                 disabled={!editingPolylineId}
                                 title="Add point"
-                                onToggle={(active) =>
+                                onClick={() =>
                                     handlePolylineEditingModeChange(
-                                        active ? PolylineEditingMode.ADD_POINT : PolylineEditingMode.IDLE,
+                                        polylineEditingMode === PolylineEditingMode.ADD_POINT
+                                            ? PolylineEditingMode.IDLE
+                                            : PolylineEditingMode.ADD_POINT,
                                     )
                                 }
+                                iconOnly
+                                size="small"
+                                variant="ghost"
                             >
                                 <AddPathPointIcon fontSize="inherit" />
-                            </ToggleButton>
-                            <ToggleButton
-                                active={polylineEditingMode === PolylineEditingMode.REMOVE_POINT}
+                            </Button>
+                            <Button
+                                pressed={polylineEditingMode === PolylineEditingMode.REMOVE_POINT}
                                 disabled={!editingPolylineId}
                                 title="Remove point"
-                                onToggle={(active) =>
+                                onClick={() =>
                                     handlePolylineEditingModeChange(
-                                        active ? PolylineEditingMode.REMOVE_POINT : PolylineEditingMode.IDLE,
+                                        polylineEditingMode === PolylineEditingMode.REMOVE_POINT
+                                            ? PolylineEditingMode.IDLE
+                                            : PolylineEditingMode.REMOVE_POINT,
                                     )
                                 }
+                                iconOnly
+                                size="small"
+                                variant="ghost"
                             >
                                 <RemovePathPointIcon fontSize="inherit" />
-                            </ToggleButton>
-                            <Input
+                            </Button>
+                            <TextInput
                                 disabled={!editingPolylineId}
-                                value={editingPolylineId ? polylineName : ""}
+                                value={editingPolylineId ? (polylineName ?? "") : ""}
                                 onChange={handlePolylineNameChange}
+                                placeholder="Polyline name"
+                                size="small"
                             />
                             <Button
                                 title={"Save polyline"}
                                 onClick={handleSavePolylineClick}
                                 disabled={!editingPolylineId}
+                                iconOnly
+                                size="small"
+                                variant="ghost"
                             >
                                 <Check fontSize="inherit" />
                             </Button>

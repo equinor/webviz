@@ -7,9 +7,9 @@ import {
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dialog } from "@lib/components/Dialog";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Dialog } from "@lib/newComponents/Dialog";
 import { timeAgo } from "@lib/utils/dates";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
@@ -65,43 +65,40 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     }
 
     return (
-        <Dialog
-            open={isOpen}
-            modal
-            showCloseCross={false}
-            title="Do you want to recover your session?"
-            actions={
-                <>
-                    <Button onClick={handleOpen} variant="text" disabled={isLoading}>
-                        {isLoading && <CircularProgress size="small" />}
-                        Recover state
-                    </Button>
-                    <Button onClick={handleDiscard} variant="text" color="danger" disabled={isLoading}>
-                        Discard
-                    </Button>
-                </>
-            }
-            width={800}
-        >
-            We found an unsaved version of your current session in your local storage. You can either discard or recover
-            it.
-            <div className="flex gap-4 mt-4">
-                <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-col gap-1">
-                        <strong className="text-xs text-gray-500">Title</strong>
-                        {sessionData.metadata.title}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <strong className="text-xs text-gray-500">Last modified</strong>
-                        {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <strong className="text-xs text-gray-500">Last persisted</strong>
-                        {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
+        <Dialog.Popup open={isOpen} modal width={800}>
+            <Dialog.Header>
+                <Dialog.Title>Do you want to recover your session?</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body layoutClassName="flex flex-col gap-y-xs">
+                We found an unsaved version of your current session in your local storage. You can either delete or
+                recover it.
+                <div className="gap-x-sm flex">
+                    <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
+                    <div className="gap-y-xs flex flex-col">
+                        <div className="gap-y-3xs flex flex-col">
+                            <strong className="text-body-xs text-neutral-subtle">Title</strong>
+                            {sessionData.metadata.title}
+                        </div>
+                        <div className="gap-y-3xs flex flex-col">
+                            <strong className="text-body-xs text-neutral-subtle">Last modified</strong>
+                            {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
+                        </div>
+                        <div className="gap-y-3xs flex flex-col">
+                            <strong className="text-body-xs text-neutral-subtle">Last persisted</strong>
+                            {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
+                        </div>
                     </div>
                 </div>
-            </div>
-        </Dialog>
+            </Dialog.Body>
+            <Dialog.Actions>
+                <Button onClick={handleDiscard} variant="ghost" tone="danger" disabled={isLoading}>
+                    Delete session
+                </Button>
+                <Button onClick={handleOpen} variant="contained" disabled={isLoading}>
+                    {isLoading && <CircularProgress size={16} />}
+                    Recover session
+                </Button>
+            </Dialog.Actions>
+        </Dialog.Popup>
     );
 }

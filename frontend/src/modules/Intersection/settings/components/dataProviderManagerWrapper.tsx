@@ -1,6 +1,6 @@
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, grid_layer, settings, surface_layer, timeline, wellbore } from "@equinor/eds-icons";
-import { Panorama, SettingsApplications } from "@mui/icons-material";
+import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -26,6 +26,7 @@ import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramew
 import { MAX_INTERSECTION_VIEWS } from "@modules/Intersection/view/typesAndEnums";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
+import { Button } from "@lib/newComponents/Button";
 
 export type DataProviderManagerWrapperProps = {
     dataProviderManager: DataProviderManager;
@@ -41,20 +42,24 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
     const groupDelegate = props.dataProviderManager.getGroupDelegate();
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
+    function handleAddView(groupDelegate: GroupDelegate) {
+        const viewCount = groupDelegate.getDescendantItems(
+            (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
+        ).length;
+        if (viewCount < MAX_INTERSECTION_VIEWS) {
+            const view = GroupRegistry.makeGroup(
+                GroupType.INTERSECTION_VIEW,
+                props.dataProviderManager,
+                colorSet.getNextColor(),
+            );
+            groupDelegate.appendChild(view);
+        }
+    }
+
     function handleAction(identifier: string, groupDelegate: GroupDelegate) {
         switch (identifier) {
             case "view": {
-                const viewCount = groupDelegate.getDescendantItems(
-                    (item) => item instanceof Group && item.getGroupType() === GroupType.INTERSECTION_VIEW,
-                ).length;
-                if (viewCount < MAX_INTERSECTION_VIEWS) {
-                    const view = GroupRegistry.makeGroup(
-                        GroupType.INTERSECTION_VIEW,
-                        props.dataProviderManager,
-                        colorSet.getNextColor(),
-                    );
-                    groupDelegate.appendChild(view);
-                }
+                handleAddView(groupDelegate);
                 return;
             }
             case "context-boundary": {
@@ -190,6 +195,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             groupActions={makeActionsForGroup}
             onAction={handleAction}
             isMoveAllowed={checkIfItemMoveIsAllowed}
+            emptyContentPlaceholder={
+                <Button tone="accent" onClick={() => handleAddView(groupDelegate)}>
+                    <Add style={{ fontSize: 16 }} /> Add first view
+                </Button>
+            }
         />
     );
 }
@@ -218,27 +228,27 @@ const ADD_CONTEXT_BOUNDARY_ACTION = {
 const SHARED_SETTINGS_CHILDREN = [
     {
         identifier: "intersection-source",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Intersection source",
     },
     {
         identifier: "ensemble",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Ensemble",
     },
     {
         identifier: "realization",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Realization",
     },
     {
         identifier: "attribute",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Attribute",
     },
     {
         identifier: "date",
-        icon: <Icon data={settings} fontSize="small" />,
+        icon: <Icon data={settings} size={16} />,
         label: "Date",
     },
 ];
@@ -265,7 +275,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "seismic",
-                        icon: <Icon data={timeline} fontSize="small" />,
+                        icon: <Icon data={timeline} size={16} />,
                         label: "Seismic",
                     },
                 ],
@@ -275,7 +285,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "realization-grid",
-                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        icon: <Icon data={grid_layer} size={16} />,
                         label: "Realization Grid",
                     },
                 ],
@@ -285,12 +295,12 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "realization-surfaces",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        icon: <Icon data={surface_layer} size={16} />,
                         label: "Realization Surfaces",
                     },
                     {
                         identifier: "surfaces-realizations-uncertainty",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        icon: <Icon data={surface_layer} size={16} />,
                         label: "Surfaces Realizations Uncertainty",
                     },
                 ],
@@ -300,7 +310,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
                 children: [
                     {
                         identifier: "wellbore-picks",
-                        icon: <Icon data={wellbore} fontSize="small" />,
+                        icon: <Icon data={wellbore} size={16} />,
                         label: "Wellbore Picks",
                     },
                 ],
@@ -313,7 +323,7 @@ const VIEW_ACTIONS: ActionGroup[] = [
         children: [
             {
                 identifier: "color-scale",
-                icon: <Icon data={color_palette} fontSize="small" />,
+                icon: <Icon data={color_palette} size={16} />,
                 label: "Color scale",
             },
         ],

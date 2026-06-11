@@ -1,15 +1,16 @@
 import type React from "react";
 
-import { DragIndicator, FolderOpen, Remove, WarningOutlined } from "@mui/icons-material";
+import { Delete, DragIndicator, FolderOpen, WarningOutlined } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorSelect } from "@lib/components/ColorSelect";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
-import { IconButton } from "@lib/components/IconButton";
-import { Input } from "@lib/components/Input";
-import { SortableList } from "@lib/components/SortableList";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { SortableList } from "@lib/newComponents/SortableList";
+import { Button } from "@lib/newComponents/Button";
+import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { Combobox } from "@lib/newComponents/Combobox";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { Table } from "@lib/newComponents/Table";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalDeltaEnsembleSetting } from "../../types";
 
@@ -40,11 +41,10 @@ function getEnsembleIdentFromDropdownValue(value: string): RegularEnsembleIdent 
     return RegularEnsembleIdent.fromString(value);
 }
 
-function makeDropdownOptions(regularEnsembleOptions: RegularEnsembleOption[]): DropdownOption[] {
+function makeDropdownOptions(regularEnsembleOptions: RegularEnsembleOption[]): ComboboxItem<string>[] {
     return regularEnsembleOptions.map((option) => ({
         value: createEnsembleOptionValue(option.ensembleIdent),
         label: option.customName ?? `${option.ensembleIdent.getEnsembleName()} (${option.caseName})`,
-        adornment: option.adornment,
     }));
 }
 
@@ -56,7 +56,6 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         {
             value: SELECT_OTHER_VALUE,
             label: "Select other ensemble...",
-            adornment: <FolderOpen fontSize="small" />,
         },
     ];
 
@@ -77,7 +76,10 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         });
     }
 
-    function onComparisonEnsembleChange(value: string) {
+    function handleComparisonEnsembleChange(value: string | null) {
+        if (value === null) {
+            return;
+        }
         if (value === SELECT_OTHER_VALUE) {
             props.onRequestOtherComparisonEnsemble({
                 ...props.deltaEnsembleSetting,
@@ -90,7 +92,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         const ensIdent = getEnsembleIdentFromDropdownValue(value);
         const ensOptions = props.regularEnsembleOptions.find((option) => option.ensembleIdent.equals(ensIdent));
         if (!ensOptions) {
-            throw new Error("Selected reference ensemble not found in regular ensemble options");
+            throw new Error("Selected comparison ensemble not found in regular ensemble options");
         }
 
         props.onUpdate({
@@ -100,7 +102,10 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         });
     }
 
-    function onReferenceEnsembleChange(value: string) {
+    function handleReferenceEnsembleChange(value: string | null) {
+        if (value === null) {
+            return;
+        }
         if (value === SELECT_OTHER_VALUE) {
             props.onRequestOtherReferenceEnsemble({
                 ...props.deltaEnsembleSetting,
@@ -127,64 +132,75 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
         props.onDelete(props.deltaEnsembleSetting);
     }
 
+    function renderEnsembleIdentAdornment(value: string) {
+        if (value === SELECT_OTHER_VALUE) return <FolderOpen fontSize="small" />;
+
+        const ensemble = props.regularEnsembleOptions.find((ens) => ens.ensembleIdent.toString() === value);
+
+        return ensemble?.adornment;
+    }
+
     const isValid =
         !!props.deltaEnsembleSetting.comparisonEnsembleIdent && !!props.deltaEnsembleSetting.referenceEnsembleIdent;
 
     return (
         <SortableList.Item key={props.deltaEnsembleSetting.uuid} id={props.deltaEnsembleSetting.uuid}>
-            <tr
-                className={resolveClassNames("align-center hover:bg-slate-100", {
-                    "odd:bg-blue-100 even:bg-blue-200": isValid && props.isDuplicate,
-                    "odd:bg-slate-50": !props.isDuplicate,
-                })}
-            >
-                <td>
-                    <SortableList.DragHandle className="flex justify-center items-center">
+            <Table.Row>
+                <Table.Cell layoutClassName="*:justify-center">
+                    <SortableList.DragHandle className="flex items-center justify-center">
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </SortableList.DragHandle>
-                </td>
-                <td className="p-2">
-                    <ColorSelect value={props.deltaEnsembleSetting.color} onChange={onColorChange} />
-                </td>
-                <td className="p-2">
-                    <Input
+                </Table.Cell>
+                <Table.Cell>
+                    <ColorSelect size="small" value={props.deltaEnsembleSetting.color} onChange={onColorChange} />
+                </Table.Cell>
+                <Table.Cell>
+                    <TextInput
+                        size="small"
                         value={props.deltaEnsembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
                         onValueChange={onNameChange}
                     />
-                </td>
-                <td className="p-2">
-                    <Dropdown
+                </Table.Cell>
+                <Table.Cell>
+                    <Combobox
+                        size="small"
                         value={comparisonEnsValue ?? ""}
                         placeholder="Select comparison ensemble..."
-                        options={ensembleDropdownOptions}
-                        onChange={onComparisonEnsembleChange}
+                        items={ensembleDropdownOptions}
+                        onValueChange={handleComparisonEnsembleChange}
+                        renderItemAdornment={renderEnsembleIdentAdornment}
                     />
-                </td>
-                <td className="p-2">
-                    <Dropdown
-                        value={referenceEnsValue ?? ""}
-                        placeholder="Select reference ensemble..."
-                        options={ensembleDropdownOptions}
-                        onChange={onReferenceEnsembleChange}
-                    />
-                </td>
-                <td className="p-2">
-                    <div className="flex flex-row">
-                        <IconButton color="danger" title="Remove delta ensemble from selection" onClick={onDelete}>
-                            <Remove fontSize="small" />
-                        </IconButton>
-                        {props.isDuplicate && (
-                            <IconButton
-                                className="ml-2 cursor-help"
-                                title="This delta ensemble is a duplicate of another delta ensemble in the selection."
-                            >
-                                <WarningOutlined fontSize="small" className="text-indigo-600" />
-                            </IconButton>
+                </Table.Cell>
+                <Table.Cell>
+                    <div className="gap-y-2xs flex items-center">
+                        <Combobox
+                            size="small"
+                            value={referenceEnsValue ?? ""}
+                            placeholder="Select reference ensemble..."
+                            items={ensembleDropdownOptions}
+                            onValueChange={handleReferenceEnsembleChange}
+                            renderItemAdornment={renderEnsembleIdentAdornment}
+                        />
+                        {isValid && props.isDuplicate && (
+                            <Tooltip content="This delta ensemble is a duplicate of another delta ensemble in the selection.">
+                                <span tabIndex={0} className="text-warning-subtle inline-block rounded">
+                                    <WarningOutlined fontSize="small" />
+                                </span>
+                            </Tooltip>
                         )}
                     </div>
-                </td>
-            </tr>
+                </Table.Cell>
+                <Table.Cell>
+                    <div className="flex flex-row">
+                        <Tooltip content="Remove delta ensemble from selection">
+                            <Button variant="ghost" tone="danger" size="small" iconOnly onClick={onDelete}>
+                                <Delete fontSize="inherit" />
+                            </Button>
+                        </Tooltip>
+                    </div>
+                </Table.Cell>
+            </Table.Row>
         </SortableList.Item>
     );
 }

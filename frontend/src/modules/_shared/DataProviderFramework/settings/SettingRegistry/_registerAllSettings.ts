@@ -107,7 +107,7 @@ SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSe
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
     customConstructorParameters: [{ extensionLengthConfig: { min: 0, max: 5000, defaultValue: 500 } }],
 });
-SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity [%]", SliderNumberSetting, {
+SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity", SliderNumberSetting, {
     customConstructorParameters: [{ minMax: { min: 0, max: 100 }, step: 1 }],
 });
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);

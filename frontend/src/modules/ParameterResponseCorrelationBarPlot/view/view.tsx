@@ -7,7 +7,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { Tag } from "@lib/components/Tag";
+import { Tag } from "@lib/newComponents/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
@@ -188,7 +188,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             {content}
         </div>
     );

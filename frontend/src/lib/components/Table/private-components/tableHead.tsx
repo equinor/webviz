@@ -4,7 +4,6 @@ import { Close, ExpandLess, ExpandMore, Square } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { Input } from "../../Input";
 import { ALTERNATING_COLUMN_HEADING_COLORS } from "../constants";
 import type {
     HeaderCellDef,
@@ -16,6 +15,7 @@ import type {
     TableFilters,
 } from "../types";
 import { SortDirection } from "../types";
+import { TextInput } from "@lib/newComponents/TextInput";
 
 function getSortingForColumn(
     columnId: string,
@@ -44,7 +44,7 @@ function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSort
         >
             <div
                 className={resolveClassNames(
-                    "text-white bg-slate-300 rounded-full aspect-square h-5 text-center align-middle text-xs flex items-center justify-center",
+                    "bg-neutral text-body-xs flex aspect-square h-5 items-center justify-center rounded-full text-center align-middle text-white",
                     {
                         invisible: columnSortSettings.length < 2,
                     },
@@ -53,7 +53,7 @@ function makeColumnSortingIcons(columnId: string, columnSortSettings: ColumnSort
                 {columnSortIndex + 1}
             </div>
 
-            <div className="text-lg text-slate-500">
+            <div className="text-body-lg text-neutral-strong">
                 {!columnSort?.direction && <Square fontSize="small" />}
                 {columnSort?.direction === SortDirection.ASC && <ExpandLess fontSize="small" />}
                 {columnSort?.direction === SortDirection.DESC && <ExpandMore fontSize="small" />}
@@ -76,8 +76,9 @@ type HeaderCellProps = {
 } & HeaderCellDef;
 
 function HeaderCell(props: HeaderCellProps) {
-    const colorIndex = props.alternatingColumnColors ? props.colGroupIndex % 2 : 1;
-    const headerColorClass = ALTERNATING_COLUMN_HEADING_COLORS[colorIndex];
+    const headerColorClass = props.alternatingColumnColors
+        ? ALTERNATING_COLUMN_HEADING_COLORS[props.colGroupIndex % 2]
+        : "";
     const columnSort = getSortingForColumn(props.columnId, props.columnSortSettings);
 
     function handleHeaderClick(evt: React.MouseEvent<HTMLTableCellElement, MouseEvent>) {
@@ -94,8 +95,8 @@ function HeaderCell(props: HeaderCellProps) {
 
     return (
         <th
-            className={resolveClassNames(headerColorClass, "border-b-2 border-slate-200 px-2", {
-                "hover:brightness-95 cursor-pointer": props.sortable,
+            className={resolveClassNames(headerColorClass, "border-neutral-subtle px-xs border-b-2", {
+                "cursor-pointer hover:brightness-95": props.sortable,
             })}
             rowSpan={props.rowSpan}
             colSpan={props.colSpan}
@@ -168,7 +169,7 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
     return (
         // ! Border styles. border-collapse and sticky headers doesn't play nice, so the borders
         // ! vanish when it floats. Using outlines here instead as a workaround
-        <thead className="select-none border-b-2 border-slate-400 shadow sticky top-0 z-10 [&_th]:outline [&_th]:outline-slate-300">
+        <thead className="bg-neutral text-neutral-strong [&_th]:outline-neutral-subtle sticky top-0 z-10 border-b-2 shadow select-none [&_th]:outline">
             {props.headerCellDefinitions.map((headerRow, index) => (
                 <tr key={`header-row-depth${index}`} style={{ height: props.headerHeight }}>
                     {headerRow.map((cellDef) => {
@@ -184,9 +185,8 @@ export function TableHead<T extends Record<string, any>>(props: TableHeadProps<T
                     })}
                 </tr>
             ))}
-
             {hasFilters && (
-                <tr className="bg-slate-200" style={{ height: props.headerHeight }}>
+                <tr className="bg-neutral" style={{ height: props.headerHeight }}>
                     {props.filterCellDefinitions.map((filterDef) => {
                         return (
                             <FilterCell
@@ -238,14 +238,14 @@ function defaultFilterRender(props: ColumnFilterImplementationProps<string>) {
         throw Error(`Default filter expects string value, but received type '${typeof value}'`);
 
     return (
-        <Input
-            type="text"
+        <TextInput
+            size="small"
             value={value}
             placeholder="Filter ..."
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.onFilterChange(e.target.value || null)}
             endAdornment={
                 <div
-                    className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                    className="text-neutral-subtle hover:text-neutral-hover cursor-pointer text-sm"
                     onClick={() => props.onFilterChange(null)}
                 >
                     <Close fontSize="inherit" />

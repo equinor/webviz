@@ -1,7 +1,7 @@
 import type React from "react";
 
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 
@@ -59,7 +59,7 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, V
                     selectedColorPaletteId={props.value?.getColorPalette().getId() ?? ""}
                     colorPalettes={defaultColorPalettes}
                     type={ColorPaletteSelectorType.Categorical}
-                    onChange={handleColorPaletteChange}
+                    onValueChange={handleColorPaletteChange}
                 />
             );
         };

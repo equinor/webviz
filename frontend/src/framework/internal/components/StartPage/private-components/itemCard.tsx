@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
-import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Avatar } from "@lib/newComponents/Avatar";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
-import { UserAvatar } from "../../UserAvatar";
 
 export type ItemCardProps = {
     id: string;
@@ -23,7 +23,7 @@ export type ItemCardProps = {
 };
 
 export function ItemCard(props: ItemCardProps): React.ReactNode {
-    const showOwnerRow = props.ownerId;
+    const showOwnerRow = props.ownerId !== undefined;
 
     const ownerInfo = useUserGraphInfo(props.ownerId);
 
@@ -52,19 +52,20 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             enterDelay="medium"
         >
             <a
-                className={resolveClassNames("flex gap-4 items-center px-2 py-1 rounded text-indigo-600 font-medium", {
-                    "opacity-50 italic line-through cursor-not-allowed": props.isDeleted,
-                    "hover:bg-indigo-100": !props.isDeleted,
-                })}
+                className={resolveClassNames(
+                    "gap-y-xs px-selectable py-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
+                    {
+                        "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
+                        "hover:bg-accent-hover": !props.isDeleted,
+                    },
+                )}
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="w-60 overflow-hidden truncate grow">
-                    <span>{props.title}</span>
-                </div>
+                <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="w-20 ml-auto text-gray-500 whitespace-nowrap text-xs">
-                    ~ <TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+                <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
+                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
             </a>
         </Tooltip>
@@ -73,15 +74,12 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
 
 function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
+    const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
 
     return (
-        <div className="flex gap-1 items-center text-sm italic text-gray-500">
-            <UserAvatar
-                userIdOrEmail={props.owner?.id ?? ""}
-                className="shrink-0 inline"
-                userDisplayName={props.owner?.display_name}
-            />
-            <span className="truncate">{name}</span>
+        <div className="gap-y-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
+            <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
+            <span className="min-w-0 flex-1 truncate">{name}</span>
         </div>
     );
 }
@@ -102,12 +100,12 @@ function TooltipContent(
         return "This item has been deleted.";
     }
     return (
-        <div className="w-2xs whitespace-normal text-base">
-            <h3 className="text-lg">{props.title}</h3>
-            <hr className="h-px mb-2 bg-white/25" />
+        <div className="w-2xs text-base whitespace-normal">
+            <h6>{props.title}</h6>
+            <hr className="mb-xs bg-floating h-px" />
             {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-6 text-sm truncate">
+                <ul className="mt-sm truncate text-sm">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -115,7 +113,7 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="italic mt-4 block text-gray-400 text-sm">Click to open</span>
+            <span className="text-neutral mt-xs text-body-sm block italic">Click to open</span>
         </div>
     );
 }

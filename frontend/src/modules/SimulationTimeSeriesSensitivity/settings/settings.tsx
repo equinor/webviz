@@ -15,8 +15,8 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
-import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import type { SmartNodeSelectorSelection } from "@lib/newComponents/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -157,7 +157,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         maxNumSelectedNodes={1}
                         numSecondsUntilSuggestionsAreShown={0.5}
                         lineBreakAfterTag={true}
-                        onChange={handleVectorSelectChange}
+                        onValueChange={handleVectorSelectChange}
                     />
                 </SettingWrapper>
                 <Label text="Frequency">

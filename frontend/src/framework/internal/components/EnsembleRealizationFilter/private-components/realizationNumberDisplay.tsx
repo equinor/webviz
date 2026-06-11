@@ -13,6 +13,7 @@ export type RealizationNumberDisplayProps = {
     disableOnClick: boolean;
     onRealizationNumberClick: (selectedRealizations: readonly number[]) => void;
 };
+
 export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> = (props) => {
     const divRef = React.useRef<HTMLDivElement>(null);
     const divSize = useElementSize(divRef);
@@ -32,88 +33,122 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
             return;
         }
         if (!props.selectedRealizations.includes(realization)) {
-            // Add the realization to the selected realizations
             props.onRealizationNumberClick([...props.selectedRealizations, realization]);
             return;
         }
-        // Remove the realization from the selected realizations
         const newRealizationNumberSelections = props.selectedRealizations.filter(
             (selectedRealization) => selectedRealization !== realization,
         );
         props.onRealizationNumberClick(newRealizationNumberSelections);
     }
 
-    function createRealizationNumberVisualization(isCompact: boolean, numRealizationPerRow: number): React.ReactNode {
-        const mainDivElements: JSX.Element[] = [];
+    const isCompact = props.showAsCompact ?? false;
+    const dotSizePx = isCompact ? 9 : 12;
+    const gapPx = isCompact ? 3 : 4;
+    const labelWidthPx = 28;
 
-        // Compact/non-compact div size and gap class definitions
-        const gapClass = isCompact ? "gap-[3px]" : "gap-[4px]";
-        const realizationDivSizeClass = isCompact ? "w-[9px] h-[9px]" : "w-[12px] h-[12px]";
+    // Number of dots per row (multiple of 5), accounting for label column in non-compact mode.
+    // Total grid width = labelWidthPx + N * (dotSizePx + gapPx), so available = divSize.width - labelWidthPx.
+    const availableWidth = isCompact ? divSize.width : divSize.width - labelWidthPx;
+    const candidateNumPerRow = Math.max(5, Math.floor(availableWidth / (dotSizePx + gapPx)));
+    const remainder = candidateNumPerRow % 5;
+    const numPerRow = remainder === 0 ? candidateNumPerRow : candidateNumPerRow - remainder;
 
-        let rowElmCounter = 0;
-        let rowCounter = 0;
-        let rowElements: JSX.Element[] = [];
-        for (const [index, realization] of allRealizationsInRange.entries()) {
-            const isCurrentRealizationAvailable = props.availableRealizations.includes(realization);
-            const isRealizationSelected = props.selectedRealizations.includes(realization);
-            const isClickDisabled = props.disableOnClick || !isCurrentRealizationAvailable;
-            if (rowElmCounter === 0) {
-                rowElements = [];
-            }
-            const realizationDiv = (
-                <Tooltip
-                    title={isCurrentRealizationAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
-                    key={realization}
+    const gridTemplateColumns = isCompact
+        ? `repeat(${numPerRow}, ${dotSizePx}px)`
+        : `${labelWidthPx}px repeat(${numPerRow}, ${dotSizePx}px)`;
+
+    // Build a linear-gradient that draws 1px vertical separator lines centered in the gap after
+    // every 5th dot column. Using a background on the outer container makes the lines continuous
+    // across all rows and row gaps without any per-cell logic.
+    const dotOffset = isCompact ? 0 : labelWidthPx + gapPx;
+    const separatorStops: string[] = [];
+    for (let col = 5; col < numPerRow; col += 5) {
+        // Center of the gap between dot (col-1) and dot col
+        const lineCenter = dotOffset + col * (dotSizePx + gapPx) - gapPx / 2;
+        separatorStops.push(
+            `transparent ${lineCenter - 0.5}px`,
+            `rgba(0,0,0,0.15) ${lineCenter - 0.5}px`,
+            `rgba(0,0,0,0.15) ${lineCenter + 0.5}px`,
+            `transparent ${lineCenter + 0.5}px`,
+        );
+    }
+    const backgroundImage =
+        separatorStops.length > 0 ? `linear-gradient(to right, ${separatorStops.join(", ")})` : undefined;
+
+    const gridElements: React.ReactNode[] = [];
+
+    if (!isCompact) {
+        gridElements.push(<span key="col-header-corner" />);
+        for (let col = 0; col < numPerRow; col++) {
+            gridElements.push(
+                <span
+                    key={`col-header-${col}`}
+                    className="text-neutral-subtle self-end text-center text-[10px] leading-none select-none"
                 >
-                    <div
-                        className={resolveClassNames(
-                            `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline-2 hover:outline-blue-300`,
-                            {
-                                "bg-green-600": isRealizationSelected,
-                                "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
-                                "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
-                                "cursor-pointer": !props.disableOnClick && isCurrentRealizationAvailable,
-                                "cursor-not-allowed": !props.disableOnClick && !isCurrentRealizationAvailable,
-                            },
-                        )}
-                        onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
-                    />
-                </Tooltip>
+                    {col % 5 === 0 ? col : ""}
+                </span>,
             );
-            rowElements.push(realizationDiv);
-
-            // If the row is full (or last realization), add it to the main div elements and reset counter
-            const isLastRealization = index === allRealizationsInRange.length - 1;
-            if (++rowElmCounter === numRealizationPerRow || isLastRealization) {
-                const rowDiv = (
-                    <div key={`row-${rowCounter}`} className={resolveClassNames(`flex ${gapClass}`)}>
-                        {[...rowElements]}
-                    </div>
-                );
-                mainDivElements.push(rowDiv);
-                rowElmCounter = 0;
-                rowCounter++;
-            }
         }
-        return <div className={resolveClassNames(`flex flex-col justify-start ${gapClass}`)}>{mainDivElements}</div>;
     }
 
-    // Compact and non-compact element width and gap (Must be in sync with the CSS in createRealizationNumberVisualization() function)
-    const nonCompactGapPx = 4;
-    const nonCompactWidthAndHeightPx = 12;
+    for (let rowStart = 0; rowStart < allRealizationsInRange.length; rowStart += numPerRow) {
+        const rowRealizations = allRealizationsInRange.slice(rowStart, rowStart + numPerRow);
 
-    // Find the number of realizations that can fit in a row based on non-compact size, as factor of 5
-    const candidateNumberOfRealizationsPerRow = Math.max(
-        5,
-        Math.floor(divSize.width / (nonCompactWidthAndHeightPx + nonCompactGapPx)),
-    );
-    const remainder = candidateNumberOfRealizationsPerRow % 5;
-    const newNumberOfRealizationsPerRow =
-        remainder === 0 ? candidateNumberOfRealizationsPerRow : candidateNumberOfRealizationsPerRow - remainder;
+        if (!isCompact) {
+            gridElements.push(
+                <span
+                    key={`label-${rowStart}`}
+                    className="text-neutral-subtle flex items-center justify-end text-[10px] leading-none select-none"
+                >
+                    {allRealizationsInRange[rowStart]}
+                </span>,
+            );
+        }
+
+        for (const realization of rowRealizations) {
+            const isAvailable = props.availableRealizations.includes(realization);
+            const isSelected = props.selectedRealizations.includes(realization);
+            const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
+
+            gridElements.push(
+                <Tooltip
+                    key={realization}
+                    title={isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
+                >
+                    <div
+                        style={{ width: dotSizePx, height: dotSizePx }}
+                        className={resolveClassNames("flex aspect-square items-center justify-center rounded-full", {
+                            "bg-accent-strong": isSelected,
+                            "bg-accent": !isSelected && isAvailable,
+                            "bg-disabled": !isSelected && !isAvailable,
+                            "hover:bg-accent-strong-hover hover:outline-accent-strong hover:outline":
+                                !isCompact && isSelected,
+                            "hover:bg-accent-hover hover:outline-accent hover:outline":
+                                !isCompact && !isSelected && isAvailable,
+                            "cursor-pointer": !isCompact && !props.disableOnClick && isAvailable,
+                            "cursor-not-allowed": !isCompact && !props.disableOnClick && !isAvailable,
+                        })}
+                        onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
+                    />
+                </Tooltip>,
+            );
+        }
+    }
 
     return (
         <div ref={divRef}>
-            {createRealizationNumberVisualization(props.showAsCompact ?? false, newNumberOfRealizationsPerRow)}
+            <div
+                style={{
+                    display: "grid",
+                    gridTemplateColumns,
+                    gap: `${gapPx}px`,
+                    alignItems: "center",
+                    backgroundImage,
+                }}
+            >
+                {gridElements}
+            </div>
         </div>
     );
 };

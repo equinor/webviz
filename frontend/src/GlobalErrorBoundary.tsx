@@ -2,8 +2,7 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
-import { Button } from "@lib/components/Button";
-import { IconButton } from "@lib/components/IconButton";
+import { Button } from "@lib/newComponents/Button";
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
@@ -40,6 +39,14 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
     }
 
     private handleWindowError(event: ErrorEvent) {
+        // In development, React re-throws every render error to the window via
+        // invokeGuardedCallbackDev (to produce a real browser stack trace) before
+        // the inner error boundary even activates. That makes it impossible to
+        // distinguish these from genuine unhandled errors at the time of the event.
+        // Dev already surfaces errors via console + React's own overlay, so skip.
+        if (import.meta.env.DEV) {
+            return;
+        }
         this.setState({ error: event.error });
     }
 
@@ -86,29 +93,35 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
 
         if (this.state.error) {
             return (
-                <div className="h-screen w-screen bg-red-200 flex items-center justify-center">
-                    <div className="flex flex-col w-1/2 min-w-[600px] bg-white shadow-sm">
-                        <div className="w-full bg-red-600 text-white p-4 flex items-center shadow-sm">
+                <div className="bg-danger-canvas flex h-screen w-screen items-center justify-center">
+                    <div className="bg-surface flex w-1/2 min-w-[600px] flex-col shadow-sm">
+                        <div className="bg-danger-strong text-danger-strong-on-emphasis px-xs py-xs flex w-full items-center shadow-sm">
                             Application terminated with error
                         </div>
-                        <div className="w-full grow p-4 flex flex-col gap-2">
+                        <div className="px-sm py-sm gap-y-sm flex w-full grow flex-col">
                             The application was terminated due to the following error:
-                            <div className="bg-slate-200 p-4 my-2 whitespace-nowrap font-mono text-sm overflow-x-scroll">
+                            <div className="bg-neutral text-body-sm px-xs py-xs my-2 overflow-x-scroll font-mono whitespace-nowrap">
                                 <strong>{this.state.error.name}</strong>: {this.state.error.message}
                             </div>
                             You can use the following URL to start a clean session:
                             <div>
-                                <div className="bg-slate-200 p-4 py-2 my-2 whitespace-nowrap font-mono text-sm flex items-center">
+                                <div className="bg-neutral text-body-sm px-xs py-xs my-2 flex items-center font-mono whitespace-nowrap">
                                     <a href={freshStartUrl.toString()} className="grow">
                                         {freshStartUrl.toString()}
                                     </a>
-                                    <IconButton onClick={copyToClipboard} title="Copy URL to clipboard">
+                                    <Button
+                                        onClick={copyToClipboard}
+                                        title="Copy URL to clipboard"
+                                        tone="neutral"
+                                        variant="ghost"
+                                        iconOnly
+                                    >
                                         <ContentCopy fontSize="small" />
-                                    </IconButton>
+                                    </Button>
                                 </div>
                                 <div
                                     className={resolveClassNames(
-                                        "h-2 m-2 whitespace-nowrap text-sm transition-opacity text-green-800",
+                                        "text-success-subtle text-body-sm font-bolder m-2 h-2 whitespace-nowrap transition-opacity",
                                         {
                                             "opacity-0": !this.state.copiedToClipboard,
                                         },
@@ -118,12 +131,12 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 bg-slate-100 flex gap-4 shadow-sm">
+                        <div className="gap-x-xs px-sm py-sm flex bg-slate-100 shadow-sm">
                             <Button
                                 onClick={() => this.state.error && reportIssue(this.state.error)}
-                                startIcon={<BugReport fontSize="small" />}
                                 disabled={this.state.symbolicatingStack}
                             >
+                                <BugReport fontSize="small" />{" "}
                                 {this.state.symbolicatingStack ? "Symbolicating stack..." : "Report issue"}
                             </Button>
                         </div>

@@ -1,12 +1,18 @@
 import React from "react";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CharLimitedInput } from "@lib/components/CharLimitedInput/charLimitedInput";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dialog } from "@lib/components/Dialog";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import { Banner } from "@lib/newComponents/Banner";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { TextArea } from "@lib/newComponents/TextArea";
+import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Typography } from "@lib/newComponents/Typography";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
@@ -17,10 +23,6 @@ export type SaveSessionDialogProps = {
     saveAsNew?: boolean;
 };
 
-type SaveSessionDialogInputFeedback = {
-    title?: string;
-};
-
 export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNode {
     const activeSession = useActiveSession();
 
@@ -29,6 +31,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
 
     const [title, setTitle] = React.useState<string>("");
     const [description, setDescription] = React.useState<string>("");
+    const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
 
     const [prevOriginalTitle, setPrevOriginalTitle] = React.useState<string>("");
     const [prevOriginalDescription, setPrevOriginalDescription] = React.useState<string>("");
@@ -63,18 +66,18 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     }
 
     function handleCancel() {
-        setIsOpen(false);
-        setPrevOriginalTitle("");
-        setPrevOriginalDescription("");
+        if (title !== originalTitle || description !== originalDescription) {
+            setShowConfirmationDialog(true);
+            return;
+        }
+        handleDiscardChanges();
     }
 
-    const inputFeedback: SaveSessionDialogInputFeedback = React.useMemo(() => {
-        const feedback: SaveSessionDialogInputFeedback = {};
-        if (title.trim() === "") {
-            feedback.title = "Title is required.";
-        }
-        return feedback;
-    }, [title]);
+    function handleDiscardChanges() {
+        setPrevOriginalTitle("");
+        setPrevOriginalDescription("");
+        setIsOpen(false);
+    }
 
     React.useEffect(
         function focusInput() {
@@ -88,52 +91,99 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
     const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
 
     return (
-        <Dialog
-            open={isOpen}
-            onClose={handleCancel}
-            title="Save Session as ..."
-            modal
-            showCloseCross
-            actions={
-                <>
-                    <Button variant="text" disabled={isSaving} onClick={handleCancel}>
+        <>
+            <Dialog.Popup open={isOpen} onOpenChange={handleCancel} modal width={600}>
+                <Dialog.Header closeIconVisible>
+                    <Dialog.Title>{props.saveAsNew ? "Save session as ..." : "Save session"}</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                    <Banner tone="warning" layoutClassName="mb-2xs">
+                        Sessions are not guaranteed to persist, as underlying data or module states may change.
+                    </Banner>
+                    <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
+                        <DashboardPreview height={220} width={150} layout={layout} />
+                        <div className="gap-y-sm flex min-w-0 grow flex-col">
+                            <FieldCompositions.Default
+                                label="Title"
+                                indicator="(Required)"
+                                info={`Enter a descriptive title for your session, which will help you identify it later. This must be between ${MIN_TITLE_LENGTH} and ${MAX_TITLE_LENGTH} characters.`}
+                            >
+                                <TextInput
+                                    minLength={MIN_TITLE_LENGTH}
+                                    maxLength={MAX_TITLE_LENGTH}
+                                    ref={inputRef}
+                                    value={title}
+                                    onValueChange={(value) => setTitle(value)}
+                                    placeholder="Enter session title"
+                                    autoFocus
+                                    required
+                                    endAdornment={
+                                        <Tooltip
+                                            content={`Your title is currently using ${title.length} out of the maximum ${MAX_TITLE_LENGTH} characters.`}
+                                        >
+                                            <Typography
+                                                size="sm"
+                                                family="body"
+                                                tone="neutral"
+                                            >{`${title.length}/${MAX_TITLE_LENGTH}`}</Typography>
+                                        </Tooltip>
+                                    }
+                                />
+                                <FieldCompositions.GenericErrors />
+                            </FieldCompositions.Default>
+                            <FieldCompositions.Default label="Description" indicator="(Optional)">
+                                <TextArea
+                                    maxLength={MAX_DESCRIPTION_LENGTH}
+                                    value={description}
+                                    onValueChange={(value) => setDescription(value)}
+                                    placeholder="Enter session description"
+                                    rows={3}
+                                    bottomAdornment={
+                                        <Tooltip
+                                            content={`Your description is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
+                                        >
+                                            <Typography
+                                                size="sm"
+                                                family="body"
+                                                tone="neutral"
+                                            >{`${description.length}/${MAX_DESCRIPTION_LENGTH}`}</Typography>
+                                        </Tooltip>
+                                    }
+                                />
+                            </FieldCompositions.Default>
+                        </div>
+                    </form>
+                </Dialog.Body>
+                <Dialog.Actions>
+                    <Button variant="ghost" tone="neutral" disabled={isSaving} onClick={handleCancel}>
                         Cancel
                     </Button>
-                    <Button variant="text" color="success" disabled={isSaving} type="submit" form={formId}>
-                        {isSaving && <CircularProgress size="small" />} Save
+                    <Button tone="accent" disabled={isSaving} type="submit" form={formId}>
+                        {isSaving && <CircularProgress size={16} />} Save
                     </Button>
-                </>
-            }
-        >
-            <div className="mb-4 p-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
-                Sessions are not guaranteed to persist, as underlying data or module states may change.
-            </div>
-            <form id={formId} className="flex gap-4 items-center" onSubmit={handleSave}>
-                <DashboardPreview height={100} width={100} layout={layout} />
-                <div className="flex flex-col gap-2 grow min-w-0">
-                    <CharLimitedInput
-                        label="Title"
-                        inputRef={inputRef}
-                        placeholder="Enter session title"
-                        type="text"
-                        value={title}
-                        onControlledValueChange={(value) => setTitle(value)}
-                        maxLength={MAX_TITLE_LENGTH}
-                        error={!!inputFeedback.title}
-                        autoFocus
-                        required
-                    />
-                    <div className="text-red-600 text-sm mb-1 h-4">{inputFeedback.title}</div>
-                    <CharLimitedInput
-                        label="Description (optional)"
-                        maxLength={MAX_DESCRIPTION_LENGTH}
-                        onControlledValueChange={(value) => setDescription(value)}
-                        placeholder="Enter session description"
-                        value={description}
-                        multiline
-                    />
-                </div>
-            </form>
-        </Dialog>
+                </Dialog.Actions>
+            </Dialog.Popup>
+            <AlertDialog
+                open={showConfirmationDialog}
+                onOpenChange={setShowConfirmationDialog}
+                title="Discard changes?"
+                primaryAction={{
+                    label: "Discard",
+                    onClick: handleDiscardChanges,
+                    tone: "danger",
+                    closesDialog: true,
+                }}
+                secondaryActions={[
+                    {
+                        label: "Keep editing",
+                        onClick: () => setShowConfirmationDialog(false),
+                        tone: "neutral",
+                        closesDialog: true,
+                    },
+                ]}
+            >
+                You have unsaved changes. Are you sure you want to discard them and close the dialog?
+            </AlertDialog>
+        </>
     );
 }

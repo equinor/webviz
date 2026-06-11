@@ -2,8 +2,8 @@ import type React from "react";
 
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { SortableList } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
+import { Button } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SortableListGroupProps = {
@@ -43,11 +43,11 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
 
     return (
         <SortableList.Group id={props.id}>
-            <div className={resolveClassNames("bg-gray-200")}>
+            <div className="bg-canvas">
                 <Header {...props} onToggleExpanded={handleToggleExpanded} expanded={props.expanded} hovered={false} />
                 <SortableList.GroupContent>
                     <div
-                        className={resolveClassNames("pl-1 bg-white shadow-inner border-b border-b-gray-300", {
+                        className={resolveClassNames("pl-3xs border-b-neutral-subtle bg-surface border-b", {
                             hidden: !props.expanded,
                         })}
                         style={props.contentStyle}
@@ -76,10 +76,9 @@ function Header(props: HeaderProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "sortable-list-item-header flex w-full items-center gap-1 h-8 text-sm border-b border-b-gray-400 px-2",
+                "bg-neutral-canvas sortable-list-item-header border-b-neutral-subtle px-3xs gap-x-3xs text-body-sm flex h-8 w-full items-center border-b",
                 {
-                    "bg-blue-300!": props.hovered,
-                    "bg-slate-300": !props.hovered,
+                    "bg-neutral-hovered!": props.hovered,
                 },
             )}
             style={props.headerStyle}
@@ -87,15 +86,19 @@ function Header(props: HeaderProps): React.ReactNode {
             <SortableList.DragHandle>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </SortableList.DragHandle>
-            <DenseIconButton
+            <Button
                 onClick={props.onToggleExpanded}
                 title={props.expanded ? "Hide children" : "Show children"}
+                variant="ghost"
+                tone="neutral"
+                size="small"
+                iconOnly
             >
                 {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </DenseIconButton>
-            <div className="flex items-center gap-2 grow min-w-0">
+            </Button>
+            <div className="gap-x-3xs flex min-w-0 grow items-center">
                 {props.startAdornment}
-                <div className="grow font-bold min-w-0">{props.title}</div>
+                <div className="font-bolder min-w-0 grow">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

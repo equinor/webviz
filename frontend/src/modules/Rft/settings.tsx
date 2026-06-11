@@ -7,7 +7,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -93,7 +93,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>
-            <PendingWrapper isPending={rftTableDefinition.isFetching} errorMessage={rftTableDefErrorMessage}>
+            <StatusWrapper isPending={rftTableDefinition.isFetching} errorMessage={rftTableDefErrorMessage}>
                 <CollapsibleGroup expanded={true} title="Response">
                     <Select
                         size={4}
@@ -119,7 +119,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         onChange={handleTimeStampUtcMsChange}
                     />
                 </CollapsibleGroup>
-            </PendingWrapper>
+            </StatusWrapper>
         </div>
     );
 }

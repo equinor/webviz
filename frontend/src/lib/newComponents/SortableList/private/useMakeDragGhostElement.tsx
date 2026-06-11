@@ -1,0 +1,84 @@
+import React from "react";
+
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { SortableListContext } from "../sortableList";
+
+export function useMakeDragGhostElement(
+    id: string,
+    element: React.ReactElement,
+    ref: React.MutableRefObject<HTMLElement | null>,
+): React.ReactElement | null {
+    const context = React.useContext(SortableListContext);
+    const boundingClientRect = useElementBoundingRect(ref);
+    const isDragging = context.draggedElementId === id;
+
+    if (!isDragging || !context.dragPosition) {
+        return null;
+    }
+
+    const isTableRow = getRenderedTagName(element, ref) === "tr";
+
+    const width = Math.round(boundingClientRect.width || ref.current?.offsetWidth || 0);
+    const height = Math.round(boundingClientRect.height || ref.current?.offsetHeight || 0);
+
+    const x = Math.round(context.dragPosition.x);
+    const y = Math.round(context.dragPosition.y);
+
+    const baseStyle: React.CSSProperties = {
+        inset: 0,
+        position: "absolute",
+        transform: `translate3d(${x}px, ${y}px, 0)`,
+        width,
+        height,
+        pointerEvents: "none",
+        opacity: 0.85,
+        zIndex: 50,
+        willChange: "transform,width,height",
+    };
+
+    if (!isTableRow) {
+        return React.cloneElement(element, {
+            className: resolveClassNames(element.props.className, "shadow-sm"),
+            "aria-hidden": true,
+            style: {
+                ...(element.props.style || {}),
+                ...baseStyle,
+            },
+        });
+    }
+
+    const rowClone = React.cloneElement(element, {
+        "aria-hidden": true,
+        className: resolveClassNames(element.props.className, "shadow-sm"),
+        style: { ...(element.props.style || {}) },
+    });
+
+    const colWidths: number[] = [];
+    if (ref.current) {
+        for (const cell of ref.current.children) {
+            colWidths.push((cell as HTMLElement).getBoundingClientRect().width);
+        }
+    }
+
+    return (
+        <div style={baseStyle} className="bg-transparent" aria-hidden>
+            <table className="table-fixed border-collapse w-[inherit]">
+                {colWidths.length > 0 && (
+                    <colgroup>
+                        {colWidths.map((w, i) => (
+                            <col key={i} style={{ width: w }} />
+                        ))}
+                    </colgroup>
+                )}
+                <tbody>{rowClone}</tbody>
+            </table>
+        </div>
+    );
+}
+
+function getRenderedTagName(el: React.ReactElement, ref: React.MutableRefObject<HTMLElement | null>): string {
+    if (typeof el.type === "string") return el.type.toLowerCase();
+    return ref.current?.tagName?.toLowerCase() ?? "";
+}

@@ -13,7 +13,7 @@ export const Content: React.FC<ContentProps> = (props) => {
     return (
         <>
             <DataChannelVisualizationLayer workbench={props.workbench} />
-            <div className="bg-gray-300 grow">
+            <div className="grow">
                 <Layout workbench={props.workbench} />
             </div>
         </>

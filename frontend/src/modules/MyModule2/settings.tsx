@@ -14,8 +14,7 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
 import type { TagOption, TagOptionProps } from "@lib/components/TagPicker";
@@ -57,7 +56,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
             <div className="mb-4">
                 <div className="mb-2 text-xs">Selected: {tagSelection.join(", ") || "none"}</div>
 
-                <div className="grid grid-cols-[0.7fr_0.3fr] gap-2 ">
+                <div className="grid grid-cols-[0.7fr_0.3fr] gap-2">
                     <Label text="Standard picker">
                         <TagPicker
                             placeholder="Select tags"
@@ -84,7 +83,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                 value={ensembleSelection}
                 allowDeltaEnsembles={true}
                 ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                onChange={setEnsembleSelection}
+                onValueChange={setEnsembleSelection}
             />
             <div className="mb-12">
                 <div className="mb-2 text-xs">Selected: {tagSelection2.join(", ") || "none"}</div>
@@ -156,7 +155,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                 hasError={statusMessage === "This is an error message"}
                 hasWarning={statusMessage === "This is a warning message"}
             >
-                <div className="pt-2 flex flex-col gap-2">
+                <div className="flex flex-col gap-2 pt-2">
                     <Dropdown
                         value={statusMessage ?? ""}
                         onChange={(val) => setStatusMessage(val === "" ? undefined : val)}
@@ -187,7 +186,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                                 checked={isPending}
                                 onChange={(e) => setIsPending(e.target.checked)}
                             />
-                            <PendingWrapper
+                            <StatusWrapper
                                 isPending={isPending}
                                 errorMessage={statusMessage === "This is an error message" ? statusMessage : undefined}
                                 warningMessage={
@@ -196,7 +195,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>):
                                 infoMessage={statusMessage === "This is an info message" ? statusMessage : undefined}
                             >
                                 <div className="h-12">This box is wrapped in a PendingWrapper</div>
-                            </PendingWrapper>
+                            </StatusWrapper>
                         </>
                     </Label>
                 </div>
@@ -211,7 +210,7 @@ Settings.displayName = "Settings";
 function CoolTag(props: TagProps): React.ReactNode {
     return (
         <div
-            className="text-xs flex items-center align-middle px-2 py-1 rounded text-white font-bold"
+            className="flex items-center rounded px-2 py-1 align-middle text-xs font-bold text-white"
             style={{
                 background:
                     "linear-gradient(270deg, #ff0000, #ff9900, #ffff00, #33ff00, #00ffff, #3300ff, #ff00cc, #ff0000)",
@@ -236,7 +235,7 @@ function CoolTag(props: TagProps): React.ReactNode {
 
 function ExcitedTagOption(props: TagOptionProps) {
     return (
-        <li className="px-2 py-1  cursor-pointer" onClick={props.onToggle}>
+        <li className="cursor-pointer px-2 py-1" onClick={props.onToggle}>
             <span
                 style={
                     props.isSelected

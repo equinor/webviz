@@ -13,10 +13,9 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ContextHelp } from "@lib/components/ContextHelp";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -240,7 +239,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         value={ensembleIdents}
                         allowDeltaEnsembles={false}
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleIdentsChange}
+                        onValueChange={handleEnsembleIdentsChange}
                     />
                 </SettingWrapper>
 
@@ -261,16 +260,11 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         size={3}
                     />
                 </SettingWrapper>
-
-                <div className="flex flex-row gap-2">
-                    <Checkbox
-                        label="Allow table intersections"
-                        checked={props.selectedAllowIndicesValuesIntersection}
-                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                    />
-                    <ContextHelp
-                        title="Allow table intersections"
-                        content={
+                <SettingWrapper
+                    label="Allow table source intersections"
+                    help={{
+                        title: "Allow table source intersections",
+                        content: (
                             <>
                                 When active allows comparison of tables where available zones, regions, facies, fluids
                                 or responses differs.
@@ -278,14 +272,20 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 Only the <b>intersection</b> of options will then be available for filtering. <br />
                                 Identifiers not present in all tables will be <b>filtered out</b>.
                             </>
-                        }
+                        ),
+                    }}
+                >
+                    <Checkbox
+                        checked={props.selectedAllowIndicesValuesIntersection}
+                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
+                        label="Allow table source intersections"
                     />
-                </div>
+                </SettingWrapper>
             </CollapsibleGroup>
             <div className="flex flex-col gap-2">{props.additionalSettings}</div>
             <div className="flex flex-col gap-2">
                 <CollapsibleGroup title="Index filters" expanded>
-                    <PendingWrapper
+                    <StatusWrapper
                         className="flex flex-col gap-2"
                         isPending={props.isPending ?? false}
                         errorMessage={
@@ -316,7 +316,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 />
                             </CollapsibleGroup>
                         ))}
-                    </PendingWrapper>
+                    </StatusWrapper>
                 </CollapsibleGroup>
             </div>
         </>

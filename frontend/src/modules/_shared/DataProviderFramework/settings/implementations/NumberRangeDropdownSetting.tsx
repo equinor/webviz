@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -107,12 +107,11 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
             });
 
             return (
-                <Dropdown
-                    options={options}
+                <ComboboxCompositions.WithBrowseButtons
+                    items={options}
                     value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
-                    onChange={(val: string) => props.onValueChange(parseInt(val))}
+                    onValueChange={(val: string) => props.onValueChange(parseInt(val))}
                     disabled={props.isOverridden}
-                    showArrows
                 />
             );
         };

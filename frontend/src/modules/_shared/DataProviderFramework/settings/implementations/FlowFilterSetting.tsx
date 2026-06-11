@@ -2,11 +2,11 @@ import React from "react";
 
 import { clamp } from "lodash";
 
-import { ColorSelect } from "@lib/components/ColorSelect";
-import { Input } from "@lib/components/Input";
-import { Slider } from "@lib/components/Slider";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
@@ -21,9 +21,11 @@ type InternalValueType = SettingTypeDefinitions[Setting.FLOW_FILTER]["internalVa
 type ExternalValueType = SettingTypeDefinitions[Setting.FLOW_FILTER]["externalValue"];
 type ValueRangeType = SettingTypeDefinitions[Setting.FLOW_FILTER]["valueConstraints"];
 
-export class FlowFilterSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
-{
+export class FlowFilterSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueRangeType
+> {
     valueConstraintsIntersectionReducerDefinition = {
         reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType, index: number) => {
             if (index === 0) {
@@ -275,7 +277,7 @@ export class FlowFilterSetting
 
             return (
                 <div
-                    className="grid gap-y-1 gap-x-2 items-center"
+                    className="gap-x-2xs gap-y-3xs grid items-center"
                     ref={divRef}
                     style={{ gridTemplateColumns: inputVisible ? "24px 40px 3fr 1fr" : "24px 40px auto" }}
                 >
@@ -315,7 +317,7 @@ export class FlowFilterSetting
                         inputVisible={inputVisible}
                     />
                     <div
-                        className={resolveClassNames("font-semibold mt-2", {
+                        className={resolveClassNames("mt-2 font-semibold", {
                             "col-span-4": inputVisible,
                             "col-span-3": !inputVisible,
                         })}
@@ -375,7 +377,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
     const handleSliderChange = React.useCallback(
-        function handleSliderChange(_: any, value: number | number[]) {
+        function handleSliderChange(value: number | readonly number[]) {
             const newValue = Array.isArray(value) ? value[0] : value;
             setLocalValue(newValue);
             debouncedOnValueChange(newValue);
@@ -384,8 +386,8 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
     );
 
     const handleInputChange = React.useCallback(
-        function handleInputChange(value: string) {
-            let numericValue = Number(value) * 1000;
+        function handleInputChange(value: number | null) {
+            let numericValue = (value ?? 0) * 1000;
             const allowedValues = Array.from({ length: Math.floor((max - min) / step) + 1 }, (_, i) => min + i * step);
             numericValue = allowedValues.reduce((prev, curr) =>
                 Math.abs(curr - numericValue) < Math.abs(prev - numericValue) ? curr : prev,
@@ -399,28 +401,25 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     return (
         <>
-            <ColorSelect value={props.color} onChange={props.onColorChange} dense />
-            <div className="text-sm">{props.label}</div>
+            <ColorSelect value={props.color} onChange={props.onColorChange} size="small" compact variant="ghost" />
+            <div className="text-body-sm">{props.label}</div>
             <Slider
                 min={min}
                 max={max}
-                onChange={handleSliderChange}
+                onValueChange={handleSliderChange}
                 value={localValue}
                 valueLabelDisplay="auto"
-                valueLabelFormat={(val) => formatNumber(val)}
+                valueLabelFormat={(val: number) => formatNumber(val)}
                 step={step}
-                track="inverted"
-                color=""
+                inverted
             />
             {props.inputVisible && (
-                <Input
-                    type="number"
+                <NumberInput
                     value={localValue / 1000}
                     min={min / 1000}
                     max={max / 1000}
                     onValueChange={handleInputChange}
                     endAdornment="K"
-                    className="min-w-20"
                 />
             )}
         </>

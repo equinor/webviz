@@ -13,8 +13,8 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -59,9 +59,9 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 ? "Initializing..."
                 : "Resetting...";
         return (
-            <div className="h-full w-full flex flex-col justify-center items-center m-2">
+            <div className="mx-2xs my-2xs flex h-full w-full flex-col items-center justify-center">
                 <CircularProgress />
-                <div className="mt-4">{text}</div>
+                <div className="mt-xs">{text}</div>
             </div>
         );
     }
@@ -71,7 +71,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         if (errorObject) {
             return (
                 <div
-                    className="text-red-600 m-2"
+                    className="mx-2xs my-2xs text-danger-subtle"
                     style={{
                         display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
                     }}
@@ -85,8 +85,8 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     function makeContent() {
         if (moduleInstanceSettingsStateInvalid) {
             return (
-                <div className="flex flex-col gap-4 h-full w-full justify-center items-center">
-                    <div className="text-red-600 m-2 text-center">
+                <div className="gap-x-xs flex h-full w-full flex-col items-center justify-center">
+                    <div className="my-2xs text-danger-subtle text-center">
                         The persisted settings for this module&apos;s settings are invalid and could not be applied.
                         They have most likely been outdated by a module update. You can reset the module to its default
                         values to continue using it.
@@ -138,15 +138,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         <div
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
-                activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative grow",
+                activeModuleInstanceId === props.moduleInstance.getId() ? "flex flex-col" : "hidden",
+                "relative h-full min-h-0 w-full grow",
             )}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex flex-col gap-4 overflow-auto grow">
-                    <div className="p-2 grow">{makeContent()}</div>
-                </div>
+                <div className="flex min-h-0 grow flex-col">{makeContent()}</div>
             </ErrorBoundary>
         </div>
     );

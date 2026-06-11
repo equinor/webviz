@@ -5,12 +5,12 @@ import { useAtom } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useContinuousColorScale, useDiscreteColorScale } from "@framework/WorkbenchSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
+import { ColorGradient } from "@lib/newComponents/ColorGradient/colorGradient";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import type { Interfaces } from "../interfaces";
@@ -47,8 +47,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         {
                             value: ColorScaleType.Discrete,
                             label: (
-                                <div className="flex gap-4 items-center">
-                                    <div className="grow w-24">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-24 grow">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} steps={10} />
                                     </div>
                                     <div>Discrete</div>
@@ -58,8 +58,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         {
                             value: ColorScaleType.Continuous,
                             label: (
-                                <div className="flex gap-4 items-center h-4">
-                                    <div className="grow w-24">
+                                <div className="flex h-4 items-center gap-4">
+                                    <div className="w-24 grow">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} />
                                     </div>
                                     <div>Continuous</div>

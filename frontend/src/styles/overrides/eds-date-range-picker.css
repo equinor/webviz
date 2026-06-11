@@ -1,0 +1,77 @@
+.webviz-eds-date-range-picker {
+    @apply form-element bg-canvas box-border rounded border-none;
+
+    /* default size */
+    @apply h-selectable-md px-sm py-xs;
+
+    &[data-size="small"] {
+        @apply h-selectable-sm pl-sm pr-xs py-3xs;
+    }
+
+    &[data-size="large"] {
+        @apply h-selectable-lg px-md py-sm;
+    }
+
+    /* Icon size */
+    & [class*="Icon"] {
+        @apply h-4;
+    }
+
+    &[data-size="small"] [class*="Icon"] {
+        @apply h-3;
+    }
+
+    &[data-size="large"] [class*="Icon"] {
+        @apply h-5;
+    }
+
+    /* Field wrapper */
+    & [class*="FieldWrapper__StyledInputFieldWrapper"] {
+        @apply h-5 rounded bg-transparent p-0 shadow-none!;
+    }
+
+    & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
+        @apply outline-0!;
+    }
+
+    &[data-size="small"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
+        @apply h-4!;
+    }
+
+    &[data-size="large"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
+        @apply h-6!;
+    }
+
+    /* Segments (date input fields) */
+    & [class*="Segment"] {
+        @apply text-body-md text-neutral-subtle data-placeholder:text-neutral-subtle h-3 outline-0;
+    }
+
+    &[data-size="small"] [class*="Segment"] {
+        @apply text-body-xs;
+    }
+
+    &[data-size="large"] [class*="Segment"] {
+        @apply text-body-lg h-4;
+    }
+
+    & [class*="Segment"]:focus-visible {
+        @apply focusable;
+    }
+
+    & [class*="Toggle__StyledButton"] {
+        @apply rounded! aspect-square;
+    }
+
+    & [class*="Toggle__StyledButton"]:hover {
+        background-color: var(--eds-color-bg-neutral-fill-muted-hover) !important;
+    }
+
+    &[data-size="small"] [class*="Toggle__StyledButton"] {
+        @apply h-4! w-4!;
+    }
+
+    & [class*="Toggle__StyledButton"]:focus-visible {
+        @apply outline-focus;
+    }
+}

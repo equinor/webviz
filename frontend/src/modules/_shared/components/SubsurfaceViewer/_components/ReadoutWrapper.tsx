@@ -401,7 +401,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     return (
         <div
             ref={mainDivRef}
-            className="h-full w-full relative"
+            className="relative h-full w-full"
             onMouseEnter={handleMainDivEnter}
             onMouseLeave={handleMainDivLeave}
             onKeyDown={handleKeyDown}
@@ -456,7 +456,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 ))}
             </SubsurfaceViewerWithCameraState>
             {props.views.viewports.length === 0 && (
-                <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
+                <div className="-mt-sm absolute top-1/2 left-1/2 h-10 -translate-1/2 transform text-center">
                     Please add views and layers in the settings panel.
                 </div>
             )}

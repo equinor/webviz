@@ -15,7 +15,7 @@ import {
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { Button } from "@lib/newComponents/Button";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
@@ -446,7 +446,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     }
 
     return (
-        <div ref={mainRef} className="flex flex-col h-full w-full max-w-full">
+        <div ref={mainRef} className="flex h-full w-full max-w-full flex-col">
             <div ref={ref} className="relative grow">
                 {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
@@ -478,7 +478,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 })}
                 {makeTempViewWrapperPlaceholder()}
                 {moduleInstances.length === 0 && draggedModuleInstanceId === null && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-500 select-none flex flex-col items-center gap-4">
+                    <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
                         <WebAsset fontSize="large" />
                         <span className="text-center">
                             <strong>No modules added.</strong>

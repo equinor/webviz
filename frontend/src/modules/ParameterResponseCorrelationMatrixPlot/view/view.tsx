@@ -10,7 +10,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
 import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
-import { Tag } from "@lib/components/Tag";
+import { Tag } from "@lib/newComponents/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
@@ -136,7 +136,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                                 toolbar.
                             </p>
                             <p>Drag from this icon to a response below:</p>
-                            <div className="flex gap-2 flex-wrap">
+                            <div className="flex flex-wrap gap-2">
                                 <Tag label="Response" />
                                 <Tag label="Response" />
                                 <Tag label="Response" />
@@ -265,7 +265,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {content}
         </div>
     );

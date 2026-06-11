@@ -2,7 +2,7 @@ import type React from "react";
 
 import type { WellboreHeader_api } from "@api";
 import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import { Select } from "@lib/newComponents/Select";
 
 import type {
     CustomSettingImplementation,
@@ -20,9 +20,11 @@ type InternalValueType = string[] | null;
 type ExternalValueType = WellboreHeader_api[] | null;
 type ValueConstraintsType = WellboreHeader_api[];
 
-export class DrilledWellboresSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
-{
+export class DrilledWellboresSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueConstraintsType
+> {
     defaultValue: InternalValueType = null;
     valueConstraintsIntersectionReducerDefinition =
         makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
@@ -84,12 +86,12 @@ export class DrilledWellboresSetting
             }
 
             return (
-                <div className="flex flex-col gap-1 mt-1">
+                <div className="mt-1 flex flex-col gap-1">
                     <Select
                         filter
                         options={options}
                         value={props.value ?? []}
-                        onChange={handleChange}
+                        onValueChange={handleChange}
                         showQuickSelectButtons={true}
                         disabled={props.isOverridden}
                         multiple={true}

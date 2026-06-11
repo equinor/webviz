@@ -1,6 +1,7 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -18,8 +19,10 @@ export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode 
     }
 
     return (
-        <DenseIconButton onClick={handleToggleVisibility} title="Toggle visibility">
-            {isVisible ? <Visibility fontSize="inherit" /> : <VisibilityOff fontSize="inherit" />}
-        </DenseIconButton>
+        <Tooltip content={isVisible ? "Hide item in view" : "Show item in view"} side="bottom">
+            <Button onClick={handleToggleVisibility} variant="ghost" tone="neutral" size="small" iconOnly>
+                {isVisible ? <Visibility fontSize="inherit" /> : <VisibilityOff fontSize="inherit" />}
+            </Button>
+        </Tooltip>
     );
 }

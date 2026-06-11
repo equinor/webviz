@@ -11,7 +11,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";

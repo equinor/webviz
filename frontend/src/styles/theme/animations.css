@@ -1,0 +1,18 @@
+@theme {
+    --animate-linear-indefinite: linear-indefinite 1.5s cubic-bezier(0.165, 0.84, 0.44, 1) 1s infinite;
+
+    @keyframes linear-indefinite {
+        0% {
+            left: -200%;
+            right: 100%;
+        }
+        60% {
+            left: 107%;
+            right: -8%;
+        }
+        100% {
+            left: 107%;
+            right: -8%;
+        }
+    }
+}
