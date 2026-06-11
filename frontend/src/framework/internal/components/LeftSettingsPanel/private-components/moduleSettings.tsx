@@ -15,7 +15,6 @@ import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Collapsible } from "@lib/newComponents/Collapsible";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -139,15 +138,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         <div
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
-                activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "relative h-full min-h-0 w-full grow flex-col",
+                activeModuleInstanceId === props.moduleInstance.getId() ? "flex flex-col" : "hidden",
+                "relative h-full min-h-0 w-full grow",
             )}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>
-                <div className="flex min-h-0 grow flex-col">
-                    <Collapsible.ScrollArea>{makeContent()}</Collapsible.ScrollArea>
-                </div>
+                <div className="flex min-h-0 grow flex-col">{makeContent()}</div>
             </ErrorBoundary>
         </div>
     );
