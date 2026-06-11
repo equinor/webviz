@@ -63,7 +63,10 @@ export function Section(props: SectionProps) {
                 </Collapsible.Trigger>
                 {props.adornment && <span className="px-selectable py-selectable">{props.adornment}</span>}
             </div>
-            <Collapsible.Panel className="col-span-3 grid grid-cols-subgrid h-(--collapsible-panel-height) overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [[hidden]:not([hidden='until-found'])]:hidden">
+            <Collapsible.Panel
+                keepMounted
+                className="setting-section-panel col-span-3 grid grid-cols-subgrid overflow-hidden h-(--collapsible-panel-height) transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0"
+            >
                 {children}
             </Collapsible.Panel>
         </Collapsible.Root>

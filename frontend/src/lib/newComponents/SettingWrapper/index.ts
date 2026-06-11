@@ -1,6 +1,6 @@
-import { SettingWrapper as SettingWrapperBase } from "./_components/SettingWrapper";
 import { Group } from "./_components/Group";
 import { Section } from "./_components/Section";
+import { SettingWrapper as SettingWrapperBase } from "./_components/SettingWrapper";
 
 export const SettingWrapper = Object.assign(SettingWrapperBase, { Group, Section });
 

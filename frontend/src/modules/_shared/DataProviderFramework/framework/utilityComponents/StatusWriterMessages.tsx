@@ -1,9 +1,10 @@
 import type React from "react";
 
+import { Error, Info, Warning } from "@mui/icons-material";
+
 import type { StatusMessage } from "@framework/types/statusWriter";
 import { StatusMessageType } from "@framework/types/statusWriter";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Error, Info, Warning } from "@mui/icons-material";
 
 export type StatusMessagesProps = { statusMessages: readonly StatusMessage[] };
 

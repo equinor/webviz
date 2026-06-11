@@ -1,7 +1,9 @@
 import React from "react";
-import { useIsMountedRef } from "./useIsMountedRef";
-import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
+
 import { reportErrorToGithub } from "@lib/utils/errors";
+import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
+
+import { useIsMountedRef } from "./useIsMountedRef";
 
 export function useSymbolicateStackTrace(error?: Error) {
     const [isSymbolicatingStack, setIsSymbolicatingStack] = React.useState(false);

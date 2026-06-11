@@ -5,7 +5,6 @@ import { ArrowRight, Check, Remove } from "@mui/icons-material";
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
@@ -13,6 +12,7 @@ import { Field } from "@lib/newComponents/Field";
 import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Select, type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../types";

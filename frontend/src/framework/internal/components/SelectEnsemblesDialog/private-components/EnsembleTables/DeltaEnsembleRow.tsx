@@ -3,11 +3,11 @@ import type React from "react";
 import { Delete, DragIndicator, FolderOpen, WarningOutlined } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SortableList } from "@lib/newComponents/SortableList";
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";
 import { Combobox } from "@lib/newComponents/Combobox";
 import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { SortableList } from "@lib/newComponents/SortableList";
 import { Table } from "@lib/newComponents/Table";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { Tooltip } from "@lib/newComponents/Tooltip";

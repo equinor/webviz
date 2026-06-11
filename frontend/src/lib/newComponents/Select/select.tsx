@@ -3,11 +3,11 @@ import React from "react";
 import { Close, Deselect, SelectAll } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
+import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
-import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
 import { TextInput } from "../TextInput";
 import { Virtualization } from "../Virtualization";
 

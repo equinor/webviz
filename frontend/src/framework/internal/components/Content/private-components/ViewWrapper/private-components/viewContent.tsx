@@ -16,11 +16,11 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
+import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 import { CrashView } from "./crashView";
-import { Button } from "@lib/newComponents/Button";
-import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 type ViewContentProps = {
     moduleInstance: ModuleInstance<any, any>;

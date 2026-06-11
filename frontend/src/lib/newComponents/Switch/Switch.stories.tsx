@@ -22,12 +22,10 @@ For labeled usage see **Components/Switch/Compositions**.
         disabled: { control: "boolean" },
         readOnly: { control: "boolean" },
         defaultChecked: { control: "boolean" },
-        size: { control: "select", options: ["small", "default", "large"] },
     },
     args: {
         disabled: false,
         defaultChecked: false,
-        size: "default",
     },
 };
 
