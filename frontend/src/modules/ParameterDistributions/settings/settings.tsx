@@ -224,22 +224,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                     </SettingWrapper>
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Selections" defaultOpen>
-                    <SettingWrapper>
-                        <CheckboxCompositions.WithLabel
-                            label="Show nonvarying parameters"
-                            checked={showConstantParameters}
-                            onCheckedChange={setShowConstantParameters}
-                        />
-                    </SettingWrapper>
-                    <SettingWrapper>
-                        <CheckboxCompositions.WithLabel
-                            label="Show LOG parameters"
-                            checked={showLogParameters}
-                            onCheckedChange={setShowLogParameters}
-                        />
-                    </SettingWrapper>
-
                     <SettingWrapper
+                        label="Parameter options"
+                        stacked
                         help={{
                             title: "Show discrete parameters",
                             content: (
@@ -265,11 +252,28 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             ),
                         }}
                     >
-                        <CheckboxCompositions.WithLabel
-                            label="Show discrete parameters"
-                            checked={showNumericDiscreteParameters}
-                            onCheckedChange={setShowNumericDiscreteParameters}
-                        />
+                        <React.Fragment>
+                            <CheckboxCompositions.WithLabel
+                                label="Show nonvarying parameters"
+                                checked={showConstantParameters}
+                                onCheckedChange={setShowConstantParameters}
+                                size="small"
+                            />
+
+                            <CheckboxCompositions.WithLabel
+                                label="Show LOG parameters"
+                                checked={showLogParameters}
+                                onCheckedChange={setShowLogParameters}
+                                size="small"
+                            />
+
+                            <CheckboxCompositions.WithLabel
+                                label="Show discrete parameters"
+                                checked={showNumericDiscreteParameters}
+                                onCheckedChange={setShowNumericDiscreteParameters}
+                                size="small"
+                            />
+                        </React.Fragment>
                     </SettingWrapper>
 
                     <SettingWrapper annotations={selectedParameterIdentsAnnotation} stacked>
