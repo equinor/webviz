@@ -7,7 +7,6 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import { Collapsible } from "@lib/newComponents/Collapsible";
@@ -17,6 +16,8 @@ import { Hidden } from "@lib/newComponents/Hidden";
 import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import type { SelectOption } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
+import type { SettingAnnotation } from "@lib/newComponents/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -60,7 +61,6 @@ import {
     userSelectedTableNameAtom,
 } from "./atoms/persistableFixableAtoms";
 import { relPermTableDefinitionQueriesAtom, relPermTableNamesQueriesAtom } from "./atoms/queryAtoms";
-import { SettingAnnotation, SettingWrapper } from "@lib/newComponents/SettingWrapper";
 
 const CURVE_TYPE_LABELS: Record<CurveType, string> = {
     [CurveType.RELPERM]: "Relative permeability",
@@ -299,6 +299,15 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </Hidden>
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Selection">
+                    {(tableDefinitionsArePending || tableDefinitionsErrorMessage) && (
+                        // TODO - Waiting for section overlay. Temp workaround
+                        <SettingWrapper
+                            loadingOverlay={tableDefinitionsArePending}
+                            errorOverlay={tableDefinitionsErrorMessage}
+                        >
+                            <div className="h-20" />
+                        </SettingWrapper>
+                    )}
                     <SettingWrapper label="Curve type">
                         <RadioCompositions.GroupWithLabels
                             options={makeEnumOptions(CURVE_TYPE_LABELS)}
