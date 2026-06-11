@@ -1,8 +1,6 @@
 import logging
 from typing import List, Optional, Sequence, cast
 
-import pyarrow as pa
-import pyarrow.compute as pc
 import polars as pl
 from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
@@ -64,18 +62,21 @@ class RftAccess:
         table_loader.require_standard_result(StandardResultName.rft)
         table_loader.require_table_name(table_names[0])
         table = await table_loader.get_aggregated_multiple_columns_async(available_response_names)
-
         timer.record_lap("load_aggregated_arrow_table")
-
-        rft_well_infos: list[RftWellInfo] = []
-        # ! We assume that list never has None
-        well_names = cast(list[str], table["WELL"].unique().to_numpy().tolist())
-
-        for well_name in well_names:
-            well_table = table.filter(pc.equal(table["WELL"], pa.scalar(well_name)))
-            timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
-
-            rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
+        grouped = (
+            cast(pl.DataFrame, pl.from_arrow(table))
+            .lazy()
+            .select(["WELL", "DATE"])
+            .unique()
+            .with_columns(pl.col("DATE").dt.timestamp("ms").alias("timestamp_utc_ms"))
+            .group_by("WELL")
+            .agg(pl.col("timestamp_utc_ms").sort())
+            .collect()
+        )
+        rft_well_infos = [
+            RftWellInfo(well_name=row["WELL"], timestamps_utc_ms=row["timestamp_utc_ms"])
+            for row in grouped.iter_rows(named=True)
+        ]
 
         timer.record_lap("process_well_infos")
         LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}")
@@ -99,33 +100,31 @@ class RftAccess:
 
         timer.record_lap("load_aggregated_arrow_table")
 
-        if realizations is not None:
-            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
-            table = table.filter(mask)
+        pl_table = cast(pl.DataFrame, pl.from_arrow(table)).lazy()
 
-        mask = pc.equal(table["WELL"], pa.scalar(well_name))
-        table = table.filter(mask)
+        if realizations is not None:
+            pl_table = pl_table.filter(pl.col("REAL").is_in(realizations))
+
+        pl_table = pl_table.filter(pl.col("WELL") == well_name)
+
         if timestamps_utc_ms is not None:
-            mask = pc.is_in(table["DATE"], value_set=pa.array(timestamps_utc_ms))
-            table = table.filter(mask)
+            pl_table = pl_table.filter(pl.col("DATE").dt.timestamp("ms").is_in(list(timestamps_utc_ms)))
 
         timer.record_lap("filter_table")
-        polars_table: pl.DataFrame = pl.from_arrow(table)  # type: ignore
-
-        polars_table = (
-            polars_table.group_by(["REAL", "DATE"])
+        result_table = (
+            pl_table.group_by(["REAL", "DATE"])
             .agg([pl.col("DEPTH").alias("depth_arr"), pl.col(response_name).alias("value_arr")])
-            .with_columns(
-                [
-                    pl.lit(well_name).alias("well_name"),
-                    (pl.col("DATE").cast(pl.Datetime).dt.timestamp() * 1000).alias("timestamp_utc_ms"),
-                    pl.col("REAL").alias("realization"),
-                ]
-            )
-            .select(["well_name", "realization", "timestamp_utc_ms", "depth_arr", "value_arr"])
+            .select([
+                pl.lit(well_name).alias("well_name"),
+                pl.col("REAL").alias("realization"),
+                pl.col("DATE").dt.timestamp("ms").alias("timestamp_utc_ms"),
+                "depth_arr",
+                "value_arr",
+            ])
+            .collect()
         )
         timer.record_lap("process_table_in_polars")
-        ret_arr_rows = polars_table.iter_rows(named=True)
+        ret_arr_rows = result_table.iter_rows(named=True)
         ret_arr = [RftRealizationData(**row) for row in ret_arr_rows]
         LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._ensemble_name=}, {well_name=}, {response_name=}")
         return ret_arr
