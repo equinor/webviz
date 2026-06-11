@@ -273,7 +273,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         <TextInput value={wellSearchText} onChange={handleWellSearchChange} placeholder={"..."} />
                     </SettingWrapper>
                     <SettingWrapper label="Sort wells by">
-                        <div className="flex items-center gap-2">
+                        <div className="gap-xs flex items-center">
                             <div className="grow">
                                 <Combobox
                                     items={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
