@@ -19,7 +19,6 @@ import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Annotations } from "@lib/newComponents/SettingWrapper/_components/Annotations";
 import { Slider } from "@lib/newComponents/Slider";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { Tooltip } from "@lib/newComponents/Tooltip";
