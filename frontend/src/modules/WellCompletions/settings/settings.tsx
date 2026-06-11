@@ -17,7 +17,9 @@ import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Annotations } from "@lib/newComponents/SettingWrapper/_components/Annotations";
 import { Slider } from "@lib/newComponents/Slider";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { Tooltip } from "@lib/newComponents/Tooltip";
@@ -203,27 +205,33 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Realization" stacked annotations={selectedRealizationAnnotations}>
-                        <div className="flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <SwitchCompositions.WithLabel
                                 label="Aggregate over all realizations"
+                                checked={realizationMode === RealizationMode.AGGREGATED}
                                 onCheckedChange={(checked) =>
                                     setRealizationMode(checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE)
                                 }
                             />
-                            <Tooltip content="Only available in single realization mode." side="bottom">
-                                <Combobox
-                                    items={availableRealizations.map((realization: number) => {
-                                        return {
-                                            label: realization.toString(),
-                                            value: realization.toString(),
-                                        };
-                                    })}
-                                    value={selectedRealization.value?.toString() ?? undefined}
-                                    onValueChange={(value) => handleSelectedRealizationNumberChange(value)}
-                                    disabled={!isSingleRealizationMode}
-                                    placeholder="Select realization..."
-                                />
-                            </Tooltip>
+                            <Combobox
+                                items={availableRealizations.map((realization: number) => {
+                                    return {
+                                        label: realization.toString(),
+                                        value: realization.toString(),
+                                    };
+                                })}
+                                value={selectedRealization.value?.toString() ?? undefined}
+                                onValueChange={(value) => handleSelectedRealizationNumberChange(value)}
+                                disabled={!isSingleRealizationMode}
+                                placeholder="Select realization..."
+                            />
+                            <Annotations
+                                annotations={
+                                    !isSingleRealizationMode
+                                        ? [{ type: "info", message: "Only available in single realization mode." }]
+                                        : []
+                                }
+                            />
                         </div>
                     </SettingWrapper>
                 </SettingWrapper.Section>
@@ -283,20 +291,19 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                     onValueChange={handleSortWellsByChange}
                                 />
                             </div>
-                            <Button
-                                onClick={handleToggleSortDirection}
-                                title={
+                            <Tooltip
+                                content={
                                     wellSortDirection === SortDirection.ASCENDING ? "Sort descending" : "Sort ascending"
                                 }
-                                iconOnly
-                                variant="contained"
                             >
-                                {wellSortDirection === SortDirection.ASCENDING ? (
-                                    <SortAscendingIcon />
-                                ) : (
-                                    <SortDescendingIcon />
-                                )}
-                            </Button>
+                                <Button onClick={handleToggleSortDirection} iconOnly variant="contained">
+                                    {wellSortDirection === SortDirection.ASCENDING ? (
+                                        <SortAscendingIcon />
+                                    ) : (
+                                        <SortDescendingIcon />
+                                    )}
+                                </Button>
+                            </Tooltip>
                         </div>
                     </SettingWrapper>
                 </SettingWrapper.Section>
