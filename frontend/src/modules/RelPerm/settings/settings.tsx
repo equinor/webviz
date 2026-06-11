@@ -290,7 +290,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 </PendingWrapper>
             </CollapsibleGroup>
             <PendingWrapper isPending={tableDefinitionsArePending} errorMessage={tableDefinitionsErrorMessage}>
-                <CollapsibleGroup expanded={true} title="Curve selection" contentClassName="flex flex-col gap-2">
+                <CollapsibleGroup expanded={true} title="Selection" contentClassName="flex flex-col gap-2">
                     <SettingWrapper label="Curve type">
                         <RadioGroup
                             options={makeEnumOptions(CURVE_TYPE_LABELS)}
