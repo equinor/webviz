@@ -19,8 +19,8 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Switch } from "@lib/components/Switch";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 

@@ -1,3 +1,4 @@
+import { Link, LinkOff } from "@mui/icons-material";
 import { parseHex, type Rgb } from "culori";
 import { isNaN } from "lodash";
 
@@ -13,7 +14,6 @@ import {
     LabelPositionType,
     type PolygonVisualizationSpec,
 } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
-import { Link, LinkOff } from "@mui/icons-material";
 
 export type { LabelPositionType, PolygonVisualizationSpec };
 

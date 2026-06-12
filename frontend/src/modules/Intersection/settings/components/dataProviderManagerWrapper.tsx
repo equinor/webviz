@@ -5,6 +5,7 @@ import { useAtom } from "jotai";
 
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useColorSet, type WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { Button } from "@lib/newComponents/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
 import { DataProviderRegistry } from "@modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry";
@@ -26,7 +27,6 @@ import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramew
 import { MAX_INTERSECTION_VIEWS } from "@modules/Intersection/view/typesAndEnums";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
-import { Button } from "@lib/newComponents/Button";
 
 export type DataProviderManagerWrapperProps = {
     dataProviderManager: DataProviderManager;

@@ -2,7 +2,8 @@
  * It is generated from color-tokens.config.js by the generate:color-utilities
  * script. Run `npm run generate:color-utilities` to regenerate. */
 
-import React from "react";
+import type React from "react";
+
 import type { Meta } from "@storybook/react";
 
 type ColorEntry = { name: string; variable: string };

@@ -5,11 +5,11 @@ import notFoundIllustration from "@assets/moduleNotFound.svg";
 import type { AtomStore } from "@framework/AtomStoreMaster";
 import { ImportStatus, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { Tag } from "@lib/newComponents/Tag";
 import { Button } from "@lib/newComponents/Button";
-import { Heading } from "@lib/newComponents/Typography/compositions/Heading/heading";
-import { Paragraph } from "@lib/newComponents/Typography/compositions";
 import { Separator } from "@lib/newComponents/Separator";
+import { Tag } from "@lib/newComponents/Tag";
+import { Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Heading } from "@lib/newComponents/Typography/compositions/Heading/heading";
 
 export class ModuleNotFoundPlaceholder extends Module<any, any> {
     constructor(moduleName: string) {

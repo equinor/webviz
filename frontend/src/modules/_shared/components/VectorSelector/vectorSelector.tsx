@@ -264,33 +264,35 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
     }
 }
 
-export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorProps>((props, ref) => {
-    const adjustedProps: VectorSelectorComponentProps = {
-        id: props.id ?? "",
-        data: props.data,
-        customVectorDefinitions: props.customVectorDefinitions ?? {},
-        onValueChange:
-            props.onValueChange ??
-            (() => {
-                return;
-            }),
-        maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
-        delimiter: props.delimiter ?? ":",
-        numMetaNodes: props.numMetaNodes ?? 0,
-        showSuggestions: props.showSuggestions ?? true,
-        selectedTags: props.selectedTags ?? [],
-        placeholder: props.placeholder ?? "Add new tag...",
-        numSecondsUntilSuggestionsAreShown: props.numSecondsUntilSuggestionsAreShown ?? 0.5,
-        lineBreakAfterTag: props.lineBreakAfterTag ?? false,
-        caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
-        useBetaFeatures: props.useBetaFeatures ?? false,
-        inputRef: props.inputRef ?? ref,
-        disabled: props.disabled ?? false,
-        fieldStateDataAttributes: props.fieldStateDataAttributes ?? {},
-    };
+export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorProps>(
+    function VectorSelector(props, ref) {
+        const adjustedProps: VectorSelectorComponentProps = {
+            id: props.id ?? "",
+            data: props.data,
+            customVectorDefinitions: props.customVectorDefinitions ?? {},
+            onValueChange:
+                props.onValueChange ??
+                (() => {
+                    return;
+                }),
+            maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
+            delimiter: props.delimiter ?? ":",
+            numMetaNodes: props.numMetaNodes ?? 0,
+            showSuggestions: props.showSuggestions ?? true,
+            selectedTags: props.selectedTags ?? [],
+            placeholder: props.placeholder ?? "Add new tag...",
+            numSecondsUntilSuggestionsAreShown: props.numSecondsUntilSuggestionsAreShown ?? 0.5,
+            lineBreakAfterTag: props.lineBreakAfterTag ?? false,
+            caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
+            useBetaFeatures: props.useBetaFeatures ?? false,
+            inputRef: props.inputRef ?? ref,
+            disabled: props.disabled ?? false,
+            fieldStateDataAttributes: props.fieldStateDataAttributes ?? {},
+        };
 
-    return <VectorSelectorComponent {...adjustedProps} />;
-});
+        return <VectorSelectorComponent {...adjustedProps} />;
+    },
+);
 
 /**
  * Add vector to existing vector selector data tree node list.

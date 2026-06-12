@@ -6,12 +6,12 @@ import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessage
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 import { ColorGradient } from "@lib/newComponents/ColorGradient";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
-import { Collapsible } from "@lib/newComponents/Collapsible";
 import { NumberInput } from "@lib/newComponents/NumberInput";
-import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSettingsProps = {
     workbench: Workbench;

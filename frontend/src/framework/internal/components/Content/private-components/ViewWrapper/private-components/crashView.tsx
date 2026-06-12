@@ -1,15 +1,16 @@
 import React from "react";
 
-import crashIllustration from "@assets/moduleCrash.svg";
 
 import { BugReport, Info, Refresh } from "@mui/icons-material";
 
-import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
-import { Dialog } from "@lib/newComponents/Dialog";
+import crashIllustration from "@assets/moduleCrash.svg";
+
 import { Button } from "@lib/newComponents/Button";
-import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
-import { Separator } from "@lib/newComponents/Separator";
 import { Code } from "@lib/newComponents/Code";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { Separator } from "@lib/newComponents/Separator";
+import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 export type FormattedErrorProps = {
     moduleName: string;

@@ -3,16 +3,17 @@ import React from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import { Button } from "@lib/newComponents/Button";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { Button } from "@lib/newComponents/Button";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Slider } from "@lib/newComponents/Slider";
+
 
 type ValueType = {
     value: [number, number, number];

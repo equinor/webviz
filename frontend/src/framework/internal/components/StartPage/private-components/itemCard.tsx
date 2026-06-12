@@ -5,9 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ItemCardProps = {

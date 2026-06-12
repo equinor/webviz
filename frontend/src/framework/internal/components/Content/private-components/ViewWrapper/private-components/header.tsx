@@ -27,13 +27,13 @@ import type { Workbench } from "@framework/Workbench";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Badge } from "@lib/newComponents/Badge";
 import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
 import { Popover } from "@lib/newComponents/Popover";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
 
 export type HeaderProps = {
     workbench: Workbench;
