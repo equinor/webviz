@@ -153,9 +153,7 @@ async def _get_grid_properties_info_async(cpgrid: CPGrid) -> List[Grid3dProperty
     async with asyncio.TaskGroup() as tg:
         no_time_property_names_task = tg.create_task(no_time_context.names_async)
         timestamp_buckets_task = tg.create_task(
-            timestamp_context.get_composite_agg_async(
-                {"name": "data.name.keyword", "t0": "data.time.t0.value"}
-            )
+            timestamp_context.get_composite_agg_async({"name": "data.name.keyword", "t0": "data.time.t0.value"})
         )
         interval_buckets_task = tg.create_task(
             interval_context.get_composite_agg_async(
