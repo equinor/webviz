@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 {
                     "bg-danger-canvas": hasErrors || invalidPersistedState,
                     "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
-                    "bg-neutral-canvas": !hasErrors && !props.isMinimized && !invalidPersistedState,
+                    "bg-neutral": !hasErrors && !props.isMinimized && !invalidPersistedState,
                 },
             )}
             onDoubleClick={handleDoubleClick}
@@ -248,13 +248,10 @@ function ModuleTitle(props: ModuleTitleProps) {
 
     return (
         <div
-            className={resolveClassNames(
-                "py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center",
-                {
-                    "cursor-grabbing": props.isDragged,
-                    "cursor-move": !props.isDragged && !props.isSnapshotMode,
-                },
-            )}
+            className={resolveClassNames("py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center", {
+                "cursor-grabbing": props.isDragged,
+                "cursor-move": !props.isDragged && !props.isSnapshotMode,
+            })}
             onPointerDown={handlePointerDown}
         >
             <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>

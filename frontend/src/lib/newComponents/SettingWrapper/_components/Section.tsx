@@ -29,15 +29,6 @@ const TONE_TO_CLASSNAMES: Record<NonNullable<SectionProps["tone"] | "disabled">,
 export function Section(props: SectionProps) {
     const { tone = "neutral", disabled = false } = props;
 
-    const children = React.Children.map(props.children, (child, index) => (
-        <div
-            key={index}
-            className="px-xs py-2xs col-span-3 grid grid-cols-subgrid empty:hidden [&:nth-child(odd_of_:not(:empty))]:bg-canvas"
-        >
-            {child}
-        </div>
-    ));
-
     return (
         <Collapsible.Root
             defaultOpen={props.defaultOpen}
@@ -65,9 +56,10 @@ export function Section(props: SectionProps) {
             </div>
             <Collapsible.Panel
                 keepMounted
-                className="setting-section-panel col-span-3 grid grid-cols-subgrid overflow-hidden h-(--collapsible-panel-height) transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0"
+                data-in-section
+                className="setting-section-panel col-span-3 grid grid-cols-subgrid overflow-hidden h-(--collapsible-panel-height) transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas [&>.contents>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:py-0 [&>[data-hidden]>.setting-row]:overflow-hidden"
             >
-                {children}
+                {props.children}
             </Collapsible.Panel>
         </Collapsible.Root>
     );

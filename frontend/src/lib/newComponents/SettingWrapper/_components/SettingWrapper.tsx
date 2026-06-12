@@ -120,17 +120,93 @@ export function SettingWrapper(props: SettingWrapperProps) {
 
     if (!props.label) {
         return (
+            <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
+                <Field.Root inline invalid={isInvalid} warning={isWarning}>
+                    <div
+                        className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
+                            "col-span-2": !!props.help,
+                            "col-span-3": !props.help,
+                        })}
+                    >
+                        <div
+                            style={{ display: "contents" }}
+                            ref={(el) => {
+                                if (el) el.inert = !!props.overlay;
+                            }}
+                        >
+                            {props.children}
+                        </div>
+                        {overlay && <Overlay type={overlay.type} message={overlay.message} />}
+                    </div>
+                    {props.help && (
+                        <div className="self-center">
+                            <Field.Info side="right">
+                                <Heading as="h6">{props.help.title}</Heading>
+                                {props.help.content}
+                            </Field.Info>
+                        </div>
+                    )}
+                    {annotations.length > 0 && (
+                        <div className={resolveClassNames("flex flex-col", { "col-span-2": !!props.help, "col-span-3": !props.help })}>
+                            <Annotations annotations={annotations} />
+                        </div>
+                    )}
+                </Field.Root>
+            </div>
+        );
+    }
+
+    const isStacked = props.stacked || groupContext === "stacked";
+
+    if (isStacked) {
+        return (
+            <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
+                <Field.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
+                    <div className="gap-x-2xs flex w-full items-center justify-between">
+                        {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
+                        {props.help && (
+                            <Field.Info side="right">
+                                <Heading as="h6">{props.help.title}</Heading>
+                                {props.help.content}
+                            </Field.Info>
+                        )}
+                    </div>
+                    {props.description && <Field.Description>{props.description}</Field.Description>}
+                    <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
+                        <div
+                            style={{ display: "contents" }}
+                            ref={(el) => {
+                                if (el) el.inert = !!overlay;
+                            }}
+                        >
+                            {props.children}
+                        </div>
+                        {overlay && <Overlay type={overlay.type} message={overlay.message} />}
+                    </div>
+                    <Annotations annotations={annotations} />
+                </Field.Root>
+            </div>
+        );
+    }
+
+    return (
+        <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
             <Field.Root inline invalid={isInvalid} warning={isWarning}>
+                <div className="gap-y-4xs flex flex-col justify-center">
+                    <div className="gap-x-2xs flex items-center">
+                        {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
+                    </div>
+                    {props.description && <Field.Description>{props.description}</Field.Description>}
+                </div>
                 <div
                     className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
-                        "col-span-2": !!props.help,
-                        "col-span-3": !props.help,
+                        "col-span-2": !props.help,
                     })}
                 >
                     <div
                         style={{ display: "contents" }}
                         ref={(el) => {
-                            if (el) el.inert = !!props.overlay;
+                            if (el) el.inert = !!overlay;
                         }}
                     >
                         {props.children}
@@ -146,81 +222,11 @@ export function SettingWrapper(props: SettingWrapperProps) {
                     </div>
                 )}
                 {annotations.length > 0 && (
-                    <div className={resolveClassNames("flex flex-col", { "col-span-2": !!props.help, "col-span-3": !props.help })}>
+                    <div className={resolveClassNames("col-start-2 flex flex-col", { "col-span-2": !props.help })}>
                         <Annotations annotations={annotations} />
                     </div>
                 )}
             </Field.Root>
-        );
-    }
-
-    const isStacked = props.stacked || groupContext === "stacked";
-
-    if (isStacked) {
-        return (
-            <Field.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
-                <div className="gap-x-2xs flex w-full items-center justify-between">
-                    {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
-                    {props.help && (
-                        <Field.Info side="right">
-                            <Heading as="h6">{props.help.title}</Heading>
-                            {props.help.content}
-                        </Field.Info>
-                    )}
-                </div>
-                {props.description && <Field.Description>{props.description}</Field.Description>}
-                <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
-                    <div
-                        style={{ display: "contents" }}
-                        ref={(el) => {
-                            if (el) el.inert = !!overlay;
-                        }}
-                    >
-                        {props.children}
-                    </div>
-                    {overlay && <Overlay type={overlay.type} message={overlay.message} />}
-                </div>
-                <Annotations annotations={annotations} />
-            </Field.Root>
-        );
-    }
-
-    return (
-        <Field.Root inline invalid={isInvalid} warning={isWarning}>
-            <div className="gap-y-4xs flex flex-col justify-center">
-                <div className="gap-x-2xs flex items-center">
-                    {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
-                </div>
-                {props.description && <Field.Description>{props.description}</Field.Description>}
-            </div>
-            <div
-                className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
-                    "col-span-2": !props.help,
-                })}
-            >
-                <div
-                    style={{ display: "contents" }}
-                    ref={(el) => {
-                        if (el) el.inert = !!overlay;
-                    }}
-                >
-                    {props.children}
-                </div>
-                {overlay && <Overlay type={overlay.type} message={overlay.message} />}
-            </div>
-            {props.help && (
-                <div className="self-center">
-                    <Field.Info side="right">
-                        <Heading as="h6">{props.help.title}</Heading>
-                        {props.help.content}
-                    </Field.Info>
-                </div>
-            )}
-            {annotations.length > 0 && (
-                <div className={resolveClassNames("col-start-2 flex flex-col", { "col-span-2": !props.help })}>
-                    <Annotations annotations={annotations} />
-                </div>
-            )}
-        </Field.Root>
+        </div>
     );
 }

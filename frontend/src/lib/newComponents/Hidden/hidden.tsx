@@ -1,5 +1,3 @@
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-
 export type HiddenProps = {
     children: React.ReactNode;
     hidden?: boolean;
@@ -8,8 +6,19 @@ export type HiddenProps = {
 
 export function Hidden(props: HiddenProps) {
     if (props.keepMounted) {
-        return <div className={resolveClassNames("contents", { hidden: props.hidden })}>{props.children}</div>;
+        // Always display:contents so children stay in the parent subgrid — label lands in col 1,
+        // input in col 2 — keeping column widths stable whether hidden or shown.
+        // data-hidden lets children hide themselves via in-data-hidden:* without leaving the grid.
+        return (
+            <div className="contents" {...(props.hidden ? { "data-hidden": "" } : {})}>
+                {props.children}
+            </div>
+        );
     }
 
-    return <>{props.hidden ? null : props.children}</>;
+    if (props.hidden) {
+        return null;
+    }
+
+    return <>{props.children}</>;
 }

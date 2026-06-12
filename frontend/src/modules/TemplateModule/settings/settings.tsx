@@ -14,6 +14,7 @@ import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { TextInput } from "@lib/newComponents/TextInput";
 
 import type { Interfaces } from "../interfaces";
+import { Hidden } from "@lib/newComponents/Hidden";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -21,6 +22,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [ensembles, setEnsembles] = React.useState<RegularEnsembleIdent[]>([]);
     const [setting4Enabled, setSetting4Enabled] = React.useState(false);
     const [setting5Enabled, setSetting5Enabled] = React.useState(false);
+    const [showHiddenSettings, setShowHiddenSettings] = React.useState(false);
 
     return (
         <Collapsible.ScrollArea>
@@ -64,51 +66,55 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </SettingWrapper>
                     <SettingWrapper
                         help={{
-                            title: "Third setting",
+                            title: "Show other settings",
                             content: "This setting has no label or description. The input spans the whole width.",
                         }}
                     >
                         <SwitchCompositions.WithLabel
-                            onCheckedChange={() => {}}
-                            checked={false}
-                            label="Third setting"
+                            onCheckedChange={setShowHiddenSettings}
+                            checked={showHiddenSettings}
+                            label="Show other settings"
                         />
                     </SettingWrapper>
-                    <SettingWrapper
-                        label="Fourth setting"
-                        help={{
-                            title: "Fourth setting",
-                            content: "An inline setting with enabling switch.",
-                        }}
-                    >
-                        <div className="gap-x-xs flex">
-                            <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} />
-                            <NumberInput value={0} onValueChange={() => {}} disabled={!setting4Enabled} />
-                        </div>
-                    </SettingWrapper>
-                    <SettingWrapper
-                        label="Fifth setting"
-                        help={{
-                            title: "Fifth setting",
-                            content: "A stacked setting with enabling switch.",
-                        }}
-                        stacked
-                    >
-                        <div className="gap-y-xs flex flex-col">
-                            <SwitchCompositions.WithLabel
-                                onCheckedChange={setSetting5Enabled}
-                                checked={setting5Enabled}
-                                size="small"
-                                label="Enable option"
-                            />
-                            <Select
-                                options={[{ label: "Option 1", value: "option1" }]}
-                                onValueChange={() => {}}
-                                size={5}
-                                disabled={!setting5Enabled}
-                            />
-                        </div>
-                    </SettingWrapper>
+                    <Hidden hidden={!showHiddenSettings} keepMounted>
+                        <>
+                            <SettingWrapper
+                                label="Setting with a pretty pretty long label"
+                                help={{
+                                    title: "Fourth setting",
+                                    content: "An inline setting with enabling switch.",
+                                }}
+                            >
+                                <div className="gap-x-xs flex">
+                                    <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} />
+                                    <NumberInput value={0} onValueChange={() => {}} disabled={!setting4Enabled} />
+                                </div>
+                            </SettingWrapper>
+                            <SettingWrapper
+                                label="Fifth setting"
+                                help={{
+                                    title: "Fifth setting",
+                                    content: "A stacked setting with enabling switch.",
+                                }}
+                                stacked
+                            >
+                                <div className="gap-y-xs flex flex-col">
+                                    <SwitchCompositions.WithLabel
+                                        onCheckedChange={setSetting5Enabled}
+                                        checked={setting5Enabled}
+                                        size="small"
+                                        label="Enable option"
+                                    />
+                                    <Select
+                                        options={[{ label: "Option 1", value: "option1" }]}
+                                        onValueChange={() => {}}
+                                        size={5}
+                                        disabled={!setting5Enabled}
+                                    />
+                                </div>
+                            </SettingWrapper>
+                        </>
+                    </Hidden>
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Settings with overlays" defaultOpen>
                     <SettingWrapper

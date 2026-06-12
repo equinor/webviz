@@ -46,24 +46,18 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             evt.stopPropagation();
             return;
         }
-        if (evt.target instanceof Element && evt.target.closest("button") !== null) {
-            evt.preventDefault();
-            return;
-        }
         props.onClick?.(props.id, evt);
     }
 
     return (
-        <a
+        <div
             className={resolveClassNames(
-                "gap-xs px-selectable py-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
+                "gap-xs px-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
                 {
                     "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
                     "hover:bg-accent-hover": !props.isDeleted,
                 },
             )}
-            href={props.href}
-            onClick={handleClick}
         >
             <Popover.Root>
                 <Popover.Trigger size="small" variant="ghost" iconOnly>
@@ -75,12 +69,18 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                     </Popover.Content>
                 </Popover.Popup>
             </Popover.Root>
-            <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
-            {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-            <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
-                ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
-            </span>
-        </a>
+            <a
+                className="gap-xs py-selectable flex w-full min-w-0 items-center"
+                href={props.href}
+                onClick={handleClick}
+            >
+                <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
+                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
+                <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
+                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+                </span>
+            </a>
+        </div>
     );
 }
 
@@ -113,7 +113,7 @@ function TooltipContent(
     }
     return (
         <div className="w-2xs text-base whitespace-normal">
-            <Heading as="h6" variant="strong">
+            <Heading as="h6" variant="strong" weight="bolder">
                 {props.title}
             </Heading>
             <Separator orientation="horizontal" />
@@ -127,7 +127,6 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-neutral mt-xs text-body-sm block italic">Click to open</span>
         </div>
     );
 }
