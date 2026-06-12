@@ -98,7 +98,7 @@ const meta: Meta<typeof Combobox> = {
         size: { control: "radio", options: ["small", "default", "large"] },
         placeholder: { control: "text" },
         noMatchesText: { control: "text" },
-        clearable: { control: "boolean" },
+        showClearAllButton: { control: "boolean" },
         disabled: { control: "boolean" },
     },
 };
@@ -126,7 +126,7 @@ export const Clearable: Story = {
     },
     args: {
         items: COUNTRIES,
-        clearable: true,
+        showClearAllButton: true,
         defaultValue: "no",
     },
 };
@@ -140,7 +140,7 @@ export const WithDefaultValue: Story = {
     args: {
         items: COUNTRIES,
         defaultValue: "de",
-        clearable: true,
+        showClearAllButton: true,
     },
 };
 
@@ -156,7 +156,7 @@ export const MultipleSelect: Story = {
     },
     render: (args) => (
         <div className="w-64">
-            <Combobox multiple clearable placeholder="Select countries" {...args} />
+            <Combobox multiple showClearAllButton placeholder="Select countries" {...args} />
         </div>
     ),
 };
@@ -172,7 +172,7 @@ export const GroupedItems: Story = {
     args: {
         items: COUNTRIES_BY_CONTINENT,
         placeholder: "Select a country",
-        clearable: true,
+        showClearAllButton: true,
     },
     render: (args) => (
         <div className="w-64">
@@ -189,7 +189,7 @@ export const Controlled: Story = {
     },
     args: {
         items: COUNTRIES,
-        clearable: true,
+        showClearAllButton: true,
         placeholder: "Select a country",
     },
     render: function ControlledComp(args: ComboboxProps<any, any>) {
@@ -241,7 +241,7 @@ export const WithField: Story = {
     },
     args: {
         items: COUNTRIES,
-        clearable: true,
+        showClearAllButton: true,
         placeholder: "Select a country",
     },
     render: (args) => (
@@ -266,7 +266,7 @@ export const WithItemAdornment: Story = {
     args: {
         items: COUNTRIES,
         placeholder: "Select a country",
-        clearable: true,
+        showClearAllButton: true,
     },
     render: (args: ComboboxProps<any, any>) => {
         function ContinentDot({ countryCode }: { countryCode: string }) {
@@ -300,7 +300,7 @@ export const WithStartAdornment: Story = {
     args: {
         items: COUNTRIES,
         placeholder: "Select a country",
-        clearable: true,
+        showClearAllButton: true,
         startAdornment: <Search fontSize="small" />,
     },
     render: (args) => (
@@ -321,7 +321,7 @@ export const WithEndAdornment: Story = {
     args: {
         items: COUNTRIES,
         placeholder: "Select a country",
-        clearable: true,
+        showClearAllButton: true,
         endAdornment: <Public fontSize="small" />,
     },
     render: (args) => (
@@ -376,7 +376,7 @@ export const AsyncFetchOnOpen: Story = {
         },
     },
     args: {
-        clearable: true,
+        showClearAllButton: true,
         placeholder: "Select a country",
     },
     render: function AsyncFetchOnOpenComp(args) {
@@ -419,7 +419,7 @@ export const AsyncSearchAsYouType: Story = {
     },
     args: {
         filter: null,
-        clearable: true,
+        showClearAllButton: true,
         placeholder: "Type to search countries…",
     },
     render: function AsyncSearchAsYouTypeComp(args) {
@@ -469,7 +469,7 @@ export const AsyncFetchError: Story = {
         },
     },
     args: {
-        clearable: true,
+        showClearAllButton: true,
         placeholder: "Select a country",
     },
     render: function AsyncFetchErrorComp(args) {

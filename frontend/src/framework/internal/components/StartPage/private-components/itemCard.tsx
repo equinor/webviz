@@ -9,6 +9,10 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Popover } from "@lib/newComponents/Popover";
+import { Info } from "@mui/icons-material";
+import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Separator } from "@lib/newComponents/Separator";
 
 export type ItemCardProps = {
     id: string;
@@ -42,33 +46,41 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             evt.stopPropagation();
             return;
         }
+        if (evt.target instanceof Element && evt.target.closest("button") !== null) {
+            evt.preventDefault();
+            return;
+        }
         props.onClick?.(props.id, evt);
     }
 
     return (
-        <Tooltip
-            title={<TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />}
-            placement="left"
-            enterDelay="medium"
+        <a
+            className={resolveClassNames(
+                "gap-xs px-selectable py-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
+                {
+                    "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
+                    "hover:bg-accent-hover": !props.isDeleted,
+                },
+            )}
+            href={props.href}
+            onClick={handleClick}
         >
-            <a
-                className={resolveClassNames(
-                    "gap-y-xs px-selectable py-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
-                    {
-                        "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
-                        "hover:bg-accent-hover": !props.isDeleted,
-                    },
-                )}
-                href={props.href}
-                onClick={handleClick}
-            >
-                <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
-                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
-                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
-                </span>
-            </a>
-        </Tooltip>
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info />
+                </Popover.Trigger>
+                <Popover.Popup side="left">
+                    <Popover.Content>
+                        <TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+            <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
+            {showOwnerRow && <OwnerLine owner={ownerInfo} />}
+            <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
+                ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+            </span>
+        </a>
     );
 }
 
@@ -77,7 +89,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
 
     return (
-        <div className="gap-y-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
+        <div className="gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
             <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
             <span className="min-w-0 flex-1 truncate">{name}</span>
         </div>
@@ -101,8 +113,10 @@ function TooltipContent(
     }
     return (
         <div className="w-2xs text-base whitespace-normal">
-            <h6>{props.title}</h6>
-            <hr className="mb-xs bg-floating h-px" />
+            <Heading as="h6" variant="strong">
+                {props.title}
+            </Heading>
+            <Separator orientation="horizontal" />
             {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
                 <ul className="mt-sm truncate text-sm">

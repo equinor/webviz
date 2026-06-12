@@ -271,7 +271,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
                             disabled={casesStandardResults.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
-                            clearable
+                            showClearAllButton
                         />
                     </Tooltip>
                 </StatusWrapper>

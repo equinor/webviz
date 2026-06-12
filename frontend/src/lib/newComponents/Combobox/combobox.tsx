@@ -34,7 +34,7 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         items: ComboboxItems<TValue>;
         placeholder?: string;
         noMatchesText?: React.ReactNode;
-        clearable?: boolean;
+        showClearAllButton?: boolean;
         /** startAdornment is shown at the start of the component */
         startAdornment?: React.ReactNode;
         /** endAdornment is shown instead of the trigger icon at the end of the input - only when `multiple` is false */
@@ -62,7 +62,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 Loading options
             </span>
         ),
-        clearable = false,
+        showClearAllButton = false,
         renderItemAdornment,
         selectionMode = "chips",
         ...rest
@@ -148,7 +148,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
 
                 {/* --- Controls --- */}
                 <div className="pr-xs gap-selectable box-border flex h-full shrink-0 items-center justify-center">
-                    {clearable && (
+                    {showClearAllButton && (
                         <ComboboxBase.Clear
                             className="Clear selectable text-body-sm py-3xs! box-border flex items-center justify-center"
                             aria-label="Clear selection"
