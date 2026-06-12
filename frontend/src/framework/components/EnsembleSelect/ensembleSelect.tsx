@@ -8,7 +8,7 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import type { SelectOption, SelectProps } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import { Select } from "@lib/newComponents/Select";
 
 import { EnsembleColorTile } from "../EnsembleColorTile";
 
@@ -89,7 +89,7 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
             options={optionsArray}
             value={selectedArray}
             optionHeight={30}
-            onChange={handleSelectionChange}
+            onValueChange={handleSelectionChange}
             multiple={multiple ?? true}
             {...rest}
         />

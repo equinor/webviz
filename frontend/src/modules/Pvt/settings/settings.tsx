@@ -2,7 +2,6 @@ import React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -10,8 +9,8 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import type { SelectOption } from "@lib/newComponents/Select";
+import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -34,6 +33,12 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -78,7 +83,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedMultiPvtNums(newPvtNums);
     }
 
-    function handleColorByChange(_: React.ChangeEvent<HTMLInputElement>, colorBy: ColorBy) {
+    function handleColorByChange(colorBy: ColorBy) {
         setSelectedColorBy(colorBy);
         if (colorBy === ColorBy.PVT_NUM) {
             setSelectedEnsembleIdents([selectedMultiEnsembleIdents[0]]);
@@ -91,8 +96,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
     }
 
-    function handlePhasesChange(value: string) {
-        setSelectedPhase(value as PhaseType);
+    function handlePhasesChange(value: PhaseType | null) {
+        if (value === null) {
+            return;
+        }
+        setSelectedPhase(value);
     }
 
     function handleVisualizePlotsChange(plots: string[]) {
@@ -118,66 +126,74 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Color by" expanded>
-                <RadioGroup
-                    options={[
-                        { label: "Ensemble", value: ColorBy.ENSEMBLE },
-                        { label: "PVTNum", value: ColorBy.PVT_NUM },
-                    ]}
-                    value={selectedColorBy}
-                    onChange={handleColorByChange}
-                />
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Ensembles" expanded>
-                <SettingWrapper annotations={selectedEnsemblesAnnotations}>
-                    <EnsembleSelect
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                        onChange={handleEnsembleSelectionChange}
-                        value={selectedEnsembleIdents.value}
-                        size={5}
-                        multiple={selectedColorBy === ColorBy.ENSEMBLE}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Realizations" expanded>
-                <SettingWrapper annotations={selectedRealizationsAnnotations}>
-                    <Select
-                        options={makeRealizationOptions(availableRealizationNumbers)}
-                        value={selectedRealizations.value.map((el) => el.toString())}
-                        onChange={handleRealizationSelectionChange}
-                        size={5}
-                        multiple={selectedColorBy === ColorBy.ENSEMBLE}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="PVT Num" expanded>
-                <SettingWrapper
-                    annotations={selectedPvtNumsAnnotations}
-                    loadingOverlay={selectedPvtNums.isLoading}
-                    errorOverlay={selectedPvtNums.depsHaveError ? "Could not be loaded." : undefined}
-                >
-                    <Select
-                        options={makePvtNumOptions(pvtDataAccessor?.getUniquePvtNums() || [])}
-                        value={selectedPvtNums.value.map((el) => el.toString())}
-                        onChange={handlePvtNumChange}
-                        size={5}
-                        multiple={selectedColorBy === ColorBy.PVT_NUM}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Phase" expanded>
-                <Dropdown options={makePhaseOptions()} value={selectedPhase} onChange={handlePhasesChange} />
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Show plot for" expanded>
-                <DependentVariableSelector
-                    dependentVariables={makeDependentVariableOptions(selectedPhase)}
-                    value={selectedDependentVariables}
-                    onChange={handleVisualizePlotsChange}
-                />
-            </CollapsibleGroup>
-        </div>
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Selection" defaultOpen>
+                    <SettingWrapper label="Ensembles" annotations={selectedEnsemblesAnnotations} stacked>
+                        <EnsembleSelect
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                            onChange={handleEnsembleSelectionChange}
+                            value={selectedEnsembleIdents.value}
+                            size={3}
+                            multiple={selectedColorBy === ColorBy.ENSEMBLE}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Realizations" annotations={selectedRealizationsAnnotations} stacked>
+                        <Select
+                            options={makeRealizationOptions(availableRealizationNumbers)}
+                            value={selectedRealizations.value.map((el) => el.toString())}
+                            onValueChange={handleRealizationSelectionChange}
+                            size={5}
+                            multiple={selectedColorBy === ColorBy.ENSEMBLE}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="PVT Num"
+                        annotations={selectedPvtNumsAnnotations}
+                        loadingOverlay={selectedPvtNums.isLoading}
+                        errorOverlay={selectedPvtNums.depsHaveError ? "Could not be loaded." : undefined}
+                        stacked
+                    >
+                        <Select
+                            options={makePvtNumOptions(pvtDataAccessor?.getUniquePvtNums() || [])}
+                            value={selectedPvtNums.value.map((el) => el.toString())}
+                            onValueChange={handlePvtNumChange}
+                            size={5}
+                            multiple={selectedColorBy === ColorBy.PVT_NUM}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Phase">
+                        <ComboboxCompositions.WithBrowseButtons
+                            items={makePhaseItems()}
+                            value={selectedPhase}
+                            onValueChange={handlePhasesChange}
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Visualization" defaultOpen>
+                    <SettingWrapper label="Color by" stacked>
+                        <RadioCompositions.GroupWithLabels
+                            options={[
+                                { label: "Ensemble", value: ColorBy.ENSEMBLE },
+                                { label: "PVTNum", value: ColorBy.PVT_NUM },
+                            ]}
+                            value={selectedColorBy}
+                            onValueChange={handleColorByChange}
+                            layout="horizontal"
+                            size="small"
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Show plot for" stacked>
+                        <DependentVariableSelector
+                            dependentVariables={makeDependentVariableOptions(selectedPhase)}
+                            value={selectedDependentVariables}
+                            onChange={handleVisualizePlotsChange}
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }
 
@@ -185,7 +201,7 @@ function makePvtNumOptions(pvtNums: number[]): SelectOption[] {
     return pvtNums.map((pvtNum) => ({ label: pvtNum.toString(), value: pvtNum.toString() }));
 }
 
-function makePhaseOptions(): SelectOption[] {
+function makePhaseItems(): ComboboxItem<PhaseType>[] {
     return Object.values(PhaseType).map((phase: PhaseType) => {
         return { value: phase, label: PHASE_TO_DISPLAY_NAME[phase] };
     });
