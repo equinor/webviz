@@ -108,7 +108,7 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     const valueFormat = property.format ?? String;
 
     if (property.render) {
-        return property.render(property.name, property.value);
+        return property.render(property.name, property.value, property.renderArgs);
     }
 
     return (
