@@ -10,10 +10,10 @@ import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Switch } from "@lib/newComponents/Switch";
-import { TextInput } from "@lib/newComponents/TextInput/_components/textInput";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import { TextInput } from "@lib/newComponents/TextInput";
 
 import type { Interfaces } from "../interfaces";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -63,13 +63,16 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         <NumberInput value={0} onValueChange={() => {}} />
                     </SettingWrapper>
                     <SettingWrapper
-                        label="Third setting"
                         help={{
                             title: "Third setting",
                             content: "This setting has no label or description. The input spans the whole width.",
                         }}
                     >
-                        <Switch onCheckedChange={() => {}} checked={false} size="small" />
+                        <SwitchCompositions.WithLabel
+                            onCheckedChange={() => {}}
+                            checked={false}
+                            label="Third setting"
+                        />
                     </SettingWrapper>
                     <SettingWrapper
                         label="Fourth setting"
@@ -79,7 +82,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         }}
                     >
                         <div className="gap-x-xs flex">
-                            <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} size="small" />
+                            <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} />
                             <NumberInput value={0} onValueChange={() => {}} disabled={!setting4Enabled} />
                         </div>
                     </SettingWrapper>

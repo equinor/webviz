@@ -14,12 +14,12 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Switch } from "@lib/components/Switch";
 import type { TagProps } from "@lib/components/TagInput";
 import type { TagOption, TagOptionProps } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
 import { Tooltip } from "@lib/components/Tooltip";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 
 import {
     allowMultiSelectAtom,

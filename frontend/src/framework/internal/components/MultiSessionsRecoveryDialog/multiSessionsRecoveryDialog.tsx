@@ -13,12 +13,12 @@ import {
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
 import { Tooltip } from "@lib/components/Tooltip";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Table } from "@lib/newComponents/Table";
 import { formatDate } from "@lib/utils/dates";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 export type MultiSessionsRecoveryDialogProps = {
     workbench: Workbench;

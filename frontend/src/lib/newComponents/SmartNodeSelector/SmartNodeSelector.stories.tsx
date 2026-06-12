@@ -2,8 +2,9 @@ import React from "react";
 
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { SmartNodeSelector } from "./index";
 import type { SmartNodeSelectorSelection } from "./smartNodeSelector";
+
+import { SmartNodeSelector } from "./index";
 
 const wellTreeData = [
     {
@@ -140,30 +141,32 @@ export const CaseInsensitiveMatching: Story = {
     },
 };
 
-export const WithChangeCallback: Story = {
-    render: (args) => {
-        const [selection, setSelection] = React.useState<SmartNodeSelectorSelection>({
-            selectedTags: [],
-            selectedNodes: [],
-            selectedIds: [],
-        });
+function WithChangeCallbackRender(args: React.ComponentProps<typeof SmartNodeSelector>) {
+    const [selection, setSelection] = React.useState<SmartNodeSelectorSelection>({
+        selectedTags: [],
+        selectedNodes: [],
+        selectedIds: [],
+    });
 
-        return (
-            <div className="flex flex-col gap-4">
-                <SmartNodeSelector {...args} onValueChange={setSelection} />
-                <div className="rounded border p-3 text-sm text-slate-600">
-                    <div>
-                        <strong>Selected nodes:</strong>{" "}
-                        {selection.selectedNodes.length > 0 ? selection.selectedNodes.join(", ") : "none"}
-                    </div>
-                    <div>
-                        <strong>Selected IDs:</strong>{" "}
-                        {selection.selectedIds.length > 0 ? selection.selectedIds.join(", ") : "none"}
-                    </div>
+    return (
+        <div className="flex flex-col gap-4">
+            <SmartNodeSelector {...args} onValueChange={setSelection} />
+            <div className="rounded border p-3 text-sm text-slate-600">
+                <div>
+                    <strong>Selected nodes:</strong>{" "}
+                    {selection.selectedNodes.length > 0 ? selection.selectedNodes.join(", ") : "none"}
+                </div>
+                <div>
+                    <strong>Selected IDs:</strong>{" "}
+                    {selection.selectedIds.length > 0 ? selection.selectedIds.join(", ") : "none"}
                 </div>
             </div>
-        );
-    },
+        </div>
+    );
+}
+
+export const WithChangeCallback: Story = {
+    render: (args) => <WithChangeCallbackRender {...args} />,
     args: {
         data: wellTreeData,
     },

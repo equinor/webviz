@@ -13,9 +13,9 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;

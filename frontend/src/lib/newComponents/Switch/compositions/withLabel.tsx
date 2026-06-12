@@ -4,6 +4,7 @@ import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentS
 import {
     getDataAttributesForSelectableSize,
     getTextSizeForSelectableSize,
+    type SelectableSize,
 } from "@lib/newComponents/_shared/utils/size";
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -14,6 +15,7 @@ import { Switch } from "../_components/switch";
 export type WithLabelProps = Omit<SwitchProps, "ref"> & {
     label?: string;
     children?: React.ReactNode;
+    size?: SelectableSize;
 };
 
 export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(function SwitchWithLabel(props, ref) {
@@ -29,7 +31,7 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}
         >
-            <Switch {...switchProps} size={size} />
+            <Switch {...switchProps} />
             <Typography size={getTextSizeForSelectableSize(size)} family="body" data-baseline="center">
                 {children ?? label}
             </Typography>

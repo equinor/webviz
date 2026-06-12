@@ -65,6 +65,19 @@ export const Disabled: Story = {
     },
 };
 
+function GroupControlledRender() {
+    const [value, setValue] = React.useState("monthly");
+    return (
+        <div className="flex flex-col gap-3">
+            <RadioGroup value={value} onValueChange={setValue}>
+                <Radio value="monthly" aria-label="Monthly" />
+                <Radio value="yearly" aria-label="Yearly" />
+            </RadioGroup>
+            <p className="text-sm text-neutral-500">Selected: {value}</p>
+        </div>
+    );
+}
+
 export const GroupControlled: Story = {
     parameters: {
         docs: {
@@ -73,16 +86,5 @@ export const GroupControlled: Story = {
             },
         },
     },
-    render: () => {
-        const [value, setValue] = React.useState("monthly");
-        return (
-            <div className="flex flex-col gap-3">
-                <RadioGroup value={value} onValueChange={setValue}>
-                    <Radio value="monthly" aria-label="Monthly" />
-                    <Radio value="yearly" aria-label="Yearly" />
-                </RadioGroup>
-                <p className="text-sm text-neutral-500">Selected: {value}</p>
-            </div>
-        );
-    },
+    render: () => <GroupControlledRender />,
 };

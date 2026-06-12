@@ -7,9 +7,9 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Table as TableComponent } from "@lib/components/Table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 
 import type { Interfaces } from "../interfaces";
 

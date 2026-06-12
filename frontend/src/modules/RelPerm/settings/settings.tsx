@@ -13,9 +13,9 @@ import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { TagPicker, type TagOption } from "@lib/components/TagPicker";
 import { SettingWrapper, type SettingAnnotation } from "@lib/newComponents/SettingWrapper";
+import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 

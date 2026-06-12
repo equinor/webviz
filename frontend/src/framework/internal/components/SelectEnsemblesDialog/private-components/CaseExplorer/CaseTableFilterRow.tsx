@@ -1,8 +1,9 @@
 import React from "react";
 
+import { Close } from "@mui/icons-material";
+
 import type { CaseInfo_api } from "@api";
 import { edsDateRangeToEpochMsRange } from "@framework/utils/edsDateUtils";
-import { Close } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { DateRangePicker } from "@lib/newComponents/DateRangePicker";

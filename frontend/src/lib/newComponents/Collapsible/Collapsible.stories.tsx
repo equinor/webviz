@@ -1,13 +1,19 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import React from "react";
 
 import { Button } from "../Button";
+
 import { Collapsible } from "./index";
 
 const meta: Meta<typeof Collapsible.Group> = {
     title: "Components/Collapsible",
     component: Collapsible.Group,
-    decorators: [(Story) => <div className="w-full max-w-[500px]"><Story /></div>],
+    decorators: [
+        (Story) => (
+            <div className="w-full max-w-[500px]">
+                <Story />
+            </div>
+        ),
+    ],
     parameters: {
         layout: "padded",
         docs: {
@@ -173,21 +179,21 @@ export const WithScrollArea: Story = {
         <div className="w-80" style={{ height: 300 }}>
             <Collapsible.ScrollArea>
                 <Collapsible.Group title="Section A">
-                    <ul className="p-4 space-y-2">
+                    <ul className="space-y-2 p-4">
                         {Array.from({ length: 6 }, (_, i) => (
                             <li key={i}>Item A{i + 1}</li>
                         ))}
                     </ul>
                 </Collapsible.Group>
                 <Collapsible.Group title="Section B">
-                    <ul className="p-4 space-y-2">
+                    <ul className="space-y-2 p-4">
                         {Array.from({ length: 6 }, (_, i) => (
                             <li key={i}>Item B{i + 1}</li>
                         ))}
                     </ul>
                 </Collapsible.Group>
                 <Collapsible.Group title="Section C">
-                    <ul className="p-4 space-y-2">
+                    <ul className="space-y-2 p-4">
                         {Array.from({ length: 6 }, (_, i) => (
                             <li key={i}>Item C{i + 1}</li>
                         ))}

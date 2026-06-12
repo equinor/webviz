@@ -50,14 +50,16 @@ const [color, setColor] = React.useState("#3b82f6");
 export default meta;
 type Story = StoryObj<typeof ColorSelect>;
 
+function DefaultRender(args: React.ComponentProps<typeof ColorSelect>) {
+    const [color, setColor] = React.useState(args.value);
+    return <ColorSelect {...args} value={color} onChange={setColor} />;
+}
+
 export const Default: Story = {
     parameters: {
         docs: { description: { story: "Click the button to open the native color picker." } },
     },
-    render: (args) => {
-        const [color, setColor] = React.useState(args.value);
-        return <ColorSelect {...args} value={color} onChange={setColor} />;
-    },
+    render: (args) => <DefaultRender {...args} />,
 };
 
 export const Disabled: Story = {
@@ -69,6 +71,16 @@ export const Disabled: Story = {
     },
 };
 
+function ControlledRender() {
+    const [color, setColor] = React.useState("#3b82f6");
+    return (
+        <div className="flex flex-col items-center gap-3">
+            <ColorSelect value={color} onChange={setColor} />
+            <p className="font-mono text-sm">{color}</p>
+        </div>
+    );
+}
+
 export const Controlled: Story = {
     parameters: {
         docs: {
@@ -77,16 +89,27 @@ export const Controlled: Story = {
             },
         },
     },
-    render: () => {
-        const [color, setColor] = React.useState("#3b82f6");
-        return (
-            <div className="flex flex-col items-center gap-3">
-                <ColorSelect value={color} onChange={setColor} />
-                <p className="font-mono text-sm">{color}</p>
-            </div>
-        );
-    },
+    render: () => <ControlledRender />,
 };
+
+function MultipleSwatchesRender() {
+    const [colors, setColors] = React.useState(["#ef4444", "#3b82f6", "#22c55e", "#f59e0b"]);
+    const labels = ["Background", "Foreground", "Accent", "Border"];
+    return (
+        <div className="flex flex-col gap-2">
+            {colors.map((color, i) => (
+                <div key={labels[i]} className="flex items-center gap-3">
+                    <span className="w-24 text-sm">{labels[i]}</span>
+                    <ColorSelect
+                        value={color}
+                        onChange={(v) => setColors((prev) => prev.map((c, j) => (j === i ? v : c)))}
+                    />
+                    <span className="font-mono text-sm">{color}</span>
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export const MultipleSwatches: Story = {
     parameters: {
@@ -96,22 +119,5 @@ export const MultipleSwatches: Story = {
             },
         },
     },
-    render: () => {
-        const [colors, setColors] = React.useState(["#ef4444", "#3b82f6", "#22c55e", "#f59e0b"]);
-        const labels = ["Background", "Foreground", "Accent", "Border"];
-        return (
-            <div className="flex flex-col gap-2">
-                {colors.map((color, i) => (
-                    <div key={labels[i]} className="flex items-center gap-3">
-                        <span className="w-24 text-sm">{labels[i]}</span>
-                        <ColorSelect
-                            value={color}
-                            onChange={(v) => setColors((prev) => prev.map((c, j) => (j === i ? v : c)))}
-                        />
-                        <span className="font-mono text-sm">{color}</span>
-                    </div>
-                ))}
-            </div>
-        );
-    },
+    render: () => <MultipleSwatchesRender />,
 };

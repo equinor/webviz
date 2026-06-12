@@ -163,6 +163,16 @@ export const MultiSelect: Story = {
     },
 };
 
+function WithQuickSelectButtonsRender() {
+    const [value, setValue] = React.useState<string[]>(["apple"]);
+    return (
+        <div className="flex flex-col gap-2">
+            <Select options={FRUITS} value={value} onValueChange={setValue} multiple showQuickSelectButtons size={6} />
+            <p className="text-sm text-neutral-500">Selected: {value.join(", ") || "none"}</p>
+        </div>
+    );
+}
+
 export const WithQuickSelectButtons: Story = {
     parameters: {
         docs: {
@@ -173,25 +183,20 @@ export const WithQuickSelectButtons: Story = {
             },
         },
     },
-    render: () => {
-        const [value, setValue] = React.useState<string[]>(["apple"]);
-        return (
-            <div className="flex flex-col gap-2">
-                <Select
-                    options={FRUITS}
-                    value={value}
-                    onValueChange={setValue}
-                    multiple
-                    showQuickSelectButtons
-                    size={6}
-                />
-                <p className="text-sm text-neutral-500">Selected: {value.join(", ") || "none"}</p>
-            </div>
-        );
-    },
+    render: () => <WithQuickSelectButtonsRender />,
 };
 
 // ─── Controlled ───────────────────────────────────────────────────────────────
+
+function ControlledRender() {
+    const [value, setValue] = React.useState<string[]>(["banana"]);
+    return (
+        <div className="flex flex-col gap-2">
+            <Select options={FRUITS} value={value} onValueChange={setValue} size={5} />
+            <p className="text-sm text-neutral-500">Selected: {value[0] ?? "none"}</p>
+        </div>
+    );
+}
 
 export const Controlled: Story = {
     parameters: {
@@ -201,15 +206,7 @@ export const Controlled: Story = {
             },
         },
     },
-    render: () => {
-        const [value, setValue] = React.useState<string[]>(["banana"]);
-        return (
-            <div className="flex flex-col gap-2">
-                <Select options={FRUITS} value={value} onValueChange={setValue} size={5} />
-                <p className="text-sm text-neutral-500">Selected: {value[0] ?? "none"}</p>
-            </div>
-        );
-    },
+    render: () => <ControlledRender />,
 };
 
 // ─── Adornments & hover text ──────────────────────────────────────────────────

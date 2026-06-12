@@ -5,11 +5,11 @@ import { useAtom } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useContinuousColorScale, useDiscreteColorScale } from "@framework/WorkbenchSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ColorGradient } from "@lib/newComponents/ColorGradient/colorGradient";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
+import { ColorGradient } from "@lib/newComponents/ColorGradient/colorGradient";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 

@@ -1,20 +1,22 @@
 import React from "react";
 
+import { AddLink } from "@mui/icons-material";
+
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
-import { truncateString } from "@lib/utils/strings";
-import { AddLink } from "@mui/icons-material";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
+import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
 import { Confirmation } from "./_private-components/confirmation";
 import { Form } from "./_private-components/form";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
+
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;

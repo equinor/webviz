@@ -2,6 +2,7 @@ import React from "react";
 
 import { Close, ExpandLess, ExpandMore, Square } from "@mui/icons-material";
 
+import { TextInput } from "@lib/newComponents/TextInput";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ALTERNATING_COLUMN_HEADING_COLORS } from "../constants";
@@ -15,7 +16,6 @@ import type {
     TableFilters,
 } from "../types";
 import { SortDirection } from "../types";
-import { TextInput } from "@lib/newComponents/TextInput";
 
 function getSortingForColumn(
     columnId: string,

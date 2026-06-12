@@ -11,12 +11,15 @@ import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
-import { Button } from "@lib/newComponents/Button";
 import { Slider } from "@lib/components/Slider";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Button } from "@lib/newComponents/Button";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { Field } from "@lib/newComponents/Field";
 import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
 import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
 import type { SmartNodeSelectorTag } from "@lib/newComponents/SmartNodeSelector/smartNodeSelector";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/newComponents/Typography";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
 import {
@@ -24,9 +27,6 @@ import {
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
 } from "../private-utils/smartNodeSelectorUtils";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Typography } from "@lib/newComponents/Typography";
-import { Field } from "@lib/newComponents/Field";
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
@@ -304,10 +304,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const displayParameterName = createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString);
 
         return (
-            <div
-                key={parameterIdentString}
-                className="px-2xs py-2xs border-neutral-subtle grow rounded-md border"
-            >
+            <div key={parameterIdentString} className="px-2xs py-2xs border-neutral-subtle grow rounded-md border">
                 <div className="gap-y-3xs flex flex-col">
                     <div className="flex flex-row items-center gap-2">
                         <Typography
@@ -355,7 +352,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     );
 
     // Text and visibility state for report/warning icon
-    const { text: reportIconText, isVisible: isReportIconVisible } = createReportIconTextAndVisibleState(
+    const reportIconText = createReportIconTextAndVisibleState(
         existingParameterIdentStrings,
         smartNodeSelectorSelection.selectedIds,
     );
@@ -453,7 +450,7 @@ function createAddButtonTextAndDisableState(
 function createReportIconTextAndVisibleState(
     existingParameterIdentStrings: string[],
     selectedParameterIdentStrings: string[],
-): { text: string | null; isVisible: boolean } {
+): string | null {
     const alreadySelectedParameterIdentStrings = selectedParameterIdentStrings.filter((selectedId) =>
         existingParameterIdentStrings.includes(selectedId),
     );
@@ -461,10 +458,10 @@ function createReportIconTextAndVisibleState(
         alreadySelectedParameterIdentStrings,
     );
     if (alreadySelectedParameterTagTexts.length === 1 && selectedParameterIdentStrings.length >= 1) {
-        return { text: `Parameter already added:\n${alreadySelectedParameterTagTexts[0]}`, isVisible: true };
+        return `Parameter already added:\n${alreadySelectedParameterTagTexts[0]}`;
     }
     if (alreadySelectedParameterTagTexts.length > 1) {
-        return { text: `Parameters already added:\n${alreadySelectedParameterTagTexts.join("\n")}`, isVisible: true };
+        return `Parameters already added:\n${alreadySelectedParameterTagTexts.join("\n")}`;
     }
-    return { text: null, isVisible: false };
+    return null;
 }

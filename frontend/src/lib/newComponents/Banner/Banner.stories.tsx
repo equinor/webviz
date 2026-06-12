@@ -91,6 +91,19 @@ export const Danger: Story = {
     },
 };
 
+function DismissableRender(args: React.ComponentProps<typeof Banner>) {
+    const [visible, setVisible] = React.useState(true);
+    return visible ? (
+        <Banner {...args} onDismiss={() => setVisible(false)}>
+            {args.children}
+        </Banner>
+    ) : (
+        <button className="text-sm underline" onClick={() => setVisible(true)}>
+            Show banner again
+        </button>
+    );
+}
+
 export const Dismissable: Story = {
     parameters: {
         docs: {
@@ -106,16 +119,5 @@ export const Dismissable: Story = {
         dismissable: true,
         children: "This banner can be dismissed.",
     },
-    render: (args) => {
-        const [visible, setVisible] = React.useState(true);
-        return visible ? (
-            <Banner {...args} onDismiss={() => setVisible(false)}>
-                {args.children}
-            </Banner>
-        ) : (
-            <button className="text-sm underline" onClick={() => setVisible(true)}>
-                Show banner again
-            </button>
-        );
-    },
+    render: (args) => <DismissableRender {...args} />,
 };
