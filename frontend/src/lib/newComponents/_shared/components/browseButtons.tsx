@@ -30,7 +30,7 @@ export function BrowseButtons(props: BrowseButtonsProps): React.ReactNode {
     const flowHorizontal = defaultedProps.size === "small";
 
     return (
-        <div className={resolveClassNames("flex h-full items-center", flowHorizontal ? "flex-row" : "flex-col")}>
+        <div className={resolveClassNames("flex items-center", flowHorizontal ? "flex-row" : "flex-col")}>
             <ArrowButton
                 data-horizontal={flowHorizontal ? "" : undefined}
                 className="not-data-horizontal:rounded-t-xs data-horizontal:rounded-l-xs"
