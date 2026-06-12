@@ -8,14 +8,14 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Input } from "@lib/components/Input";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
-import { SettingWrapper, type SettingAnnotation } from "@lib/components/SettingWrapper";
-import { TagPicker, type TagOption } from "@lib/components/TagPicker";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import type { SelectOption } from "@lib/newComponents/Select";
+import { Select } from "@lib/newComponents/Select";
+import { SettingWrapper, type SettingAnnotation } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -123,15 +123,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedStatistics(statistics as RftStatistic[]);
     }
 
-    function handleDataChannelDepthChange(value: string) {
-        const trimmedValue = value.trim();
-        if (trimmedValue === "") {
-            setDataChannelDepth(null);
-            return;
-        }
-        const parsedValue = Number(trimmedValue);
-        setDataChannelDepth(Number.isFinite(parsedValue) ? parsedValue : null);
+    function handleDataChannelDepthChange(value: number | null) {
+        setDataChannelDepth(value !== null && Number.isFinite(value) ? value : null);
     }
+
+    const debouncedHandleDataChannelDepthChange = useDebouncedFunction(handleDataChannelDepthChange, 500);
 
     const tableDefinitionsArePending = tableDefinitionQueries.some((query) => query.isFetching);
     const tableDefinitionsErrorMessage =
@@ -189,108 +185,131 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     ].filter(Boolean) as SettingAnnotation[];
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup expanded={true} title="Data source" contentClassName="flex flex-col gap-2">
-                <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations}>
-                    <EnsemblePicker
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        value={selectedEnsembleIdents}
-                        allowDeltaEnsembles={false}
-                        ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <PendingWrapper isPending={tableDefinitionsArePending} errorMessage={tableDefinitionsErrorMessage}>
-                <CollapsibleGroup expanded={true} title="Selection" contentClassName="flex flex-col gap-2">
-                    <SettingWrapper label="Response" annotations={selectedResponseNameAnnotations}>
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Data" defaultOpen>
+                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
+                        <EnsemblePicker
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={selectedEnsembleIdents}
+                            allowDeltaEnsembles={false}
+                            ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
+                            onValueChange={handleEnsembleSelectionChange}
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Selections" defaultOpen>
+                    <SettingWrapper
+                        label="Response"
+                        annotations={selectedResponseNameAnnotations}
+                        loadingOverlay={tableDefinitionsArePending}
+                        errorOverlay={tableDefinitionsErrorMessage}
+                        stacked
+                    >
                         <Select
                             options={makeStringOptions(availableResponseNames)}
                             value={selectedResponseName ? [selectedResponseName] : []}
-                            onChange={handleResponseNameChange}
+                            onValueChange={handleResponseNameChange}
                             filter={availableResponseNames.length > 6}
                             size={Math.max(1, Math.min(availableResponseNames.length, 4))}
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Well" annotations={wellNameAnnotations}>
+                    <SettingWrapper
+                        label="Well"
+                        annotations={wellNameAnnotations}
+                        loadingOverlay={tableDefinitionsArePending}
+                        errorOverlay={tableDefinitionsErrorMessage}
+                        stacked
+                    >
                         <Select
                             options={makeStringOptions(availableWellNames)}
                             value={selectedWellName ? [selectedWellName] : []}
-                            onChange={handleWellNameChange}
+                            onValueChange={handleWellNameChange}
                             filter={availableWellNames.length > 6}
                             size={Math.max(1, Math.min(availableWellNames.length, 10))}
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Date" annotations={timestampAnnotations}>
+                    <SettingWrapper
+                        label="Date"
+                        annotations={timestampAnnotations}
+                        loadingOverlay={tableDefinitionsArePending}
+                        errorOverlay={tableDefinitionsErrorMessage}
+                        stacked
+                    >
                         <Select
                             options={makeTimestampOptions(availableTimestampsUtcMs)}
                             value={selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs.toString()] : []}
-                            onChange={handleTimestampChange}
+                            onValueChange={handleTimestampChange}
                             filter={availableTimestampsUtcMs.length > 6}
                             size={Math.max(1, Math.min(availableTimestampsUtcMs.length, 6))}
                         />
                     </SettingWrapper>
-                </CollapsibleGroup>
-                <CollapsibleGroup expanded={true} title="Plot" contentClassName="flex flex-col gap-2">
-                    <SettingWrapper label="Display">
-                        <div className="flex flex-col gap-1">
-                            <Checkbox
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Plot" defaultOpen>
+                    <SettingWrapper label="Display" stacked contentClassName="flex flex-col gap-y-xs">
+                        <>
+                            <CheckboxCompositions.WithLabel
                                 label="Individual realizations"
                                 checked={showIndividualRealizations}
-                                onChange={(_, checked) => setShowIndividualRealizations(checked)}
+                                onCheckedChange={setShowIndividualRealizations}
+                                size="small"
                             />
-                            <Checkbox
+                            <CheckboxCompositions.WithLabel
                                 label="Statistic lines"
                                 checked={showStatisticalLines}
-                                onChange={(_, checked) => setShowStatisticalLines(checked)}
+                                onCheckedChange={setShowStatisticalLines}
+                                size="small"
                             />
-                            <Checkbox
+                            <CheckboxCompositions.WithLabel
                                 label="Statistic fan"
                                 checked={showStatisticalFan}
-                                onChange={(_, checked) => setShowStatisticalFan(checked)}
+                                onCheckedChange={setShowStatisticalFan}
+                                size="small"
                             />
-                            <Checkbox
+                            <CheckboxCompositions.WithLabel
                                 label="Observations"
                                 checked={showObservations}
-                                onChange={(_, checked) => setShowObservations(checked)}
+                                onCheckedChange={setShowObservations}
+                                size="small"
                             />
-                        </div>
+                        </>
                     </SettingWrapper>
-                    <SettingWrapper label="Statistic lines">
-                        <TagPicker
-                            tagOptions={makeEnumOptions(RFT_STATISTIC_LABELS)}
-                            selection={selectedStatistics}
-                            onChange={handleStatisticsChange}
+                    <SettingWrapper label="Statistic lines" stacked>
+                        <Combobox
+                            multiple
+                            items={Object.entries(RFT_STATISTIC_LABELS).map(([value, label]) => ({
+                                value: value as RftStatistic,
+                                label,
+                            }))}
+                            value={selectedStatistics}
+                            onValueChange={handleStatisticsChange}
                             placeholder="Select statistics..."
                         />
                     </SettingWrapper>
-                </CollapsibleGroup>
-                <CollapsibleGroup expanded={false} title="Data channel" contentClassName="flex flex-col gap-2">
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Data channel">
                     <SettingWrapper label="Depth line">
-                        <Checkbox
+                        <CheckboxCompositions.WithLabel
                             label="Show depth line in plot"
                             checked={showDepthLine}
-                            onChange={(_, checked) => setShowDepthLine(checked)}
+                            onCheckedChange={setShowDepthLine}
+                            size="small"
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Depth (TVD)">
-                        <div className="flex flex-col gap-1">
-                            <Input
-                                type="number"
-                                value={dataChannelDepth ?? ""}
-                                onValueChange={handleDataChannelDepthChange}
-                                placeholder="No depth selected"
-                                debounceTimeMs={500}
-                            />
-                            <span className="text-xs text-gray-500">
-                                Publishes the response value interpolated at this depth, per realization, as a data
-                                channel. The depth can also be dragged in the plot.
-                            </span>
-                        </div>
+                    <SettingWrapper
+                        label="Depth (TVD)"
+                        description="Publishes the response value interpolated at this depth, per realization, as a data channel. The depth can also be dragged in the plot."
+                        stacked
+                    >
+                        <NumberInput
+                            value={dataChannelDepth}
+                            onValueChange={debouncedHandleDataChannelDepthChange}
+                            placeholder="No depth selected"
+                        />
                     </SettingWrapper>
-                </CollapsibleGroup>
-            </PendingWrapper>
-        </div>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }
 
@@ -307,11 +326,5 @@ function makeStringOptions(values: string[]): SelectOption[] {
 function makeTimestampOptions(timestampsUtcMs: number[]): SelectOption[] {
     return timestampsUtcMs.map(function makeTimestampOption(timestampUtcMs) {
         return { label: timestampUtcMsToCompactIsoString(timestampUtcMs), value: timestampUtcMs.toString() };
-    });
-}
-
-function makeEnumOptions<T extends string>(labels: Record<T, string>): TagOption[] {
-    return Object.entries(labels).map(function makeEnumOption([value, label]) {
-        return { label: label as string, value };
     });
 }

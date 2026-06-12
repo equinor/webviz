@@ -2,7 +2,8 @@ import type React from "react";
 
 import { UnfoldLessDouble, UnfoldMoreDouble } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 
@@ -28,12 +29,16 @@ export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): Re
 
     return (
         <>
-            <DenseIconButton onClick={expandAllChildren} title="Expand all descendants">
-                <UnfoldMoreDouble fontSize="inherit" />
-            </DenseIconButton>
-            <DenseIconButton onClick={collapseAllChildren} title="Collapse all descendants">
-                <UnfoldLessDouble fontSize="inherit" />
-            </DenseIconButton>
+            <Tooltip content="Expand all descendants" side="bottom">
+                <Button onClick={expandAllChildren} iconOnly variant="ghost" size="small" tone="neutral">
+                    <UnfoldMoreDouble fontSize="inherit" />
+                </Button>
+            </Tooltip>
+            <Tooltip content="Collapse all descendants" side="bottom">
+                <Button onClick={collapseAllChildren} iconOnly variant="ghost" size="small" tone="neutral">
+                    <UnfoldLessDouble fontSize="inherit" />
+                </Button>
+            </Tooltip>
         </>
     );
 }

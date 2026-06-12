@@ -6,8 +6,10 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox/combobox";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { WithBrowseButtonsProps } from "@lib/newComponents/Combobox/compositions/withBrowseButtons";
 
 import { EnsembleColorTile } from "../EnsembleColorTile";
 
@@ -26,7 +28,14 @@ export type EnsembleDropdownProps = (
       }
 ) & {
     ensembleRealizationFilterFunction?: EnsembleRealizationFilterFunction;
-} & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
+} & (
+        | ({
+              showBrowseButtons: true;
+          } & Omit<WithBrowseButtonsProps<string>, "items" | "value" | "onValueChange">)
+        | ({
+              showBrowseButtons?: false | undefined;
+          } & Omit<ComboboxProps<string>, "items" | "value" | "onValueChange">)
+    );
 
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { onChange, ensembles, allowDeltaEnsembles, value, ensembleRealizationFilterFunction, ...rest } = props;
@@ -49,7 +58,10 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     }, [ensembles, ensembleRealizationFilterFunction]);
 
     const handleSelectionChange = React.useCallback(
-        function handleSelectionChange(selectedEnsembleIdentStr: string) {
+        function handleSelectionChange(selectedEnsembleIdentStr: string | null) {
+            if (selectedEnsembleIdentStr === null) {
+                return;
+            }
             const foundEnsemble = ensembles.find(
                 (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr,
             );
@@ -70,5 +82,16 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         [allowDeltaEnsembles, ensembles, onChange],
     );
 
-    return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChange} {...rest} />;
+    if (props.showBrowseButtons) {
+        return (
+            <ComboboxCompositions.WithBrowseButtons
+                items={optionsArray}
+                value={value?.toString()}
+                onValueChange={handleSelectionChange}
+                {...rest}
+            />
+        );
+    }
+
+    return <Combobox items={optionsArray} value={value?.toString()} onValueChange={handleSelectionChange} {...rest} />;
 }

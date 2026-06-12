@@ -2,6 +2,7 @@ import React from "react";
 
 import { Edit } from "@mui/icons-material";
 
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -38,31 +39,33 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
     }
 
     return (
-        <div
-            className="grow font-bold flex items-center gap-2 group min-w-0 overflow-hidden"
-            onDoubleClick={handleNameDoubleClick}
-            title="Double-click to edit name"
-        >
-            {editingName ? (
-                <input
-                    type="text"
-                    className="p-0.5 w-full"
-                    value={currentName}
-                    onChange={handleNameChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                />
-            ) : (
-                <>
-                    <div className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
-                    <Edit
-                        fontSize="inherit"
-                        className="opacity-0 group-hover:opacity-50 cursor-pointer"
-                        onClick={handleNameDoubleClick}
+        <Tooltip content="Double-click to edit name" side="bottom">
+            <div
+                className="group/edit-name gap-x-2xs font-bolder flex min-w-0 grow items-center overflow-hidden"
+                onDoubleClick={handleNameDoubleClick}
+            >
+                {editingName ? (
+                    <input
+                        type="text"
+                        className="w-full"
+                        value={currentName}
+                        onChange={handleNameChange}
+                        onBlur={handleBlur}
+                        onKeyDown={handleKeyDown}
+                        autoFocus
                     />
-                </>
-            )}
-        </div>
+                ) : (
+                    <>
+                        <div className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">{itemName}</div>
+                        <Edit
+                            fontSize="inherit"
+                            className="cursor-pointer opacity-0 group-hover/edit-name:opacity-50"
+                            onClick={handleNameDoubleClick}
+                            titleAccess="Click to edit name"
+                        />
+                    </>
+                )}
+            </div>
+        </Tooltip>
     );
 }

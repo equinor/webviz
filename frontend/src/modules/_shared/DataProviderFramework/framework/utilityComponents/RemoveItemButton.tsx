@@ -1,7 +1,7 @@
 import { Delete } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { Item } from "../../interfacesAndTypes/entities";
 
@@ -21,9 +21,11 @@ export function RemoveItemButton(props: RemoveItemButtonProps): React.ReactNode 
 
     return (
         <>
-            <DenseIconButton onClick={handleRemove} title="Remove item" colorScheme={DenseIconButtonColorScheme.DANGER}>
-                <Delete fontSize="inherit" />
-            </DenseIconButton>
+            <Tooltip content="Remove item" side="bottom">
+                <Button onClick={handleRemove} tone="danger" variant="ghost" size="small" iconOnly>
+                    <Delete fontSize="inherit" />
+                </Button>
+            </Tooltip>
         </>
     );
 }

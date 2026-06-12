@@ -1,0 +1,42 @@
+import React from "react";
+
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import type { Tone } from "../_shared/types/tones";
+
+export type BadgeProps = {
+    tone?: Tone;
+    badgeContent: React.ReactNode;
+    children?: React.ReactNode;
+    invisible?: boolean;
+};
+
+const TONE_TO_CLASSNAMES: Record<NonNullable<BadgeProps["tone"]>, string> = {
+    accent: "bg-accent-strong text-accent-strong-on-emphasis",
+    warning: "bg-warning-strong text-warning-strong-on-emphasis",
+    danger: "bg-danger-strong text-danger-strong-on-emphasis",
+    success: "bg-success-strong text-success-strong-on-emphasis",
+    neutral: "bg-neutral-strong text-neutral-strong-on-emphasis",
+    info: "bg-info-strong text-info-strong-on-emphasis",
+};
+
+export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badge(props, ref) {
+    const { tone = "accent", invisible = false } = props;
+
+    return (
+        <span ref={ref} className="relative">
+            {props.children}
+            <span
+                className={resolveClassNames(
+                    "text-body-xs z-elevated px-3xs py-2xs absolute top-0 right-0 box-border flex h-4 min-w-4 translate-x-2/3 -translate-y-1/2 items-center justify-center rounded-full leading-none whitespace-nowrap",
+                    TONE_TO_CLASSNAMES[tone],
+                    {
+                        invisible,
+                    },
+                )}
+            >
+                {props.badgeContent}
+            </span>
+        </span>
+    );
+});

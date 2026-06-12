@@ -129,7 +129,9 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             {/* ! Show a placeholder while dragging modules around, since resizing module content while dragging might be costly */}
             {props.changingLayout && (
                 <div
-                    className={resolveClassNames("absolute box-border", { "p-0.5": !props.isMinimized })}
+                    className={resolveClassNames("absolute box-border", {
+                        "px-4xs py-4xs": !props.isMinimized,
+                    })}
                     style={{
                         width: props.width,
                         height: props.height,
@@ -139,7 +141,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         zIndex: props.isDragged ? 1 : 0,
                     }}
                 >
-                    <div className="bg-white h-full w-full flex flex-col border-solid border-2 box-border shadow-sm">
+                    <div className="border-neutral-subtle bg-surface shadow-elevation-raised box-border flex h-full w-full flex-col border-2">
                         {makeHeader()}
                     </div>
                 </div>
@@ -147,7 +149,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             <div
                 ref={ref}
                 className={resolveClassNames("absolute box-border contain-content", {
-                    "p-0.5": !props.isMinimized,
+                    "px-4xs py-4xs": !props.isMinimized,
                     invisible: props.changingLayout,
                 })}
                 style={{
@@ -159,10 +161,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={resolveClassNames(
-                        "relative bg-white h-full w-full flex flex-col box-border shadow-sm border border-slate-100",
+                        "border-neutral-subtle shadow-elevation-raised bg-surface relative box-border flex h-full w-full flex-col border",
                         {
                             "cursor-grabbing select-none": props.isDragged,
-                            "p-1": !props.isMinimized,
+                            "p-0": !props.isMinimized,
                         },
                     )}
                     onPointerDown={handlePointerDown}
@@ -170,16 +172,16 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 >
                     <div
                         className={resolveClassNames(
-                            "absolute w-full h-full z-10 inset-0 bg-transparent box-border border-solid border-2 pointer-events-none",
+                            "z-elevated pointer-events-none absolute inset-0 box-border h-full w-full border-2 border-solid bg-transparent",
                             {
-                                "border-blue-500": isActive,
+                                "border-accent-strong": isActive,
                                 "border-transparent": !isActive,
                             },
                         )}
                     />
                     {makeHeader()}
                     <div
-                        className={resolveClassNames("grow overflow-auto h-0", {
+                        className={resolveClassNames("h-0 grow overflow-auto", {
                             hidden: props.changingLayout || props.isMinimized,
                         })}
                         onClick={handleModuleClick}

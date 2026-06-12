@@ -61,7 +61,7 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
     } else {
         classNames.push("bg-transparent");
         if (color === "primary" || !color) {
-            classNames.push("text-indigo-600", "hover:bg-indigo-100");
+            classNames.push("text-link", "hover:bg-indigo-100");
         } else if (color === "danger") {
             classNames.push("text-red-600", "hover:bg-red-100");
         } else if (color === "success") {

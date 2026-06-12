@@ -1,5 +1,6 @@
 import type { LayoutElement } from "@framework/internal/Dashboard";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { Typography } from "@lib/newComponents/Typography";
 
 export type DashboardPreviewProps = {
     layout: LayoutElement[];
@@ -9,13 +10,19 @@ export type DashboardPreviewProps = {
 
 export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode {
     const { layout, width, height } = props;
-    return (
+    return (<div className="bg-canvas border-neutral-subtle border flex items-center justify-center" style={{ width, height }}>
+        {layout.length === 0 ? (
+            <Typography size="sm" tone="neutral">
+                Empty dashboard
+            </Typography>
+        ) : (
         <svg
             width={width}
             height={height}
             viewBox={`0 0 ${width} ${height}`}
             xmlns="http://www.w3.org/2000/svg"
             version="1.1"
+            className="z-overlay relative"
         >
             {layout.map((element, idx) => {
                 const w = element.relWidth * width;
@@ -53,6 +60,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                     </g>
                 );
             })}
-        </svg>
+        </svg>)}
+        </div>
     );
 }

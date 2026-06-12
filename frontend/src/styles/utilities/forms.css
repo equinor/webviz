@@ -1,0 +1,36 @@
+@utility form-element {
+    @apply focusable bg-canvas outline-neutral rounded outline -outline-offset-2;
+
+    transition:
+        background-color 150ms,
+        outline-color 150ms;
+
+    &:focus-within {
+        box-shadow:
+            0 0 0 1px var(--eds-color-bg-neutral-canvas),
+            0 0 0 3px var(--eds-color-border-focus);
+    }
+
+    &:hover {
+        @apply outline-neutral-strong;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled cursor-not-allowed outline-transparent;
+
+        & * {
+            cursor: not-allowed;
+        }
+    }
+
+    /* data-warning and data-invalid are set by Field.Root (via FieldStateContext) and propagated
+       to form elements through useFieldState(). Declared in severity order so data-invalid wins
+       when both are present. */
+    &[data-warning] {
+        @apply outline-warning-subtle hover:outline-warning bg-warning-canvas outline-1;
+    }
+
+    &[data-invalid] {
+        @apply outline-danger-subtle hover:outline-danger bg-danger-canvas outline-1;
+    }
+}

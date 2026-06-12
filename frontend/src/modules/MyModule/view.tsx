@@ -2,7 +2,7 @@ import React from "react";
 
 import { DragIndicator } from "@mui/icons-material";
 
-import { SortableList } from "@lib/components/SortableList";
+import { SortableList } from "@lib/newComponents/SortableList";
 
 type ItemOrGroup = {
     id: string;
@@ -31,7 +31,7 @@ export function View(): React.ReactNode {
         },
     ]);
 
-    function onMove(movedItemId: string, originId: string | null, destinationId: string | null, position: number) {
+    function onMove(movedItemId: string, position: number, originId: string | null, destinationId: string | null) {
         // Update the items state based on the move
         setItems((prevItems) => {
             const newItems = [...prevItems];
@@ -72,7 +72,7 @@ export function View(): React.ReactNode {
                     <div className="max-h-[150px] overflow-auto">
                         <table className="w-full table-fixed border-collapse">
                             <SortableList.NoDropZone>
-                                <thead className="sticky top-0 bg-white z-100">
+                                <thead className="sticky top-0 z-100 bg-white">
                                     <tr>
                                         <th></th>
                                         <th>Name</th>
@@ -162,7 +162,7 @@ export function View(): React.ReactNode {
             <SortableList isMoveAllowed={() => true} onItemMoved={onMove}>
                 <SortableList.Content>
                     <SortableList.ScrollContainer>
-                        <div className="w-full h-32 overflow-auto">
+                        <div className="h-32 w-full overflow-auto">
                             {items.map((item) => {
                                 if (item.type === "item") {
                                     return (

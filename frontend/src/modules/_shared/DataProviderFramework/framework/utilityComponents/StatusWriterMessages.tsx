@@ -18,15 +18,15 @@ export function StatusMessages(props: StatusMessagesProps) {
     return (
         <>
             <StatusMessage messages={categorizedMessages.info}>
-                <Info className="text-slate-500 p-0.5" fontSize="small" />
+                <Info className="text-info-subtle" style={{ fontSize: 16 }} />
             </StatusMessage>
 
             <StatusMessage messages={categorizedMessages.warning}>
-                <Warning className="text-orange-500 p-0.5" fontSize="small" />
+                <Warning className="text-warning-subtle" style={{ fontSize: 16 }} />
             </StatusMessage>
 
             <StatusMessage messages={categorizedMessages.error}>
-                <Error className="text-red-700 p-0.5" fontSize="small" />
+                <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
             </StatusMessage>
         </>
     );

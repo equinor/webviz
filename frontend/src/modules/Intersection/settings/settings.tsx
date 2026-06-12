@@ -6,8 +6,7 @@ import { useAtom } from "jotai";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
@@ -52,16 +51,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const selectedFieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(selectedFieldIdentifierAtom);
 
     return (
-        <div className="h-full flex flex-col gap-1">
-            <CollapsibleGroup title="Field" expanded>
-                <SettingWrapper annotations={selectedFieldIdentifierAnnotations}>
-                    <FieldDropdown
-                        ensembleSet={ensembleSet}
-                        value={selectedFieldIdentifier.value}
-                        onChange={handleFieldIdentifierChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
+        <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
+            <SettingWrapper label="Field" annotations={selectedFieldIdentifierAnnotations}>
+                <FieldDropdown
+                    ensembleSet={ensembleSet}
+                    value={selectedFieldIdentifier.value}
+                    onChange={handleFieldIdentifierChange}
+                />
+            </SettingWrapper>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

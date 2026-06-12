@@ -1,8 +1,7 @@
-import type { ChangeEvent } from "react";
 import type React from "react";
 
-import { Input } from "@lib/components/Input";
-import { Switch } from "@lib/components/Switch";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Switch } from "@lib/newComponents/Switch";
 
 import type {
     CustomSettingImplementation,
@@ -168,26 +167,27 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             const min = isStatic ? (staticProps?.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
             const max = isStatic ? (staticProps?.max ?? 100) : (props.valueConstraints?.[1] ?? 100);
 
-            function handleBooleanChange(e: ChangeEvent<HTMLInputElement>) {
-                props.onValueChange({ enabled: e.target.checked, value });
+            function handleBooleanChange(checked: boolean) {
+                props.onValueChange({ enabled: checked, value });
             }
 
-            function handleNumberChange(value: string) {
-                const numValue = Number(value);
-                props.onValueChange({ enabled, value: numValue });
+            function handleNumberChange(value: number | null) {
+                if (value === null) {
+                    value = min;
+                }
+                props.onValueChange({ enabled, value });
             }
 
             return (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Switch checked={enabled} onChange={handleBooleanChange} />
-                    <Input
-                        type="number"
+                <div className="gap-x-2xs flex items-center">
+                    <Switch checked={enabled} onCheckedChange={handleBooleanChange} />
+                    <NumberInput
                         value={value}
                         min={min}
                         max={max}
                         disabled={!enabled}
-                        debounceTimeMs={200}
                         onValueChange={handleNumberChange}
+                        layoutClassName="grow"
                     />
                 </div>
             );

@@ -3,8 +3,8 @@ import type React from "react";
 import { chain, isEqual, sortBy } from "lodash";
 
 import type { WellboreLogCurveHeader_api } from "@api";
-import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { ComboboxItem, ComboboxGroup } from "@lib/newComponents/Combobox/types";
 import { makeSelectValueForCurveHeader } from "@modules/_shared/utils/wellLog";
 
 import type {
@@ -19,9 +19,9 @@ type ValueConstraintsType = WellboreLogCurveHeader_api[];
 
 export class LogCurveSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<WellboreLogCurveHeader_api[]>(
-        (a, b) => isEqual(a, b),
-    );
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<
+        WellboreLogCurveHeader_api[]
+    >((a, b) => isEqual(a, b));
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -91,18 +91,17 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
                 .sortBy([sortStatLogsToTop, "label"])
                 .value();
 
-            function handleChange(selectedIdent: string) {
+            function handleChange(selectedIdent: string | null) {
                 const selected = availableValues.find((v) => makeSelectValueForCurveHeader(v) === selectedIdent);
 
                 props.onValueChange(selected ?? null);
             }
 
             return (
-                <Dropdown
-                    filter
-                    options={curveOptions}
+                <ComboboxCompositions.WithBrowseButtons
+                    items={curveOptions}
                     value={selectedValue}
-                    onChange={handleChange}
+                    onValueChange={handleChange}
                     disabled={props.isOverridden}
                 />
             );
@@ -110,25 +109,25 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
     }
 }
 
-function makeCurveOption(curve: WellboreLogCurveHeader_api): DropdownOption {
+function makeCurveOption(curve: WellboreLogCurveHeader_api): ComboboxItem<string> {
     return {
         value: makeSelectValueForCurveHeader(curve),
         label: curve.curveName,
     };
 }
 
-function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): DropdownOptionGroup {
+function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): ComboboxGroup<string> {
     return {
-        label: logName,
-        options: chain(logCurves).map(makeCurveOption).sortBy("label").value(),
+        value: logName,
+        items: chain(logCurves).map(makeCurveOption).sortBy("label").value(),
     };
 }
 
 // It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
-function sortStatLogsToTop(group: DropdownOptionGroup | WellboreLogCurveHeader_api) {
+function sortStatLogsToTop(group: ComboboxGroup<string> | WellboreLogCurveHeader_api) {
     let logName = "";
     if ("logName" in group) logName = group.logName;
-    if ("label" in group) logName = group.label;
+    if ("value" in group) logName = group.value;
 
     return logName.startsWith("STAT_") ? 0 : 1;
 }

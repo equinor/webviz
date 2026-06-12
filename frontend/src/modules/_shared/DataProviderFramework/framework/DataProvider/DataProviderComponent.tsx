@@ -3,9 +3,9 @@ import type React from "react";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -57,11 +57,11 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
-            <div className="relative">
+            <div className="bg-surface relative">
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
                 <div
                     className={resolveClassNames(
-                        "grid grid-cols-[auto_1fr] items-stretch text-xs border [&>*:nth-child(4n-3)]:bg-slate-50 [&>*:nth-child(4n-2)]:bg-slate-50",
+                        "[&>*:nth-child(4n-2)]:bg-canvas [&>*:nth-child(4n-3)]:bg-canvas text-body-sm border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
                         {
                             hidden: !isExpanded,
                         },
@@ -86,9 +86,11 @@ function StartActions(props: StartActionProps): React.ReactNode {
     }
     return (
         <div className="flex items-center">
-            <DenseIconButton onClick={handleToggleExpanded} title={isExpanded ? "Hide settings" : "Show settings"}>
-                {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </DenseIconButton>
+            <Tooltip content={isExpanded ? "Hide settings" : "Show settings"} side="bottom">
+                <Button onClick={handleToggleExpanded} variant="ghost" tone="neutral" size="small" iconOnly>
+                    {isExpanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
+                </Button>
+            </Tooltip>
             <VisibilityToggle item={props.dataProvider} />
         </div>
     );
@@ -111,19 +113,19 @@ function EndActions(props: EndActionProps): React.ReactNode {
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
             return (
-                <Tooltip title="Subordinated">
-                    <Difference fontSize="small" />
+                <Tooltip content="Subordinated" side="bottom">
+                    <Difference style={{ fontSize: 16 }} />
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.LOADING) {
             return (
-                <Tooltip title={progressMessage ?? "Loading"}>
-                    <div className="flex gap-2 min-w-0 items-center">
-                        <span className="overflow-hidden whitespace-nowrap min-w-0 text-ellipsis">
+                <Tooltip content={progressMessage ?? "Loading"} side="bottom">
+                    <div className="gap-x-2xs flex min-w-0 items-center">
+                        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                             {progressMessage}
                         </span>
-                        <CircularProgress size="extra-small" />
+                        <CircularProgress size={16} />
                     </div>
                 </Tooltip>
             );
@@ -132,25 +134,23 @@ function EndActions(props: EndActionProps): React.ReactNode {
             const error = props.dataProvider.getError();
             if (!error) {
                 return (
-                    <Tooltip title="Error">
-                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    <Tooltip content="Error" side="bottom">
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             }
 
             if (typeof error === "string") {
                 return (
-                    <Tooltip title={error}>
-                        <div className="text-red-700 p-0.5">
-                            <Error fontSize="small" />
-                        </div>
+                    <Tooltip content={error} side="bottom">
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
-                    <Tooltip title={statusMessage.message}>
-                        <Error className="text-red-700 p-0.5" fontSize="small" />
+                    <Tooltip content={statusMessage.message} side="bottom">
+                        <Error className="text-danger-subtle" style={{ fontSize: 16 }} />
                     </Tooltip>
                 );
             }
@@ -167,15 +167,15 @@ function EndActions(props: EndActionProps): React.ReactNode {
             errorMessage += "\nPlease check the settings.";
 
             return (
-                <Tooltip title={errorMessage}>
-                    <Block className="text-red-700 p-0.5" fontSize="small" />
+                <Tooltip content={errorMessage} side="bottom">
+                    <Block className="text-danger-subtle" style={{ fontSize: 16 }} />
                 </Tooltip>
             );
         }
         if (status === DataProviderStatus.SUCCESS) {
             return (
-                <Tooltip title="Successfully loaded">
-                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
+                <Tooltip content="Successfully loaded" side="bottom">
+                    <CheckCircle className="text-success-subtle" style={{ fontSize: 16 }} />
                 </Tooltip>
             );
         }

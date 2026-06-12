@@ -1,9 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 145.6 65.1">
-  <path fill="none" stroke="#000" stroke-width=".3" d="M0 0v65h146"/>
-  <path fill="#004eff" fill-opacity=".3" fill-rule="evenodd" d="M146 0c-1 2-18 12-21 14l-8 6-11 5-9 2-15 5-9 3c-9 4-16 10-24 15-8 4-17 2-25 4L9 60c-3 1-7 2-9 5l42-7h10l15-4 23-5 13-4 7-2 11-4 9-3 8-2 8-4z"/>
-  <path fill="#004eff" fill-opacity=".3" fill-rule="evenodd" d="M146 0c0 7-6 9-9 11l-13 9-13 6-9 4c-6 1-8 3-13 5l-13 3-22 12c-7 4-18 4-26 6-5 1-11 1-16 4-3 1-10 2-12 5l42-9c10 0 18-4 27-6l23-5 11-4 10-3 11-5c13-2 15-9 22-13z"/>
-  <path fill="none" stroke="#0333ff" stroke-width=".3" d="m0 65 5-2 18-5 12-2c12-3 15-1 19-3l15-6 14-5 15-4c9-3 18-6 24-11l8-4 16-9"/>
-  <path fill="#0aa900" fill-opacity=".3" fill-rule="evenodd" d="M146 0c-17 6-38 7-52 13l-17 3-18 6c-3 1-11 2-14 4-9 4-7 8-15 12-7 5-8 12-16 14-5 1-4 8-9 11-3 1-3-1-5 2 14-3 22-14 36-16 4-1 12-9 21-11l21-6 22-5a414 414 0 0 1 37-8l9-1V0z"/>
-  <path fill="#0aa900" fill-opacity=".3" fill-rule="evenodd" d="M146 2c-4 3-5 2-8 3-5 1-12 1-14 3-4 2-10 1-13 3l-14 5c-6 1-12 1-17 3-3 1-18 4-21 6l-15 6c-7 4-9 8-14 13L13 56s-3 6-13 9c17-7 28-17 36-20l11-9 22-7c4-1 17-4 23-7l20-3c3-2 13-3 16-4l18-1z"/>
-  <path fill="none" stroke="#077500" stroke-width=".3" d="m0 65 8-4c6-1 5-5 15-9l15-13c9-8 19-8 22-10l17-6 23-5 14-4c11-4 25-3 32-6"/>
+<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+  <line x1="12" y1="42" x2="143" y2="42" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="12" y1="72" x2="143" y2="72" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="12" y1="102" x2="143" y2="102" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="42" y1="12" x2="42" y2="142" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="82" y1="12" x2="82" y2="142" stroke="#e1e1e1" stroke-width="0.5"/>
+  <line x1="122" y1="12" x2="122" y2="142" stroke="#e1e1e1" stroke-width="0.5"/>
+  <polyline points="12,12 12,142 143,142" fill="none" stroke="#626467" stroke-width="0.8"/>
+  <!-- Fan 1 (teal): outer band (P5–P95), then inner band (P25–P75) overlap darkens centre -->
+  <path fill="#cfe7e9" fill-opacity="0.6" d="M12,105 C55,100 95,88 143,75 L143,15 C95,40 55,68 12,95 Z"/>
+  <path fill="#cfe7e9" fill-opacity="0.6" d="M12,102 C55,93 95,76 143,60 L143,30 C95,54 55,76 12,98 Z"/>
+  <path fill="none" stroke="#206f77" stroke-width="1.5" d="M12,100 C55,86 95,62 143,44"/>
+  <!-- Fan 2 (green): outer band (P5–P95), then inner band (P25–P75) -->
+  <path fill="#d2f0d2" fill-opacity="0.6" d="M12,132 C55,128 95,120 143,114 L143,62 C95,80 55,104 12,122 Z"/>
+  <path fill="#d2f0d2" fill-opacity="0.6" d="M12,129 C55,124 95,116 143,104 L143,72 C95,90 55,112 12,125 Z"/>
+  <path fill="none" stroke="#207720" stroke-width="1.5" d="M12,127 C55,118 95,98 143,88"/>
 </svg>

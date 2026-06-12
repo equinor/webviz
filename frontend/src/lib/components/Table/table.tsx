@@ -136,7 +136,6 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
     }, [colgroupDefinitions]);
 
     const [selectedRows, setSelectedRows] = useOptInControlledValue([], props.selectedRows, props.onSelectedRowsChange);
-
     const [tableSortState, setTableSortState] = useOptInControlledValue([], props.sorting, props.onSortingChange);
     const [tableFilterState, setTableFilterState] = useOptInControlledValue({}, props.filters, props.onFiltersChange);
 
@@ -287,14 +286,14 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
         <>
             <div
                 ref={divWrapperRef}
-                className="relative overflow-auto border-t-2 border-slate-200"
+                className="relative overflow-auto"
                 style={{
                     height: preferredHeight,
                     maxHeight: props.maxHeight,
                     width: props.width,
                 }}
             >
-                <table className="w-full text-sm table-fixed" style={{ minWidth: tableMinWidth }}>
+                <table className="text-body-sm w-full table-fixed" style={{ minWidth: tableMinWidth }}>
                     {/* Create col-groups based on the top-level columns */}
                     <TableColGroups
                         colgroupDefinitions={colgroupDefinitions}
@@ -334,7 +333,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>): Reac
                     We fake the border at the bottom of the table so it still shows when elements overflow
                     (but still follows the table body height when dealing with locked table-heights)    
                 */}
-                <div className="border-b-2 sticky bottom-0" />
+                <div className="sticky bottom-0" />
             </div>
         </>
     );

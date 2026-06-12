@@ -1,11 +1,10 @@
 import React from "react";
 
-import { Icon, Typography } from "@equinor/eds-core-react";
+import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
 import {
     AddLink,
     ArrowDropDown,
-    Category,
     Close,
     Edit,
     Fullscreen,
@@ -17,7 +16,7 @@ import {
     SaveAs,
 } from "@mui/icons-material";
 
-import FmuLogo from "@assets/fmu.svg";
+import { FmuLogo } from "@assets/FmuLogo";
 
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
@@ -25,15 +24,19 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import type { ButtonProps } from "@lib/components/Button/button";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
-import { ComposedMenu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Button, type ButtonProps } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator";
+import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
+import { Separator } from "@lib/newComponents/Separator";
+import { Typography } from "@lib/newComponents/Typography";
+import { Heading } from "@lib/newComponents/Typography/compositions";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { DarkModeButton } from "../DarkModeButton";
+import { DensityModeToggle } from "../DensityModeToggle/densityModeToggle";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
 
@@ -53,15 +56,15 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "p-0.5 border-b-2 border-slate-200 z-50 shadow-lg flex flex-row gap-12 px-4 pl-6 items-center min-h-16",
+                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-x-3xl py-2xs px-xs flex flex-row items-center border-b-2",
                     {
-                        "bg-white": hasActiveSession,
+                        "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
                     },
                 )}
             >
                 <LogoWithText />
-                <div className="flex gap-2 items-center grow min-w-0">
+                <div className="gap-x-xs flex min-w-0 grow items-center">
                     {hasActiveSession ? (
                         <>
                             <Title workbench={props.workbench} />
@@ -70,7 +73,11 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     ) : (
                         <div className="grow" />
                     )}
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
+                    <FullscreenToggleButton />
+                    <DarkModeButton />
+                    <DensityModeToggle />
+                    <Separator orientation="vertical" />
                     <LoginButton showText={false} />
                 </div>
             </div>
@@ -79,11 +86,13 @@ export function TopBar(props: TopBarProps): React.ReactNode {
 }
 function LogoWithText(): React.ReactNode {
     return (
-        <div className="flex flex-row items-center gap-4">
-            <img src={FmuLogo} alt="FMU Analysis logo" className="w-8 h-8" />
-            <h1 className="text-md text-slate-800 whitespace-nowrap">FMU Analysis</h1>
+        <div className="gap-x-sm flex flex-row items-center">
+            <FmuLogo className="h-8 w-8" />
+            <Heading as="h6" weight="bolder">
+                FMU Analysis
+            </Heading>
             <div
-                className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
+                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm px-xs py-3xs cursor-help rounded-sm text-center"
                 title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
             >
                 BETA
@@ -92,12 +101,25 @@ function LogoWithText(): React.ReactNode {
     );
 }
 
+function FullscreenToggleButton(): React.ReactNode {
+    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
+
+    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
+
+    return (
+        <Tooltip title={fullscreenButtonTitle} placement="bottom">
+            <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
+                {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+            </TopBarButton>
+        </Tooltip>
+    );
+}
+
 type TopBarButtonsProps = {
     workbench: Workbench;
 };
 
 function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
-    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
@@ -106,8 +128,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
     function handleCloseSessionClick() {
         props.workbench.getSessionManager().maybeCloseCurrentSession();
     }
-
-    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
     const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
 
     return (
@@ -117,18 +137,12 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
             ) : (
                 <>
                     <EditSessionButton workbench={props.workbench} />
-                    <TopBarDivider />
+                    <Separator orientation="vertical" />
                     <RefreshSessionButton workbench={props.workbench} />
                     <SessionSaveButton workbench={props.workbench} />
                     <SnapshotButton workbench={props.workbench} />
-                    <TopBarDivider />
                 </>
             )}
-            <Tooltip title={fullscreenButtonTitle} placement="bottom">
-                <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
-                    {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
-                </TopBarButton>
-            </Tooltip>
             <Tooltip title={closeButtonTitle} placement="bottom">
                 <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
                     <Close fontSize="small" />
@@ -195,7 +209,7 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return <div className="grow flex gap-2 overflow-hidden items-center">{content}</div>;
+    return <div className="gap-x-sm flex grow items-center overflow-hidden">{content}</div>;
 }
 
 type SnapshotTitleProps = {
@@ -214,11 +228,11 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
             <Link fontSize="inherit" className="mr-1" />
             <Tooltip
                 title={
-                    <div className="whitespace-normal text-base">
+                    <div className="text-base whitespace-normal">
                         <h3 className="text-lg">{metadata.title}</h3>
                         {metadata.description && (
                             <>
-                                <hr className="h-px mb-2 bg-white/25" />
+                                <hr className="mb-2 h-px bg-white/25" />
                                 <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
                             </>
                         )}
@@ -227,11 +241,9 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
                 placement="bottom"
                 enterDelay="medium"
             >
-                <Typography variant="h5" className="min-w-0 truncate">
-                    {metadata.title}
-                </Typography>
+                <Heading as="h5">{metadata.title}</Heading>
             </Tooltip>
-            <Typography variant="body_short" className="font-light">
+            <Typography family="body" size="sm" as="span">
                 (snapshot)
             </Typography>
             <Tooltip title="This session is a snapshot and cannot be edited.">
@@ -262,20 +274,14 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
 
     return (
         <>
-            <Category fontSize="inherit" className="mr-1" />
-            <Typography
-                variant="h5"
-                className={resolveClassNames("overflow-ellipsis min-w-0 whitespace-nowrap flex items-center gap-4", {
-                    italic: !isPersisted,
-                })}
-            >
+            <Heading as="h6" italic={!isPersisted}>
                 <Tooltip
                     title={
-                        <div className="whitespace-normal text-base">
+                        <div className="text-base whitespace-normal">
                             <h3 className="text-lg">{metadata.title}</h3>
                             {metadata.description && (
                                 <>
-                                    <hr className="h-px mb-2 bg-white/25" />
+                                    <hr className="mb-2 h-px bg-white/25" />
                                     <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
                                 </>
                             )}
@@ -286,8 +292,8 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                 >
                     <span className="truncate">{metadata.title}</span>
                 </Tooltip>
-                <HasChangesIndicator visible={hasChanges} />
-            </Typography>
+            </Heading>
+            <HasChangesIndicator visible={hasChanges} />
         </>
     );
 }
@@ -302,8 +308,13 @@ function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React
     };
 
     return (
-        <div className="p-2 flex items-center text-sm gap-4">
-            <TopBarButton onClick={handleClick} title="Make a new session of the current snapshot" variant="contained">
+        <div className="flex items-center gap-4 p-2 text-sm">
+            <TopBarButton
+                onClick={handleClick}
+                title="Make a new session of the current snapshot"
+                variant="contained"
+                iconOnly={false}
+            >
                 Make session
             </TopBarButton>
         </div>
@@ -322,7 +333,7 @@ function SnapshotButton(props: SnapshotButtonProps): React.ReactNode {
     };
 
     return (
-        <div className="p-2 flex items-center text-sm gap-4">
+        <div className="flex items-center gap-4 p-2 text-sm">
             <TopBarButton onClick={handleClick} title="Make a snapshot of the current session">
                 <AddLink fontSize="small" />
             </TopBarButton>
@@ -354,15 +365,21 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
 
     const isSaving = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsSavingSession);
 
-    const handleSaveClick = () => {
+    const saveEnabled = persistenceInfo.hasChanges || !isPersisted;
+
+    function handleSaveClick() {
+        if (!isPersisted) {
+            setSaveSessionDialogOpen(true);
+            return;
+        }
         // The save button is disabled on new sessions, so the "maybe"
         // is technically unnecessary, but we'll use it for brevity
         props.workbench.getSessionManager().maybeSaveSession();
-    };
+    }
 
-    const handleSaveAsClick = () => {
+    function handleSaveAsClick() {
         setSaveSessionDialogOpen(true);
-    };
+    }
 
     function handleSaveMenuAction(actionId: string) {
         if (actionId === "save") {
@@ -372,22 +389,26 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
         }
     }
 
-    const saveEnabled = persistenceInfo.hasChanges && isPersisted;
-
     return (
-        <div className={resolveClassNames("p-2 flex items-center justify-center text-sm gap-4 w-14")}>
-            {isSaving ? (
-                <CircularProgress size="medium-small" className="text-amber-600" />
-            ) : (
-                <ComposedMenu
+        <div className="gap-x-xs flex items-center justify-center p-2 text-sm">
+            <Button.Group split>
+                <Button variant="contained" tone="accent" disabled={!saveEnabled} onClick={handleSaveClick} iconOnly>
+                    {isSaving ? (
+                        // Margin is explicitly added to make the spinner's position width match the save icon
+                        <CircularProgress size={16} layoutClassName="mx-[2px]" />
+                    ) : (
+                        <Save style={{ fontSize: 16 }} />
+                    )}
+                </Button>
+
+                <MenuCompositions.Default
                     onActionClicked={handleSaveMenuAction}
-                    renderTrigger={<TopBarButton title={"Save session options"} />}
                     items={[
                         {
                             id: "save",
                             label: "Save session",
                             icon: <Save fontSize="small" />,
-                            disabled: !saveEnabled,
+                            disabled: !isPersisted || !persistenceInfo.hasChanges,
                         },
                         {
                             id: "save-as",
@@ -396,10 +417,12 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                         },
                     ]}
                 >
-                    <Save fontSize="small" />
-                    <ArrowDropDown fontSize="small" />
-                </ComposedMenu>
-            )}
+                    {/* TODO: Pressed state when menu is open */}
+                    <Button {...props} variant="contained" tone="accent" iconOnly compact>
+                        <ArrowDropDown style={{ fontSize: 16 }} />
+                    </Button>
+                </MenuCompositions.Default>
+            </Button.Group>
         </div>
     );
 }
@@ -412,22 +435,21 @@ type TopBarButtonProps = {
     disabled?: boolean;
 } & ButtonProps;
 
-function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
     const { active, title, onClick, disabled, ...baseProps } = props;
-
     return (
         <Tooltip title={title} placement="bottom">
             {/* ! Workaround required to deal with EDS tooltip overwriting refs */}
             <span>
                 <Button
-                    {...baseProps}
                     ref={ref}
-                    className={resolveClassNames("w-full h-10 text-center px-3!", {
-                        "text-cyan-600": active,
-                        "text-slate-800!": props.variant === "text" || props.variant === undefined,
-                    })}
+                    variant="ghost"
+                    tone="accent"
+                    iconOnly
+                    pressed={active}
                     onClick={onClick}
                     disabled={disabled}
+                    {...baseProps}
                 >
                     {props.children}
                 </Button>
@@ -460,15 +482,11 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
     }
 
     return (
-        <div className={"p-1 px-3 flex items-center text-sm gap-4 bg-amber-100"}>
+        <div className={"flex items-center gap-4 bg-amber-100 p-1 px-3 text-sm"}>
             Out of sync with server.
             <TopBarButton onClick={handleRefreshClick} title="Reload session from server">
                 <Refresh fontSize="small" />
             </TopBarButton>
         </div>
     );
-}
-
-function TopBarDivider(): React.ReactNode {
-    return <div className="bg-slate-200 w-px h-10 mx-2" />;
 }

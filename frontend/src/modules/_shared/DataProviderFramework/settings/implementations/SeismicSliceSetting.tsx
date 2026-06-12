@@ -3,17 +3,17 @@ import React from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
-import { Button } from "@lib/components/Button";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Input } from "@lib/components/Input";
-import { Slider } from "@lib/components/Slider";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { Button } from "@lib/newComponents/Button";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+
 
 type ValueType = {
     value: [number, number, number];
@@ -134,6 +134,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 [0, 0, 1],
             ];
 
+            const [lastAppliedValue, setLastAppliedValue] = React.useState<ValueType>(props.value ?? null);
+
             const [internalValue, setInternalValue] = React.useState<[number, number, number] | null>(
                 props.value?.value ?? null,
             );
@@ -147,6 +149,12 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             const [visible, setVisible] = React.useState<[boolean, boolean, boolean]>(
                 props.value?.visible ?? [true, true, true],
             );
+            const [prevVisible, setPrevVisible] = React.useState<[boolean, boolean, boolean] | null>(null);
+
+            if (!isEqual(prevVisible, props.value?.visible ?? null)) {
+                setVisible(props.value?.visible ?? [true, true, true]);
+                setPrevVisible(props.value?.visible ?? null);
+            }
 
             function handleSliderChange(index: number, val: number) {
                 const newValue: [number, number, number] = [...(internalValue ?? [0, 0, 0])];
@@ -155,7 +163,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange({ value: newValue, visible, applied: false });
             }
 
-            function handleInputChange(index: number, val: number) {
+            function handleInputChange(index: number, val: number | null) {
                 const min = valueConstraints[index][0];
                 const max = valueConstraints[index][1];
                 const step = valueConstraints[index][2];
@@ -164,7 +172,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                     (_, i) => min + i * step,
                 );
                 const newVal = allowedValues.reduce((prev, curr) =>
-                    Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev,
+                    Math.abs(curr - (val ?? 0)) < Math.abs(prev - (val ?? 0)) ? curr : prev,
                 );
 
                 const newValue: [number, number, number] = [...(internalValue ?? [0, 0, 0])];
@@ -180,9 +188,18 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange({ value: internalValue ?? [0, 0, 0], visible: newVisible, applied: false });
             }
 
+            function handleRevertChanges() {
+                props.onValueChange({
+                    value: lastAppliedValue?.value ?? [0, 0, 0],
+                    visible: lastAppliedValue?.visible ?? [true, true, true],
+                    applied: true,
+                });
+            }
+
             function handleApplyChanges() {
                 if (internalValue) {
                     props.onValueChange({ value: internalValue, visible, applied: true });
+                    setLastAppliedValue({ value: internalValue, visible, applied: true });
                 }
             }
 
@@ -196,46 +213,56 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
 
             return (
                 <>
-                    <div className={resolveClassNames({ "outline-2 outline-amber-400": hasChanges })} ref={divRef}>
+                    <div className={resolveClassNames({ "outline-accent rounded outline-2": hasChanges })} ref={divRef}>
                         {labels.map((label, index) => (
-                            <div key={`setting-${index}`} className="flex items-center gap-x-4">
-                                <div className="w-8 flex flex-col items-start pl-1">{label}</div>
+                            <div key={`setting-${index}`} className="gap-x-sm flex items-center">
+                                <div className="pl-2xs flex w-8 flex-col items-start">{label}</div>
                                 <div className="min-w-4">
-                                    <DenseIconButton
+                                    <Button
                                         title="Toggle visibility"
                                         onClick={() => handleVisibleChange(index)}
+                                        size="small"
+                                        iconOnly
+                                        variant="ghost"
                                     >
                                         {visible[index] ? (
                                             <Visibility fontSize="inherit" />
                                         ) : (
                                             <VisibilityOff fontSize="inherit" />
                                         )}
-                                    </DenseIconButton>
+                                    </Button>
                                 </div>
                                 <div className="flex-4">
                                     <Slider
                                         min={valueConstraints[index][0]}
                                         max={valueConstraints[index][1]}
-                                        onChange={(_, value) => handleSliderChange(index, value as number)}
+                                        onValueChange={(value) => handleSliderChange(index, value as number)}
                                         value={props.value?.value[index] ?? valueConstraints[index][0]}
                                         valueLabelDisplay="auto"
                                         step={valueConstraints[index][2]}
-                                        track={false}
                                     />
                                 </div>
-                                <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputsVisible })}>
-                                    <Input
-                                        type="number"
+                                <div className={resolveClassNames("min-w-16 flex-1", { hidden: !inputsVisible })}>
+                                    <NumberInput
                                         value={internalValue?.[index] ?? 0}
-                                        onChange={(e) => handleInputChange(index, parseInt(e.target.value))}
+                                        onValueChange={(value) => handleInputChange(index, value)}
                                     />
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <div className="flex justify-end mt-2">
-                        <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges}>
-                            Apply Changes
+                    <div className="mt-2xs gap-x-2xs flex justify-end">
+                        <Button
+                            variant="ghost"
+                            tone="danger"
+                            onClick={handleRevertChanges}
+                            disabled={!hasChanges}
+                            size="small"
+                        >
+                            Revert
+                        </Button>
+                        <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges} size="small">
+                            Apply
                         </Button>
                     </div>
                 </>

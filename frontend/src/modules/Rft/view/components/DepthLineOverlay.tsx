@@ -32,7 +32,9 @@ export type DepthLineOverlayProps = {
     revision: number;
 };
 
-const LINE_COLOR = "rgba(0,0,0,1)";
+const LINE_COLOR = "var(--eds-color-text-neutral-strong)";
+// Contrasting color for the drag handle border so it stays visible against the plot in both light and dark themes.
+const HANDLE_BORDER_COLOR = "var(--eds-color-bg-neutral-canvas)";
 const DEPTH_DECIMALS = 1;
 
 function roundDepth(depth: number): number {
@@ -138,7 +140,7 @@ export function DepthLineOverlay(props: DepthLineOverlayProps): React.ReactNode 
                     height: 14,
                     borderRadius: 7,
                     background: LINE_COLOR,
-                    border: "2px solid white",
+                    border: `2px solid ${HANDLE_BORDER_COLOR}`,
                     boxShadow: "0 0 2px rgba(0,0,0,0.4)",
                     cursor: "ns-resize",
                     pointerEvents: "auto",

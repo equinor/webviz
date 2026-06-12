@@ -9,8 +9,8 @@ import {
 } from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { Button } from "@lib/newComponents/Button";
 
 import { ModulesList } from "../ModulesList";
 
@@ -70,7 +70,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     }
 
     return (
-        <div className="bg-white border-r-2 flex flex-col w-full h-full">
+        <div className="bg-surface flex h-full w-full flex-col">
             <ModulesList workbench={props.workbench} onClose={handleOnClose} />
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
@@ -83,11 +83,11 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
                 showCloseCross={true}
                 actions={
                     <div className="flex gap-4">
-                        <Button onClick={handleDialogSaveClick} color="primary">
-                            Save
-                        </Button>
-                        <Button onClick={handleDialogDiscardClick} color="danger">
+                        <Button onClick={handleDialogDiscardClick} tone="danger" variant="ghost">
                             Discard
+                        </Button>
+                        <Button onClick={handleDialogSaveClick} tone="accent">
+                            Save
                         </Button>
                     </div>
                 }

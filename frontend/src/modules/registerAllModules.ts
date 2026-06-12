@@ -20,6 +20,7 @@ import "./Rft/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./SensitivityPlot/registerModule";
+import "./TemplateModule/registerModule";
 import "./Vfp/registerModule";
 import "./WellCompletions/registerModule";
 import "./WellLogViewer/registerModule";

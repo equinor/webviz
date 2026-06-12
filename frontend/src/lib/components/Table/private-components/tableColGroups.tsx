@@ -17,10 +17,7 @@ export function TableColGroups(props: TableColGroupsProps): React.ReactNode {
                 const headerColorClass = ALTERNATING_COLUMN_CELL_COLORS[colorIndex];
 
                 return (
-                    <colgroup
-                        key={colGroupDef.columnId}
-                        className={resolveClassNames(headerColorClass, "border-x-2 border-gray-200")}
-                    >
+                    <colgroup key={colGroupDef.columnId} className={resolveClassNames(headerColorClass, "")}>
                         {colGroupDef.cols.map((colDef) => (
                             <col
                                 key={colDef.columnId}

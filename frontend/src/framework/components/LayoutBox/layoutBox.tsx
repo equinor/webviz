@@ -854,7 +854,7 @@ export const LayoutBoxComponents: React.FC<{
                 {edges.map((edge) => (
                     <div
                         key={`${edge.edge}-${edge.rect.x}-${edge.rect.y}-${edge.rect.width}-${edge.rect.height}`}
-                        className="absolute rounded-sm bg-slate-400 justify-center items-center opacity-50"
+                        className="bg-accent-strong absolute items-center justify-center rounded opacity-90"
                         style={{
                             left: edge.rect.x,
                             top: edge.rect.y,
@@ -872,27 +872,27 @@ export const LayoutBoxComponents: React.FC<{
                         }}
                     >
                         {edge.edge === LayoutBoxEdgeType.LEFT && (
-                            <div className="border-b-4 border-l-4 border-black rotate-45 w-4 h-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-b-4 border-l-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.TOP && (
-                            <div className="border-t-4 border-l-4 border-black rotate-45 w-4 h-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-l-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.RIGHT && (
-                            <div className="border-t-4 border-r-4 border-black rotate-45 w-4 h-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-r-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.BOTTOM && (
-                            <div className="border-r-4 border-b-4 border-black rotate-45 w-4 h-4" />
+                            <div className="border-accent-subtle h-4 w-4 rotate-45 border-r-4 border-b-4" />
                         )}
                         {edge.edge === LayoutBoxEdgeType.VERTICAL && (
                             <>
-                                <div className="border-b-4 border-l-4 border-black rotate-45 w-4 h-4" />
-                                <div className="border-t-4 border-r-4 border-black rotate-45 w-4 h-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-b-4 border-l-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-r-4" />
                             </>
                         )}
                         {edge.edge === LayoutBoxEdgeType.HORIZONTAL && (
                             <>
-                                <div className="border-t-4 border-l-4 border-black rotate-45 w-4 h-4" />
-                                <div className="border-r-4 border-b-4 border-black rotate-45 w-4 h-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-t-4 border-l-4" />
+                                <div className="border-accent-subtle h-4 w-4 rotate-45 border-r-4 border-b-4" />
                             </>
                         )}
                     </div>
@@ -906,8 +906,8 @@ export const LayoutBoxComponents: React.FC<{
         return (
             <div
                 className={resolveClassNames(
-                    "absolute pointer-events-none flex justify-center items-center text-white",
-                    { "bg-blue-300": hovered, "bg-transparent": !hovered },
+                    "text-accent-strong-on-emphasis pointer-events-none absolute flex items-center justify-center",
+                    { "bg-accent-strong": hovered, "bg-transparent": !hovered },
                 )}
                 key={flatBoxes[0].toString()}
                 style={{

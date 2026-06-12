@@ -3,9 +3,9 @@ import type React from "react";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
-import { Dialog } from "@lib/components/Dialog";
+import { Dialog } from "@lib/newComponents/Dialog";
+import { Tabs } from "@lib/newComponents/Tabs";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SessionManagementContent } from "./sessionManagementContent";
 import { SnapshotManagementContent } from "./snapshotManagementContent";
@@ -34,51 +34,35 @@ export function PersistenceManagementDialog(props: PersistenceManagementDialogPr
     const isDialogOpen = isOpen && !hasActiveSession;
 
     return (
-        <Dialog
-            title={
-                // Padding an border sizes are a bit weird here; this is to align with the close-cross and modal heading border
-                <div className="-mb-4 font-bold text-lg flex items-end">
-                    <button
-                        className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t", {
-                            "border-blue-500 border-b-[3px]": contentMode === "sessions",
-                            "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
-                                contentMode !== "sessions",
-                        })}
-                        onClick={() => setContentMode("sessions")}
-                    >
-                        Sessions
-                    </button>
-                    <button
-                        className={resolveClassNames("-mb-[2px] px-2 pt-1 pb-2.5 hover:bg-blue-50 rounded-t ml-2 ", {
-                            "border-blue-500 border-b-[3px]": contentMode === "snapshots",
-                            "text-gray-500 border-b-[3px] border-transparent hover:border-gray-200":
-                                contentMode !== "snapshots",
-                        })}
-                        onClick={() => setContentMode("snapshots")}
-                    >
-                        Snapshots
-                    </button>
-                </div>
-            }
-            modal
-            open={isDialogOpen}
-            onClose={() => setIsOpen(false)}
-            width={1500}
-            showCloseCross
-            height={700}
-        >
-            {contentMode === "sessions" && (
-                <SessionManagementContent
-                    workbench={props.workbench}
-                    active={isDialogOpen && contentMode === "sessions"}
-                />
-            )}
-            {contentMode === "snapshots" && (
-                <SnapshotManagementContent
-                    workbench={props.workbench}
-                    active={isDialogOpen && contentMode === "snapshots"}
-                />
-            )}
-        </Dialog>
+        <Dialog.Popup open={isDialogOpen} onOpenChange={setIsOpen} minWidth={800} width="80vw" height={700}>
+            <div className="p-sm gap-y-md border-neutral-subtle flex items-start justify-between border-b-2 pb-0">
+                <Tabs.Root
+                    value={contentMode}
+                    onValueChange={setContentMode}
+                    orientation="horizontal"
+                    layoutClassName="-mb-[2px]"
+                >
+                    <Tabs.List indicatorPosition="end">
+                        <Tabs.Tab value="sessions">Sessions</Tabs.Tab>
+                        <Tabs.Tab value="snapshots">Snapshots</Tabs.Tab>
+                    </Tabs.List>
+                </Tabs.Root>
+                <Dialog.Close />
+            </div>
+            <Dialog.Body layoutClassName="h-full">
+                {contentMode === "sessions" && (
+                    <SessionManagementContent
+                        workbench={props.workbench}
+                        active={isDialogOpen && contentMode === "sessions"}
+                    />
+                )}
+                {contentMode === "snapshots" && (
+                    <SnapshotManagementContent
+                        workbench={props.workbench}
+                        active={isDialogOpen && contentMode === "snapshots"}
+                    />
+                )}
+            </Dialog.Body>
+        </Dialog.Popup>
     );
 }

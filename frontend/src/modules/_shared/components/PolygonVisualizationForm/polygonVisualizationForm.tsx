@@ -1,27 +1,21 @@
-import React from "react";
-
+import { Link, LinkOff } from "@mui/icons-material";
+import { parseHex, type Rgb } from "culori";
 import { isNaN } from "lodash";
 
-import { ColorSelect } from "@lib/components/ColorSelect";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
-import { Label } from "@lib/components/Label";
-import { Slider } from "@lib/components/Slider";
-import { Switch } from "@lib/components/Switch";
-import { LabelPositionType } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
+import { Button } from "@lib/newComponents/Button";
+import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { NumberInput } from "@lib/newComponents/NumberInput";
+import { Switch } from "@lib/newComponents/Switch";
+import { Typography } from "@lib/newComponents/Typography";
+import {
+    calculateBackgroundColorForColor,
+    calculateLabelPosition,
+    LabelPositionType,
+    type PolygonVisualizationSpec,
+} from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";
 
-export type { LabelPositionType };
-
-export interface PolygonVisualizationSpec {
-    color: string;
-    lineThickness: number;
-    lineOpacity: number;
-    fill: boolean;
-    fillOpacity: number;
-    showLabels: boolean;
-    labelPosition: LabelPositionType;
-    labelColor: string;
-}
+export type { LabelPositionType, PolygonVisualizationSpec };
 
 export interface PolygonVisualizationFormProps {
     value: PolygonVisualizationSpec;
@@ -29,47 +23,59 @@ export interface PolygonVisualizationFormProps {
 }
 
 export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
-    function handleColorChange(color: string) {
-        const newValue = { ...props.value, color };
-        props.onChange(newValue);
+    function handleStrokeEnabledChange(checked: boolean) {
+        props.onChange({ ...props.value, hasStroke: checked });
     }
 
-    function handleLineThicknessChange(thickness: string) {
-        const numValue = parseFloat(thickness);
-        if (!isNaN(numValue) && numValue >= 0.5 && numValue <= 10) {
-            const newValue = { ...props.value, lineThickness: numValue };
-            props.onChange(newValue);
+    function handleStrokeColorChange(color: string) {
+        const update: Partial<PolygonVisualizationSpec> = { strokeColor: color };
+        if (props.value.colorsLinked) {
+            update.fillColor = color;
+        }
+        props.onChange({ ...props.value, ...update });
+    }
+
+    function handleStrokeWeightChange(weight: number | null) {
+        if (weight !== null && weight >= 0.5 && weight <= 10 && !isNaN(weight)) {
+            props.onChange({ ...props.value, strokeWeight: weight });
         }
     }
 
-    function handleLineOpacityChange(newOpacity: number) {
-        const newValue = { ...props.value, lineOpacity: newOpacity };
-        props.onChange(newValue);
+    function handleStrokeOpacityChange(newOpacity: number | null) {
+        props.onChange({ ...props.value, strokeOpacity: (newOpacity ?? 0) / 100 });
     }
 
-    function handleFillEnabledChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const newValue = { ...props.value, fill: e.target.checked };
-        props.onChange(newValue);
+    function handleFillEnabledChange(checked: boolean) {
+        props.onChange({ ...props.value, hasFill: checked });
     }
 
-    function handleFillOpacityChange(newOpacity: number) {
-        const newValue = { ...props.value, fillOpacity: newOpacity };
-        props.onChange(newValue);
+    function handleFillColorChange(color: string) {
+        const update: Partial<PolygonVisualizationSpec> = { fillColor: color };
+        if (props.value.colorsLinked) {
+            update.strokeColor = color;
+        }
+        props.onChange({ ...props.value, ...update });
     }
 
-    function handleShowLabelsChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const newValue = { ...props.value, showLabels: e.target.checked };
-        props.onChange(newValue);
+    function handleFillOpacityChange(newOpacity: number | null) {
+        props.onChange({ ...props.value, fillOpacity: (newOpacity ?? 0) / 100 });
     }
 
-    function handleLabelPositionChange(position: string) {
-        const newValue = { ...props.value, labelPosition: position as LabelPositionType };
-        props.onChange(newValue);
+    function handleShowLabelsChange(checked: boolean) {
+        props.onChange({ ...props.value, showLabels: checked });
+    }
+
+    function handleLabelPositionChange(position: string | null) {
+        if (position === null) return;
+        props.onChange({ ...props.value, labelPosition: position as LabelPositionType });
     }
 
     function handleLabelColorChange(color: string) {
-        const newValue = { ...props.value, labelColor: color };
-        props.onChange(newValue);
+        props.onChange({ ...props.value, labelColor: color });
+    }
+
+    function handleToggleColorsLinked() {
+        props.onChange({ ...props.value, colorsLinked: !props.value.colorsLinked });
     }
 
     const labelPositionOptions = [
@@ -79,149 +85,178 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
         { value: LabelPositionType.LAST_POINT, label: "Last point" },
     ];
 
-    const baseId = React.useId();
-    const ids = {
-        lineWidth: `line_width_${baseId}`,
-        lineOpacity: `line_opacity_${baseId}`,
-        fillEnable: `fill_enable_${baseId}`,
-        fillOpacity: `fill_opacity_${baseId}`,
-        labelEnable: `label_enable_${baseId}`,
-        labelPosition: `label_position_${baseId}`,
-        labelColor: `label_color_${baseId}`,
-    };
-
     return (
-        <div className="flex flex-col gap-6 p-4 ">
-            <Label text="Polygon color" position="left" labelClassName="text-base! text-gray-700">
-                <ColorSelect onChange={handleColorChange} value={props.value.color} dense />
-            </Label>
-
-            <div className="grid grid-cols-[auto_1fr] gap-2 items-center content-start">
-                {/* --- Line settings --- */}
-                <h4 className="col-span-2 font-bold">Line</h4>
-
-                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.lineWidth}>
-                    Width
-                </label>
-                <div>
-                    <Input
-                        id={ids.lineWidth}
-                        type="number"
+        <div className="gap-x-sm flex items-stretch">
+            <PolylinePreview spec={props.value} className="h-auto w-24" />
+            {/* 6 cols: switch | label | link-button | brace | color | inputs */}
+            <div className="gap-x-sm gap-y-2xs grid grid-cols-[auto_auto_auto_auto_auto_auto] items-center">
+                {/* Stroke row */}
+                <Switch checked={props.value.hasStroke} onCheckedChange={handleStrokeEnabledChange} />
+                <Typography family="body" variant="strong" size="md" tone="neutral">
+                    Stroke
+                </Typography>
+                {/* Link button — row-span-2, col 3 */}
+                <div className="pl-sm row-span-2 flex h-full items-center">
+                    <Button
+                        iconOnly
+                        size="small"
+                        variant="ghost"
+                        compact
+                        pressed={props.value.colorsLinked}
+                        onClick={handleToggleColorsLinked}
+                        title={props.value.colorsLinked ? "Unlink colors" : "Link colors"}
+                    >
+                        {props.value.colorsLinked ? <Link /> : <LinkOff />}
+                    </Button>
+                </div>
+                {/* Brace arms — row-span-2, col 4 */}
+                <div className="row-span-2 flex h-full flex-col items-start">
+                    <div className="border-neutral w-2 flex-1 rounded-tl border-t border-l" />
+                    <div className="w-2" />
+                    <div className="border-neutral w-2 flex-1 rounded-bl border-b border-l" />
+                </div>
+                <ColorSelect
+                    onChange={handleStrokeColorChange}
+                    value={props.value.strokeColor}
+                    size="small"
+                    variant="ghost"
+                    compact
+                    disabled={!props.value.hasStroke}
+                />
+                {/* Opacity + stroke weight share the column 50/50 */}
+                <div className="gap-x-sm flex">
+                    <NumberInput
+                        value={props.value.strokeOpacity * 100}
+                        min={0}
+                        max={100}
+                        step={1}
+                        scrubAdornment="%"
+                        onValueChange={handleStrokeOpacityChange}
+                        scrubAreaPosition="end"
+                        layoutClassName="grow max-w-48"
+                        disabled={!props.value.hasStroke}
+                    />
+                    <NumberInput
                         min={0.5}
                         max={10}
                         step={0.1}
-                        value={props.value.lineThickness.toString()}
-                        onValueChange={handleLineThicknessChange}
-                        style={{ width: "80px" }}
+                        value={props.value.strokeWeight}
+                        onValueChange={handleStrokeWeightChange}
+                        layoutClassName="w-24"
+                        scrubAdornment="px"
+                        scrubAreaPosition="end"
+                        disabled={!props.value.hasStroke}
                     />
                 </div>
-
-                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.lineOpacity}>
-                    Opacity
-                </label>
-                <OpacitySlider
-                    id={ids.lineOpacity}
-                    value={props.value.lineOpacity}
-                    onValueChange={handleLineOpacityChange}
-                />
-
-                {/* --- Fill settings --- */}
-                <h4 className="col-span-2 flex gap-2 items-center font-bold mt-5">
-                    <label htmlFor={ids.fillEnable}>Fill</label>
-                    <Switch
-                        id={ids.fillEnable}
-                        size="small"
-                        checked={props.value.fill}
-                        onChange={handleFillEnabledChange}
-                    />
-                </h4>
-
-                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.fillOpacity}>
-                    Opacity
-                </label>
-                <OpacitySlider
-                    disabled={!props.value.fill}
-                    id={ids.fillOpacity}
-                    value={props.value.fillOpacity}
-                    onValueChange={handleFillOpacityChange}
-                />
-
-                {/* --- Label settings --- */}
-                <h4 className="col-span-2 flex gap-2 items-center font-bold mt-5 ">
-                    <label htmlFor={ids.labelEnable}>Label</label>
-                    <Switch
-                        id={ids.labelEnable}
-                        size="small"
-                        checked={props.value.showLabels}
-                        onChange={handleShowLabelsChange}
-                    />
-                </h4>
-
-                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.labelPosition}>
-                    Position
-                </label>
-                <Dropdown
-                    disabled={!props.value.showLabels}
-                    id={ids.labelPosition}
-                    options={labelPositionOptions}
-                    value={props.value.labelPosition}
-                    onChange={handleLabelPositionChange}
-                />
-
-                <label className="text-sm text-gray-500 leading-tight" htmlFor={ids.labelColor}>
-                    Color
-                </label>
+                {/* Fill row — cols 3 & 4 occupied by row-span-2 cells */}
+                <Switch checked={props.value.hasFill} onCheckedChange={handleFillEnabledChange} />
+                <Typography family="body" variant="strong" size="md" tone="neutral">
+                    Fill
+                </Typography>
                 <ColorSelect
-                    id={ids.labelColor}
+                    onChange={handleFillColorChange}
+                    value={props.value.fillColor}
+                    size="small"
+                    variant="ghost"
+                    compact
+                    disabled={!props.value.hasFill}
+                />
+                <NumberInput
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={props.value.fillOpacity * 100}
+                    onValueChange={handleFillOpacityChange}
+                    scrubAdornment="%"
+                    scrubAreaPosition="end"
+                    layoutClassName="w-full"
+                    disabled={!props.value.hasFill}
+                />
+                {/* Labels row */}
+                <Switch checked={props.value.showLabels} onCheckedChange={handleShowLabelsChange} />
+                <Typography family="body" variant="strong" size="md" tone="neutral">
+                    Labels
+                </Typography>
+                <div /> {/* empty col 3 */}
+                <div /> {/* empty col 4 */}
+                <ColorSelect
                     value={props.value.labelColor}
                     disabled={!props.value.showLabels}
                     onChange={handleLabelColorChange}
+                    variant="ghost"
+                    compact
+                    size="small"
+                />
+                <Combobox
+                    disabled={!props.value.showLabels}
+                    items={labelPositionOptions}
+                    value={props.value.labelPosition}
+                    onValueChange={handleLabelPositionChange}
+                    layoutClassName="w-full"
                 />
             </div>
         </div>
     );
 }
 
-function OpacitySlider(props: {
-    id: string;
-    value: number;
-    disabled?: boolean;
-    onValueChange: (newValue: number) => void;
-}) {
-    // Need to round to avoid occasional floating point errors
-    const valuePercent = Math.round(props.value * 100);
+// Skewed rectangle — four vertices at distinct positions, in SVG coordinate space
+const PREVIEW_X_ARR = [10, 18, 72, 65] as const;
+const PREVIEW_Y_ARR = [85, 15, 22, 88] as const;
+const PREVIEW_Z_ARR = [0, 0, 0, 0] as const;
+const PREVIEW_POINTS = PREVIEW_X_ARR.map((x, i) => `${x},${PREVIEW_Y_ARR[i]}`).join(" ");
+
+// Minimal polygon object matching what calculateLabelPosition needs
+const PREVIEW_POLYGON = {
+    x_arr: PREVIEW_X_ARR as unknown as number[],
+    y_arr: PREVIEW_Y_ARR as unknown as number[],
+    z_arr: PREVIEW_Z_ARR as unknown as number[],
+    name: "Preview",
+    poly_id: 0,
+};
+
+function rgbToCss(rgb: Rgb): string {
+    return `rgb(${Math.round(rgb.r * 255)},${Math.round(rgb.g * 255)},${Math.round(rgb.b * 255)})`;
+}
+
+export function PolylinePreview({ spec, className }: { spec: PolygonVisualizationSpec; className?: string }) {
+    const [labelX, labelY] = calculateLabelPosition(PREVIEW_POLYGON as any, spec.labelPosition);
+    const labelRgb = parseHex(spec.labelColor) as Rgb | undefined;
+    const bgRgb = labelRgb ? calculateBackgroundColorForColor(labelRgb) : { mode: "rgb" as const, r: 0, g: 0, b: 0 };
 
     return (
-        <div className="flex gap-1 w-full items-center">
-            <div className="w-full gorw">
-                <Slider
-                    disabled={props.disabled}
-                    value={props.value}
-                    min={0}
-                    max={1}
-                    step={0.1}
-                    onChange={(_, v) => props.onValueChange(v as number)}
-                />
-            </div>
-            <div className="max-w-0 min-w-16">
-                <Input
-                    id={props.id}
-                    value={valuePercent}
-                    type="number"
-                    disabled={props.disabled}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onChange={(evt) => {
-                        const number = Number(evt.target.value);
-                        if (isNaN(number)) {
-                            props.onValueChange(0);
-                        } else {
-                            props.onValueChange(number / 100);
-                        }
-                    }}
-                />
-            </div>
-        </div>
+        <svg viewBox="0 0 80 100" className={className}>
+            <polygon
+                points={PREVIEW_POINTS}
+                fill={spec.hasFill ? spec.fillColor : "none"}
+                fillOpacity={spec.hasFill ? spec.fillOpacity : 0}
+                stroke={spec.hasStroke ? spec.strokeColor : "none"}
+                strokeWidth={spec.hasStroke ? spec.strokeWeight : 0}
+                strokeOpacity={spec.hasStroke ? spec.strokeOpacity : 0}
+                strokeLinejoin="round"
+            />
+            {spec.showLabels && (
+                <>
+                    <rect
+                        x={labelX - 18}
+                        y={labelY - 7}
+                        width={36}
+                        height={14}
+                        rx={1}
+                        fill={rgbToCss(bgRgb)}
+                        fillOpacity={0.6}
+                    />
+                    <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={9}
+                        fill={spec.labelColor}
+                    >
+                        Label
+                    </text>
+                </>
+            )}
+        </svg>
     );
 }

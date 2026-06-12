@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Tooltip } from "@equinor/eds-core-react";
-import { PinDrop, Public } from "@mui/icons-material";
 
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
@@ -9,7 +8,7 @@ import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSessi
 import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { Checkbox } from "@lib/components/Checkbox";
+import { Checkbox } from "@lib/newComponents/Checkbox";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -94,14 +93,20 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
         const disabledReason = isSnapshot ? "Sync settings cannot be changed in snapshot mode" : undefined;
 
         return (
-            <table className="w-full m-2">
+            <table className="w-full">
                 <thead>
-                    <tr className="border-b ">
-                        <th className="border-r p-2 w-6" title="Sync for all module instances">
-                            <Public fontSize="small" />
+                    <tr className="border-neutral-subtle border-b">
+                        <th
+                            className="border-neutral-subtle px-xs py-xs w-4 border-r"
+                            title="Sync for all module instances"
+                        >
+                            Global
                         </th>
-                        <th className="border-r p-2 w-6" title="Sync for active module instance">
-                            <PinDrop fontSize="small" />
+                        <th
+                            className="border-neutral-subtle px-xs py-xs w-4 border-r"
+                            title="Sync for active module instance"
+                        >
+                            Local
                         </th>
                         <th></th>
                     </tr>
@@ -110,27 +115,35 @@ export function ModuleSyncSettings(props: ModuleSyncSettingProps): React.ReactNo
                     {syncableSettingKeys.map((setting) => {
                         const globallySynced = isGlobalSyncSetting(setting);
                         return (
-                            <tr key={setting} className="hover:bg-blue-50">
+                            <tr key={setting} className="hover:bg-neutral-subtle">
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
-                                    <td className="border-r p-2">
+                                    <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
                                             checked={globallySynced}
-                                            onChange={(e) => handleGlobalSyncSettingChange(setting, e.target.checked)}
+                                            onCheckedChange={(checked) =>
+                                                handleGlobalSyncSettingChange(setting, checked)
+                                            }
                                             disabled={isSnapshot}
+                                            size="small"
                                         />
                                     </td>
                                 </Tooltip>
                                 <Tooltip title={disabledReason} disabled={!isSnapshot}>
-                                    <td className="border-r p-2">
+                                    <td className="border-neutral-subtle px-xs py-3xs align-center border-r">
                                         <Checkbox
                                             checked={globallySynced || activeModuleInstance.isSyncedSetting(setting)}
-                                            onChange={(e) => handleSyncSettingChange(setting, e.target.checked)}
+                                            onCheckedChange={(checked) => handleSyncSettingChange(setting, checked)}
                                             disabled={isSnapshot}
+                                            size="small"
                                         />
                                     </td>
                                 </Tooltip>
 
-                                <td className={resolveClassNames("p-2", { "opacity-50": isSnapshot })}>
+                                <td
+                                    className={resolveClassNames("px-xs py-3xs", {
+                                        "opacity-50": isSnapshot,
+                                    })}
+                                >
                                     {SyncSettingsMeta[setting].name}
                                 </td>
                             </tr>

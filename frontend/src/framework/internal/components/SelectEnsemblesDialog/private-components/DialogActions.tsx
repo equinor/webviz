@@ -2,8 +2,8 @@ import type React from "react";
 
 import { Check } from "@mui/icons-material";
 
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 
 export interface DialogActionsProps {
     isLoading: boolean;
@@ -17,18 +17,19 @@ export interface DialogActionsProps {
 export const DialogActions: React.FC<DialogActionsProps> = (props: DialogActionsProps) => {
     const makeApplyButtonStartIcon = () => {
         if (props.isLoading) {
-            return <CircularProgress size="small" />;
+            return <CircularProgress size={16} />;
         }
         return <Check fontSize="small" />;
     };
 
     return (
-        <div className="flex gap-4">
-            <Button onClick={props.onDiscard} color="danger" disabled={props.disableDiscard}>
+        <div className="gap-x-xs flex">
+            <Button onClick={props.onDiscard} tone="danger" variant="ghost" disabled={props.disableDiscard}>
                 Discard changes
             </Button>
             <div title={props.hasDuplicatedDeltaEnsembles ? "Duplicate Delta Ensembles (marked blue)" : ""}>
-                <Button onClick={props.onApply} disabled={props.disableApply} startIcon={makeApplyButtonStartIcon()}>
+                <Button onClick={props.onApply} disabled={props.disableApply}>
+                    {makeApplyButtonStartIcon()}
                     {props.isLoading ? "Loading ensembles..." : "Apply"}
                 </Button>
             </div>

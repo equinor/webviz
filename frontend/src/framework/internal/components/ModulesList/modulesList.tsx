@@ -1,15 +1,7 @@
 import React from "react";
 
-import {
-    Close,
-    CloudOff,
-    ExpandLess,
-    ExpandMore,
-    Help,
-    HistoryToggleOff,
-    Science,
-    WebAsset,
-} from "@mui/icons-material";
+import type { BaseUIEvent } from "@base-ui/react";
+import { Close, CloudOff, Help, HistoryToggleOff, Science, WebAsset } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
@@ -21,7 +13,10 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
+import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { Button } from "@lib/newComponents/Button";
+import { Collapsible } from "@lib/newComponents/Collapsible";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
@@ -161,7 +156,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         [props.guiMessageBroker, props.name, onDraggingStart],
     );
 
-    function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
+    function handleShowDetails(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.stopPropagation();
         const target = e.currentTarget.parentElement;
         if (!(target instanceof HTMLElement)) {
@@ -179,47 +174,39 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
         props.onHover(props.name, target.getBoundingClientRect().top);
     }
 
-    function makePreviewImage() {
-        if (props.drawPreviewFunc) {
-            const pixels = convertRemToPixels(2.5);
-            return (
-                <svg width={pixels} height={pixels} viewBox={`0 0 ${pixels} ${pixels}`}>
-                    {props.drawPreviewFunc(pixels, pixels)}
-                </svg>
-            );
-        }
-        return <div className="border bg-slate-200 border-slate-300 flex items-center justify-center w-full h-full" />;
-    }
-
     function makeItem() {
         return (
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
-                    "touch-none flex flex-col text-sm text-gray-700 w-full h-12 select-none hover:bg-blue-100 bg-white",
+                    "hover:bg-accent text-body-md flex h-12 w-full touch-none flex-col select-none",
                     {
-                        "cursor-move": !isDragged,
+                        "cursor-grab": !isDragged,
                         "cursor-grabbing": isDragged,
                     },
                 )}
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
             >
-                <div className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
-                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
-                    <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
+                <div className="px-xs gap-x-xs text-body-sm flex h-full items-center" title={props.displayName}>
+                    <div className="border-neutral-subtle bg-canvas h-10 w-10 min-w-10 shrink-0 overflow-hidden border">
+                        {makePreviewImage(40, props.drawPreviewFunc)}
+                    </div>
+                    <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
                     <span
                         className={resolveClassNames({
-                            "text-yellow-500": props.devState === ModuleDevState.DEV,
-                            "text-orange-600": props.devState === ModuleDevState.DEPRECATED,
+                            "text-warning-subtle": props.devState === ModuleDevState.DEV,
+                            "text-danger-subtle": props.devState === ModuleDevState.DEPRECATED,
                         })}
                     >
                         {makeDevStateIcon(props.devState)}
                     </span>
-                    <span className="text-gray-400">{makePersistenceIcon(props.isSerializable)}</span>
-                    <span className="cursor-pointer text-blue-800" title="Show details" onClick={handleShowDetails}>
-                        <Help fontSize="inherit" />
-                    </span>
+                    <span className="text-neutral-subtle">{makePersistenceIcon(props.isSerializable)}</span>
+                    <Tooltip title="Show details">
+                        <Button variant="ghost" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
+                            <Help style={{ fontSize: 16 }} />
+                        </Button>
+                    </Tooltip>
                 </div>
             </div>
         );
@@ -228,7 +215,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     if (isDragged) {
         return (
             <>
-                <div ref={ref} className="bg-blue-300 w-full h-12" />
+                <div ref={ref} className="bg-accent-canvas h-12 w-full" />
                 {createPortal(makeItem())}
             </>
         );
@@ -236,48 +223,18 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     return makeItem();
 };
 
-type ModulesListCategoryProps = {
-    title: string;
-    children: React.ReactNode[];
-};
-
-function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
-    const [expanded, setExpanded] = React.useState(true);
-
-    function toggleExpanded() {
-        setExpanded(!expanded);
-    }
-
-    if (props.children.length === 0) {
-        return null;
-    }
-
-    return (
-        <div className="flex flex-col gap-1">
-            <div
-                className="flex gap-2 cursor-pointer items-center bg-slate-100 p-2 text-sm shadow-sm sticky top-0 z-20"
-                onClick={toggleExpanded}
-            >
-                <span className="grow font-bold">{props.title}</span>
-                {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </div>
-            {expanded && <div className="flex flex-col bg-slate-100 gap-0.5">{props.children}</div>}
-        </div>
-    );
-}
-
 function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.DEPRECATED) {
         return (
             <span title="Deprecated" className="inline-block align-middle text-base">
-                <HistoryToggleOff fontSize="inherit" />
+                <HistoryToggleOff style={{ fontSize: 16 }} />
             </span>
         );
     }
     if (devState === ModuleDevState.DEV) {
         return (
             <span title="Experimental" className="inline-block align-middle text-base">
-                <Science fontSize="inherit" />
+                <Science style={{ fontSize: 16 }} />
             </span>
         );
     }
@@ -289,7 +246,7 @@ function makePersistenceIcon(isSerializable: boolean): React.ReactNode {
     if (!isSerializable) {
         return (
             <span title="Module settings won't be saved" className="inline-block align-middle text-base">
-                <CloudOff fontSize="inherit" />
+                <CloudOff style={{ fontSize: 16 }} />
             </span>
         );
     }
@@ -307,7 +264,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
     function makeDevState(devState: ModuleDevState): React.ReactNode {
         if (devState === ModuleDevState.DEPRECATED) {
             return (
-                <div className="flex gap-2 text-orange-600 text-xs items-center">
+                <div className="text-warning-subtle gap-x-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Deprecated</span>
                 </div>
@@ -315,7 +272,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         }
         if (devState === ModuleDevState.DEV) {
             return (
-                <div className="flex items-center gap-2 text-yellow-500 text-xs">
+                <div className="text-danger-subtle gap-x-xs text-body-xs flex items-center">
                     {makeDevStateIcon(devState)}
                     <span className="mt-[0.2rem]">Experimental</span>
                 </div>
@@ -328,7 +285,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             return null;
         }
         return (
-            <div className="flex gap-2 text-gray-400 text-xs items-center">
+            <div className="text-disabled gap-x-xs text-body-xs flex items-center">
                 {makePersistenceIcon(isSerializable)}
                 <span className="mt-[0.2rem]">Module settings won&apos;t be saved</span>
             </div>
@@ -340,7 +297,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             const tagObj = ModuleDataTags.find((el) => el.id === tag);
             if (tagObj) {
                 tags.push(
-                    <div key={tag} className="font-bold text-indigo-600">
+                    <div key={tag} className="text-accent-subtle font-bolder">
                         #{tagObj.name}
                     </div>,
                 );
@@ -357,29 +314,25 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
         style.top = props.top;
     }
 
-    const previewFunc = props.module.getDrawPreviewFunc();
-
     return (
         <div
-            className="absolute bg-white border border-gray-300 shadow-lg p-4 z-50 w-96 text-sm flex gap-4"
+            className="z-tooltip border-neutral-subtle bg-floating p-sm text-body-md gap-x-sm absolute flex w-96 items-center border shadow-lg"
             style={style}
         >
-            <svg width={64} height={64} viewBox={`0 0 ${64} ${64}`}>
-                {previewFunc?.(64, 64)}
-            </svg>
-            <div className="grow">
-                <div className="flex items-center">
-                    <span className="font-bold grow">{props.module.getDefaultTitle()}</span>
-                    <div className="cursor-pointer hover:text-blue-600" onClick={props.onClose} title="Close popup">
+            <div className="min-w-20">{makePreviewImage(80, props.module.getDrawPreviewFunc())}</div>
+            <div className="gap-y-2xs flex grow flex-col">
+                <div className="flex items-start">
+                    <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
+                    <Button variant="ghost" tone="neutral" size="small" onClick={props.onClose} iconOnly>
                         <Close fontSize="inherit" />
-                    </div>
+                    </Button>
                 </div>
-                <span className="flex flex-col">
+                <div className="flex flex-col">
                     {makeDevState(props.module.getDevState())}
                     {makePersistenceState(props.module.canBeSerialized())}
-                </span>
-                <div className="text-xs mt-2">{props.module.getDescription()}</div>
-                <div className="text-xs mt-2 flex gap-2 text-bold flex-wrap">{makeDataTags()}</div>
+                </div>
+                <div className="text-body-sm">{props.module.getDescription()}</div>
+                <div className="text-bolder gap-x-2xs text-body-xs flex flex-wrap">{makeDataTags()}</div>
             </div>
         </div>
     );
@@ -472,7 +425,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     );
 
     return (
-        <div ref={ref} className={resolveClassNames("w-full h-full relative", { hidden: !isVisible })}>
+        <div ref={ref} className={resolveClassNames("relative h-full w-full", { hidden: !isVisible })}>
             <Drawer
                 visible={true}
                 onClose={handleClose}
@@ -484,34 +437,30 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 filterItems={[
                     {
                         value: ModuleDevState.DEPRECATED,
-                        label: (
-                            <>
-                                <span className="text-orange-600 inline-block align-middle">
-                                    {makeDevStateIcon(ModuleDevState.DEPRECATED)}
-                                </span>
-                                <span className="mt-[0.2rem]">Show deprecated</span>
-                            </>
-                        ),
+                        label: <span className="mt-[0.2rem]">Show deprecated</span>,
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
+                        icon: (
+                            <span className="text-warning-subtle ml-auto inline-block align-middle">
+                                {makeDevStateIcon(ModuleDevState.DEPRECATED)}
+                            </span>
+                        ),
                     },
                     {
                         value: ModuleDevState.DEV,
-                        label: (
-                            <>
-                                <span className="text-yellow-500 inline-block align-middle">
-                                    {makeDevStateIcon(ModuleDevState.DEV)}
-                                </span>
-                                <span className="mt-[0.2rem]">Show experimental</span>
-                            </>
-                        ),
+                        label: <span className="mt-[0.2rem]">Show experimental</span>,
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
+                        icon: (
+                            <span className="text-danger-subtle ml-auto inline-block align-middle">
+                                {makeDevStateIcon(ModuleDevState.DEV)}
+                            </span>
+                        ),
                     },
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}
             >
-                <>
+                <Collapsible.ScrollArea>
                     {visibleModuleCategories.map((el) => (
-                        <ModulesListCategory key={el.category} title={el.label}>
+                        <Collapsible.Group key={el.category} title={el.label} defaultOpen>
                             {filteredModules
                                 .filter((mod) => mod.getCategory() === el.category)
                                 .map((mod) => (
@@ -529,9 +478,9 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                         onDraggingStart={handleDraggingStart}
                                     />
                                 ))}
-                        </ModulesListCategory>
+                        </Collapsible.Group>
                     ))}
-                </>
+                </Collapsible.ScrollArea>
             </Drawer>
             {showDetailsForModule &&
                 isVisible &&
@@ -546,3 +495,14 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         </div>
     );
 };
+
+function makePreviewImage(size: number, drawPreviewFunc: DrawPreviewFunc | null): React.ReactNode {
+    if (drawPreviewFunc) {
+        return (
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                {drawPreviewFunc(size, size)}
+            </svg>
+        );
+    }
+    return <div className="border-neutral-subtle bg-neutral flex h-full w-full items-center justify-center border" />;
+}
