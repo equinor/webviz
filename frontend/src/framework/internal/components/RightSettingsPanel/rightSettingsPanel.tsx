@@ -30,6 +30,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
 
     const handleOnClose = React.useCallback(
         function handleOnClose() {
+            console.debug("Request to close right settings panel received");
             if (numberOfUnsavedRealizationFilters !== 0) {
                 setDialogOpen(true);
                 return;

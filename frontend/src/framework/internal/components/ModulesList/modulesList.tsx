@@ -440,7 +440,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                         label: <span className="mt-[0.2rem]">Show deprecated</span>,
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
                         icon: (
-                            <span className="text-warning-subtle ml-auto inline-block align-middle">
+                            <span className="text-warning-subtle inline-block align-middle">
                                 {makeDevStateIcon(ModuleDevState.DEPRECATED)}
                             </span>
                         ),
@@ -450,7 +450,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                         label: <span className="mt-[0.2rem]">Show experimental</span>,
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
                         icon: (
-                            <span className="text-danger-subtle ml-auto inline-block align-middle">
+                            <span className="text-danger-subtle inline-block align-middle">
                                 {makeDevStateIcon(ModuleDevState.DEV)}
                             </span>
                         ),

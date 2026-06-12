@@ -63,6 +63,7 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     }
 
     function handleSelectPanelContent(targetContent: RightDrawerContent) {
+        console.log("Selected right sidebar content:", targetContent);
         const isSameContent = targetContent === drawerContent;
         if (isSameContent && rightSettingsPanelIsCollapsed) {
             forceSettingsPanelVisible();
@@ -79,22 +80,18 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
 
     return (
         <SideBar position="right" className="border-neutral-subtle border-l-2">
-            <Tabs.Root
-                value={drawerContent}
-                onValueChange={handleSelectPanelContent}
-                orientation="vertical"
-                layoutClassName="-ml-[2px]"
-            >
+            <Tabs.Root value={drawerContent ?? null} orientation="vertical" layoutClassName="-ml-[2px]">
                 <Tabs.List indicatorPosition="start" size="small">
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.ModulesList}
                         tooltip="Show modules list"
                         icon={<WebAssetOutlined fontSize="small" />}
                         activeIcon={<WebAsset fontSize="small" />}
                         disabled={isSnapshot}
                         disabledTooltip="Modules cannot be changed in snapshot mode"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.ModulesList)}
                     />
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.RealizationFilterSettings}
                         tooltip={RealizationFilterButtonTooltip(
                             numberOfUnsavedRealizationFilters,
@@ -112,18 +109,21 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                         )}
                         disabled={isSnapshot}
                         disabledTooltip="Realization filters cannot be changed in snapshot mode"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.RealizationFilterSettings)}
                     />
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.ModuleInstanceLog}
                         icon={<HistoryOutlined fontSize="small" />}
                         activeIcon={<History fontSize="small" />}
                         tooltip="Open module log"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.ModuleInstanceLog)}
                     />
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.ColorPaletteSettings}
                         tooltip="Show color settings"
                         icon={<PaletteOutlined fontSize="small" />}
                         activeIcon={<Palette fontSize="small" />}
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.ColorPaletteSettings)}
                     />
                 </Tabs.List>
             </Tabs.Root>
@@ -131,7 +131,7 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     );
 };
 
-type ToggleProps = TabsTabProps & {
+type TabProps = TabsTabProps & {
     value: string;
     /**
      * The icon rendered on the left side of the text
@@ -160,7 +160,7 @@ function resolveTabIcon(
     return icon;
 }
 
-function Toggle(props: ToggleProps) {
+function Tab(props: TabProps) {
     const { icon, activeIcon, disabledTooltip, tooltip, ...baseProps } = props;
     return (
         <Tooltip content={props.disabled ? disabledTooltip : tooltip} side="left">

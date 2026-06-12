@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Close, MoreVert, Search } from "@mui/icons-material";
+import { Close, FilterList, MoreVert, Search } from "@mui/icons-material";
 
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
@@ -81,7 +81,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
             )}
             <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="bg-surface py-3xs flex gap-2">
+                    <div className="bg-surface py-3xs gap-xs flex">
                         {props.showSearch && (
                             <div className="grow">
                                 <TextInput
@@ -104,14 +104,14 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                     icon: item.icon,
                                 }))}
                             >
-                                <Button variant="ghost" iconOnly>
-                                    <MoreVert fontSize="small" />
+                                <Button variant="ghost" iconOnly size="small">
+                                    <FilterList fontSize="small" />
                                 </Button>
                             </MenuCompositions.Default>
                         )}
                     </div>
                 )}
-                {props.headerChildren && <div className="bg-slate-50 p-2">{props.headerChildren}</div>}
+                {props.headerChildren && <div className="bg-canvas p-xs">{props.headerChildren}</div>}
                 <div className="h-0 max-h-full min-h-0 grow overflow-y-auto">{props.children}</div>
             </div>
         </div>
