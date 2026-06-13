@@ -166,7 +166,7 @@ class UserCache:
         if self._shared_redis_client:
             yield self._shared_redis_client
         else:
-            client = redis.Redis.from_url(self._redis_url, decode_responses=True)
+            client: redis.Redis = redis.Redis.from_url(self._redis_url, decode_responses=True)
             try:
                 yield client
             finally:

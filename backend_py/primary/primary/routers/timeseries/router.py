@@ -4,7 +4,8 @@ from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.compute as pc
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+import nanoid
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
@@ -656,20 +657,25 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
 
 
 
-from hashlib import sha256
+import hashlib
 import time
 import json
 from dataclasses import dataclass
 import httpx
+import pyarrow as pa
+import pyarrow.parquet as pq
 from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
-from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
-from webviz_services.utils.task_meta_tracker import TaskMeta, TaskMetaTracker
+from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id, TaskMetaTracker
+from webviz_services.utils.task_meta_tracker import TaskMeta, TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroErrorInfo
 from primary.utils.user_cache import UserCache, get_user_cache_for_user
 from fmu.sumo.explorer.objects import Table
+from webviz_services.utils.sumo_blob_cache import SumoBlobCache
+from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_services.derived_summary_table import create_derived_summary_table_async, bgjob_create_and_store_derived_table_async
 
 
 
@@ -677,134 +683,164 @@ class DerivedTableResponse(BaseModel):
     table_handle: str
     dbg_info: str | None
 
-class DerivedTableInfo(BaseModel):
-    vector_names: list[str]
-
-
 @router.get("/derived_vector_table_hybrid")
 async def get_derived_vector_table_hybrid(
     # fmt:off
+    request: Request,
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     vector_names: Annotated[list[str], Query(description="List of vector names to include in the derived table")],
+    retry_creation_task: Annotated[bool | None, Query(description="Can be used to retry the derived table creation task")] = None,
     # fmt:on
 ) -> LroSuccessResp[DerivedTableResponse] | LroInProgressResp | LroFailureResp:
-
     perf_metrics = ResponsePerfMetrics(response)
+    dbg_prefix = "!!!!!!!!!! "
+    LOGGER.debug(f"{dbg_prefix}Received request for derived vector table with: {case_uuid=} {ensemble_name=} {retry_creation_task=} {vector_names=}")
 
-    # !!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!
-    # !!!!!!!!!!!!!!
-    if not vector_names:
-        vector_names = ["WBHP:A1","RGIP:1", "RGIPG:1", "RGIPL:1", "RGPR:1", "RGPT:1", "GGPR:OP"]
+    # Create the deterministic table handle (also includes ensemble fingerprint)
+    table_handle = await _compute_table_handle_async(authenticated_user, case_uuid, ensemble_name, vector_names)
+    LOGGER.debug(f"{dbg_prefix}Table handle will be: {table_handle=}")
 
-    LOGGER.info(f"!!!!!!!!!!Received request for derived vector table with: {case_uuid=} {ensemble_name=} {vector_names=}")
+    user_id = authenticated_user.get_user_id()
+    sumo_access_token = authenticated_user.get_sumo_access_token()
 
-    task_fp = await _determine_task_fingerprint_async(authenticated_user, case_uuid, ensemble_name, vector_names)
-    perf_metrics.record_lap("fingerprint")
+    sumo_client = create_sumo_client(sumo_access_token)
+    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    cache_key = blob_cache.compute_cache_key(table_handle)
 
-    table_handle = f"derived_vector_table_handle__{task_fp}"
+    perf_metrics.record_lap("init")
 
-    user_cache: UserCache = get_user_cache_for_user(authenticated_user)
-    table_info: DerivedTableInfo | None = await user_cache.get_pydantic_model_async(table_handle, DerivedTableInfo, "json")
-    perf_metrics.record_lap("get-from-cache")
-    # if table_info:
-    #     # Should we do further verification here
-    #     LOGGER.info(f"!!!!!!!!!!Got existing table info: {table_info=}")
-    #     return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
+    # Note that we always check in the cache first!
+    # This means that once a table is created and is in cache, we will always return it and not trigger any
+    # more tasks, even if the client keeps retrying with the retry_creation_task flag set to true. 
+    # The retry_creation_task flag is really only for retrying when there is no cache entry yet.
+    has_cache_entry = await blob_cache.has_cache_entry_async(cache_key)
+    perf_metrics.record_lap("check-cache")
+    if has_cache_entry:
+        LOGGER.info(f"{dbg_prefix}Returning handle to derived table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]")
+        return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
 
-
-    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    task_tracker = get_task_meta_tracker_for_user_id(user_id)
+    task_fp = f"taskFP__{table_handle}"
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     perf_metrics.record_lap("task-meta")
-    #task_meta = None
 
-    access_token = authenticated_user.get_sumo_access_token()
-    sumo_client = create_sumo_client(access_token)
-
-    new_sumo_task_was_submitted = False
-    if not task_meta:
-        # Here we should determine the list of vectors that need to be batch aggregated
-        # If this list comes up empty, there is no need for submitting a task to Sumo, and we can just:
-        #  * Write DerivedTableInfo to the user cache
-        #  * Return success with the table handle
-
-        # !!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!
-        # Must start using the return value here
-        await _find_columns_needing_aggregation_async(sumo_client, case_uuid, ensemble_name, vector_names)
-
-        # But until then, let's just start the batch
-        task_meta = await _submit_and_track_task_async(sumo_client, case_uuid, ensemble_name, vector_names, task_tracker, task_fp)
-        new_sumo_task_was_submitted = True
-        LOGGER.info(f"!!!!!!!!!!Submitted new task for: {case_uuid=} {ensemble_name=}, {task_meta=}")
-        perf_metrics.record_lap("submit")
-
-
-
-    try:
-        # poll_count = 0
-        # while True:
-        #     res = await _poll_task_async(sumo_client=sumo_client, sumo_task_id=task_meta.task_id)
-        #     poll_count += 1
-        #     perf_metrics.record_lap("poll")
-        #     LOGGER.info(f"!!!!!!!!!!POLL RESULT({poll_count}) {res=} in {perf_metrics.to_string()}")
-
-        #     # if res.result_map:
-        #     #     sc = SearchContext(sumo=sumo_client)
-        #     #     for key, value in res.result_map.items():
-        #     #         obj = await sc.get_object_async(value)
-        #     #         LOGGER.info(f"!!!!!!!!!!GOT OBJECT FOR KEY {key}: {obj=}")
-        #     #         LOGGER.info("---")
-        #     #         LOGGER.info(json.dumps(obj.metadata, indent=2))
-
-        #     if res.status == "succeeded" or res.status == "failed":
-        #         break
-
-        #     await asyncio.sleep(0.2)
-
-        res = await _poll_task_async(sumo_client=sumo_client, sumo_task_id=task_meta.task_id)
-        LOGGER.info(f"!!!!!!!!!!POLL RESULT {res=} in {perf_metrics.to_string()}")
-
-        perf_metrics.record_lap("poll")
-
-        if res.status == "failed":
-            await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-            return LroFailureResp(status="failure", error=LroErrorInfo(message="Something went wrong"))
-
-        if res.status == "succeeded":
-            await user_cache.put_pydantic_model_async(table_handle, DerivedTableInfo(vector_names=vector_names), "json", 10)
-            return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Completed task and stored result in cache"))
-
-        elapsed_task_time_s = time.time() - task_meta.start_time_utc_s
-        if new_sumo_task_was_submitted:
-            prog_msg = f"New task submitted: {res.status}"
+    if retry_creation_task:
+        if task_meta:
+            LOGGER.info(f"{dbg_prefix}Retry creation task flag is set to true, deleting any existing task with {task_fp=}, {task_meta.task_id=}")
+            await task_tracker.delete_task_async(task_meta.task_id)
+            task_meta = None
         else:
-            prog_msg = f"Sumo task status: {res.status} ({elapsed_task_time_s:.1f}s elapsed)"
-        return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, progress_message=prog_msg)
+            LOGGER.info(f"{dbg_prefix}Retry creation task flag is set to true, but no existing task found with {task_fp=}")
 
-    except Exception as _exc:
-        # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
-        # Then just re-raise the exception and let our middleware handle it
-        await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-        raise
+    new_task_was_submitted = False
+    if not task_meta:
+        task_meta = await task_tracker.register_task_with_fingerprint_async(
+            task_system="background_task",
+            task_id=nanoid.generate(size=12),
+            fingerprint=task_fp,
+            ttl_s=5 * 60,
+            expected_store_key=cache_key)
+
+        job_coro = bgjob_create_and_store_derived_table_async(
+            authenticated_user=authenticated_user, 
+            task_id=task_meta.task_id,
+            case_uuid=case_uuid,
+            ensemble_name=ensemble_name,
+            vector_names=vector_names
+        )
+        run_in_background_task(job_coro)
+        new_task_was_submitted = True
+        LOGGER.info(f"{dbg_prefix}Submitted new task to create derived table [{table_handle=}, {task_meta.task_id=}]")
+        perf_metrics.record_lap("start-task")
+
+    if task_meta.state == TaskState.SUCCEEDED:
+        if not await blob_cache.has_cache_entry_async(cache_key):
+            # This should not happen, if the task succeeded the blob should be in cache. But just in case, we can return an error here.
+            await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
+            LOGGER.error(f"{dbg_prefix}Table creation task succeeded but could not find result in cache [{table_handle=}, {task_meta.task_id=}, {cache_key=}]")
+            response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            return LroFailureResp(status="failure", error=LroErrorInfo(message="Task succeeded but could not find result in cache"))
+
+        LOGGER.info(f"{dbg_prefix}Table creation task succeeded, timing {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
+        return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Task succeeded"))
+
+    if task_meta.state in [TaskState.FAILED, TaskState.CANCELLED]:
+        LOGGER.error(f"{dbg_prefix}Table creation task failed, msg: {task_meta.status_message} [{table_handle=}, {task_meta.task_id=}]")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return LroFailureResp(status="failure", error=LroErrorInfo(message=f"Task {task_meta.state}, msg: {task_meta.status_message}"))
+
+    LOGGER.info(f"{dbg_prefix}Returning in-progress for table handle, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
+
+    # We manually create a poll URL where we strip the retry_creation_task query parameter, so that the client
+    # can poll for the status of the new task without triggering more retries
+    url_without_retry = request.url.remove_query_params(["retry_creation_task"])
+    poll_url = url_without_retry.path + f"?{url_without_retry.query}"
+
+    if new_task_was_submitted:
+        prog_msg = f"New task submitted: {task_meta.state}"
+    else:
+        status_text = f" - {task_meta.status_message}" if task_meta.status_message else ""
+        elapsed_task_time_s = time.time() - task_meta.registered_at_utc_s
+        prog_msg = f"Task {task_meta.state}{status_text} ({elapsed_task_time_s:.1f}s elapsed)"
+
+    response.status_code = status.HTTP_202_ACCEPTED
+
+    LOGGER.info(f"{dbg_prefix}Actual returning: {new_task_was_submitted=}, {retry_creation_task=}, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
+
+    return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, poll_url=poll_url, progress_message=prog_msg)
 
 
-    # try:
-    #     res = await _poll_task_async(sumo_client=sumo_client, sumo_task_id=task_meta.task_id)
-    #     perf_metrics.record_lap("poll")
 
-    #     LOGGER.info(f"!!!!!!!!!!POLL RESULT {res=} in {perf_metrics.to_string()}")
+class DerivedTableInfo(BaseModel):
+    vector_names: list[str]
+    row_count: int
+    byte_size: int
+    dbg_info: str | None
 
-    #     return LroSuccessResp(status="success", result="YES")
+@router.get("/derived_table_info")
+async def get_derived_table_info(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    table_handle: Annotated[str, Query(description="Handle for the derived table")],
+    # fmt:on
+) -> DerivedTableInfo:
+    perf_metrics = ResponsePerfMetrics(response)
+    dbg_prefix = "info!!!!!! "
+    LOGGER.debug(f"{dbg_prefix}Received request for derived table info: {table_handle=}")
 
-    # except Exception as _exc:
-    #     # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
-    #     # Then just re-raise the exception and let our middleware handle it
-    #     await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-    #     raise
+    sumo_access_token = authenticated_user.get_sumo_access_token()
+    sumo_client = create_sumo_client(sumo_access_token)
+    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    cache_key = blob_cache.compute_cache_key(table_handle)
+    perf_metrics.record_lap("init")
+
+    blob_sas_url = await blob_cache.resolve_cache_entry_async(cache_key)
+    if not blob_sas_url:
+        raise HTTPException(status_code=410, detail="Derived table not found in cache")
+    perf_metrics.record_lap("resolve-cache")
+
+    table_blob_bytes = await blob_cache.download_resolved_blob_async(blob_sas_url)
+    perf_metrics.record_lap("download-blob")
+    if not table_blob_bytes:
+        raise HTTPException(status_code=410, detail="Could not download derived table from blob storage")
+    
+    pq_table = pq.read_table(pa.BufferReader(table_blob_bytes))
+    LOGGER.debug(f"{dbg_prefix}Read table from blob cache, got schema:\n{pq_table.schema}")
+    perf_metrics.record_lap("read-table")
+
+    vector_names = pq_table.schema.names
+    LOGGER.debug(f"{dbg_prefix}Vector names: {vector_names}")
+
+    row_count = pq_table.num_rows
+    blob_size_bytes = len(table_blob_bytes)
+    LOGGER.debug(f"{dbg_prefix}Sizes: {row_count=}, {blob_size_bytes=}")
+
+    LOGGER.info(f"{dbg_prefix}Got info on derived table, timing: {perf_metrics.to_string()} ({table_handle=})")
+    return DerivedTableInfo(vector_names=vector_names, row_count=row_count, byte_size=blob_size_bytes, dbg_info=f"Timing: {perf_metrics.to_string()}")
 
 
 @router.get("/calc_something_on_derived_table")
@@ -812,33 +848,41 @@ async def get_calc_something_on_derived_table(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    derived_table_handle: Annotated[str, Query(description="Handle for the derived table to do some calculation on")],
+    table_handle: Annotated[str, Query(description="Handle for the derived table to do some calculation on")],
     calculation_params: Annotated[str, Query(description="Some parameter for the calculation")],
     # fmt:on
 ) -> str:
     perf_metrics = ResponsePerfMetrics(response)
 
-    user_cache: UserCache = get_user_cache_for_user(authenticated_user)
-    table_info: DerivedTableInfo | None = await user_cache.get_pydantic_model_async(derived_table_handle, DerivedTableInfo, "json")
+    sumo_access_token = authenticated_user.get_sumo_access_token()
+    sumo_client = create_sumo_client(sumo_access_token)
+    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    cache_key = blob_cache.compute_cache_key(table_handle)
+    perf_metrics.record_lap("init")
+
+    table_blob = await blob_cache.get_cache_blob_async(cache_key)
     perf_metrics.record_lap("get-from-cache")
-    if not table_info:
+    if not table_blob:
         raise HTTPException(status_code=410, detail="Derived table not found in cache")
-    
-    return f"Did some calculation with {calculation_params=} on derived table with vectors {table_info.vector_names} (retrieved from cache in {perf_metrics.to_string()})"
+
+    pq_table = pq.read_table(pa.BufferReader(table_blob))
+
+    LOGGER.info(f"Did calculation on derived table blob from cache, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})")
+
+    return f"Did some calculation on derived table, timing: {perf_metrics.to_string()} ({table_handle=}, {calculation_params=})"
 
 
 
-async def _determine_task_fingerprint_async(authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> str:
-    fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=2 * 60)
-
-    ensemble_fp = await fingerprinter.get_or_calc_ensemble_fp_async(case_uuid, ensemble_name)
+async def _compute_table_handle_async(authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> str:
     sorted_vector_names_str = ",".join(sorted(vector_names))
-    task_payload_str = f"{case_uuid}:{ensemble_name}:{sorted_vector_names_str}"
-    task_fp = sha256((ensemble_fp + task_payload_str).encode()).hexdigest()
+    task_params_as_str = f"{case_uuid}:{ensemble_name}:{sorted_vector_names_str}_v3"
 
-    return task_fp
+    sumo_fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=2 * 60)
+    ensemble_fp = await sumo_fingerprinter.get_or_calc_ensemble_fp_async(case_uuid, ensemble_name)
+
+    # 8 bytes = 16 hex chars = 64 bits should be enough to avoid collisions for our use case
+    task_fp = hashlib.shake_128((ensemble_fp + task_params_as_str).encode()).hexdigest(8)
+    return f"TH__{task_fp}"
 
 
 
@@ -974,7 +1018,7 @@ async def _submit_and_track_task_async(
         task_id=sumo_task_uuid,
         fingerprint=task_fp,
         ttl_s=task_ttl_s,
-        task_start_time_utc_s=task_start_time_utc_s,
+        actual_start_time_utc_s=task_start_time_utc_s,
         expected_store_key=None,
     )
 

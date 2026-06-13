@@ -44,6 +44,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataErrors_api,
     GetDeltaSurfaceDataResponses_api,
+    GetDerivedTableInfoData_api,
+    GetDerivedTableInfoErrors_api,
+    GetDerivedTableInfoResponses_api,
     GetDerivedVectorTableHybridData_api,
     GetDerivedVectorTableHybridErrors_api,
     GetDerivedVectorTableHybridResponses_api,
@@ -509,6 +512,18 @@ export const getDerivedVectorTableHybrid = <ThrowOnError extends boolean = false
     >({
         responseType: "json",
         url: "/timeseries/derived_vector_table_hybrid",
+        ...options,
+    });
+
+/**
+ * Get Derived Table Info
+ */
+export const getDerivedTableInfo = <ThrowOnError extends boolean = false>(
+    options: Options<GetDerivedTableInfoData_api, ThrowOnError>,
+) =>
+    (options.client ?? client).get<GetDerivedTableInfoResponses_api, GetDerivedTableInfoErrors_api, ThrowOnError>({
+        responseType: "json",
+        url: "/timeseries/derived_table_info",
         ...options,
     });
 

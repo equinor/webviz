@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Literal
+from enum import StrEnum
 from dataclasses import dataclass
 
 import redis.asyncio as redis
@@ -8,7 +8,6 @@ import redis.asyncio as redis
 from .authenticated_user import AuthenticatedUser
 
 _REDIS_KEY_PREFIX = "task_meta_tracker"
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -40,13 +39,27 @@ class TaskMetaTrackerFactory:
         return TaskMetaTracker(user_id, self._redis_client)
 
 
+class TaskState(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
 @dataclass(frozen=True, kw_only=True)
 class TaskMeta:
     task_system: str
     task_id: str
-    start_time_utc_s: float
-    final_outcome: Literal["success", "failure"] | None = None
-    expected_store_key: str | None = None
+    state: TaskState
+    status_message: str | None          # Human-readable description of the current or final task status
+
+    expected_store_key: str | None
+
+    registered_at_utc_s: float          # Time when the task was registered with the task tracker
+    updated_at_utc_s: float             # Time when the task was last updated
+    started_at_utc_s: float | None      # Time when task execution started
+    completed_at_utc_s: float | None    # Time when the task reached a terminal state (succeeded, failed, or cancelled)
 
 
 class TaskMetaTracker:
@@ -62,13 +75,10 @@ class TaskMetaTracker:
         task_system: str,
         task_id: str,
         ttl_s: int,
-        task_start_time_utc_s: float | None,
+        actual_start_time_utc_s: float | None,
         expected_store_key: str | None,
     ) -> TaskMeta:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
-
-        if task_start_time_utc_s is None:
-            task_start_time_utc_s = time.time()
 
         # Use hsetnx to provoke an error if an entry for this task id already exists
         res = await self._redis_client.hsetnx(name=redis_hash_name, key="taskSystem", value=task_system)
@@ -78,21 +88,40 @@ class TaskMetaTracker:
         # Set TTL for the hash
         await self._redis_client.expire(redis_hash_name, ttl_s)
 
+        time_now_utc_s = time.time()
+
+        state: TaskState = TaskState.PENDING
+        registered_at_utc_s = time_now_utc_s
+        updated_at_utc_s = time_now_utc_s
+        started_at_utc_s: float | None = None
+
+        if actual_start_time_utc_s is not None:
+            state = TaskState.RUNNING
+            started_at_utc_s = actual_start_time_utc_s
+
+        update_dict: dict[str, str | float] = {
+            "state": state,
+            "expectedStoreKey": expected_store_key if expected_store_key else "",
+            "registeredAtUtcS": registered_at_utc_s,
+            "updatedAtUtcS": updated_at_utc_s,
+        }
+
+        if started_at_utc_s is not None:
+            update_dict["startTimeUtcS"] = started_at_utc_s
+
         # Now set the remaining keys/fields in the hash
-        await self._redis_client.hset(
-            name=redis_hash_name,
-            mapping={
-                "startTimeUtcS": task_start_time_utc_s,
-                "expectedStoreKey": expected_store_key if expected_store_key else "",
-            },
-        )
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
 
         return TaskMeta(
             task_system=task_system,
             task_id=task_id,
-            start_time_utc_s=task_start_time_utc_s,
-            final_outcome=None,
+            state=state,
+            status_message=None,
             expected_store_key=expected_store_key,
+            registered_at_utc_s=registered_at_utc_s,
+            updated_at_utc_s=updated_at_utc_s,
+            started_at_utc_s=started_at_utc_s,
+            completed_at_utc_s=None,
         )
 
     async def register_task_with_fingerprint_async(
@@ -101,20 +130,21 @@ class TaskMetaTracker:
         task_id: str,
         fingerprint: str,
         ttl_s: int,
-        task_start_time_utc_s: float | None,
-        expected_store_key: str | None,
+        actual_start_time_utc_s: float | None = None,
+        expected_store_key: str | None = None,
     ) -> TaskMeta:
         # Register the task itself in the usual way
         task_meta = await self.register_task_async(
             task_system=task_system,
             task_id=task_id,
             ttl_s=ttl_s,
-            task_start_time_utc_s=task_start_time_utc_s,
+            actual_start_time_utc_s=actual_start_time_utc_s,
             expected_store_key=expected_store_key,
         )
 
         # Register the mapping from task fingerprint to task id
-        # May want to set a shorter TTL for this entry
+        # It is OK to use the same TTL here even if that means that the fingerprint key may outlive the task meta
+        # since we always check for the existence of the actual task meta when looking up by fingerprint.
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
         _res = await self._redis_client.setex(fingerprint_redis_key, ttl_s, task_id)
 
@@ -128,41 +158,114 @@ class TaskMetaTracker:
 
         task_system: str = value_dict.get("taskSystem", "UNKNOWN")
 
-        task_start_time_utc_s: float = _to_float_safe(value_dict.get("startTimeUtcS", None), 0.0)
+        try:
+            task_state = TaskState(value_dict.get("state", ""))
+        except ValueError:
+            task_state = TaskState.PENDING
 
-        expected_store_key: str | None = value_dict.get("expectedStoreKey", None)
+        status_message: str | None = value_dict.get("statusMessage")
+        if status_message == "":
+            status_message = None
+
+        expected_store_key: str | None = value_dict.get("expectedStoreKey")
         if expected_store_key == "":
             expected_store_key = None
 
-        final_outcome: Literal["success", "failure"] | None = None
-        final_outcome_str = value_dict.get("finalOutcome")
-        if final_outcome_str == "success":
-            final_outcome = "success"
-        elif final_outcome_str == "failure":
-            final_outcome = "failure"
+        registered_at_utc_s: float = _to_float_safe(value_dict.get("registeredAtUtcS"), 0.0)
+        updated_at_utc_s: float = _to_float_safe(value_dict.get("updatedAtUtcS"), 0.0)
+        started_at_utc_s: float | None = _to_float_or_none(value_dict.get("startTimeUtcS"))
+        completed_at_utc_s: float | None = _to_float_or_none(value_dict.get("completedAtUtcS"))
 
         return TaskMeta(
             task_system=task_system,
             task_id=task_id,
-            start_time_utc_s=task_start_time_utc_s,
-            final_outcome=final_outcome,
+            state=task_state,
+            status_message=status_message,
             expected_store_key=expected_store_key,
+            registered_at_utc_s=registered_at_utc_s,
+            updated_at_utc_s=updated_at_utc_s,
+            started_at_utc_s=started_at_utc_s,
+            completed_at_utc_s=completed_at_utc_s,
         )
 
     async def get_task_meta_by_fingerprint_async(self, fingerprint: str) -> TaskMeta | None:
-        task_id = await self.get_task_id_by_fingerprint_async(fingerprint)
+        task_id = await self._find_task_id_for_fingerprint_async(fingerprint)
         if task_id is None:
             return None
 
         return await self.get_task_meta_async(task_id)
+
+    async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+
+        if not await self._redis_client.exists(redis_hash_name):
+            # For now, log a warning and ignore the update if the task hash does not exist.
+            # Maybe we should raise an error instead to surface potential issues earlier?
+            LOGGER.warning(f"set_state_async: task hash does not exist, ignoring update ({task_id=}, {new_state=})")
+            return False
+
+        time_now_utc_s = time.time()
+
+        update_dict: dict[str, str | float] = {
+            "state": new_state,
+            "updatedAtUtcS": time_now_utc_s,
+        }
+
+        if new_state == TaskState.RUNNING:
+            update_dict["startedAtUtcS"] = time_now_utc_s
+        elif new_state in [TaskState.SUCCEEDED, TaskState.FAILED, TaskState.CANCELLED]:
+            update_dict["completedAtUtcS"] = time_now_utc_s
+
+        # Clear status message when state changes (unless a new one is provided)
+        if status_message is not None:
+            update_dict["statusMessage"] = status_message
+        else:
+            update_dict["statusMessage"] = ""
+
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
+
+        return True
+
+    async def set_status_message_async(self, task_id: str, status_message: str) -> None:
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+
+        if not await self._redis_client.exists(redis_hash_name):
+            # For now, log a warning and ignore the update if the task hash does not exist.
+            # Maybe we should raise an error instead to surface potential issues earlier?
+            LOGGER.warning(f"set_status_message_async: task hash does not exist, ignoring update ({task_id=})")
+            return False
+
+        time_now_utc_s = time.time()
+
+        update_dict = {
+            "statusMessage": status_message,
+            "updatedAtUtcS": time_now_utc_s,
+        }
+
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
+
+        return True
+
+    async def delete_task_async(self, task_id: str) -> None:
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+        await self._redis_client.delete(redis_hash_name)
 
     async def delete_fingerprint_to_task_mapping_async(self, fingerprint: str) -> None:
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
         await self._redis_client.delete(fingerprint_redis_key)
 
     async def get_task_id_by_fingerprint_async(self, fingerprint: str) -> str | None:
-        fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
-        task_id = await self._redis_client.get(fingerprint_redis_key)
+        task_id = await self._find_task_id_for_fingerprint_async(fingerprint)
+        if task_id is None:
+            return None
+
+        # Verify the actual task entry still exists (it may have expired while the fingerprint key lives on)
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+        if not await self._redis_client.exists(redis_hash_name):
+            # We hit a stale fingerprint that maps to a non-existing task.
+            # Probably because the task meta expired but the fingerprint key did not
+            return None
+
         return task_id
 
     async def purge_all_task_meta_async(self) -> None:
@@ -172,6 +275,13 @@ class TaskMetaTracker:
         pattern = f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:*"
         async for key in self._redis_client.scan_iter(match=pattern):
             await self._redis_client.pexpire(key, 1)
+
+    async def _find_task_id_for_fingerprint_async(self, fingerprint: str) -> str | None:
+        fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
+
+        # Redis return None if the key does not exist, so we can directly return the result
+        task_id = await self._redis_client.get(fingerprint_redis_key)
+        return task_id
 
     def _make_full_redis_key_for_task(self, task_id: str) -> str:
         return f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:task:{task_id}"
@@ -188,6 +298,16 @@ def _to_float_safe(str_value: str | None, default: float) -> float:
         return float(str_value)
     except (ValueError, TypeError):
         return default
+
+
+def _to_float_or_none(str_value: str | None) -> float | None:
+    if str_value is None:
+        return None
+
+    try:
+        return float(str_value)
+    except (ValueError, TypeError):
+        return None
 
 
 def get_task_meta_tracker_for_user(authenticated_user: AuthenticatedUser) -> TaskMetaTracker:

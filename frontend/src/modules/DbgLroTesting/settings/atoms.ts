@@ -27,9 +27,7 @@ export const selectedEnsembleIdentAtom = persistableFixableAtom<RegularEnsembleI
     },
 });
 
-
-
-export const availableVectorsAtom = atomWithQuery((get) => {
+const rawAvailableVectorsQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom).value;
 
     const query = {
@@ -46,3 +44,15 @@ export const availableVectorsAtom = atomWithQuery((get) => {
     return query;
 });
 
+export const availableVectorsAtom = atom<string[]>((get) => {
+    const rawVectors = get(rawAvailableVectorsQueryAtom);
+
+    let vecArr: string[] = [];
+    if (rawVectors.data) {
+        vecArr = rawVectors.data.map((item) => item.name);
+    }
+
+    vecArr.sort();
+
+    return vecArr;
+});

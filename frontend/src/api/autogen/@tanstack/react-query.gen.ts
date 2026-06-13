@@ -26,6 +26,7 @@ import {
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
+    getDerivedTableInfo,
     getDerivedVectorTableHybrid,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
@@ -135,6 +136,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
+    GetDerivedTableInfoData_api,
+    GetDerivedTableInfoError_api,
+    GetDerivedTableInfoResponse_api,
     GetDerivedVectorTableHybridData_api,
     GetDerivedVectorTableHybridError_api,
     GetDerivedVectorTableHybridResponse_api,
@@ -805,6 +809,31 @@ export const getDerivedVectorTableHybridOptions = (options: Options<GetDerivedVe
             return data;
         },
         queryKey: getDerivedVectorTableHybridQueryKey(options),
+    });
+
+export const getDerivedTableInfoQueryKey = (options: Options<GetDerivedTableInfoData_api>) =>
+    createQueryKey("getDerivedTableInfo", options);
+
+/**
+ * Get Derived Table Info
+ */
+export const getDerivedTableInfoOptions = (options: Options<GetDerivedTableInfoData_api>) =>
+    queryOptions<
+        GetDerivedTableInfoResponse_api,
+        AxiosError<GetDerivedTableInfoError_api>,
+        GetDerivedTableInfoResponse_api,
+        ReturnType<typeof getDerivedTableInfoQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDerivedTableInfo({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDerivedTableInfoQueryKey(options),
     });
 
 export const getCalcSomethingOnDerivedTableQueryKey = (options: Options<GetCalcSomethingOnDerivedTableData_api>) =>

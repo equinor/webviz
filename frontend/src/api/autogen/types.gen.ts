@@ -260,6 +260,28 @@ export type DatedFlowNetwork_api = {
 };
 
 /**
+ * DerivedTableInfo
+ */
+export type DerivedTableInfo_api = {
+    /**
+     * Vector Names
+     */
+    vector_names: Array<string>;
+    /**
+     * Row Count
+     */
+    row_count: number;
+    /**
+     * Byte Size
+     */
+    byte_size: number;
+    /**
+     * Dbg Info
+     */
+    dbg_info: string | null;
+};
+
+/**
  * DerivedTableResponse
  */
 export type DerivedTableResponse_api = {
@@ -3987,6 +4009,12 @@ export type GetDerivedVectorTableHybridData_api = {
          * List of vector names to include in the derived table
          */
         vector_names: Array<string>;
+        /**
+         * Retry Creation Task
+         *
+         * Can be used to retry the derived table creation task
+         */
+        retry_creation_task?: boolean | null;
         zCacheBust?: string;
     };
     url: "/timeseries/derived_vector_table_hybrid";
@@ -4014,28 +4042,49 @@ export type GetDerivedVectorTableHybridResponses_api = {
 export type GetDerivedVectorTableHybridResponse_api =
     GetDerivedVectorTableHybridResponses_api[keyof GetDerivedVectorTableHybridResponses_api];
 
+export type GetDerivedTableInfoData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Table Handle
+         *
+         * Handle for the derived table
+         */
+        table_handle: string;
+        zCacheBust?: string;
+    };
+    url: "/timeseries/derived_table_info";
+};
+
+export type GetDerivedTableInfoErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetDerivedTableInfoError_api = GetDerivedTableInfoErrors_api[keyof GetDerivedTableInfoErrors_api];
+
+export type GetDerivedTableInfoResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: DerivedTableInfo_api;
+};
+
+export type GetDerivedTableInfoResponse_api = GetDerivedTableInfoResponses_api[keyof GetDerivedTableInfoResponses_api];
+
 export type GetCalcSomethingOnDerivedTableData_api = {
     body?: never;
     path?: never;
     query: {
         /**
-         * Case Uuid
-         *
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Derived Table Handle
+         * Table Handle
          *
          * Handle for the derived table to do some calculation on
          */
-        derived_table_handle: string;
+        table_handle: string;
         /**
          * Calculation Params
          *

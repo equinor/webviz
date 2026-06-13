@@ -14,6 +14,7 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { getCalcSomethingOnDerivedTableOptions } from "@api/@tanstack/react-query.gen";
+import { getDerivedTableInfoOptions } from "@api/@tanstack/react-query.gen";
 
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
@@ -36,6 +37,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
 
     const [selectedVectors, setSelectedVectors] = useState<string[]>([]);
     const [calculationParamString, setCalculationParamString] = useState<string>("");
+    const [retryCreationTask, setRetryCreationTask] = useState(false);
 
     const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
     const [calcProgressText, setCalcProgressText] = React.useState<string | null>(null);
@@ -48,6 +50,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
             case_uuid: selectedEnsembleIdent.value?.getCaseUuid() ?? "DUMMY_CASE",
             ensemble_name: selectedEnsembleIdent.value?.getEnsembleName() ?? "DUMMY_ENSEMBLE",
             vector_names: selectedVectors,
+            retry_creation_task: retryCreationTask ? true : undefined,
         },
     };
     const hybrid_derivedTableQueryKey = getDerivedVectorTableHybridQueryKey(hybrid_apiFunctionArgs);
@@ -75,6 +78,13 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     }
     useLroProgress(hybrid_derivedTableQueryOptions.queryKey, handleHybridProgress);
 
+    // Clear the retryCreationTask once the query has sent the request with it
+    useEffect(() => {
+        if (retryCreationTask && !hybrid_derivedTableQuery.isFetching) {
+            setRetryCreationTask(false);
+        }
+    }, [retryCreationTask, hybrid_derivedTableQuery.isFetching]);
+
     const isLoadingDerivedTableHandle = hybrid_derivedTableQuery.isFetching;
     if (!isLoadingDerivedTableHandle && hybridProgressText) {
         setHybridProgressText(null);
@@ -88,11 +98,22 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     //console.log(`VIEW: case_uuid: ${case_uuid}, ensemble_name: ${ensemble_name}, derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
     console.log(`VIEW: derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
 
+    const infoQueryOptions = getDerivedTableInfoOptions({
+        query: {
+            table_handle: derivedTableHandle ?? "DUMMY",
+        },
+    });
+    const infoQuery = useQuery({
+        ...infoQueryOptions,
+        enabled: Boolean(selectedEnsembleIdent && derivedTableHandle),
+    });
+
+
+    console.log(`infoQuery: isEnabled=${infoQuery.isEnabled}, isFetching=${infoQuery.isFetching}, status=${infoQuery.status}, fetchStatus=${infoQuery.fetchStatus}, error=${infoQuery.error}`);
+
     const calcQueryOptions = getCalcSomethingOnDerivedTableOptions({
         query: {
-            case_uuid: case_uuid ?? "DUMMY",
-            ensemble_name: ensemble_name ?? "DUMMY",
-            derived_table_handle: derivedTableHandle ?? "DUMMY",
+            table_handle: derivedTableHandle ?? "DUMMY",
             calculation_params: calculationParamString ?? "DUMMY",
         },
     });
@@ -196,11 +217,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         [selectedEnsembleIdent, derivedTableHandle, calculationParamString, setViewInputData],
     );
 
-    const vectorNameOptions: SelectOption[] =
-        availableVectors.data?.map((item) => ({
-            value: item.name,
-            label: item.name,
-        })) ?? [];
+    const vectorNameOptions: SelectOption[] = availableVectors.map((item) => ({value: item,label: item})) ?? [];
 
     function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         console.debug(`handleEnsembleSelectionChange(${newEnsembleIdent})`);
@@ -212,11 +229,15 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         setSelectedVectors(newVectors);
     }
 
-    function handleRefetchDerivedTable() {
-        console.debug(`handleRefetchDerivedTable`);
-        // !!!!!!!!!!!
-        // !!!!!!!!!!!
-        hybrid_derivedTableQuery.refetch();
+    function handleRefetchDerivedTableHandle() {
+        console.debug(`handleRefetchDerivedTableHandle`);
+        queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
+    }
+
+    function handleRetryDerivedTableCreationTask() {
+        console.debug(`handleRetryDerivedTableCreationTask`);
+        setRetryCreationTask(true);
+        queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
     }
 
     return (
@@ -251,8 +272,11 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                     )}
                 </Label>
 
-                <Button className="m-2 text-xs py-0" variant="outlined" onClick={handleRefetchDerivedTable}>
-                    Refetch derived table
+                <Button variant="text" onClick={handleRefetchDerivedTableHandle}>
+                    Refetch derived table handle
+                </Button>
+                <Button variant="text" onClick={handleRetryDerivedTableCreationTask}>
+                    Retry derived table creation task
                 </Button>
 
                 <div className="mt-4" />
