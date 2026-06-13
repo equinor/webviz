@@ -1,0 +1,25 @@
+export enum PlotType {
+    Timeseries = "timeseries",
+    Histogram = "histogram",
+    PercentileRange = "percentile-range",
+    Exceedance = "exceedance",
+    Density = "density",
+    Convergence = "convergence",
+    Bar = "bar",
+    Heatmap = "heatmap",
+    MemberScatter = "member-scatter",
+    Custom = "custom",
+}
+
+export const PLOT_TYPE_LABELS: Record<PlotType, string> = {
+    [PlotType.Timeseries]: "Timeseries",
+    [PlotType.Histogram]: "Histogram",
+    [PlotType.PercentileRange]: "Percentile Range Plot",
+    [PlotType.Exceedance]: "Exceedance (1-CDF)",
+    [PlotType.Density]: "Density (KDE)",
+    [PlotType.Convergence]: "Convergence",
+    [PlotType.Bar]: "Bar Chart",
+    [PlotType.Heatmap]: "Heatmap",
+    [PlotType.MemberScatter]: "Member Scatter",
+    [PlotType.Custom]: "Custom Series",
+};
