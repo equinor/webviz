@@ -829,6 +829,8 @@ async def get_derived_table_info(
     perf_metrics.record_lap("resolve-cache")
 
 
+    # !!!!!!!
+    # !!!!!!!
     # Read only the Parquet footer via HTTP range requests — avoids downloading the full blob
     def _read_parquet_footer() -> tuple[list[str], int, int | None]:
         with fsspec.open(blob_sas_url, "rb") as f:
@@ -838,7 +840,7 @@ async def get_derived_table_info(
             blob_size: int | None = getattr(f, "size", None)
         return col_names, num_rows, blob_size
 
-    vector_names, row_count, blob_size_bytes = await asyncio.get_running_loop().run_in_executor(None, _read_parquet_footer)
+    vector_names, row_count, blob_size_bytes = await asyncio.to_thread(_read_parquet_footer)
     perf_metrics.record_lap("read-footer")
 
     LOGGER.debug(f"{dbg_prefix}Vector names from footer: {vector_names}")

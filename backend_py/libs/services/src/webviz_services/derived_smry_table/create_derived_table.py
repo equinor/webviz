@@ -45,6 +45,9 @@ async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: st
     await asyncio.sleep(2)
 
     num_vecs = len(vector_names)
+
+    # Serial implementation
+    # ------------------------------------------------------
     table_arr: list[_TableItem] = []
     for i, vector_name in enumerate(vector_names):
         await progress_cb(f"Getting summary vector {i + 1}/{num_vecs}: {vector_name}")
@@ -55,6 +58,36 @@ async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: st
 
         vec_table_pa = await vec_table_obj.to_arrow_async()
         table_arr.append(_TableItem(vec_name=vector_name, table=vec_table_pa, obj_uuid=vec_table_obj.uuid))
+
+
+
+    # Concurrent implementation
+    # ------------------------------------------------------
+    # completed_count = 0
+    # semaphore = asyncio.Semaphore(20)
+
+    # async def _fetch_one_vector(vector_name: str) -> _TableItem:
+    #     nonlocal completed_count
+    #     async with semaphore:
+    #         sc_vec = sc_basis.filter(column=vector_name)
+    #         vec_table_obj = await sc_vec.aggregation_async(column=vector_name, operation="collection")
+    #         if not isinstance(vec_table_obj, Table):
+    #             raise InvalidDataError("Did not get expected object type of Table for table aggregation", Service.SUMO)
+    #         vec_table_pa = await vec_table_obj.to_arrow_async()
+    #     completed_count += 1
+    #     await progress_cb(f"Fetched {completed_count}/{num_vecs} vectors from Sumo")
+    #     return _TableItem(vec_name=vector_name, table=vec_table_pa, obj_uuid=vec_table_obj.uuid)
+
+
+    # fetch_tasks: dict[str, asyncio.Task[_TableItem]] = {}
+    # async with asyncio.TaskGroup() as tg:
+    #     for vector_name in vector_names:
+    #         fetch_tasks[vector_name] = tg.create_task(_fetch_one_vector(vector_name))
+
+    # # Preserve original ordering
+    # table_arr: list[_TableItem] = [fetch_tasks[vec_name].result() for vec_name in vector_names]
+
+
 
     await progress_cb(f"Combining summary vector tables for {num_vecs} vectors")
     first_vec_name = table_arr[0].vec_name
