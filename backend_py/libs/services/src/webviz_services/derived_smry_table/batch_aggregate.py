@@ -15,11 +15,12 @@ from webviz_services.service_exceptions import Service, ServiceRequestError, Ser
 
 LOGGER = logging.getLogger(__name__)
 
+
 ProgressMsgCallback = Callable[[str], Awaitable[None]]
 
 async def ensure_vectors_aggregated_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, table_name: str | None, vector_names: list[str], progress_cb: ProgressMsgCallback) -> bool:
 
-    vectors_to_aggregate = vector_names
+    #vectors_to_aggregate = vector_names
 
     vectors_to_aggregate = await _find_columns_needing_aggregation_async(sumo_client, case_uuid, ensemble_name, vector_names)
     if not vectors_to_aggregate:
@@ -165,7 +166,6 @@ async def _batch_aggregate_vectors_async(sumo_client: SumoClient, case_uuid: str
 
     LOGGER.debug(f"_batch_aggregate_vectors_async() - Start polling for task result on: {poll_path}")
 
-    last_status_str = None
     poll_count = 0
     while True:
         poll_resp = await sumo_client.get_async(poll_path)

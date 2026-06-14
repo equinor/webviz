@@ -663,6 +663,7 @@ import hashlib
 import time
 
 from fastapi import Request, status
+import fsspec
 import nanoid
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -801,7 +802,7 @@ async def get_derived_vector_table_hybrid(
 class DerivedTableInfo(BaseModel):
     vector_names: list[str]
     row_count: int
-    byte_size: int
+    byte_size: int | None
     dbg_info: str | None
 
 @router.get("/derived_table_info")
@@ -826,6 +827,23 @@ async def get_derived_table_info(
     if not blob_sas_url:
         raise HTTPException(status_code=410, detail="Derived table not found in cache")
     perf_metrics.record_lap("resolve-cache")
+
+
+    # Read only the Parquet footer via HTTP range requests — avoids downloading the full blob
+    def _read_parquet_footer() -> tuple[list[str], int, int | None]:
+        with fsspec.open(blob_sas_url, "rb") as f:
+            pq_file = pq.ParquetFile(f)
+            col_names: list[str] = pq_file.schema_arrow.names
+            num_rows: int = pq_file.metadata.num_rows
+            blob_size: int | None = getattr(f, "size", None)
+        return col_names, num_rows, blob_size
+
+    vector_names, row_count, blob_size_bytes = await asyncio.get_running_loop().run_in_executor(None, _read_parquet_footer)
+    perf_metrics.record_lap("read-footer")
+
+    LOGGER.debug(f"{dbg_prefix}Vector names from footer: {vector_names}")
+
+
 
     table_blob_bytes = await blob_cache.download_resolved_blob_async(blob_sas_url)
     perf_metrics.record_lap("download-blob")
