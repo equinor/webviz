@@ -1,8 +1,4 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { isAxiosError } from "axios";
-
-import { getCalcSomethingOnDerivedTableOptions } from "@api/@tanstack/react-query.gen";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -15,71 +11,19 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
     const viewInputData = props.viewContext.useSettingsToViewInterfaceValue("viewInputData");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
-    statusWriter.setLoading(displayableData ? displayableData.settings_isLoadingDerivedTableHandle || displayableData.settings_isLoadingCalc : false);
-
-    const theText = displayableData ? displayableData.infoString : "N/A";
+    statusWriter.setLoading((displayableData?.isFetchingDerivedTableHandle || displayableData?.isFetchingInfo || displayableData?.isFetchingCalc) ?? false);
 
     const caseUuid = viewInputData?.ensembleIdent ? viewInputData.ensembleIdent.getCaseUuid() : null;
     const ensembleName = viewInputData?.ensembleIdent ? viewInputData.ensembleIdent.getEnsembleName() : null;
     const derivedTableHandle = viewInputData?.derivedTableHandle ?? null;
     const calculationParams = viewInputData?.calculationParams ?? null;
 
-    // //console.log(`DbgLroTestingView: caseUuid=${caseUuid}, ensembleName=${ensembleName}, derivedTableHandle=${derivedTableHandle}, calculationParams=${calculationParams}`);
-    // const calcQuery = useQuery({
-    //     ...getCalcSomethingOnDerivedTableOptions({
-    //         query: {
-    //             case_uuid: caseUuid ?? "DUMMY",
-    //             ensemble_name: ensembleName ?? "DUMMY",
-    //             derived_table_handle: derivedTableHandle ?? "DUMMY",
-    //             calculation_params: calculationParams ?? "DUMMY",
-    //         },
-    //     }),
-    //     enabled: Boolean(caseUuid && ensembleName && derivedTableHandle && calculationParams),
-    // });
-    // calcQuery.isLoading && statusWriter.setLoading(true);
+    const debugInfoStr = displayableData ? displayableData.debugInfoStr : "N/A";
 
-    // if (calcQuery.isError) {
-    //     console.log("Calc query error:", calcQuery.error);
-    // }
-
-    let calcQueryStatusStr = "---";
-    let calcQueryDataStr = "---";
-
-    // if (calcQuery.isEnabled) {
-    //     calcQueryStatusStr = calcQuery.status;
-
-    //     if (calcQuery.error && isAxiosError(calcQuery.error)) {
-    //         calcQueryStatusStr += ` (${calcQuery.error.response?.status})`;
-    //     }
-    // }
-    // else {
-    //     calcQueryStatusStr = "disabled";
-    // }
-
-    // calcQueryDataStr = calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A";
 
     return (
         <div className="relative w-full h-full flex flex-col">
-            My text:
-            <br />
-            {theText.split("\n").map((line, i) => (
-                <React.Fragment key={i}>
-                    {i > 0 ? <br /> : null}
-                    {line}
-                </React.Fragment>
-            ))}
-            
-            <br />
-            <br />
-            Settings progress:
-            <br />
-            Hybrid: {displayableData?.settings_hybridProgressText ?? "N/A"}
-            <br />
-            Calculation: {displayableData?.settings_calcStatusStr ?? "N/A"}
-            
-            <br />
-            <br />
-            View inputs:
+            <b>View inputs:</b>
             <table>
                 <tbody>
                     {makeTableRow("caseUuid", caseUuid ?? "N/A")}
@@ -88,14 +32,38 @@ export function DbgLroTestingView(props: ModuleViewProps<Interfaces>): React.Rea
                     {makeTableRow("calculationParams", calculationParams ?? "N/A")}
                 </tbody>
             </table>
-            
+
+            <br />
+            <b>Table handle:</b>
+            IsFetching: {displayableData?.isFetchingDerivedTableHandle ? "yes" : "no"}
+            <br />
+            Status: {displayableData?.hybridStatusStr ?? "--"}
+            <br />
+            Progress: {displayableData?.hybridProgressText ?? "--"}
+
             <br />
             <br />
-            View calc query:
+            <b>Info query:</b>
+            Status: {displayableData?.infoStatusStr ?? "--"}
             <br />
-            Status: {calcQueryStatusStr}
+            Data: {displayableData?.infoDataStr ?? "--"}
+
             <br />
-            Data: {calcQueryDataStr}
+            <br />
+            <b>Calc query:</b>
+            Status: {displayableData?.calcStatusStr ?? "--"}
+            <br />
+            Data: {displayableData?.calcDataStr ?? "--"}
+
+            <br />
+            <br />
+            <b>DebugInfoStr:</b>
+            {debugInfoStr.split("\n").map((line, i) => (
+                <React.Fragment key={i}>
+                    {i > 0 ? <br /> : null}
+                    {line}
+                </React.Fragment>
+            ))}
         </div>
     );
 }

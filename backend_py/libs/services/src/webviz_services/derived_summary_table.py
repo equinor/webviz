@@ -53,9 +53,10 @@ async def create_derived_summary_table_async(sumo_client: SumoClient, case_uuid:
     # !!!!!!!!!!!!!!!!!!!
     await asyncio.sleep(2)
 
+    num_vecs = len(vector_names)
     table_arr: list[_TableItem] = []
     for i, vector_name in enumerate(vector_names):
-        await status_cb(f"Getting summary vector table for vector {vector_name} {i + 1}/{len(vector_names)}")
+        await status_cb(f"Getting summary vector {i + 1}/{num_vecs}: {vector_name}")
         sc_vec = sc_basis.filter(column=vector_name)
         vec_table_obj = await sc_vec.aggregation_async(column=vector_name, operation="collection")
         if not isinstance(vec_table_obj, Table):
@@ -64,7 +65,7 @@ async def create_derived_summary_table_async(sumo_client: SumoClient, case_uuid:
         vec_table_pa = await vec_table_obj.to_arrow_async()
         table_arr.append(_TableItem(vec_name=vector_name, table=vec_table_pa, obj_uuid=vec_table_obj.uuid))
 
-    await status_cb(f"Combining summary vector tables for vectors {', '.join(vector_names)}")
+    await status_cb(f"Combining summary vector tables for {num_vecs} vectors")
     first_vec_name = table_arr[0].vec_name
     first_table = table_arr[0].table
     first_date_column = first_table.column("DATE")
@@ -127,19 +128,21 @@ async def bgjob_create_and_store_derived_table_async(authenticated_user: Authent
         await task_tracker.set_state_async(task_id, TaskState.FAILED, status_message="Internal error: missing expected_store_key in task meta")
         return False
 
-    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_message="Creating derived summary table...")
+    await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_message="Creating derived summary table")
 
-    async def _update_status(msg: str) -> None:
+    async def _update_status_msg(msg: str) -> None:
         LOGGER.info(f"{log_prefix} * {msg}")
-        await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_message=msg)
+        await task_tracker.set_status_message_async(task_id, status_message=msg)
 
     try:
         access_token = authenticated_user.get_sumo_access_token()
         sumo_client = create_sumo_client(access_token)
         perf_metrics.record_lap("init")
 
-        derived_table, derived_table_info = await create_derived_summary_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, status_cb=_update_status)
+        derived_table, derived_table_info = await create_derived_summary_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, status_cb=_update_status_msg)
         perf_metrics.record_lap("create-table")
+
+        task_tracker.set_status_message_async(task_id, status_message="Storing derived summary table")
 
         byte_stream = io.BytesIO()
         pq.write_table(derived_table, byte_stream, compression="zstd")

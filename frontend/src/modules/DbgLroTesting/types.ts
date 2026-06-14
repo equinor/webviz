@@ -2,14 +2,19 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 
 export interface ViewDisplayableData {
-    infoString: string;
+    isFetchingDerivedTableHandle: boolean;
+    hybridStatusStr: string | null;
+    hybridProgressText: string | null;
 
-    settings_isLoadingDerivedTableHandle: boolean;
-    settings_hybridProgressText: string | null;
+    isFetchingInfo: boolean;
+    infoStatusStr: string | null;
+    infoDataStr: string | null;
 
-    settings_isLoadingCalc: boolean;
-    settings_calcStatusStr: string | null;
-    settings_calcDataStr: string | null;
+    isFetchingCalc: boolean;
+    calcStatusStr: string | null;
+    calcDataStr: string | null;
+
+    debugInfoStr: string;
 }
 
 export interface ViewInputData {

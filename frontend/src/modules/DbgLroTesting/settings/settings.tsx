@@ -31,19 +31,22 @@ import { viewInputDataAtom } from "./atoms";
 
 //-----------------------------------------------------------------------------------------------------------
 export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
+    const queryClient = useQueryClient();
+
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = useAtom(selectedEnsembleIdentAtom);
+
     const availableVectors = useAtomValue(availableVectorsAtom);
-
     const [selectedVectors, setSelectedVectors] = useState<string[]>([]);
-    const [calculationParamString, setCalculationParamString] = useState<string>("");
-    const [retryCreationTask, setRetryCreationTask] = useState(false);
 
+    const [calculationParamString, setCalculationParamString] = useState<string>("");
+
+    const [retryCreationTask, setRetryCreationTask] = useState(false);
     const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
-    const [calcProgressText, setCalcProgressText] = React.useState<string | null>(null);
 
     const setViewInputData = useSetAtom(viewInputDataAtom);
     const setViewDisplayableData = useSetAtom(viewDisplayableDataAtom);
+
 
     const hybrid_apiFunctionArgs: Options<GetDerivedVectorTableHybridData_api, false> = {
         query: {
@@ -54,7 +57,6 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         },
     };
     const hybrid_derivedTableQueryKey = getDerivedVectorTableHybridQueryKey(hybrid_apiFunctionArgs);
-    //console.log("hybrid_derivedTableQueryKey:", hybrid_derivedTableQueryKey);
     const hybrid_derivedTableQueryOptions = wrapLongRunningQuery({
         queryFn: getDerivedVectorTableHybrid,
         queryFnArgs: hybrid_apiFunctionArgs,
@@ -66,9 +68,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         ...hybrid_derivedTableQueryOptions,
         enabled: selectedEnsembleIdent ? true : false,
     });
-
-    console.log(`hybrQuery: isEnabled=${hybrid_derivedTableQuery.isEnabled}, isFetching=${hybrid_derivedTableQuery.isFetching}, status=${hybrid_derivedTableQuery.status}, fetchStatus=${hybrid_derivedTableQuery.fetchStatus}, error=${hybrid_derivedTableQuery.error}`);
-
+    //console.log(`hybrQuery: isEnabled=${hybrid_derivedTableQuery.isEnabled}, isFetching=${hybrid_derivedTableQuery.isFetching}, status=${hybrid_derivedTableQuery.status}, fetchStatus=${hybrid_derivedTableQuery.fetchStatus}, error=${hybrid_derivedTableQuery.error}`);
 
     function handleHybridProgress(progressMessage: string | null) {
         if (progressMessage) {
@@ -78,25 +78,21 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     }
     useLroProgress(hybrid_derivedTableQueryOptions.queryKey, handleHybridProgress);
 
-    // Clear the retryCreationTask once the query has sent the request with it
-    useEffect(() => {
-        if (retryCreationTask && !hybrid_derivedTableQuery.isFetching) {
-            setRetryCreationTask(false);
-        }
-    }, [retryCreationTask, hybrid_derivedTableQuery.isFetching]);
-
-    const isLoadingDerivedTableHandle = hybrid_derivedTableQuery.isFetching;
-    if (!isLoadingDerivedTableHandle && hybridProgressText) {
+    const isFetchingDerivedTableHandle = hybrid_derivedTableQuery.isFetching;
+    if (!isFetchingDerivedTableHandle && hybridProgressText) {
         setHybridProgressText(null);
     }
+
+    // Clear the retryCreationTask once the query has sent the request with it
+    useEffect(() => {
+        if (retryCreationTask && !isFetchingDerivedTableHandle) {
+            setRetryCreationTask(false);
+        }
+    }, [retryCreationTask, isFetchingDerivedTableHandle]);
 
     //const derivedTableHandle = hybrid_derivedTableQuery.isFetching ? null : (hybrid_derivedTableQuery.data?.table_handle ?? null);
     const derivedTableHandle = hybrid_derivedTableQuery.data?.table_handle ?? null;
 
-    const case_uuid = selectedEnsembleIdent?.value?.getCaseUuid() ?? null;
-    const ensemble_name = selectedEnsembleIdent?.value?.getEnsembleName() ?? null;
-    //console.log(`VIEW: case_uuid: ${case_uuid}, ensemble_name: ${ensemble_name}, derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
-    console.log(`VIEW: derivedTableHandle: ${derivedTableHandle}, calculationParamString: ${calculationParamString}`);
 
     const infoQueryOptions = getDerivedTableInfoOptions({
         query: {
@@ -105,11 +101,20 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     });
     const infoQuery = useQuery({
         ...infoQueryOptions,
-        enabled: Boolean(selectedEnsembleIdent && derivedTableHandle),
+        enabled: Boolean(derivedTableHandle),
     });
+    //console.log(`infoQuery: isEnabled=${infoQuery.isEnabled}, isFetching=${infoQuery.isFetching}, status=${infoQuery.status}, fetchStatus=${infoQuery.fetchStatus}, error=${infoQuery.error}`);
 
+    const isFetchingInfo = infoQuery.isFetching;
+    let infoStatusStr = "disabled";
+    if (infoQuery.isEnabled) {
+        infoStatusStr = infoQuery.status;
+        if (infoQuery.error && isAxiosError(infoQuery.error)) {
+            infoStatusStr += ` (${infoQuery.error.response?.status})`;
+        }
+    }
+    const infoDataStr = infoQuery.data ? JSON.stringify(infoQuery.data) : "N/A";
 
-    console.log(`infoQuery: isEnabled=${infoQuery.isEnabled}, isFetching=${infoQuery.isFetching}, status=${infoQuery.status}, fetchStatus=${infoQuery.fetchStatus}, error=${infoQuery.error}`);
 
     const calcQueryOptions = getCalcSomethingOnDerivedTableOptions({
         query: {
@@ -119,13 +124,11 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     });
     const calcQuery = useQuery({
         ...calcQueryOptions,
-        enabled: Boolean(selectedEnsembleIdent && derivedTableHandle && calculationParamString),
+        enabled: Boolean(derivedTableHandle && calculationParamString),
     });
+    //console.log(`calcQuery: isEnabled=${calcQuery.isEnabled}, isFetching=${calcQuery.isFetching}, status=${calcQuery.status}, fetchStatus=${calcQuery.fetchStatus}, error=${calcQuery.error}`);
 
-    console.log(`calcQuery: isEnabled=${calcQuery.isEnabled}, isFetching=${calcQuery.isFetching}, status=${calcQuery.status}, fetchStatus=${calcQuery.fetchStatus}, error=${calcQuery.error}`);
-
-    const isLoadingCalc = calcQuery.isFetching;
-
+    const isFetchingCalc = calcQuery.isFetching;
     let calcStatusStr = "disabled";
     if (calcQuery.isEnabled) {
         calcStatusStr = calcQuery.status;
@@ -133,12 +136,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
             calcStatusStr += ` (${calcQuery.error.response?.status})`;
         }
     }
-
-    //console.log(`calcQuery: isEnabled=${calcQuery.isEnabled}, status=${calcQuery.status}, error=${calcQuery.error}`);
-
     const calcDataStr = calcQuery.data ? JSON.stringify(calcQuery.data) : "N/A";
-
-    const queryClient = useQueryClient();
 
     // It seems that also error responses are cached by TanStack Query!!
     // We may have to add a check to see if the calcQuery is actually enabled here
@@ -164,42 +162,31 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         }
     }
 
-    // useEffect(
-    //     function refetchDerivedTableOn410() {
-    //         if (calcQuery.error && isAxiosError(calcQuery.error)) {
-    //             const statusCode = calcQuery.error.response?.status;
-    //             if (statusCode === 410) {
-    //                 console.log("Calc query returned 410, refetching derived table...");
-    //                 queryClient.setQueryData(hybrid_derivedTableQueryKey, undefined);
-    //                 queryClient.setQueryData(calcQueryOptions.queryKey, undefined);
-    //                 queryClient.invalidateQueries({ queryKey: hybrid_derivedTableQueryKey, exact: true });
-    //                 queryClient.invalidateQueries({ queryKey: calcQueryOptions.queryKey, exact: true });
-    //             }
-    //         }
-    //     },
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    //     [calcQuery.error],
-    // );
 
     useEffect(
         function propagateChangesToDisplayableData() {
-            let infoString = `Selected ensemble: ${selectedEnsembleIdent?.value ?? "none"}`;
-            infoString += `\nSelected vectors: ${selectedVectors.length > 0 ? selectedVectors.join(", ") : "none"}`;
+            let debugInfoStr = `Selected vectors: ${selectedVectors.length > 0 ? selectedVectors.join(", ") : "none"}`;
             setViewDisplayableData({
-                infoString: infoString,
-                settings_isLoadingDerivedTableHandle: isLoadingDerivedTableHandle,
-                settings_hybridProgressText: hybridProgressText,
-                settings_isLoadingCalc: isLoadingCalc,
-                settings_calcStatusStr: calcStatusStr,
-                settings_calcDataStr: calcDataStr,
+                isFetchingDerivedTableHandle: isFetchingDerivedTableHandle,
+                hybridStatusStr: hybrid_derivedTableQuery.status,
+                hybridProgressText: hybridProgressText,
+                isFetchingInfo: isFetchingInfo,
+                infoStatusStr: infoStatusStr,
+                infoDataStr: infoDataStr,
+                isFetchingCalc: isFetchingCalc,
+                calcStatusStr: calcStatusStr,
+                calcDataStr: calcDataStr,
+                debugInfoStr: debugInfoStr,
             });
         },
         [
-            selectedEnsembleIdent,
             selectedVectors,
-            isLoadingDerivedTableHandle,
+            isFetchingDerivedTableHandle,
             hybridProgressText,
-            isLoadingCalc,
+            isFetchingInfo,
+            infoStatusStr,
+            infoDataStr,
+            isFetchingCalc,
             calcStatusStr,
             calcDataStr,
             setViewDisplayableData,
@@ -217,6 +204,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         [selectedEnsembleIdent, derivedTableHandle, calculationParamString, setViewInputData],
     );
 
+    
     const vectorNameOptions: SelectOption[] = availableVectors.map((item) => ({value: item,label: item})) ?? [];
 
     function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
@@ -251,7 +239,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                     />
                 </Label>
 
-                <Label text="Vectors:">
+                <Label text="Vectors to include:">
                     <Select
                         options={vectorNameOptions}
                         size={10}
@@ -266,7 +254,7 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
                     {derivedTableHandle ? (
                         <div>Handle: {derivedTableHandle}</div>
                     ) : !derivedTableHandle && hybridProgressText ? (
-                        <div>Progress: {hybridProgressText ?? "N/A"}</div>
+                        <div>Progress: {hybridProgressText}</div>
                     ) : (
                         <div>No derived table handle</div>
                     )}
