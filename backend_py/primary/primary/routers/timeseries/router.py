@@ -4,8 +4,7 @@ from typing import Annotated
 
 import pyarrow as pa
 import pyarrow.compute as pc
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-import nanoid
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
 from webviz_services.summary_vector_statistics import compute_vector_statistics
 from webviz_services.sumo_access.parameter_access import ParameterAccess
@@ -656,26 +655,31 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
 
 
 
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
 
 import hashlib
 import time
-import json
-from dataclasses import dataclass
-import httpx
+
+from fastapi import Request, status
+import nanoid
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import BaseModel
-from fmu.sumo.explorer.explorer import SumoClient, SearchContext
-from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id, TaskMetaTracker
-from webviz_services.utils.task_meta_tracker import TaskMeta, TaskState
+
+from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id
+from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
+from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
+
 from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroErrorInfo
-from primary.utils.user_cache import UserCache, get_user_cache_for_user
-from fmu.sumo.explorer.objects import Table
+
+#from primary.utils.user_cache import UserCache, get_user_cache_for_user
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_core_utils.background_tasks import run_in_background_task
-from webviz_services.derived_summary_table import create_derived_summary_table_async, bgjob_create_and_store_derived_table_async
+
 
 
 
@@ -829,7 +833,7 @@ async def get_derived_table_info(
         raise HTTPException(status_code=410, detail="Could not download derived table from blob storage")
     
     pq_table = pq.read_table(pa.BufferReader(table_blob_bytes))
-    LOGGER.debug(f"{dbg_prefix}Read table from blob cache, got schema:\n{pq_table.schema}")
+    # LOGGER.debug(f"{dbg_prefix}Read table from blob cache, got schema:\n{pq_table.schema}")
     perf_metrics.record_lap("read-table")
 
     vector_names = pq_table.schema.names
@@ -841,6 +845,7 @@ async def get_derived_table_info(
 
     LOGGER.info(f"{dbg_prefix}Got info on derived table, timing: {perf_metrics.to_string()} ({table_handle=})")
     return DerivedTableInfo(vector_names=vector_names, row_count=row_count, byte_size=blob_size_bytes, dbg_info=f"Timing: {perf_metrics.to_string()}")
+
 
 
 @router.get("/calc_something_on_derived_table")
@@ -886,184 +891,3 @@ async def _compute_table_handle_async(authenticated_user: AuthenticatedUser, cas
 
 
 
-async def _is_column_agg_valid(column_name: str, sc_base: SearchContext) -> bool:
-    sc_agg_table = sc_base.filter(column=column_name, aggregation="collection", realization=False)
-
-    num_agg_tables = await sc_agg_table.length_async()
-    if num_agg_tables != 1:
-        return False
-
-    agg_table_obj: Table = await sc_agg_table.getitem_async(0)
-    agg_ts = agg_table_obj.metadata["_sumo"]["timestamp"]
-
-    sc_real_tables = sc_base.filter(realization=True, aggregation=False)
-    sc_real_tables_older_than_agg = sc_real_tables.filter(complex={"range": {"_sumo.timestamp": {"lt": agg_ts}}})
-
-    # Get the realization ids for the tables that are older than the aggregation
-    real_ids_older_than_agg = await sc_real_tables_older_than_agg.realizationids_async
-
-    # Get the current realization count
-    current_real_count = await sc_real_tables.filter().length_async()
-
-    # If there are any new realizations the aggregation is invalid
-    if current_real_count != len(real_ids_older_than_agg):
-        return False
-
-    # Compare the set of realization ids that are older than the aggregation with the realization
-    # ids that were actually used to construct the aggregation.
-    if set(real_ids_older_than_agg) != set(agg_table_obj.metadata["fmu"]["aggregation"]["realization_ids"]):
-        return False
-
-    return True
-
-
-
-async def _find_columns_needing_aggregation_async(sumo_client: SumoClient, case_uuid: str, ensemble_name: str, column_names: list[str]) -> list[str]:
-    if not column_names:
-        return []
-
-    sc_base = SearchContext(sumo=sumo_client).tables.filter(
-        uuid=case_uuid,
-        ensemble=ensemble_name,
-        content=["timeseries", "simulationtimeseries"]
-    )
-
-    unique_column_names = list(dict.fromkeys(column_names))
-
-    # Even if we specify the column names we're interested in here, we end up getting columns such as DATE and REAL back here
-    sc_already_agg = sc_base.filter(column=unique_column_names, aggregation="collection", realization=False)
-    raw_agg_cols_in_sumo: set[str] = set(await sc_already_agg.columns_async)
-
-    validation_tasks: dict[str, asyncio.Task] = {}
-    async with asyncio.TaskGroup() as tg:
-        for col_name in unique_column_names:
-            if col_name in raw_agg_cols_in_sumo:
-                validation_tasks[col_name] = tg.create_task(_is_column_agg_valid(col_name, sc_base))
-
-    cols_with_valid_agg: set[str] = set()
-    for col_name, task in validation_tasks.items():
-        if task.result():
-            cols_with_valid_agg.add(col_name)
-
-    cols_needing_agg: list[str] = []
-    for col_name in unique_column_names:
-        if col_name not in cols_with_valid_agg:
-            cols_needing_agg.append(col_name)
-
-    LOGGER.info(f"!!!!!!!!!!Requested columns:     {set(column_names)}")
-    LOGGER.info(f"!!!!!!!!!!Existing aggregations: {cols_with_valid_agg}")
-    LOGGER.info(f"!!!!!!!!!!Needing aggregation:   {cols_needing_agg}")
-
-    return cols_needing_agg
-
-
-def _should_treat_httpx_exception_as_timeout(httpx_exception: httpx.HTTPError) -> bool:
-    """
-    Return True if the given httpx exception should be treated as an upstream timeout.
-
-    Covers:
-      * client-side timeouts: httpx.ConnectTimeout, httpx.ReadTimeout
-      * server-side timeout response: httpx.HTTPStatusError with status 504 Gateway Timeout
-
-    Note that for server-side timeouts to work, httpx.raise_for_status() must have been called on the response.
-    """
-    if isinstance(httpx_exception, (httpx.ConnectTimeout, httpx.ReadTimeout)):
-        return True
-
-    if isinstance(httpx_exception, httpx.HTTPStatusError) and httpx_exception.response is not None:
-        return httpx_exception.response.status_code == 504
-
-    return False
-
-
-async def _submit_and_track_task_async(
-    sumo_client: SumoClient, case_uuid: str, ensemble_name: str, vector_names: list[str], task_tracker: TaskMetaTracker, task_fp: str
-) -> TaskMeta:
-    task_start_time_utc_s = time.time()
-
-    sc_base = SearchContext(sumo=sumo_client).tables.filter(
-            uuid=case_uuid,
-            ensemble=ensemble_name,
-            content=["timeseries", "simulationtimeseries"],
-        )
-    sc_real = sc_base.filter(realization=True, aggregation=False)
-
-    try:
-        httpx_resp = await sc_real.batch_aggregate_async(columns=vector_names, operation="collection", no_wait=True)
-    except (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.HTTPStatusError) as exc:
-        if _should_treat_httpx_exception_as_timeout(exc):
-            raise HTTPException(status_code=404, detail="Submitting task to Sumo aggregation service timed out") from exc
-        raise HTTPException(status_code=404, detail="Error starting Sumo aggregation task") from exc
-
-    LOGGER.info(f"!!!!!!!!!!Submitted Sumo task, got http response: {httpx_resp=} {type(httpx_resp)=}")
-
-    # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
-    # from the underlying POST request to be returned.
-    if not isinstance(httpx_resp, httpx.Response):
-        raise TypeError("Unexpected response type from Sumo when submitting statistical surface job")
-
-    # We're not getting a task id back from the POST, but a location header with a URL to poll for the result.
-    # Do a bit of string manipulation to extract the actual task UUID from the location header
-    # The full pull location typically looks something like this:
-    #   https://main-sumo-prod.radix.equinor.com/api/v1/tasks('3de7a932-14de-4873-8389-fe3a83213638')/result
-    full_poll_location = httpx_resp.headers.get("location")
-    start = full_poll_location.find("/tasks('") + 8
-    end = full_poll_location.find("')/result", start)
-    sumo_task_uuid = full_poll_location[start:end]
-
-    # According to Sumo team, the tasks and task results will be purged after 24 hours, so we set our TTL slightly shorter at 23 hours
-    task_ttl_s = 23 * 60 * 60
-    task_meta = await task_tracker.register_task_with_fingerprint_async(
-        task_system="sumo_task",
-        task_id=sumo_task_uuid,
-        fingerprint=task_fp,
-        ttl_s=task_ttl_s,
-        actual_start_time_utc_s=task_start_time_utc_s,
-        expected_store_key=None,
-    )
-
-    return task_meta
-
-
-@dataclass(frozen=True)
-class _SumoTaskState:
-    status: str  # The main status of the Sumo task. Observed values: running, succeeded, failed
-    result_url: str | None  # The URL to the result of the task, if available
-    result_map: dict | None = None
-
-
-async def _poll_task_async(sumo_client: SumoClient, sumo_task_id: str) -> _SumoTaskState:
-    # The poll path (which sumo client adds to its base_url) is: /tasks('{taskUuid}')/result
-    # Initially we used a poll_path on the form: /tasks('{taskUuid}')/result
-    # After slack discussions with R. Wiker, we now try and use the more generic path without /result to try and get richer status information
-    poll_path = f"/tasks('{sumo_task_id}')"
-    poll_resp = await sumo_client.get_async(poll_path)
-    poll_resp_dict = poll_resp.json()
-
-    LOGGER.debug("-----")
-    LOGGER.debug(f"{poll_resp_dict=}")
-    #LOGGER.debug(json.dumps(poll_resp_dict, indent=2))
-
-    source_dict = poll_resp_dict.get("_source", {})
-    LOGGER.debug(f"_source.result_map: {source_dict.get('result_map')}")
-
-    # source_dict = poll_resp_dict.get("_source", {})
-    # job_list = source_dict.get("parameters", {}).get("jobStatuses", [])
-    # first_job_dict = job_list[0] if job_list else {}
-    # LOGGER.debug(f"Poll response status: {poll_resp.status_code=}")
-    # LOGGER.debug(f"Poll response:\n--\n{json.dumps(poll_resp.json(), indent=2)}\n--")
-    # LOGGER.debug(f"_source.start: {source_dict.get('start')}")
-    # LOGGER.debug(f"_source.end: {source_dict.get('end')}")
-    # LOGGER.debug(f"_source.status: {source_dict.get('status')}")
-    # LOGGER.debug(f"_source.parameters.entity: {source_dict.get('parameters', {}).get('entity')}")
-    # LOGGER.debug(f"_source.parameters.jobStatuses[0].status: {first_job_dict.get('status')}")
-    # LOGGER.debug(f"_source.result_url: {source_dict.get('result_url')}")
-    LOGGER.debug("-----")
-
-    status = poll_resp_dict["_source"]["status"]
-    result_url = poll_resp_dict["_source"].get("result_url")
-    return _SumoTaskState(
-        status=status,
-        result_url=result_url,
-        result_map=poll_resp_dict["_source"].get("result_map"),
-    )
