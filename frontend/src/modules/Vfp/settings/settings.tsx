@@ -179,7 +179,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         }
                     >
                         <Combobox
-                            items={makeColorByOptions(vfpType, vfpDataAccessor)}
+                            items={makeColorByItems(vfpType, vfpDataAccessor)}
                             value={selectedColorBy.value ?? undefined}
                             onValueChange={(v) => v && setSelectedColorBy(v)}
                         />
@@ -285,7 +285,7 @@ function makeFilterOptions(values: number[] | undefined): SelectOption<string>[]
     return values?.map((value, index) => ({ label: value.toString(), value: index.toString() })) ?? [];
 }
 
-function makeColorByOptions(
+function makeColorByItems(
     vfpType: VfpType | null,
     vfpDataAccessor: VfpApiTableDataAccessor | null,
 ): ComboboxItems<VfpParam> {
