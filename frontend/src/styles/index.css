@@ -35,6 +35,7 @@
 @import "./components/menu.css";
 /* Temporary override for Plotly.js, to be removed once we migrate to echarts */
 @import "./components/plot.css";
+@import "./components/setting-wrapper.css";
 
 /* Base styles */
 @import "./base/app.css";

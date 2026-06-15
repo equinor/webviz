@@ -52,6 +52,71 @@ Use an \`AlertDialog\` instead of a \`Dialog\` when:
 export default meta;
 type Story = StoryObj<typeof AlertDialog>;
 
+function WithCancelConfirmationRender() {
+    const [dialogOpen, setDialogOpen] = React.useState(false);
+    const [alertOpen, setAlertOpen] = React.useState(false);
+
+    function handleCancelClick() {
+        setAlertOpen(true);
+    }
+
+    function handleDiscardConfirmed() {
+        setAlertOpen(false);
+        setDialogOpen(false);
+    }
+
+    return (
+        <>
+            <Button variant="contained" tone="accent" onClick={() => setDialogOpen(true)}>
+                Open form
+            </Button>
+
+            <Dialog.Popup open={dialogOpen} onOpenChange={setDialogOpen}>
+                <AlertDialog
+                    open={alertOpen}
+                    onOpenChange={setAlertOpen}
+                    title="Discard changes?"
+                    primaryAction={{
+                        label: "Discard changes",
+                        tone: "danger",
+                        onClick: handleDiscardConfirmed,
+                        closesDialog: true,
+                    }}
+                    secondaryActions={[
+                        {
+                            label: "Keep editing",
+                            onClick: () => setAlertOpen(false),
+                            closesDialog: true,
+                            tone: "neutral",
+                        },
+                    ]}
+                >You have unsaved changes. Leaving now will permanently discard them.</AlertDialog>
+                <Dialog.Header>
+                    <Dialog.Title>Edit profile</Dialog.Title>
+                </Dialog.Header>
+                <Dialog.Body>
+                    <Dialog.Description>
+                        Make changes to your profile here. Click Save when you are done.
+                    </Dialog.Description>
+                    <textarea
+                        className="w-full rounded-md border border-neutral-300 p-2"
+                        rows={4}
+                        defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec suscipit auctor dui, at dignissim velit."
+                    />
+                </Dialog.Body>
+                <Dialog.Actions>
+                    <Button variant="ghost" tone="neutral" onClick={handleCancelClick}>
+                        Cancel
+                    </Button>
+                    <Button variant="contained" tone="accent" onClick={() => setDialogOpen(false)}>
+                        Save
+                    </Button>
+                </Dialog.Actions>
+            </Dialog.Popup>
+        </>
+    );
+}
+
 export const WithCancelConfirmation: Story = {
     parameters: {
         docs: {
@@ -62,68 +127,5 @@ export const WithCancelConfirmation: Story = {
             },
         },
     },
-    render: () => {
-        const [dialogOpen, setDialogOpen] = React.useState(false);
-        const [alertOpen, setAlertOpen] = React.useState(false);
-
-        function handleCancelClick() {
-            setAlertOpen(true);
-        }
-
-        function handleDiscardConfirmed() {
-            setAlertOpen(false);
-            setDialogOpen(false);
-        }
-
-        return (
-            <>
-                <Button variant="contained" tone="accent" onClick={() => setDialogOpen(true)}>
-                    Open form
-                </Button>
-
-                <Dialog.Popup open={dialogOpen} onOpenChange={setDialogOpen}>
-                    <AlertDialog
-                        open={alertOpen}
-                        onOpenChange={setAlertOpen}
-                        title="Discard changes?"
-                        primaryAction={{
-                            label: "Discard changes",
-                            tone: "danger",
-                            onClick: handleDiscardConfirmed,
-                            closesDialog: true,
-                        }}
-                        secondaryActions={[
-                            {
-                                label: "Keep editing",
-                                onClick: () => setAlertOpen(false),
-                                closesDialog: true,
-                                tone: "neutral",
-                            },
-                        ]}
-                    >You have unsaved changes. Leaving now will permanently discard them.</AlertDialog>
-                    <Dialog.Header>
-                        <Dialog.Title>Edit profile</Dialog.Title>
-                    </Dialog.Header>
-                    <Dialog.Body>
-                        <Dialog.Description>
-                            Make changes to your profile here. Click Save when you are done.
-                        </Dialog.Description>
-                        <textarea
-                            className="w-full rounded-md border border-neutral-300 p-2"
-                            rows={4}
-                            defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec suscipit auctor dui, at dignissim velit."
-                        />
-                    </Dialog.Body>
-                    <Dialog.Actions>
-                        <Button variant="ghost" tone="neutral" onClick={handleCancelClick}>
-                            Cancel
-                        </Button>
-                        <Button variant="contained" tone="accent" onClick={() => setDialogOpen(false)}>
-                            Save
-                        </Button>
-                    </Dialog.Actions>
-                </Dialog.Popup>
-            </>
-        );
-    },
+    render: () => <WithCancelConfirmationRender />,
 };

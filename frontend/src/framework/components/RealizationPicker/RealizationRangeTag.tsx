@@ -1,10 +1,10 @@
 import React from "react";
 
+import { Close, Error } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import type { FocusableListItem } from "@lib/hooks/useListFocus";
 import { Direction } from "@lib/hooks/useListFocus";
-import { Close, Error } from "@mui/icons-material";
 import { Button } from "@lib/newComponents/Button";
 import { Separator } from "@lib/newComponents/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

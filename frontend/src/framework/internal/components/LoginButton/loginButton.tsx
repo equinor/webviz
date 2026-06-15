@@ -4,9 +4,9 @@ import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Popover } from "@lib/newComponents/Popover";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { makeInitials } from "@lib/utils/userNames";

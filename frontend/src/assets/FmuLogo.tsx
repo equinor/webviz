@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 export type FmuLogoProps = {
     className?: string;
@@ -7,13 +7,7 @@ export type FmuLogoProps = {
 
 export function FmuLogo(props: FmuLogoProps): React.ReactNode {
     return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            version="1.1"
-            viewBox="0 0 468.8 476.6"
-            fill="currentColor"
-            {...props}
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 468.8 476.6" fill="currentColor" {...props}>
             <path d="M182.5,1c-2.3-2.1-6-.6-6.2,2.5l-4.5,67.9c-.1,2-1.9,3.6-3.9,3.5l-79.3-4.7c-3.5-.2-5.3,4.1-2.7,6.5l141.6,126.1c2.4,2.1,6.2.4,6.2-2.8l.4-149.9c0-1,.3-2.8-.5-3.6L182.5,1Z" />
             <circle cx="142.7" cy="42.9" r="16.7" />
             <path d="M200.4,219.4l-129.6-75.3c-.9-.5-2.3-1.7-3.3-1.4L2.6,164.2c-3,.9-3.5,4.9-1,6.6l56.5,37.9c1.7,1.1,2.2,3.4,1,5.1l-43.8,66.3c-1.9,2.9.9,6.7,4.3,5.6l180-59.6c3-1,3.5-5.1.7-6.7h0Z" />

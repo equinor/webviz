@@ -4,11 +4,10 @@ import { BugReport } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Toggle } from "@lib/newComponents/Toggle";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button } from "@lib/newComponents/Button";
-import { Toggle } from "@lib/newComponents/Toggle";
 
 export type ToggleDevToolsButtonProps = {
     guiMessageBroker: GuiMessageBroker;
@@ -30,7 +29,7 @@ export const ToggleDevToolsButton: React.FC<ToggleDevToolsButtonProps> = (props)
     }
 
     return (
-        <Tooltip title={devToolsVisible ? "Hide dev tools" : "Show dev tools"} placement="right">
+        <Tooltip content={devToolsVisible ? "Hide dev tools" : "Show dev tools"} side="right">
             <div
                 className={resolveClassNames(
                     "text-m absolute right-1.5 bottom-16 z-50 m-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-800 p-2 text-white shadow-sm",

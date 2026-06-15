@@ -34,7 +34,7 @@ export type Overlay = {
  * plain string properties (errorAnnotation, warningAnnotation, infoAnnotation), but not both.
  */
 export type SettingWrapperProps = {
-    children: React.ReactElement;
+    children: React.ReactNode;
     /** When true, forces the setting to use a stacked layout regardless of the group context. */
     stacked?: boolean;
     label?: React.ReactNode;
@@ -121,26 +121,35 @@ export function SettingWrapper(props: SettingWrapperProps) {
     if (!props.label) {
         return (
             <Field.Root inline invalid={isInvalid} warning={isWarning}>
-                <div className="gap-x-xs col-span-2 flex items-center">
-                    <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
-                        <div
-                            style={{ display: "contents" }}
-                            ref={(el) => {
-                                if (el) el.inert = !!props.overlay;
-                            }}
-                        >
-                            {props.children}
-                        </div>
-                        {overlay && <Overlay type={overlay.type} message={overlay.message} />}
+                <div
+                    className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
+                        "col-span-2": !!props.help,
+                        "col-span-3": !props.help,
+                    })}
+                >
+                    <div
+                        style={{ display: "contents" }}
+                        ref={(el) => {
+                            if (el) el.inert = !!props.overlay;
+                        }}
+                    >
+                        {props.children}
                     </div>
-                    <Annotations annotations={annotations} />
-                    {props.help && (
+                    {overlay && <Overlay type={overlay.type} message={overlay.message} />}
+                </div>
+                {props.help && (
+                    <div className="self-center">
                         <Field.Info side="right">
                             <Heading as="h6">{props.help.title}</Heading>
                             {props.help.content}
                         </Field.Info>
-                    )}
-                </div>
+                    </div>
+                )}
+                {annotations.length > 0 && (
+                    <div className={resolveClassNames("flex flex-col", { "col-span-2": !!props.help, "col-span-3": !props.help })}>
+                        <Annotations annotations={annotations} />
+                    </div>
+                )}
             </Field.Root>
         );
     }

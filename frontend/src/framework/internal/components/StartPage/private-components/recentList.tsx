@@ -7,10 +7,10 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 import { Typography } from "@lib/newComponents/Typography";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 

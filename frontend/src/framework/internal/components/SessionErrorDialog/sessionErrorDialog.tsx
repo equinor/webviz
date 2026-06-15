@@ -7,10 +7,10 @@ import { getAliveOptions } from "@api";
 import { GuiEvent, useRegisterGuiEventSubscriber, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { SessionPersistenceAction } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
+import { useSymbolicateStackTrace } from "@lib/hooks/useSymbolicateStackTrace";
+import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
-import { Button } from "@lib/newComponents/Button";
-import { useSymbolicateStackTrace } from "@lib/hooks/useSymbolicateStackTrace";
 
 export type SessionErrorDialogProps = {
     workbench: Workbench;
