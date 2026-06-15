@@ -2,11 +2,10 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Checkbox } from "@lib/components/Checkbox";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 
 import type { PressureDependentVariable } from "../../../typesAndEnums";
 import { PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME } from "../../../typesAndEnums";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 
 export type DependentVariableSelectorProps = {
     dependentVariables: PressureDependentVariable[];

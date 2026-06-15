@@ -2,13 +2,15 @@ import React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
+import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import type { SelectOption } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
@@ -33,12 +35,6 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
