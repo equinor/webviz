@@ -9,6 +9,7 @@ import { clamp, clone, isEqual } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
@@ -151,6 +152,7 @@ function isDualSliderValue(value: number | readonly number[]): value is readonly
 }
 
 function useLockState(props: {
+    isDualSlider: boolean;
     showMinLock: boolean;
     showMaxLock: boolean;
     minLocked?: boolean;
@@ -160,39 +162,44 @@ function useLockState(props: {
     onMinLockedChange?: (locked: boolean) => void;
     onMaxLockedChange?: (locked: boolean) => void;
 }) {
-    const [minLockedState, setMinLockedState] = React.useState(props.defaultMinLocked ?? false);
-    const [maxLockedState, setMaxLockedState] = React.useState(props.defaultMaxLocked ?? false);
-
-    const minLocked = props.minLocked ?? minLockedState;
-    const maxLocked = props.maxLocked ?? maxLockedState;
+    const [internalMinLocked, internalSetMinLocked] = useOptInControlledValue(
+        props.defaultMinLocked ?? false,
+        props.minLocked,
+        props.onMinLockedChange,
+    );
+    const [internalMaxLocked, internalSetMaxLocked] = useOptInControlledValue(
+        props.defaultMaxLocked ?? false,
+        props.maxLocked,
+        props.onMaxLockedChange,
+    );
 
     const setMinLocked = React.useCallback(
         (locked: boolean) => {
             if (!props.showMinLock) return;
 
-            if (props.minLocked === undefined) {
-                setMinLockedState(locked);
+            internalSetMinLocked(locked);
+            if (locked && props.isDualSlider) {
+                internalSetMaxLocked(false);
             }
-            props.onMinLockedChange?.(locked);
         },
-        [props],
+        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMinLock],
     );
 
     const setMaxLocked = React.useCallback(
         (locked: boolean) => {
             if (!props.showMaxLock) return;
 
-            if (props.maxLocked === undefined) {
-                setMaxLockedState(locked);
+            internalSetMaxLocked(locked);
+            if (locked && props.isDualSlider) {
+                internalSetMinLocked(false);
             }
-            props.onMaxLockedChange?.(locked);
         },
-        [props],
+        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMaxLock],
     );
 
     return {
-        minLocked,
-        maxLocked,
+        minLocked: internalMinLocked,
+        maxLocked: internalMaxLocked,
         setMinLocked,
         setMaxLocked,
     };
@@ -326,13 +333,23 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const minGutterDotRef = React.useRef<HTMLDivElement | null>(null);
     const maxGutterDotRef = React.useRef<HTMLDivElement | null>(null);
 
+    const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue ?? 0);
     const [prevMin, setPrevMin] = React.useState(defaultedProps.min);
     const [prevMax, setPrevMax] = React.useState(defaultedProps.max);
+
+    const [isHovered, setIsHovered] = React.useState(false);
+    const [isFocused, setIsFocused] = React.useState(false);
+    const [isDragging, setIsDragging] = React.useState(false);
 
     const showMinLock = [true, "both", "min"].includes(defaultedProps.showRangeLocks);
     const showMaxLock = [true, "both", "max"].includes(defaultedProps.showRangeLocks);
 
+    const allMarkers = [defaultedProps.min, ...defaultedProps.markers, defaultedProps.max];
+    const isDualSlider = Array.isArray(internalValue);
+    const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
+
     const { minLocked, maxLocked, setMinLocked, setMaxLocked } = useLockState({
+        isDualSlider,
         showMinLock,
         showMaxLock,
         minLocked: props.minLocked,
@@ -343,17 +360,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         onMaxLockedChange: props.onMaxLockedChange,
     });
 
-    const [isHovered, setIsHovered] = React.useState(false);
-    const [isFocused, setIsFocused] = React.useState(false);
-    const [isDragging, setIsDragging] = React.useState(false);
-
-    const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue ?? 0);
-
     const wrapperSize = useElementSize(wrapperRef);
-
-    const allMarkers = [defaultedProps.min, ...defaultedProps.markers, defaultedProps.max];
-    const isDualSlider = Array.isArray(internalValue);
-    const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
     if (props.value !== undefined && props.value !== internalValue) {
         setInternalValue(props.value);
