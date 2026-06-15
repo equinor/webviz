@@ -6,11 +6,11 @@ import {
     type Material,
     type PickingInfo,
     type UpdateParameters,
+    phongMaterial,
     picking,
     project32,
 } from "@deck.gl/core";
 import { Geometry, Model } from "@luma.gl/engine";
-import { phongLighting } from "@luma.gl/shadertools";
 import { isEqual } from "lodash";
 
 import * as vec3 from "@lib/utils/vec3";
@@ -118,7 +118,7 @@ export class PipesLayer extends Layer<PipeLayerProps> {
             const model = new Model(context.device, {
                 id: `${this.id}-mesh-${idx}`,
                 geometry: mesh,
-                modules: [project32, phongLighting, picking, pipeUniforms],
+                modules: [project32, phongMaterial, picking, pipeUniforms],
                 vs: vertexShader,
                 fs: fragmentShader,
             });
