@@ -12,6 +12,7 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number, number]; // [min, max, step]
@@ -134,19 +135,9 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                 setLocalValue(props.value ?? min);
             }
 
-            // Create debounced update function with useRef to preserve reference
-            const debouncedOnValueChange = React.useRef(
-                debounce((value: number) => {
-                    onValueChange(value);
-                }, 500),
-            ).current;
-
-            // Clean up debounce on unmount
-            React.useEffect(() => {
-                return () => {
-                    debouncedOnValueChange.cancel();
-                };
-            }, [debouncedOnValueChange]);
+            const debouncedOnValueChange = useDebouncedFunction(function debouncedOnValueChange(value: number) {
+                onValueChange(value);
+            }, 500);
 
             const handleSliderChange = React.useCallback(
                 function handleSliderChange(value: number | readonly number[]) {

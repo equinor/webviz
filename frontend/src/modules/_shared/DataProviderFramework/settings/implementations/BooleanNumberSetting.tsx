@@ -7,6 +7,7 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = {
     enabled: boolean;
@@ -171,12 +172,12 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
                 props.onValueChange({ enabled: checked, value });
             }
 
-            function handleNumberChange(value: number | null) {
+            const debouncedHandleNumberChange = useDebouncedFunction(function handleNumberChange(value: number | null) {
                 if (value === null) {
                     value = min;
                 }
                 props.onValueChange({ enabled, value });
-            }
+            }, 200);
 
             return (
                 <div className="gap-x-2xs flex items-center">
@@ -186,7 +187,7 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
                         min={min}
                         max={max}
                         disabled={!enabled}
-                        onValueChange={handleNumberChange}
+                        onValueChange={debouncedHandleNumberChange}
                         layoutClassName="grow"
                     />
                 </div>

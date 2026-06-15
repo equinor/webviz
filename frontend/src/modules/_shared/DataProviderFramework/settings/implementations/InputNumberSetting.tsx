@@ -5,6 +5,7 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number];
@@ -101,16 +102,16 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
             const min = isStatic ? staticProps?.min : props.valueConstraints?.[0];
             const max = isStatic ? staticProps?.max : props.valueConstraints?.[1];
 
-            function handleInputChange(value: number | null) {
+            const debouncedHandleInputChange = useDebouncedFunction(function handleInputChange(value: number | null) {
                 props.onValueChange(value);
-            }
+            }, 200);
 
             return (
                 <NumberInput
                     value={!props.isOverridden ? (props.value ?? min) : props.overriddenValue}
                     min={min}
                     max={max}
-                    onValueChange={handleInputChange}
+                    onValueChange={debouncedHandleInputChange}
                 />
             );
         };

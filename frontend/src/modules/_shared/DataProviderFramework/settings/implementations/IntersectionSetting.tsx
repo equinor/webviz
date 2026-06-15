@@ -18,6 +18,7 @@ import {
     isValueValid,
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 export type IntersectionSettingOption = {
     type: IntersectionType;
@@ -231,7 +232,9 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(null);
             }
 
-            function handleExtensionLengthChange(numValue: number | null) {
+            const debouncedHandleExtensionLengthChange = useDebouncedFunction(function handleExtensionLengthChange(
+                numValue: number | null,
+            ) {
                 if (numValue === null) {
                     return;
                 }
@@ -240,7 +243,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     setCachedValueForIntersectionType(type, newValue);
                     props.onValueChange(newValue);
                 }
-            }
+            }, 200);
 
             const options: DropdownOption<string>[] = availableValues
                 .filter((value) => value.type === type)
@@ -293,7 +296,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                                 value={validExtensionLength}
                                 min={extensionLengthConfig?.min}
                                 max={extensionLengthConfig?.max}
-                                onValueChange={handleExtensionLengthChange}
+                                onValueChange={debouncedHandleExtensionLengthChange}
                                 scrubAdornment="m"
                                 scrubAreaPosition="end"
                             />
