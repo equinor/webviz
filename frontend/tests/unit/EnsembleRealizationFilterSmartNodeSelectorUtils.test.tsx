@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import folderIcon from "@framework/internal/components/EnsembleRealizationFilter/private-assets/folder.svg";
-import miscIcon from "@framework/internal/components/EnsembleRealizationFilter/private-assets/misc.svg";
+import { Folder, MoreHoriz } from "@mui/icons-material";
+
 import {
     addParameterNodeToTreeDataNodeList,
     createSmartNodeSelectorTagListFromParameterList,
@@ -145,7 +145,7 @@ describe("addParameterNodeToTreeDataNodeList", () => {
         expect(treeDataNodeList[0]).toEqual({
             id: groupNodeName,
             name: groupNodeName,
-            icon: folderIcon,
+            icon: <Folder />,
             children: [parameterNode],
         });
     });
@@ -161,7 +161,7 @@ describe("addParameterNodeToTreeDataNodeList", () => {
         expect(treeDataNodeList[0]).toEqual({
             id: groupNodeName,
             name: groupNodeName,
-            icon: miscIcon,
+            icon: <MoreHoriz />,
             children: [parameterNode],
         });
     });
@@ -170,7 +170,7 @@ describe("addParameterNodeToTreeDataNodeList", () => {
         const parameterNode: TreeDataNode = { id: "param1", name: "Parameter 1", children: [] };
         const groupNodeName = "Group 1";
         const treeDataNodeList: TreeDataNode[] = [
-            { id: groupNodeName, name: groupNodeName, icon: folderIcon, children: [] },
+            { id: groupNodeName, name: groupNodeName, icon: <Folder />, children: [] },
         ];
 
         addParameterNodeToTreeDataNodeList(treeDataNodeList, parameterNode, groupNodeName);
@@ -185,7 +185,7 @@ describe("addParameterNodeToTreeDataNodeList", () => {
         const parameterNode: TreeDataNode = { id: "param1", name: "Parameter 1", children: [] };
         const groupNodeName = "Group 1";
         const treeDataNodeList: TreeDataNode[] = [
-            { id: groupNodeName, name: groupNodeName, icon: folderIcon, children: undefined },
+            { id: groupNodeName, name: groupNodeName, icon: <Folder />, children: undefined },
         ];
 
         addParameterNodeToTreeDataNodeList(treeDataNodeList, parameterNode, groupNodeName);
