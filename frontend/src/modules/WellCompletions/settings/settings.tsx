@@ -17,7 +17,6 @@ import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Annotations } from "@lib/newComponents/SettingWrapper/_components/Annotations";
 import { Slider } from "@lib/newComponents/Slider";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { TextInput } from "@lib/newComponents/TextInput";
@@ -204,14 +203,20 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Realization" stacked annotations={selectedRealizationAnnotations}>
-                        <div className="gap-y-xs flex flex-col">
-                            <SwitchCompositions.WithLabel
-                                label="Aggregate over all realizations"
-                                checked={realizationMode === RealizationMode.AGGREGATED}
-                                onCheckedChange={(checked) =>
-                                    setRealizationMode(checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE)
-                                }
-                            />
+                        <SwitchCompositions.WithLabel
+                            label="Aggregate over all realizations"
+                            checked={realizationMode === RealizationMode.AGGREGATED}
+                            onCheckedChange={(checked) =>
+                                setRealizationMode(checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE)
+                            }
+                        />
+                        <SettingWrapper
+                            annotations={
+                                !isSingleRealizationMode
+                                    ? [{ type: "info", message: "Only available in single realization mode." }]
+                                    : []
+                            }
+                        >
                             <Combobox
                                 items={availableRealizations.map((realization: number) => {
                                     return {
@@ -224,14 +229,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                 disabled={!isSingleRealizationMode}
                                 placeholder="Select realization..."
                             />
-                            <Annotations
-                                annotations={
-                                    !isSingleRealizationMode
-                                        ? [{ type: "info", message: "Only available in single realization mode." }]
-                                        : []
-                                }
-                            />
-                        </div>
+                        </SettingWrapper>
                     </SettingWrapper>
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Plot settings" defaultOpen>
