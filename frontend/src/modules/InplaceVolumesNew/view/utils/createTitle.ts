@@ -15,7 +15,11 @@ function getReadableSelectorName(selector: string): string {
 }
 
 export function makeInplaceVolumesPlotTitle(firstResultName: string | null, groupByName?: string): string {
-    let title = firstResultName ? `${inplaceVolumeAbbreviations[firstResultName].label} (${firstResultName})` : "";
+    let title = "";
+    if (firstResultName) {
+        const label = inplaceVolumeAbbreviations[firstResultName]?.label;
+        title = label ? `${label} (${firstResultName})` : firstResultName;
+    }
 
     if (groupByName) {
         title += ` per ${getReadableSelectorName(groupByName)}`;

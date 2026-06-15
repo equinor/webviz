@@ -8,7 +8,6 @@ from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
-from starsessions.stores.redis import RedisStore
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from webviz_services.services_config import ServicesConfig, init_services_config
@@ -22,6 +21,7 @@ from primary.middleware.add_process_time_to_server_timing_middleware import AddP
 from primary.middleware.cache_control_middleware import CacheControlMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanClientAddressEnrichmentMiddleware
 from primary.middleware.otel_span_enrichment_middleware import OtelSpanEndUserEnrichmentMiddleware
+from primary.middleware.encrypted_redis_session_store import EncryptedRedisSessionStore
 from primary.persistence.persistence_stores import PersistenceStoresSingleton
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
@@ -79,7 +79,7 @@ services_config = ServicesConfig(
     enterprise_subscription_key=config.ENTERPRISE_SUBSCRIPTION_KEY,
     surface_query_url=config.SURFACE_QUERY_URL,
     vds_host_address=config.VDS_HOST_ADDRESS,
-    redis_user_session_url=config.REDIS_USER_SESSION_URL,
+    redis_cache_url=config.REDIS_CACHE_URL,
 )
 init_services_config(services_config)
 
@@ -190,8 +190,10 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
-session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
-app.add_middleware(SessionMiddleware, store=session_store)
+encrypted_session_store = EncryptedRedisSessionStore(
+    fernet_key=config.SESSION_STORE_FERNET_KEY, redis_url=config.REDIS_AUTH_STORE_URL, prefix="auth-sessions:"
+)
+app.add_middleware(SessionMiddleware, store=encrypted_session_store)
 
 # Enrich telemetry spans with client address information (must run after ProxyHeadersMiddleware)
 app.add_middleware(OtelSpanClientAddressEnrichmentMiddleware)

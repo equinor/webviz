@@ -89,6 +89,15 @@ export function makeRichWellTrajectoriesLayer(
             showScreens: true,
             showScreenTrajectoryAsDash: true,
         },
+        productionColors: {
+            oil: flowFilterSettings?.production.oil.color,
+            gas: flowFilterSettings?.production.gas.color,
+            water: flowFilterSettings?.production.water.color,
+        },
+        injectionColors: {
+            gas: flowFilterSettings?.injection.gas.color,
+            water: flowFilterSettings?.injection.water.color,
+        },
         enableFilters: filtersEnabled,
         // Use this option to show filtered trajectory parts
         // showFilterTrajectoryGhost: [139, 139, 139, 255 * 0.1],

@@ -12,11 +12,12 @@ import { isNaN } from "lodash";
 
 import { HoverTopic } from "@framework/HoverService";
 import type { HoverData } from "@framework/HoverService";
+import type { FlowDataColors } from "@framework/types/wellbore";
+import { InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
 
 import type { CategoricalReadout, ReadoutProperty } from "../components/Readout/types";
 import { AdjustedWellsLayer } from "../customDeckGlLayers/AdjustedWellsLayer";
 import type { DrilledWellboreTrajectoryData } from "../DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
-import { InjectionPhase, ProductionPhase } from "../DataProviderFramework/settings/settingsDefinitions";
 
 import { formatNumber } from "./numberFormatting";
 import type { InjectionReadoutValue, ProductionReadoutValue } from "./subsurfaceViewer/FlowDataReadout";
@@ -268,6 +269,8 @@ export function getMarkerReadout(marker: MarkerData): ReadoutProperty<string>[] 
 
 export function getFlowReadout(
     wellFeature: BaseWellFeature,
+    productionColors?: FlowDataColors,
+    injectionColors?: FlowDataColors,
 ): ReadoutProperty<ProductionReadoutValue | InjectionReadoutValue>[] {
     if (!wellFeature.properties) return [];
     if (!isExtendedWellFeature(wellFeature)) return [];
@@ -288,11 +291,13 @@ export function getFlowReadout(
         {
             name: "Production",
             value: productionReadoutValue,
+            renderArgs: { colors: productionColors },
             render: renderProductionReadout,
         },
         {
             name: "Injection",
             value: injectionReadoutValue,
+            renderArgs: { colors: injectionColors },
             render: renderInjectionReadout,
         },
     ];

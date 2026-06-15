@@ -3,6 +3,7 @@ import { isEqual } from "lodash";
 import { type SeismicCubeMeta_api, getSeismicCubeMetaListOptions, getSeismicSlicesOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import { sortTimeOrIntervalArray } from "@lib/utils/arrays";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { NO_UPDATE } from "@modules/_shared/DataProviderFramework/delegates/_utils/Dependency";
 import type {
@@ -307,15 +308,15 @@ export class SeismicSlicesProvider implements CustomDataProviderImplementation<
                     return [];
                 }
 
-                const availableTimeOrIntervals = [
-                    ...new Set(
-                        seismicCubeMetaList
-                            .filter((surface) => surface.seismicAttribute === seismicAttribute)
-                            .map((el) => el.isoDateOrInterval),
+                return sortTimeOrIntervalArray(
+                    Array.from(
+                        new Set(
+                            seismicCubeMetaList
+                                .filter((surface) => surface.seismicAttribute === seismicAttribute)
+                                .map((el) => el.isoDateOrInterval),
+                        ),
                     ),
-                ];
-
-                return availableTimeOrIntervals;
+                );
             },
         });
 

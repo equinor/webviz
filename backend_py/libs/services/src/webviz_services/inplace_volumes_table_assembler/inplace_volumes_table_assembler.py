@@ -44,6 +44,47 @@ from ._utils.inplace_volumes_df_utils import (
 LOGGER = logging.getLogger(__name__)
 
 
+def _apply_deferred_facies_filter(
+    results_df: pl.DataFrame, deferred_facies_filter_values: list[str] | None
+) -> pl.DataFrame:
+    """
+    Apply a deferred FACIES filter to a per-fluid results DataFrame.
+
+    Used in combination with FACIES_FRACTION: the FACIES filter must not restrict the
+    denominator of the fraction, so it is applied only after the fraction has been
+    computed. If the FACIES column is not present in the DataFrame (e.g. because FACIES
+    was not part of the group-by indices), the filter is skipped.
+    """
+    if deferred_facies_filter_values is None:
+        return results_df
+    if InplaceVolumes.TableIndexColumns.FACIES.value not in results_df.columns:
+        return results_df
+    return results_df.filter(pl.col(InplaceVolumes.TableIndexColumns.FACIES.value).is_in(deferred_facies_filter_values))
+
+
+def _split_deferred_facies_filter(
+    indices_with_values: list[InplaceVolumesIndexWithValues],
+    valid_result_names: set[str],
+) -> tuple[list[InplaceVolumesIndexWithValues], list[str] | None]:
+    """
+    Split off a FACIES filter from the provided indices when FACIES_FRACTION is requested.
+
+    Returns a tuple of (indices_with_values_without_facies_filter, deferred_facies_values).
+    When FACIES_FRACTION is not requested, or when no FACIES filter is present, the input
+    list is returned unchanged and the deferred values are ``None``.
+    """
+    if Property.FACIES_FRACTION.value not in valid_result_names:
+        return indices_with_values, None
+
+    facies_index = InplaceVolumes.TableIndexColumns.FACIES
+    facies_entry = next((e for e in indices_with_values if e.index == facies_index), None)
+    if facies_entry is None:
+        return indices_with_values, None
+
+    effective_indices = [e for e in indices_with_values if e.index != facies_index]
+    return effective_indices, list(facies_entry.values)
+
+
 class InplaceVolumesTableAssembler:
     """
     This class provides an interface for interacting with definitions used in front-end for assembling and providing
@@ -99,7 +140,9 @@ class InplaceVolumesTableAssembler:
             valid_fluids = [elm for elm in fluids if elm is not None]
 
             calculated_volumes = get_available_calculated_volumes_from_volume_names(volume_column_names)
-            available_property_names = get_available_properties_from_volume_names(volume_column_names)
+            available_property_names = get_available_properties_from_volume_names(
+                volume_column_names, index_columns=index_columns_uniques_dict.keys()
+            )
             result_names = volume_column_names + calculated_volumes + available_property_names
             valid_result_names = get_valid_result_names_from_list(result_names)
 
@@ -149,6 +192,7 @@ class InplaceVolumesTableAssembler:
         (
             accumulated_inplace_volumes_real_df_per_fluid_value,
             categorized_result_names,
+            deferred_facies_filter_values,
         ) = await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
             table_name, result_names, group_by_indices, indices_with_values, realizations
         )
@@ -171,6 +215,12 @@ class InplaceVolumesTableAssembler:
             # - Calculate properties and calculated volumes
             accumulated_result_real_df = create_per_fluid_results_df(
                 accumulated_volumes_real_df, categorized_result_names, fluid_value
+            )
+
+            # Apply deferred FACIES filter (if any) now that FACIES_FRACTION has been computed
+            # using the full set of facies as denominator.
+            accumulated_result_real_df = _apply_deferred_facies_filter(
+                accumulated_result_real_df, deferred_facies_filter_values
             )
 
             table_data_per_fluid_value.append(
@@ -204,6 +254,7 @@ class InplaceVolumesTableAssembler:
         (
             accumulated_inplace_volumes_real_df_per_fluid_value,
             categorized_result_names,
+            deferred_facies_filter_values,
         ) = await self._create_accumulated_real_inplace_volumes_df_per_fluid_and_categorized_result_names_async(
             table_name, result_names, group_by_indices, indices_with_values, realizations
         )
@@ -227,6 +278,12 @@ class InplaceVolumesTableAssembler:
             # - Calculate properties and calculated volumes
             accumulated_result_real_df = create_per_fluid_results_df(
                 accumulated_volumes_real_df, categorized_result_names, fluid_value
+            )
+
+            # Apply deferred FACIES filter (if any) now that FACIES_FRACTION has been computed
+            # using the full set of facies as denominator.
+            accumulated_result_real_df = _apply_deferred_facies_filter(
+                accumulated_result_real_df, deferred_facies_filter_values
             )
 
             # Create statistical table data across realization
@@ -253,7 +310,7 @@ class InplaceVolumesTableAssembler:
         group_by_indices: list[InplaceVolumes.TableIndexColumns] | None,
         indices_with_values: list[InplaceVolumesIndexWithValues],
         realizations: list[int] | None,
-    ) -> tuple[dict[str, pl.DataFrame], CategorizedResultNames]:
+    ) -> tuple[dict[str, pl.DataFrame], CategorizedResultNames, list[str] | None]:
         """
         Get a dictionary with accumulated Inplace Volumes DataFrame per unique fluid value, and categorized result names for the given DataFrame.
 
@@ -271,6 +328,9 @@ class InplaceVolumesTableAssembler:
         Note:
         - This function finds all necessary volumes from requested result names. Calculation of properties and calculated volumes has to be done outside this function.
         - If group_by_indices is None or does not include FLUID, the fluids will be summed in the result, and BO and BG properties will be excluded from the result names.
+        - When FACIES_FRACTION is among the requested result names, any FACIES filter in `indices_with_values` is deferred: the filter is not applied during row-filtering
+          (so the BULK denominator spans all facies), and the deferred FACIES values are returned as the third tuple element so the caller can apply the filter after
+          the fraction has been computed. If no FACIES filter is deferred the third element is `None`.
         """
 
         if group_by_indices == []:
@@ -285,6 +345,14 @@ class InplaceVolumesTableAssembler:
         if sum_fluids:
             valid_result_names = {r for r in result_names if r not in (Property.BO.value, Property.BG.value)}
 
+        # Defer FACIES filter when FACIES_FRACTION is requested so the denominator of the
+        # fraction (sum of BULK across facies) is computed across all facies in the table,
+        # not only the facies selected by the caller. The filter is re-applied by the
+        # caller after FACIES_FRACTION has been calculated.
+        effective_indices_with_values, deferred_facies_filter_values = _split_deferred_facies_filter(
+            indices_with_values, valid_result_names
+        )
+
         # Get all necessary volumes: volume columns, and volumes needed to calculate properties and calculated volumes
         all_necessary_volume_names, categorized_result_names = get_required_volume_names_and_categorized_result_names(
             valid_result_names
@@ -292,13 +360,13 @@ class InplaceVolumesTableAssembler:
 
         # Create volumes df filtered on indices values and realizations, for all necessary volumes
         row_filtered_volumes_df = await self._get_row_filtered_inplace_volumes_df_async(
-            table_name, all_necessary_volume_names, realizations, indices_with_values
+            table_name, all_necessary_volume_names, realizations, effective_indices_with_values
         )
 
         if row_filtered_volumes_df.is_empty():
             # If no data is found for the given indices and realizations, return empty dictionary
             empty_dict: dict[str, pl.DataFrame] = {}
-            return (empty_dict, categorized_result_names)
+            return (empty_dict, categorized_result_names, deferred_facies_filter_values)
 
         # Ensure valid inplace volumes DataFrame (contains necessary index columns and realization column)
         validate_inplace_volumes_df_selector_columns(row_filtered_volumes_df)
@@ -341,6 +409,7 @@ class InplaceVolumesTableAssembler:
         return (
             accumulated_inplace_volumes_real_df_per_fluid_value_dict,
             categorized_result_names,
+            deferred_facies_filter_values,
         )
 
     async def _get_row_filtered_inplace_volumes_df_async(

@@ -87,6 +87,29 @@ def create_property_column_expressions(
     return calculated_property_expressions
 
 
+def create_facies_fraction_expression(volumes_df_columns: list[str], partition_columns: list[str]) -> pl.Expr | None:
+    """
+    Create Polars expression for the FACIES_FRACTION property column.
+
+    The expression computes ``BULK / sum(BULK) over partition_columns`` so the fraction is
+    evaluated within each partition (typically per realization and per remaining group-by
+    index, excluding FACIES). Returns ``None`` when prerequisites are missing, i.e. the
+    FACIES index column or the BULK volume column is not present in ``volumes_df_columns``.
+    """
+    VolumeColumns = InplaceVolumes.VolumetricColumns
+
+    if VolumeColumns.BULK.value not in volumes_df_columns:
+        return None
+    if InplaceVolumes.TableIndexColumns.FACIES.value not in volumes_df_columns:
+        return None
+    if not partition_columns:
+        return None
+
+    bulk_col = pl.col(VolumeColumns.BULK.value)
+    fraction_expr = bulk_col / bulk_col.sum().over(partition_columns)
+    return create_named_expression_with_nan_for_inf(fraction_expr, Property.FACIES_FRACTION.value)
+
+
 def create_calculated_volume_column_expressions(
     volumes_df_columns: list[str], calculated_volumes: list[str], fluid: InplaceVolumes.Fluid | None = None
 ) -> list[pl.Expr]:
