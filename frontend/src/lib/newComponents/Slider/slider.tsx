@@ -28,7 +28,11 @@ export type SliderChangeEventDetails =
 // | BaseUIChangeEventDetails<"clamp-min", SliderRootChangeEventCustomProperties>
 // | BaseUIChangeEventDetails<"clamp-max", SliderRootChangeEventCustomProperties>;
 
-export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orientation">> & {
+export type SliderProps = ComponentWrapperProps<
+    // ! Orientation would require a lot of extra checks, and we currently
+    // ! are not using vertical sliders anywhere, so we disable it for now
+    Omit<SliderRootBaseProps, "orientation">
+> & {
     /**
      * Shows a button and gutter tracks for locking value to min and/or max values
      *
@@ -98,6 +102,17 @@ export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orien
     /** Hides the slider indicator */
     noIndicator?: boolean;
 
+    /** Additional slider values to show a mark at. The slider will *always* show markers at the ends */
+    markers?: number[];
+
+    /** Snaps the allowed slider values to the values defined in markers (including min/max) */
+    snapToMarkers?: boolean;
+
+    /**
+     * Display the value of each marker below them.
+     * A function can be provided for further customization. Returning a empty node (null, false, etc) will fully remove the label */
+    markerLabels?: boolean | ((markerValue: number, index: number) => React.ReactNode);
+
     /**
      * Formats the value displayed by the thumbs value tooltip.
      * @param value The current value of the thumb.
@@ -124,6 +139,9 @@ const DEFAULT_PROPS = {
     max: 100,
     showRangeLocks: "none" as NonNullable<SliderProps["showRangeLocks"]>,
     valueLabelDisplay: "auto" as NonNullable<SliderProps["valueLabelDisplay"]>,
+    markers: [] as number[],
+    snapToMarkers: false as boolean,
+    thumbCollisionBehavior: "push" as NonNullable<SliderProps["thumbCollisionBehavior"]>,
 } satisfies Partial<SliderProps>;
 
 type DefaultedSliderProps = typeof DEFAULT_PROPS & SliderProps;
@@ -274,6 +292,7 @@ function resolveTrackHeightClassName(size: SelectableSize) {
 
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const defaultedProps: DefaultedSliderProps = { ...DEFAULT_PROPS, ...props };
+
     const { onValueChange, onValueCommitted } = props;
 
     const baseProps = resolveWrapperProps(defaultedProps, [
@@ -284,6 +303,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         "inverted",
         "noIndicator",
         "size",
+        "markers",
+        "markerLabels",
+        "snapToMarkers",
         "minLocked",
         "maxLocked",
         "defaultMinLocked",
@@ -329,6 +351,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
     const wrapperSize = useElementSize(wrapperRef);
 
+    const allMarkers = [defaultedProps.min, ...defaultedProps.markers, defaultedProps.max];
     const isDualSlider = Array.isArray(internalValue);
     const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
@@ -396,7 +419,34 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
             }
         }
 
-        updateValue(newValue, eventDetails);
+        if (defaultedProps.snapToMarkers && !allMarkers.includes(activeValue)) {
+            const closestMarker = allMarkers.reduce((prev, curr) => {
+                return Math.abs(curr - activeValue) < Math.abs(prev - activeValue) ? curr : prev;
+            });
+
+            let snappedValue = closestMarker as number | number[];
+
+            if (isDualSliderValue(newValue)) {
+                // ! The "push" thumb behavior might cause the other value to change as
+                // ! well, so we need to make sure it also remains snapped to a marker
+                let otherValue = eventDetails.activeThumbIndex === 0 ? newValue[1] : newValue[0];
+                const otherGotPushed = !allMarkers.includes(otherValue);
+
+                if (otherGotPushed) otherValue = closestMarker;
+
+                const snappedDualValue = [otherValue, otherValue];
+                snappedDualValue[eventDetails.activeThumbIndex] = closestMarker;
+
+                snappedValue = snappedDualValue;
+            }
+
+            // Only apply the snapped value if necessary
+            if (!isEqual(snappedValue, internalValue)) {
+                updateValue(snappedValue, eventDetails);
+            }
+        } else {
+            updateValue(newValue, eventDetails);
+        }
     }
 
     const showThumbValueLabels =
@@ -466,13 +516,10 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                     <SliderBase.Control
                         ref={ref}
-                        className={resolveClassNames(
-                            "group py-xs flex w-full touch-none items-center select-none",
-                            {
-                                "pl-(--lock-gutter-size)": showMinLock,
-                                "pr-(--lock-gutter-size)": showMaxLock,
-                            },
-                        )}
+                        className={resolveClassNames("group py-xs flex w-full touch-none items-center select-none", {
+                            "pl-(--lock-gutter-size)": showMinLock,
+                            "pr-(--lock-gutter-size)": showMaxLock,
+                        })}
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
                         onFocus={() => setIsFocused(true)}
@@ -523,8 +570,30 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                                 },
                             )}
                         >
-                            {/* Only show start dot for dual sliders */}
-                            <Dot placement="start" />
+                            {allMarkers.map((v, i) => {
+                                const percentage =
+                                    ((v - defaultedProps.min) / (defaultedProps.max - defaultedProps.min)) * 100;
+                                return (
+                                    <React.Fragment key={i}>
+                                        <Dot leftPosPercent={percentage} />
+                                        <DotLabel
+                                            leftPosPercent={percentage}
+                                            value={v}
+                                            index={i}
+                                            markerLabels={defaultedProps.markerLabels}
+                                            onClick={(v) => {
+                                                if (!isDualSliderValue(internalValue)) {
+                                                    setInternalValue(v);
+                                                } else if (v <= internalValue[0]) {
+                                                    setInternalValue([v, internalValue[1]]);
+                                                } else if (v >= internalValue[1]) {
+                                                    setInternalValue([internalValue[1], v]);
+                                                }
+                                            }}
+                                        />
+                                    </React.Fragment>
+                                );
+                            })}
 
                             {!props.noIndicator && (
                                 <SliderBase.Indicator
@@ -568,8 +637,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                                 onSetMinLocked={setMinLocked}
                                 onSetMaxLocked={setMaxLocked}
                             />
-
-                            <Dot placement="end" />
                         </SliderBase.Track>
 
                         {showMaxLock && (
@@ -778,16 +845,52 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
     );
 });
 
-function Dot(props: { placement: "start" | "end" }) {
+function Dot(props: { leftPosPercent: number }) {
     const className =
-        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4";
+        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4 -translate-x-[4px]";
 
-    const style: React.HTMLAttributes<HTMLDivElement>["style"] = {};
+    return <div className={className} style={{ left: `${props.leftPosPercent}%` }} />;
+}
 
-    if (props.placement === "start") style.left = "-4px";
-    if (props.placement === "end") style.right = "-4px";
+function DotLabel(props: {
+    leftPosPercent: number;
+    value: number;
+    index: number;
+    markerLabels?: SliderProps["markerLabels"];
+    onClick: (value: number) => void;
+}): React.ReactNode {
+    if (!props.markerLabels) return null;
 
-    return <div className={className} style={style} />;
+    let formattedValue;
+
+    if (typeof props.markerLabels === "function") {
+        formattedValue = props.markerLabels(props.value, props.index);
+    } else {
+        formattedValue = String(props.value);
+    }
+
+    if (!formattedValue && formattedValue !== 0) {
+        return null;
+    }
+
+    return (
+        <Typography
+            data-pos={props.leftPosPercent}
+            as="span"
+            family="body"
+            variant="subtle"
+            size="sm"
+            tone="neutral"
+            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm hover:bg-input "
+            layoutStyles={{ left: `${props.leftPosPercent}%` }}
+            onPointerDownCapture={(evt) => {
+                evt.stopPropagation();
+                props.onClick(props.value);
+            }}
+        >
+            {formattedValue}
+        </Typography>
+    );
 }
 
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(SliderComponent);

@@ -23,12 +23,22 @@ const meta: Meta<typeof Slider> = {
         ),
     ],
     tags: ["autodocs"],
+    args: {
+        markers: [],
+    },
     argTypes: {
+        thumbCollisionBehavior: {
+            control: "inline-radio",
+            options: ["push", "swap", "none"],
+        },
         disabled: {
             control: "boolean",
         },
         step: {
             control: "number",
+        },
+        markerLabels: {
+            control: "boolean",
         },
     },
 };
@@ -84,12 +94,40 @@ export const Size: Story = {
     ),
 };
 
+export const Marks: Story = {
+    args: { markers: [10, 20, 40, 60, 80], snapToMarkers: true, markerLabels: true },
+    argTypes: {
+        markerLabels: {
+            control: "radio",
+            options: [false, true, "(v) => `${v}%`", "(_, i) => (i % 2 === 0 ? v : null)"],
+        },
+    },
+    render: (args) => {
+        let markerLabels = args.markerLabels as
+            | SliderProps["markerLabels"]
+            | "(v) => `${v}%`"
+            | "(_, i) => (i % 2 === 0 ? v : null)";
+
+        if (markerLabels === "(v) => `${v}%`") {
+            markerLabels = (v: number) => `${v}%`;
+        }
+
+        if (markerLabels === "(_, i) => (i % 2 === 0 ? v : null)") {
+            markerLabels = (v: number, i: number) => (i % 2 === 0 ? v : null);
+        }
+
+        return (
+            <div className="gap-y-lg flex flex-col">
+                <Slider defaultValue={20} {...args} markerLabels={markerLabels} />
+            </div>
+        );
+    },
+};
+
 export const Controlled: Story = {
     argTypes: { min: { control: "number" }, max: { control: "number" } },
     args: { min: 0, max: 100 },
     render: function ControlledStoryComp(args) {
-        // const [, ] = React.useState<>()
-
         const [lockMin, setLockMin] = React.useState(false);
         const [lockMax, setLockMax] = React.useState(true);
 
