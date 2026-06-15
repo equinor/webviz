@@ -1,9 +1,8 @@
+import { Folder, MoreHoriz } from "@mui/icons-material";
 import { describe, expect, test } from "vitest";
 
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { Folder, MoreHoriz } from "@mui/icons-material";
-
 import {
     addParameterNodeToTreeDataNodeList,
     createSmartNodeSelectorTagListFromParameterList,
