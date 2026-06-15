@@ -20,7 +20,7 @@ const paths = {
 export default defineConfig(({ mode, command }) => {
     const define = {
         "process.env": {},
-    };
+    } as Record<string, any>;
 
     // In order to polyfill "global" for older packages
     // Only in dev since "@loaders.gl" is already exporting "window" and would cause a duplicate export
@@ -57,7 +57,10 @@ export default defineConfig(({ mode, command }) => {
                     ...prev,
                     [current.replace("/*", "")]: path.resolve(
                         __dirname,
-                        aliases.compilerOptions.paths[current][0].replace("/*", ""),
+                        aliases.compilerOptions.paths[current as keyof typeof aliases.compilerOptions.paths][0].replace(
+                            "/*",
+                            "",
+                        ),
                     ),
                 }),
                 {},
