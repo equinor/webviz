@@ -274,7 +274,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
     );
 
     return (
-        <div className="gap-y-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
+        <div className="gap-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
             <FieldCompositions.Default label="Gradient type" gridLayout>
                 <RadioCompositions.GroupWithLabels
                     value={colorScaleSpecification.colorScale.getGradientType()}
@@ -622,7 +622,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     className={resolveClassNames(
                         "absolute -top-6 flex h-7 -translate-x-1/2 transform cursor-ew-resize flex-col",
                         {
-                            "z-50": isDragging,
+                            "z-overlay": isDragging,
                             hidden:
                                 props.gradientType === ColorScaleGradientType.Sequential || !areBoundariesUserDefined,
                         },

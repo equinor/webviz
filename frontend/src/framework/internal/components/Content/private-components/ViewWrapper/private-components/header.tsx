@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "px-xs gap-x-xs shadow-elevation-raised py-4xs relative flex touch-none items-center text-lg select-none",
+                "px-xs gap-x-xs shadow-elevation-raised py-4xs text-body-lg relative flex touch-none items-center select-none",
                 {
                     "bg-danger-canvas": hasErrors || invalidPersistedState,
                     "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
@@ -452,7 +452,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <ul className="gap-y-2xs px-2xs py-2xs flex flex-col">
+            <ul className="gap-y-2xs p-2xs flex flex-col">
                 {hotStatusMessages.map((entry, i) => (
                     <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
                         <Typography
@@ -477,7 +477,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     if (isLoading) {
         stateIndicators.push(
             <Tooltip key="header-loading" title="This module is currently loading new content.">
-                <div className="flex cursor-help items-center justify-center px-1">
+                <div className="px-3xs flex cursor-help items-center justify-center">
                     <CircularProgress size={16} />
                 </div>
             </Tooltip>,
@@ -501,20 +501,22 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
                 <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
                     <Tooltip title={badgeTitle} placement="bottom">
                         <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
-                            <Error
-                                fontSize="inherit"
-                                color="error"
-                                style={{ display: numErrors === 0 ? "none" : "block" }}
-                            />
-                            <div className="overflow-hidden">
-                                <Warning
+                            <div className="gap-x-4xs flex items-center whitespace-nowrap">
+                                <Error
                                     fontSize="inherit"
-                                    color="warning"
-                                    style={{ display: numWarnings === 0 ? "none" : "block" }}
-                                    className={resolveClassNames({
-                                        "-ml-3": numErrors > 0,
-                                    })}
+                                    color="error"
+                                    style={{ display: numErrors === 0 ? "none" : "block" }}
                                 />
+                                <div className="overflow-hidden">
+                                    <Warning
+                                        fontSize="inherit"
+                                        color="warning"
+                                        style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                        className={resolveClassNames({
+                                            "-ml-xs": numErrors > 0,
+                                        })}
+                                    />
+                                </div>
                             </div>
                         </Badge>
                     </Tooltip>

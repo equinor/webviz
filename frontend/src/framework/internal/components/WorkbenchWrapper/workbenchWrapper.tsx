@@ -90,7 +90,6 @@ export function WorkbenchWrapper() {
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
-            <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
             <SessionErrorDialog workbench={workbench} />
         </>
     );

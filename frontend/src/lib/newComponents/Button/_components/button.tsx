@@ -104,7 +104,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
                 "focusable focus-visible:outline-0",
                 "group-data-group/button-group:not-first-of-type:rounded-l-none group-data-group/button-group:not-last-of-type:rounded-r-none",
                 {
-                    "aspect-square rounded-full": props.round,
+                    "aspect-square w-fit rounded-full": props.round,
                     rounded: !props.round,
                     "aspect-square justify-center p-0!": props.iconOnly,
                     [ICON_SIZE_CLASSES[size]]: props.iconOnly,

@@ -308,12 +308,9 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
 
     return (
         <div
-            className={resolveClassNames(
-                "py-3xs px-2xs group/log-item gap-x-2xs hover:bg-accent flex items-center",
-                {
-                    "cursor-help": Boolean(detailsObject),
-                },
-            )}
+            className={resolveClassNames("py-3xs px-2xs group/log-item gap-x-2xs hover:bg-accent flex items-center", {
+                "cursor-help": Boolean(detailsObject),
+            })}
             onMouseEnter={handleShowDetails}
             onMouseLeave={handleHideDetails}
         >
@@ -347,16 +344,16 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="absolute z-50 w-96 border border-gray-300 bg-white p-1 text-sm shadow-lg"
+            className="border-neutral-subtle bg-surface z-overlay p-xs text-body-sm absolute w-96 border shadow-lg"
             style={style}
             onPointerEnter={props.onPointerEnter}
             onPointerLeave={props.onPointerLeave}
         >
-            <table className="w-full border-separate border-spacing-2 text-xs">
+            <table className="w-full border-separate border-spacing-2">
                 <tbody>
                     {Object.entries(props.details).map(([key, value]) => (
                         <tr key={key}>
-                            <td className="font-bold text-gray-600">{key}</td>
+                            <td className="text-neutral-subtle font-bold">{key}</td>
                             <td>{JSON.stringify(value)}</td>
                         </tr>
                     ))}

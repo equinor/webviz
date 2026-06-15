@@ -14,10 +14,11 @@ export const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(func
             data-collapsible-scroll-area
             className={resolveClassNames(
                 props.layoutClassName,
-                "group/scrollarea relative h-full min-h-0 w-full overflow-auto pb-12",
+                "group/scrollarea relative h-full min-h-0 w-full overflow-auto",
             )}
         >
             {props.children}
+            <div className="h-24" />
         </div>
     );
 });

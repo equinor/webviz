@@ -9,6 +9,7 @@ import {
     Edit,
     Fullscreen,
     FullscreenExit,
+    Info,
     Link,
     Lock,
     Refresh,
@@ -24,14 +25,14 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator";
 import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -39,6 +40,8 @@ import { DarkModeButton } from "../DarkModeButton";
 import { DensityModeToggle } from "../DensityModeToggle/densityModeToggle";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
+import { ToggleDevToolsButton } from "../ToggleDevToolsButton";
+import { Popover } from "@lib/newComponents/Popover";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -77,6 +80,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     <FullscreenToggleButton />
                     <DarkModeButton />
                     <DensityModeToggle />
+                    <ToggleDevToolsButton guiMessageBroker={props.workbench.getGuiMessageBroker()} />
                     <Separator orientation="vertical" />
                     <LoginButton showText={false} />
                 </div>
@@ -107,7 +111,7 @@ function FullscreenToggleButton(): React.ReactNode {
     const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
 
     return (
-        <Tooltip title={fullscreenButtonTitle} placement="bottom">
+        <Tooltip content={fullscreenButtonTitle} side="bottom">
             <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
                 {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
             </TopBarButton>
@@ -143,7 +147,7 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
                     <SnapshotButton workbench={props.workbench} />
                 </>
             )}
-            <Tooltip title={closeButtonTitle} placement="bottom">
+            <Tooltip content={closeButtonTitle} side="bottom">
                 <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
                     <Close fontSize="small" />
                 </TopBarButton>
@@ -225,28 +229,36 @@ function SnapshotTitle(props: SnapshotTitleProps): React.ReactNode {
 
     return (
         <>
-            <Link fontSize="inherit" className="mr-1" />
-            <Tooltip
-                title={
-                    <div className="text-base whitespace-normal">
-                        <h3 className="text-lg">{metadata.title}</h3>
-                        {metadata.description && (
-                            <>
-                                <hr className="mb-2 h-px bg-white/25" />
-                                <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
-                            </>
-                        )}
-                    </div>
-                }
-                placement="bottom"
-                enterDelay="medium"
-            >
-                <Heading as="h5">{metadata.title}</Heading>
-            </Tooltip>
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info style={{ fontSize: 16 }} />
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
+                        <div className="whitespace-normal">
+                            <Heading as="h6" variant="strong" weight="bolder">
+                                {metadata.title}
+                            </Heading>
+                            {metadata.description && (
+                                <>
+                                    <Separator orientation="horizontal" />
+                                    <Paragraph size="sm" layoutClassName="whitespace-pre-wrap">
+                                        {metadata.description}
+                                    </Paragraph>
+                                </>
+                            )}
+                        </div>
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+            <Link fontSize="inherit" className="mr-2xs" />
+            <Heading as="h5" layoutClassName="truncate">
+                {metadata.title}
+            </Heading>
             <Typography family="body" size="sm" as="span">
                 (snapshot)
             </Typography>
-            <Tooltip title="This session is a snapshot and cannot be edited.">
+            <Tooltip content="This session is a snapshot and cannot be edited.">
                 <Lock fontSize="inherit" />
             </Tooltip>
         </>
@@ -274,24 +286,30 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
 
     return (
         <>
-            <Heading as="h6" italic={!isPersisted}>
-                <Tooltip
-                    title={
-                        <div className="text-base whitespace-normal">
-                            <h3 className="text-lg">{metadata.title}</h3>
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info style={{ fontSize: 16 }} />
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
+                        <div className="whitespace-normal">
+                            <Heading as="h6" variant="strong" weight="bolder">
+                                {metadata.title}
+                            </Heading>
                             {metadata.description && (
                                 <>
-                                    <hr className="mb-2 h-px bg-white/25" />
-                                    <p className="text-sm whitespace-pre-wrap">{metadata.description}</p>
+                                    <Separator orientation="horizontal" />
+                                    <Paragraph size="sm" layoutClassName="whitespace-pre-wrap">
+                                        {metadata.description}
+                                    </Paragraph>
                                 </>
                             )}
                         </div>
-                    }
-                    placement="bottom"
-                    enterDelay="medium"
-                >
-                    <span className="truncate">{metadata.title}</span>
-                </Tooltip>
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+            <Heading as="h6" layoutClassName="truncate">
+                {metadata.title}
             </Heading>
             <HasChangesIndicator visible={hasChanges} />
         </>
@@ -308,16 +326,14 @@ function SessionFromSnapshotButton(props: SessionFromSnapshotButtonProps): React
     };
 
     return (
-        <div className="flex items-center gap-4 p-2 text-sm">
-            <TopBarButton
-                onClick={handleClick}
-                title="Make a new session of the current snapshot"
-                variant="contained"
-                iconOnly={false}
-            >
-                Make session
-            </TopBarButton>
-        </div>
+        <TopBarButton
+            onClick={handleClick}
+            title="Make a new session of the current snapshot"
+            variant="contained"
+            iconOnly={false}
+        >
+            Make session
+        </TopBarButton>
     );
 }
 
@@ -333,11 +349,9 @@ function SnapshotButton(props: SnapshotButtonProps): React.ReactNode {
     };
 
     return (
-        <div className="flex items-center gap-4 p-2 text-sm">
-            <TopBarButton onClick={handleClick} title="Make a snapshot of the current session">
-                <AddLink fontSize="small" />
-            </TopBarButton>
-        </div>
+        <TopBarButton onClick={handleClick} title="Make a snapshot of the current session">
+            <AddLink fontSize="small" />
+        </TopBarButton>
     );
 }
 
@@ -390,40 +404,38 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
     }
 
     return (
-        <div className="gap-x-xs flex items-center justify-center p-2 text-sm">
-            <Button.Group split>
-                <Button variant="contained" tone="accent" disabled={!saveEnabled} onClick={handleSaveClick} iconOnly>
-                    {isSaving ? (
-                        // Margin is explicitly added to make the spinner's position width match the save icon
-                        <CircularProgress size={16} layoutClassName="mx-[2px]" />
-                    ) : (
-                        <Save style={{ fontSize: 16 }} />
-                    )}
-                </Button>
+        <Button.Group split>
+            <Button variant="contained" tone="accent" disabled={!saveEnabled} onClick={handleSaveClick} iconOnly>
+                {isSaving ? (
+                    // Margin is explicitly added to make the spinner's position width match the save icon
+                    <CircularProgress size={16} layoutClassName="mx-[2px]" />
+                ) : (
+                    <Save style={{ fontSize: 16 }} />
+                )}
+            </Button>
 
-                <MenuCompositions.Default
-                    onActionClicked={handleSaveMenuAction}
-                    items={[
-                        {
-                            id: "save",
-                            label: "Save session",
-                            icon: <Save fontSize="small" />,
-                            disabled: !isPersisted || !persistenceInfo.hasChanges,
-                        },
-                        {
-                            id: "save-as",
-                            label: "Save session as ...",
-                            icon: <SaveAs fontSize="small" />,
-                        },
-                    ]}
-                >
-                    {/* TODO: Pressed state when menu is open */}
-                    <Button {...props} variant="contained" tone="accent" iconOnly compact>
-                        <ArrowDropDown style={{ fontSize: 16 }} />
-                    </Button>
-                </MenuCompositions.Default>
-            </Button.Group>
-        </div>
+            <MenuCompositions.Default
+                onActionClicked={handleSaveMenuAction}
+                items={[
+                    {
+                        id: "save",
+                        label: "Save session",
+                        icon: <Save fontSize="small" />,
+                        disabled: !isPersisted || !persistenceInfo.hasChanges,
+                    },
+                    {
+                        id: "save-as",
+                        label: "Save session as ...",
+                        icon: <SaveAs fontSize="small" />,
+                    },
+                ]}
+            >
+                {/* TODO: Pressed state when menu is open */}
+                <Button {...props} variant="contained" tone="accent" iconOnly compact>
+                    <ArrowDropDown style={{ fontSize: 16 }} />
+                </Button>
+            </MenuCompositions.Default>
+        </Button.Group>
     );
 }
 
@@ -438,7 +450,7 @@ type TopBarButtonProps = {
 function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
     const { active, title, onClick, disabled, ...baseProps } = props;
     return (
-        <Tooltip title={title} placement="bottom">
+        <Tooltip content={title} side="bottom">
             {/* ! Workaround required to deal with EDS tooltip overwriting refs */}
             <span>
                 <Button
@@ -482,11 +494,22 @@ function RefreshSessionButton(props: RefreshSessionButtonProps): React.ReactNode
     }
 
     return (
-        <div className={"flex items-center gap-4 bg-amber-100 p-1 px-3 text-sm"}>
+        <div
+            className={
+                "gap-xs bg-warning-canvas text-warning-subtle py-2xs px-sm text-body-sm flex items-center rounded"
+            }
+        >
             Out of sync with server.
-            <TopBarButton onClick={handleRefreshClick} title="Reload session from server">
-                <Refresh fontSize="small" />
-            </TopBarButton>
+            <Button
+                onClick={handleRefreshClick}
+                title="Reload session from server"
+                size="small"
+                variant="ghost"
+                tone="warning"
+                iconOnly
+            >
+                <Refresh style={{ fontSize: 16 }} />
+            </Button>
         </div>
     );
 }

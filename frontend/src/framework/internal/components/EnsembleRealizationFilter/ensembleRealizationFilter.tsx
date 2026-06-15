@@ -222,25 +222,20 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     const readableEnsembleName = props.ensemble.getCustomName() ?? props.ensemble.getDisplayName();
 
     const activeStyleClasses = {
-        "ring ring-blue-400": true,
+        "outline-accent-strong": true,
     };
     const inactiveStyleClasses = {
-        "cursor-pointer ring hover:ring-2 ring-gray-300/(--ring-opacity) hover:ring-blue-200": true,
-        "[--ring-opacity:100%] hover:ring-blue-400/(--ring-opacity)": !props.isAnotherFilterActive,
-        "[--ring-opacity:50%] group hover:[--ring-opacity:75%] transition-opacity": props.isAnotherFilterActive,
+        "cursor-pointer outline-neutral-subtle hover:outline-accent": true,
     };
     const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
     return (
-        <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
-            <div className="bg-neutral flex items-center justify-center rounded-t-md">
+        <div className={resolveClassNames("group rounded outline", mainDivStyleClasses)}>
+            <div className="bg-neutral flex items-center justify-center rounded-t">
                 <div
-                    className={resolveClassNames(
-                        "group px-2xs py-3xs gap-x-2xs flex h-full min-w-0 grow items-center",
-                        {
-                            "opacity-50 transition-opacity duration-100 group-hover:opacity-75":
-                                !props.isActive && props.isAnotherFilterActive,
-                        },
-                    )}
+                    className={resolveClassNames("px-2xs py-3xs gap-x-2xs flex h-full min-w-0 grow items-center", {
+                        "opacity-60 transition-opacity duration-100 group-hover:opacity-100":
+                            !props.isActive && props.isAnotherFilterActive,
+                    })}
                     onClick={handleHeaderOnClick}
                 >
                     <EnsembleColorTile
@@ -249,7 +244,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         isRealizationFilterEffective={areRealizationsFiltered}
                     />
                     <div
-                        className="font-bolder flex h-full min-w-0 grow cursor-pointer items-center pr-2 pl-2 text-sm"
+                        className="font-bolder px-2xs text-body-sm flex h-full min-w-0 grow cursor-pointer items-center"
                         title={props.isActive ? `Ensemble: ${readableEnsembleName}` : "Click to open filter"}
                     >
                         <span className="truncate">{readableEnsembleName}</span>
@@ -285,25 +280,23 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             </div>
             <div
                 className={resolveClassNames({
-                    "opacity-30 transition-opacity duration-100 group-hover:opacity-75":
+                    "opacity-70 transition-opacity duration-100 group-hover:opacity-100":
                         !props.isActive && props.isAnotherFilterActive,
                 })}
                 title={!props.isActive ? "Click to open filter" : undefined}
                 onClickCapture={handleBodyOnClickCapture}
             >
-                <div className="border-neutral-subtle flex flex-col gap-2 rounded-b border p-2">
-                    <div className="py-2xs px-2xs">
-                        <RealizationNumberDisplay
-                            selectedRealizations={props.selections.realizationNumbers}
-                            availableRealizations={props.ensemble.getRealizations()}
-                            showAsCompact={!props.isActive}
-                            disableOnClick={
-                                props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER ||
-                                !props.isActive
-                            }
-                            onRealizationNumberClick={handleRealizationNumberDisplayClick}
-                        />
-                    </div>
+                <div className="border-neutral-subtle gap-2xs p-2xs flex flex-col rounded-b border">
+                    <RealizationNumberDisplay
+                        selectedRealizations={props.selections.realizationNumbers}
+                        availableRealizations={props.ensemble.getRealizations()}
+                        showAsCompact={!props.isActive}
+                        disableOnClick={
+                            props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER ||
+                            !props.isActive
+                        }
+                        onRealizationNumberClick={handleRealizationNumberDisplayClick}
+                    />
                     <div className={resolveClassNames({ hidden: !props.isActive })}>
                         <div className="border-neutral-subtle px-2xs py-2xs">
                             <Separator orientation="horizontal" />

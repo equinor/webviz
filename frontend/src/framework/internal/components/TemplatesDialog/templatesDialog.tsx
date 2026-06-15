@@ -97,14 +97,14 @@ export function TemplatesDialog(props: TemplatesDialogProps): React.ReactNode {
                             </div>
                         </div>
                         <div className="relative h-full w-[360px] min-w-[360px]">
-                            <div className="border-neutral flex h-full max-h-full w-full flex-col overflow-y-auto border-l bg-gray-50">
+                            <div className="border-neutral-subtle bg-canvas flex h-full max-h-full w-full flex-col overflow-y-auto border-l">
                                 <TemplateDetails template={template} onApply={applyTemplate} />
                                 <div className="min-h-32" />
                             </div>
                             {template && (
                                 <div className="absolute bottom-0 left-1 h-32 w-full">
-                                    <div className="h-12 w-full bg-linear-to-t from-white to-transparent" />
-                                    <div className="px-xs py-xs bg-surface h-20 w-full">
+                                    <div className="h-12 w-full bg-linear-to-t from-100% to-0%" />
+                                    <div className="p-xs bg-surface h-20 w-full">
                                         <Button
                                             onClick={() => applyTemplate(template)}
                                             disabled={!template}
@@ -156,7 +156,7 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
             </div>
             <div>
                 <strong>Data tags:</strong>
-                <div className="text-sm">{makeDataTags(extractModuleDataTagIds(props.template))}</div>
+                <div className="text-body-sm">{makeDataTags(extractModuleDataTagIds(props.template))}</div>
             </div>
         </div>
     );
@@ -240,9 +240,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
                     <div className="text-body-xs line-clamp-1" title={props.template?.description}>
                         {props.template?.description}
                     </div>
-                    <div className="text-bolder mt-xs gap-x-2xs flex flex-wrap text-xs">
-                        {makeDataTags(dataTagIds)}
-                    </div>
+                    <div className="text-bolder mt-xs gap-x-2xs flex flex-wrap text-xs">{makeDataTags(dataTagIds)}</div>
                 </div>
             </div>
         </>

@@ -24,8 +24,12 @@ export function Overlay({ type, message }: OverlayProps) {
         >
             <Tooltip content={message ?? "Loading..."} side="bottom">
                 <span className="gap-x-xs px-xs flex w-full items-center justify-center">
-                    {type === "loading" && <span className="shrink-0"><CircularProgress size={16} /></span>}
-                    {message && <span className="min-w-0 truncate text-sm">{message}</span>}
+                    {type === "loading" && (
+                        <span className="shrink-0">
+                            <CircularProgress size={16} />
+                        </span>
+                    )}
+                    {message && <span className="text-body-sm min-w-0 truncate">{message}</span>}
                 </span>
             </Tooltip>
         </div>

@@ -1,6 +1,6 @@
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { Dialog } from "@lib/components/Dialog";
+import { Dialog } from "@lib/newComponents/Dialog";
 
 export type EnsemblesLoadingErrorInfoDialogProps = {
     open: boolean;
@@ -13,16 +13,19 @@ export type EnsemblesLoadingErrorInfoDialogProps = {
 
 export function EnsemblesLoadingErrorInfoDialog(props: EnsemblesLoadingErrorInfoDialogProps) {
     return (
-        <Dialog open={props.open} onClose={props.onClose} title={props.title} modal actions={props.actions}>
-            <div className="flex flex-col space-y-4">
+        <Dialog.Popup open={props.open} onOpenChange={props.onClose} modal>
+            <Dialog.Header>
+                <Dialog.Title>{props.title}</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body layoutClassName="flex flex-col">
                 {props.description}
-                <div className="max-h-96 overflow-y-auto">
+                <div className="gap-xs flex max-h-96 flex-col overflow-y-auto">
                     {Object.entries(props.ensembleLoadingErrorInfoMap).map(([ensembleIdentString, errorInfo]) => {
                         const isDeltaEnsemble = DeltaEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString);
                         const descriptionPrefix = isDeltaEnsemble ? "Delta Ensemble" : "Ensemble";
                         return (
-                            <div key={ensembleIdentString} className="mb-4">
-                                <div className="font-medium">
+                            <div key={ensembleIdentString}>
+                                <div className="font-normal">
                                     {descriptionPrefix}: {errorInfo.displayName}
                                 </div>
                                 <ul className="list-inside list-disc">
@@ -32,7 +35,8 @@ export function EnsemblesLoadingErrorInfoDialog(props: EnsemblesLoadingErrorInfo
                         );
                     })}
                 </div>
-            </div>
-        </Dialog>
+            </Dialog.Body>
+            <Dialog.Actions>{props.actions}</Dialog.Actions>
+        </Dialog.Popup>
     );
 }

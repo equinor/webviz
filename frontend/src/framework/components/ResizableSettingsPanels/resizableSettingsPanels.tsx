@@ -394,7 +394,7 @@ function SettingsDragBar(props: SettingsDragBarProps): React.ReactNode {
         >
             <div
                 data-settings-handle={props.panel}
-                className="absolute top-0 -left-px z-40 h-full w-1 cursor-ew-resize touch-none bg-transparent"
+                className="z-sticky absolute top-0 -left-px h-full w-1 cursor-ew-resize touch-none bg-transparent"
             />
         </div>
     );

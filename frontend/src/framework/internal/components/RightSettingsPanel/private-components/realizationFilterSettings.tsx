@@ -383,41 +383,38 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         }
 
         return (
-            <div className="px-xs py-2xs gap-y-2xs flex flex-col overflow-y-auto">
-                <div className="grow space-y-4">
-                    {ensembleSet.getEnsembleArray().map((ensemble) => {
-                        const ensembleIdent = ensemble.getIdent();
-                        const isActive =
-                            activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
-                        const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
+            <div className="px-xs py-2xs gap-y-xs flex flex-col overflow-y-auto">
+                {ensembleSet.getEnsembleArray().map((ensemble) => {
+                    const ensembleIdent = ensemble.getIdent();
+                    const isActive =
+                        activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
+                    const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
 
-                        const selections =
-                            ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
-                        const currentFilteredRealizations = realizationFilterSet
-                            .getRealizationFilterForEnsembleIdent(ensembleIdent)
-                            .getFilteredRealizations();
+                    const selections = ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+                    const currentFilteredRealizations = realizationFilterSet
+                        .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                        .getFilteredRealizations();
 
-                        if (!selections) {
-                            return null;
-                        }
-                        return (
-                            <EnsembleRealizationFilter
-                                key={ensembleIdent.toString()}
-                                ensemble={ensemble}
-                                filteredRealizationNumbers={currentFilteredRealizations}
-                                selections={selections}
-                                hasUnsavedSelections={ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]}
-                                isActive={isActive}
-                                isAnotherFilterActive={isAnotherActive}
-                                onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
-                                onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
-                                onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
-                                onApplyClick={() => handleApplyClick(ensembleIdent)}
-                                onDiscardClick={() => handleDiscardClick(ensembleIdent)}
-                            />
-                        );
-                    })}
-                </div>
+                    if (!selections) {
+                        return null;
+                    }
+                    return (
+                        <EnsembleRealizationFilter
+                            key={ensembleIdent.toString()}
+                            ensemble={ensemble}
+                            filteredRealizationNumbers={currentFilteredRealizations}
+                            selections={selections}
+                            hasUnsavedSelections={ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]}
+                            isActive={isActive}
+                            isAnotherFilterActive={isAnotherActive}
+                            onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
+                            onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
+                            onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
+                            onApplyClick={() => handleApplyClick(ensembleIdent)}
+                            onDiscardClick={() => handleDiscardClick(ensembleIdent)}
+                        />
+                    );
+                })}
             </div>
         );
     }

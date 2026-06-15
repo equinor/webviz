@@ -226,14 +226,14 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
     if (devState === ModuleDevState.DEPRECATED) {
         return (
-            <span title="Deprecated" className="inline-block align-middle text-base">
+            <span title="Deprecated" className="inline-block align-middle">
                 <HistoryToggleOff style={{ fontSize: 16 }} />
             </span>
         );
     }
     if (devState === ModuleDevState.DEV) {
         return (
-            <span title="Experimental" className="inline-block align-middle text-base">
+            <span title="Experimental" className="inline-block align-middle">
                 <Science style={{ fontSize: 16 }} />
             </span>
         );
@@ -245,7 +245,7 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
 function makePersistenceIcon(isSerializable: boolean): React.ReactNode {
     if (!isSerializable) {
         return (
-            <span title="Module settings won't be saved" className="inline-block align-middle text-base">
+            <span title="Module settings won't be saved" className="inline-block align-middle">
                 <CloudOff style={{ fontSize: 16 }} />
             </span>
         );

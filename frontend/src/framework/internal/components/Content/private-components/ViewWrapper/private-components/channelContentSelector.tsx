@@ -233,8 +233,8 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     className="bg-neutral px-2xs text-body-sm font-bolder flex h-12 items-center"
                 >
                     <div className="grow">
-                        Make <i className="text-accent-subtle font-bold">{props.receiver.getDisplayName()}</i> subscribe
-                        to...
+                        Make <i className="text-accent-subtle font-bolder">{props.receiver.getDisplayName()}</i>{" "}
+                        subscribe to...
                     </div>
                     <Button variant="ghost" tone="neutral" size="small" onClick={handleCancelChannelSelection} iconOnly>
                         <Close fontSize="small" />

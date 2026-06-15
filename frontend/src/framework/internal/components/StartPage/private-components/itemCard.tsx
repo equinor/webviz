@@ -112,14 +112,14 @@ function TooltipContent(
         return "This item has been deleted.";
     }
     return (
-        <div className="w-2xs text-base whitespace-normal">
+        <div className="text-body-md w-2xs whitespace-normal">
             <Heading as="h6" variant="strong" weight="bolder">
                 {props.title}
             </Heading>
             <Separator orientation="horizontal" />
-            {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
+            {props.description && <p className="text-body-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-sm truncate text-sm">
+                <ul className="mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>

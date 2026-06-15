@@ -200,7 +200,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
             </Button>
 
             {props.selected && (
-                <div className="bg-accent-strong absolute top-0 left-0 z-10 block h-full w-full rounded-sm opacity-50" />
+                <div className="bg-accent-strong z-overlay absolute top-0 left-0 block h-full w-full rounded-sm opacity-50" />
             )}
         </li>
     );
