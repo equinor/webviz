@@ -5,11 +5,11 @@ import { useAtom, useSetAtom } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { Select } from "@lib/newComponents/Select";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
@@ -58,8 +58,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         setValue: setParameterIdentString,
     });
 
-    function handlePlotTypeChanged(value: string) {
-        setPlotType(value as PlotType);
+    function handlePlotTypeChanged(value: PlotType | null) {
+        if (value === null) {
+            return;
+        }
+        setPlotType(value);
     }
 
     function handleParameterChanged(value: string[]) {
@@ -75,25 +78,34 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     }));
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Plot type" expanded>
-                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Plot settings" expanded>
-                <Label text="Show trendline" position="left" key="show-trendline">
-                    <Checkbox checked={showTrendline} onChange={(e) => setShowTrendline(e.target.checked)} />
-                </Label>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Parameter selection" expanded>
-                <Select
-                    value={parameterIdentString.value ? [parameterIdentString.value] : [""]}
-                    onChange={handleParameterChanged}
-                    options={parameterOptions}
-                    multiple={false}
-                    size={40}
-                    filter
-                />
-            </CollapsibleGroup>
-        </div>
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Plot settings" defaultOpen>
+                    <SettingWrapper label="Plot type">
+                        <Combobox<PlotType> items={plotTypes} value={plotType} onValueChange={handlePlotTypeChanged} />
+                    </SettingWrapper>
+                    <SettingWrapper>
+                        <CheckboxCompositions.WithLabel
+                            label="Show trendline"
+                            checked={showTrendline}
+                            onCheckedChange={setShowTrendline}
+                            size="small"
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Parameter selection" defaultOpen>
+                    <SettingWrapper label="Parameter" stacked>
+                        <Select
+                            value={parameterIdentString.value ? [parameterIdentString.value] : []}
+                            onValueChange={handleParameterChanged}
+                            options={parameterOptions}
+                            multiple={false}
+                            size={20}
+                            filter
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }
