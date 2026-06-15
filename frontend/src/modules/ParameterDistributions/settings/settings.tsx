@@ -1,3 +1,5 @@
+import React from "react";
+
 import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
@@ -46,7 +48,6 @@ import {
     selectedPriorEnsembleIdentAtom,
 } from "./atoms/persistableFixableAtoms";
 import { ParameterSortingInfoContent } from "./components/ParameterSortingInfoContent";
-import React from "react";
 
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
