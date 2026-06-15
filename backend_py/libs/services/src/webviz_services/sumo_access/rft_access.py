@@ -114,13 +114,15 @@ class RftAccess:
         result_table = (
             pl_table.group_by(["REAL", "DATE"])
             .agg([pl.col("DEPTH").alias("depth_arr"), pl.col(response_name).alias("value_arr")])
-            .select([
-                pl.lit(well_name).alias("well_name"),
-                pl.col("REAL").alias("realization"),
-                pl.col("DATE").dt.timestamp("ms").alias("timestamp_utc_ms"),
-                "depth_arr",
-                "value_arr",
-            ])
+            .select(
+                [
+                    pl.lit(well_name).alias("well_name"),
+                    pl.col("REAL").alias("realization"),
+                    pl.col("DATE").dt.timestamp("ms").alias("timestamp_utc_ms"),
+                    "depth_arr",
+                    "value_arr",
+                ]
+            )
             .collect()
         )
         timer.record_lap("process_table_in_polars")
