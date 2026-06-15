@@ -4,6 +4,9 @@ import { omit } from "lodash";
 export type LayoutClassProps = {
     /** Class names applied to the element. Should only be used for adjusting layout (margins, visibility, positioning) */
     layoutClassName?: string;
+
+    /** Styles applied to the element. Should only be used for adjusting layout (margins, visibility, positioning) */
+    layoutStyles?: React.CSSProperties;
 };
 
 /**
@@ -25,10 +28,17 @@ export function resolveWrapperProps<
     // wrapped components in other library components. By omitting them in the type definition of ComponentWrapperProps,
     // we prevent implementers from passing these props and bypassing the design system while still allowing us to use them
     // at runtime when necessary.
-    const baseProps = omit(props, "layoutClassName", "className" as keyof TWrappedProps, ...additionalOmitPaths);
+    const baseProps = omit(
+        props,
+        "layoutClassName",
+        "layoutStyles",
+        "className" as keyof TWrappedProps,
+        ...additionalOmitPaths,
+    );
 
     return {
         className: `${props.className ?? ""} ${props.layoutClassName ?? ""}`.trim(),
+        style: { ...props.styles, ...props.layoutStyles },
         ...baseProps,
     } as unknown as TBaseUIProps;
 }

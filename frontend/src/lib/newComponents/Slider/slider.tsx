@@ -443,7 +443,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
             value={internalValue}
             onValueChange={onValueChangeInternal}
             style={{
-                // @ts-expect-error -- css typing doesn't accept variables
                 "--lock-gutter-size": `${clamp(wrapperSize.width * 0.1, 20, 40)}px`,
 
                 // Couldn't find any EDS variable for these sizes; these pixels sizes are used in the design doc
@@ -452,6 +451,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                 // Needed to avoid some jumpiness in some cases
                 "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
+                ...baseProps.style,
             }}
             render={(rootProps, state) => (
                 <div {...rootProps}>
