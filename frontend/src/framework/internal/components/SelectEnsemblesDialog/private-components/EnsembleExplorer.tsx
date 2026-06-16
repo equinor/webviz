@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ArrowRight, Check, Remove } from "@mui/icons-material";
+import { Add, Check, FilterList, Info, Remove } from "@mui/icons-material";
 
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
@@ -9,12 +9,14 @@ import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Field } from "@lib/newComponents/Field";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { Select, type SelectOption } from "@lib/newComponents/Select";
+import { Hidden } from "@lib/newComponents/Hidden";
+import { Popover } from "@lib/newComponents/Popover";
+import { type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Table } from "@lib/newComponents/Table";
+import { TextInput } from "@lib/newComponents/TextInput";
 import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Typography } from "@lib/newComponents/Typography";
 
 import type { InternalRegularEnsembleSetting } from "../types";
 
@@ -35,6 +37,28 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
     const [ensemblesInSelectedCase, setEnsemblesInSelectedCase] = React.useState<EnsembleInfo_api[]>([]);
     const [activeSelectedEnsembles, setActiveSelectedEnsembles] = React.useState<RegularEnsembleIdent[]>([]);
+    const [filterText, setFilterText] = React.useState("");
+    const [hoveredEnsembleName, setHoveredEnsembleName] = React.useState<string | null>(null);
+
+    const filteredEnsembles = React.useMemo(
+        function filterSelectedEnsembles() {
+            if (filterText.trim() === "") {
+                return props.selectedEnsembles;
+            }
+
+            return props.selectedEnsembles.filter((ens) => {
+                const ensembleName = ens.ensembleIdent.getEnsembleName().toLowerCase();
+                const caseName = ens.caseName?.toLowerCase() ?? "";
+                const caseUuid = ens.ensembleIdent.getCaseUuid().toLowerCase();
+                const searchText = filterText.toLowerCase();
+
+                return (
+                    ensembleName.includes(searchText) || caseName.includes(searchText) || caseUuid.includes(searchText)
+                );
+            });
+        },
+        [filterText, props.selectedEnsembles],
+    );
 
     // --- Derived data ---
     const [activeEnsembleNames, setActiveEnsembleNames] = useValidArrayState<string>({
@@ -185,51 +209,141 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                         onCaseSelectionChange={handleCaseSelectedChange}
                     />
                     <Separator orientation="horizontal" />
-                    <div className="gap-x-sm flex w-full items-center justify-evenly">
-                        <FieldCompositions.Default
-                            label="Ensembles in case"
-                            indicator={`(${ensemblesInSelectedCase.length})`}
-                            layoutClassName="w-full"
-                        >
-                            <StatusWrapper
-                                className={`w-full ${!selectedCaseUuid ? "text-neutral-subtle" : ""}`}
-                                infoMessage={!selectedCaseUuid ? "No case selected" : undefined}
-                            >
-                                <Select
-                                    filter
-                                    filterPlaceholder="Filter ensembles..."
-                                    options={ensembleOptions}
-                                    value={activeEnsembleNames}
-                                    onValueChange={handleRegularEnsembleChanged}
-                                    disabled={!selectedCaseUuid}
-                                    size={5}
-                                    width="100%"
-                                    placeholder="No ensembles available..."
-                                    multiple
+                    <div className="gap-x-sm flex w-full items-center">
+                        <Field.Root layoutClassName="flex flex-col gap-y-2xs h-full grow">
+                            <div className="gap-md flex w-full flex-nowrap items-center">
+                                <Field.Label indicator={`(${ensemblesInSelectedCase.length})`}>
+                                    Ensembles in selected case
+                                </Field.Label>
+                                <span className="grow" />
+                                <TextInput
+                                    placeholder="Filter..."
+                                    startAdornment={<FilterList fontSize="inherit" className="mr-2xs" />}
+                                    layoutClassName="max-w-60"
+                                    value={filterText}
+                                    onValueChange={setFilterText}
+                                    size="small"
                                 />
-                            </StatusWrapper>
-                        </FieldCompositions.Default>
-                        {props.multiSelect && (
-                            <>
-                                <div className="gap-y-2xs flex flex-col">
+                                <Tooltip content="Remove selected ensembles">
                                     <Button
                                         variant="contained"
                                         size="small"
-                                        onClick={handleSelectRegularEnsembles}
+                                        onClick={handleRemoveSelectedEnsembles}
                                         tone="accent"
-                                        disabled={ensembleAlreadySelected || ensembleOptions.length === 0}
+                                        compact
+                                        disabled={props.selectedEnsembles.length === 0}
                                     >
-                                        <span className="flex justify-end">
-                                            Add
-                                            <ArrowRight fontSize="inherit" />
-                                        </span>
+                                        <Add style={{ fontSize: 16 }} /> Add all
                                     </Button>
-                                </div>
-                                <Field.Root layoutClassName="flex flex-col gap-y-2xs min-w-1/2 h-full">
-                                    <div className="gap-x-xs flex w-full items-center justify-between">
+                                </Tooltip>
+                            </div>
+                            <Table.Root
+                                layoutClassName="w-full h-40 overflow-auto"
+                                size="small"
+                                compact
+                                selectable="multiple"
+                                rowSelection={activeEnsembleNames}
+                                onChangeRowSelection={(rowKeys) => setActiveEnsembleNames(rowKeys as string[])}
+                            >
+                                <Table.Head sticky>
+                                    <Table.Column colKey="name">Name</Table.Column>
+                                    <Table.Column colKey="standard-results" width={100}>
+                                        Standard results
+                                    </Table.Column>
+                                    <Table.Column colKey="add" width={20}>
+                                        Add
+                                    </Table.Column>
+                                </Table.Head>
+                                <Table.Body emptyMessage="No ensembles available...">
+                                    {ensemblesInSelectedCase.map((ens) => {
+                                        return (
+                                            <Table.Row
+                                                key={ens.name}
+                                                rowKey={ens.name}
+                                                selectable
+                                                onPointerEnter={() => setHoveredEnsembleName(ens.name)}
+                                                onPointerLeave={() => setHoveredEnsembleName(null)}
+                                            >
+                                                <Table.Cell>{ens.name}</Table.Cell>
+                                                <Table.Cell>
+                                                    <Popover.Root>
+                                                        <Popover.Trigger tone="accent" variant="contained" size="small">
+                                                            <Info /> {ens.standardResults.length}
+                                                        </Popover.Trigger>
+                                                        <Popover.Popup side="top">
+                                                            <Popover.Content>
+                                                                <Typography
+                                                                    size="sm"
+                                                                    variant="subtle"
+                                                                    tone="neutral"
+                                                                    lineHeight="default"
+                                                                >
+                                                                    <strong>Standard results for this ensemble:</strong>
+                                                                    <ul className="pl-md list-disc">
+                                                                        {ens.standardResults.map((result, idx) => (
+                                                                            <li key={idx}>{result}</li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </Typography>
+                                                            </Popover.Content>
+                                                        </Popover.Popup>
+                                                    </Popover.Root>
+                                                </Table.Cell>
+                                                <Table.Cell>
+                                                    <Hidden
+                                                        hidden={
+                                                            hoveredEnsembleName !== ens.name ||
+                                                            !(
+                                                                activeEnsembleNames.length == 0 ||
+                                                                activeEnsembleNames.includes(ens.name)
+                                                            )
+                                                        }
+                                                    >
+                                                        <Tooltip
+                                                            content={
+                                                                activeEnsembleNames.length < 2
+                                                                    ? "Add ensemble"
+                                                                    : "Add selected ensembles"
+                                                            }
+                                                        >
+                                                            <Button
+                                                                variant="contained"
+                                                                size="small"
+                                                                tone="accent"
+                                                                iconOnly
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRegularEnsembleChanged(activeEnsembleNames);
+                                                                }}
+                                                            >
+                                                                <Add fontSize="inherit" />
+                                                            </Button>
+                                                        </Tooltip>
+                                                    </Hidden>
+                                                </Table.Cell>
+                                            </Table.Row>
+                                        );
+                                    })}
+                                </Table.Body>
+                            </Table.Root>
+                        </Field.Root>
+                        {props.multiSelect && (
+                            <>
+                                <Separator orientation="vertical" />
+                                <Field.Root layoutClassName="flex flex-col gap-y-2xs h-full grow">
+                                    <div className="gap-md flex w-full flex-nowrap items-center">
                                         <Field.Label indicator={`(${props.selectedEnsembles.length})`}>
                                             My selected Ensembles
                                         </Field.Label>
+                                        <span className="grow" />
+                                        <TextInput
+                                            placeholder="Filter..."
+                                            startAdornment={<FilterList fontSize="inherit" className="mr-2xs" />}
+                                            layoutClassName="max-w-60"
+                                            value={filterText}
+                                            onValueChange={setFilterText}
+                                            size="small"
+                                        />
                                         <Tooltip content="Remove selected ensembles">
                                             <Button
                                                 variant="contained"
@@ -245,18 +359,24 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                     </div>
                                     <Table.Root layoutClassName="w-full max-h-40 overflow-auto" size="small" compact>
                                         <Table.Head sticky>
-                                            <Table.Row>
-                                                <Table.Cell>Name</Table.Cell>
-                                                <Table.Cell>Case</Table.Cell>
-                                                <Table.Cell>Remove</Table.Cell>
-                                            </Table.Row>
+                                            <Table.Column colKey="name">Name</Table.Column>
+                                            <Table.Column colKey="case">Case</Table.Column>
+                                            <Table.Column colKey="remove" width={20}>
+                                                Remove
+                                            </Table.Column>
                                         </Table.Head>
                                         <Table.Body emptyMessage="No ensembles selected">
-                                            {props.selectedEnsembles.map((ens) => {
+                                            {filteredEnsembles.map((ens) => {
                                                 return (
-                                                    <Table.Row key={ens.ensembleIdent.toString()}>
+                                                    <Table.Row key={ens.ensembleIdent.toString()} selectable>
                                                         <Table.Cell>{ens.ensembleIdent.getEnsembleName()}</Table.Cell>
-                                                        <Table.Cell>{ens.caseName}</Table.Cell>
+                                                        <Table.Cell>
+                                                            {ens.caseName}
+                                                            {" - "}
+                                                            <Typography variant="subtle" tone="neutral" size="xs">
+                                                                {ens.ensembleIdent.getCaseUuid()}
+                                                            </Typography>
+                                                        </Table.Cell>
                                                         <Table.Cell>
                                                             <Tooltip content="Remove ensemble">
                                                                 <Button

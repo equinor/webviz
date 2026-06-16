@@ -3,6 +3,7 @@ import { Field as FieldBase } from "@base-ui/react";
 
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type LabelProps = ComponentWrapperProps<FieldLabelBaseProps> & {
     indicator?: string;
@@ -14,7 +15,7 @@ export function Label(props: LabelProps) {
     return (
         <FieldBase.Label
             {...baseProps}
-            className="gap-x-selectable flex items-center"
+            className={resolveClassNames(props.layoutClassName, "gap-x-selectable flex items-center")}
             render={<Typography as="label" family="body" variant="strong" size="md" tone="neutral" />}
         >
             {props.children}

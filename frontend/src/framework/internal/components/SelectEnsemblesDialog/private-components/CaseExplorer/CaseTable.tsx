@@ -108,7 +108,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             onChangeRowSelection={props.onCaseSelected}
         >
             <Table.Head sticky>
-                <Table.Column colKey="#" width={56} sortable={false}></Table.Column>
+                <Table.Column colKey="#" width={56} sortable={false} />
                 <Table.Column colKey="name" widthInPercent={24}>
                     Name / id
                 </Table.Column>
