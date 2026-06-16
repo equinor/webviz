@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/experimental-ct-react";
 
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import type { SelectOption } from "@lib/newComponents/Select";
+import { Select } from "@lib/newComponents/Select";
 
 test.use({ viewport: { width: 1920, height: 1080 } });
 
@@ -41,7 +41,7 @@ test.describe("Select", () => {
             selection = values;
         }
 
-        const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} />);
+        const select = await mount(<Select options={selectOptions1} size={SIZE} onValueChange={handleChange} />);
 
         // Click on first element and expect selection
         let options = await select.locator("div").nth(1).locator("div");
@@ -94,7 +94,9 @@ test.describe("Select", () => {
             selection = values;
         }
 
-        const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
+        const select = await mount(
+            <Select options={selectOptions1} size={SIZE} onValueChange={handleChange} multiple />,
+        );
 
         // Click on first element and expect selection
         const options = select.locator("div").nth(1).locator("div");
@@ -207,12 +209,14 @@ test.describe("Select", () => {
             selection = values;
         }
 
-        const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
+        const select = await mount(
+            <Select options={selectOptions1} size={SIZE} onValueChange={handleChange} multiple />,
+        );
         for (let i = 0; i < SIZE; i++) {
             expect(select).toContainText(selectOptions1[i].value);
         }
 
-        await select.update(<Select options={selectOptions2} size={SIZE} onChange={handleChange} multiple />);
+        await select.update(<Select options={selectOptions2} size={SIZE} onValueChange={handleChange} multiple />);
         for (let i = 0; i < SIZE; i++) {
             expect(select).toContainText(selectOptions2[i].value);
         }
@@ -237,7 +241,7 @@ test.describe("Select", () => {
                 options={selectOptions1}
                 size={SIZE}
                 showQuickSelectButtons={true}
-                onChange={handleChange}
+                onValueChange={handleChange}
                 multiple={true}
             />,
         );
