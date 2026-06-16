@@ -120,10 +120,6 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
         [selectedCaseUuid, activeEnsembleNames, props.selectedEnsembles],
     );
 
-    function handleRegularEnsembleChanged(ensembleNames: string[]) {
-        setActiveEnsembleNames(ensembleNames);
-    }
-
     function handleSelectRegularEnsembles() {
         if (!selectedCaseUuid || !selectedCaseName || activeEnsembleNames.length === 0 || ensembleAlreadySelected) {
             return;
@@ -313,7 +309,21 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                                                 iconOnly
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handleRegularEnsembleChanged(activeEnsembleNames);
+                                                                    if (activeEnsembleNames.length === 0) {
+                                                                        if (!selectedCaseUuid || !selectedCaseName) return;
+                                                                        try {
+                                                                            props.onSelectEnsemble({
+                                                                                ensembleIdent: new RegularEnsembleIdent(selectedCaseUuid, ens.name),
+                                                                                caseName: selectedCaseName,
+                                                                                color: props.nextEnsembleColor,
+                                                                                customName: null,
+                                                                            });
+                                                                        } catch (error) {
+                                                                            console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+                                                                        }
+                                                                    } else {
+                                                                        handleSelectRegularEnsembles();
+                                                                    }
                                                                 }}
                                                             >
                                                                 <Add fontSize="inherit" />
