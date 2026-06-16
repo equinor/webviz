@@ -120,6 +120,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         >
             <ComboboxBase.InputGroup
                 className={resolveClassNames(
+                    props.layoutClassName,
                     "form-element gap-x-sm pl-sm flex cursor-text items-center",
                     size !== "small" || (props.multiple && selectionMode === "chips") ? "py-xs" : undefined,
                     SELECTABLE_SIZES_CLASSNAMES[size],
