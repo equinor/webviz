@@ -147,156 +147,6 @@ const DEFAULT_PROPS = {
 
 type DefaultedSliderProps = typeof DEFAULT_PROPS & SliderProps;
 
-function isDualSliderValue(value: number | readonly number[]): value is readonly number[] {
-    return Array.isArray(value);
-}
-
-function useLockState(props: {
-    isDualSlider: boolean;
-    showMinLock: boolean;
-    showMaxLock: boolean;
-    minLocked?: boolean;
-    maxLocked?: boolean;
-    defaultMinLocked?: boolean;
-    defaultMaxLocked?: boolean;
-    onMinLockedChange?: (locked: boolean) => void;
-    onMaxLockedChange?: (locked: boolean) => void;
-}) {
-    const [internalMinLocked, internalSetMinLocked] = useOptInControlledValue(
-        props.defaultMinLocked ?? false,
-        props.minLocked,
-        props.onMinLockedChange,
-    );
-    const [internalMaxLocked, internalSetMaxLocked] = useOptInControlledValue(
-        props.defaultMaxLocked ?? false,
-        props.maxLocked,
-        props.onMaxLockedChange,
-    );
-
-    const setMinLocked = React.useCallback(
-        (locked: boolean) => {
-            if (!props.showMinLock) return;
-
-            internalSetMinLocked(locked);
-            if (locked && props.isDualSlider) {
-                internalSetMaxLocked(false);
-            }
-        },
-        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMinLock],
-    );
-
-    const setMaxLocked = React.useCallback(
-        (locked: boolean) => {
-            if (!props.showMaxLock) return;
-
-            internalSetMaxLocked(locked);
-            if (locked && props.isDualSlider) {
-                internalSetMinLocked(false);
-            }
-        },
-        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMaxLock],
-    );
-
-    return {
-        minLocked: internalMinLocked,
-        maxLocked: internalMaxLocked,
-        setMinLocked,
-        setMaxLocked,
-    };
-}
-
-function useLockedValueUpdate(props: {
-    value: number | readonly number[];
-    min: number;
-    max: number;
-    minLocked: boolean;
-    maxLocked: boolean;
-    onValueChange?: (
-        value: number | readonly number[],
-        eventDetails: SliderChangeEventDetails,
-        commit: boolean,
-    ) => void;
-}) {
-    const prevMinLocked = React.useRef(false);
-    const prevMaxLocked = React.useRef(false);
-
-    const { onValueChange } = props;
-
-    React.useEffect(() => {
-        const value = props.value;
-        const isDualValue = isDualSliderValue(value);
-        let newValue: typeof value | null = null;
-
-        // Min lock was just enabled
-        if (props.minLocked && !prevMinLocked.current) {
-            if (isDualValue) {
-                newValue = [props.min, value[1]];
-            } else {
-                newValue = props.min;
-            }
-        }
-
-        // Max lock was just enabled
-        if (props.maxLocked && !prevMaxLocked.current) {
-            if (isDualValue && newValue !== null) {
-                newValue = [(newValue as number[])[0], props.max];
-            } else if (isDualValue) {
-                newValue = [value[0], props.max];
-            } else {
-                newValue = props.max;
-            }
-        }
-
-        prevMinLocked.current = props.minLocked;
-        prevMaxLocked.current = props.maxLocked;
-
-        if (newValue !== null) {
-            onValueChange?.(newValue, { reason: "range-locked" }, true);
-        }
-    }, [props.minLocked, props.maxLocked, props.min, props.max, props.value, onValueChange]);
-}
-
-function useUnlockOnValueChange(props: {
-    value: number | readonly number[];
-    min: number;
-    max: number;
-    minLocked: boolean;
-    maxLocked: boolean;
-
-    setMinLocked: (locked: boolean) => void;
-    setMaxLocked: (locked: boolean) => void;
-}) {
-    const { setMinLocked, setMaxLocked } = props;
-    const prevValue = React.useRef(props.value);
-
-    React.useEffect(() => {
-        // Only check if value actually changed
-        if (isEqual(prevValue.current, props.value)) return;
-
-        const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
-        const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
-
-        if (props.minLocked && lowerValue > props.min) {
-            setMinLocked(false);
-        }
-
-        if (props.maxLocked && upperValue < props.max) {
-            setMaxLocked(false);
-        }
-
-        prevValue.current = props.value;
-    }, [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked]);
-}
-
-function resolveTrackHeightClassName(size: SelectableSize) {
-    return {
-        // Same size for small and default, as h-0.5 seems way to small
-        small: "h-1",
-        default: "h-1",
-        large: "h-1.5",
-    }[size];
-}
-
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
     const defaultedProps: DefaultedSliderProps = { ...DEFAULT_PROPS, ...props };
 
@@ -898,6 +748,157 @@ function DotLabel(props: {
             {formattedValue}
         </Typography>
     );
+}
+
+
+function isDualSliderValue(value: number | readonly number[]): value is readonly number[] {
+    return Array.isArray(value);
+}
+
+function useLockState(props: {
+    isDualSlider: boolean;
+    showMinLock: boolean;
+    showMaxLock: boolean;
+    minLocked?: boolean;
+    maxLocked?: boolean;
+    defaultMinLocked?: boolean;
+    defaultMaxLocked?: boolean;
+    onMinLockedChange?: (locked: boolean) => void;
+    onMaxLockedChange?: (locked: boolean) => void;
+}) {
+    const [internalMinLocked, internalSetMinLocked] = useOptInControlledValue(
+        props.defaultMinLocked ?? false,
+        props.minLocked,
+        props.onMinLockedChange,
+    );
+    const [internalMaxLocked, internalSetMaxLocked] = useOptInControlledValue(
+        props.defaultMaxLocked ?? false,
+        props.maxLocked,
+        props.onMaxLockedChange,
+    );
+
+    const setMinLocked = React.useCallback(
+        (locked: boolean) => {
+            if (!props.showMinLock) return;
+
+            internalSetMinLocked(locked);
+            if (locked && props.isDualSlider) {
+                internalSetMaxLocked(false);
+            }
+        },
+        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMinLock],
+    );
+
+    const setMaxLocked = React.useCallback(
+        (locked: boolean) => {
+            if (!props.showMaxLock) return;
+
+            internalSetMaxLocked(locked);
+            if (locked && props.isDualSlider) {
+                internalSetMinLocked(false);
+            }
+        },
+        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMaxLock],
+    );
+
+    return {
+        minLocked: internalMinLocked,
+        maxLocked: internalMaxLocked,
+        setMinLocked,
+        setMaxLocked,
+    };
+}
+
+function useLockedValueUpdate(props: {
+    value: number | readonly number[];
+    min: number;
+    max: number;
+    minLocked: boolean;
+    maxLocked: boolean;
+    onValueChange?: (
+        value: number | readonly number[],
+        eventDetails: SliderChangeEventDetails,
+        commit: boolean,
+    ) => void;
+}) {
+    const prevMinLocked = React.useRef(false);
+    const prevMaxLocked = React.useRef(false);
+
+    const { onValueChange } = props;
+
+    React.useEffect(() => {
+        const value = props.value;
+        const isDualValue = isDualSliderValue(value);
+        let newValue: typeof value | null = null;
+
+        // Min lock was just enabled
+        if (props.minLocked && !prevMinLocked.current) {
+            if (isDualValue) {
+                newValue = [props.min, value[1]];
+            } else {
+                newValue = props.min;
+            }
+        }
+
+        // Max lock was just enabled
+        if (props.maxLocked && !prevMaxLocked.current) {
+            if (isDualValue && newValue !== null) {
+                newValue = [(newValue as number[])[0], props.max];
+            } else if (isDualValue) {
+                newValue = [value[0], props.max];
+            } else {
+                newValue = props.max;
+            }
+        }
+
+        prevMinLocked.current = props.minLocked;
+        prevMaxLocked.current = props.maxLocked;
+
+        if (newValue !== null) {
+            onValueChange?.(newValue, { reason: "range-locked" }, true);
+        }
+    }, [props.minLocked, props.maxLocked, props.min, props.max, props.value, onValueChange]);
+}
+
+function useUnlockOnValueChange(props: {
+    value: number | readonly number[];
+    min: number;
+    max: number;
+    minLocked: boolean;
+    maxLocked: boolean;
+
+    setMinLocked: (locked: boolean) => void;
+    setMaxLocked: (locked: boolean) => void;
+}) {
+    const { setMinLocked, setMaxLocked } = props;
+    const prevValue = React.useRef(props.value);
+
+    React.useEffect(() => {
+        // Only check if value actually changed
+        if (isEqual(prevValue.current, props.value)) return;
+
+        const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
+        const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
+
+        if (props.minLocked && lowerValue > props.min) {
+            setMinLocked(false);
+        }
+
+        if (props.maxLocked && upperValue < props.max) {
+            setMaxLocked(false);
+        }
+
+        prevValue.current = props.value;
+    }, [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked]);
+}
+
+function resolveTrackHeightClassName(size: SelectableSize) {
+    return {
+        // Same size for small and default, as h-0.5 seems way to small
+        small: "h-1",
+        default: "h-1",
+        large: "h-1.5",
+    }[size];
 }
 
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(SliderComponent);
