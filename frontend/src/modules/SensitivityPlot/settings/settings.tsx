@@ -8,7 +8,6 @@ import { KeyKind } from "@framework/types/dataChannnel";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
-import { Hidden } from "@lib/newComponents/Hidden";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
