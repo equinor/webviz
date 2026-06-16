@@ -5,7 +5,7 @@ import { Tooltip } from "@base-ui/react";
 import type { SliderRootProps as SliderRootBaseProps, SliderRootState } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
 import { Lock, LockOpen } from "@mui/icons-material";
-import { clamp, clone, isEqual } from "lodash";
+import { chain, clamp, clone, isEqual, minBy } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -24,6 +24,7 @@ const INDICATOR_CLASS_NAME = "bg-accent-strong data-disabled:bg-disabled";
 export type SliderChangeEventDetails =
     | SliderBase.Root.ChangeEventDetails
     | { reason: "clamp-value" }
+    | { reason: "marker-clicked" }
     | { reason: "range-locked" };
 // If we want to follow base-ui even more directly, use these
 // | BaseUIChangeEventDetails<"clamp-min", SliderRootChangeEventCustomProperties>
@@ -194,7 +195,13 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const showMinLock = [true, "both", "min"].includes(defaultedProps.showRangeLocks);
     const showMaxLock = [true, "both", "max"].includes(defaultedProps.showRangeLocks);
 
-    const allMarkers = [defaultedProps.min, ...defaultedProps.markers, defaultedProps.max];
+    const allMarkers = React.useMemo(() => {
+        return chain([defaultedProps.min, ...defaultedProps.markers, defaultedProps.max])
+            .sortBy()
+            .sortedUniq()
+            .value();
+    }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min]);
+
     const isDualSlider = Array.isArray(internalValue);
     const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
@@ -437,14 +444,22 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                                             leftPosPercent={percentage}
                                             value={v}
                                             index={i}
+                                            disabled={props.disabled}
                                             markerLabels={defaultedProps.markerLabels}
                                             onClick={(v) => {
                                                 if (!isDualSliderValue(internalValue)) {
-                                                    setInternalValue(v);
-                                                } else if (v <= internalValue[0]) {
-                                                    setInternalValue([v, internalValue[1]]);
-                                                } else if (v >= internalValue[1]) {
-                                                    setInternalValue([internalValue[1], v]);
+                                                    updateValue(v, { reason: "marker-clicked" }, true);
+                                                    inputRefs[0].current?.focus();
+                                                } else {
+                                                    const nearestThumbIndex = minBy([0, 1], (idx) =>
+                                                        Math.abs(internalValue[idx] - v),
+                                                    )!;
+
+                                                    const newValue = [...internalValue];
+                                                    newValue[nearestThumbIndex] = v;
+
+                                                    updateValue(newValue, { reason: "marker-clicked" }, true);
+                                                    inputRefs[nearestThumbIndex].current?.focus();
                                                 }
                                             }}
                                         />
@@ -590,7 +605,7 @@ function Thumb(props: {
                         disabled={thumbHidden}
                         className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2 box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
                         index={props.index}
-                        inputRef={props.inputRefs[1]}
+                        inputRef={props.inputRefs[props.index]}
                         getAriaLabel={props.getAriaLabel}
                         style={positionStyle}
                         onKeyDownCapture={onThumbInputKeyDown}
@@ -714,6 +729,7 @@ function DotLabel(props: {
     value: number;
     index: number;
     markerLabels?: SliderProps["markerLabels"];
+    disabled?: boolean;
     onClick: (value: number) => void;
 }): React.ReactNode {
     if (!props.markerLabels) return null;
@@ -732,24 +748,23 @@ function DotLabel(props: {
 
     return (
         <Typography
-            data-pos={props.leftPosPercent}
             as="span"
+            aria-label={`Set slider to ${props.value}`}
+            data-disabled={props.disabled ? "" : undefined}
             family="body"
             variant="subtle"
             size="sm"
             tone="neutral"
-            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm hover:bg-input "
-            layoutStyles={{ left: `${props.leftPosPercent}%` }}
-            onPointerDownCapture={(evt) => {
-                evt.stopPropagation();
-                props.onClick(props.value);
-            }}
+            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm not-data-disabled:hover:bg-input "
+            layoutStyle={{ left: `${props.leftPosPercent}%` }}
+            // ! Slider will move the thumb during pointer-down event, so we stop it here to avoid jumpiness
+            onPointerDown={(evt) => !props.disabled && evt.stopPropagation()}
+            onClick={() => !props.disabled && props.onClick(props.value)}
         >
             {formattedValue}
         </Typography>
     );
 }
-
 
 function isDualSliderValue(value: number | readonly number[]): value is readonly number[] {
     return Array.isArray(value);
@@ -778,7 +793,7 @@ function useLockState(props: {
     );
 
     const setMinLocked = React.useCallback(
-        (locked: boolean) => {
+        function setMinLockedFunc(locked: boolean) {
             if (!props.showMinLock) return;
 
             internalSetMinLocked(locked);
@@ -790,7 +805,7 @@ function useLockState(props: {
     );
 
     const setMaxLocked = React.useCallback(
-        (locked: boolean) => {
+        function setMaxLockedFunc(locked: boolean) {
             if (!props.showMaxLock) return;
 
             internalSetMaxLocked(locked);

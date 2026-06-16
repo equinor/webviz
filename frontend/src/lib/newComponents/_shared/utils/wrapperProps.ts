@@ -1,3 +1,5 @@
+import type React from "react"
+
 import type { Many } from "lodash";
 import { omit } from "lodash";
 
@@ -6,7 +8,7 @@ export type LayoutClassProps = {
     layoutClassName?: string;
 
     /** Styles applied to the element. Should only be used for adjusting layout (margins, visibility, positioning) */
-    layoutStyles?: React.CSSProperties;
+    layoutStyle?: React.CSSProperties;
 };
 
 /**
@@ -31,14 +33,15 @@ export function resolveWrapperProps<
     const baseProps = omit(
         props,
         "layoutClassName",
-        "layoutStyles",
+        "layoutStyle",
+        "style" as keyof TWrappedProps,
         "className" as keyof TWrappedProps,
         ...additionalOmitPaths,
     );
 
     return {
         className: `${props.className ?? ""} ${props.layoutClassName ?? ""}`.trim(),
-        style: { ...props.styles, ...props.layoutStyles },
+        style: { ...props.style, ...props.layoutStyle },
         ...baseProps,
     } as unknown as TBaseUIProps;
 }

@@ -99,26 +99,27 @@ export const Marks: Story = {
     argTypes: {
         markerLabels: {
             control: "radio",
-            options: [false, true, "(v) => `${v}%`", "(_, i) => (i % 2 === 0 ? v : null)"],
+            options: [false, true, "(v) => `${v}%`", "(v, i) => (i % 2 === 0 ? v : null)"],
         },
     },
     render: (args) => {
         let markerLabels = args.markerLabels as
             | SliderProps["markerLabels"]
             | "(v) => `${v}%`"
-            | "(_, i) => (i % 2 === 0 ? v : null)";
+            | "(v, i) => (i % 2 === 0 ? v : null)";
 
         if (markerLabels === "(v) => `${v}%`") {
             markerLabels = (v: number) => `${v}%`;
         }
 
-        if (markerLabels === "(_, i) => (i % 2 === 0 ? v : null)") {
+        if (markerLabels === "(v, i) => (i % 2 === 0 ? v : null)") {
             markerLabels = (v: number, i: number) => (i % 2 === 0 ? v : null);
         }
 
         return (
             <div className="gap-y-lg flex flex-col">
                 <Slider defaultValue={20} {...args} markerLabels={markerLabels} />
+                <Slider defaultValue={[20, 80]} {...args} markerLabels={markerLabels} />
             </div>
         );
     },
