@@ -10,6 +10,7 @@ import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
+import { isArrayAsReadOnly } from "@lib/utils/arrays";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
@@ -267,6 +268,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         eventDetails: SliderBase.Root.ChangeEventDetails,
     ) {
         const activeValue = isDualSliderValue(newValue) ? newValue[eventDetails.activeThumbIndex] : newValue;
+        const prevActiveValue = isDualSliderValue(internalValue)
+            ? internalValue[eventDetails.activeThumbIndex]
+            : internalValue;
 
         if (isDualSliderValue(newValue)) {
             if (eventDetails.activeThumbIndex === 0 && activeValue > defaultedProps.min) {
@@ -284,25 +288,14 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         }
 
         if (defaultedProps.snapToMarkers && !allMarkers.includes(activeValue)) {
-            const closestMarker = allMarkers.reduce((prev, curr) => {
-                return Math.abs(curr - activeValue) < Math.abs(prev - activeValue) ? curr : prev;
-            });
+            let snapTarget: SnapTarget = "nearest";
 
-            let snappedValue = closestMarker as number | number[];
-
-            if (isDualSliderValue(newValue)) {
-                // ! The "push" thumb behavior might cause the other value to change as
-                // ! well, so we need to make sure it also remains snapped to a marker
-                let otherValue = eventDetails.activeThumbIndex === 0 ? newValue[1] : newValue[0];
-                const otherGotPushed = !allMarkers.includes(otherValue);
-
-                if (otherGotPushed) otherValue = closestMarker;
-
-                const snappedDualValue = [otherValue, otherValue];
-                snappedDualValue[eventDetails.activeThumbIndex] = closestMarker;
-
-                snappedValue = snappedDualValue;
+            // For keyboard movement, we should always go a new marker marker
+            if (eventDetails.reason === "keyboard") {
+                snapTarget = prevActiveValue - activeValue < 0 ? "next" : "prev";
             }
+
+            const snappedValue = getSnappedValue(allMarkers, newValue, snapTarget);
 
             // Only apply the snapped value if necessary
             if (!isEqual(snappedValue, internalValue)) {
@@ -914,6 +907,33 @@ function resolveTrackHeightClassName(size: SelectableSize) {
         default: "h-1",
         large: "h-1.5",
     }[size];
+}
+
+type SnapTarget = "nearest" | "next" | "prev";
+
+function getSnappedValue(
+    sortedMarkers: number[],
+    value: number | readonly number[],
+    target: SnapTarget,
+): number | readonly number[] {
+    if (isArrayAsReadOnly(value)) {
+        return value.map((v) => getSnappedValue(sortedMarkers, v, target)) as number[];
+    }
+
+    switch (target) {
+        case "nearest": {
+            const closestMarker = minBy(sortedMarkers, (marker) => Math.abs(marker - value))!;
+            return closestMarker;
+        }
+        case "next": {
+            const nextMarker = sortedMarkers.find((marker) => marker >= value);
+            return nextMarker !== undefined ? nextMarker : sortedMarkers[sortedMarkers.length - 1];
+        }
+        case "prev": {
+            const prevMaker = sortedMarkers.findLast((marker) => marker <= value);
+            return prevMaker !== undefined ? prevMaker : sortedMarkers[0];
+        }
+    }
 }
 
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(SliderComponent);

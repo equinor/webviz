@@ -50,3 +50,11 @@ export function sortTimeOrIntervalArray(values: string[]): string[] {
         return a.localeCompare(b);
     });
 }
+
+/**
+ * Simple wrapper around Array.isArray() that narrows the type as a readonly array. Note that
+ * this can't *actually* check that an array is readonly, it merely narrows it as if it was.
+ */
+export function isArrayAsReadOnly(arg: any): arg is readonly any[] {
+    return Array.isArray(arg);
+}
