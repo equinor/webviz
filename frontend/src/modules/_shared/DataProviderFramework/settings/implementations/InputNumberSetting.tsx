@@ -1,3 +1,4 @@
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 
 import type {
@@ -5,7 +6,6 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number];

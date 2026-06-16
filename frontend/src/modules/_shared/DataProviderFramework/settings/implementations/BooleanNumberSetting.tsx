@@ -1,5 +1,6 @@
 import type React from "react";
 
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Switch } from "@lib/newComponents/Switch";
 
@@ -7,7 +8,6 @@ import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = {
     enabled: boolean;

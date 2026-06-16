@@ -2,6 +2,7 @@ import React from "react";
 
 import { debounce } from "lodash";
 
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Slider } from "@lib/newComponents/Slider";
@@ -12,7 +13,6 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number, number]; // [min, max, step]
