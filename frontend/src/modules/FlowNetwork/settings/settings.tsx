@@ -128,7 +128,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 }) ?? []
                             }
                             value={selectedRealization.value ?? undefined}
-                            onValueChange={(v) => v && setSelectedRealization(v)}
+                            onValueChange={(v) => v !== null && setSelectedRealization(v)}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Frequency">
