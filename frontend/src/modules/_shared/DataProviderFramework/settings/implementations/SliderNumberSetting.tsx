@@ -1,7 +1,5 @@
 import React from "react";
 
-import { debounce } from "lodash";
-
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { NumberInput } from "@lib/newComponents/NumberInput";
