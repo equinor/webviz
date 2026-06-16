@@ -14,6 +14,13 @@ const meta: Meta<typeof Slider> = {
     component: Slider,
     parameters: {
         layout: "centered",
+        docs: {
+            description: {
+                component: `
+The \`Slider\` component allows users to select a value or range of values along a track by dragging a thumb. It supports both single-value and range selection, as well as various customization options for appearance and behavior. When explicitly using a singular value, the emitted change events will match the value type (and vice versa for dual sliders)
+                `,
+            },
+        },
     },
     decorators: [
         (Story) => (
@@ -56,6 +63,49 @@ export const Default: Story = {
     ),
 };
 
+export const Marks: Story = {
+    args: { markers: [10, 20, 40, 60, 80], snapToMarkers: true, markerLabels: true },
+    argTypes: {
+        markerLabels: {
+            control: "radio",
+            options: [false, true, "(v) => `${v}%`", "(v, i) => (i % 2 === 0 ? v : null)"],
+        },
+    },
+    parameters: {
+        docs: {
+            description: {
+                story: `
+Marks (or ticks) consist of three properties: \`markers\`, \`snapToMarkers\`, and \`markerLabels\`.
+- The \`markers\` prop can be used to define an assorted list of slider points that should show a marker. The slider will *always* have marks at the \`min\` and \`max\` values.
+- The \`snapToMarkers\` prop makes the slider thumb snap to the closest marker when dragged, or to the next/previous value when changing the value with keyboard inputs
+- The \`markerLabels\` prop can be used to show text labels underneath each marker. Labels can be clicked to quickly snap the slider to the marked value. Set it to \`true\` to just show the marker values directly, or provide a custom formatting function to render custom labels.	                
+`,
+            },
+        },
+    },
+    render: (args) => {
+        let markerLabels = args.markerLabels as
+            | SliderProps["markerLabels"]
+            | "(v) => `${v}%`"
+            | "(v, i) => (i % 2 === 0 ? v : null)";
+
+        if (markerLabels === "(v) => `${v}%`") {
+            markerLabels = (v: number) => `${v}%`;
+        }
+
+        if (markerLabels === "(v, i) => (i % 2 === 0 ? v : null)") {
+            markerLabels = (v: number, i: number) => (i % 2 === 0 ? v : null);
+        }
+
+        return (
+            <div className="gap-y-lg flex flex-col">
+                <Slider {...args} defaultValue={20} markerLabels={markerLabels} />
+                <Slider {...args} defaultValue={[20, 80]} markerLabels={markerLabels} />
+            </div>
+        );
+    },
+};
+
 export const Disabled: Story = {
     args: { disabled: true },
     render: (args) => (
@@ -92,37 +142,6 @@ export const Size: Story = {
             <Slider defaultValue={75} valueLabelDisplay="always" {...args} size="large" />
         </div>
     ),
-};
-
-export const Marks: Story = {
-    args: { markers: [10, 20, 40, 60, 80], snapToMarkers: true, markerLabels: true },
-    argTypes: {
-        markerLabels: {
-            control: "radio",
-            options: [false, true, "(v) => `${v}%`", "(v, i) => (i % 2 === 0 ? v : null)"],
-        },
-    },
-    render: (args) => {
-        let markerLabels = args.markerLabels as
-            | SliderProps["markerLabels"]
-            | "(v) => `${v}%`"
-            | "(v, i) => (i % 2 === 0 ? v : null)";
-
-        if (markerLabels === "(v) => `${v}%`") {
-            markerLabels = (v: number) => `${v}%`;
-        }
-
-        if (markerLabels === "(v, i) => (i % 2 === 0 ? v : null)") {
-            markerLabels = (v: number, i: number) => (i % 2 === 0 ? v : null);
-        }
-
-        return (
-            <div className="gap-y-lg flex flex-col">
-                <Slider defaultValue={20} {...args} markerLabels={markerLabels} />
-                <Slider defaultValue={[20, 80]} {...args} markerLabels={markerLabels} />
-            </div>
-        );
-    },
 };
 
 export const Controlled: Story = {
