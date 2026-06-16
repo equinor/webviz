@@ -105,13 +105,6 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         }
     }
 
-    function handleSelectedRealizationNumberChange(realizationNumber: string | null) {
-        if (realizationNumber === null) {
-            return;
-        }
-        setSelectedRealization(parseInt(realizationNumber));
-    }
-
     function handleDateIndexSelectionChange(newIndex: number | readonly number[]) {
         if (typeof newIndex === "number") {
             setSelectedCompletionDateIndex(newIndex);
@@ -133,27 +126,6 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
         throw new Error(
             "Invalid time step index range selection, expected number or array of numbers length 2, got: " + newIndex,
         );
-    }
-
-    function handleWellExclusionChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const value = e.target.value;
-        setWellExclusionText(value);
-    }
-
-    function handleWellSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const value = e.target.value;
-        setWellSearchText(value);
-    }
-
-    function handleHideZeroCompletionsChange(checked: boolean) {
-        setIsZeroCompletionsHidden(checked);
-    }
-
-    function handleSortWellsByChange(value: SortWellsBy | null) {
-        if (value === null) {
-            return;
-        }
-        setSortWellsBy(value);
     }
 
     function handleToggleSortDirection() {
@@ -218,14 +190,11 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             }
                         >
                             <Combobox
-                                items={availableRealizations.map((realization: number) => {
-                                    return {
-                                        label: realization.toString(),
-                                        value: realization.toString(),
-                                    };
+                                items={availableRealizations.map((real) => {
+                                    return { label: real.toString(), value: real };
                                 })}
-                                value={selectedRealization.value?.toString() ?? undefined}
-                                onValueChange={(value) => handleSelectedRealizationNumberChange(value)}
+                                value={selectedRealization.value ?? undefined}
+                                onValueChange={(v) => v !== null && setSelectedRealization(v)}
                                 disabled={!isSingleRealizationMode}
                                 placeholder="Select realization..."
                             />
@@ -239,7 +208,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             options={Object.values(TimeAggregationMode).map((elm: TimeAggregationMode) => {
                                 return { value: elm, label: TimeAggregationModeEnumToStringMapping[elm] };
                             })}
-                            onValueChange={(value) => setTimeAggregationMode(value)}
+                            onValueChange={setTimeAggregationMode}
                             size="small"
                             layout="horizontal"
                         />
@@ -268,14 +237,14 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                         <SwitchCompositions.WithLabel
                             label="Filter by completions"
                             checked={isZeroCompletionsHidden}
-                            onCheckedChange={handleHideZeroCompletionsChange}
+                            onCheckedChange={setIsZeroCompletionsHidden}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Exclude well names">
-                        <TextInput value={wellExclusionText} onChange={handleWellExclusionChange} placeholder={"..."} />
+                        <TextInput value={wellExclusionText} onValueChange={setWellExclusionText} placeholder={"..."} />
                     </SettingWrapper>
                     <SettingWrapper label="Search well names">
-                        <TextInput value={wellSearchText} onChange={handleWellSearchChange} placeholder={"..."} />
+                        <TextInput value={wellSearchText} onValueChange={setWellSearchText} placeholder={"..."} />
                     </SettingWrapper>
                     <SettingWrapper label="Sort wells by">
                         <div className="gap-xs flex items-center">
@@ -285,7 +254,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                         return { value: elm, label: SortWellsByEnumToStringMapping[elm] };
                                     })}
                                     value={sortWellsBy}
-                                    onValueChange={handleSortWellsByChange}
+                                    onValueChange={(v) => v && setSortWellsBy(v)}
                                 />
                             </div>
                             <Tooltip
