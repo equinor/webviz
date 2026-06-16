@@ -112,7 +112,7 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
 
     /**
      * Display the value of each marker below them.
-     * A function can be provided for further customization. Returning a empty node (null, false, etc) will fully remove the label */
+     * A function can be provided for further customization. Returning an empty node (null, false, etc) will fully remove the label */
     markerLabels?: boolean | ((markerValue: number, index: number) => React.ReactNode);
 
     /**
@@ -234,7 +234,7 @@ function SliderComponent(
     const wrapperSize = useElementSize(wrapperRef);
 
     if (props.value !== undefined && props.value !== internalValue) {
-        setInternalValue(props.value as number | number[]);
+        setInternalValue(props.value);
     }
 
     function getThumbAriaLabelFunc(index: number) {
@@ -247,8 +247,8 @@ function SliderComponent(
         function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
             setInternalValue(newValue);
 
-            onValueChange?.(newValue as any, eventDetails);
-            if (commit) onValueCommitted?.(newValue as any, eventDetails);
+            onValueChange?.(newValue, eventDetails);
+            if (commit) onValueCommitted?.(newValue, eventDetails);
         },
         [onValueChange, onValueCommitted],
     );
@@ -433,39 +433,6 @@ function SliderComponent(
                                 },
                             )}
                         >
-                            {allMarkers.map((v, i) => {
-                                const percentage =
-                                    ((v - defaultedProps.min) / (defaultedProps.max - defaultedProps.min)) * 100;
-                                return (
-                                    <React.Fragment key={i}>
-                                        <Dot leftPosPercent={percentage} />
-                                        <DotLabel
-                                            leftPosPercent={percentage}
-                                            value={v}
-                                            index={i}
-                                            disabled={props.disabled}
-                                            markerLabels={defaultedProps.markerLabels}
-                                            onClick={(v) => {
-                                                if (!isDualSliderValue(internalValue)) {
-                                                    updateValue(v, { reason: "marker-clicked" }, true);
-                                                    inputRefs[0].current?.focus();
-                                                } else {
-                                                    const nearestThumbIndex = minBy([0, 1], (idx) =>
-                                                        Math.abs(internalValue[idx] - v),
-                                                    )!;
-
-                                                    const newValue = [...internalValue];
-                                                    newValue[nearestThumbIndex] = v;
-
-                                                    updateValue(newValue, { reason: "marker-clicked" }, true);
-                                                    inputRefs[nearestThumbIndex].current?.focus();
-                                                }
-                                            }}
-                                        />
-                                    </React.Fragment>
-                                );
-                            })}
-
                             {!props.noIndicator && (
                                 <SliderBase.Indicator
                                     className={resolveClassNames("rounded-lg", {
@@ -508,6 +475,41 @@ function SliderComponent(
                                 onSetMinLocked={setMinLocked}
                                 onSetMaxLocked={setMaxLocked}
                             />
+
+                            {allMarkers.map((v, i) => {
+                                const range = defaultedProps.max - defaultedProps.min;
+                                const percentage = range === 0 ? 0 : ((v - defaultedProps.min) / range) * 100;
+
+                                return (
+                                    <React.Fragment key={i}>
+                                        <Dot leftPosPercent={percentage} />
+                                        <DotLabel
+                                            leftPosPercent={percentage}
+                                            value={v}
+                                            index={i}
+                                            size={componentSize}
+                                            disabled={props.disabled}
+                                            markerLabels={defaultedProps.markerLabels}
+                                            onClick={(v) => {
+                                                if (!isDualSliderValue(internalValue)) {
+                                                    updateValue(v, { reason: "marker-clicked" }, true);
+                                                    inputRefs[0].current?.focus();
+                                                } else {
+                                                    const nearestThumbIndex = minBy([0, 1], (idx) =>
+                                                        Math.abs(internalValue[idx] - v),
+                                                    )!;
+
+                                                    const newValue = [...internalValue];
+                                                    newValue[nearestThumbIndex] = v;
+
+                                                    updateValue(newValue, { reason: "marker-clicked" }, true);
+                                                    inputRefs[nearestThumbIndex].current?.focus();
+                                                }
+                                            }}
+                                        />
+                                    </React.Fragment>
+                                );
+                            })}
                         </SliderBase.Track>
 
                         {showMaxLock && (
@@ -602,7 +604,8 @@ function Thumb(props: {
                         // Hiding via style to keep refs stable
                         hidden={thumbHidden}
                         disabled={thumbHidden}
-                        className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2 box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                        // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
+                        className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
                         index={props.index}
                         inputRef={props.inputRefs[props.index]}
                         getAriaLabel={props.getAriaLabel}
@@ -718,7 +721,7 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
 
 function Dot(props: { leftPosPercent: number }) {
     const className =
-        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4 -translate-x-[4px]";
+        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4 -translate-x-1/2";
 
     return <div className={className} style={{ left: `${props.leftPosPercent}%` }} />;
 }
@@ -729,11 +732,13 @@ function DotLabel(props: {
     index: number;
     markerLabels?: SliderProps["markerLabels"];
     disabled?: boolean;
+    size: SelectableSize;
     onClick: (value: number) => void;
 }): React.ReactNode {
     if (!props.markerLabels) return null;
 
     let formattedValue;
+    const textSize = getTextSizeForSelectableSize(props.size);
 
     if (typeof props.markerLabels === "function") {
         formattedValue = props.markerLabels(props.value, props.index);
@@ -745,20 +750,29 @@ function DotLabel(props: {
         return null;
     }
 
+    function handleOnClick() {
+        if (props.disabled) return;
+        props.onClick(props.value);
+    }
+
     return (
         <Typography
             as="span"
+            role="button"
+            tabIndex={props.disabled ? -1 : 0}
+            aria-disabled={props.disabled ? true : undefined}
             aria-label={`Set slider to ${props.value}`}
             data-disabled={props.disabled ? "" : undefined}
             family="body"
             variant="subtle"
-            size="sm"
+            size={getNextTextSize(textSize, -1)}
             tone="neutral"
-            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm not-data-disabled:hover:bg-input "
+            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm not-data-disabled:hover:bg-input focus:outline-focus"
             layoutStyle={{ left: `${props.leftPosPercent}%` }}
             // ! Slider will move the thumb during pointer-down event, so we stop it here to avoid jumpiness
+            onClick={handleOnClick}
+            onKeyDown={(evt) => ["Enter", " "].includes(evt.key) && handleOnClick()}
             onPointerDown={(evt) => !props.disabled && evt.stopPropagation()}
-            onClick={() => !props.disabled && props.onClick(props.value)}
         >
             {formattedValue}
         </Typography>
@@ -928,8 +942,8 @@ function getSnappedValue(sortedMarkers: number[], value: number | number[], targ
             return nextMarker !== undefined ? nextMarker : sortedMarkers[sortedMarkers.length - 1];
         }
         case "prev": {
-            const prevMaker = sortedMarkers.findLast((marker) => marker <= value);
-            return prevMaker !== undefined ? prevMaker : sortedMarkers[0];
+            const prevMarker = sortedMarkers.findLast((marker) => marker <= value);
+            return prevMarker !== undefined ? prevMarker : sortedMarkers[0];
         }
     }
 }

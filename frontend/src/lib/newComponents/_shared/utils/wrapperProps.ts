@@ -1,4 +1,4 @@
-import type React from "react"
+import type React from "react";
 
 import type { Many } from "lodash";
 import { omit } from "lodash";
