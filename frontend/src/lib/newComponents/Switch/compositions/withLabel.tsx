@@ -9,8 +9,8 @@ import {
 import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { SwitchProps } from "../_components/switch";
-import { Switch } from "../_components/switch";
+import type { SwitchProps } from "../_baseComponents/switch";
+import { Switch } from "../_baseComponents/switch";
 
 export type WithLabelProps = Omit<SwitchProps, "ref"> & {
     label?: string;

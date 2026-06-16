@@ -44,11 +44,11 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
     if (props.oil == null && props.gas == null && props.water == null) return null;
 
     return (
-        <div className="-ml-2 text-xs">
+        <div className="-ml-2xs text-xs">
             <button
                 className={resolveClassNames(
-                    "pl-2 pr-1 rounded-r-sm flex items-center gap-2 hover:bg-gray-300 w-full",
-                    { "bg-gray-300": !collapsed },
+                    "pl-2xs pr-3xs gap-2xs hover:bg-neutral-hover flex w-full items-center rounded-r-sm",
+                    { "bg-neutral-subtle": !collapsed },
                 )}
                 onClick={() => setCollapsed(!collapsed)}
             >
@@ -71,7 +71,7 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
             </button>
 
             {!collapsed && (
-                <ul className="bg-gray-200 px-2 w-full space-y-1">
+                <ul className="bg-neutral-canvas w-full space-y-1 px-2">
                     <FlowValueText value={props.oil} name="Oil" color={COLORS[props.phase].oil} unit="Sm³" />
                     <FlowValueText value={props.gas} name="Gas" color={COLORS[props.phase].gas} unit="Sm³" />
                     <FlowValueText value={props.water} name="Water" color={COLORS[props.phase].water} unit="m³" />
