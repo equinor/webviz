@@ -13,6 +13,7 @@ import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { Select, type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
 import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { Table } from "@lib/newComponents/Table";
 import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../types";
@@ -97,10 +98,6 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
 
     function handleRegularEnsembleChanged(ensembleNames: string[]) {
         setActiveEnsembleNames(ensembleNames);
-    }
-
-    function handleActiveSelectedEnsembleChanged(ensembleIdents: RegularEnsembleIdent[]) {
-        setActiveSelectedEnsembles(ensembleIdents);
     }
 
     function handleSelectRegularEnsembles() {
@@ -228,7 +225,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                         </span>
                                     </Button>
                                 </div>
-                                <Field.Root layoutClassName="flex flex-col gap-y-2xs min-w-1/2">
+                                <Field.Root layoutClassName="flex flex-col gap-y-2xs min-w-1/2 h-full">
                                     <div className="gap-x-xs flex w-full items-center justify-between">
                                         <Field.Label indicator={`(${props.selectedEnsembles.length})`}>
                                             My selected Ensembles
@@ -239,27 +236,47 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                                 size="small"
                                                 onClick={handleRemoveSelectedEnsembles}
                                                 tone="danger"
-                                                iconOnly
-                                                disabled={activeSelectedEnsembles.length === 0}
+                                                compact
+                                                disabled={props.selectedEnsembles.length === 0}
                                             >
-                                                <Remove style={{ fontSize: 16 }} />
+                                                <Remove style={{ fontSize: 16 }} /> Remove all
                                             </Button>
                                         </Tooltip>
                                     </div>
-                                    <Select
-                                        filter
-                                        filterPlaceholder="Filter selected ensembles..."
-                                        options={props.selectedEnsembles.map((ens) => ({
-                                            label: `${ens.ensembleIdent.getEnsembleName()} (${ens.caseName} [${ens.ensembleIdent.getCaseUuid()}])`,
-                                            value: ens.ensembleIdent,
-                                        }))}
-                                        value={activeSelectedEnsembles}
-                                        onValueChange={handleActiveSelectedEnsembleChanged}
-                                        size={5}
-                                        layoutClassName="w-full"
-                                        placeholder="No ensembles selected..."
-                                        multiple
-                                    />
+                                    <Table.Root layoutClassName="w-full max-h-40 overflow-auto" size="small" compact>
+                                        <Table.Head sticky>
+                                            <Table.Row>
+                                                <Table.Cell>Name</Table.Cell>
+                                                <Table.Cell>Case</Table.Cell>
+                                                <Table.Cell>Remove</Table.Cell>
+                                            </Table.Row>
+                                        </Table.Head>
+                                        <Table.Body emptyMessage="No ensembles selected">
+                                            {props.selectedEnsembles.map((ens) => {
+                                                return (
+                                                    <Table.Row key={ens.ensembleIdent.toString()}>
+                                                        <Table.Cell>{ens.ensembleIdent.getEnsembleName()}</Table.Cell>
+                                                        <Table.Cell>{ens.caseName}</Table.Cell>
+                                                        <Table.Cell>
+                                                            <Tooltip content="Remove ensemble">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="small"
+                                                                    onClick={() =>
+                                                                        props.onRemoveEnsembles?.(ens.ensembleIdent)
+                                                                    }
+                                                                    tone="danger"
+                                                                    iconOnly
+                                                                >
+                                                                    <Remove fontSize="inherit" />
+                                                                </Button>
+                                                            </Tooltip>
+                                                        </Table.Cell>
+                                                    </Table.Row>
+                                                );
+                                            })}
+                                        </Table.Body>
+                                    </Table.Root>
                                 </Field.Root>
                             </>
                         )}
