@@ -10,7 +10,6 @@ import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
-import { isArrayAsReadOnly } from "@lib/utils/arrays";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
@@ -31,10 +30,10 @@ export type SliderChangeEventDetails =
 // | BaseUIChangeEventDetails<"clamp-min", SliderRootChangeEventCustomProperties>
 // | BaseUIChangeEventDetails<"clamp-max", SliderRootChangeEventCustomProperties>;
 
-export type SliderProps = ComponentWrapperProps<
+export type SliderProps<TValue extends number | readonly number[] = number | readonly number[]> = ComponentWrapperProps<
     // ! Orientation would require a lot of extra checks, and we currently
     // ! are not using vertical sliders anywhere, so we disable it for now
-    Omit<SliderRootBaseProps, "orientation">
+    Omit<SliderRootBaseProps<TValue>, "orientation">
 > & {
     /**
      * Shows a button and gutter tracks for locking value to min and/or max values
@@ -129,17 +128,25 @@ export type SliderProps = ComponentWrapperProps<
      *
      * Event is extended to include lock-toggles as an event-reason
      */
-    onValueChange?: (value: number | readonly number[], eventDetails: SliderChangeEventDetails) => void;
+    onValueChange?: (
+        value: TValue extends number ? number : readonly number[],
+        eventDetails: SliderChangeEventDetails,
+    ) => void;
+
     /**
      * See `Slider.Root.onValueCommit`
      *
      * Event is extended to include lock-toggles as an event-reason
      */
-    onValueCommitted?: (value: number | readonly number[], eventDetails: SliderChangeEventDetails) => void;
+    onValueCommitted?: (
+        value: TValue extends number ? number : readonly number[],
+        eventDetails: SliderChangeEventDetails,
+    ) => void;
 };
 const DEFAULT_PROPS = {
     min: 0,
     max: 100,
+    defaultValue: 0,
     showRangeLocks: "none" as NonNullable<SliderProps["showRangeLocks"]>,
     valueLabelDisplay: "auto" as NonNullable<SliderProps["valueLabelDisplay"]>,
     markers: [] as number[],
@@ -147,12 +154,18 @@ const DEFAULT_PROPS = {
     thumbCollisionBehavior: "push" as NonNullable<SliderProps["thumbCollisionBehavior"]>,
 } satisfies Partial<SliderProps>;
 
-type DefaultedSliderProps = typeof DEFAULT_PROPS & SliderProps;
+type InternalOnChangeCallback = (value: number | number[], eventDetails: SliderChangeEventDetails) => void;
 
-function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const defaultedProps: DefaultedSliderProps = { ...DEFAULT_PROPS, ...props };
+function SliderComponent(
+    // ! Note: To simplify internal logic, we always type the slider props as number | number[] using some direct
+    // ! casting. Externally, slider users will see the change event's with the same type as the provided values
+    props: SliderProps<number | number[]>,
+    ref: React.ForwardedRef<HTMLDivElement>,
+): React.ReactNode {
+    const defaultedProps = { ...DEFAULT_PROPS, ...props };
 
-    const { onValueChange, onValueCommitted } = props;
+    const onValueChange = props.onValueChange as InternalOnChangeCallback;
+    const onValueCommitted = props.onValueCommitted as InternalOnChangeCallback;
 
     const baseProps = resolveWrapperProps(defaultedProps, [
         "showRangeLocks",
@@ -185,7 +198,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const minGutterDotRef = React.useRef<HTMLDivElement | null>(null);
     const maxGutterDotRef = React.useRef<HTMLDivElement | null>(null);
 
-    const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue ?? 0);
+    const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue);
     const [prevMin, setPrevMin] = React.useState(defaultedProps.min);
     const [prevMax, setPrevMax] = React.useState(defaultedProps.max);
 
@@ -221,7 +234,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const wrapperSize = useElementSize(wrapperRef);
 
     if (props.value !== undefined && props.value !== internalValue) {
-        setInternalValue(props.value);
+        setInternalValue(props.value as number | number[]);
     }
 
     function getThumbAriaLabelFunc(index: number) {
@@ -231,15 +244,11 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     }
 
     const updateValue = React.useCallback(
-        function updateValue(
-            newValue: number | readonly number[],
-            eventDetails: SliderChangeEventDetails,
-            commit?: boolean,
-        ) {
+        function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
             setInternalValue(newValue);
-            onValueChange?.(newValue, eventDetails);
 
-            if (commit) onValueCommitted?.(newValue, eventDetails);
+            onValueChange?.(newValue as any, eventDetails);
+            if (commit) onValueCommitted?.(newValue as any, eventDetails);
         },
         [onValueChange, onValueCommitted],
     );
@@ -263,10 +272,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         setMaxLocked,
     });
 
-    function onValueChangeInternal(
-        newValue: number | readonly number[],
-        eventDetails: SliderBase.Root.ChangeEventDetails,
-    ) {
+    function onValueChangeInternal(newValue: number | number[], eventDetails: SliderBase.Root.ChangeEventDetails) {
         const activeValue = isDualSliderValue(newValue) ? newValue[eventDetails.activeThumbIndex] : newValue;
         const prevActiveValue = isDualSliderValue(internalValue)
             ? internalValue[eventDetails.activeThumbIndex]
@@ -818,16 +824,12 @@ function useLockState(props: {
 }
 
 function useLockedValueUpdate(props: {
-    value: number | readonly number[];
+    value: number | number[];
     min: number;
     max: number;
     minLocked: boolean;
     maxLocked: boolean;
-    onValueChange?: (
-        value: number | readonly number[],
-        eventDetails: SliderChangeEventDetails,
-        commit: boolean,
-    ) => void;
+    onValueChange?: (value: number | number[], eventDetails: SliderChangeEventDetails, commit: boolean) => void;
 }) {
     const prevMinLocked = React.useRef(false);
     const prevMaxLocked = React.useRef(false);
@@ -835,9 +837,9 @@ function useLockedValueUpdate(props: {
     const { onValueChange } = props;
 
     React.useEffect(() => {
-        const value = props.value;
+        const value = props.value as number | number[];
         const isDualValue = isDualSliderValue(value);
-        let newValue: typeof value | null = null;
+        let newValue: number | number[] | null = null;
 
         // Min lock was just enabled
         if (props.minLocked && !prevMinLocked.current) {
@@ -911,12 +913,8 @@ function resolveTrackHeightClassName(size: SelectableSize) {
 
 type SnapTarget = "nearest" | "next" | "prev";
 
-function getSnappedValue(
-    sortedMarkers: number[],
-    value: number | readonly number[],
-    target: SnapTarget,
-): number | readonly number[] {
-    if (isArrayAsReadOnly(value)) {
+function getSnappedValue(sortedMarkers: number[], value: number | number[], target: SnapTarget): number | number[] {
+    if (Array.isArray(value)) {
         return value.map((v) => getSnappedValue(sortedMarkers, v, target)) as number[];
     }
 
@@ -936,4 +934,8 @@ function getSnappedValue(
     }
 }
 
-export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(SliderComponent);
+export const Slider = React.forwardRef(SliderComponent) as <
+    Value extends number | readonly number[] = number | readonly number[],
+>(
+    props: SliderProps<Value> & React.RefAttributes<HTMLDivElement>,
+) => React.ReactNode;
