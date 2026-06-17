@@ -348,10 +348,7 @@ function SliderComponent(
     return (
         <SliderBase.Root
             {...baseProps}
-            className={resolveClassNames(
-                "gap-x-2xs px-2xs flex items-center data-disabled:cursor-not-allowed",
-                props.layoutClassName,
-            )}
+            className={resolveClassNames("gap-x-2xs px-2xs flex items-center", props.layoutClassName)}
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}
@@ -379,10 +376,13 @@ function SliderComponent(
 
                     <SliderBase.Control
                         ref={ref}
-                        className={resolveClassNames("group py-xs flex w-full touch-none items-center select-none", {
-                            "pl-(--lock-gutter-size)": showMinLock,
-                            "pr-(--lock-gutter-size)": showMaxLock,
-                        })}
+                        className={resolveClassNames(
+                            "group py-xs flex w-full cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed",
+                            {
+                                "pl-(--lock-gutter-size)": showMinLock,
+                                "pr-(--lock-gutter-size)": showMaxLock,
+                            },
+                        )}
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
                         onFocus={() => setIsFocused(true)}
