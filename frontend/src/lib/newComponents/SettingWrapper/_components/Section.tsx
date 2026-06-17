@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Collapsible } from "@base-ui/react";
 import { ExpandMore } from "@mui/icons-material";
@@ -39,12 +39,12 @@ export function Section(props: SectionProps) {
         <Collapsible.Root
             defaultOpen={props.defaultOpen}
             disabled={disabled}
-            className="contents group/settingsSection"
+            className="group/settingsSection contents"
         >
             <div
                 className={resolveClassNames(
-                    "col-span-3 gap-y-md shadow-elevation-raised flex items-center justify-between border-b",
-                    "group-data-collapsible-scroll-area/scrollarea:sticky group-data-collapsible-scroll-area/scrollarea:top-0 group-data-collapsible-scroll-area/scrollarea:z-sticky",
+                    "gap-y-md shadow-elevation-raised col-span-3 flex items-center justify-between border-b",
+                    "group-data-collapsible-scroll-area/scrollarea:z-sticky group-data-collapsible-scroll-area/scrollarea:sticky group-data-collapsible-scroll-area/scrollarea:top-0",
                     TONE_TO_CLASSNAMES[disabled ? "disabled" : tone],
                     { "pointer-events-none cursor-not-allowed": disabled },
                 )}
@@ -63,7 +63,7 @@ export function Section(props: SectionProps) {
             <Collapsible.Panel
                 keepMounted
                 data-in-section
-                className="setting-section-panel col-span-3 grid grid-cols-subgrid overflow-hidden h-(--collapsible-panel-height) transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas [&>.contents>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:py-0 [&>[data-hidden]>.setting-row]:overflow-hidden"
+                className="setting-section-panel [&>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas [&>.contents>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas col-span-3 grid h-(--collapsible-panel-height) grid-cols-subgrid overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:overflow-hidden [&>[data-hidden]>.setting-row]:py-0"
             >
                 {props.children}
             </Collapsible.Panel>

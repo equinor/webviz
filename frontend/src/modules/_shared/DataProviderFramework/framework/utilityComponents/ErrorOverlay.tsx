@@ -1,11 +1,10 @@
 import React from "react";
 
-import { Dialog } from "@lib/components/Dialog";
+import { AlertDialog } from "@lib/newComponents/AlertDialog/alertDialog";
 import { Button } from "@lib/newComponents/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic, type ItemDelegate } from "../../delegates/ItemDelegate";
-import { AlertDialog } from "@lib/newComponents/AlertDialog/alertDialog";
 
 export type ErrorOverlayProps = {
     itemDelegate: ItemDelegate;

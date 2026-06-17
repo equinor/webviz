@@ -11,14 +11,15 @@ import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
-import { Slider } from "@lib/newComponents/Slider";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { Button } from "@lib/newComponents/Button";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { Field } from "@lib/newComponents/Field";
+import { Slider } from "@lib/newComponents/Slider";
 import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
 import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
 import type { SmartNodeSelectorTag } from "@lib/newComponents/SmartNodeSelector/smartNodeSelector";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Typography } from "@lib/newComponents/Typography";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
@@ -27,7 +28,6 @@ import {
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
 } from "../private-utils/smartNodeSelectorUtils";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
@@ -188,7 +188,10 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             if (valueSelection.length !== 2) {
                 throw new Error(`Value selection must have 2 values`);
             }
-            const rounded: [number, number] = [roundContinuousValue(valueSelection[0]), roundContinuousValue(valueSelection[1])];
+            const rounded: [number, number] = [
+                roundContinuousValue(valueSelection[0]),
+                roundContinuousValue(valueSelection[1]),
+            ];
             setImmediateSliderValues((prev) => ({ ...prev, [parameterIdentString]: rounded }));
             debouncedContinuousRangeChange(parameterIdentString, rounded);
         },
@@ -262,9 +265,9 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 step={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max)}
                 value={immediateValue ?? [valueSelection.start, valueSelection.end]}
                 valueLabelDisplay="auto"
-                valueLabelFormat={(value) => roundContinuousValue(value)}
-                onValueChange={(newValue) =>
-                    handleContinuousParameterValueRangeChange(parameterIdentString, newValue as number[])
+                valueLabelFormat={(value: number) => roundContinuousValue(value)}
+                onValueChange={(newValue: number[]) =>
+                    handleContinuousParameterValueRangeChange(parameterIdentString, newValue)
                 }
                 showRangeLocks
             />

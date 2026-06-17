@@ -7,7 +7,6 @@ import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSess
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
-import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { Workbench } from "@framework/Workbench";

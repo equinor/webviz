@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BugReport, DeveloperMode, DeveloperModeOutlined } from "@mui/icons-material";
+import { DeveloperMode } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
