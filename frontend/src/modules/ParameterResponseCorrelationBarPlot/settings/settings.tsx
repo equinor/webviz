@@ -2,7 +2,6 @@ import { useAtom } from "jotai";
 
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import { Collapsible } from "@lib/newComponents/Collapsible";
-import { NumberInput } from "@lib/newComponents/NumberInput";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Slider } from "@lib/newComponents/Slider";
 
@@ -18,10 +17,9 @@ export function Settings() {
         const newValue = Array.isArray(value) ? value[0] : (value as number);
         setNumParams(newValue);
     }
-    function handleCorrCutOffChange(value: number | null) {
-        // Ensure threshold is between 0 and 1
-        const threshold = value === null ? 0.0 : Math.max(0.0, Math.min(1.0, Math.abs(value)));
-        setCorrCutOff(threshold);
+    function handleCorrCutOffChange(value: number | readonly number[]) {
+        const newValue = Array.isArray(value) ? value[0] : (value as number);
+        setCorrCutOff(newValue);
     }
     return (
         <Collapsible.ScrollArea>
@@ -37,13 +35,14 @@ export function Settings() {
                             valueLabelDisplay="auto"
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Correlation cutoff (absolute)">
-                        <NumberInput
+                    <SettingWrapper label={`Correlation cutoff (absolute): ${corrCutOff}`}>
+                        <Slider
                             value={corrCutOff}
                             onValueChange={handleCorrCutOffChange}
                             min={0}
-                            max={1}
                             step={0.01}
+                            max={1}
+                            valueLabelDisplay="auto"
                         />
                     </SettingWrapper>
                     <SettingWrapper>

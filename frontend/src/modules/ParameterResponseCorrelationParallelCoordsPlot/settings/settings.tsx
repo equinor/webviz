@@ -2,23 +2,20 @@ import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Slider } from "@lib/newComponents/Slider";
 
 import type { Interfaces } from "../interfaces";
 
-import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
+import { corrCutOffAtom, numParamsAtom } from "./atoms/baseAtoms";
 
 //-----------------------------------------------------------------------------------------------------------
 export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     const [numParams, setNumParams] = useAtom(numParamsAtom);
     const [corrCutOff, setCorrCutOff] = useAtom(corrCutOffAtom);
-    const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
 
     useApplyInitialSettingsToState(initialSettings, "numParams", "number", setNumParams);
-    useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
     useApplyInitialSettingsToState(initialSettings, "corrCutOff", "number", setCorrCutOff);
 
     function handleNumParamsChange(value: number | readonly number[]) {
@@ -43,7 +40,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             valueLabelDisplay="auto"
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Correlation cut-off (abs)">
+                    <SettingWrapper label={`Correlation cutoff (absolute): ${corrCutOff}`}>
                         <Slider
                             value={corrCutOff}
                             onValueChange={handleCorrCutOffChange}
@@ -51,14 +48,6 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             step={0.01}
                             max={1}
                             valueLabelDisplay="auto"
-                        />
-                    </SettingWrapper>
-                    <SettingWrapper>
-                        <CheckboxCompositions.WithLabel
-                            label="Show parameter labels"
-                            checked={showLabels}
-                            onCheckedChange={setShowLabels}
-                            size="small"
                         />
                     </SettingWrapper>
                 </SettingWrapper.Section>

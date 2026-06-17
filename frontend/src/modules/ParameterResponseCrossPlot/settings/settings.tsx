@@ -58,13 +58,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         setValue: setParameterIdentString,
     });
 
-    function handlePlotTypeChanged(value: PlotType | null) {
-        if (value === null) {
-            return;
-        }
-        setPlotType(value);
-    }
-
     function handleParameterChanged(value: string[]) {
         const selectedValue = value.length > 0 ? value[0] : null;
         setParameterIdentString(selectedValue);
@@ -82,7 +75,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
             <SettingWrapper.Group>
                 <SettingWrapper.Section title="Plot settings" defaultOpen>
                     <SettingWrapper label="Plot type">
-                        <Combobox<PlotType> items={plotTypes} value={plotType} onValueChange={handlePlotTypeChanged} />
+                        <Combobox<PlotType>
+                            items={plotTypes}
+                            value={plotType}
+                            onValueChange={(v) => v && setPlotType(v)}
+                        />
                     </SettingWrapper>
                     <SettingWrapper>
                         <CheckboxCompositions.WithLabel
