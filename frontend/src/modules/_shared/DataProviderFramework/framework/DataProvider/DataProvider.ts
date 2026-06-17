@@ -1,6 +1,6 @@
 import type { FetchQueryOptions, QueryClient, QueryKey } from "@tanstack/react-query";
 import { isCancelledError } from "@tanstack/react-query";
-import { clone, isEqual } from "lodash";
+import { clone, isEqual } from "lodash-es";
 
 import { GenericStatusMessageStore } from "@framework/GenericStatusMessageStore";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";

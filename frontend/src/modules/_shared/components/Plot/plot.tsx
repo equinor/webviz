@@ -1,6 +1,6 @@
 import React from "react";
 
-import _ from "lodash";
+import _ from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 

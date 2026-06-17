@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { random, range, sampleSize } from "lodash";
+import { random, range, sampleSize } from "lodash-es";
 
 export const alternateColColorsAtom = atom<boolean>(false);
 export const allowMultiSelectAtom = atom<boolean>(false);

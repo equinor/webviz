@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
 

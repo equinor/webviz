@@ -1,6 +1,6 @@
 import React from "react";
 
-import { debounce } from "lodash";
+import { debounce } from "lodash-es";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";

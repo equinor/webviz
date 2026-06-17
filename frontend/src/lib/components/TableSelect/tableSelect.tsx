@@ -1,7 +1,7 @@
 import type { Key } from "react";
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

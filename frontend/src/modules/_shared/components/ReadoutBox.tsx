@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import _ from "lodash";
+import _ from "lodash-es";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { useStableProp } from "@lib/hooks/useStableProp";

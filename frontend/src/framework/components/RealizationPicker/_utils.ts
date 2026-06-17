@@ -1,4 +1,4 @@
-import { chain, inRange, range } from "lodash";
+import { chain, inRange, range } from "lodash-es";
 
 import { getNumbersAndRanges } from "@framework/utils/numberUtils";
 

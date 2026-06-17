@@ -1,5 +1,5 @@
 import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import { maxBy, minBy } from "lodash";
+import { maxBy, minBy } from "lodash-es";
 
 import type { WellboreLogCurveData_api } from "@api";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";

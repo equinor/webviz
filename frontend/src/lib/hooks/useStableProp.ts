@@ -1,6 +1,6 @@
 import React from "react";
 
-import _ from "lodash";
+import _ from "lodash-es";
 
 /**
  * Deeply compares a variable with it's previous state, and returns a stable refference if the object is equivalent.

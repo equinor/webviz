@@ -1,4 +1,4 @@
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 import * as vec3 from "@lib/utils/vec3";
 

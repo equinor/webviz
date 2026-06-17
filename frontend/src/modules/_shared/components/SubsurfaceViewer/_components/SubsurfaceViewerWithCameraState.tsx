@@ -2,7 +2,7 @@ import React from "react";
 
 import type { BoundingBox2D, SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import * as bbox from "@lib/utils/bbox";
 

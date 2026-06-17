@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
