@@ -43,13 +43,21 @@ type SelectProps =
       };
 
 export type TableRootProps = {
+    /** Height of the scroll container. Can be a number (pixels) or a CSS string. */
     height?: number | string;
+    /** Maximum height of the scroll container. Can be a number (pixels) or a CSS string. */
     maxHeight?: number | string;
+    /** Width of the scroll container. Can be a number (pixels) or a CSS string. */
     width?: number | string;
+    /** Ref forwarded to the overflow scroll wrapper element. */
     overflowWrapperRef?: React.RefObject<HTMLDivElement>;
+    /** The table's Head, Body, and Foot sections. */
     children?: React.ReactNode;
+    /** Size of rows and text. @default "default" */
     size?: SelectableSize;
+    /** When true, reduces vertical padding in cells. */
     compact?: boolean;
+    /** When true, applies `table-fixed` layout so column widths are driven by the header. */
     fixed?: boolean;
 } & SortingProps &
     SelectProps &

@@ -5,11 +5,17 @@ import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 
 export type SettingConfigButtonProps = {
+    /** The title shown in the modal dialog header. */
     formTitle: string;
+    /** The content rendered inside the modal dialog body. */
     formContent: React.ReactNode;
+    /** Called when the modal dialog opens. */
     onOpen?: () => void;
+    /** Called when the modal dialog closes. */
     onClose?: () => void;
+    /** Called when the user clicks Apply. */
     onApply?: () => void;
+    /** Called when the user clicks Cancel. */
     onDiscard?: () => void;
 } & Omit<ButtonProps, "buttonRef" | "ref" | "onClick">;
 

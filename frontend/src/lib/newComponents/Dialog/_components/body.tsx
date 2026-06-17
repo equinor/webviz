@@ -2,6 +2,7 @@ import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperP
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type BodyProps = LayoutClassProps & {
+    /** The content rendered in the scrollable body area of the dialog. */
     children?: React.ReactNode;
 };
 

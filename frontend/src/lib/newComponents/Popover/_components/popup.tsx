@@ -6,11 +6,13 @@ import { Popover as PopoverBase } from "@base-ui/react/popover";
 import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
 
 export type PopupProps = {
+    /** The content rendered inside the popover. */
     children?: React.ReactNode;
-
-    // Exposed props from base-ui parts
+    /** Alignment of the popover relative to the trigger. @default "center" */
     align?: PopoverPositionerBaseProps["align"];
+    /** Which side of the trigger to display the popover. @default "bottom" */
     side?: PopoverPositionerBaseProps["side"];
+    /** When true, the popover repositions to stay in view while scrolling. */
     sticky?: PopoverPositionerBaseProps["sticky"];
 };
 

@@ -8,7 +8,6 @@ import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@a
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
 import { Button } from "@lib/newComponents/Button";
@@ -19,6 +18,7 @@ import { FieldCompositions } from "@lib/newComponents/Field/compositions";
 import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import { readInitialStateFromLocalStorage, storeStateInLocalStorage } from "./_utils";
 import { CaseTable } from "./CaseTable";
@@ -219,7 +219,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         "Never"
                     )}
                 </span>
-                <Tooltip title="Refresh assets and cases lists" enterDelay="medium">
+                <Tooltip content="Refresh assets and cases lists" delay="medium">
                     <Button tone="accent" onClick={handleManualRefetch} variant="ghost">
                         {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
                             <CircularProgress size={16} />
@@ -244,14 +244,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </StatusWrapper>
                 </FieldCompositions.Default>
-                <Tooltip title="Show only cases authored by me" enterDelay="medium">
+                <Tooltip content="Show only cases authored by me" delay="medium">
                     <SwitchCompositions.WithLabel
                         checked={showOnlyMyCases}
                         onCheckedChange={handleCasesByMeChange}
                         label="Only my cases"
                     />
                 </Tooltip>
-                <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                <Tooltip content="Show only cases marked as official" delay="medium">
                     <SwitchCompositions.WithLabel
                         checked={showOnlyOfficialCases}
                         onCheckedChange={handleOfficialCasesSwitchChange}
@@ -263,7 +263,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     errorMessage={casesQuery.error ? "Error loading cases" : undefined}
                     className="h-full min-h-0 min-w-56 flex-1"
                 >
-                    <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
+                    <Tooltip content="Filter cases by selected Standard Results" delay="medium">
                         <Combobox
                             value={selectedStandardResults}
                             placeholder="Standard Results"

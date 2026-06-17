@@ -5,6 +5,7 @@ import { Field as FieldBase, type FieldErrorProps } from "@base-ui/react";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
+/** Accepts all standard field error props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
 export type ErrorProps = ComponentWrapperProps<FieldErrorProps>;
 
 function ErrorComponent(props: ErrorProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {

@@ -1,11 +1,11 @@
 import React from "react";
 
-import { Close, FilterList, MoreVert, Search } from "@mui/icons-material";
+import { Close, FilterList, Search } from "@mui/icons-material";
 
-import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
 import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
 import { TextInput } from "@lib/newComponents/TextInput";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 export type DrawerFilterItem<T extends string | number> = {
     icon: React.ReactNode;
@@ -71,7 +71,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                     <span className="text-header-xs font-bolder grow p-0">{props.title}</span>
                     {props.actions}
                     {props.onClose && (
-                        <Tooltip title="Close">
+                        <Tooltip content="Close">
                             <Button variant="ghost" tone="neutral" iconOnly onClick={props.onClose} size="small">
                                 <Close fontSize="inherit" />
                             </Button>

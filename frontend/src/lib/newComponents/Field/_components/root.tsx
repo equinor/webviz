@@ -9,7 +9,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FieldStateContext } from "./FieldStateContext";
 
 export type RootProps = ComponentWrapperProps<FieldRootBaseProps> & {
+    /** When true, uses `display: contents` so the field integrates into a parent grid layout. */
     inline?: boolean;
+    /** When true, applies warning styling and state to the field. */
     warning?: boolean;
 };
 

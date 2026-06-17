@@ -6,6 +6,7 @@ import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type LabelProps = ComponentWrapperProps<FieldLabelBaseProps> & {
+    /** Short supplementary text rendered after the label, e.g. "(optional)". */
     indicator?: string;
 };
 

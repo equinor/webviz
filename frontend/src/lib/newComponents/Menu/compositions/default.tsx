@@ -26,6 +26,7 @@ export type ComposedMenuProps = {
 
     // --- Inherited props ---
     // Trigger
+    /** The element that opens the menu when clicked. */
     children: MenuTriggerProps["children"];
 
     // Popup

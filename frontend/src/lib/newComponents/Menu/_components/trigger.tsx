@@ -7,6 +7,7 @@ import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperPro
 import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
 export type MenuTriggerProps = ComponentWrapperProps<MenuBaseTriggerProps> & {
+    /** The element that opens the menu when clicked. */
     children: React.ReactElement;
 };
 

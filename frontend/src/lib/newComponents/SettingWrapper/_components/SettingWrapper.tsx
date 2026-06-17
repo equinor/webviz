@@ -11,13 +11,18 @@ import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
 
 export type SettingAnnotation = {
+    /** The severity level that determines the icon and color of the annotation. */
     type: "warning" | "info" | "error";
+    /** The message text displayed in the annotation. */
     message: string;
 };
 
 type PlainAnnotationStrings = {
+    /** Error annotation shown below the input. Mutually exclusive with `annotations`. */
     errorAnnotation?: string;
+    /** Warning annotation shown below the input. Mutually exclusive with `annotations`. */
     warningAnnotation?: string;
+    /** Info annotation shown below the input. Mutually exclusive with `annotations`. */
     infoAnnotation?: string;
     annotations?: never;
 };
@@ -34,17 +39,23 @@ export type Overlay = {
  * plain string properties (errorAnnotation, warningAnnotation, infoAnnotation), but not both.
  */
 export type SettingWrapperProps = {
+    /** The input control(s) rendered as the setting's content. */
     children: React.ReactNode;
     /** When true, forces the setting to use a stacked layout regardless of the group context. */
     stacked?: boolean;
+    /** The label shown beside or above the input. */
     label?: React.ReactNode;
     /** When the setting contains multiple inputs, pass a ref to the specific input the label should activate. */
     labelFor?: React.RefObject<HTMLElement | null>;
+    /** Optional descriptive text shown below the label. */
     description?: React.ReactNode;
+    /** Configuration for a context help popover shown next to the label. */
     help?: ContextHelpProps;
+    /** Additional CSS class applied to the content wrapper element. */
     contentClassName?: string;
 } & (
     | {
+          /** Annotations rendered below the input. Mutually exclusive with the individual annotation string props. */
           annotations?: SettingAnnotation[];
           errorAnnotation?: never;
           warningAnnotation?: never;
@@ -54,6 +65,7 @@ export type SettingWrapperProps = {
 ) &
     (
         | {
+              /** Overlay displayed over the input. Mutually exclusive with individual overlay props. */
               overlay?: Overlay;
               errorOverlay?: never;
               warningOverlay?: never;
@@ -61,9 +73,13 @@ export type SettingWrapperProps = {
               infoOverlay?: never;
           }
         | {
+              /** Error message overlay. Mutually exclusive with `overlay`. */
               errorOverlay?: string;
+              /** Warning message overlay. Mutually exclusive with `overlay`. */
               warningOverlay?: string;
+              /** Info message overlay. Mutually exclusive with `overlay`. */
               infoOverlay?: string;
+              /** When true, shows a loading spinner overlay. Mutually exclusive with `overlay`. */
               loadingOverlay?: boolean;
               overlay?: never;
           }

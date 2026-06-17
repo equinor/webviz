@@ -9,6 +9,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type RadioProps = ComponentWrapperProps<Omit<RadioRootBaseProps, "ref">> & {
+    /** Size of the radio button. @default "default" */
     size?: SelectableSize;
 };
 

@@ -2,7 +2,7 @@ import React from "react";
 
 import { Error, ExpandLess, ExpandMore, Warning } from "@mui/icons-material";
 
-import { Tooltip } from "@lib/components/Tooltip";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { BaseComponentProps } from "../BaseComponent";
@@ -48,7 +48,7 @@ function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.Forw
                 {props.icon && React.cloneElement(props.icon, { className: "w-4 h-4" })}
                 <h3 className="text-sm font-semibold grow leading-none">{props.title}</h3>
                 {(props.hasError || props.hasWarning) && (
-                    <Tooltip title={`There are ${props.hasError ? "errors" : "warnings"} in this section`}>
+                    <Tooltip content={`There are ${props.hasError ? "errors" : "warnings"} in this section`}>
                         {props.hasError ? (
                             <Error fontSize="inherit" color="error" />
                         ) : (
@@ -56,7 +56,7 @@ function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.Forw
                         )}
                     </Tooltip>
                 )}
-                <Tooltip title={expanded ? "Collapse" : "Expand"}>
+                <Tooltip content={expanded ? "Collapse" : "Expand"}>
                     <DenseIconButton aria-label={expanded ? "Collapse" : "Expand"} onClick={handleClick}>
                         {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                     </DenseIconButton>

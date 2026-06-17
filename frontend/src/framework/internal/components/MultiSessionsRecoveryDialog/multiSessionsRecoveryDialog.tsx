@@ -12,12 +12,12 @@ import {
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
 import { AlertDialog } from "@lib/newComponents/AlertDialog";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Table } from "@lib/newComponents/Table";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { formatDate } from "@lib/utils/dates";
 
 export type MultiSessionsRecoveryDialogProps = {
@@ -144,7 +144,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
     function makeSessionSaveStateMessage() {
         if (!session.id) {
             return (
-                <Tooltip title="This session has never been saved.">
+                <Tooltip content="This session has never been saved.">
                     <span className="text-neutral-subtle italic">Never saved</span>
                 </Tooltip>
             );
@@ -160,7 +160,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
 
         if (backendSession.isError) {
             return (
-                <Tooltip title="An error occurred while checking the session. No data could be loaded from the backend, but you can still open the session and recover unsaved work.">
+                <Tooltip content="An error occurred while checking the session. No data could be loaded from the backend, but you can still open the session and recover unsaved work.">
                     <span className="text-warning-subtle gap-x-xs flex items-center italic">
                         <Warning fontSize="inherit" /> Error checking session
                     </span>
@@ -186,12 +186,12 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
             <Table.Cell noPadding>
                 <div className="px-xs gap-x-xs flex justify-end">
                     <Tooltip
-                        title={
+                        content={
                             sessionId
                                 ? "Open this session in a new tab."
                                 : "Opening unsaved sessions in a new tab is not supported yet."
                         }
-                        placement="left"
+                        side="left"
                     >
                         <span>
                             <Button
@@ -204,7 +204,7 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
                             </Button>
                         </span>
                     </Tooltip>
-                    <Tooltip title="Open this session in the current tab." placement="left">
+                    <Tooltip content="Open this session in the current tab." side="left">
                         <span>
                             <Button variant="ghost" iconOnly onClick={() => onOpen(sessionId)}>
                                 <OpenInBrowser fontSize="inherit" />
@@ -212,8 +212,8 @@ function SessionRecoveryRow(props: SessionRecoveryRowProps) {
                         </span>
                     </Tooltip>
                     <Tooltip
-                        title="Delete this session. This cannot be undone, but it will not affect any sessions saved in the backend."
-                        placement="left"
+                        content="Delete this session. This cannot be undone, but it will not affect any sessions saved in the backend."
+                        side="left"
                     >
                         <span>
                             <Button variant="ghost" tone="danger" iconOnly onClick={() => onDiscard(sessionId)}>

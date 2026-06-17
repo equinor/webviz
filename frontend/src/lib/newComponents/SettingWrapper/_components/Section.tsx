@@ -8,11 +8,17 @@ import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SectionProps = {
+    /** The label shown in the collapsible section header. */
     title: string;
+    /** Controls the background color tone of the header. @default "neutral" */
     tone?: Tone;
+    /** Optional element rendered at the trailing end of the header row. */
     adornment?: React.ReactNode;
+    /** When true, the section starts in the open state. */
     defaultOpen?: boolean;
+    /** When true, prevents the section from being opened or closed. */
     disabled?: boolean;
+    /** The settings content rendered inside the collapsible panel. */
     children?: React.ReactNode;
 };
 

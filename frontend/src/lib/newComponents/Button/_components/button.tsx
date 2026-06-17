@@ -10,13 +10,21 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/utils/wrapperProps";
 
 export type ButtonProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">> & {
+    /** Visual style of the button. @default "contained" */
     variant?: "contained" | "outlined" | "ghost";
+    /** Size of the button. @default "default" */
     size?: SelectableSize;
+    /** Controls the color tone of the button. @default "accent" */
     tone?: "accent" | "neutral" | "danger" | "warning";
+    /** When true, disables the button and applies disabled styling. */
     disabled?: boolean;
+    /** When true, renders the button as a circle. */
     round?: boolean;
+    /** When true, removes padding and sizes the button to its icon content. */
     iconOnly?: boolean;
+    /** When true, reduces horizontal padding for use in tight spaces. */
     compact?: boolean;
+    /** Controls the pressed/toggled visual state of the button. */
     pressed?: boolean;
 };
 

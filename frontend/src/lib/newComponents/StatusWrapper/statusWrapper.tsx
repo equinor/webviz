@@ -4,11 +4,17 @@ import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type StatusWrapperProps = {
+    /** The content to wrap and optionally overlay with a status indicator. */
     children: React.ReactNode;
+    /** When set, shows an error message overlay with a red outline. Takes priority over warning and info. */
     errorMessage?: string;
+    /** When set, shows a warning message overlay with an orange outline. */
     warningMessage?: string;
+    /** When set, shows an info message overlay with a neutral outline. */
     infoMessage?: string;
+    /** When true, shows a loading spinner overlay and makes the wrapped content inert. */
     isPending?: boolean;
+    /** Additional CSS class names applied to the root element. */
     className?: string;
 };
 

@@ -6,16 +6,23 @@ import type { TextSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
+    /** Font family. @default "body" */
     family?: "header" | "body" | "mono";
+    /** Text size scale. */
     size: TextSize;
-    // If tone is set, variant must be set as well. If tone is not set, variant is ignored.
-    // The text color is inherited by default, but setting tone to e.g. "danger" will apply a danger color. The variant controls the intensity of the color.
+    /** Semantic color tone. Requires `variant` to take effect; color is inherited when omitted. */
     tone?: "accent" | "neutral" | "danger" | "success" | "warning" | "info";
+    /** Intensity of the tone color — `"subtle"` is softer, `"strong"` is more prominent. @default "subtle" */
     variant?: "subtle" | "strong";
+    /** HTML element to render. @default "span" */
     as?: React.ElementType;
+    /** Line height mode. `"squished"` reduces leading for compact layouts. @default "default" */
     lineHeight?: "default" | "squished";
+    /** Font weight. @default "normal" */
     weight?: "lighter" | "normal" | "bolder";
+    /** Letter spacing. @default "normal" */
     tracking?: "tight" | "normal" | "wide";
+    /** When true, renders text in italic. */
     italic?: boolean;
 };
 

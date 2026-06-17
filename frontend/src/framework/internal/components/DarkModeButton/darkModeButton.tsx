@@ -3,8 +3,8 @@ import React from "react";
 import { DarkMode, LightMode } from "@mui/icons-material";
 
 import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 const LOCAL_STORAGE_KEY = "colorScheme";
 
@@ -28,7 +28,7 @@ export function DarkModeButton(): React.ReactNode {
     }, [colorScheme]);
 
     return (
-        <Tooltip title="Toggle dark mode">
+        <Tooltip content="Toggle dark mode">
             <Button variant="ghost" tone="accent" iconOnly onClick={toggleDarkMode}>
                 {colorScheme === "dark" ? <DarkMode fontSize="inherit" /> : <LightMode fontSize="inherit" />}
             </Button>

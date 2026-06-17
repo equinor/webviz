@@ -14,8 +14,11 @@ import type { RadioProps } from "../_components/radio";
 import { Radio } from "../_components/radio";
 
 export type WithLabelProps = RadioProps & {
+    /** Text label rendered next to the radio button. Ignored when `children` is provided. */
     label?: string;
+    /** Custom content rendered next to the radio button. Takes precedence over `label`. */
     children?: React.ReactNode;
+    /** Layout direction of the radio button relative to its label. @default "horizontal" */
     direction?: "horizontal" | "vertical";
 };
 

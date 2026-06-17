@@ -3,6 +3,7 @@ import React from "react";
 import { Typography, type TypographyProps } from "../../typography";
 
 export type HeadingProps = {
+    /** HTML heading element to render. Determines both the tag and the preset text size. */
     as: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 } & Omit<TypographyProps, "as" | "family" | "size">;
 

@@ -2,6 +2,7 @@ import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperP
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ContentProps = LayoutClassProps & {
+    /** The content rendered inside the collapsible panel. */
     children?: React.ReactNode;
 };
 

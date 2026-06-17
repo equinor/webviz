@@ -6,6 +6,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { resolveWrapperProps, type LayoutClassProps } from "../_shared/utils/wrapperProps";
 
+/** Horizontal or vertical divider line. Use `layoutClassName` for spacing. */
 export type SeparatorProps = Pick<SeparatorBaseProps, "orientation"> & LayoutClassProps;
 
 export const Separator = React.forwardRef<HTMLDivElement, SeparatorProps>(function Separator(props, ref) {

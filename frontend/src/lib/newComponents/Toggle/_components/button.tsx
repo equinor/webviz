@@ -10,7 +10,9 @@ import { Button as Button_, type ButtonProps as ButtonProps_ } from "../../Butto
 export type ButtonProps<TValue extends string> = ComponentWrapperProps<
     Omit<ToggleBaseProps<TValue>, "variant" | "ref" | "children">
 > & {
+    /** Additional props forwarded to the underlying `Button` component (e.g. `size`, `tone`, `iconOnly`). */
     buttonProps?: Omit<ButtonProps_, "ref">;
+    /** The button label content. Can be a render function that receives toggle props and `{ pressed }`. */
     children?:
         | React.ReactNode
         | ((

@@ -3,8 +3,8 @@ import { category, dashboard, folder_open, github, external_link, add } from "@e
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 
 import { RecentSessions } from "./private-components/recentSessions";
@@ -51,25 +51,25 @@ export function StartPage(props: StartPageProps) {
                     <section className="gap-y-xs flex flex-col">
                         <Heading as="h3">Start</Heading>
                         <Tooltip
-                            placement="right"
-                            title="Create a new free session and save it later on demand."
-                            enterDelay="medium"
+                            side="right"
+                            content="Create a new free session and save it later on demand."
+                            delay="medium"
                         >
                             <Button variant="ghost" onClick={handleNewSession}>
                                 <Icon name="category" fontSize="inherit" />
                                 New session
                             </Button>
                         </Tooltip>
-                        <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
+                        <Tooltip side="right" content="Open an existing session." delay="medium">
                             <Button variant="ghost" onClick={openOverviewDialogOnSessions}>
                                 <Icon name="folder_open" fontSize="inherit" />
                                 Open session or snapshot...
                             </Button>
                         </Tooltip>
                         <Tooltip
-                            placement="right"
-                            title="Start from a template to quickly set up a session with predefined settings and data."
-                            enterDelay="medium"
+                            side="right"
+                            content="Start from a template to quickly set up a session with predefined settings and data."
+                            delay="medium"
                         >
                             <Button variant="ghost" onClick={handleOpenTemplatesDialog}>
                                 <Icon name="dashboard" fontSize="inherit" />

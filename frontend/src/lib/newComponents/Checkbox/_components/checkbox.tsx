@@ -10,6 +10,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type CheckboxProps = ComponentWrapperProps<Omit<CheckboxRootProps, "ref">> & {
+    /** Size of the checkbox. @default "default" */
     size?: SelectableSize;
 };
 

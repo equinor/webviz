@@ -5,7 +5,9 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TextAreaProps = {
+    /** Called with the new string value whenever the textarea content changes. */
     onValueChange?: (value: string) => void;
+    /** Optional element rendered below the textarea, aligned to the right. */
     bottomAdornment?: React.ReactNode;
 } & ComponentWrapperProps<Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "className">>;
 

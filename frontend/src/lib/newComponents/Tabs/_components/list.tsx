@@ -8,7 +8,9 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ListProps = ComponentWrapperProps<TabsListBaseProps> & {
+    /** Whether the active tab indicator appears at the start or end of the tab. @default "end" */
     indicatorPosition?: "start" | "end";
+    /** Size of the tab list items. @default "default" */
     size?: SelectableSize;
 };
 

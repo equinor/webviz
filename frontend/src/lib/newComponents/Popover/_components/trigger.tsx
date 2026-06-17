@@ -11,6 +11,7 @@ import { Button } from "@lib/newComponents/Button";
 export type TriggerProps = ComponentWrapperProps<
     Pick<ButtonProps, "variant" | "size" | "tone" | "round" | "iconOnly" | "compact">
 > & {
+    /** The content rendered inside the trigger button. */
     children: React.ReactNode;
 } & Omit<PopoverTriggerBaseProps, "className" | "nativeButton" | "render">;
 

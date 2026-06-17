@@ -8,8 +8,11 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Tile } from "./tile";
 
 export type GroupProps = LayoutClassProps & {
+    /** The color palette whose colors are rendered as individual tiles. */
     colorPalette: ColorPalette;
+    /** Controls the height of each tile. @default "default" */
     size?: "small" | "default" | "large";
+    /** When true, adds a gap between tiles instead of rendering them as a fused strip. */
     gap?: boolean;
 };
 

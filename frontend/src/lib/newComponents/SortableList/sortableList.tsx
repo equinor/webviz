@@ -29,12 +29,19 @@ enum Cursor {
 }
 
 export type IsMoveAllowedArgs = {
+    /** ID of the item being dragged. */
     movedItemId: string;
+    /** Type of the item being dragged. */
     movedItemType: ItemType | null;
+    /** ID of the group the item originated from, or `null` for the root. */
     originId: string | null;
+    /** Type of the origin container. */
     originType: ItemType | null;
+    /** ID of the group the item would be dropped into, or `null` for the root. */
     destinationId: string | null;
+    /** Type of the destination container. */
     destinationType: ItemType | null;
+    /** Zero-based position within the destination container. */
     position: number;
 };
 
@@ -65,14 +72,18 @@ export const SortableListContext = React.createContext<SortableListContextType>(
 });
 
 export type SortableListProps = {
+    /** Sortable items and groups. */
     children: React.ReactNode;
+    /** Optional callback to restrict where items can be dropped. Return `false` to prevent the move. */
     isMoveAllowed?: (args: IsMoveAllowedArgs) => boolean;
+    /** Called when a drag-and-drop completes with the item ID, target position, origin group ID, and destination group ID. */
     onItemMoved?: (
         movedItemId: string,
         position: number,
         originId: string | null,
         destinationId: string | null,
     ) => void;
+    /** Class names applied to the list root element. */
     className?: string;
 };
 
@@ -95,16 +106,6 @@ const DEFAULT_SCROLL_TIME = 100;
 // Defines the size of the area at the top and bottom of the scroll container where auto-scrolling should start
 const AUTO_SCROLL_EDGE_PX = 20;
 
-/**
- *
- * @param {SortableListProps} props Object of properties for the SortableList component (see below for details).
- * @param {function} props.onItemMoved Callback that is called when an item is moved. Should be wrapped inside a React.useCallback.
- * @param {function} props.isMoveAllowed Callback that is called to check if an item can be moved. Should be wrapped inside a React.useCallback.
- * @param {React.ReactNode} props.children Child components that must be of either type SortableListItem or SortableListGroup.
- * @param {string} props.className Optional class name for the main list container.
- *
- * @returns {React.ReactNode} A sortable list component.
- */
 export const SortableList = function SortableListImpl(props: SortableListProps) {
     const { onItemMoved, isMoveAllowed } = props;
 

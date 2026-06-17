@@ -7,10 +7,10 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Typography } from "@lib/newComponents/Typography";
 import { Heading } from "@lib/newComponents/Typography/compositions";
 
@@ -51,7 +51,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
     );
 
     function makeContent() {
-        if (true || isFirstTimeFetching) {
+        if (isFirstTimeFetching) {
             if (itemsQuery.status === "pending") {
                 return (
                     <span className="gap-sm text-neutral-subtle flex items-center">
@@ -95,12 +95,12 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 <Heading as="h4" layoutClassName="grow">
                     {props.title}
                 </Heading>
-                <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
+                <Tooltip content="Refresh" side="bottom" delay="medium">
                     <Button size="small" variant="ghost" iconOnly onClick={refresh}>
                         {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="small" />}
                     </Button>
                 </Tooltip>
-                <Tooltip title="Show all" placement="bottom" enterDelay="medium">
+                <Tooltip content="Show all" side="bottom" delay="medium">
                     <Button size="small" variant="ghost" iconOnly onClick={props.onDialogIconClick}>
                         <Icon name="folder_open" />
                     </Button>

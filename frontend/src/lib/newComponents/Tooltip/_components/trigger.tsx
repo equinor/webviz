@@ -18,7 +18,9 @@ const DEFAULT_PROPS = {
 } satisfies Partial<TriggerProps>;
 
 export type TriggerProps = WrappedTriggerProps & {
+    /** The element that triggers the tooltip. Must be a single React element. */
     children: React.ReactElement;
+    /** How long to wait before showing the tooltip. @default "short" */
     delay?: keyof typeof DELAY_MS_MAP;
 };
 

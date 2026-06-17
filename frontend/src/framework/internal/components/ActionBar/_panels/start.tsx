@@ -4,11 +4,11 @@ import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBrok
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Badge } from "@lib/newComponents/Badge";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { Separator } from "@lib/newComponents/Separator";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type StartPanelProps = {
@@ -35,8 +35,8 @@ export function StartPanel(props: StartPanelProps) {
     return (
         <>
             <Tooltip
-                title={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
-                placement="bottom"
+                content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
+                side="bottom"
             >
                 {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
                 <span>
@@ -66,8 +66,8 @@ export function StartPanel(props: StartPanelProps) {
             </Tooltip>
             <Separator orientation="vertical" />
             <Tooltip
-                title={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Show templates dialog"}
-                placement="bottom"
+                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Show templates dialog"}
+                side="bottom"
             >
                 {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
                 <span>

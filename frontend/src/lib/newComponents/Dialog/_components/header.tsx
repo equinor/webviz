@@ -1,7 +1,9 @@
 import { Close } from "./close";
 
 export type HeaderProps = {
+    /** When true, shows a close icon button in the top-right corner. */
     closeIconVisible?: boolean;
+    /** The content rendered inside the header, typically a title. */
     children: React.ReactNode;
 };
 

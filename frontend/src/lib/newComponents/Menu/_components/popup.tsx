@@ -15,8 +15,11 @@ import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type MenuPopupProps = ComponentWrapperProps<MenuBasePopupProps> & {
+    /** Which side of the trigger to display the menu. @default "bottom" */
     side?: MenuBasePositionerProps["side"];
+    /** Alignment of the menu relative to the trigger. @default "end" */
     align?: MenuBasePositionerProps["align"];
+    /** Controls the size of items in the popup. @default "default" */
     itemSize?: SelectableSize;
 };
 

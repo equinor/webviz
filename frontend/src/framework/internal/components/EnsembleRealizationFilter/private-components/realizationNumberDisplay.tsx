@@ -2,8 +2,8 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Tooltip } from "@lib/components/Tooltip";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type RealizationNumberDisplayProps = {
@@ -114,7 +114,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
             gridElements.push(
                 <Tooltip
                     key={realization}
-                    title={isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
+                    content={isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
                 >
                     <div
                         style={{ width: dotSizePx, height: dotSizePx }}

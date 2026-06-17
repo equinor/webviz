@@ -3,8 +3,11 @@ import type React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type TileProps = {
+    /** The CSS color value applied as the tile's background. */
     color: string;
+    /** When true, the tile stretches to fill its container and removes its border, for use inside a group. @default false */
     grouped?: boolean;
+    /** Controls the height of the tile. @default "default" */
     size?: "small" | "default" | "large";
 };
 

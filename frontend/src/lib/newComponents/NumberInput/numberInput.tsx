@@ -15,18 +15,17 @@ import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/uti
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBaseProps, "className">> & {
+    /** Element placed in a draggable scrub area for adjusting the value by dragging. */
     scrubAdornment?: React.ReactNode;
+    /** Element rendered at the leading end of the input. */
     startAdornment?: React.ReactNode;
+    /** Element rendered at the trailing end of the input, before the increment/decrement buttons. */
     endAdornment?: React.ReactNode;
-
+    /** Size of the input. @default "default" */
     size?: SelectableSize;
-
-    /**
-     * @default "start"
-     */
+    /** Which side the scrub area is placed on. @default "start" */
     scrubAreaPosition?: "start" | "end";
-
-    // Exposed parts-props
+    /** Placeholder text shown when the input is empty. @default "Enter a number..." */
     placeholder?: NumberFieldInputBaseProps["placeholder"];
 };
 

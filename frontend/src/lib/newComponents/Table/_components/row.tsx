@@ -9,9 +9,13 @@ import { useTableSectionContext } from "../_contexts/tableSectionContext";
 import type { TableRootProps } from "./root";
 
 export type TableRowProps = {
+    /** When true, makes this row selectable, overriding the table-level `selectable` setting. */
     selectable?: boolean;
+    /** Overrides the sortable behavior for columns within this row. */
     sortable?: TableRootProps["sortable"];
+    /** Unique key identifying this row, required for row selection to work. */
     rowKey?: string;
+    /** The table cells to render. */
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableRowElement>>;
 

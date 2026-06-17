@@ -9,7 +9,9 @@ import { Tooltip } from "@lib/newComponents/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type WithCopyButtonProps = {
+    /** The string value displayed in the read-only input and copied to the clipboard. */
     value: string;
+    /** Additional class names applied to the input wrapper. Prefer `layoutClassName` on other components. */
     className?: string;
 };
 

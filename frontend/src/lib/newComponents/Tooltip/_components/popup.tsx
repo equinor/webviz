@@ -7,9 +7,11 @@ import { PortalContainerContext } from "@lib/newComponents/_shared/contexts/port
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
 export type PopupProps = {
+    /** Side of the trigger element where the tooltip appears. */
     side?: TooltipPositionerBaseProps["side"];
+    /** Alignment of the tooltip relative to the trigger. */
     align?: TooltipPositionerBaseProps["align"];
-
+    /** The tooltip text content. */
     children?: React.ReactNode;
 };
 

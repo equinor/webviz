@@ -28,10 +28,15 @@ function makeColorPalettePreview(
 }
 
 export type ColorPaletteSelectorProps = {
+    /** The list of available color palettes to choose from. */
     colorPalettes: ColorPalette[];
+    /** The ID of the currently selected color palette. */
     selectedColorPaletteId: string;
+    /** Called when the user selects a different palette. */
     onValueChange?: (colorPalette: ColorPalette) => void;
+    /** Determines how the palette preview is rendered in each dropdown item. */
     type: ColorPaletteSelectorType;
+    /** Number of discrete steps shown in the preview. Only used when `type` is `Discrete`. */
     steps?: number;
 };
 

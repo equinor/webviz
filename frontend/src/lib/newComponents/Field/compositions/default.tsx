@@ -21,9 +21,13 @@ export type DefaultProps = {
      * */
     gridLayout?: boolean;
 
+    /** The label text shown above or beside the field. */
     label: string;
+    /** Optional descriptive text shown below the label. */
     description?: React.ReactNode;
+    /** Optional info element shown inline next to the label. */
     info?: React.ReactNode;
+    /** Short supplementary text rendered after the label, e.g. "(optional)". */
     indicator?: string;
 } & Omit<FieldRootProps, "inline">;
 

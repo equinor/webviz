@@ -5,6 +5,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+/** Accepts all standard field description props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
 export type DescriptionProps = ComponentWrapperProps<FieldDescriptionBaseProps>;
 
 export function Description(props: DescriptionProps) {

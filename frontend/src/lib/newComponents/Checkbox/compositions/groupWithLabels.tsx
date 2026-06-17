@@ -7,13 +7,18 @@ import { CheckboxGroup, type CheckboxGroupProps } from "../_components/checkboxG
 import { WithLabel } from "./withLabel";
 
 export type CheckboxOption = {
+    /** The display text for this option. */
     label: string;
+    /** The value submitted when this option is checked. */
     value: string;
+    /** When true, disables this individual option regardless of the group's disabled state. */
     disabled?: boolean;
 };
 
 export type GroupWithLabelsProps = {
+    /** The list of checkbox options to render. */
     options: CheckboxOption[];
+    /** Whether to stack options vertically or horizontally. @default "vertical" */
     layout?: "vertical" | "horizontal";
 } & CheckboxGroupProps;
 

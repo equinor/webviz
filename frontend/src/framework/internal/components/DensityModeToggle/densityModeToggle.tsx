@@ -3,8 +3,8 @@ import React from "react";
 import { DensityMedium, DensitySmall } from "@mui/icons-material";
 
 import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 const LOCAL_STORAGE_KEY = "density";
 
@@ -29,7 +29,7 @@ export function DensityModeToggle(): React.ReactNode {
     );
 
     return (
-        <Tooltip title="Toggle density mode">
+        <Tooltip content="Toggle density mode">
             <Button variant="ghost" tone="accent" iconOnly onClick={toggleDenseMode}>
                 {density === "comfortable" ? <DensitySmall fontSize="inherit" /> : <DensityMedium fontSize="inherit" />}
             </Button>

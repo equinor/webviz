@@ -1,18 +1,17 @@
 import React from "react";
 
+import { Info } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Avatar } from "@lib/newComponents/Avatar";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Popover } from "@lib/newComponents/Popover";
-import { Info } from "@mui/icons-material";
-import { Heading } from "@lib/newComponents/Typography/compositions";
 import { Separator } from "@lib/newComponents/Separator";
+import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
+import { Heading } from "@lib/newComponents/Typography/compositions";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ItemCardProps = {
     id: string;

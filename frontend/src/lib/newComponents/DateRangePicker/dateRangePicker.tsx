@@ -13,7 +13,9 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/util
 export type DateRange = NonNullable<DateRangePickerBaseProps["value"]>;
 
 export type DateRangePickerProps = ComponentWrapperProps<DateRangePickerBaseProps> & {
+    /** The selected date range, or `null` when no range is selected. */
     value: DateRange | null;
+    /** Visual size of the date range picker. @default "default" */
     size?: SelectableSize;
 };
 

@@ -7,12 +7,15 @@ import { AlertDialogNestingContext } from "../../../contexts/alertDialogNestingC
 import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
 
 export type PopupProps = {
+    /** The content rendered inside the dialog. */
     children?: React.ReactNode;
     /** Width of the dialog. Can be a number (pixels) or a string (e.g., "50%"). */
     width?: number | string;
     /** Height of the dialog. Can be a number (pixels) or a string (e.g., "50%"). */
     height?: number | string;
+    /** Minimum width of the dialog. Can be a number (pixels) or a string (e.g., "300px"). */
     minWidth?: number | string;
+    /** Minimum height of the dialog. Can be a number (pixels) or a string (e.g., "200px"). */
     minHeight?: number | string;
     /** Keeps the dialog mounted in the DOM even when it's closed. Useful for maintaining state or avoiding re-renders. */
     keepMounted?: boolean;

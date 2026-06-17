@@ -13,10 +13,15 @@ import { SELECTABLE_SIZES_CLASSNAMES } from "../../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/utils/wrapperProps";
 
 export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size" | "type">> & {
+    /** Element rendered at the start (left) of the input. Replaced by an error icon when the field is invalid. */
     startAdornment?: React.ReactNode;
+    /** Element rendered at the end (right) of the input. */
     endAdornment?: React.ReactNode;
+    /** Visual size of the input. @default "default" */
     size?: SelectableSize;
+    /** Native HTML `size` attribute passed to the underlying `<input>` element (character width hint). */
     inputSize?: InputBaseProps["size"];
+    /** Input type. The `"number"` type is excluded — use `NumberInput` for numeric input. */
     type?: Exclude<InputBaseProps["type"], "number">;
 };
 

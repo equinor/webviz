@@ -11,14 +11,20 @@ import { RadioGroup, type RadioGroupProps } from "../_components/group";
 import { WithLabel } from "./withLabel";
 
 export type RadioOption = {
+    /** The display text for this option. */
     label: string;
+    /** The value submitted when this option is selected. */
     value: string;
+    /** When true, disables this individual option regardless of the group's disabled state. */
     disabled?: boolean;
 };
 
 export type GroupWithLabels = {
+    /** The list of radio options to render. */
     options: RadioOption[];
+    /** Whether to stack options vertically or horizontally. @default "vertical" */
     layout?: "vertical" | "horizontal";
+    /** Size of each radio option. @default "default" */
     size?: SelectableSize;
 } & RadioGroupProps;
 

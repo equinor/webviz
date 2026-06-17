@@ -14,7 +14,9 @@ const TRIGGER_PROPS = ["delay"] as (keyof TriggerProps)[];
 const POPUP_PROPS = ["align", "side"] as (keyof PopupProps)[];
 
 export type DefaultTooltipProps = {
+    /** The tooltip text to display. When `undefined` or empty, the tooltip is automatically disabled. */
     content: string | undefined;
+    /** The element that triggers the tooltip on hover. */
     children: React.ReactNode;
 } & Pick<RootProps, (typeof ROOT_PROPS)[number]> &
     Pick<TriggerProps, (typeof TRIGGER_PROPS)[number]> &

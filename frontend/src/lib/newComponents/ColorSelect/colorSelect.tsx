@@ -9,8 +9,11 @@ export type ColorSelectProps = Omit<
     ButtonProps,
     "onClick" | "onChange" | "children" | "iconOnly" | "round" | "tone" | "pressed" | "variant" | "ref"
 > & {
+    /** The current hex color value. */
     value: string;
+    /** Called when the user picks a new color. */
     onChange: (value: string) => void;
+    /** Visual style of the button trigger. @default "outlined" */
     variant?: Exclude<ButtonProps["variant"], "contained">;
 };
 

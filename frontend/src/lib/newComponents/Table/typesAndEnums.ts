@@ -1,6 +1,8 @@
 // - Table collation definitions - --- --- --- --- --- --- --- --- --- --- ---
 export type TableSortState = {
+    /** The key identifying the column being sorted. */
     columnKey: string;
+    /** The current sort direction for this column. */
     direction: SortDirection;
 };
 

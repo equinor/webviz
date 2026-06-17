@@ -3,6 +3,7 @@ import React from "react";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 export type GroupProps = {
+    /** The SettingWrapper items to render inside the group. */
     children?: React.ReactNode;
 };
 

@@ -8,16 +8,24 @@ import { Button } from "../Button";
 import { Paragraph, Heading } from "../Typography/compositions";
 
 export type AlertDialogAction = {
+    /** The button label text. */
     label: string;
+    /** Color tone of the action button. */
     tone?: ButtonProps["tone"];
+    /** Called when the action button is clicked. */
     onClick: () => void;
+    /** When true, clicking the button automatically closes the dialog. */
     closesDialog?: boolean;
 };
 
 export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render" | "style" | "children"> & {
+    /** Dialog heading text. */
     title: string;
+    /** The main call-to-action button, rendered with contained styling and auto-focused. */
     primaryAction: AlertDialogAction;
+    /** Additional action buttons rendered before the primary action. */
     secondaryActions?: AlertDialogAction[];
+    /** The dialog description content. */
     children: React.ReactNode;
 };
 

@@ -7,8 +7,11 @@ import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ColorGradientProps = LayoutClassProps & {
+    /** The color palette used to generate the gradient. */
     colorPalette: ColorPalette;
+    /** Number of discrete color steps to render. When omitted, a continuous CSS gradient is used. */
     steps?: number;
+    /** Controls the height of the gradient bar. @default "default" */
     size?: SelectableSize;
 };
 

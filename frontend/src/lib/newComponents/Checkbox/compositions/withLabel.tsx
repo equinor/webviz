@@ -14,8 +14,11 @@ import type { CheckboxProps } from "../_components/checkbox";
 import { Checkbox } from "../_components/checkbox";
 
 export type WithLabelProps = CheckboxProps & {
+    /** Text label rendered next to the checkbox. Ignored when `children` is provided. */
     label?: string;
+    /** Custom content rendered next to the checkbox. Takes precedence over `label`. */
     children?: React.ReactNode;
+    /** Layout direction of the checkbox relative to its label. @default "horizontal" */
     direction?: "horizontal" | "vertical";
 };
 

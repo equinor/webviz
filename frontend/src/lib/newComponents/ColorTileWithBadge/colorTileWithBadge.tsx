@@ -6,8 +6,11 @@ import { ColorTile } from "@lib/newComponents/ColorTile";
 import type { ColorTileProps } from "@lib/newComponents/ColorTile";
 
 export type ColorTileWithBadgeProps = ColorTileProps & {
+    /** When true, renders the badge icon over the top-right corner of the tile. */
     showBadge: boolean;
+    /** Additional class names applied to the badge icon element, typically used to set its background color. */
     badgeClassName?: string;
+    /** The MUI icon component rendered as the badge. */
     badgeIcon: React.ComponentType<SvgIconProps>;
 };
 

@@ -2,7 +2,7 @@ import type React from "react";
 
 import { ChevronRight } from "@mui/icons-material";
 
-import { Tooltip } from "@lib/components/Tooltip";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import { EnsembleExplorerMode } from "../_hooks";
 
@@ -24,7 +24,7 @@ export const ExplorerTitle: React.FC<ExplorerTitleProps> = ({ showExplorer, expl
         <div className="gap-x-xs flex items-center">
             {showExplorer ? (
                 <>
-                    <Tooltip title="Back to selected ensembles" placement="bottom">
+                    <Tooltip content="Back to selected ensembles" side="bottom">
                         <button className="selectable text-header-md" onClick={onClose}>
                             Selected Ensembles
                         </button>

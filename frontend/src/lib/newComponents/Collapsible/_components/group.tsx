@@ -10,8 +10,11 @@ import { Typography } from "@lib/newComponents/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type GroupProps = ComponentWrapperProps<CollapsibleRootProps> & {
+    /** The label shown in the collapsible header. */
     title: string;
+    /** Controls the background color tone of the header. @default "neutral" */
     tone?: Tone;
+    /** Optional element rendered at the trailing end of the header row. */
     adornment?: React.ReactNode;
 };
 

@@ -10,15 +10,22 @@ import { type LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
 
 export type AvatarUserData = {
+    /** URL of the user's profile image. */
     imageSrc?: string;
+    /** Short text shown when the image fails to load (typically 1–2 uppercase letters). */
     initials?: string;
+    /** Tooltip text shown on hover. */
     title?: string;
+    /** Accessible alt text for the image. */
     alt?: string;
 };
 
 export type AvatarProps = LayoutClassProps & {
+    /** User data to display, or an async function that resolves to it. */
     userData?: AvatarUserData | (() => Promise<AvatarUserData>);
+    /** Size of the avatar in pixels. @default 48 */
     size?: PixelSize;
+    /** When true, renders the avatar with reduced opacity. */
     disabled?: boolean;
 };
 

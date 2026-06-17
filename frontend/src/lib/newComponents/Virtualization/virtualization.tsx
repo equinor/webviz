@@ -7,13 +7,21 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { withDefaults } from "../../components/_component-utils/components";
 
 export type VirtualizationProps<T = any> = {
+    /** HTML tag used as a spacer element before and after the visible items. @default "div" */
     placeholderComponent?: string;
+    /** Ref to the scrollable container element whose scroll position drives the virtual window. */
     containerRef: React.RefObject<HTMLElement>;
+    /** The full list of items to virtualize. */
     items: Array<T>;
+    /** Renders a single item given the item value and its absolute index in `items`. */
     renderItem: (item: T, index: number) => React.ReactNode;
+    /** Fixed pixel size of each item along the scroll axis. */
     itemSize: number;
+    /** Scroll axis. */
     direction: "vertical" | "horizontal";
+    /** Index of the item to scroll into view when it changes. @default 0 */
     startIndex?: number;
+    /** Called whenever the visible range changes, with the new first and last visible indices. */
     onScroll?: (newStartIndex: number, newEndIndex: number) => void;
 };
 

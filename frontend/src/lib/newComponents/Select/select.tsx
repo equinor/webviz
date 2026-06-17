@@ -17,28 +17,48 @@ enum KeyModifier {
 }
 
 export type SelectOption<TValue = string> = {
+    /** The underlying data value for this option. */
     value: TValue;
+    /** Optional element rendered before the label. */
     adornment?: React.ReactNode;
+    /** The display text shown in the list. */
     label: string;
+    /** Tooltip shown on hover. Falls back to `label` if not provided. */
     hoverText?: string;
+    /** When true, prevents this option from being selected. */
     disabled?: boolean;
 };
 
 export type SelectProps<TValue = string> = LayoutClassProps & {
+    /** HTML id applied to the filter input when `filter` is true. */
     id?: string;
+    /** HTML id applied to the outer wrapper element. */
     wrapperId?: string;
+    /** When true, disables the entire select and makes it non-interactive. */
     disabled?: boolean;
+    /** The list of options to display. */
     options: SelectOption<TValue>[];
+    /** The currently selected values. */
     value?: TValue[];
+    /** Called when the selection changes. */
     onValueChange?: (values: TValue[]) => void;
+    /** Text shown when the list is empty and no filter is active. */
     placeholder?: string;
+    /** When true, shows a filter input above the list. */
     filter?: boolean;
+    /** Placeholder text for the filter input. @default "Filter options..." */
     filterPlaceholder?: string;
+    /** Number of visible rows. @default 1 */
     size?: number;
+    /** Height of each option row in pixels. @default 24 */
     optionHeight?: number;
+    /** When true, allows selecting multiple values via Ctrl+click and Shift+click. */
     multiple?: boolean;
+    /** CSS width applied to the list container. */
     width?: string | number;
+    /** Debounce delay in milliseconds applied to `onValueChange` calls. */
     debounceTimeMs?: number;
+    /** When true, shows "Select all" and "Unselect all" buttons above the list. */
     showQuickSelectButtons?: boolean;
 };
 

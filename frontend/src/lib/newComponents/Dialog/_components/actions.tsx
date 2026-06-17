@@ -1,6 +1,7 @@
 import React from "react";
 
 export type ActionsProps = {
+    /** The action buttons to render. The last child automatically receives `autoFocus`. */
     children?: React.ReactNode;
 };
 

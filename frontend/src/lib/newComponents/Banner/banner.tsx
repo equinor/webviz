@@ -8,9 +8,13 @@ import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 
 export type BannerProps = LayoutClassProps & {
+    /** Controls the visual tone of the banner. @default "info" */
     tone?: "warning" | "danger" | "success" | "info";
+    /** When true, shows a dismiss button. @default false */
     dismissable?: boolean;
+    /** Called when the user clicks the dismiss button. */
     onDismiss?: () => void;
+    /** The content displayed inside the banner. */
     children?: React.ReactNode;
 };
 

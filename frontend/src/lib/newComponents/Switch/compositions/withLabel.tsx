@@ -13,8 +13,11 @@ import type { SwitchProps } from "../_baseComponents/switch";
 import { Switch } from "../_baseComponents/switch";
 
 export type WithLabelProps = Omit<SwitchProps, "ref"> & {
+    /** Text label rendered next to the switch. Ignored when `children` is provided. */
     label?: string;
+    /** Custom content rendered next to the switch. Takes precedence over `label`. */
     children?: React.ReactNode;
+    /** Size of the switch and label. @default "default" */
     size?: SelectableSize;
 };
 

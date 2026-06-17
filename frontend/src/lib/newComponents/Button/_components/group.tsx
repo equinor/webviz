@@ -6,8 +6,11 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { ButtonProps } from "./button";
 
 export type GroupProps = LayoutClassProps & {
+    /** The Button elements to render in the group. */
     children: React.ReactElement<ButtonProps>[];
+    /** When true, adds a small gap between buttons instead of merging their borders. */
     split?: boolean;
+    /** Overrides the size of all buttons in the group. */
     size?: ButtonProps["size"];
 };
 

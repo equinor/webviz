@@ -13,9 +13,9 @@ import {
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Button } from "@lib/newComponents/Button";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -75,7 +75,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
         }
 
         return (
-            <Tooltip title="Clear all messages">
+            <Tooltip content="Clear all messages">
                 <Button onClick={handleClearAll} tone="danger" variant="ghost" iconOnly size="small">
                     <ClearAll fontSize="inherit" />
                 </Button>

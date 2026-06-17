@@ -6,6 +6,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type TabProps = ComponentWrapperProps<Omit<TabsTabBaseProps, "children" | "ref">> & {
+    /** The tab label content. Can be a render function that receives `{ isActive }`. */
     children?: React.ReactNode | ((props: { isActive: boolean }) => React.ReactNode);
 };
 

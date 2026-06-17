@@ -6,6 +6,7 @@ import type { MenuRootProps as MenuBaseRootProps } from "@base-ui/react";
 import { MenuVariantContext } from "@lib/newComponents/_shared/contexts/menuVariantContext";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 
+/** Accepts all standard menu root props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
 export type MenuRootProps = ComponentWrapperProps<MenuBaseRootProps>;
 
 export function Root(props: MenuRootProps): React.ReactNode {

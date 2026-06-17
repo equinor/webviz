@@ -7,14 +7,23 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { ColorGradientProps } from "../ColorGradient/colorGradient";
 
 export type ColorScalePreviewProps = {
+    /** The color palette used to build the color scale. */
     colorPalette: ColorPalette;
+    /** Whether the gradient runs sequentially or diverges from a midpoint. */
     gradientType: ColorScaleGradientType;
+    /** When true, renders the scale as discrete steps rather than a continuous gradient. */
     discrete: boolean;
+    /** Number of discrete steps. Only meaningful when `discrete` is true. */
     steps: number;
+    /** The minimum value of the data range. */
     min: number;
+    /** The maximum value of the data range. */
     max: number;
+    /** The midpoint value for diverging gradients. */
     divMidPoint: number;
+    /** Unique identifier used to namespace the SVG gradient definition. */
     id: string;
+    /** Controls the height of the preview bar. @default "default" */
     size?: SelectableSize;
 };
 

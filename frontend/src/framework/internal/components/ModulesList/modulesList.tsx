@@ -13,10 +13,10 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Button } from "@lib/newComponents/Button";
 import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
@@ -202,7 +202,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                         {makeDevStateIcon(props.devState)}
                     </span>
                     <span className="text-neutral-subtle">{makePersistenceIcon(props.isSerializable)}</span>
-                    <Tooltip title="Show details">
+                    <Tooltip content="Show details">
                         <Button variant="ghost" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
                             <Help style={{ fontSize: 16 }} />
                         </Button>

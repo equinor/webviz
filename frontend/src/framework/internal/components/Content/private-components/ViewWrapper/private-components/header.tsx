@@ -24,13 +24,13 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/components/Tooltip";
 import { Badge } from "@lib/newComponents/Badge";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
 import { Popover } from "@lib/newComponents/Popover";
 import { Separator } from "@lib/newComponents/Separator";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Typography } from "@lib/newComponents/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -165,7 +165,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             <Separator orientation="vertical" />
 
             {props.isMaximized ? (
-                <Tooltip title="Restore">
+                <Tooltip content="Restore">
                     <Button
                         onPointerDown={handleRestoreClick}
                         onPointerUp={handlePointerUp}
@@ -179,7 +179,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     </Button>
                 </Tooltip>
             ) : (
-                <Tooltip title="Maximize">
+                <Tooltip content="Maximize">
                     <Button
                         onPointerDown={handleMaximizeClick}
                         onPointerUp={handlePointerUp}
@@ -193,7 +193,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     </Button>
                 </Tooltip>
             )}
-            <Tooltip title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
+            <Tooltip content={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
                 <Button
                     onPointerDown={handleRemoveClick}
                     onPointerUp={handlePointerUp}
@@ -280,7 +280,7 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
         <div className="gap-x-2xs flex items-center">
             {syncedSettings.map((setting) => (
                 <Tooltip
-                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
+                    content={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
                     key={setting}
                 >
                     <span className="bg-info-strong px-3xs py-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
@@ -476,7 +476,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (isLoading) {
         stateIndicators.push(
-            <Tooltip key="header-loading" title="This module is currently loading new content.">
+            <Tooltip key="header-loading" content="This module is currently loading new content.">
                 <div className="px-3xs flex cursor-help items-center justify-center">
                     <CircularProgress size={16} />
                 </div>
@@ -499,7 +499,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         stateIndicators.push(
             <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
                 <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
-                    <Tooltip title={badgeTitle} placement="bottom">
+                    <Tooltip content={badgeTitle} side="bottom">
                         <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
                             <div className="gap-x-4xs flex items-center whitespace-nowrap">
                                 <Error
@@ -546,7 +546,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (stateIndicators.length === 0) {
         stateIndicators.push(
-            <Tooltip title="Show complete log for this module" key="header-module-log">
+            <Tooltip content="Show complete log for this module" key="header-module-log">
                 <Button onPointerDown={handleShowLogClick} variant="ghost" tone="neutral" size="small" iconOnly>
                     <History fontSize="inherit" />
                 </Button>

@@ -31,17 +31,23 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
     >
 > &
     AsyncState & {
+        /** The list of items or grouped items to display in the dropdown. */
         items: ComboboxItems<TValue>;
+        /** Placeholder text shown when no value is selected. @default "Select an option" */
         placeholder?: string;
+        /** Content shown when no items match the current search input. @default "No matches found" */
         noMatchesText?: React.ReactNode;
+        /** When true, shows a button to clear the entire selection. @default false */
         showClearAllButton?: boolean;
         /** startAdornment is shown at the start of the component */
         startAdornment?: React.ReactNode;
         /** endAdornment is shown instead of the trigger icon at the end of the input - only when `multiple` is false */
         endAdornment?: React.ReactNode;
+        /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
         /** Only applies when `multiple` is true. "chips" (default) renders a chip per selection; "count" renders "X/N selected". */
         selectionMode?: "chips" | "count";
+        /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
     };
 
