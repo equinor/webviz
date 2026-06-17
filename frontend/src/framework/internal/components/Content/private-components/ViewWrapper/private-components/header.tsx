@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "px-xs gap-x-xs shadow-elevation-raised py-4xs text-body-lg relative flex touch-none items-center select-none",
+                "px-xs gap-x-xs shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
                 {
                     "bg-danger-canvas": hasErrors || invalidPersistedState,
                     "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,

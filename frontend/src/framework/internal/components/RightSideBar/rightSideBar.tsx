@@ -63,7 +63,6 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     }
 
     function handleSelectPanelContent(targetContent: RightDrawerContent) {
-        console.log("Selected right sidebar content:", targetContent);
         const isSameContent = targetContent === drawerContent;
         if (isSameContent && rightSettingsPanelIsCollapsed) {
             forceSettingsPanelVisible();
@@ -199,6 +198,7 @@ function RealizationFilterButtonIcon(
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
             tone={numberOfUnsavedRealizationFilters ? "warning" : "accent"}
             invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
+            corner="top-left"
         >
             {active ? <FilterAlt fontSize="small" /> : <FilterAltOutlined fontSize="small" />}
         </Badge>

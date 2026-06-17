@@ -1,7 +1,9 @@
 import React from "react";
 
 export type TagProps = {
+    /** The text content displayed inside the tag. */
     label: string;
+    /** Accessible tooltip text shown on hover. */
     title?: string;
 };
 

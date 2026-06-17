@@ -1,14 +1,18 @@
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { PIXEL_SIZES_CLASSNAMES, type PixelSize } from "../_shared/utils/size";
+import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 
 export type CircularProgressProps = {
+    /** Size of the spinner in pixels. @default 48 */
     size?: PixelSize;
+    /** Color scheme of the spinner. @default "default" */
     tone?: "default" | "on-emphasis";
+    /** Whether the spinner animates continuously or tracks a specific value. @default "indeterminate" */
     variant?: "indeterminate" | "determinate";
+    /** The current progress value (0–100). Only used when `variant` is "determinate". */
     value?: number;
-    layoutClassName?: string;
-};
+} & LayoutClassProps;
 
 const TONE_CLASSNAMES: Record<NonNullable<CircularProgressProps["tone"]>, { track: string; progress: string }> = {
     default: { track: "stroke-accent", progress: "stroke-accent-strong" },

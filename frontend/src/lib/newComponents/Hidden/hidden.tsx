@@ -1,6 +1,9 @@
 export type HiddenProps = {
+    /** The content to show or hide. */
     children: React.ReactNode;
+    /** When true, the children are hidden from view. @default false */
     hidden?: boolean;
+    /** When true, children remain mounted in the DOM even when hidden, preserving their state. @default false */
     keepMounted?: boolean;
 };
 

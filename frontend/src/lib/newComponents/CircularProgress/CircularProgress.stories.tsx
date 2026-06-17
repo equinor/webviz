@@ -18,6 +18,14 @@ const meta: Meta<typeof CircularProgress> = {
             control: { type: "radio" },
             options: ["default", "on-emphasis"],
         },
+        variant: {
+            control: { type: "radio" },
+            options: ["indeterminate", "determinate"],
+        },
+        value: {
+            control: { type: "range", min: 0, max: 100, step: 1 },
+        },
+        layoutClassName: { table: { disable: true } },
     },
 };
 
@@ -74,10 +82,5 @@ export const Playground: Story = {
         size: 48,
         tone: "default",
         variant: "indeterminate",
-    },
-    argTypes: {
-        value: {
-            control: { type: "range", min: 0, max: 100, step: 1 },
-        },
     },
 };
