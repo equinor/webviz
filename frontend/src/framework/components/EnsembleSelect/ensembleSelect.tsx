@@ -7,7 +7,7 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import type { SelectOption, SelectProps } from "@lib/components/Select";
+import type { SelectOption, SelectProps } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
 
 import { EnsembleColorTile } from "../EnsembleColorTile";

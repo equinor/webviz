@@ -92,13 +92,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
     }
 
-    function handlePhasesChange(value: PhaseType | null) {
-        if (value === null) {
-            return;
-        }
-        setSelectedPhase(value);
-    }
-
     function handleVisualizePlotsChange(plots: string[]) {
         const orderedPlots = [
             PressureDependentVariable.FORMATION_VOLUME_FACTOR,
@@ -163,7 +156,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         <ComboboxCompositions.WithBrowseButtons
                             items={makePhaseItems()}
                             value={selectedPhase}
-                            onValueChange={handlePhasesChange}
+                            onValueChange={(val) => val !== null && setSelectedPhase(val)}
                         />
                     </SettingWrapper>
                 </SettingWrapper.Section>
