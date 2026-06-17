@@ -95,29 +95,10 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         }
     }
 
-    function handleDisplayComponentTypeChange(value: DisplayComponentType | null) {
-        if (value !== null) {
-            setDisplayComponentType(value);
-        }
-    }
-
-    function handleScalingChange(value: SensitivityScaling | null) {
-        if (value !== null) {
-            setSensitivityScaling(value);
-        }
-    }
-
-    function handleSortByChange(value: SensitivitySortBy | null) {
-        if (value !== null) {
-            setSensitivitySortBy(value);
-        }
-    }
-
-    function handleColorByChange(value: ColorBy | null) {
-        if (value !== null) {
-            setColorBy(value);
-        }
-    }
+    const isChartSettingsDisabled = displayComponentType !== DisplayComponentType.SENSITIVITY_CHART;
+    const chartSettingsInfoAnnotation = isChartSettingsDisabled
+        ? "Only available when the plot type is sensitivity chart."
+        : undefined;
 
     return (
         <Collapsible.ScrollArea>
@@ -143,7 +124,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 },
                             ]}
                             value={displayComponentType}
-                            onValueChange={handleDisplayComponentTypeChange}
+                            onValueChange={(value) => value && setDisplayComponentType(value)}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Scaling">
@@ -163,7 +144,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 },
                             ]}
                             value={sensitivityScaling}
-                            onValueChange={handleScalingChange}
+                            onValueChange={(value) => value && setSensitivityScaling(value)}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Sensitivity sort order">
@@ -179,12 +160,12 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 },
                             ]}
                             value={sensitivitySortBy}
-                            onValueChange={handleSortByChange}
+                            onValueChange={(value) => value && setSensitivitySortBy(value)}
                         />
                     </SettingWrapper>
-                    <SettingWrapper label="Color by">
+                    <SettingWrapper label="Color by" infoAnnotation={chartSettingsInfoAnnotation}>
                         <Combobox<ColorBy>
-                            disabled={displayComponentType !== DisplayComponentType.SENSITIVITY_CHART}
+                            disabled={isChartSettingsDisabled}
                             items={[
                                 {
                                     label: "Sensitivity",
@@ -196,7 +177,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 },
                             ]}
                             value={colorBy}
-                            onValueChange={handleColorByChange}
+                            onValueChange={(value) => value && setColorBy(value)}
                         />
                     </SettingWrapper>
                     <SettingWrapper>
@@ -207,45 +188,44 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             size="small"
                         />
                     </SettingWrapper>
-                    <SettingWrapper>
-                        <CheckboxCompositions.WithLabel
-                            disabled={displayComponentType !== DisplayComponentType.SENSITIVITY_CHART}
-                            label="Show realization points"
-                            checked={showRealizationPoints}
-                            onCheckedChange={setShowRealizationPoints}
-                            size="small"
-                        />
-                    </SettingWrapper>
-                    <SettingWrapper>
-                        <CheckboxCompositions.WithLabel
-                            disabled={displayComponentType !== DisplayComponentType.SENSITIVITY_CHART}
-                            label="Show labels"
-                            checked={showLabels}
-                            onCheckedChange={setShowLabels}
-                            size="small"
-                        />
-                    </SettingWrapper>
-                    {displayComponentType !== DisplayComponentType.SENSITIVITY_CHART ? null : (
-                        <SettingWrapper
-                            help={{
-                                title: "Show mean points",
-                                content: (
-                                    <>
-                                        Shows one marker per Monte Carlo sensitivity at the mean response value across
-                                        all realizations in the sensitivity. Scenario sensitivities do not get mean
-                                        points because their low and high case averages are shown separately.
-                                    </>
-                                ),
-                            }}
-                        >
+                    <SettingWrapper
+                        label="Chart options"
+                        infoAnnotation={chartSettingsInfoAnnotation}
+                        help={{
+                            title: "Show mean points",
+                            content: (
+                                <>
+                                    Shows one marker per Monte Carlo sensitivity at the mean response value across all
+                                    realizations in the sensitivity. Scenario sensitivities do not get mean points
+                                    because their low and high case averages are shown separately.
+                                </>
+                            ),
+                        }}
+                    >
+                        <div className="gap-vertical-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
+                                disabled={isChartSettingsDisabled}
+                                label="Show realization points"
+                                checked={showRealizationPoints}
+                                onCheckedChange={setShowRealizationPoints}
+                                size="small"
+                            />
+                            <CheckboxCompositions.WithLabel
+                                disabled={isChartSettingsDisabled}
+                                label="Show labels"
+                                checked={showLabels}
+                                onCheckedChange={setShowLabels}
+                                size="small"
+                            />
+                            <CheckboxCompositions.WithLabel
+                                disabled={isChartSettingsDisabled}
                                 label="Show mean points"
                                 checked={showSensitivityMeanPoints}
                                 onCheckedChange={setShowSensitivityMeanPoints}
                                 size="small"
                             />
-                        </SettingWrapper>
-                    )}
+                        </div>
+                    </SettingWrapper>
                 </SettingWrapper.Section>
             </SettingWrapper.Group>
         </Collapsible.ScrollArea>
