@@ -181,12 +181,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     return (
         <div
-            className="gap-x-2xs form-element px-xs py-xs flex w-full items-center"
+            className="gap-2xs form-element px-xs py-xs flex w-full items-center"
             data-disabled={props.disabled ? "" : undefined}
         >
             <ul
                 className={resolveClassNames(
-                    "gap-x-3xs flex w-full flex-wrap",
+                    "gap-3xs flex w-full flex-wrap",
                     // Equivalent to SELECTABLE_SIZES_CLASSNAMES["small"],
                     "h-selectable-sm text-body-sm",
                 )}
