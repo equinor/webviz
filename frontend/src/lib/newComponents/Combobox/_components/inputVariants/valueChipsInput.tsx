@@ -18,7 +18,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
     ref: React.ForwardedRef<HTMLInputElement>,
 ): React.ReactNode {
     return (
-        <ComboboxBase.Chips className="gap-x-3xs gap-y-3xs flex w-full grow flex-wrap items-center">
+        <ComboboxBase.Chips className="gap-x-3xs gap-y-3xs flex min-w-0 grow flex-wrap items-center">
             <ComboboxBase.Value>
                 {(value) => (
                     <>

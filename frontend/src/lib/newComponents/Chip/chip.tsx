@@ -49,7 +49,7 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
             tone={props.tone}
             disabled={props.disabled}
             variant="ghost"
-            layoutClassName={resolveClassNames("ml-3xs self-stretch border-l rounded-l-none", {
+            layoutClassName={resolveClassNames("ml-3xs shrink-0 self-stretch border-l rounded-l-none", {
                 "border-warning": props.tone === "warning",
                 "border-danger": props.tone === "danger",
                 "border-neutral": props.tone === "neutral",
@@ -82,7 +82,7 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
             )}
         >
             {props.startAdornment}
-            {props.children}
+            <div className="min-w-0 flex-1 overflow-hidden">{props.children}</div>
             {props.wrapRemoveButton?.(removeButton) ?? removeButton}
             {props.selected && (
                 <div className="bg-accent-strong absolute top-0 left-0 z-10 block h-full w-full rounded-sm opacity-50" />
