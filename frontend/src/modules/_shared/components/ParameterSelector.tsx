@@ -1,10 +1,10 @@
 import React from "react";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 import type { SelectOption } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 
 type ParametersSelectorProps = {
     allParameterIdents: ParameterIdent[];
@@ -116,27 +116,26 @@ export function ParametersSelector({
                     value={selectedGroupFilterValues}
                     onValueChange={handleGroupChange}
                     multiple={true}
-                    size={Math.min(10, groupSelectOptions.length > 0 ? groupSelectOptions.length : 1)}
+                    size={Math.min(10, groupSelectOptions.length > 3 ? groupSelectOptions.length : 3)}
                     showQuickSelectButtons
                 />
             </SettingWrapper>
             <SettingWrapper label="Parameters" stacked>
-                <>
-                    <CheckboxCompositions.WithLabel
-                        label="Auto-select all on group change"
-                        checked={autoSelectAllOnGroupChange}
-                        onCheckedChange={setAutoSelectAllOnGroupChange}
-                    />
-                    <Select
-                        value={selectedParameterIdents.map((p) => p.toString())}
-                        onValueChange={handleParameterChange}
-                        options={parameterSelectOptions}
-                        multiple={true}
-                        size={Math.min(10, parameterSelectOptions.length > 0 ? parameterSelectOptions.length : 1)}
-                        filter
-                        showQuickSelectButtons
-                    />
-                </>
+                <SwitchCompositions.WithLabel
+                    label="Auto-select all on group change"
+                    checked={autoSelectAllOnGroupChange}
+                    onCheckedChange={setAutoSelectAllOnGroupChange}
+                    size="small"
+                />
+                <Select
+                    value={selectedParameterIdents.map((p) => p.toString())}
+                    onValueChange={handleParameterChange}
+                    options={parameterSelectOptions}
+                    multiple={true}
+                    size={Math.min(10, parameterSelectOptions.length > 3 ? parameterSelectOptions.length : 3)}
+                    filter
+                    showQuickSelectButtons
+                />
             </SettingWrapper>
         </div>
     );

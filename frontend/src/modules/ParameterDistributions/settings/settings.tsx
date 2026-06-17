@@ -107,14 +107,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         }
     }
 
-    function handlePriorEnsembleChange(identStr: string | null) {
-        setSelectedPriorEnsembleIdent(identStr ? RegularEnsembleIdentClass.fromString(identStr) : null);
-    }
-
-    function handlePosteriorEnsembleChange(identStr: string | null) {
-        setSelectedPosteriorEnsembleIdent(identStr ? RegularEnsembleIdentClass.fromString(identStr) : null);
-    }
-
     function renderEnsembleAdornment(identStr: string) {
         const ensemble = regularEnsembleArray.find((ens) => ens.getIdent().toString() === identStr) ?? null;
         if (!ensemble) {
@@ -185,7 +177,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 value={selectedPriorEnsembleIdent.value?.toString() ?? null}
                                 placeholder="Select prior ensemble"
                                 renderItemAdornment={renderEnsembleAdornment}
-                                onValueChange={handlePriorEnsembleChange}
+                                onValueChange={(identStr) =>
+                                    setSelectedPriorEnsembleIdent(
+                                        identStr ? RegularEnsembleIdentClass.fromString(identStr) : null,
+                                    )
+                                }
                             />
                         </SettingWrapper>
                     </Hidden>
@@ -199,7 +195,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 value={selectedPosteriorEnsembleIdent.value?.toString() ?? null}
                                 placeholder="Select posterior ensemble"
                                 renderItemAdornment={renderEnsembleAdornment}
-                                onValueChange={handlePosteriorEnsembleChange}
+                                onValueChange={(identStr) =>
+                                    setSelectedPosteriorEnsembleIdent(
+                                        identStr ? RegularEnsembleIdentClass.fromString(identStr) : null,
+                                    )
+                                }
                             />
                         </SettingWrapper>
                     </Hidden>
@@ -309,20 +309,20 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             onValueChange={handleHistogramModeChange}
                         />
                     </SettingWrapper>
-                    <SettingWrapper stacked>
-                        <>
-                            <CheckboxCompositions.WithLabel
-                                label="Show individual realization values"
-                                disabled={selectedVisualizationType === ParameterDistributionPlotType.HISTOGRAM}
-                                checked={showIndividualRealizationValues}
-                                onCheckedChange={setShowIndividualRealizationValues}
-                            />
-                            <CheckboxCompositions.WithLabel
-                                label="Show markers for P10, Mean, P90"
-                                checked={showPercentilesAndMeanLines}
-                                onCheckedChange={setShowPercentilesAndMeanLines}
-                            />
-                        </>
+                    <SettingWrapper label="Additional markers" stacked>
+                        <CheckboxCompositions.WithLabel
+                            label="Show individual realization values"
+                            disabled={selectedVisualizationType === ParameterDistributionPlotType.HISTOGRAM}
+                            checked={showIndividualRealizationValues}
+                            onCheckedChange={setShowIndividualRealizationValues}
+                            size="small"
+                        />
+                        <CheckboxCompositions.WithLabel
+                            label="Show markers for P10, Mean, P90"
+                            checked={showPercentilesAndMeanLines}
+                            onCheckedChange={setShowPercentilesAndMeanLines}
+                            size="small"
+                        />
                     </SettingWrapper>
                 </SettingWrapper.Section>
             </SettingWrapper.Group>
