@@ -22,7 +22,7 @@ import {
     sharedYAxesAtom,
 } from "./atoms/baseAtoms";
 
-const plotTypes = [
+const plotTypeItems = [
     {
         value: PlotType.Histogram,
         label: "Histogram",
@@ -54,12 +54,6 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
     useApplyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
 
-    function handlePlotTypeChanged(value: string | null) {
-        if (value !== null) {
-            setPlotType(value as PlotType);
-        }
-    }
-
     function handleNumBinsChange(value: number | readonly number[]) {
         if (Array.isArray(value)) {
             return;
@@ -77,7 +71,11 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
             <SettingWrapper.Group>
                 <SettingWrapper.Section title="Plot type" defaultOpen>
                     <SettingWrapper label="Plot type">
-                        <Combobox items={plotTypes} value={plotType} onValueChange={handlePlotTypeChanged} />
+                        <Combobox<PlotType>
+                            items={plotTypeItems}
+                            value={plotType}
+                            onValueChange={(value) => value && setPlotType(value)}
+                        />
                     </SettingWrapper>
                 </SettingWrapper.Section>
                 <Hidden hidden={plotType === null}>
