@@ -5,7 +5,6 @@ import { useAtom, useAtomValue } from "jotai";
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { ModuleSettingsProps } from "@framework/Module";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { RegularEnsembleIdent as RegularEnsembleIdentClass } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
