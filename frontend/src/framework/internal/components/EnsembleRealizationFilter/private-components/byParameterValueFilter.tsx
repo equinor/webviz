@@ -183,7 +183,10 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     const debouncedHandleContinuousRangeChange = useDebouncedFunction(handleContinuousRangeChange, 200);
 
     const handleContinuousParameterValueRangeChange = React.useCallback(
-        function handleContinuousParameterValueRangeChange(parameterIdentString: string, valueSelection: number[]) {
+        function handleContinuousParameterValueRangeChange(
+            parameterIdentString: string,
+            valueSelection: readonly number[],
+        ) {
             if (valueSelection.length !== 2) {
                 throw new Error(`Value selection must have 2 values`);
             }
@@ -265,9 +268,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 value={immediateValue ?? [valueSelection.start, valueSelection.end]}
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value: number) => roundContinuousValue(value)}
-                onValueChange={(newValue: number[]) =>
-                    handleContinuousParameterValueRangeChange(parameterIdentString, newValue)
-                }
+                onValueChange={(newValue) => handleContinuousParameterValueRangeChange(parameterIdentString, newValue)}
                 showRangeLocks
             />
         );

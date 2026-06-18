@@ -33,7 +33,6 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     const [selectedCaseName, setSelectedCaseName] = React.useState<string | null>(null);
     const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
     const [ensemblesInSelectedCase, setEnsemblesInSelectedCase] = React.useState<EnsembleInfo_api[]>([]);
-    const [activeSelectedEnsembles, setActiveSelectedEnsembles] = React.useState<RegularEnsembleIdent[]>([]);
     const [filterText, setFilterText] = React.useState("");
 
     const filteredEnsembles = React.useMemo(
