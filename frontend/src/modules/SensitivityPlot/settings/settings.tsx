@@ -10,7 +10,6 @@ import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
-import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
 import type { Interfaces } from "../interfaces";
