@@ -18,8 +18,16 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/util
 import { Button } from "../Button";
 import { Typography } from "../Typography";
 
+type SnapTarget = "nearest" | "next" | "prev";
+
 const TRACK_CLASS_NAME = "not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas";
 const INDICATOR_CLASS_NAME = "bg-accent-strong data-disabled:bg-disabled";
+const TRACK_HEIGHT_CLASS_NAMES = {
+    // Same size for small and default, as h-0.5 seems way to small
+    small: "h-1",
+    default: "h-1",
+    large: "h-1.5",
+} as const;
 
 export type SliderChangeEventDetails =
     | SliderBase.Root.ChangeEventDetails
@@ -112,7 +120,7 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
 
     /**
      * Display the value of each marker below them.
-     * A function can be provided for further customization. Returning an empty node (null, false, etc) will fully remove the label */
+     * A function can be provided for further customization. Returning an empty node (null, false, etc) or an empty string will fully remove the label */
     markerLabels?: boolean | ((markerValue: number, index: number) => React.ReactNode);
 
     /**
@@ -217,7 +225,6 @@ function SliderComponent(
     }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min]);
 
     const isDualSlider = Array.isArray(internalValue);
-    const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
     const { minLocked, maxLocked, setMinLocked, setMaxLocked } = useLockState({
         isDualSlider,
@@ -237,11 +244,17 @@ function SliderComponent(
         setInternalValue(props.value);
     }
 
-    function getThumbAriaLabelFunc(index: number) {
-        if (!defaultedProps.thumbAriaLabel) return "";
-        if (!Array.isArray(defaultedProps.thumbAriaLabel)) return defaultedProps.thumbAriaLabel;
-        return defaultedProps.thumbAriaLabel[index];
-    }
+    const getThumbAriaLabelFunc = React.useCallback(
+        function getThumbAriaLabelFunc(index: number) {
+            if (!defaultedProps.thumbAriaLabel) return "";
+            if (!Array.isArray(defaultedProps.thumbAriaLabel)) return defaultedProps.thumbAriaLabel;
+            return defaultedProps.thumbAriaLabel[index];
+        },
+        [defaultedProps.thumbAriaLabel],
+    );
+
+    // To preserve built-in base-ui defaults, we only pass a function to the thumbs if any thumb-labels were configured
+    const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
     const updateValue = React.useCallback(
         function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
@@ -424,14 +437,10 @@ function SliderComponent(
                         )}
 
                         <SliderBase.Track
-                            className={resolveClassNames(
-                                "w-full rounded-lg",
-                                resolveTrackHeightClassName(componentSize),
-                                {
-                                    [INDICATOR_CLASS_NAME]: props.inverted,
-                                    [TRACK_CLASS_NAME]: !props.inverted,
-                                },
-                            )}
+                            className={resolveClassNames("w-full rounded-lg", TRACK_HEIGHT_CLASS_NAMES[componentSize], {
+                                [INDICATOR_CLASS_NAME]: props.inverted,
+                                [TRACK_CLASS_NAME]: !props.inverted,
+                            })}
                         >
                             {!props.noIndicator && (
                                 <SliderBase.Indicator
@@ -703,7 +712,7 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
             />
 
             <div
-                className={resolveClassNames("w-full", resolveTrackHeightClassName(props.size))}
+                className={resolveClassNames("w-full", TRACK_HEIGHT_CLASS_NAMES[props.size])}
                 style={{
                     // @ts-expect-error -- css typing doesn't accept variables
                     "--gutter-color": getGutterColorVariable(isDisabled, isFilled, isDragging),
@@ -850,38 +859,41 @@ function useLockedValueUpdate(props: {
 
     const { onValueChange } = props;
 
-    React.useEffect(() => {
-        const value = props.value as number | number[];
-        const isDualValue = isDualSliderValue(value);
-        let newValue: number | number[] | null = null;
+    React.useEffect(
+        function clampToToggledLocksEffec() {
+            const value = props.value as number | number[];
+            const isDualValue = isDualSliderValue(value);
+            let newValue: number | number[] | null = null;
 
-        // Min lock was just enabled
-        if (props.minLocked && !prevMinLocked.current) {
-            if (isDualValue) {
-                newValue = [props.min, value[1]];
-            } else {
-                newValue = props.min;
+            // Min lock was just enabled
+            if (props.minLocked && !prevMinLocked.current) {
+                if (isDualValue) {
+                    newValue = [props.min, value[1]];
+                } else {
+                    newValue = props.min;
+                }
             }
-        }
 
-        // Max lock was just enabled
-        if (props.maxLocked && !prevMaxLocked.current) {
-            if (isDualValue && newValue !== null) {
-                newValue = [(newValue as number[])[0], props.max];
-            } else if (isDualValue) {
-                newValue = [value[0], props.max];
-            } else {
-                newValue = props.max;
+            // Max lock was just enabled
+            if (props.maxLocked && !prevMaxLocked.current) {
+                if (isDualValue && newValue !== null) {
+                    newValue = [(newValue as number[])[0], props.max];
+                } else if (isDualValue) {
+                    newValue = [value[0], props.max];
+                } else {
+                    newValue = props.max;
+                }
             }
-        }
 
-        prevMinLocked.current = props.minLocked;
-        prevMaxLocked.current = props.maxLocked;
+            prevMinLocked.current = props.minLocked;
+            prevMaxLocked.current = props.maxLocked;
 
-        if (newValue !== null) {
-            onValueChange?.(newValue, { reason: "range-locked" }, true);
-        }
-    }, [props.minLocked, props.maxLocked, props.min, props.max, props.value, onValueChange]);
+            if (newValue !== null) {
+                onValueChange?.(newValue, { reason: "range-locked" }, true);
+            }
+        },
+        [props.minLocked, props.maxLocked, props.min, props.max, props.value, onValueChange],
+    );
 }
 
 function useUnlockOnValueChange(props: {
@@ -897,35 +909,27 @@ function useUnlockOnValueChange(props: {
     const { setMinLocked, setMaxLocked } = props;
     const prevValue = React.useRef(props.value);
 
-    React.useEffect(() => {
-        // Only check if value actually changed
-        if (isEqual(prevValue.current, props.value)) return;
+    React.useEffect(
+        function unlockSliderLocksEffect() {
+            // Only check if value actually changed
+            if (isEqual(prevValue.current, props.value)) return;
 
-        const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
-        const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
+            const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
+            const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
 
-        if (props.minLocked && lowerValue > props.min) {
-            setMinLocked(false);
-        }
+            if (props.minLocked && lowerValue > props.min) {
+                setMinLocked(false);
+            }
 
-        if (props.maxLocked && upperValue < props.max) {
-            setMaxLocked(false);
-        }
+            if (props.maxLocked && upperValue < props.max) {
+                setMaxLocked(false);
+            }
 
-        prevValue.current = props.value;
-    }, [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked]);
+            prevValue.current = props.value;
+        },
+        [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked],
+    );
 }
-
-function resolveTrackHeightClassName(size: SelectableSize) {
-    return {
-        // Same size for small and default, as h-0.5 seems way to small
-        small: "h-1",
-        default: "h-1",
-        large: "h-1.5",
-    }[size];
-}
-
-type SnapTarget = "nearest" | "next" | "prev";
 
 function getSnappedValue(sortedMarkers: number[], value: number | number[], target: SnapTarget): number | number[] {
     if (Array.isArray(value)) {

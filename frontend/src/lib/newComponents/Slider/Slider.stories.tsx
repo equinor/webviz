@@ -78,7 +78,7 @@ export const Marks: Story = {
 Marks (or ticks) consist of three properties: \`markers\`, \`snapToMarkers\`, and \`markerLabels\`.
 - The \`markers\` prop can be used to define an assorted list of slider points that should show a marker. The slider will *always* have marks at the \`min\` and \`max\` values.
 - The \`snapToMarkers\` prop makes the slider thumb snap to the closest marker when dragged, or to the next/previous value when changing the value with keyboard inputs
-- The \`markerLabels\` prop can be used to show text labels underneath each marker. Labels can be clicked to quickly snap the slider to the marked value. Set it to \`true\` to just show the marker values directly, or provide a custom formatting function to render custom labels.	                
+- The \`markerLabels\` prop can be used to show text labels underneath each marker. Labels can be clicked to quickly snap the slider to the marked value. Set it to \`true\` to just show the marker values directly, or provide a custom formatting function to render custom labels.
 `,
             },
         },
