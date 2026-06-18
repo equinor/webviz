@@ -25,12 +25,13 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Button, type ButtonProps } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator";
 import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
+import { Popover } from "@lib/newComponents/Popover";
 import { Separator } from "@lib/newComponents/Separator";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Typography } from "@lib/newComponents/Typography";
 import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -41,7 +42,6 @@ import { DensityModeToggle } from "../DensityModeToggle/densityModeToggle";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
 import { ToggleDevToolsButton } from "../ToggleDevToolsButton";
-import { Popover } from "@lib/newComponents/Popover";
 
 export type TopBarProps = {
     workbench: Workbench;
@@ -59,7 +59,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-x-3xl py-2xs px-xs flex flex-row items-center border-b-2",
+                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-x-sm py-2xs px-xs flex flex-row items-center border-b-2",
                     {
                         "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,
@@ -70,6 +70,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                 <div className="gap-x-xs flex min-w-0 grow items-center">
                     {hasActiveSession ? (
                         <>
+                            <Separator orientation="vertical" />
                             <Title workbench={props.workbench} />
                             <TopBarButtons workbench={props.workbench} />
                         </>
@@ -413,7 +414,6 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                     <Save style={{ fontSize: 16 }} />
                 )}
             </Button>
-
             <MenuCompositions.Default
                 onActionClicked={handleSaveMenuAction}
                 items={[

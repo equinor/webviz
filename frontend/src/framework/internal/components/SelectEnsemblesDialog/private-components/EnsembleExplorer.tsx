@@ -9,6 +9,7 @@ import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Field } from "@lib/newComponents/Field";
+import { Hidden } from "@lib/newComponents/Hidden";
 import { type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
 import { TextInput } from "@lib/newComponents/TextInput";
@@ -245,34 +246,36 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                             <Field.Label indicator={`(${ensemblesInSelectedCase.length})`}>
                                 Ensembles in selected case
                             </Field.Label>
-                            <Tooltip content="Add all ensembles from selected case">
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={handleSelectAll}
-                                    tone="accent"
-                                    disabled={
-                                        ensemblesInSelectedCase.length === 0 ||
-                                        ensemblesInSelectedCase.every((ens) => isEnsembleSelected(ens.name))
-                                    }
-                                >
-                                    <Add style={{ fontSize: 16 }} /> Add all
-                                </Button>
-                            </Tooltip>
-                            <Tooltip content="Remove all ensembles from selected case">
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={handleRemoveAll}
-                                    tone="danger"
-                                    disabled={
-                                        ensemblesInSelectedCase.length === 0 ||
-                                        !ensemblesInSelectedCase.some((ens) => isEnsembleSelected(ens.name))
-                                    }
-                                >
-                                    <Remove style={{ fontSize: 16 }} /> Remove all
-                                </Button>
-                            </Tooltip>
+                            <Hidden hidden={!props.multiSelect}>
+                                <Tooltip content="Add all ensembles from selected case">
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleSelectAll}
+                                        tone="accent"
+                                        disabled={
+                                            ensemblesInSelectedCase.length === 0 ||
+                                            ensemblesInSelectedCase.every((ens) => isEnsembleSelected(ens.name))
+                                        }
+                                    >
+                                        <Add style={{ fontSize: 16 }} /> Add all
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip content="Remove all ensembles from selected case">
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleRemoveAll}
+                                        tone="danger"
+                                        disabled={
+                                            ensemblesInSelectedCase.length === 0 ||
+                                            !ensemblesInSelectedCase.some((ens) => isEnsembleSelected(ens.name))
+                                        }
+                                    >
+                                        <Remove style={{ fontSize: 16 }} /> Remove all
+                                    </Button>
+                                </Tooltip>
+                            </Hidden>
                             <span className="grow" />
                             <TextInput
                                 placeholder="Filter..."
@@ -291,6 +294,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                     selected={isEnsembleSelected(ens.name)}
                                     onSelect={() => handleSelectEnsemble(ens.name)}
                                     onUnselect={() => handleUnselectEnsemble(ens.name)}
+                                    singleSelect={!props.multiSelect}
                                 />
                             ))}
                         </div>
@@ -304,16 +308,8 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                     </Button>
                 ) : (
                     <>
-                        <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="ghost">
+                        <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="contained">
                             Cancel
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleSelectRegularEnsembles}
-                            tone="accent"
-                            disabled={ensembleAlreadySelected || ensembleOptions.length === 0}
-                        >
-                            Select Ensemble
                         </Button>
                     </>
                 )}
@@ -326,6 +322,7 @@ type EnsembleRowProps = {
     selected: boolean;
     onSelect: () => void;
     onUnselect: () => void;
+    singleSelect: boolean;
 };
 
 function EnsembleRow(props: EnsembleRowProps) {
@@ -358,6 +355,10 @@ function EnsembleRow(props: EnsembleRowProps) {
     }
 
     function makeIcon() {
+        if (props.singleSelect) {
+            return props.selected ? <Check fontSize="inherit" /> : <span className="w-3" />;
+        }
+
         if (props.selected) {
             return <CheckBox />;
         }
@@ -371,7 +372,7 @@ function EnsembleRow(props: EnsembleRowProps) {
                 "selectable group/row px-2xs hover:bg-neutral focus-within:bg-accent focus-within:hover:bg-accent-hover active:bg-accent-active h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none!",
                 {
                     "bg-accent-strong! text-accent-strong-on-emphasis! hover:bg-accent-strong-hover! active:bg-accent-strong-active!":
-                        props.selected,
+                        props.selected && !props.singleSelect,
                 },
             )}
             ref={rowRef}
@@ -380,7 +381,11 @@ function EnsembleRow(props: EnsembleRowProps) {
             onClick={handleClick}
         >
             <span className="text-body-md">{makeIcon()}</span>
-            <span className={resolveClassNames("justify-self-start", { "font-bolder": props.selected })}>
+            <span
+                className={resolveClassNames("justify-self-start", {
+                    "font-bolder": props.selected && !props.singleSelect,
+                })}
+            >
                 {props.ensemble.name}
             </span>
         </div>

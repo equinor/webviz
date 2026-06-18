@@ -20,7 +20,6 @@ import { makeHashFromSelectedEnsembles } from "./_utils";
 import { DialogActions } from "./private-components/DialogActions";
 import { EnsembleExplorer } from "./private-components/EnsembleExplorer";
 import { EnsembleTables } from "./private-components/EnsembleTables";
-import { ExplorerTitle } from "./private-components/ExplorerTitle";
 import { SelectEnsemblesConfirmationDialogs } from "./private-components/SelectEnsemblesConfirmationDialogs";
 
 export type SelectEnsemblesDialogProps = {
@@ -169,11 +168,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             >
                 <div className="flex h-full flex-col">
                     <Dialog.Header closeIconVisible>
-                        <ExplorerTitle
-                            showExplorer={showEnsembleExplorer}
-                            explorerMode={ensembleExplorerMode}
-                            onClose={handleCloseEnsembleExplorer}
-                        />
+                        <Dialog.Title>Ensembles used in this session</Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body layoutClassName="grow min-h-0">
                         <div className="relative flex h-full min-h-0 w-full flex-col">
@@ -215,6 +210,35 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </div>
                     </Dialog.Body>
                 </div>
+                <Dialog.Popup
+                    open={showEnsembleExplorer}
+                    onOpenChange={(open: boolean) => {
+                        if (!open) {
+                            handleCloseEnsembleExplorer();
+                        }
+                    }}
+                    width={`${dialogSizePercent.width}%`}
+                    height={`${dialogSizePercent.height}%`}
+                    modal
+                    keepMounted
+                >
+                    <Dialog.Header closeIconVisible>
+                        <Dialog.Title>
+                            {ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
+                                ? "Add ensembles"
+                                : "Select ensemble"}
+                        </Dialog.Title>
+                    </Dialog.Header>
+                    <EnsembleExplorer
+                        queriesDisabled={!showEnsembleExplorer}
+                        nextEnsembleColor={nextEnsembleColor}
+                        selectedEnsembles={selectedRegularEnsembles}
+                        onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
+                        onRemoveEnsembles={selectionHandlers.handleRemoveRegularEnsembles}
+                        multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
+                        onRequestClose={handleCloseEnsembleExplorer}
+                    />
+                </Dialog.Popup>
                 <SelectEnsemblesConfirmationDialogs
                     ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
                     showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
@@ -222,48 +246,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     onConfirmCancel={handleClose}
                     onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
                 />
-                <Dialog.Popup
-                    open={showEnsembleExplorer}
-                    onOpenChange={(open: boolean) => {
-                        if (!open) {
-                            handleCancel();
-                        }
-                    }}
-                    width={`${dialogSizePercent.width}%`}
-                    height={`${dialogSizePercent.height}%`}
-                    modal
-                >
-                    <Dialog.Header>
-                        <ExplorerTitle
-                            showExplorer={showEnsembleExplorer}
-                            explorerMode={ensembleExplorerMode}
-                            onClose={handleCloseEnsembleExplorer}
-                        />
-                    </Dialog.Header>
-                    <EnsembleExplorer
-                        queriesDisabled={!showEnsembleExplorer}
-                        nextEnsembleColor={nextEnsembleColor}
-                        selectedEnsembles={
-                            ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                ? selectedRegularEnsembles
-                                : []
-                        }
-                        onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                        onRemoveEnsembles={selectionHandlers.handleRemoveRegularEnsembles}
-                        multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
-                        onRequestClose={handleCloseEnsembleExplorer}
-                    />
-                    <SelectEnsemblesConfirmationDialogs
-                        ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
-                        showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
-                        showLoadingErrorsDialogState={[
-                            showEnsemblesLoadingErrorDialog,
-                            setShowEnsemblesLoadingErrorDialog,
-                        ]}
-                        onConfirmCancel={handleClose}
-                        onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
-                    />
-                </Dialog.Popup>
             </Dialog.Popup>
         </>
     );

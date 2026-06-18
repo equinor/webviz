@@ -532,7 +532,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         if (this.hasDirtyChanges()) {
             const result = await ConfirmationService.confirm({
-                title: "Unsaved changes",
+                title: "Save changes before closing session?",
                 message: "You have unsaved changes in your current session. Do you want to save them before closing?",
                 actions: [
                     { id: "cancel", label: "Cancel", color: "secondary" },

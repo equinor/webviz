@@ -181,6 +181,7 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                             items={ensembleDropdownOptions}
                             onValueChange={handleReferenceEnsembleChange}
                             renderItemAdornment={renderEnsembleIdentAdornment}
+                            layoutClassName="grow"
                         />
                         {isValid && props.isDuplicate && (
                             <Tooltip content="This delta ensemble is a duplicate of another delta ensemble in the selection.">

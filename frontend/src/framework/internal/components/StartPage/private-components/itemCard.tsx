@@ -63,9 +63,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                     <Info />
                 </Popover.Trigger>
                 <Popover.Popup side="left">
-                    <Popover.Content>
-                        <TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
-                    </Popover.Content>
+                    <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
                 </Popover.Popup>
             </Popover.Root>
             <a
@@ -104,7 +102,7 @@ function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
     return userInfoQuery.data ?? null;
 }
 
-function TooltipContent(
+function PopoverContent(
     props: { owner: GraphUser_api | null; tooltipInfo?: Record<string, string> } & ItemCardProps,
 ): React.ReactNode {
     if (props.isDeleted) {

@@ -55,7 +55,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
             {...baseRootProps}
             {...fieldStateAttrs}
             className={resolveClassNames(
-                props.layoutClassName,
+                baseRootProps.className,
                 "form-element",
                 "bg-canvas grow",
                 "px-xs gap-y-xs flex items-center",
