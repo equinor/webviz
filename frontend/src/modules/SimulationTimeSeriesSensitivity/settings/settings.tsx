@@ -125,9 +125,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                     <SettingWrapper
                         label="Vector"
                         annotations={selectedVectorNameAndTagAnnotations}
-                        loadingOverlay={vectorListQuery.isLoading}
+                        loadingOverlay={vectorListQuery.isFetching}
                         errorOverlay={
-                            vectorListQuery.error ? "Error loading available vectors. See details in log." : undefined
+                            vectorListQuery.isError ? "Error loading available vectors. See details in log." : undefined
                         }
                     >
                         <VectorSelector
