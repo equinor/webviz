@@ -221,17 +221,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     const readableEnsembleName = props.ensemble.getCustomName() ?? props.ensemble.getDisplayName();
 
-    const activeStyleClasses = {
-        "ring ring-blue-400": true,
-    };
-    const inactiveStyleClasses = {
-        "cursor-pointer ring hover:ring-2 ring-gray-300/(--ring-opacity) hover:ring-blue-200": true,
-        "[--ring-opacity:100%] hover:ring-blue-400/(--ring-opacity)": !props.isAnotherFilterActive,
-        "[--ring-opacity:50%] group hover:[--ring-opacity:75%] transition-opacity": props.isAnotherFilterActive,
-    };
-    const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
     return (
-        <div className={resolveClassNames("rounded-md", mainDivStyleClasses)}>
+        <div
+            className={resolveClassNames("rounded-md", {
+                "outline-neutral-subtle hover:outline-focus cursor-pointer outline hover:outline-2": !props.isActive,
+                "outline-focus outline": props.isActive,
+            })}
+        >
             <div className="bg-neutral flex items-center justify-center rounded-t-md">
                 <div
                     className={resolveClassNames(
