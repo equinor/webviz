@@ -119,20 +119,16 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                            onChange={(v) => setSelectedEnsembleIdent(v)}
+                            onChange={setSelectedEnsembleIdent}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Realization" annotations={selectedRealizationNumberAnnotations}>
                         <Combobox<number>
-                            items={
-                                availableRealizationNumbers?.map((real) => {
-                                    return { value: real, label: real.toString() };
-                                }) ?? []
-                            }
-                            value={
-                                selectedRealizationNumber.value !== null ? selectedRealizationNumber.value : undefined
-                            }
-                            onValueChange={(v) => v !== null && setSelectedRealizationNumber(v)}
+                            items={availableRealizationNumbers.map((real) => {
+                                return { value: real, label: real.toString() };
+                            })}
+                            value={selectedRealizationNumber.value}
+                            onValueChange={setSelectedRealizationNumber}
                         />
                     </SettingWrapper>
                     <SettingWrapper
@@ -164,7 +160,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 { label: "BHP", value: PressureOption.BHP },
                                 { label: "DP (BHP-THP)", value: PressureOption.DP },
                             ]}
-                            onValueChange={(v) => setUserSelectedPressureOption(v)}
+                            onValueChange={setUserSelectedPressureOption}
                             layout="horizontal"
                         />
                     </SettingWrapper>
@@ -180,7 +176,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     >
                         <Combobox
                             items={makeColorByItems(vfpType, vfpDataAccessor)}
-                            value={selectedColorBy.value ?? undefined}
+                            value={selectedColorBy.value}
                             onValueChange={(v) => v && setSelectedColorBy(v)}
                         />
                     </SettingWrapper>
