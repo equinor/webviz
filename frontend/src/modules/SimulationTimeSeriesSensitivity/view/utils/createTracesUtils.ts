@@ -27,7 +27,7 @@ export function createStatisticalLineTraces(
                     showLegend: false,
                     lineColor: color,
                     lineWidth: 3,
-                    hoverTemplate: `Sensitivity:<b>${aCase.sensitivityName}</b> <br> Case: <b>${aCase.sensitivityName}</b> <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
+                    hoverTemplate: `Sensitivity:<b>${aCase.sensitivityName}</b> <br> Case: <b>${aCase.sensitivityCase}</b> <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
                 }),
             );
         }
