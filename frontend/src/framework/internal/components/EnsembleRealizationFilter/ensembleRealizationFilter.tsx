@@ -221,15 +221,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     const readableEnsembleName = props.ensemble.getCustomName() ?? props.ensemble.getDisplayName();
 
-    const activeStyleClasses = {
-        "outline-accent-strong": true,
-    };
-    const inactiveStyleClasses = {
-        "cursor-pointer outline-neutral-subtle hover:outline-accent": true,
-    };
-    const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
     return (
-        <div className={resolveClassNames("group rounded outline", mainDivStyleClasses)}>
+        <div
+            className={resolveClassNames("group rounded-md outline", {
+                "outline-neutral-subtle hover:outline-accent cursor-pointer": !props.isActive,
+                "outline-accent-strong": props.isActive,
+            })}
+        >
             <div className="bg-neutral flex items-center justify-center rounded-t">
                 <div
                     className={resolveClassNames("px-2xs py-3xs gap-x-2xs flex h-full min-w-0 grow items-center", {
