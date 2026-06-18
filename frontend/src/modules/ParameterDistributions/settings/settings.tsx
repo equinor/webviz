@@ -79,34 +79,6 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const regularEnsembleArray = ensembleSet.getRegularEnsembleArray();
 
-    function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
-        setSelectedEnsembleIdents(ensembleIdents);
-    }
-
-    function handleAnalysisModeChange(value: EnsembleMode | null) {
-        if (value !== null) {
-            setSelectedEnsembleMode(value);
-        }
-    }
-
-    function handleSortMethodChange(value: ParameterSortMethod | null) {
-        if (value !== null) {
-            setSelectedParameterSortingMethod(value);
-        }
-    }
-
-    function handlePlotTypeChange(value: ParameterDistributionPlotType | null) {
-        if (value !== null) {
-            setSelectedVisualizationType(value);
-        }
-    }
-
-    function handleHistogramModeChange(value: HistogramMode | null) {
-        if (value !== null) {
-            setHistogramMode(value);
-        }
-    }
-
     function renderEnsembleAdornment(identStr: string) {
         const ensemble = regularEnsembleArray.find((ens) => ens.getIdent().toString() === identStr) ?? null;
         if (!ensemble) {
@@ -153,7 +125,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 disabled: !hasMultipleRegularEnsembles && type === EnsembleMode.PRIOR_POSTERIOR,
                             }))}
                             value={selectedEnsembleMode}
-                            onValueChange={handleAnalysisModeChange}
+                            onValueChange={(v) => v && setSelectedEnsembleMode(v)}
                         />
                     </SettingWrapper>
                     <Hidden hidden={selectedEnsembleMode !== EnsembleMode.INDEPENDENT}>
@@ -166,7 +138,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 ensembles={regularEnsembleArray}
                                 ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                                 value={selectedEnsembleIdents.value ?? []}
-                                onValueChange={handleEnsembleSelectionChange}
+                                onValueChange={setSelectedEnsembleIdents}
                             />
                         </SettingWrapper>
                     </Hidden>
@@ -220,7 +192,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     type !== ParameterSortMethod.ALPHABETICAL,
                             }))}
                             value={selectedParameterSortingMethod.value}
-                            onValueChange={handleSortMethodChange}
+                            onValueChange={(v) => v && setSelectedParameterSortingMethod(v)}
                         />
                     </SettingWrapper>
                 </SettingWrapper.Section>
@@ -295,7 +267,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 }),
                             )}
                             value={selectedVisualizationType}
-                            onValueChange={handlePlotTypeChange}
+                            onValueChange={(v) => v && setSelectedVisualizationType(v)}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Histogram mode">
@@ -306,7 +278,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             }))}
                             value={histogramMode}
                             disabled={selectedVisualizationType !== ParameterDistributionPlotType.HISTOGRAM}
-                            onValueChange={handleHistogramModeChange}
+                            onValueChange={(v) => v && setHistogramMode(v)}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Additional markers" stacked>

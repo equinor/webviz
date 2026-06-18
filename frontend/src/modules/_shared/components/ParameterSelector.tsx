@@ -6,6 +6,9 @@ import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 
+const MIN_SELECTOR_SIZE = 3;
+const MAX_SELECTOR_SIZE = 10;
+
 type ParametersSelectorProps = {
     allParameterIdents: ParameterIdent[];
     selectedParameterIdents: ParameterIdent[];
@@ -116,7 +119,10 @@ export function ParametersSelector({
                     value={selectedGroupFilterValues}
                     onValueChange={handleGroupChange}
                     multiple={true}
-                    size={Math.min(10, groupSelectOptions.length > 3 ? groupSelectOptions.length : 3)}
+                    size={Math.min(
+                        MAX_SELECTOR_SIZE,
+                        groupSelectOptions.length > MIN_SELECTOR_SIZE ? groupSelectOptions.length : MIN_SELECTOR_SIZE,
+                    )}
                     showQuickSelectButtons
                 />
             </SettingWrapper>
@@ -132,7 +138,12 @@ export function ParametersSelector({
                     onValueChange={handleParameterChange}
                     options={parameterSelectOptions}
                     multiple={true}
-                    size={Math.min(10, parameterSelectOptions.length > 3 ? parameterSelectOptions.length : 3)}
+                    size={Math.min(
+                        MAX_SELECTOR_SIZE,
+                        parameterSelectOptions.length > MIN_SELECTOR_SIZE
+                            ? parameterSelectOptions.length
+                            : MIN_SELECTOR_SIZE,
+                    )}
                     filter
                     showQuickSelectButtons
                 />
