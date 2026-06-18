@@ -82,7 +82,7 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
             )}
         >
             {props.startAdornment}
-            <div className="min-w-0 flex-1 overflow-hidden">{props.children}</div>
+            <div className="flex min-w-0 flex-1 items-center self-stretch overflow-x-hidden">{props.children}</div>
             {props.wrapRemoveButton?.(removeButton) ?? removeButton}
             {props.selected && (
                 <div className="bg-accent-strong absolute top-0 left-0 z-10 block h-full w-full rounded-sm opacity-50" />

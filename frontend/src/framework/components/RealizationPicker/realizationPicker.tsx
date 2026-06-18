@@ -181,12 +181,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     return (
         <div
-            className="gap-2xs form-element px-xs py-xs flex w-full items-center"
+            className="form-element gap-x-xs px-xs py-xs flex cursor-text items-center"
             data-disabled={props.disabled ? "" : undefined}
         >
             <ul
                 className={resolveClassNames(
-                    "gap-3xs flex w-full flex-wrap",
+                    "gap-3xs flex min-w-0 grow flex-wrap items-center",
                     // Equivalent to SELECTABLE_SIZES_CLASSNAMES["small"],
                     "h-selectable-sm text-body-sm",
                 )}
@@ -212,7 +212,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                         value={currentInputValue}
                         wrapperClassName="h-full"
                         type="text"
-                        placeholder="Enter a realization number or range..."
+                        placeholder={!rangeValues.length ? "Enter a realization number or range..." : ""}
                         minCharacterWidth={5}
                         onFocus={() => listFocus.setFocusedIndex(-1)}
                         onValueChange={handleInputChange}
