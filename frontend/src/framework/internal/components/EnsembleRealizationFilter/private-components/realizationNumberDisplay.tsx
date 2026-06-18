@@ -28,19 +28,26 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         setAllRealizationsInRange(Array.from({ length: Math.max(...props.availableRealizations) + 1 }, (_, i) => i));
     }
 
-    function handleRealizationElementClick(realization: number) {
-        if (props.disableOnClick) {
-            return;
-        }
-        if (!props.selectedRealizations.includes(realization)) {
-            props.onRealizationNumberClick([...props.selectedRealizations, realization]);
-            return;
-        }
-        const newRealizationNumberSelections = props.selectedRealizations.filter(
-            (selectedRealization) => selectedRealization !== realization,
-        );
-        props.onRealizationNumberClick(newRealizationNumberSelections);
-    }
+    // Since the function prop is not guaranteed to be stable, we wrap it in a ref so we can safely memoize against it
+    const onRealizationNumberClickRef = React.useRef(props.onRealizationNumberClick);
+    onRealizationNumberClickRef.current = props.onRealizationNumberClick;
+
+    const handleRealizationElementClick = React.useCallback(
+        function handleRealizationElementClickFunc(realization: number) {
+            if (props.disableOnClick) {
+                return;
+            }
+            if (!props.selectedRealizations.includes(realization)) {
+                onRealizationNumberClickRef.current([...props.selectedRealizations, realization]);
+                return;
+            }
+            const newRealizationNumberSelections = props.selectedRealizations.filter(
+                (selectedRealization) => selectedRealization !== realization,
+            );
+            onRealizationNumberClickRef.current(newRealizationNumberSelections);
+        },
+        [props.disableOnClick, props.selectedRealizations],
+    );
 
     const isCompact = props.showAsCompact ?? false;
     const dotSizePx = isCompact ? 9 : 12;
@@ -76,65 +83,87 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
     const backgroundImage =
         separatorStops.length > 0 ? `linear-gradient(to right, ${separatorStops.join(", ")})` : undefined;
 
-    const gridElements: React.ReactNode[] = [];
+    const gridElements = React.useMemo(
+        function computeGridElementsMemo() {
+            const elements: React.ReactNode[] = [];
 
-    if (!isCompact) {
-        gridElements.push(<span key="col-header-corner" />);
-        for (let col = 0; col < numPerRow; col++) {
-            gridElements.push(
-                <span
-                    key={`col-header-${col}`}
-                    className="text-neutral-subtle self-end text-center text-[10px] leading-none select-none"
-                >
-                    {col % 5 === 0 ? col : ""}
-                </span>,
-            );
-        }
-    }
+            const selectedRealizationsSet = new Set(props.selectedRealizations);
+            const availableRealizationsSet = new Set(props.availableRealizations);
 
-    for (let rowStart = 0; rowStart < allRealizationsInRange.length; rowStart += numPerRow) {
-        const rowRealizations = allRealizationsInRange.slice(rowStart, rowStart + numPerRow);
+            if (!isCompact) {
+                elements.push(<span key="col-header-corner" />);
+                for (let col = 0; col < numPerRow; col++) {
+                    elements.push(
+                        <span
+                            key={`col-header-${col}`}
+                            className="text-neutral-subtle self-end text-center text-[10px] leading-none select-none"
+                        >
+                            {col % 5 === 0 ? col : ""}
+                        </span>,
+                    );
+                }
+            }
 
-        if (!isCompact) {
-            gridElements.push(
-                <span
-                    key={`label-${rowStart}`}
-                    className="text-neutral-subtle flex items-center justify-end text-[10px] leading-none select-none"
-                >
-                    {allRealizationsInRange[rowStart]}
-                </span>,
-            );
-        }
+            for (let rowStart = 0; rowStart < allRealizationsInRange.length; rowStart += numPerRow) {
+                const rowRealizations = allRealizationsInRange.slice(rowStart, rowStart + numPerRow);
 
-        for (const realization of rowRealizations) {
-            const isAvailable = props.availableRealizations.includes(realization);
-            const isSelected = props.selectedRealizations.includes(realization);
-            const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
+                if (!isCompact) {
+                    elements.push(
+                        <span
+                            key={`label-${rowStart}`}
+                            className="text-neutral-subtle flex items-center justify-end text-[10px] leading-none select-none"
+                        >
+                            {allRealizationsInRange[rowStart]}
+                        </span>,
+                    );
+                }
 
-            gridElements.push(
-                <Tooltip
-                    key={realization}
-                    content={isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
-                >
-                    <div
-                        style={{ width: dotSizePx, height: dotSizePx }}
-                        className={resolveClassNames("flex aspect-square items-center justify-center rounded-full", {
-                            "bg-accent-strong": isSelected,
-                            "bg-accent": !isSelected && isAvailable,
-                            "bg-disabled": !isSelected && !isAvailable,
-                            "hover:bg-accent-strong-hover hover:outline-accent-strong hover:outline":
-                                !isCompact && isSelected,
-                            "hover:bg-accent-hover hover:outline-accent hover:outline":
-                                !isCompact && !isSelected && isAvailable,
-                            "cursor-pointer": !isCompact && !props.disableOnClick && isAvailable,
-                            "cursor-not-allowed": !isCompact && !props.disableOnClick && !isAvailable,
-                        })}
-                        onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
-                    />
-                </Tooltip>,
-            );
-        }
-    }
+                for (const realization of rowRealizations) {
+                    const isAvailable = availableRealizationsSet.has(realization);
+                    const isSelected = selectedRealizationsSet.has(realization);
+                    const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
+
+                    elements.push(
+                        <Tooltip
+                            key={realization}
+                            content={isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
+                        >
+                            <div
+                                style={{ width: dotSizePx, height: dotSizePx }}
+                                className={resolveClassNames(
+                                    "flex aspect-square items-center justify-center rounded-full",
+                                    {
+                                        "bg-accent-strong": isSelected,
+                                        "bg-accent": !isSelected && isAvailable,
+                                        "bg-disabled": !isSelected && !isAvailable,
+                                        "hover:bg-accent-strong-hover hover:outline-accent-strong hover:outline":
+                                            !isCompact && isSelected,
+                                        "hover:bg-accent-hover hover:outline-accent hover:outline":
+                                            !isCompact && !isSelected && isAvailable,
+                                        "cursor-pointer": !isCompact && !props.disableOnClick && isAvailable,
+                                        "cursor-not-allowed": !isCompact && !props.disableOnClick && !isAvailable,
+                                    },
+                                )}
+                                onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
+                            />
+                        </Tooltip>,
+                    );
+                }
+            }
+
+            return elements;
+        },
+        [
+            isCompact,
+            numPerRow,
+            allRealizationsInRange,
+            props.availableRealizations,
+            props.selectedRealizations,
+            props.disableOnClick,
+            dotSizePx,
+            handleRealizationElementClick,
+        ],
+    );
 
     return (
         <div ref={divRef}>
