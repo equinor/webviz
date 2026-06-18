@@ -11,7 +11,9 @@ import type { Preview } from "@storybook/react";
 import { DarkModeButton } from "../src/framework/internal/components/DarkModeButton";
 import { DensityModeToggle } from "../src/framework/internal/components/DensityModeToggle";
 
+// @ts-expect-error -- CSS imports are not typed
 import "../src/styles/index.css";
+// @ts-expect-error -- CSS imports are not typed
 import "./preview.css";
 
 const theme = createTheme({
@@ -33,7 +35,7 @@ const preview: Preview = {
                 {/* TODO: Dark-mode buttons overlap content too much in doc-view. Hide it for now*/}
                 {ctx.viewMode !== "docs" && (
                     <div
-                        className="bg-canvas gap-horizontal-sm px-horizontal-2xs py-horizontal-3xs fixed top-1 right-1 flex rounded"
+                        className="bg-canvas gap-horizontal-sm px-2xs py-3xs fixed top-1 right-1 flex rounded"
                         style={{
                             position: "fixed",
                             top: "1rem",
@@ -44,7 +46,7 @@ const preview: Preview = {
                         <DensityModeToggle />
                     </div>
                 )}
-                <div className="bg-surface border-neutral-subtle py-horizontal-2xl px-horizontal-xl h-full w-full rounded border">
+                <div className="bg-surface border-neutral-subtle py-2xl px-xl h-full w-full rounded border">
                     <Story />
                 </div>
             </>

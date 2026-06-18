@@ -169,7 +169,7 @@ function calcGridDimensions(numContents: number): { numRows: number; numCols: nu
 function MaxNumberPlotsExceededMessage(): React.ReactElement {
     return (
         <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
+            <Warning fontSize="large" className="mb-2xs" />
             Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
             .
         </ContentWarning>

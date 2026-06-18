@@ -25,7 +25,7 @@ const MAX_NUM_PLOTS = 12;
 function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
+            <Warning fontSize="large" className="mb-sm" />
             Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
             .
         </ContentWarning>
