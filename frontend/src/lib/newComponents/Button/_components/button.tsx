@@ -103,6 +103,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
             {...getDataAttributesForSelectableSize(size, true)}
             style={{
                 minHeight: "calc(var(--eds-selectable-space-vertical) * 2 + round(1cap , 4px))",
+                ...baseProps.style,
             }}
             className={resolveClassNames(
                 props.layoutClassName,
