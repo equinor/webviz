@@ -291,7 +291,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 title={!props.isActive ? "Click to open filter" : undefined}
                 onClickCapture={handleBodyOnClickCapture}
             >
-                <div className="border-neutral-subtle flex flex-col gap-2 rounded-b border p-2">
+                <div className="border-neutral-subtle gap-y-xs flex flex-col rounded-b border p-2">
                     <div className="py-2xs px-2xs">
                         <RealizationNumberDisplay
                             selectedRealizations={props.selections.realizationNumbers}

@@ -384,7 +384,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
         return (
             <div className="px-xs py-2xs gap-y-2xs flex flex-col overflow-y-auto">
-                <div className="grow space-y-4">
+                <div className="*:not-first:mt-xs grow">
                     {ensembleSet.getEnsembleArray().map((ensemble) => {
                         const ensembleIdent = ensemble.getIdent();
                         const isActive =
