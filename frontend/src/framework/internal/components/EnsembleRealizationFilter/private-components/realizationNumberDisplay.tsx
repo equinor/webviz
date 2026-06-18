@@ -87,6 +87,9 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         function computeGridElementsMemo() {
             const elements: React.ReactNode[] = [];
 
+            const selectedRealizationsSet = new Set(props.selectedRealizations);
+            const availableRealizationsSet = new Set(props.availableRealizations);
+
             if (!isCompact) {
                 elements.push(<span key="col-header-corner" />);
                 for (let col = 0; col < numPerRow; col++) {
@@ -116,8 +119,8 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                 }
 
                 for (const realization of rowRealizations) {
-                    const isAvailable = props.availableRealizations.includes(realization);
-                    const isSelected = props.selectedRealizations.includes(realization);
+                    const isAvailable = availableRealizationsSet.has(realization);
+                    const isSelected = selectedRealizationsSet.has(realization);
                     const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
 
                     elements.push(
