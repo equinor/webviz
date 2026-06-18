@@ -225,6 +225,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             value={timeStepSettingProps.sliderValue}
                             min={0}
                             max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
+                            markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
                             valueLabelFormat={createValueLabelFormat}
                             onValueChange={(value) =>
                                 isSingleTimeStepMode
