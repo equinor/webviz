@@ -5,10 +5,11 @@ import { Tooltip } from "@base-ui/react";
 import type { SliderRootProps as SliderRootBaseProps, SliderRootState } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
 import { Lock, LockOpen } from "@mui/icons-material";
-import { clamp, clone, isEqual } from "lodash";
+import { chain, clamp, clone, isEqual, minBy } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
@@ -17,18 +18,31 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/util
 import { Button } from "../Button";
 import { Typography } from "../Typography";
 
+type SnapTarget = "nearest" | "next" | "prev";
+
 const TRACK_CLASS_NAME = "not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas";
 const INDICATOR_CLASS_NAME = "bg-accent-strong data-disabled:bg-disabled";
+const TRACK_HEIGHT_CLASS_NAMES = {
+    // Same size for small and default, as h-0.5 seems way to small
+    small: "h-1",
+    default: "h-1",
+    large: "h-1.5",
+} as const;
 
 export type SliderChangeEventDetails =
     | SliderBase.Root.ChangeEventDetails
     | { reason: "clamp-value" }
+    | { reason: "marker-clicked" }
     | { reason: "range-locked" };
 // If we want to follow base-ui even more directly, use these
 // | BaseUIChangeEventDetails<"clamp-min", SliderRootChangeEventCustomProperties>
 // | BaseUIChangeEventDetails<"clamp-max", SliderRootChangeEventCustomProperties>;
 
-export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orientation">> & {
+export type SliderProps<TValue extends number | readonly number[] = number | readonly number[]> = ComponentWrapperProps<
+    // ! Orientation would require a lot of extra checks, and we currently
+    // ! are not using vertical sliders anywhere, so we disable it for now
+    Omit<SliderRootBaseProps<TValue>, "orientation">
+> & {
     /**
      * Shows a button and gutter tracks for locking value to min and/or max values
      *
@@ -98,6 +112,17 @@ export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orien
     /** Hides the slider indicator */
     noIndicator?: boolean;
 
+    /** Additional slider values to show a mark at. The slider will *always* show markers at the ends */
+    markers?: number[];
+
+    /** Snaps the allowed slider values to the values defined in markers (including min/max) */
+    snapToMarkers?: boolean;
+
+    /**
+     * Display the value of each marker below them.
+     * A function can be provided for further customization. Returning an empty node (null, false, etc) or an empty string will fully remove the label */
+    markerLabels?: boolean | ((markerValue: number, index: number) => React.ReactNode);
+
     /**
      * Formats the value displayed by the thumbs value tooltip.
      * @param value The current value of the thumb.
@@ -111,170 +136,44 @@ export type SliderProps = ComponentWrapperProps<Omit<SliderRootBaseProps, "orien
      *
      * Event is extended to include lock-toggles as an event-reason
      */
-    onValueChange?: (value: number | readonly number[], eventDetails: SliderChangeEventDetails) => void;
+    onValueChange?: (
+        value: TValue extends number ? number : readonly number[],
+        eventDetails: SliderChangeEventDetails,
+    ) => void;
+
     /**
      * See `Slider.Root.onValueCommit`
      *
      * Event is extended to include lock-toggles as an event-reason
      */
-    onValueCommitted?: (value: number | readonly number[], eventDetails: SliderChangeEventDetails) => void;
+    onValueCommitted?: (
+        value: TValue extends number ? number : readonly number[],
+        eventDetails: SliderChangeEventDetails,
+    ) => void;
 };
 const DEFAULT_PROPS = {
     min: 0,
     max: 100,
+    defaultValue: 0,
     showRangeLocks: "none" as NonNullable<SliderProps["showRangeLocks"]>,
     valueLabelDisplay: "auto" as NonNullable<SliderProps["valueLabelDisplay"]>,
+    markers: [] as number[],
+    snapToMarkers: false as boolean,
+    thumbCollisionBehavior: "push" as NonNullable<SliderProps["thumbCollisionBehavior"]>,
 } satisfies Partial<SliderProps>;
 
-type DefaultedSliderProps = typeof DEFAULT_PROPS & SliderProps;
+type InternalOnChangeCallback = (value: number | number[], eventDetails: SliderChangeEventDetails) => void;
 
-function isDualSliderValue(value: number | readonly number[]): value is readonly number[] {
-    return Array.isArray(value);
-}
+function SliderComponent(
+    // ! Note: To simplify internal logic, we always type the slider props as number | number[] using some direct
+    // ! casting. Externally, slider users will see the change event's with the same type as the provided values
+    props: SliderProps<number | number[]>,
+    ref: React.ForwardedRef<HTMLDivElement>,
+): React.ReactNode {
+    const defaultedProps = { ...DEFAULT_PROPS, ...props };
 
-function useLockState(props: {
-    showMinLock: boolean;
-    showMaxLock: boolean;
-    minLocked?: boolean;
-    maxLocked?: boolean;
-    defaultMinLocked?: boolean;
-    defaultMaxLocked?: boolean;
-    onMinLockedChange?: (locked: boolean) => void;
-    onMaxLockedChange?: (locked: boolean) => void;
-}) {
-    const [minLockedState, setMinLockedState] = React.useState(props.defaultMinLocked ?? false);
-    const [maxLockedState, setMaxLockedState] = React.useState(props.defaultMaxLocked ?? false);
-
-    const minLocked = props.minLocked ?? minLockedState;
-    const maxLocked = props.maxLocked ?? maxLockedState;
-
-    const setMinLocked = React.useCallback(
-        (locked: boolean) => {
-            if (!props.showMinLock) return;
-
-            if (props.minLocked === undefined) {
-                setMinLockedState(locked);
-            }
-            props.onMinLockedChange?.(locked);
-        },
-        [props],
-    );
-
-    const setMaxLocked = React.useCallback(
-        (locked: boolean) => {
-            if (!props.showMaxLock) return;
-
-            if (props.maxLocked === undefined) {
-                setMaxLockedState(locked);
-            }
-            props.onMaxLockedChange?.(locked);
-        },
-        [props],
-    );
-
-    return {
-        minLocked,
-        maxLocked,
-        setMinLocked,
-        setMaxLocked,
-    };
-}
-
-function useLockedValueUpdate(props: {
-    value: number | readonly number[];
-    min: number;
-    max: number;
-    minLocked: boolean;
-    maxLocked: boolean;
-    onValueChange?: (
-        value: number | readonly number[],
-        eventDetails: SliderChangeEventDetails,
-        commit: boolean,
-    ) => void;
-}) {
-    const prevMinLocked = React.useRef(false);
-    const prevMaxLocked = React.useRef(false);
-
-    const { onValueChange } = props;
-
-    React.useEffect(() => {
-        const value = props.value;
-        const isDualValue = isDualSliderValue(value);
-        let newValue: typeof value | null = null;
-
-        // Min lock was just enabled
-        if (props.minLocked && !prevMinLocked.current) {
-            if (isDualValue) {
-                newValue = [props.min, value[1]];
-            } else {
-                newValue = props.min;
-            }
-        }
-
-        // Max lock was just enabled
-        if (props.maxLocked && !prevMaxLocked.current) {
-            if (isDualValue && newValue !== null) {
-                newValue = [(newValue as number[])[0], props.max];
-            } else if (isDualValue) {
-                newValue = [value[0], props.max];
-            } else {
-                newValue = props.max;
-            }
-        }
-
-        prevMinLocked.current = props.minLocked;
-        prevMaxLocked.current = props.maxLocked;
-
-        if (newValue !== null) {
-            onValueChange?.(newValue, { reason: "range-locked" }, true);
-        }
-    }, [props.minLocked, props.maxLocked, props.min, props.max, props.value, onValueChange]);
-}
-
-function useUnlockOnValueChange(props: {
-    value: number | readonly number[];
-    min: number;
-    max: number;
-    minLocked: boolean;
-    maxLocked: boolean;
-
-    setMinLocked: (locked: boolean) => void;
-    setMaxLocked: (locked: boolean) => void;
-}) {
-    const { setMinLocked, setMaxLocked } = props;
-    const prevValue = React.useRef(props.value);
-
-    React.useEffect(() => {
-        // Only check if value actually changed
-        if (isEqual(prevValue.current, props.value)) return;
-
-        const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
-        const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
-
-        if (props.minLocked && lowerValue > props.min) {
-            setMinLocked(false);
-        }
-
-        if (props.maxLocked && upperValue < props.max) {
-            setMaxLocked(false);
-        }
-
-        prevValue.current = props.value;
-    }, [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked]);
-}
-
-function resolveTrackHeightClassName(size: SelectableSize) {
-    return {
-        // Same size for small and default, as h-0.5 seems way to small
-        small: "h-1",
-        default: "h-1",
-        large: "h-1.5",
-    }[size];
-}
-
-function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const defaultedProps: DefaultedSliderProps = { ...DEFAULT_PROPS, ...props };
-    const { onValueChange, onValueCommitted } = props;
+    const onValueChange = props.onValueChange as InternalOnChangeCallback;
+    const onValueCommitted = props.onValueCommitted as InternalOnChangeCallback;
 
     const baseProps = resolveWrapperProps(defaultedProps, [
         "showRangeLocks",
@@ -284,6 +183,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         "inverted",
         "noIndicator",
         "size",
+        "markers",
+        "markerLabels",
+        "snapToMarkers",
         "minLocked",
         "maxLocked",
         "defaultMinLocked",
@@ -304,13 +206,28 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const minGutterDotRef = React.useRef<HTMLDivElement | null>(null);
     const maxGutterDotRef = React.useRef<HTMLDivElement | null>(null);
 
+    const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue);
     const [prevMin, setPrevMin] = React.useState(defaultedProps.min);
     const [prevMax, setPrevMax] = React.useState(defaultedProps.max);
+
+    const [isHovered, setIsHovered] = React.useState(false);
+    const [isFocused, setIsFocused] = React.useState(false);
+    const [isDragging, setIsDragging] = React.useState(false);
 
     const showMinLock = [true, "both", "min"].includes(defaultedProps.showRangeLocks);
     const showMaxLock = [true, "both", "max"].includes(defaultedProps.showRangeLocks);
 
+    const allMarkers = React.useMemo(() => {
+        return chain([defaultedProps.min, ...defaultedProps.markers, defaultedProps.max])
+            .sortBy()
+            .sortedUniq()
+            .value();
+    }, [defaultedProps.markers, defaultedProps.max, defaultedProps.min]);
+
+    const isDualSlider = Array.isArray(internalValue);
+
     const { minLocked, maxLocked, setMinLocked, setMaxLocked } = useLockState({
+        isDualSlider,
         showMinLock,
         showMaxLock,
         minLocked: props.minLocked,
@@ -321,36 +238,29 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         onMaxLockedChange: props.onMaxLockedChange,
     });
 
-    const [isHovered, setIsHovered] = React.useState(false);
-    const [isFocused, setIsFocused] = React.useState(false);
-    const [isDragging, setIsDragging] = React.useState(false);
-
-    const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue ?? 0);
-
     const wrapperSize = useElementSize(wrapperRef);
-
-    const isDualSlider = Array.isArray(internalValue);
-    const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
     if (props.value !== undefined && props.value !== internalValue) {
         setInternalValue(props.value);
     }
 
-    function getThumbAriaLabelFunc(index: number) {
-        if (!defaultedProps.thumbAriaLabel) return "";
-        if (!Array.isArray(defaultedProps.thumbAriaLabel)) return defaultedProps.thumbAriaLabel;
-        return defaultedProps.thumbAriaLabel[index];
-    }
+    const getThumbAriaLabelFunc = React.useCallback(
+        function getThumbAriaLabelFunc(index: number) {
+            if (!defaultedProps.thumbAriaLabel) return "";
+            if (!Array.isArray(defaultedProps.thumbAriaLabel)) return defaultedProps.thumbAriaLabel;
+            return defaultedProps.thumbAriaLabel[index];
+        },
+        [defaultedProps.thumbAriaLabel],
+    );
+
+    // To preserve built-in base-ui defaults, we only pass a function to the thumbs if any thumb-labels were configured
+    const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
 
     const updateValue = React.useCallback(
-        function updateValue(
-            newValue: number | readonly number[],
-            eventDetails: SliderChangeEventDetails,
-            commit?: boolean,
-        ) {
+        function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
             setInternalValue(newValue);
-            onValueChange?.(newValue, eventDetails);
 
+            onValueChange?.(newValue, eventDetails);
             if (commit) onValueCommitted?.(newValue, eventDetails);
         },
         [onValueChange, onValueCommitted],
@@ -375,11 +285,11 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         setMaxLocked,
     });
 
-    function onValueChangeInternal(
-        newValue: number | readonly number[],
-        eventDetails: SliderBase.Root.ChangeEventDetails,
-    ) {
+    function onValueChangeInternal(newValue: number | number[], eventDetails: SliderBase.Root.ChangeEventDetails) {
         const activeValue = isDualSliderValue(newValue) ? newValue[eventDetails.activeThumbIndex] : newValue;
+        const prevActiveValue = isDualSliderValue(internalValue)
+            ? internalValue[eventDetails.activeThumbIndex]
+            : internalValue;
 
         if (isDualSliderValue(newValue)) {
             if (eventDetails.activeThumbIndex === 0 && activeValue > defaultedProps.min) {
@@ -396,7 +306,23 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
             }
         }
 
-        updateValue(newValue, eventDetails);
+        if (defaultedProps.snapToMarkers && !allMarkers.includes(activeValue)) {
+            let snapTarget: SnapTarget = "nearest";
+
+            // For keyboard movement, we should always go a new marker marker
+            if (eventDetails.reason === "keyboard") {
+                snapTarget = prevActiveValue - activeValue < 0 ? "next" : "prev";
+            }
+
+            const snappedValue = getSnappedValue(allMarkers, newValue, snapTarget);
+
+            // Only apply the snapped value if necessary
+            if (!isEqual(snappedValue, internalValue)) {
+                updateValue(snappedValue, eventDetails);
+            }
+        } else {
+            updateValue(newValue, eventDetails);
+        }
     }
 
     const showThumbValueLabels =
@@ -435,15 +361,11 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     return (
         <SliderBase.Root
             {...baseProps}
-            className={resolveClassNames(
-                "gap-x-2xs px-2xs flex items-center data-disabled:cursor-not-allowed",
-                props.layoutClassName,
-            )}
+            className={resolveClassNames("gap-x-2xs px-2xs flex items-center", props.layoutClassName)}
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}
             style={{
-                // @ts-expect-error -- css typing doesn't accept variables
                 "--lock-gutter-size": `${clamp(wrapperSize.width * 0.1, 20, 40)}px`,
 
                 // Couldn't find any EDS variable for these sizes; these pixels sizes are used in the design doc
@@ -452,6 +374,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
                 // Needed to avoid some jumpiness in some cases
                 "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
+                ...baseProps.style,
             }}
             render={(rootProps, state) => (
                 <div {...rootProps}>
@@ -467,7 +390,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                     <SliderBase.Control
                         ref={ref}
                         className={resolveClassNames(
-                            "group py-xs flex w-full touch-none items-center select-none",
+                            "group py-xs flex w-full cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed",
                             {
                                 "pl-(--lock-gutter-size)": showMinLock,
                                 "pr-(--lock-gutter-size)": showMaxLock,
@@ -514,18 +437,11 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                         )}
 
                         <SliderBase.Track
-                            className={resolveClassNames(
-                                "w-full rounded-lg",
-                                resolveTrackHeightClassName(componentSize),
-                                {
-                                    [INDICATOR_CLASS_NAME]: props.inverted,
-                                    [TRACK_CLASS_NAME]: !props.inverted,
-                                },
-                            )}
+                            className={resolveClassNames("w-full rounded-lg", TRACK_HEIGHT_CLASS_NAMES[componentSize], {
+                                [INDICATOR_CLASS_NAME]: props.inverted,
+                                [TRACK_CLASS_NAME]: !props.inverted,
+                            })}
                         >
-                            {/* Only show start dot for dual sliders */}
-                            <Dot placement="start" />
-
                             {!props.noIndicator && (
                                 <SliderBase.Indicator
                                     className={resolveClassNames("rounded-lg", {
@@ -569,7 +485,40 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                                 onSetMaxLocked={setMaxLocked}
                             />
 
-                            <Dot placement="end" />
+                            {allMarkers.map((v, i) => {
+                                const range = defaultedProps.max - defaultedProps.min;
+                                const percentage = range === 0 ? 0 : ((v - defaultedProps.min) / range) * 100;
+
+                                return (
+                                    <React.Fragment key={i}>
+                                        <Dot leftPosPercent={percentage} />
+                                        <DotLabel
+                                            leftPosPercent={percentage}
+                                            value={v}
+                                            index={i}
+                                            size={componentSize}
+                                            disabled={props.disabled}
+                                            markerLabels={defaultedProps.markerLabels}
+                                            onClick={(v) => {
+                                                if (!isDualSliderValue(internalValue)) {
+                                                    updateValue(v, { reason: "marker-clicked" }, true);
+                                                    inputRefs[0].current?.focus();
+                                                } else {
+                                                    const nearestThumbIndex = minBy([0, 1], (idx) =>
+                                                        Math.abs(internalValue[idx] - v),
+                                                    )!;
+
+                                                    const newValue = [...internalValue];
+                                                    newValue[nearestThumbIndex] = v;
+
+                                                    updateValue(newValue, { reason: "marker-clicked" }, true);
+                                                    inputRefs[nearestThumbIndex].current?.focus();
+                                                }
+                                            }}
+                                        />
+                                    </React.Fragment>
+                                );
+                            })}
                         </SliderBase.Track>
 
                         {showMaxLock && (
@@ -664,9 +613,10 @@ function Thumb(props: {
                         // Hiding via style to keep refs stable
                         hidden={thumbHidden}
                         disabled={thumbHidden}
-                        className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2 box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                        // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
+                        className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
                         index={props.index}
-                        inputRef={props.inputRefs[1]}
+                        inputRef={props.inputRefs[props.index]}
                         getAriaLabel={props.getAriaLabel}
                         style={positionStyle}
                         onKeyDownCapture={onThumbInputKeyDown}
@@ -762,7 +712,7 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
             />
 
             <div
-                className={resolveClassNames("w-full", resolveTrackHeightClassName(props.size))}
+                className={resolveClassNames("w-full", TRACK_HEIGHT_CLASS_NAMES[props.size])}
                 style={{
                     // @ts-expect-error -- css typing doesn't accept variables
                     "--gutter-color": getGutterColorVariable(isDisabled, isFilled, isDragging),
@@ -778,16 +728,232 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
     );
 });
 
-function Dot(props: { placement: "start" | "end" }) {
+function Dot(props: { leftPosPercent: number }) {
     const className =
-        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4";
+        "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4 -translate-x-1/2";
 
-    const style: React.HTMLAttributes<HTMLDivElement>["style"] = {};
-
-    if (props.placement === "start") style.left = "-4px";
-    if (props.placement === "end") style.right = "-4px";
-
-    return <div className={className} style={style} />;
+    return <div className={className} style={{ left: `${props.leftPosPercent}%` }} />;
 }
 
-export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(SliderComponent);
+function DotLabel(props: {
+    leftPosPercent: number;
+    value: number;
+    index: number;
+    markerLabels?: SliderProps["markerLabels"];
+    disabled?: boolean;
+    size: SelectableSize;
+    onClick: (value: number) => void;
+}): React.ReactNode {
+    if (!props.markerLabels) return null;
+
+    let formattedValue;
+    const textSize = getTextSizeForSelectableSize(props.size);
+
+    if (typeof props.markerLabels === "function") {
+        formattedValue = props.markerLabels(props.value, props.index);
+    } else {
+        formattedValue = String(props.value);
+    }
+
+    if (!formattedValue && formattedValue !== 0) {
+        return null;
+    }
+
+    function handleOnClick() {
+        if (props.disabled) return;
+        props.onClick(props.value);
+    }
+
+    return (
+        <Typography
+            as="span"
+            role="button"
+            tabIndex={props.disabled ? -1 : 0}
+            aria-disabled={props.disabled ? true : undefined}
+            aria-label={`Set slider to ${props.value}`}
+            data-disabled={props.disabled ? "" : undefined}
+            family="body"
+            variant="subtle"
+            size={getNextTextSize(textSize, -1)}
+            tone="neutral"
+            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm not-data-disabled:hover:bg-input focus:outline-focus"
+            layoutStyle={{ left: `${props.leftPosPercent}%` }}
+            // ! Slider will move the thumb during pointer-down event, so we stop it here to avoid jumpiness
+            onClick={handleOnClick}
+            onKeyDown={(evt) => ["Enter", " "].includes(evt.key) && handleOnClick()}
+            onPointerDown={(evt) => !props.disabled && evt.stopPropagation()}
+        >
+            {formattedValue}
+        </Typography>
+    );
+}
+
+function isDualSliderValue(value: number | readonly number[]): value is readonly number[] {
+    return Array.isArray(value);
+}
+
+function useLockState(props: {
+    isDualSlider: boolean;
+    showMinLock: boolean;
+    showMaxLock: boolean;
+    minLocked?: boolean;
+    maxLocked?: boolean;
+    defaultMinLocked?: boolean;
+    defaultMaxLocked?: boolean;
+    onMinLockedChange?: (locked: boolean) => void;
+    onMaxLockedChange?: (locked: boolean) => void;
+}) {
+    const [internalMinLocked, internalSetMinLocked] = useOptInControlledValue(
+        props.defaultMinLocked ?? false,
+        props.minLocked,
+        props.onMinLockedChange,
+    );
+    const [internalMaxLocked, internalSetMaxLocked] = useOptInControlledValue(
+        props.defaultMaxLocked ?? false,
+        props.maxLocked,
+        props.onMaxLockedChange,
+    );
+
+    const setMinLocked = React.useCallback(
+        function setMinLockedFunc(locked: boolean) {
+            if (!props.showMinLock) return;
+
+            internalSetMinLocked(locked);
+            if (locked && props.isDualSlider) {
+                internalSetMaxLocked(false);
+            }
+        },
+        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMinLock],
+    );
+
+    const setMaxLocked = React.useCallback(
+        function setMaxLockedFunc(locked: boolean) {
+            if (!props.showMaxLock) return;
+
+            internalSetMaxLocked(locked);
+            if (locked && props.isDualSlider) {
+                internalSetMinLocked(false);
+            }
+        },
+        [internalSetMaxLocked, internalSetMinLocked, props.isDualSlider, props.showMaxLock],
+    );
+
+    return {
+        minLocked: internalMinLocked,
+        maxLocked: internalMaxLocked,
+        setMinLocked,
+        setMaxLocked,
+    };
+}
+
+function useLockedValueUpdate(props: {
+    value: number | number[];
+    min: number;
+    max: number;
+    minLocked: boolean;
+    maxLocked: boolean;
+    onValueChange?: (value: number | number[], eventDetails: SliderChangeEventDetails, commit: boolean) => void;
+}) {
+    const prevMinLocked = React.useRef(false);
+    const prevMaxLocked = React.useRef(false);
+
+    const { onValueChange } = props;
+
+    React.useEffect(
+        function clampToToggledLocksEffec() {
+            const value = props.value as number | number[];
+            const isDualValue = isDualSliderValue(value);
+            let newValue: number | number[] | null = null;
+
+            // Min lock was just enabled
+            if (props.minLocked && !prevMinLocked.current) {
+                if (isDualValue) {
+                    newValue = [props.min, value[1]];
+                } else {
+                    newValue = props.min;
+                }
+            }
+
+            // Max lock was just enabled
+            if (props.maxLocked && !prevMaxLocked.current) {
+                if (isDualValue && newValue !== null) {
+                    newValue = [(newValue as number[])[0], props.max];
+                } else if (isDualValue) {
+                    newValue = [value[0], props.max];
+                } else {
+                    newValue = props.max;
+                }
+            }
+
+            prevMinLocked.current = props.minLocked;
+            prevMaxLocked.current = props.maxLocked;
+
+            if (newValue !== null) {
+                onValueChange?.(newValue, { reason: "range-locked" }, true);
+            }
+        },
+        [props.minLocked, props.maxLocked, props.min, props.max, props.value, onValueChange],
+    );
+}
+
+function useUnlockOnValueChange(props: {
+    value: number | readonly number[];
+    min: number;
+    max: number;
+    minLocked: boolean;
+    maxLocked: boolean;
+
+    setMinLocked: (locked: boolean) => void;
+    setMaxLocked: (locked: boolean) => void;
+}) {
+    const { setMinLocked, setMaxLocked } = props;
+    const prevValue = React.useRef(props.value);
+
+    React.useEffect(
+        function unlockSliderLocksEffect() {
+            // Only check if value actually changed
+            if (isEqual(prevValue.current, props.value)) return;
+
+            const lowerValue = isDualSliderValue(props.value) ? props.value[0] : props.value;
+            const upperValue = isDualSliderValue(props.value) ? props.value[1] : props.value;
+
+            if (props.minLocked && lowerValue > props.min) {
+                setMinLocked(false);
+            }
+
+            if (props.maxLocked && upperValue < props.max) {
+                setMaxLocked(false);
+            }
+
+            prevValue.current = props.value;
+        },
+        [props.max, props.maxLocked, props.min, props.minLocked, props.value, setMaxLocked, setMinLocked],
+    );
+}
+
+function getSnappedValue(sortedMarkers: number[], value: number | number[], target: SnapTarget): number | number[] {
+    if (Array.isArray(value)) {
+        return value.map((v) => getSnappedValue(sortedMarkers, v, target)) as number[];
+    }
+
+    switch (target) {
+        case "nearest": {
+            const closestMarker = minBy(sortedMarkers, (marker) => Math.abs(marker - value))!;
+            return closestMarker;
+        }
+        case "next": {
+            const nextMarker = sortedMarkers.find((marker) => marker >= value);
+            return nextMarker !== undefined ? nextMarker : sortedMarkers[sortedMarkers.length - 1];
+        }
+        case "prev": {
+            const prevMarker = sortedMarkers.findLast((marker) => marker <= value);
+            return prevMarker !== undefined ? prevMarker : sortedMarkers[0];
+        }
+    }
+}
+
+export const Slider = React.forwardRef(SliderComponent) as <
+    Value extends number | readonly number[] = number | readonly number[],
+>(
+    props: SliderProps<Value> & React.RefAttributes<HTMLDivElement>,
+) => React.ReactNode;
