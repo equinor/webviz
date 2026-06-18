@@ -2,7 +2,7 @@ import React from "react";
 
 import { Combobox as ComboboxBase } from "@base-ui/react";
 
-import { Chip } from "../../../Chip/chip";
+import { Chip } from "../../../Chip";
 
 import { ComboboxInput } from "./_input";
 
@@ -38,7 +38,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                                 startAdornment={props.renderItemAdornment?.(item)}
                                                 wrapRemoveButton={(btn) => <ComboboxBase.ChipRemove render={btn} />}
                                             >
-                                                <span className="line-clamp-2">{label}</span>
+                                                <span className="line-clamp-2 min-w-0 flex-1">{label}</span>
                                             </Chip>
                                         )}
                                     />

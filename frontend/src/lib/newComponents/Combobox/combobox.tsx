@@ -151,7 +151,6 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 <div className="gap-selectable -mr-3xs box-border flex h-full shrink-0 items-center justify-center empty:hidden">
                     {clearable && (
                         <ComboboxBase.Clear
-                            className="Clear selectable text-body-sm box-border flex items-center justify-center"
                             aria-label="Clear selection"
                             render={<Button tone="neutral" iconOnly variant="ghost" size="small" />}
                         >

@@ -41,13 +41,15 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
         "wrapRemoveButton",
     ) as HTMLAttributes<HTMLElement>;
 
+    const isDisabled = props.disabled || props.selected;
+
     const removeButton = (
         <Button
             tabIndex={-1}
             iconOnly
             size="small"
             tone={props.tone}
-            disabled={props.disabled}
+            disabled={isDisabled}
             variant="ghost"
             layoutClassName={resolveClassNames("ml-3xs shrink-0 self-stretch border-l rounded-l-none", {
                 "border-warning": props.tone === "warning",
@@ -69,8 +71,8 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
             {...baseProps}
             ref={ref as any}
             data-tone={props.tone}
-            data-disabled={props.disabled ? "" : undefined}
-            aria-disabled={props.disabled}
+            data-disabled={isDisabled ? "" : undefined}
+            aria-disabled={isDisabled}
             className={resolveClassNames(
                 baseProps.className,
                 "relative rounded-sm",
