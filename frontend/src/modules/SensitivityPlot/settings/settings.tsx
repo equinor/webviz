@@ -10,6 +10,7 @@ import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
+import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
 import type { Interfaces } from "../interfaces";
@@ -163,6 +164,14 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             onValueChange={(value) => value && setSensitivitySortBy(value)}
                         />
                     </SettingWrapper>
+                    <SettingWrapper label="Data filtering">
+                        <CheckboxCompositions.WithLabel
+                            label="Hide sensitivities without impact"
+                            checked={hideZeroY}
+                            onCheckedChange={setHideZeroY}
+                            size="small"
+                        />
+                    </SettingWrapper>
                     <SettingWrapper label="Color by" infoAnnotation={chartSettingsInfoAnnotation}>
                         <Combobox<ColorBy>
                             disabled={isChartSettingsDisabled}
@@ -180,16 +189,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             onValueChange={(value) => value && setColorBy(value)}
                         />
                     </SettingWrapper>
-                    <SettingWrapper>
-                        <CheckboxCompositions.WithLabel
-                            label="Hide sensitivities without impact"
-                            checked={hideZeroY}
-                            onCheckedChange={setHideZeroY}
-                            size="small"
-                        />
-                    </SettingWrapper>
                     <SettingWrapper
                         label="Chart options"
+                        stacked
                         infoAnnotation={chartSettingsInfoAnnotation}
                         help={{
                             title: "Show mean points",
