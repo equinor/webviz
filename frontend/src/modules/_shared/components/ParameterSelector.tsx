@@ -1,10 +1,13 @@
 import React from "react";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { Checkbox } from "@lib/components/Checkbox";
-import { Label } from "@lib/components/Label";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import type { SelectOption } from "@lib/newComponents/Select";
+import { Select } from "@lib/newComponents/Select";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+
+const MIN_SELECTOR_SIZE = 3;
+const MAX_SELECTOR_SIZE = 10;
 
 type ParametersSelectorProps = {
     allParameterIdents: ParameterIdent[];
@@ -109,35 +112,42 @@ export function ParametersSelector({
         }));
 
     return (
-        <div>
-            <Label wrapperClassName="mb-4" text="Select Group(s)">
+        <div className="gap-y-sm flex flex-col">
+            <SettingWrapper label="Parameter groups" stacked>
                 <Select
                     options={groupSelectOptions}
                     value={selectedGroupFilterValues}
-                    onChange={handleGroupChange}
+                    onValueChange={handleGroupChange}
                     multiple={true}
-                    size={Math.min(10, groupSelectOptions.length > 0 ? groupSelectOptions.length : 1)}
+                    size={Math.min(
+                        MAX_SELECTOR_SIZE,
+                        groupSelectOptions.length > MIN_SELECTOR_SIZE ? groupSelectOptions.length : MIN_SELECTOR_SIZE,
+                    )}
                     showQuickSelectButtons
                 />
-            </Label>
-            <Label text="Select Parameter(s)">
-                <>
-                    <Checkbox
-                        label="Auto-select all on group change"
-                        checked={autoSelectAllOnGroupChange}
-                        onChange={(e) => setAutoSelectAllOnGroupChange(e.target.checked)}
-                    />
-                    <Select
-                        value={selectedParameterIdents.map((p) => p.toString())}
-                        onChange={handleParameterChange}
-                        options={parameterSelectOptions}
-                        multiple={true}
-                        size={Math.min(10, parameterSelectOptions.length > 0 ? parameterSelectOptions.length : 1)}
-                        filter
-                        showQuickSelectButtons
-                    />
-                </>
-            </Label>
+            </SettingWrapper>
+            <SettingWrapper label="Parameters" stacked>
+                <SwitchCompositions.WithLabel
+                    label="Auto-select all on group change"
+                    checked={autoSelectAllOnGroupChange}
+                    onCheckedChange={setAutoSelectAllOnGroupChange}
+                    size="small"
+                />
+                <Select
+                    value={selectedParameterIdents.map((p) => p.toString())}
+                    onValueChange={handleParameterChange}
+                    options={parameterSelectOptions}
+                    multiple={true}
+                    size={Math.min(
+                        MAX_SELECTOR_SIZE,
+                        parameterSelectOptions.length > MIN_SELECTOR_SIZE
+                            ? parameterSelectOptions.length
+                            : MIN_SELECTOR_SIZE,
+                    )}
+                    filter
+                    showQuickSelectButtons
+                />
+            </SettingWrapper>
         </div>
     );
 }
