@@ -200,7 +200,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         />
                     </SettingWrapper>
                     <SettingWrapper
-                        label="Time steps"
+                        label={`Time step${selectedDateTime.value ? `: (${selectedDateTime.value})` : ""}`}
                         loadingOverlay={selectedDateTime.isLoading}
                         annotations={selectedDateTimeAnnotations}
                         errorOverlay={selectedDateTime.depsHaveError ? "Could not load time steps." : undefined}
@@ -208,7 +208,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         <Slider
                             valueLabelDisplay="auto"
                             min={0}
-                            max={availableDateTimes?.length ? availableDateTimes.length - 1 : 0}
+                            max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
+                            markers={availableDateTimes.map((_, index) => index)}
                             value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
                             valueLabelFormat={createValueLabelFormat}
                             onValueChange={(v) => handleSelectedTimeStepIndexChange(v)}
