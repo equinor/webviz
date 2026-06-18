@@ -57,7 +57,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             width={props.width ?? percentWidth}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
-            style={{ fontWeight: "inherit", height: `${cellHeightPx}px` }}
+            style={{ fontWeight: "inherit", height: `${cellHeightPx}px`, ...baseProps.style }}
             className={resolveClassNames(
                 props.layoutClassName,
                 "border-neutral-subtle group/cell relative text-left align-middle whitespace-nowrap",
