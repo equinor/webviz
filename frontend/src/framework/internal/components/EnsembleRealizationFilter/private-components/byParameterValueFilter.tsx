@@ -154,11 +154,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         [parameterIdentStringToValueSelectionReadonlyMap, onFilterChange],
     );
 
-    const debouncedContinuousRangeChange = React.useCallback(
-        useDebouncedFunction(function debouncedContinuousRangeChange(
-            parameterIdentString: string,
-            valueSelection: number[],
-        ) {
+    const handleContinuousRangeChange = React.useCallback(
+        function handleContinuousRangeChange(parameterIdentString: string, valueSelection: number[]) {
             const parameter = ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
             if (!parameter) {
                 throw new Error(`Parameter ${parameterIdentString} not found`);
@@ -175,13 +172,15 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
             const newRangeSelection: Readonly<NumberRange> = { start: valueSelection[0], end: valueSelection[1] };
             setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newRangeSelection);
-        }, 200),
+        },
         [
             ensembleParameters,
             parameterIdentStringToValueSelectionReadonlyMap,
             setNewParameterValueSelectionAndTriggerOnChange,
         ],
     );
+
+    const debouncedHandleContinuousRangeChange = useDebouncedFunction(handleContinuousRangeChange, 200);
 
     const handleContinuousParameterValueRangeChange = React.useCallback(
         function handleContinuousParameterValueRangeChange(parameterIdentString: string, valueSelection: number[]) {
@@ -193,9 +192,9 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 roundContinuousValue(valueSelection[1]),
             ];
             setImmediateSliderValues((prev) => ({ ...prev, [parameterIdentString]: rounded }));
-            debouncedContinuousRangeChange(parameterIdentString, rounded);
+            debouncedHandleContinuousRangeChange(parameterIdentString, rounded);
         },
-        [debouncedContinuousRangeChange],
+        [debouncedHandleContinuousRangeChange],
     );
 
     const handleDiscreteParameterValueSelectionChange = React.useCallback(
@@ -292,7 +291,9 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                     items={uniqueValues.map((elm) => {
                         return { label: elm, value: elm };
                     })}
-                    onValueChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
+                    onValueChange={(value: string[]) =>
+                        handleDiscreteParameterValueSelectionChange(parameterIdentString, value)
+                    }
                     multiple
                     size="small"
                 />
@@ -307,7 +308,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                         return { label: String(elm), value: String(elm) };
                     })}
                     value={valueSelection.map(String)}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string[]) =>
                         handleDiscreteParameterValueSelectionChange(parameterIdentString, value.map(Number))
                     }
                     multiple

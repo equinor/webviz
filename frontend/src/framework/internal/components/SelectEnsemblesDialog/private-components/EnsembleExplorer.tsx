@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Add, Check, FilterList, Info, Remove } from "@mui/icons-material";
+import { Add, Check, CheckBox, CheckBoxOutlineBlank, FilterList, Remove } from "@mui/icons-material";
 
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
@@ -9,14 +9,11 @@ import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { Button } from "@lib/newComponents/Button";
 import { Dialog } from "@lib/newComponents/Dialog";
 import { Field } from "@lib/newComponents/Field";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { Popover } from "@lib/newComponents/Popover";
 import { type SelectOption } from "@lib/newComponents/Select";
 import { Separator } from "@lib/newComponents/Separator";
-import { Table } from "@lib/newComponents/Table";
 import { TextInput } from "@lib/newComponents/TextInput";
 import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Typography } from "@lib/newComponents/Typography";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { InternalRegularEnsembleSetting } from "../types";
 
@@ -38,26 +35,16 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
     const [ensemblesInSelectedCase, setEnsemblesInSelectedCase] = React.useState<EnsembleInfo_api[]>([]);
     const [activeSelectedEnsembles, setActiveSelectedEnsembles] = React.useState<RegularEnsembleIdent[]>([]);
     const [filterText, setFilterText] = React.useState("");
-    const [hoveredEnsembleName, setHoveredEnsembleName] = React.useState<string | null>(null);
 
     const filteredEnsembles = React.useMemo(
-        function filterSelectedEnsembles() {
+        function filterEnsemblesInCase() {
             if (filterText.trim() === "") {
-                return props.selectedEnsembles;
+                return ensemblesInSelectedCase;
             }
-
-            return props.selectedEnsembles.filter((ens) => {
-                const ensembleName = ens.ensembleIdent.getEnsembleName().toLowerCase();
-                const caseName = ens.caseName?.toLowerCase() ?? "";
-                const caseUuid = ens.ensembleIdent.getCaseUuid().toLowerCase();
-                const searchText = filterText.toLowerCase();
-
-                return (
-                    ensembleName.includes(searchText) || caseName.includes(searchText) || caseUuid.includes(searchText)
-                );
-            });
+            const searchText = filterText.toLowerCase();
+            return ensemblesInSelectedCase.filter((ens) => ens.name.toLowerCase().includes(searchText));
         },
-        [filterText, props.selectedEnsembles],
+        [filterText, ensemblesInSelectedCase],
     );
 
     // --- Derived data ---
@@ -145,32 +132,6 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
         setActiveEnsembleNames([]);
     }
 
-    function handleRemoveSelectedEnsembles() {
-        if (!activeSelectedEnsembles || !props.onRemoveEnsembles) {
-            return;
-        }
-
-        // Remove all selected ensembles
-        const matchingEnsemble = props.selectedEnsembles.find((ens) =>
-            activeSelectedEnsembles.some((activeEnsemble) => activeEnsemble.equals(ens.ensembleIdent)),
-        );
-        if (!matchingEnsemble || !matchingEnsemble.caseName) {
-            return;
-        }
-
-        props.onRemoveEnsembles(...activeSelectedEnsembles);
-
-        // Select the first ensemble in the list after removal, or set to null if no ensembles remain
-        const remainingEnsembles = props.selectedEnsembles.filter(
-            (ens) => !activeSelectedEnsembles.some((activeEnsemble) => activeEnsemble.equals(ens.ensembleIdent)),
-        );
-        if (remainingEnsembles.length > 0) {
-            setActiveSelectedEnsembles([remainingEnsembles[0].ensembleIdent]);
-        } else {
-            setActiveSelectedEnsembles([]);
-        }
-    }
-
     function handleCaseSelectedChange(caseSelection: CaseSelection | null) {
         if (!caseSelection) {
             setSelectedCaseName(null);
@@ -195,6 +156,81 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
         }
     }
 
+    function isEnsembleSelected(ensembleName: string): boolean {
+        return props.selectedEnsembles.some(
+            (sel) =>
+                sel.ensembleIdent.getCaseUuid() === selectedCaseUuid &&
+                sel.ensembleIdent.getEnsembleName() === ensembleName,
+        );
+    }
+
+    function handleSelectEnsemble(ensembleName: string) {
+        if (!selectedCaseUuid || !selectedCaseName) return;
+        let ensembleIdent: RegularEnsembleIdent;
+        try {
+            ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ensembleName);
+        } catch (error) {
+            console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+            return;
+        }
+        props.onSelectEnsemble({
+            ensembleIdent,
+            caseName: selectedCaseName,
+            color: props.nextEnsembleColor,
+            customName: null,
+        });
+        setActiveEnsembleNames((prev) => [...prev, ensembleName]);
+    }
+
+    function handleUnselectEnsemble(ensembleName: string) {
+        if (!selectedCaseUuid) return;
+        let ensembleIdent: RegularEnsembleIdent;
+        try {
+            ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ensembleName);
+        } catch (error) {
+            console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+            return;
+        }
+        props.onRemoveEnsembles?.(ensembleIdent);
+        setActiveEnsembleNames((prev) => prev.filter((name) => name !== ensembleName));
+    }
+
+    function handleSelectAll() {
+        if (!selectedCaseUuid || !selectedCaseName) return;
+        for (const ens of ensemblesInSelectedCase) {
+            if (isEnsembleSelected(ens.name)) continue;
+            try {
+                const ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ens.name);
+                props.onSelectEnsemble({
+                    ensembleIdent,
+                    caseName: selectedCaseName,
+                    color: props.nextEnsembleColor,
+                    customName: null,
+                });
+            } catch (error) {
+                console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+            }
+        }
+    }
+
+    function handleRemoveAll() {
+        if (!selectedCaseUuid || !props.onRemoveEnsembles) return;
+        const toRemove: RegularEnsembleIdent[] = [];
+        for (const ens of ensemblesInSelectedCase) {
+            try {
+                const ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ens.name);
+                if (props.selectedEnsembles.some((sel) => sel.ensembleIdent.equals(ensembleIdent))) {
+                    toRemove.push(ensembleIdent);
+                }
+            } catch (error) {
+                console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+            }
+        }
+        if (toRemove.length > 0) {
+            props.onRemoveEnsembles(...toRemove);
+        }
+    }
+
     return (
         <>
             <Dialog.Body layoutClassName="grow min-h-0">
@@ -205,212 +241,61 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                         onCaseSelectionChange={handleCaseSelectedChange}
                     />
                     <Separator orientation="horizontal" />
-                    <div className="gap-x-sm flex w-full items-center">
-                        <Field.Root layoutClassName="flex flex-col gap-y-2xs h-full grow">
-                            <div className="gap-md flex w-full flex-nowrap items-center">
-                                <Field.Label indicator={`(${ensemblesInSelectedCase.length})`}>
-                                    Ensembles in selected case
-                                </Field.Label>
-                                <span className="grow" />
-                                <TextInput
-                                    placeholder="Filter..."
-                                    startAdornment={<FilterList fontSize="inherit" className="mr-2xs" />}
-                                    layoutClassName="max-w-60"
-                                    value={filterText}
-                                    onValueChange={setFilterText}
+                    <Field.Root layoutClassName="flex flex-col gap-y-2xs min-h-52 h-52 w-full">
+                        <div className="gap-md flex w-full flex-nowrap items-center">
+                            <Field.Label indicator={`(${ensemblesInSelectedCase.length})`}>
+                                Ensembles in selected case
+                            </Field.Label>
+                            <Tooltip content="Add all ensembles from selected case">
+                                <Button
+                                    variant="contained"
                                     size="small"
-                                />
-                                <Tooltip content="Remove selected ensembles">
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        onClick={handleRemoveSelectedEnsembles}
-                                        tone="accent"
-                                        compact
-                                        disabled={props.selectedEnsembles.length === 0}
-                                    >
-                                        <Add style={{ fontSize: 16 }} /> Add all
-                                    </Button>
-                                </Tooltip>
-                            </div>
-                            <Table.Root
-                                layoutClassName="w-full h-40 overflow-auto"
+                                    onClick={handleSelectAll}
+                                    tone="accent"
+                                    disabled={
+                                        ensemblesInSelectedCase.length === 0 ||
+                                        ensemblesInSelectedCase.every((ens) => isEnsembleSelected(ens.name))
+                                    }
+                                >
+                                    <Add style={{ fontSize: 16 }} /> Add all
+                                </Button>
+                            </Tooltip>
+                            <Tooltip content="Remove all ensembles from selected case">
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={handleRemoveAll}
+                                    tone="danger"
+                                    disabled={
+                                        ensemblesInSelectedCase.length === 0 ||
+                                        !ensemblesInSelectedCase.some((ens) => isEnsembleSelected(ens.name))
+                                    }
+                                >
+                                    <Remove style={{ fontSize: 16 }} /> Remove all
+                                </Button>
+                            </Tooltip>
+                            <span className="grow" />
+                            <TextInput
+                                placeholder="Filter..."
+                                startAdornment={<FilterList fontSize="inherit" className="mr-2xs" />}
+                                layoutClassName="max-w-60"
+                                value={filterText}
+                                onValueChange={setFilterText}
                                 size="small"
-                                compact
-                                selectable="multiple"
-                                rowSelection={activeEnsembleNames}
-                                onChangeRowSelection={(rowKeys) => setActiveEnsembleNames(rowKeys as string[])}
-                            >
-                                <Table.Head sticky>
-                                    <Table.Column colKey="name">Name</Table.Column>
-                                    <Table.Column colKey="standard-results" width={100}>
-                                        Standard results
-                                    </Table.Column>
-                                    <Table.Column colKey="add" width={20}>
-                                        Add
-                                    </Table.Column>
-                                </Table.Head>
-                                <Table.Body emptyMessage="No ensembles available...">
-                                    {ensemblesInSelectedCase.map((ens) => {
-                                        return (
-                                            <Table.Row
-                                                key={ens.name}
-                                                rowKey={ens.name}
-                                                selectable
-                                                onPointerEnter={() => setHoveredEnsembleName(ens.name)}
-                                                onPointerLeave={() => setHoveredEnsembleName(null)}
-                                            >
-                                                <Table.Cell>{ens.name}</Table.Cell>
-                                                <Table.Cell>
-                                                    <Popover.Root>
-                                                        <Popover.Trigger tone="accent" variant="contained" size="small">
-                                                            <Info /> {ens.standardResults.length}
-                                                        </Popover.Trigger>
-                                                        <Popover.Popup side="top">
-                                                            <Popover.Content>
-                                                                <Typography
-                                                                    size="sm"
-                                                                    variant="subtle"
-                                                                    tone="neutral"
-                                                                    lineHeight="default"
-                                                                >
-                                                                    <strong>Standard results for this ensemble:</strong>
-                                                                    <ul className="pl-md list-disc">
-                                                                        {ens.standardResults.map((result, idx) => (
-                                                                            <li key={idx}>{result}</li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </Typography>
-                                                            </Popover.Content>
-                                                        </Popover.Popup>
-                                                    </Popover.Root>
-                                                </Table.Cell>
-                                                <Table.Cell>
-                                                    <Hidden
-                                                        hidden={
-                                                            hoveredEnsembleName !== ens.name ||
-                                                            !(
-                                                                activeEnsembleNames.length == 0 ||
-                                                                activeEnsembleNames.includes(ens.name)
-                                                            )
-                                                        }
-                                                    >
-                                                        <Tooltip
-                                                            content={
-                                                                activeEnsembleNames.length < 2
-                                                                    ? "Add ensemble"
-                                                                    : "Add selected ensembles"
-                                                            }
-                                                        >
-                                                            <Button
-                                                                variant="contained"
-                                                                size="small"
-                                                                tone="accent"
-                                                                iconOnly
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (activeEnsembleNames.length === 0) {
-                                                                        if (!selectedCaseUuid || !selectedCaseName) return;
-                                                                        try {
-                                                                            props.onSelectEnsemble({
-                                                                                ensembleIdent: new RegularEnsembleIdent(selectedCaseUuid, ens.name),
-                                                                                caseName: selectedCaseName,
-                                                                                color: props.nextEnsembleColor,
-                                                                                customName: null,
-                                                                            });
-                                                                        } catch (error) {
-                                                                            console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
-                                                                        }
-                                                                    } else {
-                                                                        handleSelectRegularEnsembles();
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Add fontSize="inherit" />
-                                                            </Button>
-                                                        </Tooltip>
-                                                    </Hidden>
-                                                </Table.Cell>
-                                            </Table.Row>
-                                        );
-                                    })}
-                                </Table.Body>
-                            </Table.Root>
-                        </Field.Root>
-                        {props.multiSelect && (
-                            <>
-                                <Separator orientation="vertical" />
-                                <Field.Root layoutClassName="flex flex-col gap-y-2xs h-full grow">
-                                    <div className="gap-md flex w-full flex-nowrap items-center">
-                                        <Field.Label indicator={`(${props.selectedEnsembles.length})`}>
-                                            My selected Ensembles
-                                        </Field.Label>
-                                        <span className="grow" />
-                                        <TextInput
-                                            placeholder="Filter..."
-                                            startAdornment={<FilterList fontSize="inherit" className="mr-2xs" />}
-                                            layoutClassName="max-w-60"
-                                            value={filterText}
-                                            onValueChange={setFilterText}
-                                            size="small"
-                                        />
-                                        <Tooltip content="Remove selected ensembles">
-                                            <Button
-                                                variant="contained"
-                                                size="small"
-                                                onClick={handleRemoveSelectedEnsembles}
-                                                tone="danger"
-                                                compact
-                                                disabled={props.selectedEnsembles.length === 0}
-                                            >
-                                                <Remove style={{ fontSize: 16 }} /> Remove all
-                                            </Button>
-                                        </Tooltip>
-                                    </div>
-                                    <Table.Root layoutClassName="w-full max-h-40 overflow-auto" size="small" compact>
-                                        <Table.Head sticky>
-                                            <Table.Column colKey="name">Name</Table.Column>
-                                            <Table.Column colKey="case">Case</Table.Column>
-                                            <Table.Column colKey="remove" width={20}>
-                                                Remove
-                                            </Table.Column>
-                                        </Table.Head>
-                                        <Table.Body emptyMessage="No ensembles selected">
-                                            {filteredEnsembles.map((ens) => {
-                                                return (
-                                                    <Table.Row key={ens.ensembleIdent.toString()} selectable>
-                                                        <Table.Cell>{ens.ensembleIdent.getEnsembleName()}</Table.Cell>
-                                                        <Table.Cell>
-                                                            {ens.caseName}
-                                                            {" - "}
-                                                            <Typography variant="subtle" tone="neutral" size="xs">
-                                                                {ens.ensembleIdent.getCaseUuid()}
-                                                            </Typography>
-                                                        </Table.Cell>
-                                                        <Table.Cell>
-                                                            <Tooltip content="Remove ensemble">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="small"
-                                                                    onClick={() =>
-                                                                        props.onRemoveEnsembles?.(ens.ensembleIdent)
-                                                                    }
-                                                                    tone="danger"
-                                                                    iconOnly
-                                                                >
-                                                                    <Remove fontSize="inherit" />
-                                                                </Button>
-                                                            </Tooltip>
-                                                        </Table.Cell>
-                                                    </Table.Row>
-                                                );
-                                            })}
-                                        </Table.Body>
-                                    </Table.Root>
-                                </Field.Root>
-                            </>
-                        )}
-                    </div>
+                            />
+                        </div>
+                        <div className="form-element gap-x-sm group/grid text-body-sm grid w-full grow grid-cols-[2rem_1fr] content-start overflow-auto">
+                            {filteredEnsembles.map((ens) => (
+                                <EnsembleRow
+                                    key={ens.name}
+                                    ensemble={ens}
+                                    selected={isEnsembleSelected(ens.name)}
+                                    onSelect={() => handleSelectEnsemble(ens.name)}
+                                    onUnselect={() => handleUnselectEnsemble(ens.name)}
+                                />
+                            ))}
+                        </div>
+                    </Field.Root>
                 </div>
             </Dialog.Body>
             <Dialog.Actions>
@@ -435,5 +320,70 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                 )}
             </Dialog.Actions>
         </>
+    );
+}
+type EnsembleRowProps = {
+    ensemble: EnsembleInfo_api;
+    selected: boolean;
+    onSelect: () => void;
+    onUnselect: () => void;
+};
+
+function EnsembleRow(props: EnsembleRowProps) {
+    const rowRef = React.useRef<HTMLDivElement>(null);
+
+    function handleClick() {
+        if (props.selected) {
+            props.onUnselect();
+        } else {
+            props.onSelect();
+        }
+        rowRef.current?.focus();
+    }
+
+    function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleClick();
+        } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = e.currentTarget.nextElementSibling as HTMLElement | null;
+            next?.focus({ preventScroll: true });
+            next?.scrollIntoView({ block: "nearest" });
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = e.currentTarget.previousElementSibling as HTMLElement | null;
+            prev?.focus({ preventScroll: true });
+            prev?.scrollIntoView({ block: "nearest" });
+        }
+    }
+
+    function makeIcon() {
+        if (props.selected) {
+            return <CheckBox />;
+        }
+
+        return <CheckBoxOutlineBlank />;
+    }
+
+    return (
+        <div
+            className={resolveClassNames(
+                "selectable group/row px-2xs hover:bg-neutral focus-within:bg-accent focus-within:hover:bg-accent-hover active:bg-accent-active h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none!",
+                {
+                    "bg-accent-strong! text-accent-strong-on-emphasis! hover:bg-accent-strong-hover! active:bg-accent-strong-active!":
+                        props.selected,
+                },
+            )}
+            ref={rowRef}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            onClick={handleClick}
+        >
+            <span className="text-body-md">{makeIcon()}</span>
+            <span className={resolveClassNames("justify-self-start", { "font-bolder": props.selected })}>
+                {props.ensemble.name}
+            </span>
+        </div>
     );
 }

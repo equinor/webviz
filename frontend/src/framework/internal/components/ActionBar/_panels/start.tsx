@@ -46,7 +46,6 @@ export function StartPanel(props: StartPanelProps) {
                         onClick={handleEnsembleDialogOpenClick}
                         tone="accent"
                         variant="ghost"
-                        size="small"
                     >
                         <Badge
                             invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
@@ -77,7 +76,6 @@ export function StartPanel(props: StartPanelProps) {
                         onClick={handleTemplatesListClick}
                         tone="accent"
                         variant="ghost"
-                        size="small"
                     >
                         <GridView fontSize="inherit" />
                     </Button>

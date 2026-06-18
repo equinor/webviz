@@ -218,10 +218,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 <SelectEnsemblesConfirmationDialogs
                     ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
                     showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
-                    showLoadingErrorsDialogState={[
-                        showEnsemblesLoadingErrorDialog,
-                        setShowEnsemblesLoadingErrorDialog,
-                    ]}
+                    showLoadingErrorsDialogState={[showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog]}
                     onConfirmCancel={handleClose}
                     onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
                 />
@@ -252,11 +249,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 : []
                         }
                         onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                        onRemoveEnsembles={
-                            ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                ? selectionHandlers.handleRemoveRegularEnsembles
-                                : undefined
-                        }
+                        onRemoveEnsembles={selectionHandlers.handleRemoveRegularEnsembles}
                         multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
                         onRequestClose={handleCloseEnsembleExplorer}
                     />
