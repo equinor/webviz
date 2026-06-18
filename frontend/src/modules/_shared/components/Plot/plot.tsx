@@ -1,6 +1,6 @@
 import React from "react";
 
-import _ from "lodash-es";
+import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
@@ -84,27 +84,27 @@ export function Plot(props: PlotProps): React.ReactNode {
     const onDownloadClickRef = React.useRef(onDownloadClick);
     onDownloadClickRef.current = onDownloadClick;
 
-    if (shouldApplyPlotUpdate && !_.isEqual(prevLayout, layout)) {
+    if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
-        setStableLayout(_.cloneDeep(layout));
+        setStableLayout(cloneDeep(layout));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(prevData, data)) {
+    if (shouldApplyPlotUpdate && !isEqual(prevData, data)) {
         setPrevData(data);
-        setStableData(_.cloneDeep(data));
+        setStableData(cloneDeep(data));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(prevConfig, config)) {
+    if (shouldApplyPlotUpdate && !isEqual(prevConfig, config)) {
         setPrevConfig(config);
-        setStableConfig(_.cloneDeep(config));
+        setStableConfig(cloneDeep(config));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(stableOtherProps, otherProps)) {
+    if (shouldApplyPlotUpdate && !isEqual(stableOtherProps, otherProps)) {
         setStableOtherProps(otherProps);
     }
 
     return React.useMemo(() => {
-        const layoutWithDefaults = _.merge({}, DEFAULT_LAYOUT, stableLayout);
+        const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
 
         const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
         if (onDownloadClickRef.current) {
@@ -115,7 +115,7 @@ export function Plot(props: PlotProps): React.ReactNode {
                 click: () => onDownloadClickRef.current?.(),
             });
         }
-        const configWithDefaults = { ..._.merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
+        const configWithDefaults = { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
 
         return (
             <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />

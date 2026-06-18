@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ArrowDropDown, ArrowDropUp, ExpandLess, ExpandMore } from "@mui/icons-material";
-import _ from "lodash-es";
+import { clamp, isEqual } from "lodash-es";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
@@ -86,7 +86,7 @@ function isDropdownOptionGroup<T>(optionOrGroup: DropdownOptionOrGroup<T>): opti
 
 function isOptionOfValue<T>(opt: OptionOrTitle<T>, targetValue: T): opt is OptionItem<T> {
     if (opt.type === ItemType.GROUP_TITLE) return false;
-    return _.isEqual(opt.value, targetValue);
+    return isEqual(opt.value, targetValue);
 }
 
 function makeOptionListItemsRecursively<TValue>(
@@ -129,7 +129,7 @@ function findValidDropdownIndex(itemList: OptionOrTitle<any>[], currentIdx: numb
 
     const direction = Math.sign(increment);
     let adjustedIndex = currentIdx + increment;
-    adjustedIndex = _.clamp(adjustedIndex, 0, itemList.length - 1);
+    adjustedIndex = clamp(adjustedIndex, 0, itemList.length - 1);
 
     // Bump the selection one step further if the target isn't a valid option
     // ! Assumes there can never be two group titles in a row
@@ -137,7 +137,7 @@ function findValidDropdownIndex(itemList: OptionOrTitle<any>[], currentIdx: numb
         if (adjustedIndex === 0) return 1;
 
         adjustedIndex += direction;
-        adjustedIndex = _.clamp(adjustedIndex, 0, itemList.length - 1);
+        adjustedIndex = clamp(adjustedIndex, 0, itemList.length - 1);
     }
 
     return adjustedIndex;
@@ -186,7 +186,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     const selectedValue = isExternallyControlled ? (props.value as TValue | null) : selection;
 
     // Value changed externally, update indexes to match the new value
-    if (isExternallyControlled && !_.isEqual(selectedValue, prevValue)) {
+    if (isExternallyControlled && !isEqual(selectedValue, prevValue)) {
         setSelection(selectedValue);
         setPrevValue(selectedValue);
         setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, selectedValue)));
@@ -516,7 +516,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             return (
                 <OptionItem
                     key={`${item.value}`}
-                    isSelected={_.isEqual(selectedValue, item.value)}
+                    isSelected={isEqual(selectedValue, item.value)}
                     isFocused={optionIndexWithFocus === index}
                     isInGroup={!!item.parent}
                     {...item}
