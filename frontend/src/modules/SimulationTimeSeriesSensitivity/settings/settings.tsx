@@ -10,11 +10,10 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox/combobox";
+import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/newComponents/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
@@ -92,14 +91,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         }
     }
 
-    function handleFrequencySelectionChange(newFreqStr: string) {
-        let newFreq: Frequency_api | null = null;
-        if (newFreqStr !== "RAW") {
-            newFreq = newFreqStr as Frequency_api;
-        }
-        setResamplingFrequency(newFreq);
-    }
-
     const handleVectorSelectChange = React.useCallback(
         function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
             // vectorSelectorData is null when still loading
@@ -113,14 +104,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         [vectorSelectorData, setSelectedVectorNameAndTag],
     );
 
-    function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowHistorical(event.target.checked);
-    }
-
-    function handleSensitivityNamesSelectionChange(newSensitivities: string[]) {
-        setSelectedSensitivityNamesAtom(newSensitivities);
-    }
-
     const selectedRegularEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedRegularEnsembleIdentAtom,
     );
@@ -128,82 +111,88 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const selectedSensitivityNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityNamesAtom);
 
     return (
-        <>
-            <CollapsibleGroup expanded={true} title="Ensemble">
-                <SettingWrapper annotations={selectedRegularEnsembleIdentAnnotations}>
-                    <EnsembleDropdown
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        value={selectedRegularEnsembleIdent.value}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Time Series" hasError={selectedVectorNameAndTag.depsHaveError}>
-                <SettingWrapper
-                    label="Vector"
-                    annotations={selectedVectorNameAndTagAnnotations}
-                    loadingOverlay={selectedVectorNameAndTag.isLoading}
-                    errorOverlay={
-                        selectedVectorNameAndTag.depsHaveError
-                            ? "Error loading available vectors. See details in log."
-                            : undefined
-                    }
-                >
-                    <VectorSelector
-                        data={vectorSelectorData ?? []}
-                        selectedTags={selectedVectorNameAndTag.value?.tag ? [selectedVectorNameAndTag.value.tag] : []}
-                        placeholder="Add new vector..."
-                        maxNumSelectedNodes={1}
-                        numSecondsUntilSuggestionsAreShown={0.5}
-                        lineBreakAfterTag={true}
-                        onValueChange={handleVectorSelectChange}
-                    />
-                </SettingWrapper>
-                <Label text="Frequency">
-                    <div className="ml-4">
-                        <Dropdown
-                            width="50%"
-                            options={[
-                                { value: "RAW", label: "None (raw)" },
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Data" defaultOpen>
+                    <SettingWrapper label="Ensemble" annotations={selectedRegularEnsembleIdentAnnotations}>
+                        <EnsembleDropdown
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={selectedRegularEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                            onChange={handleEnsembleSelectionChange}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Vector"
+                        annotations={selectedVectorNameAndTagAnnotations}
+                        loadingOverlay={vectorListQuery.isFetching}
+                        errorOverlay={
+                            vectorListQuery.isError ? "Error loading available vectors. See details in log." : undefined
+                        }
+                    >
+                        <VectorSelector
+                            data={vectorSelectorData ?? []}
+                            selectedTags={
+                                selectedVectorNameAndTag.value?.tag ? [selectedVectorNameAndTag.value.tag] : []
+                            }
+                            placeholder="Add new vector..."
+                            maxNumSelectedNodes={1}
+                            numSecondsUntilSuggestionsAreShown={0.5}
+                            lineBreakAfterTag={true}
+                            onValueChange={handleVectorSelectChange}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Frequency">
+                        <Combobox
+                            value={resampleFrequency}
+                            onValueChange={setResamplingFrequency}
+                            items={[
+                                { value: null, label: "None (raw)" },
                                 ...Object.values(Frequency_api).map((val: Frequency_api) => {
                                     return { value: val, label: FrequencyEnumToStringMapping[val] };
                                 }),
                             ]}
-                            value={resampleFrequency ?? "RAW"}
-                            onChange={handleFrequencySelectionChange}
                         />
-                    </div>
-                </Label>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Visualization">
-                <Checkbox
-                    label="Mean over realizations"
-                    checked={showStatistics}
-                    onChange={(e) => setShowStatistics(e.target.checked)}
-                />
-                <Checkbox
-                    label="Individual realizations"
-                    checked={showRealizations}
-                    onChange={(e) => setShowRealizations(e.target.checked)}
-                />{" "}
-                <Checkbox label="Show historical" checked={showHistorical} onChange={handleShowHistorical} />
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Sensitivity filter">
-                <SettingWrapper annotations={selectedSensitivityNamesAnnotations}>
-                    <Select
-                        options={availableSensitivityNames.map((name) => ({
-                            value: name,
-                            label: name,
-                        }))}
-                        value={selectedSensitivityNames.value ?? []}
-                        onChange={handleSensitivityNamesSelectionChange}
-                        filter={true}
-                        size={10}
-                        multiple={true}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-        </>
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Plot" defaultOpen>
+                    <SettingWrapper label="Visualization" stacked>
+                        <CheckboxCompositions.WithLabel
+                            label="Mean over realizations"
+                            checked={showStatistics}
+                            onCheckedChange={setShowStatistics}
+                        />
+                        <CheckboxCompositions.WithLabel
+                            label="Individual realizations"
+                            checked={showRealizations}
+                            onCheckedChange={setShowRealizations}
+                        />
+                        <CheckboxCompositions.WithLabel
+                            label="Show historical"
+                            checked={showHistorical}
+                            onCheckedChange={setShowHistorical}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Sensitivity filter"
+                        annotations={selectedSensitivityNamesAnnotations}
+                        stacked
+                    >
+                        <Select
+                            value={selectedSensitivityNames.value ?? []}
+                            onValueChange={setSelectedSensitivityNamesAtom}
+                            options={availableSensitivityNames.map((name) => ({
+                                value: name,
+                                label: name,
+                            }))}
+                            filter
+                            size={10}
+                            multiple
+                            showQuickSelectButtons
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }

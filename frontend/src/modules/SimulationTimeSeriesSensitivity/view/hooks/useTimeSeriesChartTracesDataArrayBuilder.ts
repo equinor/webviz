@@ -8,10 +8,10 @@ import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import type { TimeSeriesPlotlyTrace } from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
 import {
     createLineTrace,
+    createLegendTrace,
     createRealizationLineTraces,
     createStatisticalLineTraces,
 } from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
-
 
 import {
     selectedSensitivityNamesAtom,
@@ -52,6 +52,9 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
 
     if (ensemble && selectedSensitivityNames.length > 0) {
         const sensitivitiesColorMap = createSensitivityColorMap(allSensitivityNamesInEnsemble, colorSet);
+        const sensitivitiesWithStatTraces = new Set<string>();
+        const sensitivitiesWithRealizationTraces = new Set<string>();
+
         selectedSensitivityNames.forEach((sensitivityName) => {
             const color = sensitivitiesColorMap[sensitivityName];
 
@@ -61,7 +64,10 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
                     (stat) => stat.sensitivityName === sensitivityName,
                 );
                 const traces = createStatisticalLineTraces(matchingCases, StatisticFunction_api.MEAN, color);
-                traceDataArr.push(...traces);
+                if (traces.length > 0) {
+                    sensitivitiesWithStatTraces.add(sensitivityName);
+                    traceDataArr.push(...traces);
+                }
             }
 
             // Add realization traces
@@ -72,11 +78,29 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
                     const realizationData: VectorRealizationData_api[] = vectorDataQuery.data.filter((vec) =>
                         realsToInclude.includes(vec.realization),
                     );
-                    const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
-                    traceDataArr.push(...traces);
+                    if (realizationData.length > 0) {
+                        sensitivitiesWithRealizationTraces.add(sensitivityName);
+                        const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
+                        traceDataArr.push(...traces);
+                    }
                 }
             }
         });
+
+        // Add legend traces for sensitivities that need them
+        selectedSensitivityNames.forEach((sensitivityName) => {
+            const color = sensitivitiesColorMap[sensitivityName];
+            const hasStatTraces = sensitivitiesWithStatTraces.has(sensitivityName);
+            const hasRealizationTraces = sensitivitiesWithRealizationTraces.has(sensitivityName);
+
+            // Use solid line as long as reals are shown, dashed only when just stats
+            if (hasRealizationTraces) {
+                traceDataArr.push(createLegendTrace(sensitivityName, color, "solid"));
+            } else if (hasStatTraces) {
+                traceDataArr.push(createLegendTrace(sensitivityName, color, "dash"));
+            }
+        });
+
         // Add history
         if (historicalQuery?.data && showHistorical) {
             traceDataArr.push(
