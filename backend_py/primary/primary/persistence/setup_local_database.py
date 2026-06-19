@@ -53,8 +53,11 @@ def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) ->
     else:
         raise RuntimeError("❌ Cosmos Emulator gateway not ready after timeout")
 
-    # Now that we know the gateway is reachable, create the CosmosClient
-    return CosmosClient(uri, key, connection_verify=False)
+    # Now that we know the gateway is reachable, create the CosmosClient.
+    # enable_endpoint_discovery=False keeps the SDK using this explicit endpoint instead of the
+    # account's advertised locations (the emulator advertises 127.0.0.1, which isn't reachable from
+    # inside the backend container).
+    return CosmosClient(uri, key, connection_verify=False, enable_endpoint_discovery=False)
 
 
 def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max_attempts: int = 5) -> DatabaseProxy:
