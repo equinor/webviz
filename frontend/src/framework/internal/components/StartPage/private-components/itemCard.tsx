@@ -9,9 +9,7 @@ import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
 import { Popover } from "@lib/newComponents/Popover";
-import { Separator } from "@lib/newComponents/Separator";
 import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
-import { Heading } from "@lib/newComponents/Typography/compositions";
 
 export type ItemCardProps = {
     id: string;
@@ -70,7 +68,10 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                     <Info />
                 </Popover.Trigger>
                 <Popover.Popup side="left">
-                    <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    <Popover.Title hideCloseButton>{props.title}</Popover.Title>
+                    <Popover.Content as="div" layoutClassName="min-w-2xs">
+                        <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    </Popover.Content>
                 </Popover.Popup>
             </Popover.Root>
         </Button.Group>
@@ -105,14 +106,10 @@ function PopoverContent(
         return "This item has been deleted.";
     }
     return (
-        <div className="text-body-md w-2xs whitespace-normal">
-            <Heading as="h6" variant="strong" weight="bolder">
-                {props.title}
-            </Heading>
-            <Separator orientation="horizontal" />
+        <>
             {props.description && <p className="text-body-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-sm text-body-sm truncate">
+                <ul className="not-first:mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -120,6 +117,6 @@ function PopoverContent(
                     ))}
                 </ul>
             )}
-        </div>
+        </>
     );
 }
