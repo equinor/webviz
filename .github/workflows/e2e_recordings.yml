@@ -66,6 +66,13 @@ jobs:
           docker compose exec -T backend-primary mkdir -p /home/appuser/.sumo
           docker compose cp shared.key backend-primary:/home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
           rm -f shared.key
+          # `docker compose cp` writes the file as root, but the backend runs as `appuser`. The Sumo
+          # client calls os.chmod() on the shared key, which fails with "Operation not permitted"
+          # unless the file is owned by the running user. Fix ownership and lock down permissions.
+          docker compose exec -T -u root backend-primary \
+            chown appuser:appuser /home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
+          docker compose exec -T -u root backend-primary \
+            chmod 600 /home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
 
       - name: ⏳ Wait for the stack to become responsive
         # The Cosmos DB Emulator (vnext-preview) needs a little time to come up before the backend
