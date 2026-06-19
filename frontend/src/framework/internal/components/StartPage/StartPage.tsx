@@ -80,16 +80,18 @@ export function StartPage(props: StartPageProps) {
                     <RecentSessions workbench={props.workbench} />
                     <section className="gap-y-sm flex flex-col">
                         <Heading as="h3">Resources</Heading>
-                        <a
+
+                        <Button.AsLink
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gap-selectable text-link px-md py-2xs flex w-max items-center rounded"
+                            variant="ghost"
+                            tone="accent"
+                            external
                         >
-                            <Icon name="github" />
+                            <Icon name="github" fontSize="inherit" />
                             Webviz on GitHub
-                            <Icon name="external_link" className="h-4" />
-                        </a>
+                        </Button.AsLink>
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>
