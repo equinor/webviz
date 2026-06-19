@@ -39,7 +39,6 @@
 
 /* Base styles */
 @import "./base/app.css";
-@import "./base/tailwind-compat.css";
 @import "./base/scrollbar.css";
 
 /* Overrides */
