@@ -142,13 +142,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         }
                     >
                         <Combobox<string>
-                            items={
-                                validVfpTableNames?.map((name) => {
-                                    return { value: name, label: name };
-                                }) ?? []
-                            }
-                            value={selectedVfpTableName.value ?? undefined}
-                            onValueChange={(v) => v && setSelectedVfpTableName(v)}
+                            items={validVfpTableNames.map((name) => {
+                                return { value: name, label: name };
+                            })}
+                            value={selectedVfpTableName.value}
+                            onValueChange={setSelectedVfpTableName}
                         />
                     </SettingWrapper>
                 </SettingWrapper.Section>
