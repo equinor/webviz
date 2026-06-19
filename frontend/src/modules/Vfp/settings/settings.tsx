@@ -2,14 +2,13 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import type { ComboboxItems } from "@lib/newComponents/Combobox/types";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
+import { Select, type SelectOption } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -63,20 +62,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     usePropagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
     usePropagateQueryErrorToStatusWriter(vfpTableNamesQuery, statusWriter);
 
-    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
-        setSelectedEnsembleIdent(ensembleIdent);
-    }
-
-    function handleRealizationNumberChange(value: string) {
-        const realizationNumber = parseInt(value);
-        setSelectedRealizationNumber(realizationNumber);
-    }
-
-    function handleVfpNameSelectionChange(value: string) {
-        const vfpName = value;
-        setSelectedVfpTableName(vfpName);
-    }
-
     function handleThpIndicesSelectionChange(thpIndices: string[]) {
         const thpIndicesNumbers = thpIndices.map((value) => parseInt(value));
         setSelectedThpIndices(thpIndicesNumbers);
@@ -95,14 +80,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     function handleAlqIndicesSelectionChange(alqIndices: string[]) {
         const alqIndicesNumbers = alqIndices.map((value) => parseInt(value));
         setSelectedAlqIndices(alqIndicesNumbers);
-    }
-
-    function handlePressureOptionChange(_: React.ChangeEvent<HTMLInputElement>, pressureOption: PressureOption) {
-        setUserSelectedPressureOption(pressureOption);
-    }
-
-    function handleColorByChange(vfpParam: string) {
-        setSelectedColorBy(vfpParam as VfpParam);
     }
 
     let thpLabel = "THP";
@@ -134,57 +111,73 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup expanded={true} title="Ensemble">
-                <SettingWrapper annotations={selectedEnsembleIdentAnnotations}>
-                    <EnsembleDropdown
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        value={selectedEnsembleIdent.value}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Realization">
-                <SettingWrapper annotations={selectedRealizationNumberAnnotations}>
-                    <Dropdown
-                        options={
-                            availableRealizationNumbers?.map((real) => {
-                                return { value: real.toString(), label: real.toString() };
-                            }) ?? []
-                        }
-                        value={
-                            selectedRealizationNumber.value !== null
-                                ? selectedRealizationNumber.value.toString()
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Data" defaultOpen>
+                    <SettingWrapper label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
+                        <EnsembleDropdown
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={selectedEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                            onChange={setSelectedEnsembleIdent}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper label="Realization" annotations={selectedRealizationNumberAnnotations}>
+                        <Combobox<number>
+                            items={availableRealizationNumbers.map((real) => {
+                                return { value: real, label: real.toString() };
+                            })}
+                            value={selectedRealizationNumber.value}
+                            onValueChange={setSelectedRealizationNumber}
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="VFP Name"
+                        annotations={selectedVfpTableNameAnnotations}
+                        loadingOverlay={selectedVfpTableName.isLoading}
+                        errorOverlay={
+                            selectedVfpTableName.depsHaveError
+                                ? "Error loading table names. See log for details."
                                 : undefined
                         }
-                        onChange={handleRealizationNumberChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="VFP Name">
-                <SettingWrapper
-                    annotations={selectedVfpTableNameAnnotations}
-                    loadingOverlay={selectedVfpTableName.isLoading}
-                    errorOverlay={
-                        selectedVfpTableName.depsHaveError
-                            ? "Error loading table names. See log for details."
-                            : undefined
-                    }
-                >
-                    <Dropdown
-                        options={
-                            validVfpTableNames?.map((name) => {
+                    >
+                        <Combobox<string>
+                            items={validVfpTableNames.map((name) => {
                                 return { value: name, label: name };
-                            }) ?? []
+                            })}
+                            value={selectedVfpTableName.value}
+                            onValueChange={setSelectedVfpTableName}
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <SettingWrapper.Section title="Plot" defaultOpen>
+                    <SettingWrapper label="Pressure Option">
+                        <RadioCompositions.GroupWithLabels
+                            value={userSelectedPressureOption}
+                            options={[
+                                { label: "BHP", value: PressureOption.BHP },
+                                { label: "DP (BHP-THP)", value: PressureOption.DP },
+                            ]}
+                            onValueChange={setUserSelectedPressureOption}
+                            layout="horizontal"
+                        />
+                    </SettingWrapper>
+                    <SettingWrapper
+                        label="Color By"
+                        annotations={selectedColorByAnnotations}
+                        loadingOverlay={selectedColorBy.isLoading}
+                        errorOverlay={
+                            selectedColorBy.depsHaveError
+                                ? "Error loading VFP parameter values. See log for details."
+                                : undefined
                         }
-                        value={selectedVfpTableName.value ?? undefined}
-                        onChange={handleVfpNameSelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Filter" expanded={true}>
-                <div className="flex flex-col gap-2">
+                    >
+                        <Combobox
+                            items={makeColorByItems(vfpType, vfpDataAccessor)}
+                            value={selectedColorBy.value}
+                            onValueChange={(v) => v && setSelectedColorBy(v)}
+                        />
+                    </SettingWrapper>
                     <SettingWrapper
                         label={thpLabel}
                         annotations={selectedThpIndicesAnnotations}
@@ -198,9 +191,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         <Select
                             options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
                             value={selectedThpIndices.value?.map((value) => value.toString()) ?? []}
-                            onChange={handleThpIndicesSelectionChange}
+                            onValueChange={handleThpIndicesSelectionChange}
                             size={5}
-                            multiple={true}
+                            multiple
+                            showQuickSelectButtons
                         />
                     </SettingWrapper>
                     <SettingWrapper
@@ -221,9 +215,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                     : makeFilterOptions(vfpDataAccessor.getVfpParamValues(VfpParam.WFR))
                             }
                             value={selectedWfrIndices.value?.map((value) => value.toString()) ?? []}
-                            onChange={handleWfrIndicesSelectionChange}
+                            onValueChange={handleWfrIndicesSelectionChange}
                             size={5}
-                            multiple={true}
+                            multiple
+                            showQuickSelectButtons
                         />
                     </SettingWrapper>
                     <SettingWrapper
@@ -244,9 +239,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                     : makeFilterOptions(vfpDataAccessor.getVfpParamValues(VfpParam.GFR))
                             }
                             value={selectedGfrIndices.value?.map((value) => value.toString()) ?? []}
-                            onChange={handleGfrIndicesSelectionChange}
+                            onValueChange={handleGfrIndicesSelectionChange}
                             size={5}
-                            multiple={true}
+                            multiple
+                            showQuickSelectButtons
                         />
                     </SettingWrapper>
                     <SettingWrapper
@@ -267,52 +263,29 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                     : makeFilterOptions(vfpDataAccessor.getVfpParamValues(VfpParam.ALQ))
                             }
                             value={selectedAlqIndices.value?.map((value) => value.toString()) ?? []}
-                            onChange={handleAlqIndicesSelectionChange}
+                            onValueChange={handleAlqIndicesSelectionChange}
                             size={3}
-                            multiple={true}
+                            multiple
+                            showQuickSelectButtons
                         />
                     </SettingWrapper>
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Pressure Option" expanded={true}>
-                <RadioGroup
-                    options={[
-                        { label: "BHP", value: PressureOption.BHP },
-                        { label: "DP (BHP-THP)", value: PressureOption.DP },
-                    ]}
-                    value={userSelectedPressureOption}
-                    onChange={handlePressureOptionChange}
-                />
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Color By" expanded={true}>
-                <SettingWrapper
-                    annotations={selectedColorByAnnotations}
-                    loadingOverlay={selectedColorBy.isLoading}
-                    errorOverlay={
-                        selectedColorBy.depsHaveError
-                            ? "Error loading VFP parameter values. See log for details."
-                            : undefined
-                    }
-                >
-                    <Dropdown
-                        options={makeColorByOptions(vfpType, vfpDataAccessor)}
-                        value={selectedColorBy.value ?? undefined}
-                        onChange={handleColorByChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-        </div>
+                </SettingWrapper.Section>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }
 
-function makeFilterOptions(values: number[] | undefined): SelectOption[] {
+function makeFilterOptions(values: number[] | undefined): SelectOption<string>[] {
     return values?.map((value, index) => ({ label: value.toString(), value: index.toString() })) ?? [];
 }
 
-function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpApiTableDataAccessor | null): SelectOption[] {
-    const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }];
+function makeColorByItems(
+    vfpType: VfpType | null,
+    vfpDataAccessor: VfpApiTableDataAccessor | null,
+): ComboboxItems<VfpParam> {
+    const items = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }];
     if (vfpType === VfpType.VFPPROD) {
-        options.push(
+        items.push(
             ...[
                 { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
                 { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
@@ -320,5 +293,5 @@ function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpApiTabl
             ],
         );
     }
-    return options;
+    return items;
 }
