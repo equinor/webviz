@@ -1,0 +1,94 @@
+name: e2e recordings
+
+# Spins up the full stack via docker compose, seeds an authenticated session (the same
+# Sumo-shared-key bypass used by the integration tests) and runs the Playwright e2e tests
+# with RECORD=1 so videos/screenshots/traces are captured and uploaded as build artifacts.
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e_recordings:
+    # The Sumo shared key secret is only available on the upstream repo, so skip on forks.
+    if: github.repository == 'equinor/webviz'
+    runs-on: ubuntu-22.04
+
+    env:
+      # docker compose / backend-primary configuration. The Fernet key matches the one used by
+      # the other CI workflows so the seeded session can be encrypted/decrypted consistently.
+      WEBVIZ_CLIENT_SECRET: 0
+      WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+      WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+      WEBVIZ_VDS_HOST_ADDRESS: 0
+      WEBVIZ_PSEUDONYM_HMAC_KEY: 0
+      WEBVIZ_SESSION_STORE_FERNET_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      WEBVIZ_REDIS_AUTH_STORE_PASSWORD: 0
+      WEBVIZ_REDIS_CACHE_PASSWORD: 0
+      WEBVIZ_SUMO_ENV: prod
+
+    steps:
+      - name: 📖 Checkout commit locally
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci --include=dev
+
+      - name: 🎭 Install Playwright browser (chromium)
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: 🐳 Build and start the full stack
+        run: docker compose up --build --detach
+
+      - name: 🔑 Provision Sumo shared key into the backend container
+        env:
+          SHARED_KEY_SUMO_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
+        run: |
+          if [ ${#SHARED_KEY_SUMO_PROD} -eq 0 ]; then
+            echo "Error: SHARED_KEY_SUMO_PROD is empty. Stopping the action."
+            exit 1
+          fi
+          printf '%s' "$SHARED_KEY_SUMO_PROD" > shared.key
+          docker compose exec -T backend-primary mkdir -p /home/appuser/.sumo
+          docker compose cp shared.key backend-primary:/home/appuser/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
+          rm -f shared.key
+
+      - name: ⏳ Wait for the stack to become responsive
+        run: |
+          curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
+          curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:8080
+
+      - name: 🎥 Run e2e tests with recording
+        working-directory: ./frontend
+        env:
+          CI: "true"
+        run: npm run test:e2e:record
+
+      - name: 🐳 Dump docker compose logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      # - name: 📤 Upload recordings and report
+      #   uses: actions/upload-artifact@v4
+      #   if: always()
+      #   with:
+      #     name: e2e-recordings
+      #     path: |
+      #       frontend/test-results/
+      #       frontend/playwright-report/
+      #     retention-days: 30
+
+      - name: 🧹 Tear down the stack
+        if: always()
+        run: docker compose down --volumes
