@@ -91,15 +91,22 @@ jobs:
         if: failure()
         run: docker compose logs --no-color
 
-      # - name: 📤 Upload recordings and report
-      #   uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: e2e-recordings
-      #     path: |
-      #       frontend/test-results/
-      #       frontend/playwright-report/
-      #     retention-days: 30
+      - name: ☁️ Upload recordings to Azure Blob Storage
+        # Only upload recordings when the tests succeeded.
+        if: success()
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.E2E_RECORDINGS_STORAGE_CONNECTION_STRING }}
+        run: |
+          # Playwright names each test's output folder after the test, so blob names are deterministic
+          # and every run overwrites the previous recording instead of accumulating copies.
+          echo "Uploading recordings to container 'e2e-recordings'"
+          az storage blob upload-batch \
+            --destination e2e-recordings \
+            --source frontend/test-results \
+            --pattern "*.webm" \
+            --overwrite \
+            --output none
+          echo "Upload complete."
 
       - name: 🧹 Tear down the stack
         if: always()
