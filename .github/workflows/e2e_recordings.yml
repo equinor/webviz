@@ -68,8 +68,8 @@ jobs:
           rm -f shared.key
 
       - name: ⏳ Wait for the stack to become responsive
-        # The Cosmos DB Emulator is slow to boot (and the backend waits for it to be healthy before
-        # starting), so allow several minutes for the backend to come up.
+        # The Cosmos DB Emulator (vnext-preview) needs a little time to come up before the backend
+        # can finish initializing persistence, so allow a generous window for the backend to respond.
         run: |
           curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
           curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:8080

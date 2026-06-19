@@ -7,7 +7,7 @@ import time
 from typing import List, Dict, Any
 import ssl
 import urllib.request
-from urllib.error import URLError
+from urllib.error import URLError, HTTPError
 
 from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 
@@ -28,7 +28,9 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
 
 
 def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) -> CosmosClient:
-    probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
+    # Probe the gateway root rather than a specific endpoint so this works across both the legacy
+    # emulator and the vnext-preview emulator (which doesn't expose the legacy explorer cert path).
+    probe_url = f"{uri.rstrip('/')}/"
     # pylint: disable=protected-access
     # Disabling SSL certificate verification is safe here because this code is used exclusively
     # with the local Cosmos DB Emulator for development and testing. Never use this in production.
@@ -37,16 +39,21 @@ def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) ->
     for attempt in range(retries):
         try:
             with urllib.request.urlopen(probe_url, context=context) as response:  # nosec
-                if response.status == 200:
-                    LOGGER.info("✅ Emulator HTTPS endpoint is up. Proceeding to create CosmosClient.")
+                if response.status:
+                    LOGGER.info("✅ Emulator gateway is up. Proceeding to create CosmosClient.")
                     break
+        except HTTPError:
+            # The gateway requires authentication, so an unauthenticated probe returns an HTTP error
+            # status (e.g. 401). Receiving any HTTP response means the gateway is up and ready.
+            LOGGER.info("✅ Emulator gateway is up (responded to probe). Proceeding to create CosmosClient.")
+            break
         except URLError as e:
-            LOGGER.warning("⏳ Emulator cert endpoint not ready (attempt %d): %s", attempt + 1, e.reason)
+            LOGGER.warning("⏳ Emulator gateway not ready (attempt %d): %s", attempt + 1, e.reason)
         time.sleep(delay)
     else:
-        raise RuntimeError("❌ Cosmos Emulator certificate endpoint not ready after timeout")
+        raise RuntimeError("❌ Cosmos Emulator gateway not ready after timeout")
 
-    # Now that we know HTTPS works, create the CosmosClient
+    # Now that we know the gateway is reachable, create the CosmosClient
     return CosmosClient(uri, key, connection_verify=False)
 
 

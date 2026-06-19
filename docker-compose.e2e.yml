@@ -4,6 +4,11 @@
 # Cosmos DB account. This override spins up the local Cosmos DB Emulator and configures the backend
 # to initialize its persistence stores against the emulator instead.
 #
+# We use the next-generation ("vnext-preview") Linux emulator rather than the legacy emulator. The
+# legacy emulator runs the Windows SQL engine on Linux via a PAL shim and is heavy and crash-prone
+# on GitHub-hosted runners (sqlpal "Last Chance" / resource-starvation crashes). The vnext-preview
+# emulator is a lighter, Linux-native rewrite that uses far less memory and starts more reliably.
+#
 # Usage:
 #   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build --detach
 
@@ -16,20 +21,16 @@ services:
         condition: service_healthy
 
   cosmos-db-emulator:
-    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview
     platform: linux/amd64
     tty: true
-    mem_limit: 4GB
     ports:
-      - "8081:8081" # HTTPS endpoint
-      - "10250-10255:10250-10255" # Internal emulator ports (needed)
-    environment:
-      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
-      # No need to persist data between runs in CI.
-      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=false
+      - "8081:8081" # Gateway endpoint
     healthcheck:
-      test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
+      # The gateway requires authentication, so it answers an unauthenticated request with 401.
+      # We don't use `curl -f`; any HTTP response (even 401) means the gateway is up and ready.
+      test: curl -ksS https://127.0.0.1:8081/ -o /dev/null || exit 1
       interval: 10s
       retries: 18 # 3 minutes
-      start_period: 30s
+      start_period: 20s
       timeout: 5s
