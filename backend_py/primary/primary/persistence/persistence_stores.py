@@ -130,10 +130,12 @@ class PersistenceStoresSingleton:
         if cls._instance is not None:
             raise RuntimeError("PersistenceStoresSingleton is already initialized")
 
-        # Cosmos DB Emulator defaults
-        uri = "https://cosmos-db-emulator:8081"
+        # Cosmos DB Emulator (vnext-preview) defaults. The vnext-preview emulator serves its gateway
+        # over plain HTTP on port 8081 (the legacy emulator used HTTPS). The key below is the
+        # well-known emulator key.
+        uri = "http://cosmos-db-emulator:8081"
         key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-        cosmos_client = CosmosClient(uri, key, connection_verify=False)
+        cosmos_client = CosmosClient(uri, key)
         maybe_setup_local_database(uri, key)
         cls._instance = PersistenceStores(cosmos_client)
 
