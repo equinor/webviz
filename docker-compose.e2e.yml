@@ -1,0 +1,35 @@
+# Docker compose override used by the "e2e recordings" CI workflow.
+#
+# In CI there are no valid Azure credentials for Cosmos DB, so the backend cannot connect to a real
+# Cosmos DB account. This override spins up the local Cosmos DB Emulator and configures the backend
+# to initialize its persistence stores against the emulator instead.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build --detach
+
+services:
+  backend-primary:
+    environment:
+      - WEBVIZ_USE_COSMOS_DB_EMULATOR=true
+    depends_on:
+      cosmos-db-emulator:
+        condition: service_healthy
+
+  cosmos-db-emulator:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    platform: linux/amd64
+    tty: true
+    mem_limit: 4GB
+    ports:
+      - "8081:8081" # HTTPS endpoint
+      - "10250-10255:10250-10255" # Internal emulator ports (needed)
+    environment:
+      - AZURE_COSMOS_EMULATOR_PARTITION_COUNT=1
+      # No need to persist data between runs in CI.
+      - AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE=false
+    healthcheck:
+      test: curl -k https://127.0.0.1:8081/_explorer/emulator.pem || exit 1
+      interval: 10s
+      retries: 18 # 3 minutes
+      start_period: 30s
+      timeout: 5s

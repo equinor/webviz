@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
+      # Use the base compose file plus the e2e override (which adds the Cosmos DB Emulator) for every
+      # `docker compose` invocation in this job.
+      COMPOSE_FILE: docker-compose.yml:docker-compose.e2e.yml
       # docker compose / backend-primary configuration. The Fernet key matches the one used by
       # the other CI workflows so the seeded session can be encrypted/decrypted consistently.
       WEBVIZ_CLIENT_SECRET: 0
@@ -65,8 +68,10 @@ jobs:
           rm -f shared.key
 
       - name: ⏳ Wait for the stack to become responsive
+        # The Cosmos DB Emulator is slow to boot (and the backend waits for it to be healthy before
+        # starting), so allow several minutes for the backend to come up.
         run: |
-          curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
+          curl --retry 90 --retry-delay 5 --retry-connrefused --retry-all-errors -f http://localhost:5000/alive
           curl --retry 30 --retry-delay 2 --retry-connrefused --retry-all-errors -f http://localhost:8080
 
       - name: 🎥 Run e2e tests with recording
