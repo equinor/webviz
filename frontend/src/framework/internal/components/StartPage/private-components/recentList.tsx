@@ -90,7 +90,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="gap-xs flex min-w-0 flex-col">
+        <section className="gap-xs flex w-96 min-w-64 flex-col">
             <div className="gap-xs flex items-center">
                 <Heading as="h4" layoutClassName="grow">
                     {props.title}

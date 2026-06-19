@@ -7,11 +7,9 @@ import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { Avatar } from "@lib/newComponents/Avatar";
+import { Button } from "@lib/newComponents/Button";
 import { Popover } from "@lib/newComponents/Popover";
-import { Separator } from "@lib/newComponents/Separator";
 import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
-import { Heading } from "@lib/newComponents/Typography/compositions";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ItemCardProps = {
     id: string;
@@ -49,35 +47,34 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
     }
 
     return (
-        <div
-            className={resolveClassNames(
-                "gap-xs px-selectable min-h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
-                {
-                    "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
-                    "hover:bg-accent-hover": !props.isDeleted,
-                },
-            )}
-        >
+        <Button.Group layoutClassName="w-full" split>
+            <Button.AsLink
+                variant="ghost"
+                size="small"
+                layoutClassName="flex-1 min-w-0 no-underline! "
+                compact
+                href={props.href}
+                onClick={handleClick}
+            >
+                <div className="min-w-0 grow truncate">{props.title}</div>
+                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
+                <span className="text-body-xs text-neutral-subtle w-16 shrink-0 text-right whitespace-nowrap">
+                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
+                </span>
+            </Button.AsLink>
+
             <Popover.Root>
                 <Popover.Trigger size="small" variant="ghost" iconOnly>
                     <Info />
                 </Popover.Trigger>
                 <Popover.Popup side="left">
-                    <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    <Popover.Title hideCloseButton>{props.title}</Popover.Title>
+                    <Popover.Content as="div" layoutClassName="min-w-2xs">
+                        <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    </Popover.Content>
                 </Popover.Popup>
             </Popover.Root>
-            <a
-                className="gap-xs py-selectable flex w-full min-w-0 items-center"
-                href={props.href}
-                onClick={handleClick}
-            >
-                <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
-                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
-                    ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
-                </span>
-            </a>
-        </div>
+        </Button.Group>
     );
 }
 
@@ -86,9 +83,9 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
 
     return (
-        <div className="gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
+        <div className="mx-sm gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic no-underline!">
             <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
-            <span className="min-w-0 flex-1 truncate">{name}</span>
+            <span className="min-w-0 flex-1 truncate no-underline!">{name}</span>
         </div>
     );
 }
@@ -109,14 +106,10 @@ function PopoverContent(
         return "This item has been deleted.";
     }
     return (
-        <div className="text-body-md w-2xs whitespace-normal">
-            <Heading as="h6" variant="strong" weight="bolder">
-                {props.title}
-            </Heading>
-            <Separator orientation="horizontal" />
+        <>
             {props.description && <p className="text-body-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
-                <ul className="mt-sm text-body-sm truncate">
+                <ul className="not-first:mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -124,6 +117,6 @@ function PopoverContent(
                     ))}
                 </ul>
             )}
-        </div>
+        </>
     );
 }

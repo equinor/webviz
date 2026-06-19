@@ -1,5 +1,6 @@
 import React from "react";
 
+import { ComponentSizeContext, useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -16,6 +17,8 @@ export type GroupProps = LayoutClassProps & {
 
 export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group(props, ref) {
     const { children, layoutClassName, split, ...rest } = props;
+    const size = useComponentSize(props);
+
     return (
         <div
             ref={ref}
@@ -25,10 +28,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group
             })}
             {...rest}
         >
-            {React.Children.map(children, (child) => {
-                if (!React.isValidElement(child)) return null;
-                return React.cloneElement(child, { size: props.size, ...child.props });
-            })}
+            <ComponentSizeContext.Provider value={size}>{children}</ComponentSizeContext.Provider>
         </div>
     );
 });
