@@ -10,7 +10,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
-import { Select } from "@lib/newComponents/Select/select";
+import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { Slider } from "@lib/newComponents/Slider";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -62,7 +62,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     usePropagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
-
     const timeStepSliderDebounceTimeMs = 10;
     const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -122,13 +121,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </SettingWrapper>
                     <SettingWrapper label="Realization" annotations={selectedRealizationAnnotations}>
                         <Combobox
-                            items={
-                                availableRealizations?.map((real) => {
-                                    return { value: real, label: real.toString() };
-                                }) ?? []
-                            }
-                            value={selectedRealization.value ?? undefined}
-                            onValueChange={(v) => v !== null && setSelectedRealization(v)}
+                            items={availableRealizations.map((real) => {
+                                return { value: real, label: real.toString() };
+                            })}
+                            value={selectedRealization.value}
+                            onValueChange={setSelectedRealization}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Frequency">
@@ -212,7 +209,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             markers={availableDateTimes.map((_, index) => index)}
                             value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
                             valueLabelFormat={createValueLabelFormat}
-                            onValueChange={(v) => handleSelectedTimeStepIndexChange(v)}
+                            onValueChange={handleSelectedTimeStepIndexChange}
                         />
                     </SettingWrapper>
                 </SettingWrapper.Section>

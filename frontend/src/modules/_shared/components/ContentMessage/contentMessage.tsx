@@ -23,6 +23,7 @@ export const ContentMessage: React.FC<ContentMessageProps> = (props) => {
 
     return (
         <Typography
+            as="div"
             layoutClassName="flex h-full w-full flex-col items-center justify-center text-center"
             size="md"
             tone={tone}
