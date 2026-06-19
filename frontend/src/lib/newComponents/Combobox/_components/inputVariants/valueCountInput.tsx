@@ -8,7 +8,6 @@ import { ComboboxInput } from "./_input";
 
 export type ValueCountProps<TValue> = {
     flatItems: ComboboxItem<TValue>[];
-    placeholder?: string;
     children?: React.ReactNode;
 };
 
@@ -24,11 +23,7 @@ function ComboboxValueCountInputComponent<TValue>(
                         ref={ref}
                         data-has-selection={Array.isArray(value) && value.length > 0 ? "" : undefined}
                         className="data-has-selection:placeholder:text-neutral-strong!"
-                        placeholder={
-                            Array.isArray(value) && value.length > 0
-                                ? `${value.length}/${props.flatItems.length} selected`
-                                : props.placeholder
-                        }
+                        placeholder={`${value.length}/${props.flatItems.length} selected`}
                     />
                 )}
             </ComboboxBase.Value>

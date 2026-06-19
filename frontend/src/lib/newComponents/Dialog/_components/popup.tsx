@@ -19,23 +19,27 @@ export type PopupProps = {
     minHeight?: number | string;
     /** Keeps the dialog mounted in the DOM even when it's closed. Useful for maintaining state or avoiding re-renders. */
     keepMounted?: boolean;
+    /**
+     * When true, suppresses the backdrop and replaces the scale animation with a fade for dialogs that
+     * stack directly on top of another dialog at the same position. Prevents the distracting
+     * "push-forward/push-back" effect that occurs with same-size overlapping dialogs.
+     */
+    stacked?: boolean;
 } & Pick<DialogRootProps, "defaultOpen" | "open" | "onOpenChange" | "modal"> &
     Pick<DialogPopupProps, "initialFocus" | "finalFocus">;
 
 export function Popup(props: PopupProps) {
-    const { open = false, defaultOpen = false, keepMounted = false } = props;
+    const { open = false, defaultOpen = false, keepMounted = false, stacked = false } = props;
     const [popupContainer, setPopupContainer] = React.useState<HTMLElement | null>(null);
     const { openCount } = React.useContext(AlertDialogNestingContext);
 
     React.useEffect(
-        function applyNestedDialogAttributes() {
-            if (!popupContainer || !open) return;
-            if (openCount > 0) {
-                popupContainer.setAttribute("data-nested-dialog-open", "");
-                popupContainer.style.setProperty("--nested-dialogs", String(openCount));
+        function applyAlertNestingClass() {
+            if (!popupContainer) return;
+            if (open && openCount > 0) {
+                popupContainer.classList.add("dialog__popup--alert-open");
             } else {
-                popupContainer.removeAttribute("data-nested-dialog-open");
-                popupContainer.style.removeProperty("--nested-dialogs");
+                popupContainer.classList.remove("dialog__popup--alert-open");
             }
         },
         [popupContainer, open, openCount],
@@ -48,7 +52,7 @@ export function Popup(props: PopupProps) {
                 <DialogBase.Backdrop className="dialog__backdrop" />
                 <DialogBase.Popup
                     ref={setPopupContainer}
-                    className="dialog__popup z-modal flex flex-col"
+                    className={`dialog__popup z-modal flex flex-col${stacked ? " dialog__popup--stacked" : ""}`}
                     style={{
                         width: props.width,
                         height: props.height,

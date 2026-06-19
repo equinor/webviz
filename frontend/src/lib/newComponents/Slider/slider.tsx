@@ -175,7 +175,8 @@ function SliderComponent(
     const onValueChange = props.onValueChange as InternalOnChangeCallback;
     const onValueCommitted = props.onValueCommitted as InternalOnChangeCallback;
 
-    const baseProps = resolveWrapperProps(defaultedProps, [
+    const baseProps = resolveWrapperProps(
+        defaultedProps,
         "showRangeLocks",
         "valueLabelDisplay",
         "thumbAriaLabel",
@@ -194,7 +195,7 @@ function SliderComponent(
         "onMaxLockedChange",
         "onValueChange",
         "onValueCommitted",
-    ]);
+    );
 
     const componentSize = useComponentSize(props);
 
@@ -375,7 +376,7 @@ function SliderComponent(
                 // Needed to avoid some jumpiness in some cases
                 "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
                 ...baseProps.style,
-            }}
+            } as React.CSSProperties}
             render={(rootProps, state) => (
                 <div {...rootProps}>
                     {showMinLock && (

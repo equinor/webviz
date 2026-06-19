@@ -188,7 +188,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                 className={resolveClassNames(
                     "gap-x-3xs flex w-full flex-wrap",
                     // Equivalent to SELECTABLE_SIZES_CLASSNAMES["small"],
-                    "h-selectable-sm text-body-sm",
+                    "min-h-selectable-sm text-body-sm",
                 )}
                 onFocus={() => (rootHasFocusRef.current = true)}
                 onBlur={onRootBlur}

@@ -1,10 +1,13 @@
 import { Dialog as DialogBase } from "@base-ui/react";
+import { Tooltip } from "@lib/newComponents/Tooltip";
 import { Close as CloseIcon } from "@mui/icons-material";
 
 export function Close() {
     return (
-        <DialogBase.Close className="h-selectable-sm hover:bg-neutral-hover active:bg-neutral-active text-neutral-subtle relative -top-0.5 -right-0.5 inline-flex aspect-square items-center justify-center rounded">
-            <CloseIcon fontSize="inherit" />
+        <DialogBase.Close className="min-h-selectable-sm text-body-lg hover:bg-neutral-hover active:bg-neutral-active text-neutral-subtle relative -top-0.25 -right-0.25 inline-flex aspect-square items-center justify-center rounded">
+            <Tooltip content="Close" side="top" delay="long">
+                <CloseIcon fontSize="inherit" />
+            </Tooltip>
         </DialogBase.Close>
     );
 }

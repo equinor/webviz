@@ -2,14 +2,14 @@
     @apply form-element bg-canvas box-border rounded border-none;
 
     /* default size */
-    @apply h-selectable-md px-sm py-xs;
+    @apply min-h-selectable-md px-sm py-xs;
 
     &[data-size="small"] {
-        @apply h-selectable-sm pl-sm pr-xs py-3xs;
+        @apply min-h-selectable-sm pl-sm pr-xs py-3xs;
     }
 
     &[data-size="large"] {
-        @apply h-selectable-lg px-md py-sm;
+        @apply min-h-selectable-lg px-md py-sm;
     }
 
     /* Icon size */
@@ -60,7 +60,7 @@
     }
 
     & [class*="Toggle__StyledButton"] {
-        @apply rounded! aspect-square;
+        @apply aspect-square rounded!;
     }
 
     & [class*="Toggle__StyledButton"]:hover {

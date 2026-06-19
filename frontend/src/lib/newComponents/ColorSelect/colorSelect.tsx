@@ -12,13 +12,15 @@ export type ColorSelectProps = Omit<
     /** The current hex color value. */
     value: string;
     /** Called when the user picks a new color. */
-    onChange: (value: string) => void;
+    onValueChange?: (value: string) => void;
+    /** Called when the user commits the color change (e.g., on blur or enter). */
+    onValueCommit?: (value: string) => void;
     /** Visual style of the button trigger. @default "outlined" */
     variant?: Exclude<ButtonProps["variant"], "contained">;
 };
 
 export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>(function ColorSelect(props, ref) {
-    const { value, onChange, variant = "outlined", ...buttonProps } = props;
+    const { value, onValueChange, onValueCommit, variant = "outlined", ...buttonProps } = props;
     const [selectedColor, setSelectedColor] = React.useState(value);
     const [prevSelectedColor, setPrevSelectedColor] = React.useState(value);
 
@@ -37,14 +39,25 @@ export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>
         function handleInputColorChange(e: React.ChangeEvent<HTMLInputElement>) {
             const newColor = e.target.value;
             setSelectedColor(newColor);
-            onChange(newColor);
+            onValueChange?.(newColor);
         },
-        [onChange],
+        [onValueChange],
+    );
+
+    React.useEffect(
+        function attachNativeChangeListener() {
+            const el = inputRef.current;
+            if (!el) return;
+            const handleChange = () => onValueCommit?.(el.value);
+            el.addEventListener("change", handleChange);
+            return () => el.removeEventListener("change", handleChange);
+        },
+        [onValueCommit],
     );
 
     return (
         <>
-            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} variant={variant} tone="neutral" iconOnly>
+            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} variant={variant} tone="neutral" compact>
                 <ColorTile.Tile color={selectedColor} size={props.size} />
                 {props.size !== "small" && <ExpandMore fontSize="inherit" />}
             </Button>

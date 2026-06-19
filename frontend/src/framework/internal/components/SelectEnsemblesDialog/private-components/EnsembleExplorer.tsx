@@ -1,6 +1,17 @@
 import React from "react";
 
-import { Add, Check, CheckBox, CheckBoxOutlineBlank, FilterList, Remove } from "@mui/icons-material";
+import {
+    Add,
+    Check,
+    CheckBox,
+    CheckBoxOutlineBlank,
+    Close,
+    Filter,
+    Filter1,
+    FilterAlt,
+    FilterList,
+    Remove,
+} from "@mui/icons-material";
 
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
@@ -278,12 +289,25 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                             </Hidden>
                             <span className="grow" />
                             <TextInput
-                                placeholder="Filter..."
+                                placeholder="Filter ensembles..."
                                 startAdornment={<FilterList fontSize="inherit" className="mr-2xs" />}
                                 layoutClassName="max-w-60"
                                 value={filterText}
                                 onValueChange={setFilterText}
                                 size="small"
+                                endAdornment={
+                                    <Button
+                                        variant="ghost"
+                                        size="small"
+                                        tone="neutral"
+                                        onClick={() => setFilterText("")}
+                                        iconOnly
+                                        compact
+                                        data-density="comfortable"
+                                    >
+                                        <Close fontSize="inherit" />
+                                    </Button>
+                                }
                             />
                         </div>
                         <div className="form-element gap-x-sm group/grid text-body-sm grid w-full grow grid-cols-[2rem_1fr] content-start overflow-auto">
@@ -369,7 +393,7 @@ function EnsembleRow(props: EnsembleRowProps) {
     return (
         <div
             className={resolveClassNames(
-                "selectable group/row px-2xs hover:bg-neutral focus-within:bg-accent focus-within:hover:bg-accent-hover active:bg-accent-active h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none!",
+                "selectable group/row px-2xs hover:bg-neutral focus-within:bg-accent focus-within:hover:bg-accent-hover active:bg-accent-active min-h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none!",
                 {
                     "bg-accent-strong! text-accent-strong-on-emphasis! hover:bg-accent-strong-hover! active:bg-accent-strong-active!":
                         props.selected && !props.singleSelect,

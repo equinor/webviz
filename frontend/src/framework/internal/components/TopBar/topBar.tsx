@@ -293,18 +293,29 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                 </Popover.Trigger>
                 <Popover.Popup side="bottom">
                     <Popover.Content>
-                        <div className="whitespace-normal">
+                        <div className="gap-4xs flex flex-col whitespace-normal">
                             <Heading as="h6" variant="strong" weight="bolder">
                                 {metadata.title}
                             </Heading>
-                            {metadata.description && (
-                                <>
-                                    <Separator orientation="horizontal" />
-                                    <Paragraph size="sm" layoutClassName="whitespace-pre-wrap">
-                                        {metadata.description}
-                                    </Paragraph>
-                                </>
-                            )}
+                            <Separator orientation="horizontal" />
+                            <Paragraph
+                                size="sm"
+                                tone="neutral"
+                                layoutClassName="whitespace-pre-wrap"
+                                italic={!metadata.description}
+                            >
+                                {metadata.description ?? "No description provided."}
+                            </Paragraph>
+                            <Separator orientation="horizontal" />
+                            <Typography size="xs" tone="neutral">
+                                {isPersisted
+                                    ? `Last saved: ${
+                                          persistenceInfo.lastPersistedMs
+                                              ? new Date(persistenceInfo.lastPersistedMs).toLocaleString()
+                                              : "unknown"
+                                      }`
+                                    : "Not saved yet"}
+                            </Typography>
                         </div>
                     </Popover.Content>
                 </Popover.Popup>

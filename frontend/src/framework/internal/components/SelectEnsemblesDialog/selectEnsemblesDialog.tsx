@@ -7,6 +7,7 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { Dialog } from "@lib/newComponents/Dialog";
+import { Form } from "@lib/newComponents/Form";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -114,8 +115,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const {
         handleApplyEnsembleSelection,
         handleApplyEnsembleSelectionWithLoadingError,
-        hasInvalidDeltaEnsembles,
-        hasDuplicateDeltaEnsembles,
         ensembleLoadingErrorInfoMap,
     } = useApplyEnsembleSelection({
         queryClient,
@@ -128,6 +127,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         },
         onSuccess: handleClose,
     });
+
+    const handleFormSubmit = React.useCallback(
+        function handleFormSubmit(e: React.FormEvent) {
+            e.preventDefault();
+            handleApplyEnsembleSelection();
+        },
+        [handleApplyEnsembleSelection],
+    );
 
     // Determine next ensemble color
     const nextEnsembleColor = React.useMemo(() => {
@@ -171,7 +178,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         <Dialog.Title>Ensembles used in this session</Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body layoutClassName="grow min-h-0">
-                        <div className="relative flex h-full min-h-0 w-full flex-col">
+                        <Form
+                            layoutClassName="relative flex h-full min-h-0 w-full flex-col"
+                            onSubmit={handleFormSubmit}
+                        >
                             <EnsembleTables
                                 nextEnsembleColor={nextEnsembleColor}
                                 selectedRegularEnsembles={selectedRegularEnsembles}
@@ -196,18 +206,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 <DialogActions
                                     isLoading={isEnsembleSetLoading}
                                     disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
-                                    disableApply={
-                                        isEnsembleSetLoading ||
-                                        hasInvalidDeltaEnsembles() ||
-                                        hasDuplicateDeltaEnsembles() ||
-                                        !hasUnappliedChanges
-                                    }
-                                    hasDuplicatedDeltaEnsembles={hasDuplicateDeltaEnsembles()}
+                                    disableApply={isEnsembleSetLoading || !hasUnappliedChanges}
                                     onDiscard={handleClose}
-                                    onApply={handleApplyEnsembleSelection}
                                 />
                             </Dialog.Actions>
-                        </div>
+                        </Form>
                     </Dialog.Body>
                 </div>
                 <Dialog.Popup
@@ -221,6 +224,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     height={`${dialogSizePercent.height}%`}
                     modal
                     keepMounted
+                    stacked
                 >
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>

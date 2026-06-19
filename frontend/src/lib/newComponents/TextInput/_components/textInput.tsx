@@ -65,7 +65,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                         "form-element",
                         "w-full",
                         "pl-sm",
-                        "gap-y-xs flex items-center",
+                        "gap-xs flex items-center",
                         "text-neutral-strong",
                         SELECTABLE_SIZES_CLASSNAMES[size],
                         size === "small" ? "pr-3xs" : "pr-sm",

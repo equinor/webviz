@@ -52,7 +52,7 @@ type Story = StoryObj<typeof ColorSelect>;
 
 function DefaultRender(args: React.ComponentProps<typeof ColorSelect>) {
     const [color, setColor] = React.useState(args.value);
-    return <ColorSelect {...args} value={color} onChange={setColor} />;
+    return <ColorSelect {...args} value={color} onValueChange={setColor} />;
 }
 
 export const Default: Story = {
@@ -75,7 +75,7 @@ function ControlledRender() {
     const [color, setColor] = React.useState("#3b82f6");
     return (
         <div className="flex flex-col items-center gap-3">
-            <ColorSelect value={color} onChange={setColor} />
+            <ColorSelect value={color} onValueChange={setColor} />
             <p className="font-mono text-sm">{color}</p>
         </div>
     );
@@ -102,7 +102,7 @@ function MultipleSwatchesRender() {
                     <span className="w-24 text-sm">{labels[i]}</span>
                     <ColorSelect
                         value={color}
-                        onChange={(v) => setColors((prev) => prev.map((c, j) => (j === i ? v : c)))}
+                        onValueChange={(v) => setColors((prev) => prev.map((c, j) => (j === i ? v : c)))}
                     />
                     <span className="font-mono text-sm">{color}</span>
                 </div>

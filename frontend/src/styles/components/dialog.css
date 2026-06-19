@@ -8,14 +8,26 @@
         border-radius: var(--radius-rounded);
         background-color: var(--eds-color-bg-floating);
         outline: 1px solid var(--eds-color-border-neutral-subtle);
-        --nested-dialogs: 0;
-        transform: translate(-50%, -50%) scale(calc(1 - 0.1 * var(--nested-dialogs)));
-        translate: 0 calc(0px + 1.25rem * var(--nested-dialogs));
+        transform: translate(-50%, -50%);
 
         &[data-starting-style],
         &[data-ending-style] {
             opacity: 0;
             transform: translate(-50%, -50%) scale(0.9);
+        }
+
+        &.dialog__popup--stacked {
+            &[data-starting-style],
+            &[data-ending-style] {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Scale back only when an alert dialog is open on top (not for stacked regular dialogs) */
+        &.dialog__popup--alert-open {
+            transform: translate(-50%, -50%) scale(calc(1 - 0.1 * var(--nested-dialogs)));
+            translate: 0 calc(0px + 1.25rem * var(--nested-dialogs));
         }
 
         &[data-nested-dialog-open] {

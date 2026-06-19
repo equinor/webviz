@@ -2,6 +2,7 @@ import type React from "react";
 
 import type { Many } from "lodash";
 import { omit } from "lodash";
+import { Prettify } from "./prettify";
 
 export type LayoutClassProps = {
     /** Class names applied to the element. Should only be used for adjusting layout (margins, visibility, positioning) */
@@ -23,13 +24,17 @@ export type ComponentWrapperProps<TBaseUIProps extends Record<string, any>> = Om
     LayoutClassProps;
 
 export function resolveWrapperProps<
-    TBaseUIProps extends Record<string, any>,
-    TWrappedProps extends ComponentWrapperProps<TBaseUIProps>,
->(props: TWrappedProps, ...additionalOmitPaths: Array<Many<keyof TWrappedProps>>): TBaseUIProps {
+    TWrappedProps extends ComponentWrapperProps<any>,
+    TOmitKeys extends keyof TWrappedProps = never,
+>(
+    props: TWrappedProps,
+    ...additionalOmitPaths: Array<Many<TOmitKeys>>
+): Prettify<Omit<TWrappedProps, TOmitKeys | keyof LayoutClassProps> & { className?: string; style?: React.CSSProperties }> {
     // Neither className, render, nor style are omitted here because we might make use of them when using
     // wrapped components in other library components. By omitting them in the type definition of ComponentWrapperProps,
     // we prevent implementers from passing these props and bypassing the design system while still allowing us to use them
     // at runtime when necessary.
+    const p = props as any;
     const baseProps = omit(
         props,
         "layoutClassName",
@@ -40,8 +45,8 @@ export function resolveWrapperProps<
     );
 
     return {
-        className: `${props.className ?? ""} ${props.layoutClassName ?? ""}`.trim(),
-        style: { ...props.style, ...props.layoutStyle },
+        className: `${p.className ?? ""} ${p.layoutClassName ?? ""}`.trim(),
+        style: { ...p.style, ...p.layoutStyle },
         ...baseProps,
-    } as unknown as TBaseUIProps;
+    } as any;
 }

@@ -1017,7 +1017,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async deleteSnapshot(snapshotId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
-            title: "Are you sure?",
+            title: "Really delete snapshot?",
             message:
                 "This snapshot will be deleted and will no longer be available to any user. This action cannot be reversed.",
             actions: [

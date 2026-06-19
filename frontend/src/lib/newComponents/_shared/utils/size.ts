@@ -16,9 +16,9 @@ export const PIXEL_SIZES_CLASSNAMES: Record<PixelSize, string> = {
 export type SelectableSize = "small" | "default" | "large";
 
 export const SELECTABLE_SIZES_CLASSNAMES: Record<SelectableSize, string> = {
-    small: "h-selectable-sm text-body-sm",
-    default: "h-selectable-md text-body-md",
-    large: "h-selectable-lg text-body-lg",
+    small: "min-h-selectable-sm text-body-sm",
+    default: "min-h-selectable-md text-body-md",
+    large: "min-h-selectable-lg text-body-lg",
 };
 
 export function getDataAttributesForSelectableSize(size: SelectableSize, squished?: boolean): Record<string, string> {

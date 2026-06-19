@@ -116,7 +116,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     <div className="border-neutral w-2 flex-1 rounded-bl border-b border-l" />
                 </div>
                 <ColorSelect
-                    onChange={handleStrokeColorChange}
+                    onValueChange={handleStrokeColorChange}
                     value={props.value.strokeColor}
                     size="small"
                     variant="ghost"
@@ -154,7 +154,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                     Fill
                 </Typography>
                 <ColorSelect
-                    onChange={handleFillColorChange}
+                    onValueChange={handleFillColorChange}
                     value={props.value.fillColor}
                     size="small"
                     variant="ghost"
@@ -182,7 +182,7 @@ export function PolygonVisualizationForm(props: PolygonVisualizationFormProps) {
                 <ColorSelect
                     value={props.value.labelColor}
                     disabled={!props.value.showLabels}
-                    onChange={handleLabelColorChange}
+                    onValueChange={handleLabelColorChange}
                     variant="ghost"
                     compact
                     size="small"

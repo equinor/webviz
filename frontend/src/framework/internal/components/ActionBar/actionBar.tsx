@@ -19,7 +19,7 @@ export function ActionBar(props: ActionBarProps) {
     }
 
     return (
-        <div className="border-b-neutral-subtle bg-surface py-xs shadow-elevation-raised flex border-b-2">
+        <div className="border-b-neutral-subtle bg-surface px-xs py-3xs shadow-elevation-raised flex border-b-2">
             <StartPanel workbench={props.workbench} />
         </div>
     );

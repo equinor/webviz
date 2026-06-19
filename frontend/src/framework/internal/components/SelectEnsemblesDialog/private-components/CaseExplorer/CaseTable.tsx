@@ -34,6 +34,9 @@ export type CaseTableProps = {
     onDataCollated?: (collatedData: CaseInfo_api[]) => void;
 };
 
+// colKey doesn't always match the data field name on CaseInfo_api
+const COL_KEY_TO_FIELD: Record<string, string> = { author: "user" };
+
 export function CaseTable(props: CaseTableProps): React.ReactNode {
     const { onDataCollated } = props;
     const tableOverflowWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -44,10 +47,12 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
     }, [userInfo]);
 
     const [tableFilterState, setTableFilterState] = React.useState<CaseTableFilterState>({});
-    const [tableSortState, setTableSortState] = React.useState<TableSortState | null>({
-        columnKey: "updatedAtUtcMs",
-        direction: SortDirection.DESC,
-    });
+    const [tableSortState, setTableSortState] = React.useState<TableSortState[] | undefined>([
+        {
+            columnKey: "updatedAtUtcMs",
+            direction: SortDirection.DESC,
+        },
+    ]);
 
     const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState(props.showOnlyMyCases);
     const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState(props.showOnlyOfficialCases);
@@ -70,22 +75,23 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         }));
     }
 
-    // TODO: Support multiple sort state
     const filteredCaseData = useCaseDataFilter(props.caseData, tableFilterState);
     const collatedCaseData = React.useMemo(
         function sortCaseData() {
             if (!filteredCaseData) return [];
 
-            const { columnKey: sortKey, direction: sortDirection } = tableSortState ?? {};
+            const activeSorts = (tableSortState ?? []).filter((s) => s.direction !== SortDirection.NONE);
 
-            if (!sortKey || !sortDirection) return filteredCaseData;
-
-            if (sortDirection === SortDirection.NONE) {
+            if (activeSorts.length === 0) {
                 // Sort cases by date descending (to prevent random order when no sorting is applied in the table)
-                return orderBy(filteredCaseData, "updatedAtUtcMs", SortDirection.ASC);
+                return orderBy(filteredCaseData, "updatedAtUtcMs", SortDirection.DESC);
             }
 
-            return orderBy(filteredCaseData, sortKey, sortDirection);
+            return orderBy(
+                filteredCaseData,
+                activeSorts.map((s) => COL_KEY_TO_FIELD[s.columnKey] ?? s.columnKey),
+                activeSorts.map((s) => s.direction as "asc" | "desc"),
+            );
         },
         [filteredCaseData, tableSortState],
     );
@@ -100,7 +106,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             size="small"
             compact
             fixed
-            sortable
+            sortable="multiple"
             selectable
             columnSorting={tableSortState}
             rowSelection={props.selectedCase}
