@@ -8,7 +8,7 @@
 export const DROGON_AHM = {
     assetName: "Drogon",
     fieldIdentifier: "DROGON",
-    caseName: "webviz_ahm_case",
-    caseUuid: "485041ce-ad72-48a3-ac8c-484c0ed95cf8",
+    caseName: "2026-06-12_drogon_ahm_with_hydrostatic_check",
+    caseUuid: "e7f117b6-29fe-488f-989c-dbbc9bd03f09",
     ensembleName: "iter-0",
 } as const;

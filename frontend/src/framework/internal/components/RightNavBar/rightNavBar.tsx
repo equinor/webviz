@@ -89,6 +89,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         >
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
+                    data-testid="modules-list-open-button"
                     active={drawerContent === RightDrawerContent.ModulesList}
                     tooltip="Show modules list"
                     icon={<WebAsset fontSize="small" className="size-5" />}

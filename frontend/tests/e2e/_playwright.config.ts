@@ -44,8 +44,10 @@ export default defineConfig({
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: record ? "on" : "on-first-retry",
 
-        /* Optionally record video and screenshots for every test (toggled with RECORD=1). */
-        video: record ? "on" : "off",
+        /* Optionally record video and screenshots for every test (toggled with RECORD=1). Record at
+         * full HD so the resulting tutorial videos are crisp (matches the 1920x1080 viewport set on
+         * the recording projects below). */
+        video: record ? { mode: "on", size: { width: 1920, height: 1080 } } : "off",
         screenshot: record ? "on" : "off",
     },
 
@@ -59,7 +61,11 @@ export default defineConfig({
         {
             name: "unauthenticated-chromium",
             testMatch: /(.*\.unauth\.test\.ts|signIn\.test\.ts)/,
-            use: { ...devices["Desktop Chrome"] },
+            use: {
+                ...devices["Desktop Chrome"],
+                /* Record at full HD (overrides the 1280x720 viewport from the device preset). */
+                ...(record ? { viewport: { width: 1920, height: 1080 } } : {}),
+            },
         },
 
         /*
@@ -72,6 +78,8 @@ export default defineConfig({
             use: {
                 ...devices["Desktop Chrome"],
                 storageState: STORAGE_STATE_PATH,
+                /* Record at full HD (overrides the 1280x720 viewport from the device preset). */
+                ...(record ? { viewport: { width: 1920, height: 1080 } } : {}),
             },
         },
     ],

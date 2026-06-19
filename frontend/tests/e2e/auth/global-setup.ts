@@ -17,6 +17,9 @@ const SEED_SCRIPT_PATH = resolve(REPO_ROOT, "backend_py/primary/scripts/seed_e2e
 /** The app host the browser talks to. The session cookie is scoped to this domain. */
 const APP_DOMAIN = process.env.E2E_APP_DOMAIN ?? "localhost";
 
+/** The app origin the browser loads, used to scope seeded localStorage entries. */
+const APP_ORIGIN = process.env.E2E_BASE_URL ?? "http://localhost:8080";
+
 /**
  * Command used to run the seed script inside the backend container. Overridable via the
  * E2E_SEED_EXEC env var (whitespace separated) so CI or alternative setups can adapt it.
@@ -107,7 +110,18 @@ function writeStorageState(seedResult: SeedResult): void {
                 sameSite: "Lax" as const,
             },
         ],
-        origins: [],
+        origins: [
+            {
+                origin: APP_ORIGIN,
+                localStorage: [
+                    // The app defaults its in-app DevTools panel to visible in dev mode (the e2e
+                    // stack runs the dev build). Seed the persisted GuiState so it stays hidden,
+                    // keeping it out of the tutorial recordings. The key is the GuiState enum value
+                    // and the value is JSON (see GuiMessageBroker.loadPersistentStates).
+                    { name: "devToolsVisible", value: "false" },
+                ],
+            },
+        ],
     };
 
     mkdirSync(dirname(STORAGE_STATE_PATH), { recursive: true });

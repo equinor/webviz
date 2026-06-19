@@ -11,7 +11,7 @@ import type { ColumnFilterImplementationProps, TableColumns } from "@lib/compone
 import { TagPicker } from "@lib/components/TagPicker";
 import { formatDate } from "@lib/utils/dates";
 
-import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
+import { AuthorCell, CaseNameAndIdCell, DescriptionCell, NullableTextCell } from "./_components";
 import type { CaseRowData } from "./_types";
 
 export function storeStateInLocalStorage(stateName: string, value: string) {
@@ -58,7 +58,7 @@ export function makeCaseTableColumns(
             columnId: "description",
             sizeInPercent: 18,
             showTooltip: true,
-            renderData: (value) => <DescriptionCell description={value} />,
+            renderData: (value, context) => <DescriptionCell description={value} caseId={context.entry.caseId} />,
             filter: { render: (props) => filterInput(props) },
         },
         {
@@ -69,7 +69,7 @@ export function makeCaseTableColumns(
             filter: {
                 render: (props) => filterInput(props, disabledFilterComponents.disableAuthorComponent),
             },
-            renderData: (value) => <AuthorCell author={value} />,
+            renderData: (value, context) => <AuthorCell author={value} caseId={context.entry.caseId} />,
         },
         {
             label: "Status",
@@ -113,6 +113,7 @@ export function makeCaseTableColumns(
             sizeInPercent: 11,
             formatValue: (value) => formatNullableText(value),
             showTooltip: true,
+            renderData: (value, context) => <NullableTextCell value={value} caseId={context.entry.caseId} />,
             filter: {
                 render: (props) => (
                     <TagPicker
@@ -132,6 +133,7 @@ export function makeCaseTableColumns(
             sizeInPercent: 9,
             formatValue: (value) => formatNullableText(value),
             showTooltip: true,
+            renderData: (value, context) => <NullableTextCell value={value} caseId={context.entry.caseId} />,
             filter: {
                 render: (props) => (
                     <TagPicker

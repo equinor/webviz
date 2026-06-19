@@ -41,6 +41,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         >
             <div className="flex flex-col gap-2 grow">
                 <NavBarButton
+                    data-testid="ensemble-selection-open-button"
                     tooltip={"Open ensemble selection dialog"}
                     disabledTooltip={"Ensembles cannot be changed in snapshot mode"}
                     disabled={isSnapshot}
