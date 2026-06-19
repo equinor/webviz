@@ -37,6 +37,11 @@ import { Button } from "@lib/newComponents/Button";
   Save
 </Button>
 
+// Button-styled Link
+<Button.AsLink variant="contained" tone="accent" href="example.com" external>
+  Go to
+</Button.AsLink>
+
 // Split button
 <Button.Group>
   <Button variant="contained" tone="accent" onClick={() => save()}>Save</Button>
@@ -277,6 +282,30 @@ export const IconOnly: Story = {
                 <MoreVert fontSize="inherit" />
             </Button>
         </div>
+    ),
+};
+
+// ─── Button.AsLink
+export const AsLink: StoryObj<typeof Button.AsLink> = {
+    name: "AsLink",
+    argTypes: {
+        // Can't figure out how to make it pick up the AsLink, so manually removing this
+        pressed: { table: { disable: true } },
+        external: { control: "boolean" },
+    } as any,
+    parameters: {
+        docs: {
+            description: {
+                story:
+                    "Use `Button.AsLink` to render a button that semantically behaves like a link. " +
+                    "It accepts all the same props as `Button` in addition to anchor attributes like `href` and `target`.",
+            },
+        },
+    },
+    render: (args) => (
+        <Button.AsLink {...args} href="https://webviz.io" target="_blank">
+            Visit webviz.io
+        </Button.AsLink>
     ),
 };
 
