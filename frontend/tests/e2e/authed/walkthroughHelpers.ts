@@ -332,6 +332,8 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
     // The dropped module's header carries the module title; use it to confirm the drop committed.
     const droppedModule = layout.getByTitle(moduleDisplayName).first();
 
+    await smoothMoveToLocator(page, page.locator(`[title="${moduleDisplayName}"]`).first());
+
     await expect(async () => {
         const moduleItem = page.locator(`[title="${moduleDisplayName}"]`).first();
         await expect(moduleItem).toBeVisible();
