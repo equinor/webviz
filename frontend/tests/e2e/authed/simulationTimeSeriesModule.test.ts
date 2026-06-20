@@ -7,6 +7,7 @@ import {
     installCaseRowRedaction,
     installFakeCursor,
     pace,
+    RECORDING,
     smoothClick,
     smoothFill,
 } from "./walkthroughHelpers";
@@ -174,8 +175,20 @@ test.describe("Simulation Time Series module", () => {
         await pace(page, "long");
 
         // --- 12. Assert a Plotly chart renders from the real Sumo data ---
-        await expect(page.locator(".js-plotly-plot").first()).toBeVisible({ timeout: 90_000 });
+        const plot = page.locator(".js-plotly-plot").first();
+        await expect(plot).toBeVisible({ timeout: 90_000 });
+        // Plotly mounts the SVG container before the data is drawn, so waiting only for the plot to
+        // be "visible" can finish on an empty chart. Wait for an actual trace line to be rendered so
+        // the recording shows the populated time-series curve, not a blank plot.
+        await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
         await pace(page, "long");
+
+        // Hold on the finished chart for a few seconds before the test (and thus the video) ends.
+        // Playwright stops the screencast when the context closes and can drop the final moment, so
+        // without this the recording sometimes cuts off just as the plot appears. Recording-only.
+        if (RECORDING) {
+            await page.waitForTimeout(4_000);
+        }
     });
 });
 
