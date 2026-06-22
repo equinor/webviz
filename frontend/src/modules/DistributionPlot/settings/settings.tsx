@@ -1,15 +1,14 @@
-import type React from "react";
-
 import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import { Slider } from "@lib/components/Slider";
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
+import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Combobox } from "@lib/newComponents/Combobox";
+import { Hidden } from "@lib/newComponents/Hidden";
+import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Slider } from "@lib/newComponents/Slider";
 
 import type { Interfaces } from "../interfaces";
 import { BarSortBy, PlotType } from "../typesAndEnums";
@@ -23,7 +22,7 @@ import {
     sharedYAxesAtom,
 } from "./atoms/baseAtoms";
 
-const plotTypes = [
+const plotTypeItems = [
     {
         value: PlotType.Histogram,
         label: "Histogram",
@@ -55,115 +54,90 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);
     useApplyInitialSettingsToState(initialSettings, "orientation", "string", setOrientation);
 
-    function handlePlotTypeChanged(value: string) {
-        setPlotType(value as PlotType);
-    }
-
-    function handleNumBinsChange(_: Event, value: number | number[]) {
+    function handleNumBinsChange(value: number | readonly number[]) {
         if (Array.isArray(value)) {
             return;
         }
-        setNumBins(value);
+        setNumBins(value as number);
     }
 
-    function handleOrientationChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setOrientation(e.target.value as "h" | "v");
-    }
-
-    function makeContent(): React.ReactNode {
-        if (plotType === null) {
-            return null;
-        }
-        const content: React.ReactNode[] = [];
-        const axisContent: React.ReactNode = (
-            <>
-                <div className="mb-2 text-gray-500">
-                    <Checkbox
-                        label="Shared X Axes"
-                        checked={sharedXAxes}
-                        onChange={(_, checked) => setSharedXAxes(checked)}
-                    />
-                </div>
-                <div className="mb-2">
-                    <Checkbox
-                        label="Shared Y Axes"
-                        checked={sharedYAxes}
-                        onChange={(_, checked) => setSharedYAxes(checked)}
-                    />
-                </div>
-            </>
-        );
-        if (plotType === PlotType.Histogram) {
-            content.push(
-                <CollapsibleGroup title="Plot settings" expanded key="number-of-bins">
-                    <Label text="Number of bins">
-                        <Slider
-                            value={numBins}
-                            onChange={handleNumBinsChange}
-                            min={1}
-                            max={30}
-                            valueLabelDisplay="auto"
-                        />
-                    </Label>
-                    {axisContent}
-                </CollapsibleGroup>,
-            );
-        }
-        if (plotType === PlotType.Scatter || plotType === PlotType.ScatterWithColorMapping) {
-            content.push(
-                <CollapsibleGroup title="Plot settings" expanded key="scatter-2d-axes">
-                    {axisContent}
-                </CollapsibleGroup>,
-            );
-        }
-        if (plotType === PlotType.BarChart) {
-            content.push(
-                <CollapsibleGroup title="Plot settings" expanded key="orientation">
-                    <Label text="Orientation">
-                        <RadioGroup
-                            options={[
-                                {
-                                    label: "Horizontal",
-                                    value: "h",
-                                },
-                                {
-                                    label: "Vertical",
-                                    value: "v",
-                                },
-                            ]}
-                            onChange={handleOrientationChange}
-                            value={orientation}
-                        />
-                    </Label>
-                    <Label text="Sort bars by">
-                        <RadioGroup
-                            options={[
-                                {
-                                    label: "Value",
-                                    value: BarSortBy.Value,
-                                },
-                                {
-                                    label: "Key",
-                                    value: BarSortBy.Key,
-                                },
-                            ]}
-                            onChange={(_, value) => setBarSortBy(value as typeof barSortBy)}
-                            value={barSortBy}
-                        />
-                    </Label>
-                </CollapsibleGroup>,
-            );
-        }
-
-        return content;
-    }
+    const showAxesSettings =
+        plotType === PlotType.Histogram ||
+        plotType === PlotType.Scatter ||
+        plotType === PlotType.ScatterWithColorMapping;
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Plot type" expanded>
-                <Dropdown value={plotType as string} options={plotTypes} onChange={handlePlotTypeChanged} />
-            </CollapsibleGroup>
-            {makeContent()}
-        </div>
+        <Collapsible.ScrollArea>
+            <SettingWrapper.Group>
+                <SettingWrapper.Section title="Plot type" defaultOpen>
+                    <SettingWrapper label="Plot type">
+                        <Combobox<PlotType>
+                            items={plotTypeItems}
+                            value={plotType}
+                            onValueChange={(value) => value && setPlotType(value)}
+                        />
+                    </SettingWrapper>
+                </SettingWrapper.Section>
+                <Hidden hidden={plotType === null}>
+                    <SettingWrapper.Section title="Plot settings" defaultOpen>
+                        <Hidden hidden={plotType !== PlotType.Histogram}>
+                            <SettingWrapper label="Number of bins" stacked>
+                                <Slider
+                                    value={numBins}
+                                    onValueChange={handleNumBinsChange}
+                                    min={1}
+                                    max={30}
+                                    valueLabelDisplay="auto"
+                                />
+                            </SettingWrapper>
+                        </Hidden>
+                        <Hidden hidden={!showAxesSettings}>
+                            <SettingWrapper label="Axes" stacked contentClassName="flex flex-col gap-y-xs">
+                                <>
+                                    <CheckboxCompositions.WithLabel
+                                        label="Shared X axes"
+                                        checked={sharedXAxes}
+                                        onCheckedChange={setSharedXAxes}
+                                        size="small"
+                                    />
+                                    <CheckboxCompositions.WithLabel
+                                        label="Shared Y axes"
+                                        checked={sharedYAxes}
+                                        onCheckedChange={setSharedYAxes}
+                                        size="small"
+                                    />
+                                </>
+                            </SettingWrapper>
+                        </Hidden>
+                        <Hidden hidden={plotType !== PlotType.BarChart}>
+                            <SettingWrapper label="Orientation" stacked>
+                                <RadioCompositions.GroupWithLabels
+                                    value={orientation}
+                                    options={[
+                                        { label: "Horizontal", value: "h" },
+                                        { label: "Vertical", value: "v" },
+                                    ]}
+                                    onValueChange={(value) => setOrientation(value as "h" | "v")}
+                                    size="small"
+                                />
+                            </SettingWrapper>
+                        </Hidden>
+                        <Hidden hidden={plotType !== PlotType.BarChart}>
+                            <SettingWrapper label="Sort bars by" stacked>
+                                <RadioCompositions.GroupWithLabels
+                                    value={barSortBy}
+                                    options={[
+                                        { label: "Value", value: BarSortBy.Value },
+                                        { label: "Key", value: BarSortBy.Key },
+                                    ]}
+                                    onValueChange={(value) => setBarSortBy(value as typeof barSortBy)}
+                                    size="small"
+                                />
+                            </SettingWrapper>
+                        </Hidden>
+                    </SettingWrapper.Section>
+                </Hidden>
+            </SettingWrapper.Group>
+        </Collapsible.ScrollArea>
     );
 }
