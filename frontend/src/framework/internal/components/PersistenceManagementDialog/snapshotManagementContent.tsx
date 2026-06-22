@@ -185,34 +185,38 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                     onCheckedChange={setHideDeletedSnapshots}
                 />
                 <span className="grow" />
-                <Tooltip.Provider>
-                    <Tooltip content="Open selected snapshot" side="bottom">
+                <Tooltip.Provider side="bottom">
+                    <Tooltip content="Open selected snapshot">
                         <Button
                             variant="ghost"
                             tone="accent"
                             disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
                             onClick={handleOpenSnapshotClick}
                         >
-                            <FileOpen fontSize="inherit" /> Open
+                            <FileOpen className="self-end" /> Open
                         </Button>
                     </Tooltip>
-                    <Tooltip content={deleteButtonTooltip} side="bottom">
+                    <Tooltip content={deleteButtonTooltip}>
                         <Button
                             variant="ghost"
                             tone="danger"
                             disabled={!selectedSnapshot || deletePending || !userId}
                             onClick={handleDeleteClick}
                         >
-                            {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />}{" "}
+                            {deletePending ? (
+                                <CircularProgress layoutClassName="self-end" size="em" />
+                            ) : (
+                                <Delete className="self-end" />
+                            )}{" "}
                             {deleteButtonText}
                         </Button>
                     </Tooltip>
-                    <Tooltip content="Refresh list" side="bottom">
+                    <Tooltip content="Refresh list">
                         <Button variant="ghost" tone="accent" onClick={queryRefreshActionRef.current?.refresh}>
                             {queryRefreshActionRef.current?.isRefreshing ? (
-                                <CircularProgress size={16} />
+                                <CircularProgress layoutClassName="self-end" size="em" />
                             ) : (
-                                <Refresh fontSize="inherit" />
+                                <Refresh className="self-end" />
                             )}{" "}
                             Refresh
                         </Button>

@@ -116,45 +116,50 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Field.Root>
             </div>
             <div className="gap-x-4xs flex items-center">
-                <Tooltip.Provider>
-                    <Tooltip content="Start and open new session" side="bottom">
+                <Tooltip.Provider side="bottom">
+                    <Tooltip content="Start and open new session">
                         <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
-                            <Add fontSize="inherit" /> New session
+                            <Add className="self-end" /> New session
                         </Button>
                     </Tooltip>
                     <span className="grow" />
-                    <Tooltip content="Edit the selected session" side="bottom">
+                    <Tooltip content="Edit the selected session">
                         <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleEditClick}>
-                            <Edit fontSize="inherit" /> Edit
+                            <Edit className="self-end" /> Edit
                         </Button>
                     </Tooltip>
-                    <Tooltip content="Open the selected session" side="bottom">
+                    <Tooltip content="Open the selected session">
                         <Button
                             tone="accent"
                             variant="ghost"
                             disabled={!selectedSession}
                             onClick={handleOpenSessionClick}
                         >
-                            <FileOpen fontSize="inherit" /> Open
+                            <FileOpen className="self-end" /> Open
                         </Button>
                     </Tooltip>
-                    <Tooltip content="Delete the selected session" side="bottom">
+                    <Tooltip content="Delete the selected session">
                         <Button
                             tone="danger"
                             disabled={!selectedSession || deletePending}
                             onClick={handleDeleteClick}
                             variant="ghost"
                         >
-                            {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
+                            {deletePending ? (
+                                <CircularProgress layoutClassName="self-end" size="em" />
+                            ) : (
+                                <Delete className="self-end" />
+                            )}{" "}
+                            Delete
                         </Button>
                     </Tooltip>
 
-                    <Tooltip content="Refresh list" side="top">
+                    <Tooltip content="Refresh list">
                         <Button tone="accent" onClick={queryRefreshActionRef.current?.refresh} variant="ghost">
                             {queryRefreshActionRef.current?.isRefreshing ? (
-                                <CircularProgress size={16} />
+                                <CircularProgress layoutClassName="self-end" size="em" />
                             ) : (
-                                <Refresh fontSize="inherit" />
+                                <Refresh className="self-end" />
                             )}{" "}
                             Refresh
                         </Button>
