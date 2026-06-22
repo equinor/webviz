@@ -39,3 +39,8 @@ if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-dev-db.documents.azure.com:443/")
+
+# When this is set (e.g. by the docker-compose-cosmos-db.yml override), the backend will use the
+# local Cosmos DB Emulator at the given endpoint instead of the cloud Cosmos DB. Leave it unset for
+# normal development and production, which connect to the cloud Cosmos DB using Azure credentials.
+COSMOS_DB_EMULATOR_HOST = os.getenv("WEBVIZ_COSMOS_DB_EMULATOR_HOST")
