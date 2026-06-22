@@ -1,13 +1,11 @@
 import React from "react";
 
-import { Close, Error } from "@mui/icons-material";
+import { Error } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
 import type { FocusableListItem } from "@lib/hooks/useListFocus";
 import { Direction } from "@lib/hooks/useListFocus";
-import { Button } from "@lib/newComponents/Button";
-import { Separator } from "@lib/newComponents/Separator";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Chip } from "@lib/newComponents/Chip";
 
 import type { RealizationNumberLimits, SelectionValidityInfo } from "./_utils";
 import { computeTagValidityInfo, sanitizeRangeInput, SelectionValidity } from "./_utils";
@@ -148,22 +146,16 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
     }
 
     return (
-        <li
-            data-disabled={props.disabled ? "" : undefined}
-            className={resolveClassNames(
-                "relative rounded-sm",
-                "flex items-center overflow-hidden",
-                "pl-2xs",
-                "data-disabled:opacity-75",
-                "text-neutral-strong data-[tone=warning]:text-warning-subtle data-[tone=danger]:text-danger-subtle",
-                "bg-neutral data-[tone=warning]:bg-warning data-[tone=danger]:bg-danger",
-            )}
-            data-tone={colorTone}
+        <Chip
+            as="li"
+            tone={colorTone}
+            onRemove={props.onRemove}
+            disabled={props.disabled}
             title={tagTitle}
+            selected={props.selected}
+            startAdornment={makeMatchCounter()}
             onClick={props.onFocus}
         >
-            {makeMatchCounter()}
-
             <AutoFitInput
                 ref={inputRef}
                 value={activeValue}
@@ -177,32 +169,7 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
                 onFocus={handleFocus}
                 onKeyDown={handleKeyDown}
             />
-
-            <Separator
-                orientation="vertical"
-                data-tone={colorTone}
-                layoutClassName="bg-neutral-active data-[tone=warning]:bg-warning-active data-[tone=danger]:bg-danger-active mr-0!"
-            />
-
-            <Button
-                tabIndex={-1}
-                iconOnly
-                size="small"
-                tone={colorTone}
-                disabled={props.selected || props.disabled}
-                variant="ghost"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    props.onRemove();
-                }}
-            >
-                <Close />
-            </Button>
-
-            {props.selected && (
-                <div className="bg-accent-strong z-overlay absolute top-0 left-0 block h-full w-full rounded-sm opacity-50" />
-            )}
-        </li>
+        </Chip>
     );
 }
 

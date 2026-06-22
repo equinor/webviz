@@ -5,7 +5,7 @@ import { Tooltip } from "@base-ui/react";
 import type { SliderRootProps as SliderRootBaseProps, SliderRootState } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
 import { Lock, LockOpen } from "@mui/icons-material";
-import { chain, clamp, clone, isEqual, minBy } from "lodash";
+import { chain, clamp, clone, defaults, isEqual, minBy } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -170,7 +170,7 @@ function SliderComponent(
     props: SliderProps<number | number[]>,
     ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactNode {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const defaultedProps = defaults({}, props, DEFAULT_PROPS);
 
     const onValueChange = props.onValueChange as InternalOnChangeCallback;
     const onValueCommitted = props.onValueCommitted as InternalOnChangeCallback;
