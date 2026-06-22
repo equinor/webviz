@@ -30,8 +30,7 @@ export type AlertDialogProps = Omit<AlertDialogRootProps, "className" | "render"
 };
 
 export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(function AlertDialog(props, ref) {
-    const { title, primaryAction, secondaryActions, children, ...rest } = props;
-    const { open } = rest;
+    const { title, primaryAction, secondaryActions, children, open, ...rest } = props;
     const { increment, decrement } = React.useContext(AlertDialogNestingContext);
 
     React.useEffect(
@@ -47,7 +46,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
 
     // The "dialog__*" classes can be found in the dialog.css file in the styles/components folder
     return (
-        <AlertDialogBase.Root {...rest}>
+        <AlertDialogBase.Root {...rest} open={open}>
             <AlertDialogBase.Portal>
                 <AlertDialogBase.Backdrop className="dialog__backdrop z-alert" />
                 <AlertDialogBase.Popup className="dialog__popup z-alert" ref={ref}>

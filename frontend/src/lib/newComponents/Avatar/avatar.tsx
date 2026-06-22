@@ -6,8 +6,9 @@ import PersonIcon from "@mui/icons-material/Person";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { PixelSize } from "../_shared/utils/size";
-import { type LayoutClassProps } from "../_shared/utils/wrapperProps";
+import { resolveWrapperProps, type LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
+import { withDefaults } from "../_shared/utils/defaultProps";
 
 export type AvatarUserData = {
     /** URL of the user's profile image. */
@@ -43,8 +44,14 @@ const SIZE_CLASSES: Record<NonNullable<AvatarProps["size"]>, string> = {
     48: "h-12 aspect-square text-body-2xl tracking-body-2xl-tight",
 };
 
+const DEFAULT_PROPS = {
+    size: 48,
+} satisfies Partial<AvatarProps>;
+
 export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function Avatar(props, ref): React.ReactNode {
-    const { userData, size = 48 } = props;
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const { userData } = defaultedProps;
+    const baseProps = resolveWrapperProps(defaultedProps, "userData", "size", "disabled");
 
     const [userDataWithStatus, setUserDataWithStatus] = React.useState<UserDataWithStatus>(() => {
         if (userData && typeof userData !== "function") {
@@ -98,17 +105,18 @@ export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function 
     return (
         <span className="relative inline-flex align-middle">
             <AvatarBase.Root
+                {...baseProps}
                 ref={ref}
                 className={resolveClassNames(
-                    props.layoutClassName,
+                    baseProps.className,
                     "inline-flex items-center justify-center overflow-hidden rounded-full",
-                    SIZE_CLASSES[size],
+                    SIZE_CLASSES[defaultedProps.size],
                     {
-                        "opacity-50": props.disabled,
+                        "opacity-50": defaultedProps.disabled,
                     },
                 )}
                 render={<span />}
-                aria-disabled={props.disabled}
+                aria-disabled={defaultedProps.disabled}
             >
                 {showImage && (
                     <AvatarBase.Image
@@ -120,10 +128,7 @@ export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function 
                     />
                 )}
                 <AvatarBase.Fallback
-                    className={resolveClassNames(
-                        "bg-neutral text-neutral-subtle flex h-full w-full items-center justify-center leading-px font-medium uppercase not-italic no-underline",
-                        {},
-                    )}
+                    className="bg-neutral text-neutral-subtle flex h-full w-full items-center justify-center leading-px font-medium uppercase not-italic no-underline"
                     render={<span />}
                 >
                     {userDataWithStatus.status === "rejected" ? (
@@ -142,7 +147,7 @@ export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function 
                     },
                 )}
             >
-                <CircularProgress size={size} />
+                <CircularProgress size={defaultedProps.size} />
             </span>
         </span>
     );

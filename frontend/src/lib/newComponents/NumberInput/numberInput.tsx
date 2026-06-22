@@ -58,7 +58,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
                 baseRootProps.className,
                 "form-element",
                 "bg-canvas grow",
-                "px-xs gap-y-xs flex items-center",
+                "px-xs gap-xs flex items-center",
                 SELECTABLE_SIZES_CLASSNAMES[size],
                 {
                     "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,
