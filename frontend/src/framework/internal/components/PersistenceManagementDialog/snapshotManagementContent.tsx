@@ -252,7 +252,11 @@ type SnapshotTableProps = {
 };
 
 function SnapshotTable(props: SnapshotTableProps) {
+    const { onSelectedSnapshotChange } = props;
+
     const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+    const userId = useAuthProvider().userInfo?.user_id;
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableSortState, setTableSortState] = React.useState<TableSortState | null>(null);
@@ -264,16 +268,10 @@ function SnapshotTable(props: SnapshotTableProps) {
             filter_title: props.titleFilter,
             filter_last_visited_from: dateFilterRange?.from,
             filter_last_visited_to: dateFilterRange?.to,
-            filter_owner_id: props.showMySnapshotsOnly ? props.selectedSnapshot?.snapshotMetadata.ownerId : undefined,
+            filter_owner_id: props.showMySnapshotsOnly ? userId : undefined,
             filter_snapshot_deleted: props.hideDeletedSnapshots ? false : undefined,
         };
-    }, [
-        props.titleFilter,
-        props.lastVisitedAtFilter,
-        props.showMySnapshotsOnly,
-        props.hideDeletedSnapshots,
-        props.selectedSnapshot?.snapshotMetadata.ownerId,
-    ]);
+    }, [props.lastVisitedAtFilter, props.titleFilter, props.showMySnapshotsOnly, props.hideDeletedSnapshots, userId]);
 
     const querySortingParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
         const { columnKey, direction } = tableSortState ?? {};
@@ -336,6 +334,15 @@ function SnapshotTable(props: SnapshotTableProps) {
         [snapshotsQuery, tableData.length, visibleRowRange],
     );
 
+    React.useEffect(
+        function maybeDeselectRemovedEntry() {
+            if (props.selectedSnapshot && !tableData.some((s) => props.selectedSnapshot?.snapshotId === s.snapshotId)) {
+                onSelectedSnapshotChange(null);
+            }
+        },
+        [onSelectedSnapshotChange, props.selectedSnapshot, tableData],
+    );
+
     return (
         <Table.Root
             layoutClassName="h-full"
@@ -348,7 +355,7 @@ function SnapshotTable(props: SnapshotTableProps) {
             rowSelection={props.selectedSnapshot?.snapshotId ?? null}
             onChangeColumnSort={setTableSortState}
             onChangeRowSelection={(snapshotId) =>
-                props.onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
+                onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
             }
         >
             <Table.Head sticky>
