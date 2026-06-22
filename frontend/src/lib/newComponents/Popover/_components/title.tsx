@@ -10,6 +10,7 @@ import { Typography } from "@lib/newComponents/Typography";
 export type TitleProps = {
     fontSize?: "xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
     hideCloseButton?: boolean;
+    containedSeparator?: boolean;
     children: React.ReactNode;
 };
 
@@ -33,7 +34,7 @@ export function Title(props: TitleProps): React.ReactNode {
                 )}
             </div>
 
-            <Separator layoutClassName="-mx-sm" />
+            <Separator layoutClassName={!props.containedSeparator ? "-mx-sm" : ""} />
         </>
     );
 }
