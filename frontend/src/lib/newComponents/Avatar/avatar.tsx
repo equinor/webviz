@@ -24,7 +24,7 @@ export type AvatarProps = LayoutClassProps & {
     /** User data to display, or an async function that resolves to it. */
     userData?: AvatarUserData | (() => Promise<AvatarUserData>);
     /** Size of the avatar in pixels. @default 48 */
-    size?: PixelSize;
+    size?: Exclude<PixelSize, "em">;
     /** When true, renders the avatar with reduced opacity. */
     disabled?: boolean;
 };

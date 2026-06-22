@@ -23,7 +23,7 @@ const TONE_CLASSNAMES: Record<NonNullable<CircularProgressProps["tone"]>, { trac
 const CIRCUMFERENCE = 2 * Math.PI * 22;
 
 export function CircularProgress(props: CircularProgressProps) {
-    const { size = 48, tone = "default", variant = "indeterminate" } = props;
+    const { size = "em", tone = "default", variant = "indeterminate" } = props;
 
     const toneClasses = TONE_CLASSNAMES[tone];
     const isIndeterminate = variant === "indeterminate";

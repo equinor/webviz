@@ -50,10 +50,16 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const fieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(fieldIdentifierAtom);
 
     return (
-        <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
-            <SettingWrapper label="Field" annotations={fieldIdentifierAnnotations}>
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier.value} />
-            </SettingWrapper>
+        <div className="gap-y-xs px-xs py-xs flex h-full w-full flex-col">
+            <SettingWrapper.Group>
+                <SettingWrapper label="Field" annotations={fieldIdentifierAnnotations}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        onChange={handleFieldChange}
+                        value={fieldIdentifier.value}
+                    />
+                </SettingWrapper>
+            </SettingWrapper.Group>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

@@ -51,9 +51,15 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     return (
         <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
-            <SettingWrapper label="Field">
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier.value} />
-            </SettingWrapper>
+            <SettingWrapper.Group>
+                <SettingWrapper label="Field">
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        onChange={handleFieldChange}
+                        value={fieldIdentifier.value}
+                    />
+                </SettingWrapper>
+            </SettingWrapper.Group>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

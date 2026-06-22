@@ -52,13 +52,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
 
     return (
         <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
-            <SettingWrapper label="Field" annotations={selectedFieldIdentifierAnnotations}>
-                <FieldDropdown
-                    ensembleSet={ensembleSet}
-                    value={selectedFieldIdentifier.value}
-                    onChange={handleFieldIdentifierChange}
-                />
-            </SettingWrapper>
+            <SettingWrapper.Group>
+                <SettingWrapper label="Field" annotations={selectedFieldIdentifierAnnotations}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        value={selectedFieldIdentifier.value}
+                        onChange={handleFieldIdentifierChange}
+                    />
+                </SettingWrapper>
+            </SettingWrapper.Group>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

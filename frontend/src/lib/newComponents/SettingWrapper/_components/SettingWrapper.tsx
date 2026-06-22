@@ -133,7 +133,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
 
     if (!props.label) {
         return (
-            <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
+            <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid in-data-in-group:col-span-3 in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:grid in-data-in-group:grid-cols-subgrid">
                 <Field.Root inline invalid={isInvalid} warning={isWarning}>
                     <div
                         className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
@@ -173,7 +173,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
 
     if (isStacked) {
         return (
-            <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
+            <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid in-data-in-group:col-span-3 in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:grid in-data-in-group:grid-cols-subgrid">
                 <Field.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
                     <div className="gap-x-2xs flex w-full items-center justify-between">
                         {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
@@ -203,7 +203,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
     }
 
     return (
-        <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
+        <div className="setting-row in-data-in-section:col-span-3 in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-section:grid in-data-in-section:grid-cols-subgrid in-data-in-group:col-span-3 in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:grid in-data-in-group:grid-cols-subgrid">
             <Field.Root inline invalid={isInvalid} warning={isWarning}>
                 <div className="gap-y-4xs flex flex-col justify-center">
                     <div className="gap-x-2xs flex items-center">
