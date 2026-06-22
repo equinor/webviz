@@ -49,11 +49,8 @@ export function Section(props: SectionProps) {
                     { "pointer-events-none cursor-not-allowed": disabled },
                 )}
             >
-                <Collapsible.Trigger className="focusable gap-x-xs px-selectable py-selectable flex grow cursor-pointer items-center">
-                    <ExpandMore
-                        className="transition-transform group-data-closed/settingsSection:-rotate-90"
-                        fontSize="inherit"
-                    />
+                <Collapsible.Trigger className="focusable gap-x-3xs px-selectable py-selectable flex grow cursor-pointer items-center">
+                    <ExpandMore className="transition-transform! group-data-closed/settingsSection:-rotate-90" />
                     <Typography family="body" as="span" size="sm" weight="bolder">
                         {props.title}
                     </Typography>
