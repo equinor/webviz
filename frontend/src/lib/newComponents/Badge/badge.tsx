@@ -41,7 +41,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badg
             {props.children}
             <span
                 className={resolveClassNames(
-                    "text-body-xs z-elevated px-3xs absolute box-border flex min-h-2 min-w-4 items-center justify-center rounded-full whitespace-nowrap",
+                    "text-body-xs z-elevated px-3xs absolute box-border flex h-4 min-h-2 min-w-4 items-center justify-center rounded-full font-sans leading-none whitespace-nowrap",
                     TONE_TO_CLASSNAMES[tone],
                     CORNER_TO_CLASSNAMES[corner],
                     {

@@ -27,32 +27,32 @@
 
     /* Field wrapper */
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-5 rounded bg-transparent p-0 shadow-none!;
+        @apply gap-4xs h-5 items-center rounded bg-transparent p-0 shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
         @apply outline-0!;
     }
 
-    &[data-size="small"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-4!;
-    }
-
-    &[data-size="large"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-6!;
-    }
-
     /* Segments (date input fields) */
     & [class*="Segment"] {
-        @apply text-body-md text-neutral-subtle data-placeholder:text-neutral-subtle h-3 outline-0;
+        @apply text-body-md text-neutral-subtle data-placeholder:text-neutral-subtle focus-within:bg-canvas h-5! outline-0;
+    }
+
+    & [class*="Typography"] {
+        @apply text-neutral-subtle;
+    }
+
+    & [data-size="small"] [class*="Typography"] {
+        @apply text-body-xs! h-3!;
     }
 
     &[data-size="small"] [class*="Segment"] {
-        @apply text-body-xs;
+        @apply text-body-xs! h-3!;
     }
 
     &[data-size="large"] [class*="Segment"] {
-        @apply text-body-lg h-4;
+        @apply text-body-lg h-6!;
     }
 
     & [class*="Segment"]:focus-visible {
@@ -60,11 +60,7 @@
     }
 
     & [class*="Toggle__StyledButton"] {
-        @apply aspect-square rounded!;
-    }
-
-    & [class*="Toggle__StyledButton"]:hover {
-        background-color: var(--eds-color-bg-neutral-fill-muted-hover) !important;
+        @apply text-accent-subtle hover:bg-accent-hover active:bg-accent-active aspect-square rounded!;
     }
 
     &[data-size="small"] [class*="Toggle__StyledButton"] {

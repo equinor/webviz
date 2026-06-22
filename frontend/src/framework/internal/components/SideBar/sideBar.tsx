@@ -10,7 +10,7 @@ export function SideBar(props: SideBarProps) {
     return (
         <div
             className={resolveClassNames(
-                "bg-surface z-base border-neutral-subtle flex flex-col",
+                "bg-surface z-sticky border-neutral-subtle flex flex-col",
                 props.position === "left" ? "border-r" : "border-l",
                 props.className,
             )}
