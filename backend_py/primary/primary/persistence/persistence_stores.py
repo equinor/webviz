@@ -132,7 +132,9 @@ class PersistenceStoresSingleton:
 
         # Cosmos DB Emulator well-known default key
         key = "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-        cosmos_client = CosmosClient(uri, key)
+        # Disable endpoint discovery: the emulator advertises its location as 127.0.0.1, which the SDK
+        # would otherwise route to instead of the provided container-network URI (e.g. cosmos-db-emulator).
+        cosmos_client = CosmosClient(uri, key, enable_endpoint_discovery=False)
         maybe_setup_local_database(uri, key)
         cls._instance = PersistenceStores(cosmos_client)
 
