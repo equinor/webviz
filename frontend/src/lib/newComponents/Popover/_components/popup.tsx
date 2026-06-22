@@ -40,11 +40,9 @@ export function Popup(props: PopupProps): React.ReactNode {
                 sticky={defaultedProps.sticky}
                 anchor={defaultedProps.anchor}
             >
-                <PopoverBase.Popup className="bg-floating border-neutral relative rounded-sm border shadow-md transition-opacity">
+                <PopoverBase.Popup className="bg-floating border-neutral py-xs px-sm relative max-h-[80vh] max-w-md rounded-sm border shadow-md transition-opacity">
                     <PopoverBase.Arrow className="floating__arrow border-neutral border border-r-0 border-b-0" />
-                    <PopoverBase.Viewport className="py-xs px-sm max-h-[80vh] max-w-md">
-                        {props.children}
-                    </PopoverBase.Viewport>
+                    {props.children}
                 </PopoverBase.Popup>
             </PopoverBase.Positioner>
         </PopoverBase.Portal>
