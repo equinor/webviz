@@ -40,8 +40,6 @@ def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max
 
 
 def maybe_setup_local_database(uri: str, key: str) -> None:
-    # Disable endpoint discovery: the emulator advertises its location as 127.0.0.1, which the SDK
-    # would otherwise route to instead of the provided container-network URI (e.g. cosmos-db-emulator).
     client: CosmosClient = CosmosClient(uri, key, enable_endpoint_discovery=False)
 
     total_containers = 0
