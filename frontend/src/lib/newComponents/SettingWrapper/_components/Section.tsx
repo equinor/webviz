@@ -60,7 +60,7 @@ export function Section(props: SectionProps) {
             <Collapsible.Panel
                 keepMounted
                 data-in-section
-                className="setting-section-panel [&>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas [&>.contents>.setting-row:nth-child(odd_of_.setting-row)]:bg-canvas col-span-3 grid h-(--collapsible-panel-height) grid-cols-subgrid overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:overflow-hidden [&>[data-hidden]>.setting-row]:py-0"
+                className="setting-section-panel [&>.setting-row:nth-child(odd_of_.setting-row)]:bg-neutral/20 [&>.contents>.setting-row:nth-child(odd_of_.setting-row)]:bg-neutral/20 col-span-3 grid h-(--collapsible-panel-height) grid-cols-subgrid overflow-hidden transition-all duration-200 ease-out data-ending-style:h-0 data-starting-style:h-0 [&>[data-hidden]>.setting-row]:invisible [&>[data-hidden]>.setting-row]:h-0 [&>[data-hidden]>.setting-row]:min-h-0 [&>[data-hidden]>.setting-row]:overflow-hidden [&>[data-hidden]>.setting-row]:py-0"
             >
                 {props.children}
             </Collapsible.Panel>

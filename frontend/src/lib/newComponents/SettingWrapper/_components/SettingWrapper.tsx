@@ -118,18 +118,15 @@ export function SettingWrapper(props: SettingWrapperProps) {
           ].filter(Boolean) as SettingAnnotation[])
         : (props.annotations ?? []);
 
-    const overlay: Overlay | undefined =
-        "overlay" in props
-            ? props.overlay
-            : props.loadingOverlay
-              ? { type: "loading", message: "Loading..." }
-              : props.errorOverlay
-                ? { type: "error", message: props.errorOverlay }
-                : props.warningOverlay
-                  ? { type: "warning", message: props.warningOverlay }
-                  : props.infoOverlay
-                    ? { type: "info", message: props.infoOverlay }
-                    : undefined;
+    const overlay: Overlay | undefined = "overlay" in props
+        ? props.overlay
+        : (
+              (props.loadingOverlay && { type: "loading", message: "Loading..." }) ||
+              (props.errorOverlay   && { type: "error",   message: props.errorOverlay }) ||
+              (props.warningOverlay && { type: "warning", message: props.warningOverlay }) ||
+              (props.infoOverlay    && { type: "info",    message: props.infoOverlay }) ||
+              undefined
+          );
 
     const isInvalid = annotations.some((a) => a.type === "error");
     const isWarning = annotations.some((a) => a.type === "warning");
