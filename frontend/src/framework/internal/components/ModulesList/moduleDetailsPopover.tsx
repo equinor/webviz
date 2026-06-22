@@ -33,7 +33,7 @@ export function ModuleDetailsPopover(props: ModuleDetailsPopoverProps): React.Re
                             <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
                         </Popover.Title>
                         <Popover.Content as="div">
-                            <div className="flex flex-col">
+                            <div className="gap-x-sm mb-2xs flex empty:hidden">
                                 <DevState module={props.module} />
                                 <PersistenceState module={props.module} />
                             </div>
@@ -52,7 +52,7 @@ function DevState(props: { module: Module<any, any> }) {
 
     if (devState === ModuleDevState.DEPRECATED) {
         return (
-            <div className="text-warning-subtle gap-x-xs text-body-xs flex items-center">
+            <div className="text-warning-subtle gap-4xs text-body-xs flex items-center">
                 <DevStateIcon devState={devState} />
                 <span className="mt-[0.2rem]">Deprecated</span>
             </div>
@@ -60,7 +60,7 @@ function DevState(props: { module: Module<any, any> }) {
     }
     if (devState === ModuleDevState.DEV) {
         return (
-            <div className="text-danger-subtle gap-x-xs text-body-xs flex items-center">
+            <div className="text-danger-subtle gap-4xs text-body-xs flex items-center">
                 <DevStateIcon devState={devState} />
                 <span className="mt-[0.2rem]">Experimental</span>
             </div>
@@ -72,7 +72,7 @@ function PersistenceState(props: { module: Module<any, any> }): React.ReactNode 
     if (props.module.canBeSerialized()) return null;
 
     return (
-        <div className="text-disabled gap-x-xs text-body-xs flex items-center">
+        <div className="text-disabled gap-x-4xs text-body-xs flex items-center">
             <PersistenceIcon isSerializable={false} />
             <span className="mt-[0.2rem]">Module settings won&apos;t be saved</span>
         </div>
@@ -82,20 +82,8 @@ function PersistenceState(props: { module: Module<any, any> }): React.ReactNode 
 function DataTags(props: { module: Module<any, any> }): React.ReactNode {
     if (!props.module) return [];
 
-    const tags: React.ReactNode[] = [];
-    for (const tag of props.module.getDataTagIds()) {
-        const tagObj = ModuleDataTags.find((el) => el.id === tag);
-        if (tagObj) {
-            tags.push(
-                <div key={tag} className="text-accent-subtle font-bolder">
-                    #{tagObj.name}
-                </div>,
-            );
-        }
-    }
-
     return (
-        <div className="text-bolder gap-x-2xs text-body-xs flex flex-wrap">
+        <div className="mt-2xs text-bolder gap-x-2xs text-body-xs flex flex-wrap">
             {props.module.getDataTagIds().map((tag) => {
                 const tagObj = ModuleDataTags.find((el) => el.id === tag);
 
