@@ -414,27 +414,33 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
     return (
         <Table.Row
             rowKey={item.snapshotMetadata.id}
-            layoutClassName="data-deleted:opacity-60 data-deleted:*:line-through"
+            layoutClassName="group/snapshot-row"
             data-deleted={isDeleted ? "" : undefined}
         >
-            <Table.Cell layoutClassName="text-center!">{item.visits}</Table.Cell>
+            <Table.Cell layoutClassName="text-center! group-data-deleted/snapshot-row:line-through">
+                {item.visits}
+            </Table.Cell>
             <Table.Cell title={item.snapshotMetadata.title}>
                 <div className="gap-x-4xs flex items-center justify-between">
-                    <span className="truncate overflow-hidden">{item.snapshotMetadata.title}</span>
+                    <span className="truncate overflow-hidden group-data-deleted/snapshot-row:line-through">
+                        {item.snapshotMetadata.title}
+                    </span>
                     {isDeleted && (
                         <strong
                             title="This snapshot has been deleted by the snapshot owner"
-                            className="text-danger-subtle decoration-transparent! decoration-0"
+                            className="text-danger-subtle group-data-selected/snapshot-row:text-danger-strong-on-emphasis"
                         >
                             (Deleted)
                         </strong>
                     )}
                 </div>
             </Table.Cell>
-            <Table.Cell>
-                {item.snapshotMetadata.description || <span className="text-current/50 italic">N/A</span>}
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:*:line-through">
+                {item.snapshotMetadata.description || (
+                    <span className="italic group-not-data-selected/snapshot-row:text-current/50">N/A</span>
+                )}
             </Table.Cell>
-            <Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
                 <CopyCellValue onCopyRequested={() => url}>
                     <div className="group relative flex h-full min-w-0 items-center" title={url}>
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
@@ -444,10 +450,10 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
             <Table.Cell noPadding>
                 <div className="px-sm gap-x-xs flex items-center">
                     <Avatar userData={avatarFn} size={24} />
-                    {name}
+                    <span className="group-data-deleted/snapshot-row:line-through">{name}</span>
                 </div>
             </Table.Cell>
-            <Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
                 {item.lastVisitedAt ? (
                     formatDate(new Date(item.lastVisitedAt))
                 ) : (

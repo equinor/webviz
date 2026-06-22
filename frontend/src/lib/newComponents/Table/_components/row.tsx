@@ -34,6 +34,7 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
         <tr
             {...baseProps}
             ref={ref}
+            data-selected={isSelected ? "" : undefined}
             className={resolveClassNames(props.layoutClassName, {
                 "font-normal": sectionContext === "body",
                 "font-extrabold": sectionContext !== "body",
