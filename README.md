@@ -17,7 +17,7 @@ You can then access
 - backend API documentation at `http://localhost:8080/api/docs`
 
 Before you start however you need to create a file `.env` at the root of the project
-with the following variable:
+with the following variables:
 
 ```
 WEBVIZ_CLIENT_SECRET=...
