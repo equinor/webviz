@@ -99,23 +99,15 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 filterItems={[
                     {
                         value: ModuleDevState.DEPRECATED,
-                        label: <span className="mt-[0.2rem]">Show deprecated</span>,
+                        label: "Show deprecated",
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
-                        icon: (
-                            <span className="text-warning-subtle inline-block align-middle">
-                                <DevStateIcon devState={ModuleDevState.DEPRECATED} />
-                            </span>
-                        ),
+                        icon: <DevStateIcon devState={ModuleDevState.DEPRECATED} />,
                     },
                     {
                         value: ModuleDevState.DEV,
-                        label: <span className="mt-[0.2rem]">Show experimental</span>,
+                        label: "Show experimental",
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
-                        icon: (
-                            <span className="text-danger-subtle inline-block align-middle">
-                                <DevStateIcon devState={ModuleDevState.DEV} />
-                            </span>
-                        ),
+                        icon: <DevStateIcon devState={ModuleDevState.DEV} />,
                     },
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}

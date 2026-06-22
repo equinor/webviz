@@ -81,7 +81,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
             )}
             <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="bg-surface py-3xs gap-xs flex">
+                    <div className="bg-surface py-3xs gap-xs px-2xs flex">
                         {props.showSearch && (
                             <div className="grow">
                                 <TextInput
