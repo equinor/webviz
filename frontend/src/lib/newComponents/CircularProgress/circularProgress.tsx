@@ -47,11 +47,11 @@ export function CircularProgress(props: CircularProgressProps) {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
         >
-            <circle cx="48" cy="48" r="22" fill="none" strokeWidth="4" className={toneClasses.track} />
+            <circle cx="48" cy="48" r="18" fill="none" strokeWidth="4" className={toneClasses.track} />
             <circle
                 cx="48"
                 cy="48"
-                r="22"
+                r="18"
                 fill="none"
                 strokeLinecap="round"
                 strokeWidth="4"
