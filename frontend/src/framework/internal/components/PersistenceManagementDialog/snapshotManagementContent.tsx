@@ -252,7 +252,11 @@ type SnapshotTableProps = {
 };
 
 function SnapshotTable(props: SnapshotTableProps) {
+    const { onSelectedSnapshotChange } = props;
+
     const wrapperRef = React.useRef<HTMLDivElement>(null);
+
+    const userId = useAuthProvider().userInfo?.user_id;
 
     const [visibleRowRange, setVisibleRowRange] = React.useState<{ start: number; end: number } | null>(null);
     const [tableSortState, setTableSortState] = React.useState<TableSortState | null>(null);
@@ -264,16 +268,10 @@ function SnapshotTable(props: SnapshotTableProps) {
             filter_title: props.titleFilter,
             filter_last_visited_from: dateFilterRange?.from,
             filter_last_visited_to: dateFilterRange?.to,
-            filter_owner_id: props.showMySnapshotsOnly ? props.selectedSnapshot?.snapshotMetadata.ownerId : undefined,
+            filter_owner_id: props.showMySnapshotsOnly ? userId : undefined,
             filter_snapshot_deleted: props.hideDeletedSnapshots ? false : undefined,
         };
-    }, [
-        props.titleFilter,
-        props.lastVisitedAtFilter,
-        props.showMySnapshotsOnly,
-        props.hideDeletedSnapshots,
-        props.selectedSnapshot?.snapshotMetadata.ownerId,
-    ]);
+    }, [props.lastVisitedAtFilter, props.titleFilter, props.showMySnapshotsOnly, props.hideDeletedSnapshots, userId]);
 
     const querySortingParams = React.useMemo<Options<GetSnapshotAccessLogsData_api>["query"]>(() => {
         const { columnKey, direction } = tableSortState ?? {};
@@ -336,6 +334,15 @@ function SnapshotTable(props: SnapshotTableProps) {
         [snapshotsQuery, tableData.length, visibleRowRange],
     );
 
+    React.useEffect(
+        function maybeDeselectRemovedEntry() {
+            if (props.selectedSnapshot && !tableData.some((s) => props.selectedSnapshot?.snapshotId === s.snapshotId)) {
+                onSelectedSnapshotChange(null);
+            }
+        },
+        [onSelectedSnapshotChange, props.selectedSnapshot, tableData],
+    );
+
     return (
         <Table.Root
             layoutClassName="h-full"
@@ -348,7 +355,7 @@ function SnapshotTable(props: SnapshotTableProps) {
             rowSelection={props.selectedSnapshot?.snapshotId ?? null}
             onChangeColumnSort={setTableSortState}
             onChangeRowSelection={(snapshotId) =>
-                props.onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
+                onSelectedSnapshotChange(tableData.find((s) => s.snapshotId === snapshotId) ?? null)
             }
         >
             <Table.Head sticky>
@@ -406,7 +413,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
     const { item } = props;
     const ownerInfo = useUserGraphInfo(item.snapshotMetadata.ownerId);
     const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
-    const avatarFn = useUserAvatar(name ?? "", ownerInfo?.display_name);
+    const avatarFn = useUserAvatar(ownerInfo?.id ?? "", ownerInfo?.display_name);
     const url = buildSnapshotUrl(item.snapshotId);
 
     const isDeleted = item.snapshotDeleted;
@@ -414,27 +421,33 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
     return (
         <Table.Row
             rowKey={item.snapshotMetadata.id}
-            layoutClassName="data-deleted:opacity-60 data-deleted:*:line-through"
+            layoutClassName="group/snapshot-row"
             data-deleted={isDeleted ? "" : undefined}
         >
-            <Table.Cell layoutClassName="text-center!">{item.visits}</Table.Cell>
+            <Table.Cell layoutClassName="text-center! group-data-deleted/snapshot-row:line-through">
+                {item.visits}
+            </Table.Cell>
             <Table.Cell title={item.snapshotMetadata.title}>
                 <div className="gap-x-4xs flex items-center justify-between">
-                    <span className="truncate overflow-hidden">{item.snapshotMetadata.title}</span>
+                    <span className="truncate overflow-hidden group-data-deleted/snapshot-row:line-through">
+                        {item.snapshotMetadata.title}
+                    </span>
                     {isDeleted && (
                         <strong
                             title="This snapshot has been deleted by the snapshot owner"
-                            className="text-danger-subtle decoration-transparent! decoration-0"
+                            className="text-danger-subtle group-data-selected/snapshot-row:text-danger-strong-on-emphasis"
                         >
                             (Deleted)
                         </strong>
                     )}
                 </div>
             </Table.Cell>
-            <Table.Cell>
-                {item.snapshotMetadata.description || <span className="text-current/50 italic">N/A</span>}
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:*:line-through">
+                {item.snapshotMetadata.description || (
+                    <span className="italic group-not-data-selected/snapshot-row:text-current/50">N/A</span>
+                )}
             </Table.Cell>
-            <Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
                 <CopyCellValue onCopyRequested={() => url}>
                     <div className="group relative flex h-full min-w-0 items-center" title={url}>
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
@@ -444,10 +457,10 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
             <Table.Cell noPadding>
                 <div className="px-sm gap-x-xs flex items-center">
                     <Avatar userData={avatarFn} size={24} />
-                    {name}
+                    <span className="group-data-deleted/snapshot-row:line-through">{name}</span>
                 </div>
             </Table.Cell>
-            <Table.Cell>
+            <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
                 {item.lastVisitedAt ? (
                     formatDate(new Date(item.lastVisitedAt))
                 ) : (

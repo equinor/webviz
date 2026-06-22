@@ -24,6 +24,7 @@ function LinkButtonComponent(props: LinkButtonProps, ref: React.ForwardedRef<HTM
             {...baseProps}
             {...getDataAttributesForSelectableSize(size, true)}
             className={resolveClassNames(baseProps.className, resolveButtonClassNames(size, props))}
+            tabIndex={props.disabled ? -1 : undefined}
             style={{
                 minHeight: "calc(var(--eds-selectable-space-vertical) * 2 + round(1cap , 4px))",
                 ...baseProps.style,

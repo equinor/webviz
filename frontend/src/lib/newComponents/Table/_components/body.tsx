@@ -5,7 +5,6 @@ import { getNextTextSize, getTextSizeForSelectableSize } from "@lib/newComponent
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 
-// import { Table } from "..";
 import { useTableColumnContext } from "../_contexts/tableColumnContext";
 import { useTableRootContext } from "../_contexts/tableRootContext";
 import { TableSectionContext } from "../_contexts/tableSectionContext";
@@ -22,7 +21,7 @@ export function BodyComponent(
     props: TableBodyProps,
     ref: React.ForwardedRef<HTMLTableSectionElement>,
 ): React.ReactNode {
-    const baseProps = resolveWrapperProps(props);
+    const baseProps = resolveWrapperProps(props, "emptyMessage");
     const rootContext = useTableRootContext();
 
     return (

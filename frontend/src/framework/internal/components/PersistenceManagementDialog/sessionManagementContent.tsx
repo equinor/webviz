@@ -307,11 +307,11 @@ function SessionTable(props: SessionTableProps) {
                     items={tableDataWithPendingRows}
                     itemSize={ROW_HEIGHT_PX["small"]}
                     direction="vertical"
-                    renderItem={(item, idx) => {
+                    renderItem={(item: SessionMetadata_api | typeof PENDING_ROW, idx) => {
                         if (item === PENDING_ROW) {
                             return <TableCompositions.PendingRow key={`pending-row--${idx}`} />;
                         } else {
-                            return <SessionRow item={item} />;
+                            return <SessionRow key={item.id} item={item} />;
                         }
                     }}
                     onScroll={onTableScrollIndexChange}
