@@ -413,7 +413,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
     const { item } = props;
     const ownerInfo = useUserGraphInfo(item.snapshotMetadata.ownerId);
     const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
-    const avatarFn = useUserAvatar(name ?? "", ownerInfo?.display_name);
+    const avatarFn = useUserAvatar(ownerInfo?.id ?? "", ownerInfo?.display_name);
     const url = buildSnapshotUrl(item.snapshotId);
 
     const isDeleted = item.snapshotDeleted;

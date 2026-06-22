@@ -80,7 +80,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
 
 function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
-    const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
+    const avatarFn = useUserAvatar(props.owner?.id ?? "", props.owner?.display_name);
 
     return (
         <div className="mx-sm gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic no-underline!">
