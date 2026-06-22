@@ -51,8 +51,10 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
             <Button.AsLink
                 variant="ghost"
                 size="small"
-                layoutClassName="flex-1 min-w-0 no-underline! "
+                data-is-deleted={props.isDeleted ? "" : undefined}
+                layoutClassName="flex-1 min-w-0 data-is-deleted:line-through"
                 compact
+                disabled={props.isDeleted}
                 href={props.href}
                 onClick={handleClick}
             >
@@ -102,11 +104,11 @@ function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
 function PopoverContent(
     props: { owner: GraphUser_api | null; tooltipInfo?: Record<string, string> } & ItemCardProps,
 ): React.ReactNode {
-    if (props.isDeleted) {
-        return "This item has been deleted.";
-    }
     return (
         <>
+            {props.isDeleted && (
+                <p className="text-danger-subtle italic">This snapshot has been deleted by the owner.</p>
+            )}
             {props.description && <p className="text-body-sm whitespace-pre-wrap">{props.description}</p>}
             {props.tooltipInfo && (
                 <ul className="not-first:mt-sm text-body-sm truncate">
