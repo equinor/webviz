@@ -5,9 +5,6 @@ This file is only used for setting up the local database for development and tes
 import logging
 import time
 from typing import List, Dict, Any
-import ssl
-import urllib.request
-from urllib.error import URLError
 
 from azure.cosmos import CosmosClient, PartitionKey, DatabaseProxy
 
@@ -27,29 +24,6 @@ COSMOS_SCHEMA: List[Dict[str, Any]] = [
 ]
 
 
-def wait_for_emulator(uri: str, key: str, retries: int = 50, delay: int = 10) -> CosmosClient:
-    probe_url = f"{uri.rstrip('/')}/_explorer/emulator.pem"
-    # pylint: disable=protected-access
-    # Disabling SSL certificate verification is safe here because this code is used exclusively
-    # with the local Cosmos DB Emulator for development and testing. Never use this in production.
-    context = ssl._create_unverified_context()  # nosec
-
-    for attempt in range(retries):
-        try:
-            with urllib.request.urlopen(probe_url, context=context) as response:  # nosec
-                if response.status == 200:
-                    LOGGER.info("✅ Emulator HTTPS endpoint is up. Proceeding to create CosmosClient.")
-                    break
-        except URLError as e:
-            LOGGER.warning("⏳ Emulator cert endpoint not ready (attempt %d): %s", attempt + 1, e.reason)
-        time.sleep(delay)
-    else:
-        raise RuntimeError("❌ Cosmos Emulator certificate endpoint not ready after timeout")
-
-    # Now that we know HTTPS works, create the CosmosClient
-    return CosmosClient(uri, key, connection_verify=False)
-
-
 def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max_attempts: int = 5) -> DatabaseProxy:
     db_name: str = db_def["database"]
     for attempt in range(1, max_attempts + 1):
@@ -66,7 +40,9 @@ def create_database_with_retry(client: CosmosClient, db_def: Dict[str, Any], max
 
 
 def maybe_setup_local_database(uri: str, key: str) -> None:
-    client: CosmosClient = wait_for_emulator(uri, key)
+    # Disable endpoint discovery: the emulator advertises its location as 127.0.0.1, which the SDK
+    # would otherwise route to instead of the provided container-network URI (e.g. cosmos-db-emulator).
+    client: CosmosClient = CosmosClient(uri, key, enable_endpoint_discovery=False)
 
     total_containers = 0
 
