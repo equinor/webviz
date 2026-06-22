@@ -14,6 +14,9 @@ export type PopupProps = {
     side?: PopoverPositionerBaseProps["side"];
     /** When true, the popover repositions to stay in view while scrolling. */
     sticky?: PopoverPositionerBaseProps["sticky"];
+
+    /** The element to position the popover against. By default, it will be positioned against the trigger */
+    anchor?: PopoverPositionerBaseProps["anchor"];
 };
 
 const DEFAULT_PROPS = {
@@ -35,6 +38,7 @@ export function Popup(props: PopupProps): React.ReactNode {
                 align={defaultedProps.align}
                 side={defaultedProps.side}
                 sticky={defaultedProps.sticky}
+                anchor={defaultedProps.anchor}
             >
                 <PopoverBase.Popup className="bg-floating border-neutral relative rounded-sm border shadow-md transition-opacity">
                     <PopoverBase.Arrow className="floating__arrow border-neutral border border-r-0 border-b-0" />
