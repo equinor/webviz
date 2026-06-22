@@ -1,7 +1,8 @@
 import React from "react";
 
 import { Combobox as ComboboxBase } from "@base-ui/react";
-import { Clear } from "@mui/icons-material";
+
+import { Chip } from "../../../Chip";
 
 import { ComboboxInput } from "./_input";
 
@@ -17,7 +18,7 @@ export function ComboboxValueChipsInputComponent<TValue>(
     ref: React.ForwardedRef<HTMLInputElement>,
 ): React.ReactNode {
     return (
-        <ComboboxBase.Chips className="gap-x-3xs gap-y-3xs flex w-full grow flex-wrap items-center">
+        <ComboboxBase.Chips className="gap-x-3xs gap-y-3xs flex min-w-0 grow flex-wrap items-center">
             <ComboboxBase.Value>
                 {(value) => (
                     <>
@@ -29,21 +30,18 @@ export function ComboboxValueChipsInputComponent<TValue>(
                                     <ComboboxBase.Chip
                                         key={key}
                                         aria-label={label}
-                                        className="gap-x-3xs bg-neutral text-neutral-strong data-highlighted:bg-accent-hover data-highlighted:outline-focus not-data-highlighted:hover:outline-accent focus-within:bg-accent-hover flex items-center overflow-hidden rounded outline-2 outline-offset-1 outline-transparent"
-                                    >
-                                        {props.renderItemAdornment && (
-                                            <div className="pl-xs flex shrink-0 items-center">
-                                                {props.renderItemAdornment(item)}
-                                            </div>
+                                        render={(htmlProps, chipState) => (
+                                            <Chip
+                                                {...htmlProps}
+                                                tone="neutral"
+                                                disabled={chipState.disabled}
+                                                startAdornment={props.renderItemAdornment?.(item)}
+                                                wrapRemoveButton={(btn) => <ComboboxBase.ChipRemove render={btn} />}
+                                            >
+                                                <span className="line-clamp-2 min-w-0 flex-1">{label}</span>
+                                            </Chip>
                                         )}
-                                        <span className="px-3xs py-3xs flex min-w-0 items-center">{label}</span>
-                                        <ComboboxBase.ChipRemove
-                                            aria-label={`Remove ${label}`}
-                                            className="selectable text-body-xs py-0"
-                                        >
-                                            <Clear />
-                                        </ComboboxBase.ChipRemove>
-                                    </ComboboxBase.Chip>
+                                    />
                                 );
                             })}
                         <ComboboxInput ref={ref} placeholder={value.length > 0 ? "" : props.placeholder} />
