@@ -1,342 +1,20 @@
 import React from "react";
 
-import type { BaseUIEvent } from "@base-ui/react";
-import { Close, CloudOff, Help, HistoryToggleOff, Science, WebAsset } from "@mui/icons-material";
+import { WebAsset } from "@mui/icons-material";
 
-import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { GuiEvent, GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
-import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
-import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import type { DrawPreviewFunc } from "@framework/Preview";
 import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { Button } from "@lib/newComponents/Button";
 import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
-import type { Size2D } from "@lib/utils/geometry";
-import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { Vec2 } from "@lib/utils/vec2";
-import { point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
-const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vec2): React.CSSProperties => {
-    if (isDragged) {
-        return {
-            width: dragSize.width,
-            height: dragSize.height,
-            left: dragPosition.x,
-            top: dragPosition.y,
-            zIndex: 50,
-            opacity: 0.5,
-            position: "absolute",
-        };
-    }
-    return {
-        zIndex: 0,
-        opacity: 1,
-    };
-};
-
-type ModulesListItemProps = {
-    name: string;
-    devState: ModuleDevState;
-    displayName: string;
-    description: string | null;
-    isSerializable: boolean;
-    drawPreviewFunc: DrawPreviewFunc | null;
-    guiMessageBroker: GuiMessageBroker;
-    onShowDetails: (moduleName: string, yPos: number) => void;
-    onHover: (moduleName: string, yPos: number) => void;
-    onDraggingStart: () => void;
-};
-
-const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
-    const { onDraggingStart } = props;
-    const ref = React.useRef<HTMLDivElement>(null);
-    const [isDragged, setIsDragged] = React.useState<boolean>(false);
-    const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
-    const [dragSize, setDragSize] = React.useState<Size2D>({ width: 0, height: 0 });
-
-    React.useEffect(
-        function pointerEventsEffect() {
-            const refCurrent = ref.current;
-            let pointerDownPoint: Vec2 | null = null;
-            let dragging = false;
-            let pointerDownElementPosition: Vec2 | null = null;
-            let pointerToElementDiff: Vec2 = { x: 0, y: 0 };
-
-            const handlePointerDown = (e: PointerEvent) => {
-                if (ref.current) {
-                    document.body.classList.add("touch-none");
-                    const point = vec2FromPointerEvent(e);
-                    const rect = ref.current.getBoundingClientRect();
-                    pointerDownElementPosition = subtractVec2(point, pointRelativeToDomRect(point, rect));
-                    props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
-                        moduleName: props.name,
-                        elementPosition: subtractVec2(point, pointRelativeToDomRect(point, rect)),
-                        elementSize: { width: rect.width, height: rect.height },
-                        pointerPosition: point,
-                    });
-                    pointerDownPoint = point;
-                    addDraggingEventListeners();
-                }
-            };
-
-            const handlePointerUp = () => {
-                if (!pointerDownPoint) {
-                    return;
-                }
-                pointerDownPoint = null;
-                dragging = false;
-                setIsDragged(false);
-                document.body.classList.remove("touch-none");
-                pointerDownElementPosition = null;
-
-                removeDraggingEventListeners();
-            };
-
-            const handlePointerMove = (e: PointerEvent) => {
-                if (!pointerDownPoint) {
-                    return;
-                }
-
-                if (
-                    !dragging &&
-                    point2Distance(vec2FromPointerEvent(e), pointerDownPoint) > MANHATTAN_LENGTH &&
-                    pointerDownElementPosition
-                ) {
-                    dragging = true;
-                    setIsDragged(true);
-                    onDraggingStart();
-                    if (ref.current) {
-                        const rect = ref.current.getBoundingClientRect();
-                        setDragSize({ width: rect.width, height: rect.height });
-                    }
-                    pointerToElementDiff = subtractVec2(pointerDownPoint, pointerDownElementPosition);
-                    return;
-                }
-
-                if (dragging) {
-                    setDragPosition(subtractVec2(vec2FromPointerEvent(e), pointerToElementDiff));
-                }
-            };
-
-            function addDraggingEventListeners() {
-                document.addEventListener("pointerup", handlePointerUp);
-                document.addEventListener("pointermove", handlePointerMove);
-                document.addEventListener("pointercancel", handlePointerUp);
-                document.addEventListener("blur-sm", handlePointerUp);
-            }
-
-            function removeDraggingEventListeners() {
-                document.removeEventListener("pointerup", handlePointerUp);
-                document.removeEventListener("pointermove", handlePointerMove);
-                document.removeEventListener("pointercancel", handlePointerUp);
-                document.removeEventListener("blur-sm", handlePointerUp);
-            }
-
-            if (ref.current) {
-                ref.current.addEventListener("pointerdown", handlePointerDown);
-            }
-
-            return () => {
-                if (refCurrent) {
-                    refCurrent.removeEventListener("pointerdown", handlePointerDown);
-                }
-                removeDraggingEventListeners();
-            };
-        },
-        [props.guiMessageBroker, props.name, onDraggingStart],
-    );
-
-    function handleShowDetails(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
-        e.stopPropagation();
-        const target = e.currentTarget.parentElement;
-        if (!(target instanceof HTMLElement)) {
-            return;
-        }
-        props.onShowDetails(props.name, target.getBoundingClientRect().top);
-    }
-
-    function handleHover(e: React.MouseEvent<HTMLDivElement>) {
-        e.stopPropagation();
-        const target = e.currentTarget;
-        if (!(target instanceof HTMLElement)) {
-            return;
-        }
-        props.onHover(props.name, target.getBoundingClientRect().top);
-    }
-
-    function makeItem() {
-        return (
-            <div
-                ref={isDragged ? undefined : ref}
-                className={resolveClassNames(
-                    "hover:bg-accent text-body-md flex h-12 w-full touch-none flex-col select-none",
-                    {
-                        "cursor-grab": !isDragged,
-                        "cursor-grabbing": isDragged,
-                    },
-                )}
-                style={makeStyle(isDragged, dragSize, dragPosition)}
-                onMouseOver={handleHover}
-            >
-                <div className="px-xs gap-x-xs text-body-sm flex h-full items-center" title={props.displayName}>
-                    <div className="border-neutral-subtle bg-canvas h-10 w-10 min-w-10 shrink-0 overflow-hidden border">
-                        {makePreviewImage(40, props.drawPreviewFunc)}
-                    </div>
-                    <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
-                    <span
-                        className={resolveClassNames({
-                            "text-warning-subtle": props.devState === ModuleDevState.DEV,
-                            "text-danger-subtle": props.devState === ModuleDevState.DEPRECATED,
-                        })}
-                    >
-                        {makeDevStateIcon(props.devState)}
-                    </span>
-                    <span className="text-neutral-subtle">{makePersistenceIcon(props.isSerializable)}</span>
-                    <Tooltip content="Show details">
-                        <Button variant="ghost" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
-                            <Help style={{ fontSize: 16 }} />
-                        </Button>
-                    </Tooltip>
-                </div>
-            </div>
-        );
-    }
-
-    if (isDragged) {
-        return (
-            <>
-                <div ref={ref} className="bg-accent-canvas h-12 w-full" />
-                {createPortal(makeItem())}
-            </>
-        );
-    }
-    return makeItem();
-};
-
-function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
-    if (devState === ModuleDevState.DEPRECATED) {
-        return (
-            <span title="Deprecated" className="inline-block align-middle">
-                <HistoryToggleOff style={{ fontSize: 16 }} />
-            </span>
-        );
-    }
-    if (devState === ModuleDevState.DEV) {
-        return (
-            <span title="Experimental" className="inline-block align-middle">
-                <Science style={{ fontSize: 16 }} />
-            </span>
-        );
-    }
-
-    return null;
-}
-
-function makePersistenceIcon(isSerializable: boolean): React.ReactNode {
-    if (!isSerializable) {
-        return (
-            <span title="Module settings won't be saved" className="inline-block align-middle">
-                <CloudOff style={{ fontSize: 16 }} />
-            </span>
-        );
-    }
-    return null;
-}
-
-type DetailsPopupProps = {
-    module: Module<any, any>;
-    right: number;
-    top: number;
-    onClose: () => void;
-};
-
-function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
-    function makeDevState(devState: ModuleDevState): React.ReactNode {
-        if (devState === ModuleDevState.DEPRECATED) {
-            return (
-                <div className="text-warning-subtle gap-x-xs text-body-xs flex items-center">
-                    {makeDevStateIcon(devState)}
-                    <span className="mt-[0.2rem]">Deprecated</span>
-                </div>
-            );
-        }
-        if (devState === ModuleDevState.DEV) {
-            return (
-                <div className="text-danger-subtle gap-x-xs text-body-xs flex items-center">
-                    {makeDevStateIcon(devState)}
-                    <span className="mt-[0.2rem]">Experimental</span>
-                </div>
-            );
-        }
-    }
-
-    function makePersistenceState(isSerializable: boolean): React.ReactNode {
-        if (isSerializable) {
-            return null;
-        }
-        return (
-            <div className="text-disabled gap-x-xs text-body-xs flex items-center">
-                {makePersistenceIcon(isSerializable)}
-                <span className="mt-[0.2rem]">Module settings won&apos;t be saved</span>
-            </div>
-        );
-    }
-    function makeDataTags(): React.ReactNode[] {
-        const tags: React.ReactNode[] = [];
-        for (const tag of props.module.getDataTagIds()) {
-            const tagObj = ModuleDataTags.find((el) => el.id === tag);
-            if (tagObj) {
-                tags.push(
-                    <div key={tag} className="text-accent-subtle font-bolder">
-                        #{tagObj.name}
-                    </div>,
-                );
-            }
-        }
-
-        return tags;
-    }
-
-    const style: React.CSSProperties = { right: props.right };
-    if (props.top > window.innerHeight / 2) {
-        style.bottom = window.innerHeight - props.top - convertRemToPixels(3);
-    } else {
-        style.top = props.top;
-    }
-
-    return (
-        <div
-            className="z-tooltip border-neutral-subtle bg-floating p-sm text-body-md gap-x-sm absolute flex w-96 items-center border shadow-lg"
-            style={style}
-        >
-            <div className="min-w-20">{makePreviewImage(80, props.module.getDrawPreviewFunc())}</div>
-            <div className="gap-y-2xs flex grow flex-col">
-                <div className="flex items-start">
-                    <span className="font-bolder grow">{props.module.getDefaultTitle()}</span>
-                    <Button variant="ghost" tone="neutral" size="small" onClick={props.onClose} iconOnly>
-                        <Close fontSize="inherit" />
-                    </Button>
-                </div>
-                <div className="flex flex-col">
-                    {makeDevState(props.module.getDevState())}
-                    {makePersistenceState(props.module.canBeSerialized())}
-                </div>
-                <div className="text-body-sm">{props.module.getDescription()}</div>
-                <div className="text-bolder gap-x-2xs text-body-xs flex flex-wrap">{makeDataTags()}</div>
-            </div>
-        </div>
-    );
-}
+import { ModuleDetailsPopover } from "./moduleDetailsPopover";
+import { DevStateIcon } from "./moduleIcons";
+import { ModulesListItem } from "./moduleListItem";
 
 export type ModulesListProps = {
     workbench: Workbench;
@@ -365,42 +43,26 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
 
     const ref = React.useRef<HTMLDivElement>(null);
-    const boundingClientRect = useElementBoundingRect(ref);
 
     const [searchQuery, setSearchQuery] = React.useState("");
     const [optionalDevStates, setOptionalDevStates] =
         React.useState<OptionalModuleDevState[]>(INITIAL_OPTIONAL_DEV_STATES);
-    const [showDetailsForModule, setShowDetailsForModule] = React.useState<string | null>(null);
-    const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
+    const [detailsOpen, setDetailsOpen] = React.useState<boolean>(false);
+    const [lastHoveredModule, setLastHoveredModule] = React.useState<string | null>(null);
+    const [detailsPopoverAnchor, setDetailsPopoverAnchor] = React.useState<HTMLElement>();
 
     function handleSearchQueryChange(e: React.ChangeEvent<HTMLInputElement>) {
         setSearchQuery(e.target.value);
-        handleHideDetails();
+        setDetailsOpen(false);
+        setLastHoveredModule(null);
     }
 
-    function handleShowDetails(moduleName: string, yPos: number) {
-        if (showDetailsForModule) {
-            setShowDetailsForModule(null);
-            return;
-        }
-        setShowDetailsForModule(moduleName);
-        setDetailsPosY(yPos);
-    }
-
-    function handleHideDetails() {
-        setShowDetailsForModule(null);
-    }
-
-    function handleChangeDetails(moduleName: string, yPos: number) {
-        if (!showDetailsForModule) {
-            return;
-        }
-        setShowDetailsForModule(moduleName);
-        setDetailsPosY(yPos);
+    function handleShowDetails() {
+        setDetailsOpen(true);
     }
 
     const handleDraggingStart = React.useCallback(function handleDraggingStart() {
-        setShowDetailsForModule(null);
+        setDetailsOpen(false);
     }, []);
 
     function handleClose() {
@@ -414,15 +76,15 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()));
     const showDebugModules = isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG);
 
-    let right = 0;
-    if (boundingClientRect) {
-        right = window.innerWidth - boundingClientRect.left + 10;
-    }
-
     const isVisible = drawerContent === RightDrawerContent.ModulesList;
     const visibleModuleCategories = MODULE_CATEGORIES.filter(
         (el) => el.category !== ModuleCategory.DEBUG || showDebugModules,
     );
+
+    function handleItemHover(moduleName: string, ref: React.RefObject<HTMLDivElement>) {
+        setLastHoveredModule(moduleName);
+        setDetailsPopoverAnchor(ref.current ?? undefined);
+    }
 
     return (
         <div ref={ref} className={resolveClassNames("relative h-full w-full", { hidden: !isVisible })}>
@@ -437,23 +99,15 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                 filterItems={[
                     {
                         value: ModuleDevState.DEPRECATED,
-                        label: <span className="mt-[0.2rem]">Show deprecated</span>,
+                        label: "Show deprecated",
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEPRECATED),
-                        icon: (
-                            <span className="text-warning-subtle inline-block align-middle">
-                                {makeDevStateIcon(ModuleDevState.DEPRECATED)}
-                            </span>
-                        ),
+                        icon: <DevStateIcon devState={ModuleDevState.DEPRECATED} />,
                     },
                     {
                         value: ModuleDevState.DEV,
-                        label: <span className="mt-[0.2rem]">Show experimental</span>,
+                        label: "Show experimental",
                         initiallySelected: optionalDevStates.includes(ModuleDevState.DEV),
-                        icon: (
-                            <span className="text-danger-subtle inline-block align-middle">
-                                {makeDevStateIcon(ModuleDevState.DEV)}
-                            </span>
-                        ),
+                        icon: <DevStateIcon devState={ModuleDevState.DEV} />,
                     },
                 ]}
                 onFilterItemSelectionChange={setOptionalDevStates}
@@ -473,36 +127,22 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                                         description={mod.getDescription()}
                                         drawPreviewFunc={mod.getDrawPreviewFunc()}
                                         guiMessageBroker={props.workbench.getGuiMessageBroker()}
-                                        onShowDetails={handleShowDetails}
-                                        onHover={handleChangeDetails}
                                         onDraggingStart={handleDraggingStart}
+                                        onShowDetails={handleShowDetails}
+                                        onHover={handleItemHover}
                                     />
                                 ))}
                         </Collapsible.Group>
                     ))}
                 </Collapsible.ScrollArea>
             </Drawer>
-            {showDetailsForModule &&
-                isVisible &&
-                createPortal(
-                    <DetailsPopup
-                        module={ModuleRegistry.getModule(showDetailsForModule)}
-                        onClose={handleHideDetails}
-                        right={right}
-                        top={detailsPosY}
-                    />,
-                )}
+
+            <ModuleDetailsPopover
+                open={detailsOpen && !!lastHoveredModule}
+                anchor={detailsPopoverAnchor}
+                module={lastHoveredModule ? ModuleRegistry.getModule(lastHoveredModule) : null}
+                onOpenChange={setDetailsOpen}
+            />
         </div>
     );
 };
-
-function makePreviewImage(size: number, drawPreviewFunc: DrawPreviewFunc | null): React.ReactNode {
-    if (drawPreviewFunc) {
-        return (
-            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-                {drawPreviewFunc(size, size)}
-            </svg>
-        );
-    }
-    return <div className="border-neutral-subtle bg-neutral flex h-full w-full items-center justify-center border" />;
-}
