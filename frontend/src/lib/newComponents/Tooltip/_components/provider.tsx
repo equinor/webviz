@@ -1,10 +1,20 @@
-import type React from "react";
+import React from "react";
 
-import type { TooltipProviderProps as TooltipProviderBaseProps } from "@base-ui/react";
+import type { TooltipPositionerProps, TooltipProviderProps as TooltipProviderBaseProps } from "@base-ui/react";
 import { Tooltip as TooltipBase } from "@base-ui/react";
 
-export type ProviderProps = TooltipProviderBaseProps;
+type PositionProps = Pick<TooltipPositionerProps, "side" | "align">;
+
+export type ProviderProps = TooltipProviderBaseProps & PositionProps;
+
+export const TooltipProviderContext = React.createContext<null | PositionProps>(null);
 
 export function Provider(props: ProviderProps): React.ReactNode {
-    return <TooltipBase.Provider {...props} />;
+    const { side, align, ...otherProps } = props;
+
+    return (
+        <TooltipBase.Provider {...otherProps}>
+            <TooltipProviderContext.Provider value={{ side, align }}>{props.children}</TooltipProviderContext.Provider>
+        </TooltipBase.Provider>
+    );
 }

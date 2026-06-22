@@ -6,6 +6,8 @@ import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
 import { PortalContainerContext } from "@lib/newComponents/_shared/contexts/portalContainerContext";
 import { Paragraph } from "@lib/newComponents/Typography/compositions";
 
+import { TooltipProviderContext } from "./provider";
+
 export type PopupProps = {
     /** Side of the trigger element where the tooltip appears. */
     side?: TooltipPositionerBaseProps["side"];
@@ -17,10 +19,16 @@ export type PopupProps = {
 
 export const Popup = React.forwardRef<HTMLDivElement, PopupProps>(function PopupComp(props, ref) {
     const portalContainer = React.useContext(PortalContainerContext);
+    const providerContext = React.useContext(TooltipProviderContext);
 
     return (
         <TooltipBase.Portal container={portalContainer}>
-            <TooltipBase.Positioner side={props.side} align={props.align} sideOffset={8} className="z-tooltip">
+            <TooltipBase.Positioner
+                className="z-tooltip"
+                side={props.side ?? providerContext?.side}
+                align={props.align ?? providerContext?.align}
+                sideOffset={8}
+            >
                 <TooltipBase.Popup
                     ref={ref}
                     className="bg-floating-inverted px-sm py-xs text-neutral-strong-on-emphasis! relative rounded"
