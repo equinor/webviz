@@ -3,7 +3,7 @@ import React from "react";
 import { Help } from "@mui/icons-material";
 
 import { GuiEvent, type GuiMessageBroker } from "@framework/GuiMessageBroker";
-import { ModuleDevState } from "@framework/Module";
+import type { ModuleDevState } from "@framework/Module";
 import type { DrawPreviewFunc } from "@framework/Preview";
 import { Button } from "@lib/newComponents/Button";
 import { createPortal } from "@lib/utils/createPortal";
@@ -154,17 +154,9 @@ export function ModulesListItem(props: ModulesListItemProps): React.ReactNode {
                         <PreviewImage size={40} drawPreviewFunc={props.drawPreviewFunc} />
                     </div>
                     <span className="grow overflow-hidden text-ellipsis whitespace-nowrap">{props.displayName}</span>
-                    <span
-                        className={resolveClassNames({
-                            "text-warning-subtle": props.devState === ModuleDevState.DEV,
-                            "text-danger-subtle": props.devState === ModuleDevState.DEPRECATED,
-                        })}
-                    >
-                        <DevStateIcon devState={props.devState} />
-                    </span>
-                    <span className="text-neutral-subtle">
-                        <PersistenceIcon isSerializable={props.isSerializable} />
-                    </span>
+
+                    <DevStateIcon devState={props.devState} />
+                    <PersistenceIcon isSerializable={props.isSerializable} />
 
                     <Button variant="ghost" tone="accent" size="small" iconOnly onClick={handleShowDetails}>
                         <Help style={{ fontSize: ICON_SIZE_PX }} />

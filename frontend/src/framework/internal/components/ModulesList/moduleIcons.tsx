@@ -7,16 +7,17 @@ export const ICON_SIZE_PX = 16;
 export function DevStateIcon(props: { devState: ModuleDevState }): React.ReactNode {
     if (props.devState === ModuleDevState.DEPRECATED) {
         return (
-            <span title="Deprecated" className="inline-block align-middle">
-                <HistoryToggleOff style={{ fontSize: ICON_SIZE_PX }} />
-            </span>
+            <HistoryToggleOff
+                className="text-danger-subtle"
+                titleAccess="Deprecated"
+                style={{ fontSize: ICON_SIZE_PX }}
+            />
         );
     }
+
     if (props.devState === ModuleDevState.DEV) {
         return (
-            <span title="Experimental" className="inline-block align-middle">
-                <Science style={{ fontSize: ICON_SIZE_PX }} />
-            </span>
+            <Science className="text-warning-subtle" titleAccess="Experimental" style={{ fontSize: ICON_SIZE_PX }} />
         );
     }
 
@@ -26,9 +27,11 @@ export function DevStateIcon(props: { devState: ModuleDevState }): React.ReactNo
 export function PersistenceIcon(props: { isSerializable: boolean }): React.ReactNode {
     if (!props.isSerializable) {
         return (
-            <span title="Module settings won't be saved" className="inline-block align-middle">
-                <CloudOff style={{ fontSize: ICON_SIZE_PX }} />
-            </span>
+            <CloudOff
+                className="text-neutral-subtle"
+                titleAccess="Module settings won't be saved"
+                style={{ fontSize: ICON_SIZE_PX }}
+            />
         );
     }
     return null;

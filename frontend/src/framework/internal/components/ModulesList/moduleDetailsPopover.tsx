@@ -54,7 +54,7 @@ function DevState(props: { module: Module<any, any> }) {
         return (
             <div className="text-warning-subtle gap-4xs text-body-xs flex items-center">
                 <DevStateIcon devState={devState} />
-                <span className="mt-[0.2rem]">Deprecated</span>
+                Deprecated
             </div>
         );
     }
@@ -62,7 +62,7 @@ function DevState(props: { module: Module<any, any> }) {
         return (
             <div className="text-danger-subtle gap-4xs text-body-xs flex items-center">
                 <DevStateIcon devState={devState} />
-                <span className="mt-[0.2rem]">Experimental</span>
+                Experimental
             </div>
         );
     }
@@ -74,7 +74,7 @@ function PersistenceState(props: { module: Module<any, any> }): React.ReactNode 
     return (
         <div className="text-disabled gap-x-4xs text-body-xs flex items-center">
             <PersistenceIcon isSerializable={false} />
-            <span className="mt-[0.2rem]">Module settings won&apos;t be saved</span>
+            Module settings won&apos;t be saved
         </div>
     );
 }
