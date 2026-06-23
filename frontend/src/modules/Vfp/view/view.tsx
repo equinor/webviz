@@ -1,8 +1,8 @@
 import React from "react";
 
 import type { ModuleViewProps } from "@framework/Module";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import {
     ContentError,
     ContentMessage,
@@ -41,7 +41,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     }
 
     return (
-        <div ref={wrapperDivRef} className="w-full h-full">
+        <div ref={wrapperDivRef} className="h-full w-full">
             {content}
         </div>
     );
