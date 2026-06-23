@@ -25,6 +25,8 @@ export function makePlannedWellTrajectoriesLayer({
     const wellLayerDataFeatures = plannedWellboreTrajectoriesData.map((well) => {
         const feature = wellTrajectoryToGeojson(well);
         feature.properties.color = PLANNED_WELL_COLOR;
+        // Suffix the name so the hover readout/label makes clear this is a planned (not drilled) well.
+        feature.properties.name = `${feature.properties.name} (planned)`;
         return feature;
     });
 

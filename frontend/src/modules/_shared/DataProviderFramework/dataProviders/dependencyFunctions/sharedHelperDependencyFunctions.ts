@@ -87,6 +87,12 @@ export async function createIntersectionPolylineWithSectionLengthsForField(
         throw new Error("Field identifier is not set");
     }
 
+    // Exhaustiveness guard: if a new IntersectionType is added, this will fail to compile.
+    if (intersection.type !== IntersectionType.WELLBORE && intersection.type !== IntersectionType.PLANNED_WELLBORE) {
+        const exhaustiveCheck: never = intersection.type;
+        throw new Error(`Unsupported intersection type: ${exhaustiveCheck}`);
+    }
+
     const intersectionSpecification: WellboreIntersectionSpecification = {
         type: IntersectionType.WELLBORE,
         wellboreUuid: intersection.uuid,

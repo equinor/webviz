@@ -272,7 +272,8 @@ class SmdaAccess:
         )
 
         if not planned_survey_header_results:
-            raise NoDataError(f"No planned wellbore headers found for {field_identifier=}.", Service.SMDA)
+            # Planned wellbores are optional, so an empty result is not an error.
+            return []
 
         # The plan-survey-headers endpoint does not expose wellbore_purpose or parent_wellbore, so these
         # required WellboreHeader fields are set to None for planned wellbores.
@@ -307,6 +308,7 @@ class SmdaAccess:
             field_identifier=field_identifier,
             wellbore_uuids=wellbore_uuids,
             no_data_message=f"No planned wellbore surveys found for {field_identifier=}, {wellbore_uuids=}.",
+            raise_on_empty=False,
         )
 
     async def _get_wellbore_trajectories_async(
@@ -315,6 +317,7 @@ class SmdaAccess:
         field_identifier: str,
         wellbore_uuids: Optional[List[str]] = None,
         no_data_message: str | None = None,
+        raise_on_empty: bool = True,
     ) -> List[WellboreTrajectory]:
         params = {
             "_projection": "wellbore_uuid, unique_wellbore_identifier,easting,northing,tvd_msl,md",
@@ -327,7 +330,9 @@ class SmdaAccess:
         result = await self._smda_get_request_async(endpoint=endpoint, params=params)
 
         if not result:
-            raise NoDataError(no_data_message or "No wellbore surveys found.", Service.SMDA)
+            if raise_on_empty:
+                raise NoDataError(no_data_message or "No wellbore surveys found.", Service.SMDA)
+            return []
 
         # Convert the result to polars for processing
         resultdf = pl.DataFrame(result)

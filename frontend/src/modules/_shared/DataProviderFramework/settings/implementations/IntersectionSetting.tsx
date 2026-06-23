@@ -89,6 +89,11 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             throw new Error("Expected object with string properties: type, name, uuid");
         }
 
+        // Discard values with an unknown intersection type (e.g. from an outdated serialized state)
+        if (!Object.values(IntersectionType).includes(v.type as IntersectionType)) {
+            return null;
+        }
+
         // For wellbore types, default extensionLength to 0 if not present (backward compat)
         if (isWellboreIntersectionType(v.type as IntersectionType) && typeof v.extensionLength !== "number") {
             v.extensionLength = 0;
