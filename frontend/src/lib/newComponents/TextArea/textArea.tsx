@@ -29,20 +29,25 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(fun
                 props.layoutClassName,
                 "form-element",
                 "w-full",
-                "px-sm",
-                "py-xs",
                 "text-neutral",
                 "text-body-md",
-                "gap-y-xs flex flex-col",
+                "gap-y-2xs flex flex-col",
+                "resize-y",
+                "overflow-y-hidden",
+                "overflow-x-clip",
+                {
+                    "min-h-10": !bottomAdornment,
+                    "min-h-16": !!bottomAdornment,
+                },
             )}
         >
             <textarea
                 {...baseProps}
                 onChange={handleChange}
                 ref={ref}
-                className={resolveClassNames(props.layoutClassName, "m-0 w-full bg-transparent p-0 outline-0")}
+                className="px-sm py-xs text-body-md min-h-0 w-full grow resize-none bg-transparent outline-0"
             />
-            {bottomAdornment && <span className="mr-lg w-full text-right">{bottomAdornment}</span>}
+            {bottomAdornment && <span className="px-sm pb-4xs w-full text-right">{bottomAdornment}</span>}
         </div>
     );
 });
