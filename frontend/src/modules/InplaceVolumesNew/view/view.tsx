@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useAtomValue } from "jotai";
+import { orderBy } from "lodash";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -11,6 +12,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
 import { Table } from "@lib/newComponents/Table";
 import { TableCompositions } from "@lib/newComponents/Table/compositions";
+import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
 
 import type { Interfaces } from "../interfaces";
 
@@ -41,6 +43,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
     const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
 
+    const [tableSortState, setTableSortState] = React.useState<TableSortState[]>([]);
+
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter, resultName, subplotBy, colorBy);
 
@@ -66,6 +70,16 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         return makeStatisticsTableColumns(statisticsTableData.subplotByLabel, statisticsTableData.colorByLabel);
     }, [statisticsTableData]);
 
+    const collatedTableRows = React.useMemo(() => {
+        if (!statisticsTableData?.rows) return [];
+
+        return orderBy(
+            statisticsTableData.rows,
+            tableSortState.map((s) => s.columnKey),
+            tableSortState.map((s) => s.direction as "asc" | "desc"),
+        );
+    }, [statisticsTableData, tableSortState]);
+
     function createErrorMessage(): string | null {
         if (aggregatedTableDataQueries.allQueriesFailed) {
             return "Failed to load inplace volumes table data";
@@ -90,16 +104,28 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 </div>
                 {showStatisticsTable && statisticsTableData && tableColumns && (
                     <div className="px-sm py-xs max-h-1/4 min-h-0 flex-none overflow-auto">
-                        <Table.Root fixed compact size="small" height={"100%"}>
+                        <Table.Root
+                            fixed
+                            compact
+                            size="small"
+                            height="100%"
+                            sortable="multiple"
+                            columnSorting={tableSortState}
+                            onChangeColumnSort={setTableSortState}
+                        >
                             <Table.Head sticky>
                                 {tableColumns.map((col) => (
-                                    <Table.Column key={col.columnId} widthInPercent={col.sizeInPercent}>
+                                    <Table.Column
+                                        key={col.columnId}
+                                        colKey={col.columnId}
+                                        widthInPercent={col.sizeInPercent}
+                                    >
                                         {col.label}
                                     </Table.Column>
                                 ))}
                             </Table.Head>
                             <Table.Body>
-                                <TableCompositions.VirtualizedRows rows={statisticsTableData.rows}>
+                                <TableCompositions.VirtualizedRows rows={collatedTableRows}>
                                     {(row) => (
                                         <Table.Row key={row.id}>
                                             {tableColumns.map((col) => (
