@@ -19,6 +19,7 @@ type SettingComponentPropsBase<TInternalValue> = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;
+    disabled: boolean;
 };
 
 // Component props for static settings (no valueConstraints)

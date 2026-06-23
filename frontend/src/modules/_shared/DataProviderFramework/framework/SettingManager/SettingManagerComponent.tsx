@@ -125,6 +125,7 @@ export function SettingManagerComponent<
                                 overriddenValue={value}
                                 valueConstraints={valueConstraints}
                                 globalSettings={globalSettings}
+                                disabled={!isSettingEnabled(attributes.enabled)}
                                 workbenchSession={props.manager.getWorkbenchSession()}
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />
