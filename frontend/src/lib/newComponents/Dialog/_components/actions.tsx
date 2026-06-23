@@ -1,7 +1,10 @@
 import React from "react";
 
 export type ActionsProps = {
-    /** The action buttons to render. The last child automatically receives `autoFocus`. */
+    /** Whether the last action button should automatically receive focus. */
+    withAutoFocus?: boolean;
+
+    /** The action buttons to render. The last child automatically receives `autoFocus` if `withAutoFocus` is true. */
     children?: React.ReactNode;
 };
 
@@ -10,7 +13,7 @@ export function Actions(props: ActionsProps) {
     const last = children.length - 1;
 
     const withFocus = children.map((child, i) =>
-        i === last && React.isValidElement(child)
+        i === last && React.isValidElement(child) && props.withAutoFocus
             ? React.cloneElement(child as React.ReactElement<{ autoFocus?: boolean }>, { autoFocus: true })
             : child,
     );
