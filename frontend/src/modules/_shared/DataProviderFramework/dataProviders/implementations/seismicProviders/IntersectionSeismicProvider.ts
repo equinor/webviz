@@ -142,7 +142,6 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
-
         setting(Setting.REALIZATION).bindAttributes({
             read(read) {
                 return {

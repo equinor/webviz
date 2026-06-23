@@ -123,7 +123,6 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
-
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
                 return {
@@ -257,7 +256,11 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                     (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
                 );
 
-                return getAvailableIntersectionOptions(headers, fieldIntersectionPolylines, plannedWellboreHeaders ?? []);
+                return getAvailableIntersectionOptions(
+                    headers,
+                    fieldIntersectionPolylines,
+                    plannedWellboreHeaders ?? [],
+                );
             },
         });
 

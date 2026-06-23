@@ -54,6 +54,7 @@ export function makeDrilledWellTrajectoriesLayer(
         },
         name,
         refine: false,
+        outline: false,
         lineStyle: { width: getLineStyleWidth, color: getColor },
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
         pickable: true,
