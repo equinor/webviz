@@ -8,7 +8,7 @@ import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
 
 import {
-    ColorBy,
+    GroupBy,
     PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME,
     PhaseType,
     PressureDependentVariable,
@@ -135,7 +135,7 @@ export class PvtPlotBuilder {
         dependentVariables: readonly PressureDependentVariable[],
         pvtNums: readonly number[],
         phase: PhaseType,
-        colorBy: ColorBy,
+        colorBy: GroupBy,
         colorSet: ColorSet,
     ): void {
         const figure = this.getFigureAndAssertValidity();
@@ -199,11 +199,11 @@ export class PvtPlotBuilder {
 
                     let i = 0;
                     let color = colors[collectionIndex];
-                    if (colorBy === ColorBy.PVT_NUM) {
+                    if (colorBy === GroupBy.PVT_NUM) {
                         color = colors[pvtNumIndex];
                     }
 
-                    const legendGroupIndex = colorBy === ColorBy.PVT_NUM ? pvtNumIndex : collectionIndex;
+                    const legendGroupIndex = colorBy === GroupBy.PVT_NUM ? pvtNumIndex : collectionIndex;
 
                     for (const [dependentVariable, dependentVariableMap] of groupedTracesMaps) {
                         const row = Math.floor(i / 2) + 1;
@@ -255,11 +255,11 @@ export class PvtPlotBuilder {
 
                         if (
                             i === 0 &&
-                            ((colorBy === ColorBy.PVT_NUM && collectionIndex === 0) ||
-                                (colorBy === ColorBy.ENSEMBLE && pvtNumIndex === 0))
+                            ((colorBy === GroupBy.PVT_NUM && collectionIndex === 0) ||
+                                (colorBy === GroupBy.ENSEMBLE && pvtNumIndex === 0))
                         ) {
                             let traceLegendName = "";
-                            if (colorBy === ColorBy.PVT_NUM) {
+                            if (colorBy === GroupBy.PVT_NUM) {
                                 traceLegendName = `PVTNum - ${table.pvtnum.toString()}`;
                             } else {
                                 traceLegendName = `${this._makeEnsembleDisplayNameFunc(
@@ -319,14 +319,14 @@ export class PvtPlotBuilder {
     }
 
     private makeColorsArray(
-        colorBy: ColorBy,
+        colorBy: GroupBy,
         colorSet: ColorSet,
         pvtNumsLength: number,
         tableCollectionsLength: number,
     ): readonly string[] {
         const colors: string[] = [];
         colors.push(colorSet.getFirstColor());
-        if (colorBy === ColorBy.PVT_NUM) {
+        if (colorBy === GroupBy.PVT_NUM) {
             for (let i = 1; i < pvtNumsLength; i++) {
                 colors.push(colorSet.getNextColor());
             }

@@ -2,8 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { Checkbox } from "@lib/components/Checkbox";
-
+import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
 
 import type { PressureDependentVariable } from "../../../typesAndEnums";
 import { PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME } from "../../../typesAndEnums";
@@ -38,11 +37,12 @@ export function DependentVariableSelector(props: DependentVariableSelectorProps)
         <div className="flex flex-col">
             {props.dependentVariables.map((variable) => {
                 return (
-                    <Checkbox
+                    <CheckboxCompositions.WithLabel
                         key={variable}
                         label={PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME[variable]}
                         checked={selectedVariables.includes(variable)}
-                        onChange={(_, checked) => handleSelectionChange(variable, checked)}
+                        onCheckedChange={(checked) => handleSelectionChange(variable, checked)}
+                        size="small"
                     />
                 );
             })}
