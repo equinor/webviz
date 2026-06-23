@@ -5,7 +5,7 @@ import { GroupTreePlot } from "@webviz/group-tree-plot";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
 
@@ -51,7 +51,7 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     }, [nodeMetadataList]);
 
     return (
-        <div className="w-full h-full">
+        <div className="h-full w-full">
             {queryStatus === QueryStatus.Loading ? (
                 <ContentInfo>
                     <CircularProgress />

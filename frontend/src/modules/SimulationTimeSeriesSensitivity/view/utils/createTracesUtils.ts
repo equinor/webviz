@@ -2,7 +2,6 @@ import type { PlotData } from "plotly.js";
 
 import type { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 
-
 export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
     realizationNumber?: number | null;
     legendrank?: number;
@@ -14,7 +13,7 @@ export function createStatisticalLineTraces(
     color: string,
 ): TimeSeriesPlotlyTrace[] {
     const traces: TimeSeriesPlotlyTrace[] = [];
-    sensitivityData.forEach((aCase, index) => {
+    sensitivityData.forEach((aCase) => {
         const statisticObj = aCase.valueObjects.find((obj) => obj.statisticFunction === statisticsFunction);
         if (statisticObj) {
             traces.push(
@@ -25,10 +24,10 @@ export function createStatisticalLineTraces(
                     legendGroup: `${aCase.sensitivityName}`,
                     lineShape: "linear",
                     lineDash: "dash",
-                    showLegend: index === 0,
+                    showLegend: false,
                     lineColor: color,
                     lineWidth: 3,
-                    hoverTemplate: `Sensitivity:<b>${aCase.sensitivityName}</b> <br> Case: <b>${aCase.sensitivityName}</b> <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
+                    hoverTemplate: `Sensitivity:<b>${aCase.sensitivityName}</b> <br> Case: <b>${aCase.sensitivityCase}</b> <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
                 }),
             );
         }
@@ -54,6 +53,7 @@ export function createRealizationLineTraces(
             timestampsMsUtc: vec.timestampsUtcMs,
             values: vec.values,
             name: `real-${vec.realization}`,
+            legendGroup: `${sensitivityName}`,
             lineShape: lineShape,
             lineDash: "solid",
             showLegend: false,
@@ -68,11 +68,29 @@ export function createRealizationLineTraces(
             traces.push(trace);
         }
     });
+
     if (highlightedTrace) {
         traces.push(highlightedTrace);
     }
     return traces;
 }
+export function createLegendTrace(
+    sensitivityName: string,
+    color: string,
+    lineStyle: "dash" | "solid" = "solid",
+): TimeSeriesPlotlyTrace {
+    return {
+        name: sensitivityName,
+        x: [null],
+        y: [null],
+        legendgroup: sensitivityName,
+        showlegend: true,
+        type: "scatter",
+        mode: "lines",
+        line: { color: color, width: 3, dash: lineStyle },
+    };
+}
+
 export type LineTraceData = {
     timestampsMsUtc: number[];
     values: number[];
