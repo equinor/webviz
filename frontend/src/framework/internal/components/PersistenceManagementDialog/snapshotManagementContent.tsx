@@ -149,7 +149,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                         value={immediateTitleFilterValue}
                         placeholder="Search title"
                         onValueChange={setDebouncedTitleFilterValue}
-                        startAdornment={<Search fontSize="inherit" />}
+                        startAdornment={<Search />}
                         endAdornment={
                             <Tooltip content="Clear title filter" side="top">
                                 <Button
@@ -159,7 +159,7 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                                     iconOnly
                                     tone="neutral"
                                 >
-                                    <Close fontSize="inherit" />
+                                    <Close />
                                 </Button>
                             </Tooltip>
                         }
@@ -192,8 +192,9 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                             tone="accent"
                             disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
                             onClick={handleOpenSnapshotClick}
+                            icon={<FileOpen />}
                         >
-                            <FileOpen className="self-end" /> Open
+                            Open
                         </Button>
                     </Tooltip>
                     <Tooltip content={deleteButtonTooltip}>
@@ -202,22 +203,18 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                             tone="danger"
                             disabled={!selectedSnapshot || deletePending || !userId}
                             onClick={handleDeleteClick}
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
                         >
-                            {deletePending ? (
-                                <CircularProgress layoutClassName="self-end" size="em" />
-                            ) : (
-                                <Delete className="self-end" />
-                            )}{" "}
                             {deleteButtonText}
                         </Button>
                     </Tooltip>
                     <Tooltip content="Refresh list">
-                        <Button variant="ghost" tone="accent" onClick={queryRefreshActionRef.current?.refresh}>
-                            {queryRefreshActionRef.current?.isRefreshing ? (
-                                <CircularProgress layoutClassName="self-end" size="em" />
-                            ) : (
-                                <Refresh className="self-end" />
-                            )}{" "}
+                        <Button
+                            variant="ghost"
+                            tone="accent"
+                            onClick={queryRefreshActionRef.current?.refresh}
+                            icon={queryRefreshActionRef.current?.isRefreshing ? <CircularProgress /> : <Refresh />}
+                        >
                             Refresh
                         </Button>
                     </Tooltip>

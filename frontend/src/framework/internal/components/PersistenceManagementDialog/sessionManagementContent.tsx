@@ -104,7 +104,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                                     tone="neutral"
                                     iconOnly
                                 >
-                                    <Close fontSize="inherit" />
+                                    <Close />
                                 </Button>
                             </Tooltip>
                         }
@@ -118,14 +118,20 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
             <div className="gap-x-4xs flex items-center">
                 <Tooltip.Provider side="bottom">
                     <Tooltip content="Start and open new session">
-                        <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
-                            <Add className="self-end" /> New session
+                        <Button tone="accent" onClick={handleNewSessionClick} variant="contained" icon={<Add />}>
+                            New session
                         </Button>
                     </Tooltip>
                     <span className="grow" />
                     <Tooltip content="Edit the selected session">
-                        <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleEditClick}>
-                            <Edit className="self-end" /> Edit
+                        <Button
+                            tone="accent"
+                            variant="ghost"
+                            disabled={!selectedSession}
+                            onClick={handleEditClick}
+                            icon={<Edit />}
+                        >
+                            Edit
                         </Button>
                     </Tooltip>
                     <Tooltip content="Open the selected session">
@@ -134,8 +140,9 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                             variant="ghost"
                             disabled={!selectedSession}
                             onClick={handleOpenSessionClick}
+                            icon={<FileOpen />}
                         >
-                            <FileOpen className="self-end" /> Open
+                            Open
                         </Button>
                     </Tooltip>
                     <Tooltip content="Delete the selected session">
@@ -144,23 +151,19 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                             disabled={!selectedSession || deletePending}
                             onClick={handleDeleteClick}
                             variant="ghost"
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
                         >
-                            {deletePending ? (
-                                <CircularProgress layoutClassName="self-end" size="em" />
-                            ) : (
-                                <Delete className="self-end" />
-                            )}{" "}
                             Delete
                         </Button>
                     </Tooltip>
 
                     <Tooltip content="Refresh list">
-                        <Button tone="accent" onClick={queryRefreshActionRef.current?.refresh} variant="ghost">
-                            {queryRefreshActionRef.current?.isRefreshing ? (
-                                <CircularProgress layoutClassName="self-end" size="em" />
-                            ) : (
-                                <Refresh className="self-end" />
-                            )}{" "}
+                        <Button
+                            tone="accent"
+                            onClick={queryRefreshActionRef.current?.refresh}
+                            variant="ghost"
+                            icon={queryRefreshActionRef.current?.isRefreshing ? <CircularProgress /> : <Refresh />}
+                        >
                             Refresh
                         </Button>
                     </Tooltip>

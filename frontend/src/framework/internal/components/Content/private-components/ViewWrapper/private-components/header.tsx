@@ -14,13 +14,7 @@ import {
     Warning,
 } from "@mui/icons-material";
 
-import {
-    GuiEvent,
-    GuiState,
-    RightDrawerContent,
-    useGuiValue,
-    useSetGuiState,
-} from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, RightDrawerContent, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
@@ -56,7 +50,7 @@ export type HeaderProps = {
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
 
-const COMPACT_WIDTH_THRESHOLD_PX = 240;
+const COMPACT_WIDTH_THRESHOLD_PX = 320;
 
 export const Header: React.FC<HeaderProps> = (props) => {
     const dashboard = useActiveDashboard();
@@ -98,10 +92,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         [guiMessageBroker, moduleInstanceId],
     );
 
-    const setRightSettingsPanelWidth = useSetGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent,
-    );
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
 
     const showLog = React.useCallback(
@@ -190,11 +181,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
         <div
             ref={headerRef}
             className={resolveClassNames(
-                "px-xs gap-4xs shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
+                "px-xs gap-4xs bg-neutral shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
                 {
-                    "bg-danger-canvas": hasErrors || invalidPersistedState,
-                    "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
-                    "bg-neutral": !hasErrors && !props.isMinimized && !invalidPersistedState,
+                    "bg-danger-canvas!": hasErrors || invalidPersistedState,
+                    "bg-neutral-subtle!": !hasErrors && !invalidPersistedState && props.isMinimized,
                 },
             )}
             onDoubleClick={handleDoubleClick}
@@ -279,38 +269,75 @@ function DefaultHeaderActions(props: HeaderActionsProps): React.ReactNode {
                 isMaximized={props.isMaximized}
                 isSnapshotMode={props.isSnapshotMode}
             />
-            <div className="gap-4xs flex shrink-0 items-center">
-                <Separator orientation="vertical" />
-                {props.isMaximized ? (
-                    <Tooltip content="Restore">
-                        <Button
-                            onPointerDown={handleRestorePointerDown}
-                            onPointerUp={handlePointerUp}
-                            variant="ghost"
-                            tone="neutral"
-                            size="small"
-                            iconOnly
-                        >
-                            <CloseFullscreen fontSize="inherit" />
-                        </Button>
-                    </Tooltip>
-                ) : (
-                    <Tooltip content="Maximize">
-                        <Button
-                            onPointerDown={handleMaximizePointerDown}
-                            onPointerUp={handlePointerUp}
-                            variant="ghost"
-                            tone="neutral"
-                            size="small"
-                            iconOnly
-                        >
-                            <OpenInFull fontSize="inherit" />
-                        </Button>
-                    </Tooltip>
-                )}
-            </div>
+            <Separator orientation="vertical" />
+            {props.isMaximized ? (
+                <Tooltip content="Restore">
+                    <Button
+                        onPointerDown={handleRestorePointerDown}
+                        onPointerUp={handlePointerUp}
+                        variant="ghost"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <CloseFullscreen fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+            ) : (
+                <Tooltip content="Maximize">
+                    <Button
+                        onPointerDown={handleMaximizePointerDown}
+                        onPointerUp={handlePointerUp}
+                        variant="ghost"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <OpenInFull fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+            )}
         </>
     );
+}
+
+type MenuBadgeProps = {
+    numErrors: number;
+    numWarnings: number;
+    numSyncedSettings: number;
+    children: React.ReactNode;
+};
+
+function MenuBadge(props: MenuBadgeProps): React.ReactNode {
+    const hasErrors = props.numErrors > 0;
+    const hasWarnings = props.numWarnings > 0;
+    const hasSyncedSettings = props.numSyncedSettings > 0;
+
+    if (hasErrors) {
+        return (
+            <Badge badgeContent={props.numErrors} tone="danger">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    if (hasWarnings) {
+        return (
+            <Badge badgeContent={props.numWarnings} tone="warning">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    if (hasSyncedSettings) {
+        return (
+            <Badge badgeContent={props.numSyncedSettings} tone="info">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    return props.children;
 }
 
 type CompactHeaderActionsProps = HeaderActionsProps & {
@@ -339,7 +366,13 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
             <Menu.Root>
                 <Menu.Trigger>
                     <Button variant="ghost" size="small" tone="neutral" iconOnly title="More options">
-                        <MoreVert fontSize="inherit" />
+                        <MenuBadge
+                            numErrors={props.numErrors}
+                            numWarnings={props.numWarnings}
+                            numSyncedSettings={syncedSettings.length}
+                        >
+                            <MoreVert fontSize="inherit" />
+                        </MenuBadge>
                     </Button>
                 </Menu.Trigger>
                 <Menu.Popup>
@@ -349,7 +382,7 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                                 <Menu.Item
                                     key="synced-settings"
                                     icon={
-                                        <Badge badgeContent={syncedSettings.length}>
+                                        <Badge badgeContent={syncedSettings.length} tone="info">
                                             <Link fontSize="inherit" />
                                         </Badge>
                                     }
@@ -366,22 +399,43 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                             ))}
                         </Menu.SubmenuItem>
                     )}
-                    {props.isLoading && <Menu.Item icon={<CircularProgress size={16} />} text="Loading..." disabled />}
-                    {props.numErrors > 0 && (
+                    {props.numErrors > 0 || props.numWarnings > 0 ? (
                         <Menu.Item
-                            icon={<Error fontSize="inherit" color="error" />}
-                            text={`${props.numErrors} error${props.numErrors > 1 ? "s" : ""}`}
-                            disabled
+                            icon={
+                                <span className="relative flex size-[1em] items-center justify-center">
+                                    {props.numErrors > 0 ? (
+                                        <>
+                                            <Error fontSize="inherit" color="error" />
+                                            {props.numWarnings > 0 && (
+                                                <Warning
+                                                    fontSize="inherit"
+                                                    color="warning"
+                                                    className="absolute -right-1 -bottom-1 text-[0.65em]!"
+                                                />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Warning fontSize="inherit" color="warning" />
+                                    )}
+                                </span>
+                            }
+                            text={[
+                                props.numErrors > 0 ? `${props.numErrors} error${props.numErrors > 1 ? "s" : ""}` : "",
+                                props.numWarnings > 0
+                                    ? `${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`
+                                    : "",
+                            ]
+                                .filter(Boolean)
+                                .join(", ")}
+                            onClick={props.onShowLog}
+                        />
+                    ) : (
+                        <Menu.Item
+                            icon={<History fontSize="inherit" />}
+                            text="Show module log"
+                            onClick={props.onShowLog}
                         />
                     )}
-                    {props.numWarnings > 0 && (
-                        <Menu.Item
-                            icon={<Warning fontSize="inherit" color="warning" />}
-                            text={`${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`}
-                            disabled
-                        />
-                    )}
-                    <Menu.Item icon={<History fontSize="inherit" />} text="Show module log" onClick={props.onShowLog} />
                     {props.hasDataReceiver && !props.isSnapshotMode && (
                         <Menu.Item
                             icon={<Input fontSize="inherit" />}
@@ -422,7 +476,7 @@ function ModuleLoadingBar(props: ModuleLoadingBarProps) {
                 hidden: !isLoading,
             })}
         >
-            <LinearProgress variant="indeterminate" />
+            <LinearProgress variant="indeterminate" size="small" />
         </div>
     );
 }
@@ -638,7 +692,10 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         e.preventDefault();
         e.stopPropagation();
 
-        if (guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+        if (
+            guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+            SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+        ) {
             setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
 

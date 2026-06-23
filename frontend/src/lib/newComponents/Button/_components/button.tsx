@@ -4,6 +4,7 @@ import { Button as ButtonBase } from "@base-ui/react/button";
 import type { ButtonProps as ButtonPropsBase } from "@base-ui/react/button";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { getDataAttributesForSelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -24,29 +25,77 @@ export type ButtonProps = WrapperProps &
 
         /** Button size */
         size?: SelectableSize;
+
+        /** Icon to be displayed inside the button next to the label. When an icon is provided without children, the button will be rendered as an icon-only button. */
+        icon?: React.ReactNode;
+
+        /** Position of the icon inside the button. Defaults to "start" */
+        iconPosition?: "start" | "end";
     };
 
+const DEFAULT_PROPS = {
+    size: "default",
+    iconPosition: "start",
+} satisfies Partial<ButtonProps>;
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
-    const baseProps = resolveWrapperProps(props, "pressed", "size", ...STYLE_PROP_KEYS);
-    const size = useComponentSize(props);
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps, "pressed", "size", ...STYLE_PROP_KEYS);
+    const size = useComponentSize(defaultedProps);
+
+    let iconOnly = defaultedProps.iconOnly;
+    if (defaultedProps.icon && !defaultedProps.children) {
+        iconOnly = true;
+    }
 
     return (
         <ButtonBase
-            ref={ref}
             {...baseProps}
             {...getDataAttributesForSelectableSize(size, true)}
-            data-pressed={props.pressed ? "" : undefined}
-            className={resolveClassNames(baseProps.className, resolveButtonClassNames(size, props))}
+            ref={ref}
+            data-pressed={defaultedProps.pressed ? "" : undefined}
+            className={resolveClassNames(baseProps.className, resolveButtonClassNames(size, defaultedProps))}
             style={{
                 minHeight: "calc(var(--eds-selectable-space-vertical) * 2 + round(1cap , 4px))",
                 ...baseProps.style,
             }}
         >
-            {props.iconOnly ? (
-                props.children
+            {iconOnly ? (
+                <ButtonIcon size={size} iconOnly>
+                    {defaultedProps.icon ?? defaultedProps.children}
+                </ButtonIcon>
             ) : (
-                <span className={resolveButtonLabelClassNames(size)}>{props.children}</span>
+                <span className={resolveButtonLabelClassNames(size)}>
+                    {defaultedProps.icon && defaultedProps.iconPosition === "start" && (
+                        <ButtonIcon size={size}>{defaultedProps.icon}</ButtonIcon>
+                    )}
+                    {defaultedProps.children}
+                    {defaultedProps.icon && defaultedProps.iconPosition === "end" && (
+                        <ButtonIcon size={size}>{defaultedProps.icon}</ButtonIcon>
+                    )}
+                </span>
             )}
         </ButtonBase>
     );
 });
+
+type ButtonIconProps = {
+    children: React.ReactNode;
+    size: SelectableSize;
+    iconOnly?: boolean;
+};
+
+function ButtonIcon(props: ButtonIconProps) {
+    return (
+        <span
+            className={resolveClassNames("flex items-center justify-center", {
+                "text-body-sm!": props.size === "small",
+                "text-body-lg!": props.size === "default",
+                "text-body-xl!": props.size === "large",
+                "self-end": !props.iconOnly,
+            })}
+        >
+            {props.children}
+        </span>
+    );
+}

@@ -1,5 +1,4 @@
-import { defaults } from "lodash";
-
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -86,7 +85,7 @@ const DEFAULT_STYLE_PROPS = {
 } satisfies Partial<ButtonStyleProps>;
 
 export function resolveButtonClassNames(size: SelectableSize, styleProps: ButtonStyleProps) {
-    const defaultedProps = defaults({}, styleProps, DEFAULT_STYLE_PROPS);
+    const defaultedProps = withDefaults(styleProps, DEFAULT_STYLE_PROPS);
 
     return resolveClassNames(
         "px-selectable inline-flex cursor-pointer items-center rounded",
