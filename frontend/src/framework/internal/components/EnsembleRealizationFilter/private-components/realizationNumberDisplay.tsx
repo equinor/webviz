@@ -127,6 +127,9 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                                     </Tooltip>
                                 );
                             })}
+                            {Array.from({ length: 5 - group.length }).map((_, i) => (
+                                <div key={`placeholder-${i}`} style={{ width: dotSizePx, height: dotSizePx }} />
+                            ))}
                         </div>
                     </div>
                 ))}

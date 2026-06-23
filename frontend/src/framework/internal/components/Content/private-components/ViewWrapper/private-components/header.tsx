@@ -1,7 +1,18 @@
 import React from "react";
 
 import type { BaseUIEvent, PopoverRootActions } from "@base-ui/react";
-import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
+import {
+    Close,
+    CloseFullscreen,
+    Error,
+    History,
+    Input,
+    Link,
+    MoreVert,
+    OpenInFull,
+    Output,
+    Warning,
+} from "@mui/icons-material";
 
 import {
     GuiEvent,
@@ -24,10 +35,12 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { Badge } from "@lib/newComponents/Badge";
 import { Button } from "@lib/newComponents/Button";
 import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { LinearProgress } from "@lib/newComponents/LinearProgress";
+import { Menu } from "@lib/newComponents/Menu";
 import { Popover } from "@lib/newComponents/Popover";
 import { Separator } from "@lib/newComponents/Separator";
 import { Tooltip } from "@lib/newComponents/Tooltip";
@@ -43,6 +56,8 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
+
+const COMPACT_WIDTH_THRESHOLD_PX = 240;
 
 export const Header: React.FC<HeaderProps> = (props) => {
     const dashboard = useActiveDashboard();
@@ -69,30 +84,56 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const invalidPersistedState = persistedSettingsInvalid || persistedViewInvalid;
 
-    const handleMaximizeClick = React.useCallback(
-        function handleMaximizeClick(e: React.PointerEvent<HTMLButtonElement>) {
-            const currentLayout = dashboard.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({
-                ...l,
-                maximized: l.moduleInstanceId === moduleInstanceId,
-            }));
-            dashboard.setLayout(tweakedLayout);
-            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
 
-            e.preventDefault();
-            e.stopPropagation();
+    const channelManager = props.moduleInstance.getChannelManager();
+    const receivers = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+
+    const editConnections = React.useCallback(
+        function editConnections() {
+            guiMessageBroker.setState(GuiState.EditDataChannelConnections, true);
+            guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
+                moduleInstanceId,
+            });
+        },
+        [guiMessageBroker, moduleInstanceId],
+    );
+
+    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
+        guiMessageBroker,
+        GuiState.RightSettingsPanelWidthInPercent,
+    );
+    const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+
+    const showLog = React.useCallback(
+        function showLog() {
+            if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+                setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
+            }
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+            setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
+        },
+        [rightSettingsPanelWidth, setRightSettingsPanelWidth, dashboard, moduleInstanceId, setRightDrawerContent],
+    );
+
+    const headerRef = React.useRef<HTMLDivElement>(null);
+    const { width: headerWidth } = useElementSize(headerRef);
+    const isCompact = headerWidth < COMPACT_WIDTH_THRESHOLD_PX;
+
+    const maximize = React.useCallback(
+        function maximize() {
+            const currentLayout = dashboard.getLayout();
+            dashboard.setLayout(
+                currentLayout.map((l) => ({ ...l, maximized: l.moduleInstanceId === moduleInstanceId })),
+            );
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
         },
         [moduleInstanceId, dashboard],
     );
 
-    const handleRestoreClick = React.useCallback(
-        function handleRestoreClick(e: React.PointerEvent<HTMLButtonElement>) {
-            const currentLayout = dashboard.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: false }));
-            dashboard.setLayout(tweakedLayout);
-
-            e.preventDefault();
-            e.stopPropagation();
+    const restore = React.useCallback(
+        function restore() {
+            dashboard.setLayout(dashboard.getLayout().map((l) => ({ ...l, maximized: false })));
         },
         [dashboard],
     );
@@ -120,11 +161,34 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
+    const numErrors = hotStatusMessages.filter((m) => m.type === StatusMessageType.Error).length;
+    const numWarnings = hotStatusMessages.filter((m) => m.type === StatusMessageType.Warning).length;
+
+    const sharedActionProps: HeaderActionsProps = {
+        workbench: props.workbench,
+        moduleInstance: props.moduleInstance,
+        isMaximized: props.isMaximized,
+        isMinimized: props.isMinimized,
+        isSnapshotMode: isSnapshot,
+        onMaximize: maximize,
+        onRestore: restore,
+    };
+
+    const compactActionProps: CompactHeaderActionsProps = {
+        ...sharedActionProps,
+        isLoading,
+        numErrors,
+        numWarnings,
+        hasDataReceiver: receivers.length > 0,
+        onShowLog: showLog,
+        onEditConnections: editConnections,
+    };
 
     return (
         <div
+            ref={headerRef}
             className={resolveClassNames(
-                "px-xs gap-x-xs shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
+                "px-xs gap-4xs shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
                 {
                     "bg-danger-canvas": hasErrors || invalidPersistedState,
                     "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
@@ -142,73 +206,206 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isSnapshotMode={isSnapshot}
                 onPointerDown={props.onPointerDown}
             />
+
+            {!isCompact ? (
+                <DefaultHeaderActions {...sharedActionProps} />
+            ) : (
+                <CompactHeaderActions {...compactActionProps} />
+            )}
+
+            <div className="gap-4xs flex shrink-0 items-center">
+                <Separator orientation="vertical" />
+                <Tooltip content={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
+                    <Button
+                        onPointerDown={handleRemoveClick}
+                        onPointerUp={handlePointerUp}
+                        disabled={isSnapshot}
+                        tone="danger"
+                        variant="ghost"
+                        size="small"
+                        iconOnly
+                    >
+                        <Close fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+            </div>
+        </div>
+    );
+};
+
+type HeaderActionsProps = {
+    workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
+    isMaximized?: boolean;
+    isMinimized?: boolean;
+    isSnapshotMode?: boolean;
+    onMaximize: () => void;
+    onRestore: () => void;
+};
+
+function DefaultHeaderActions(props: HeaderActionsProps): React.ReactNode {
+    function handlePointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
+    }
+
+    function handleMaximizePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        props.onMaximize();
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function handleRestorePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        props.onRestore();
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    return (
+        <>
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
-
             <Separator orientation="vertical" />
-
             <StatusIndicator
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
             />
-
             <Separator orientation="vertical" />
-
             <DataChannelButtons
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
                 isMaximized={props.isMaximized}
-                isSnapshotMode={isSnapshot}
+                isSnapshotMode={props.isSnapshotMode}
             />
+            <div className="gap-4xs flex shrink-0 items-center">
+                <Separator orientation="vertical" />
+                {props.isMaximized ? (
+                    <Tooltip content="Restore">
+                        <Button
+                            onPointerDown={handleRestorePointerDown}
+                            onPointerUp={handlePointerUp}
+                            variant="ghost"
+                            tone="neutral"
+                            size="small"
+                            iconOnly
+                        >
+                            <CloseFullscreen fontSize="inherit" />
+                        </Button>
+                    </Tooltip>
+                ) : (
+                    <Tooltip content="Maximize">
+                        <Button
+                            onPointerDown={handleMaximizePointerDown}
+                            onPointerUp={handlePointerUp}
+                            variant="ghost"
+                            tone="neutral"
+                            size="small"
+                            iconOnly
+                        >
+                            <OpenInFull fontSize="inherit" />
+                        </Button>
+                    </Tooltip>
+                )}
+            </div>
+        </>
+    );
+}
 
+type CompactHeaderActionsProps = HeaderActionsProps & {
+    isLoading: boolean;
+    numErrors: number;
+    numWarnings: number;
+    hasDataReceiver: boolean;
+    onShowLog: () => void;
+    onEditConnections: () => void;
+};
+
+function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode {
+    const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
+
+    return (
+        <div className="gap-4xs flex shrink-0 items-center">
+            <DataChannelButtons
+                workbench={props.workbench}
+                moduleInstance={props.moduleInstance}
+                isMinimized={false}
+                isMaximized={props.isMaximized}
+                isSnapshotMode={props.isSnapshotMode}
+                showChannelsOnly
+            />
             <Separator orientation="vertical" />
-
-            {props.isMaximized ? (
-                <Tooltip content="Restore">
-                    <Button
-                        onPointerDown={handleRestoreClick}
-                        onPointerUp={handlePointerUp}
-                        title="Restore"
-                        variant="ghost"
-                        tone="neutral"
-                        size="small"
-                        iconOnly
-                    >
-                        <CloseFullscreen fontSize="inherit" />
+            <Menu.Root>
+                <Menu.Trigger>
+                    <Button variant="ghost" size="small" tone="neutral" iconOnly title="More options">
+                        <MoreVert fontSize="inherit" />
                     </Button>
-                </Tooltip>
-            ) : (
-                <Tooltip content="Maximize">
-                    <Button
-                        onPointerDown={handleMaximizeClick}
-                        onPointerUp={handlePointerUp}
-                        title="Maximize"
-                        variant="ghost"
-                        tone="neutral"
-                        size="small"
-                        iconOnly
-                    >
-                        <OpenInFull fontSize="inherit" />
-                    </Button>
-                </Tooltip>
-            )}
-            <Tooltip content={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
-                <Button
-                    onPointerDown={handleRemoveClick}
-                    onPointerUp={handlePointerUp}
-                    disabled={isSnapshot}
-                    tone="danger"
-                    variant="ghost"
-                    size="small"
-                    iconOnly
-                >
-                    <Close fontSize="inherit" />
-                </Button>
-            </Tooltip>
+                </Menu.Trigger>
+                <Menu.Popup>
+                    {syncedSettings.length > 0 && (
+                        <Menu.SubmenuItem
+                            triggerContent={
+                                <Menu.Item
+                                    key="synced-settings"
+                                    icon={
+                                        <Badge badgeContent={syncedSettings.length}>
+                                            <Link fontSize="inherit" />
+                                        </Badge>
+                                    }
+                                    text="Synced settings"
+                                />
+                            }
+                        >
+                            {syncedSettings.map((setting) => (
+                                <Menu.Item
+                                    key={setting}
+                                    icon={<Link fontSize="inherit" />}
+                                    text={`Syncs "${SyncSettingsMeta[setting].name}" across the dashboard`}
+                                />
+                            ))}
+                        </Menu.SubmenuItem>
+                    )}
+                    {props.isLoading && <Menu.Item icon={<CircularProgress size={16} />} text="Loading..." disabled />}
+                    {props.numErrors > 0 && (
+                        <Menu.Item
+                            icon={<Error fontSize="inherit" color="error" />}
+                            text={`${props.numErrors} error${props.numErrors > 1 ? "s" : ""}`}
+                            disabled
+                        />
+                    )}
+                    {props.numWarnings > 0 && (
+                        <Menu.Item
+                            icon={<Warning fontSize="inherit" color="warning" />}
+                            text={`${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`}
+                            disabled
+                        />
+                    )}
+                    <Menu.Item icon={<History fontSize="inherit" />} text="Show module log" onClick={props.onShowLog} />
+                    {props.hasDataReceiver && !props.isSnapshotMode && (
+                        <Menu.Item
+                            icon={<Input fontSize="inherit" />}
+                            text="Edit data connections"
+                            onClick={props.onEditConnections}
+                        />
+                    )}
+                    <Menu.Separator />
+                    {props.isMaximized ? (
+                        <Menu.Item
+                            icon={<CloseFullscreen fontSize="inherit" />}
+                            text="Restore"
+                            onClick={props.onRestore}
+                        />
+                    ) : (
+                        <Menu.Item
+                            icon={<OpenInFull fontSize="inherit" />}
+                            text="Maximize"
+                            onClick={props.onMaximize}
+                        />
+                    )}
+                </Menu.Popup>
+            </Menu.Root>
         </div>
     );
-};
+}
 
 type ModuleLoadingBarProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -298,6 +495,7 @@ type DataChannelButtonsProps = {
     isMinimized?: boolean;
     isMaximized?: boolean;
     isSnapshotMode?: boolean;
+    showChannelsOnly?: boolean;
 };
 
 function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
@@ -394,7 +592,7 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
                     </Badge>
                 </Button>
             )}
-            {hasDataReceiver && (
+            {hasDataReceiver && !props.showChannelsOnly && (
                 <Button
                     title={makeChannelInButtonTitle()}
                     onPointerDown={handleReceiverPointerDown}
