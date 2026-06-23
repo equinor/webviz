@@ -33,11 +33,12 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     const tableColumns = React.useMemo(() => {
         function renderColumnRecursive(heading: TableHeading, key: string): React.ReactNode {
             return (
+                // ! To make sorting logic easy, the col-keys should exactly match the property key path in the data object
                 <Table.Column key={key} colKey={key} widthInPercent={heading.sizeInPercent}>
                     {heading.label}
                     {heading.subHeading &&
                         Object.entries(heading.subHeading).map(([subKey, subHeading]) =>
-                            renderColumnRecursive(subHeading, `${key}.${subKey}`),
+                            renderColumnRecursive(subHeading, subKey),
                         )}
                 </Table.Column>
             );
