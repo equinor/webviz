@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
+import { makePlannedWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makePlannedWellTrajectoriesLayer2D";
 import { makeRichWellTrajectoriesLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRichWellTrajectoriesLayer";
 import {
     DpfSubsurfaceViewerWrapper,
@@ -10,6 +11,7 @@ import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataPro
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
+import { PlannedWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/PlannedWellboreTrajectoriesProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import {
     AttributeSurfaceProvider,
@@ -145,6 +147,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DrilledWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeRichWellTrajectoriesLayer,
+        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.PLANNED_WELL_TRAJECTORIES,
+    PlannedWellboreTrajectoriesProvider,
+    {
+        transformToVisualization: makePlannedWellTrajectoriesLayer2D,
         transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
         transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
     },

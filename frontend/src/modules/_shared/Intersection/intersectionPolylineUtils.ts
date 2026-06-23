@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/query-core";
 
-import { getWellTrajectoriesOptions } from "@api";
+import { getPlannedWellTrajectoriesOptions, getWellTrajectoriesOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -22,6 +22,9 @@ export type WellboreIntersectionSpecification = {
     wellboreUuid: string;
     extensionLength: number;
     fieldIdentifier: string;
+    // When true, the wellbore is a planned (not yet drilled) wellbore and the trajectory is fetched
+    // from the planned-trajectory endpoint instead of the drilled one.
+    isPlanned?: boolean;
 };
 
 export type IntersectionSpecification = PolylineIntersectionSpecification | WellboreIntersectionSpecification;
@@ -56,16 +59,25 @@ export function makeIntersectionPolylineWithSectionLengthsPromise(
     }
 
     // Wellbore intersection
-    const { extensionLength, wellboreUuid, fieldIdentifier } = intersectionSpecification;
+    const { extensionLength, wellboreUuid, fieldIdentifier, isPlanned } = intersectionSpecification;
+    const trajectoriesQueryOptions = isPlanned
+        ? getPlannedWellTrajectoriesOptions({
+              query: {
+                  field_identifier: fieldIdentifier ?? "",
+                  wellbore_uuids: [wellboreUuid],
+              },
+              signal: abortSignal,
+          })
+        : getWellTrajectoriesOptions({
+              query: {
+                  field_identifier: fieldIdentifier ?? "",
+                  wellbore_uuids: [wellboreUuid],
+              },
+              signal: abortSignal,
+          });
     const makePolylineAndActualSectionLengthsPromise = queryClient
         .fetchQuery({
-            ...getWellTrajectoriesOptions({
-                query: {
-                    field_identifier: fieldIdentifier ?? "",
-                    wellbore_uuids: [wellboreUuid],
-                },
-                signal: abortSignal,
-            }),
+            ...trajectoriesQueryOptions,
         })
         .then((wellTrajectoryData) => {
             const wellTrajectoryPath: number[][] = [];

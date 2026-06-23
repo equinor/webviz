@@ -3,6 +3,7 @@ import { DrilledWellborePicksProvider } from "../implementations/DrilledWellbore
 import { DrilledWellboreTrajectoriesProvider } from "../implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "../implementations/FaultPolygonsProvider";
 import { IntersectionRealizationGridProvider } from "../implementations/IntersectionRealizationGridProvider";
+import { PlannedWellboreTrajectoriesProvider } from "../implementations/PlannedWellboreTrajectoriesProvider";
 import { RealizationPolygonsProvider } from "../implementations/RealizationPolygonsProvider";
 import { IntersectionSeismicProvider } from "../implementations/seismicProviders/IntersectionSeismicProvider";
 import {
@@ -18,6 +19,10 @@ DataProviderRegistry.registerDataProvider(DataProviderType.DRILLED_WELLBORE_PICK
 DataProviderRegistry.registerDataProvider(
     DataProviderType.DRILLED_WELL_TRAJECTORIES,
     DrilledWellboreTrajectoriesProvider,
+);
+DataProviderRegistry.registerDataProvider(
+    DataProviderType.PLANNED_WELL_TRAJECTORIES,
+    PlannedWellboreTrajectoriesProvider,
 );
 DataProviderRegistry.registerDataProvider(
     DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID,

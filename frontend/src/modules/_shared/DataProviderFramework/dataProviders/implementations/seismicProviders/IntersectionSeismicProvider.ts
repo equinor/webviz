@@ -23,6 +23,7 @@ import { Representation } from "../../../settings/implementations/Representation
 import { Setting } from "../../../settings/settingsDefinitions";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
+    fetchPlannedWellboreHeaders,
     fetchWellboreHeaders,
 } from "../../dependencyFunctions/sharedHelperDependencyFunctions";
 import {
@@ -254,20 +255,37 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
             },
         });
 
+        const plannedWellboreHeader = makeSharedResult({
+            debugName: "plannedWellboreHeaders",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                return await fetchPlannedWellboreHeaders(fieldIdentifier, abortSignal, queryClient);
+            },
+        });
+
         setting(Setting.INTERSECTION).bindValueConstraints({
             read(read) {
                 return {
                     wellboreHeaders: read.sharedResult(wellboreHeader),
+                    plannedWellboreHeaders: read.sharedResult(plannedWellboreHeader),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),
                     fieldId: read.globalSetting("fieldId"),
                 };
             },
-            resolve({ wellboreHeaders, intersectionPolylines, fieldId }) {
+            resolve({ wellboreHeaders, plannedWellboreHeaders, intersectionPolylines, fieldId }) {
                 const fieldIntersectionPolylines = intersectionPolylines.filter(
                     (intersectionPolyline) => intersectionPolyline.fieldId === fieldId,
                 );
 
-                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+                return getAvailableIntersectionOptions(
+                    wellboreHeaders ?? [],
+                    fieldIntersectionPolylines,
+                    plannedWellboreHeaders ?? [],
+                );
             },
         });
 
