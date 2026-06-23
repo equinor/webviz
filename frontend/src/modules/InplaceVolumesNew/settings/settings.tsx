@@ -201,10 +201,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </SettingWrapper>
                     <SettingWrapper label="Max bins">
                         <Slider
+                            // ! Temp workaround - Avoids markers overflowing. Framework update branch will rework label position to
+                            layoutClassName="pb-lg"
                             value={plotOptions.histogramBins}
                             min={5}
                             step={1}
                             max={30}
+                            markerLabels
+                            markers={[10, 15, 20, 25]}
                             valueLabelDisplay="auto"
                             disabled={selectedPlotType !== PlotType.HISTOGRAM}
                             // Value is always a number, so cast is safe
