@@ -33,7 +33,7 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     const tableColumns = React.useMemo(() => {
         function renderColumnRecursive(heading: TableHeading, key: string): React.ReactNode {
             return (
-                // ! To make sorting logic easy, the col-keys should exactly match the property key path in the data object
+                // ! To make sorting logic easy, the col-keys should match the property key path in the data object
                 <Table.Column key={key} colKey={key} widthInPercent={heading.sizeInPercent}>
                     {heading.label}
                     {heading.subHeading &&
@@ -107,9 +107,28 @@ function TableFilterRow(props: {
     columnConfig: TableColumnsConfig;
     onFilterChange: (columnKey: string, filterValue: string | null) => void;
 }) {
+    // ! As with sorting, the keys/sub-keys should match the property key path in the data object
+    const flattenedLeafColumns = React.useMemo(() => {
+        const leafColumns: { [key: string]: TableHeading } = {};
+
+        function addLeafColumnsRecursive(heading: TableHeading, key: string) {
+            if (heading.subHeading) {
+                Object.entries(heading.subHeading).forEach(([subKey, subHeading]) =>
+                    addLeafColumnsRecursive(subHeading, subKey),
+                );
+            } else {
+                leafColumns[key] = heading;
+            }
+        }
+
+        Object.entries(props.columnConfig).forEach(([key, heading]) => addLeafColumnsRecursive(heading, key));
+
+        return leafColumns;
+    }, [props.columnConfig]);
+
     return (
         <Table.Row sortable={false}>
-            {Object.entries(props.columnConfig).map(([colKey, heading]) => (
+            {Object.entries(flattenedLeafColumns).map(([colKey, heading]) => (
                 <TableFilterCell
                     key={colKey}
                     filterValue={props.filterState[colKey] ?? null}
