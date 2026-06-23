@@ -2,7 +2,6 @@ import React from "react";
 
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
-import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -28,13 +27,12 @@ export type ModuleInstanceLogProps = {
     onClose: () => void;
 };
 
-export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
+export const ModuleInstanceLog = React.memo(function ModuleInstanceLog(props: ModuleInstanceLogProps) {
     const dashboard = useActiveDashboard();
     const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
 
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const moduleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 
@@ -127,14 +125,11 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     }
 
     return (
-        <div
-            ref={ref}
-            className={`w-full ${drawerContent === RightDrawerContent.ModuleInstanceLog ? "h-full" : "h-0"}`}
-        >
+        <div ref={ref} className="h-full w-full">
             <Drawer
                 title={makeTitle()}
                 icon={<History />}
-                visible={drawerContent === RightDrawerContent.ModuleInstanceLog}
+                visible={true}
                 onClose={handleClose}
                 actions={makeActions()}
             >
@@ -164,7 +159,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
                 )}
         </div>
     );
-}
+});
 
 type LogListProps = {
     onShowDetails: (details: Record<string, unknown>, yPos: number) => void;

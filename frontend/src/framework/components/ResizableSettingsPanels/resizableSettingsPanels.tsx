@@ -363,10 +363,12 @@ export function ResizableSettingsPanels(props: ResizableSettingsPanelsProps): Re
             <div className="grow overflow-hidden">{props.children.content}</div>
             {props.children.rightSettingsPanel !== undefined && (
                 <>
-                    <SettingsDragBar
-                        panel="rightSettingsPanel"
-                        isDragging={isDragging && draggingPanel === "rightSettingsPanel"}
-                    />
+                    {props.visible?.rightSettingsPanel !== false && (
+                        <SettingsDragBar
+                            panel="rightSettingsPanel"
+                            isDragging={isDragging && draggingPanel === "rightSettingsPanel"}
+                        />
+                    )}
                     <div className="overflow-hidden" style={makeSettingsPanelStyle("rightSettingsPanel")}>
                         {props.children.rightSettingsPanel}
                     </div>
@@ -385,7 +387,7 @@ function SettingsDragBar(props: SettingsDragBarProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "z-overlay hover:bg-accent-strong outline-accent relative w-px cursor-ew-resize touch-none transition-colors duration-100 ease-in-out hover:outline-2",
+                "z-sticky hover:bg-accent-strong outline-accent relative w-px cursor-ew-resize touch-none transition-colors duration-100 ease-in-out hover:outline-2",
                 {
                     "bg-accent-strong outline-accent outline-2": props.isDragging,
                     "bg-neutral border-transparent": !props.isDragging,

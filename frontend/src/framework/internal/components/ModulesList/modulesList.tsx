@@ -2,7 +2,6 @@ import React from "react";
 
 import { WebAsset } from "@mui/icons-material";
 
-import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
@@ -10,7 +9,6 @@ import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/de
 import type { Workbench } from "@framework/Workbench";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { isDevMode } from "@lib/utils/devMode";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ModuleDetailsPopover } from "./moduleDetailsPopover";
 import { DevStateIcon } from "./moduleIcons";
@@ -39,9 +37,7 @@ if (isDevMode()) {
     INITIAL_OPTIONAL_DEV_STATES.push(ModuleDevState.DEPRECATED);
 }
 
-export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
-
+export const ModulesList = React.memo(function ModulesList(props: ModulesListProps) {
     const ref = React.useRef<HTMLDivElement>(null);
 
     const [searchQuery, setSearchQuery] = React.useState("");
@@ -76,7 +72,6 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         .filter((mod) => mod.getDefaultTitle().toLowerCase().includes(searchQuery.toLowerCase()));
     const showDebugModules = isDevMode() || debugFlagIsEnabled(SHOW_DEBUG_MODULES_FLAG);
 
-    const isVisible = drawerContent === RightDrawerContent.ModulesList;
     const visibleModuleCategories = MODULE_CATEGORIES.filter(
         (el) => el.category !== ModuleCategory.DEBUG || showDebugModules,
     );
@@ -87,7 +82,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     }
 
     return (
-        <div ref={ref} className={resolveClassNames("relative h-full w-full", { hidden: !isVisible })}>
+        <div ref={ref} className="relative h-full w-full">
             <Drawer
                 visible={true}
                 onClose={handleClose}
@@ -145,4 +140,4 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
             />
         </div>
     );
-};
+});

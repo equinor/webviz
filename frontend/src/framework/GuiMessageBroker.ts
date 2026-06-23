@@ -371,6 +371,16 @@ export function useSetGuiState<T extends GuiState>(
     guiMessageBroker: GuiMessageBroker,
     state: T,
 ): (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void {
-    const [, stateSetter] = useGuiState(guiMessageBroker, state);
-    return stateSetter;
+    return React.useCallback(
+        function stateSetter(
+            valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T]),
+        ): void {
+            if (valueOrFunc instanceof Function) {
+                guiMessageBroker.setState(state, valueOrFunc(guiMessageBroker.getState(state)));
+                return;
+            }
+            guiMessageBroker.setState(state, valueOrFunc);
+        },
+        [guiMessageBroker, state],
+    );
 }

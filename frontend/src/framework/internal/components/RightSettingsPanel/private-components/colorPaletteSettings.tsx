@@ -2,7 +2,6 @@ import React from "react";
 
 import { Numbers, Palette } from "@mui/icons-material";
 
-import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
@@ -18,13 +17,12 @@ export type ColorPaletteSettingsProps = {
     onClose: () => void;
 };
 
-export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
+export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(props: ColorPaletteSettingsProps) {
     const colorPalettes = props.workbench
         .getSessionManager()
         .getActiveSession()
         .getWorkbenchSettings()
         .getColorPalettes();
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
         props.workbench.getSessionManager().getActiveSession().getWorkbenchSettings().getSelectedColorPaletteIds(),
     );
@@ -57,7 +55,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
         <Drawer
             title="Color palette settings"
             icon={<Palette />}
-            visible={drawerContent === RightDrawerContent.ColorPaletteSettings}
+            visible={true}
             onClose={props.onClose}
         >
             <Collapsible.ScrollArea>
@@ -156,4 +154,4 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
             </Collapsible.ScrollArea>
         </Drawer>
     );
-};
+});

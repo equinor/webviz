@@ -3,26 +3,29 @@ import React from "react";
 import {
     GuiEvent,
     GuiState,
+    RightDrawerContent,
     useGuiValue,
     useRegisterGuiEventSubscriber,
     useSetGuiState,
 } from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
+import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import { ContentHidden } from "@lib/newComponents/Hidden";
 
 import { ModulesList } from "../ModulesList";
 
 import { ColorPaletteSettings } from "./private-components/colorPaletteSettings";
 import { ModuleInstanceLog } from "./private-components/moduleInstanceLog";
 import { RealizationFilterSettings } from "./private-components/realizationFilterSettings";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
 
 type RightSettingsPanelProps = { workbench: Workbench };
 
-export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => {
+export const RightSettingsPanel = React.memo(function RightSettingsPanel(props: RightSettingsPanelProps) {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
 
+    const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
@@ -71,10 +74,18 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
 
     return (
         <div className="bg-surface flex h-full w-full flex-col">
-            <ModulesList workbench={props.workbench} onClose={handleOnClose} />
-            <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
-            <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
-            <ColorPaletteSettings workbench={props.workbench} onClose={handleOnClose} />
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.ModulesList}>
+                <ModulesList workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.RealizationFilterSettings}>
+                <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.ModuleInstanceLog}>
+                <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.ColorPaletteSettings}>
+                <ColorPaletteSettings workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
             <AlertDialog
                 open={dialogOpen}
                 onOpenChange={handleDialogCloseClick}
@@ -102,4 +113,4 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
             </AlertDialog>
         </div>
     );
-};
+});

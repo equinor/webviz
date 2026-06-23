@@ -5,7 +5,7 @@ import { isEqual } from "lodash";
 
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
 import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
@@ -23,9 +23,10 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
-export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
+export const RealizationFilterSettings = React.memo(function RealizationFilterSettings(
+    props: RealizationFilterSettingsProps,
+) {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
@@ -420,15 +421,15 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     }
 
     return (
-        <div className={`w-full ${drawerContent === RightDrawerContent.RealizationFilterSettings ? "h-full" : "h-0"}`}>
+        <div className="h-full w-full">
             <Drawer
                 title="Realization Filter"
                 icon={<FilterAlt />}
-                visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
+                visible={true}
                 onClose={handleFilterSettingsClose}
             >
                 {createEnsembleRealizationFilterList()}
             </Drawer>
         </div>
     );
-};
+});

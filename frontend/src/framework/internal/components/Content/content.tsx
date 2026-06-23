@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import type { Workbench } from "@framework/Workbench";
 
@@ -9,7 +9,7 @@ type ContentProps = {
     workbench: Workbench;
 };
 
-export const Content: React.FC<ContentProps> = (props) => {
+export const Content = React.memo(function Content(props: ContentProps) {
     return (
         <>
             <DataChannelVisualizationLayer workbench={props.workbench} />
@@ -18,4 +18,4 @@ export const Content: React.FC<ContentProps> = (props) => {
             </div>
         </>
     );
-};
+});

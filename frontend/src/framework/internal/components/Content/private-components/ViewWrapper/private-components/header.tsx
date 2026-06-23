@@ -18,7 +18,6 @@ import {
     GuiEvent,
     GuiState,
     RightDrawerContent,
-    useGuiState,
     useGuiValue,
     useSetGuiState,
 } from "@framework/GuiMessageBroker";
@@ -99,7 +98,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         [guiMessageBroker, moduleInstanceId],
     );
 
-    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
+    const setRightSettingsPanelWidth = useSetGuiState(
         guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent,
     );
@@ -107,13 +106,16 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const showLog = React.useCallback(
         function showLog() {
-            if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+            if (
+                guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+                SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+            ) {
                 setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
             }
             dashboard.setActiveModuleInstanceId(moduleInstanceId);
             setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
         },
-        [rightSettingsPanelWidth, setRightSettingsPanelWidth, dashboard, moduleInstanceId, setRightDrawerContent],
+        [guiMessageBroker, setRightSettingsPanelWidth, dashboard, moduleInstanceId, setRightDrawerContent],
     );
 
     const headerRef = React.useRef<HTMLDivElement>(null);
@@ -630,16 +632,13 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent,
-    );
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
 
     function handleShowLogClick(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+        if (guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
             setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
 
