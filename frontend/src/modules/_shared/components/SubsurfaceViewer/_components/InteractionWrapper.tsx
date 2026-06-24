@@ -19,7 +19,6 @@ import {
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
 import { ContextMenu } from "./ContextMenu";
-import { ControlsInfoBox } from "./ControlsInfoBox";
 import { HoverVisualizationWrapper } from "./HoverVisualizationWrapper";
 import type { ReadoutWrapperProps } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
@@ -213,7 +212,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 activePolylineName={activePolylineName}
             />
             <ContextMenu deckGlManager={deckGlManagerRef.current} />
-            <ControlsInfoBox />
         </HoverVisualizationWrapper>
     );
 }

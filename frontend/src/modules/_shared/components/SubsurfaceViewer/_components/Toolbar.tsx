@@ -20,6 +20,8 @@ import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
 import { type PolylinesPlugin, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 
+import { ControlsInfoPopover } from "./ControlsInfoPopover";
+
 export type ToolbarProps = {
     hideVerticalScaleControls?: boolean;
     verticalScale: number;
@@ -97,6 +99,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         <GenericToolbar>
             <div className="items-left text-md flex flex-col justify-start gap-1">
                 <div className="flex items-center justify-start gap-1">
+                    <ControlsInfoPopover />
                     <Button
                         onClick={handleFitInViewClick}
                         title="Reset view to fit all objects"
