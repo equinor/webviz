@@ -141,11 +141,12 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         >
             <ComboboxBase.InputGroup
                 render={(htmlProps, state) => {
-                    const { children, ...divProps } = htmlProps;
+                    const { children, className, ...divProps } = htmlProps;
                     return (
                         <div
                             {...divProps}
                             className={resolveClassNames(
+                                className,
                                 defaultedProps.layoutClassName,
                                 "form-element gap-x-sm px-sm flex cursor-text items-center",
                                 size !== "small" ||

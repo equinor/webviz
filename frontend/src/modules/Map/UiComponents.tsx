@@ -1,7 +1,7 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
+import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 
 //
 // Sub-component for aggregation/statistic selection
@@ -23,16 +23,16 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
     ];
 
     return (
-        <Label text="Aggregation/statistic:">
-            <Dropdown
-                options={itemArr}
+        <SettingWrapper label="Aggregation/statistic">
+            <ComboboxCompositions.WithBrowseButtons
+                items={itemArr}
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
-                onChange={(newVal: string) =>
+                onValueChange={(newVal: string) =>
                     props.onAggregationSelectionChange(
                         newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null,
                     )
                 }
             />
-        </Label>
+        </SettingWrapper>
     );
 }
