@@ -8,6 +8,7 @@ import type { MenuVariant } from "../../contexts/menuVariantContext";
 import { useMenuVariant } from "../../contexts/menuVariantContext";
 
 import type { MenuItemContentProps } from "./itemContent";
+import { ItemContent } from "./itemContent";
 
 export type MenuVariantItemProps = ContextMenuItemProps | MenuItemProps;
 
@@ -21,7 +22,9 @@ function SubMenuTriggerItemComponent<TProps extends MenuVariantItemProps>(
 
     return (
         <BaseComp ref={ref} {...mergedProps}>
-            <span className="grow">{props.children}</span>
+            <ItemContent icon={props.icon} description={props.description} text={props.text}>
+                {props.children}
+            </ItemContent>
             <ChevronRight fontSize="inherit" className="ml-2xs" />
         </BaseComp>
     );
