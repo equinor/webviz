@@ -13,7 +13,12 @@ import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
-import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "../_shared/utils/size";
+import {
+    getNextTextSize,
+    getTextSizeForSelectableSize,
+    SELECTABLE_SIZES_CLASSNAMES,
+    type SelectableSize,
+} from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 import { Typography } from "../Typography";
@@ -107,6 +112,7 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
      */
     inverted?: boolean;
 
+    /** Component size. The size will affect the slider controller area; this means the slider height will generally match other library components, but if also showing markers, the total height will be bigger than other components */
     size?: SelectableSize;
 
     /** Hides the slider indicator */
@@ -362,25 +368,33 @@ function SliderComponent(
     return (
         <SliderBase.Root
             {...baseProps}
-            className={resolveClassNames("gap-x-2xs px-2xs flex items-center", props.layoutClassName)}
+            className={resolveClassNames("px-2xs grid items-center", props.layoutClassName)}
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}
-            style={{
-                "--lock-gutter-size": `${clamp(wrapperSize.width * 0.1, 20, 40)}px`,
+            style={
+                {
+                    gridTemplateColumns: `
+                        ${showMinLock ? "auto var(--lock-gutter-size) " : ""}
+                        1fr
+                        ${showMaxLock ? " var(--lock-gutter-size) auto" : ""}
+                    `,
+                    "--lock-gutter-size": `${clamp(wrapperSize.width * 0.1, 20, 40)}px`,
 
-                // Couldn't find any EDS variable for these sizes; these pixels sizes are used in the design doc
-                "--thumb-size": `${{ small: 6, default: 8, large: 10 }[componentSize]}px`,
-                "--mark-size": `${{ small: 4, default: 6, large: 8 }[componentSize]}px`,
+                    // Couldn't find any EDS variable for these sizes; these pixels sizes are used in the design doc
+                    "--thumb-size": `${{ small: 6, default: 8, large: 10 }[componentSize]}px`,
+                    "--mark-size": `${{ small: 4, default: 6, large: 8 }[componentSize]}px`,
 
-                // Needed to avoid some jumpiness in some cases
-                "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
-                ...baseProps.style,
-            } as React.CSSProperties}
+                    // Needed to avoid some jumpiness in some cases
+                    "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
+                    ...baseProps.style,
+                } as React.CSSProperties
+            }
             render={(rootProps, state) => (
                 <div {...rootProps}>
                     {showMinLock && (
                         <LimitLockSwitch
+                            layoutClassName="mr-2xs"
                             size={componentSize}
                             disabled={state.disabled}
                             isLocked={minLocked}
@@ -392,11 +406,13 @@ function SliderComponent(
                         ref={ref}
                         className={resolveClassNames(
                             "group py-xs flex w-full cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed",
+                            SELECTABLE_SIZES_CLASSNAMES[componentSize],
                             {
                                 "pl-(--lock-gutter-size)": showMinLock,
                                 "pr-(--lock-gutter-size)": showMaxLock,
                             },
                         )}
+                        style={{ gridColumnEnd: `span ${1 + Number(showMinLock) + Number(showMaxLock)}` }}
                         onMouseEnter={() => setIsHovered(true)}
                         onMouseLeave={() => setIsHovered(false)}
                         onFocus={() => setIsFocused(true)}
@@ -478,6 +494,7 @@ function SliderComponent(
                                 disabled={state.disabled}
                                 min={defaultedProps.min}
                                 max={defaultedProps.max}
+                                // ! This can never be locked to min, since it's either hidden or the rightmost thumb
                                 lockedToMin={false}
                                 lockedToMax={maxLocked}
                                 valueLabelFormat={defaultedProps.valueLabelFormat}
@@ -486,40 +503,12 @@ function SliderComponent(
                                 onSetMaxLocked={setMaxLocked}
                             />
 
-                            {allMarkers.map((v, i) => {
-                                const range = defaultedProps.max - defaultedProps.min;
-                                const percentage = range === 0 ? 0 : ((v - defaultedProps.min) / range) * 100;
-
-                                return (
-                                    <React.Fragment key={i}>
-                                        <Dot leftPosPercent={percentage} />
-                                        <DotLabel
-                                            leftPosPercent={percentage}
-                                            value={v}
-                                            index={i}
-                                            size={componentSize}
-                                            disabled={props.disabled}
-                                            markerLabels={defaultedProps.markerLabels}
-                                            onClick={(v) => {
-                                                if (!isDualSliderValue(internalValue)) {
-                                                    updateValue(v, { reason: "marker-clicked" }, true);
-                                                    inputRefs[0].current?.focus();
-                                                } else {
-                                                    const nearestThumbIndex = minBy([0, 1], (idx) =>
-                                                        Math.abs(internalValue[idx] - v),
-                                                    )!;
-
-                                                    const newValue = [...internalValue];
-                                                    newValue[nearestThumbIndex] = v;
-
-                                                    updateValue(newValue, { reason: "marker-clicked" }, true);
-                                                    inputRefs[nearestThumbIndex].current?.focus();
-                                                }
-                                            }}
-                                        />
-                                    </React.Fragment>
-                                );
-                            })}
+                            {allMarkers.map((v, i) => (
+                                <Dot
+                                    leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
+                                    key={i}
+                                />
+                            ))}
                         </SliderBase.Track>
 
                         {showMaxLock && (
@@ -534,8 +523,10 @@ function SliderComponent(
                             />
                         )}
                     </SliderBase.Control>
+
                     {showMaxLock && (
                         <LimitLockSwitch
+                            layoutClassName="ml-2xs"
                             size={componentSize}
                             disabled={state.disabled}
                             isLocked={maxLocked}
@@ -646,6 +637,7 @@ function Thumb(props: {
 }
 
 function LimitLockSwitch(props: {
+    layoutClassName?: string;
     size: SelectableSize;
     disabled: boolean;
     isLocked: boolean;
@@ -655,6 +647,7 @@ function LimitLockSwitch(props: {
 
     return (
         <Button
+            layoutClassName={props.layoutClassName}
             variant="ghost"
             tone="accent"
             size={props.size}
@@ -700,7 +693,7 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
 
     return (
         <div
-            className={resolveClassNames("relative flex w-(--lock-gutter-size) items-center", {
+            className={resolveClassNames("flex w-(--lock-gutter-size) items-center", {
                 "-ml-(--lock-gutter-size)": props.placement === "start",
                 "-mr-(--lock-gutter-size)": props.placement === "end",
                 "flex-row-reverse": props.placement === "end",
@@ -708,7 +701,7 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
         >
             <div
                 ref={ref}
-                className="border-neutral bg-surface m-(--mark-thumb-diff) box-content size-(--mark-size) shrink-0 rounded-full border"
+                className="border-neutral bg-surface mx-(--mark-thumb-diff) box-content size-(--mark-size) shrink-0 rounded-full border"
                 onPointerDownCapture={() => !props.sliderState.disabled && props.onSetLocked(true)}
             />
 
@@ -777,11 +770,12 @@ function DotLabel(props: {
             variant="subtle"
             size={getNextTextSize(textSize, -1)}
             tone="neutral"
-            layoutClassName="font-bolder px-2xs py-4xs block rounded-sm absolute -translate-x-1/2 top-sm not-data-disabled:hover:bg-input focus:outline-focus"
-            layoutStyle={{ left: `${props.leftPosPercent}%` }}
-            // ! Slider will move the thumb during pointer-down event, so we stop it here to avoid jumpiness
+            // To make the marker labels "float", while still applying their height to the parent, we cram them all in the same grid cell, and then align them to their markers using a margin
+            layoutClassName="cursor-pointer font-bolder px-2xs py-4xs block -translate-x-1/2 rounded-sm not-data-disabled:hover:bg-input focus:outline-focus justify-self-start"
+            layoutStyle={{ marginLeft: `${props.leftPosPercent}%`, gridColumn: 1, gridRow: 1 }}
             onClick={handleOnClick}
             onKeyDown={(evt) => ["Enter", " "].includes(evt.key) && handleOnClick()}
+            // ! Slider will move the thumb during pointer-down event, so we stop it here to avoid jumpiness
             onPointerDown={(evt) => !props.disabled && evt.stopPropagation()}
         >
             {formattedValue}
@@ -817,10 +811,10 @@ function useLockState(props: {
 
     const setMinLocked = React.useCallback(
         function setMinLockedFunc(locked: boolean) {
-            if (!props.showMinLock) return;
+            if (!props.showMinLock && locked) return;
 
             internalSetMinLocked(locked);
-            if (locked && props.isDualSlider) {
+            if (locked && !props.isDualSlider) {
                 internalSetMaxLocked(false);
             }
         },
@@ -829,10 +823,10 @@ function useLockState(props: {
 
     const setMaxLocked = React.useCallback(
         function setMaxLockedFunc(locked: boolean) {
-            if (!props.showMaxLock) return;
+            if (!props.showMaxLock && locked) return;
 
             internalSetMaxLocked(locked);
-            if (locked && props.isDualSlider) {
+            if (locked && !props.isDualSlider) {
                 internalSetMinLocked(false);
             }
         },
@@ -951,6 +945,13 @@ function getSnappedValue(sortedMarkers: number[], value: number | number[], targ
             return prevMarker !== undefined ? prevMarker : sortedMarkers[0];
         }
     }
+}
+
+function getMarkerPercentage(value: number, min: number, max: number) {
+    const range = max - min;
+
+    if (range === 0) return 0;
+    return ((value - min) / range) * 100;
 }
 
 export const Slider = React.forwardRef(SliderComponent) as <

@@ -47,6 +47,10 @@ The \`Slider\` component allows users to select a value or range of values along
         markerLabels: {
             control: "boolean",
         },
+        showRangeLocks: {
+            control: "radio",
+            options: ["none", "min", "max", "both", true],
+        },
     },
 };
 
@@ -134,6 +138,17 @@ export const NoIndicator: Story = {
 };
 
 export const Size: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: `
+The \`size\` prop can be used to adjust the size of the slider. The default size is \`"default"\`, but you can also use \`"small"\` or \`"large"\`.
+
+The size will affect the slider controller area; this means the slider height will generally match other library components, but if also showing markers, the total height will be bigger than other components. 
+`,
+            },
+        },
+    },
     argTypes: { size: { table: { disable: true } } },
     render: (args) => (
         <div className="gap-y-lg flex flex-col">
