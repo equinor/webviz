@@ -136,6 +136,19 @@ export const Disabled: Story = {
     },
 };
 
+export const ReadOnly: Story = {
+    parameters: {
+        docs: {
+            description: { story: "Browse buttons are disabled when the combobox is readonly" },
+        },
+    },
+    args: {
+        items: SEASONS,
+        defaultValue: "summer",
+        readOnly: true,
+    },
+};
+
 export const Sizes: Story = {
     parameters: {
         docs: {

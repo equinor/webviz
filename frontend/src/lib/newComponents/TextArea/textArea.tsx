@@ -25,6 +25,8 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(fun
 
     return (
         <div
+            data-disabled={props.disabled ? "" : undefined}
+            data-readonly={props.readOnly ? "" : undefined}
             className={resolveClassNames(
                 props.layoutClassName,
                 "form-element",

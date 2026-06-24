@@ -30,7 +30,13 @@ export function BrowseButtons(props: BrowseButtonsProps): React.ReactNode {
     const flowHorizontal = defaultedProps.size === "small";
 
     return (
-        <div className={resolveClassNames("flex items-center", flowHorizontal ? "flex-row" : "flex-col")}>
+        <div
+            data-disabled={defaultedProps.disabled ? "" : undefined}
+            className={resolveClassNames(
+                "data-disabled:text-disabled flex items-center",
+                flowHorizontal ? "flex-row" : "flex-col",
+            )}
+        >
             <ArrowButton
                 data-horizontal={flowHorizontal ? "" : undefined}
                 className="not-data-horizontal:rounded-t-xs data-horizontal:rounded-l-xs"
@@ -71,7 +77,7 @@ function ArrowButton(props: ArrowButtonProps) {
         large: " text-body-sm",
     }[size];
 
-    const className = `focusable bg-neutral not-disabled:hover:bg-neutral-hover active:bg-neutral-active px-4xs flex flex-1 items-center justify-center focus:outline-0 ${textSizeClass}`;
+    const className = `focusable bg-neutral cursor-default not-disabled:hover:bg-neutral-hover note-disabled:active:bg-neutral-active px-4xs flex flex-1 items-center justify-center focus:outline-0 ${textSizeClass}`;
 
     const element = useRender({
         defaultTagName: "button",
