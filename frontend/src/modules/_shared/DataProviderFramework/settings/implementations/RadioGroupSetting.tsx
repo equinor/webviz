@@ -82,6 +82,7 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
                         options={options ?? []}
                         layout="horizontal"
                         size="small"
+                        disabled={props.disabled}
                     />
                 </div>
             );

@@ -14,7 +14,6 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
-
 type ValueType = {
     value: [number, number, number];
     visible: [boolean, boolean, boolean];
@@ -224,6 +223,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                         size="small"
                                         iconOnly
                                         variant="ghost"
+                                        disabled={props.disabled}
                                     >
                                         {visible[index] ? (
                                             <Visibility fontSize="inherit" />
@@ -240,12 +240,14 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                                         value={props.value?.value[index] ?? valueConstraints[index][0]}
                                         valueLabelDisplay="auto"
                                         step={valueConstraints[index][2]}
+                                        disabled={props.disabled}
                                     />
                                 </div>
                                 <div className={resolveClassNames("min-w-16 flex-1", { hidden: !inputsVisible })}>
                                     <NumberInput
                                         value={internalValue?.[index] ?? 0}
                                         onValueChange={(value) => handleInputChange(index, value)}
+                                        disabled={props.disabled}
                                     />
                                 </div>
                             </div>
@@ -256,12 +258,17 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                             variant="ghost"
                             tone="danger"
                             onClick={handleRevertChanges}
-                            disabled={!hasChanges}
+                            disabled={!hasChanges || props.disabled}
                             size="small"
                         >
                             Revert
                         </Button>
-                        <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges} size="small">
+                        <Button
+                            variant="contained"
+                            onClick={handleApplyChanges}
+                            disabled={!hasChanges || props.disabled}
+                            size="small"
+                        >
                             Apply
                         </Button>
                     </div>

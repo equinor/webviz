@@ -63,9 +63,9 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
                 <EnsembleDropdown
                     ensembles={ensembles}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
+                    value={props.value}
                     onChange={props.onValueChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                     showBrowseButtons
                 />
             );

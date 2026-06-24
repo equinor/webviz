@@ -139,6 +139,7 @@ export class PolygonVisualizationSetting implements StaticSettingImplementation<
                     onOpen={handleConfigOpen}
                     onDiscard={handleDiscardConfig}
                     onApply={handleApplyConfig}
+                    disabled={props.disabled}
                 >
                     {currentValue && <VisualizationPreview value={currentValue} />}
                 </SettingConfigButton>

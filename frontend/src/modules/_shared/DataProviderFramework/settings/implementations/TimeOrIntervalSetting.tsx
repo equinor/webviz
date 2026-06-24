@@ -76,9 +76,9 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
                 <ComboboxCompositions.WithBrowseButtons
                     items={options}
                     placeholder="Select a date"
-                    value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
+                    value={props.value?.toString()}
                     onValueChange={props.onValueChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

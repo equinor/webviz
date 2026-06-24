@@ -93,7 +93,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<
                         value={props.value ?? []}
                         onValueChange={handleChange}
                         showQuickSelectButtons={true}
-                        disabled={props.isOverridden}
+                        disabled={props.disabled}
                         multiple={true}
                         size={5}
                     />

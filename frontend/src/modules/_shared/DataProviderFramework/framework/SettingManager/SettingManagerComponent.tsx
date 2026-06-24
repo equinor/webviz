@@ -121,8 +121,6 @@ export function SettingManagerComponent<
                                 onValueChange={handleValueChanged}
                                 value={value}
                                 isValueValid={isValid}
-                                isOverridden={isExternallyControlled}
-                                overriddenValue={value}
                                 valueConstraints={valueConstraints}
                                 globalSettings={globalSettings}
                                 disabled={!isSettingEnabled(attributes.enabled)}

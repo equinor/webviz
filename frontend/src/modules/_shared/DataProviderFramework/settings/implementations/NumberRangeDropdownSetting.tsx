@@ -109,9 +109,9 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
             return (
                 <ComboboxCompositions.WithBrowseButtons
                     items={options}
-                    value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
+                    value={props.value?.toString()}
                     onValueChange={(val: string) => props.onValueChange(parseInt(val))}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

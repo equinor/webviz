@@ -178,7 +178,6 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                 [debouncedOnValueChange, min, max, step],
             );
 
-            const displayValue = !props.isOverridden ? localValue : (props.overriddenValue ?? min);
             return (
                 <div className="gap-x-sm flex items-center" ref={divRef}>
                     <div className="grow">
@@ -186,19 +185,21 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                             min={min}
                             max={max}
                             onValueChange={handleSliderChange}
-                            value={displayValue}
+                            value={localValue}
                             valueLabelDisplay="auto"
                             step={step}
+                            disabled={props.disabled}
                         />
                     </div>
                     <div className={resolveClassNames("w-24", { hidden: !inputVisible })}>
                         <NumberInput
-                            value={displayValue}
+                            value={localValue}
                             min={min}
                             max={max}
                             onValueChange={handleInputChange}
                             scrubAdornment="%"
                             scrubAreaPosition="end"
+                            disabled={props.disabled}
                         />
                     </div>
                 </div>

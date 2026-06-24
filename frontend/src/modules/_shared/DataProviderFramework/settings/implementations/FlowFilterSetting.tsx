@@ -297,6 +297,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("production", "oil", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "oil", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
@@ -306,6 +307,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("production", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "gas", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Water"
@@ -315,6 +317,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("production", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "water", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <div
                         className={resolveClassNames("mt-2 font-semibold", {
@@ -332,6 +335,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "water", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
@@ -341,6 +345,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "gas", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                 </div>
             );
@@ -356,6 +361,7 @@ type SliderNumberSettingProps = {
     onValueChange: (newValue: number) => void;
     onColorChange: (newColor: string) => void;
     inputVisible: boolean;
+    disabled?: boolean;
 };
 
 function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
@@ -401,7 +407,14 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     return (
         <>
-            <ColorSelect value={props.color} onValueChange={props.onColorChange} size="small" compact variant="ghost" />
+            <ColorSelect
+                value={props.color}
+                onValueChange={props.onColorChange}
+                size="small"
+                compact
+                variant="ghost"
+                disabled={props.disabled}
+            />
             <div className="text-body-sm">{props.label}</div>
             <Slider
                 min={min}
@@ -412,6 +425,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                 valueLabelFormat={(val: number) => formatNumber(val)}
                 step={step}
                 inverted
+                disabled={props.disabled}
             />
             {props.inputVisible && (
                 <NumberInput
@@ -420,6 +434,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                     max={max / 1000}
                     onValueChange={handleInputChange}
                     endAdornment="K"
+                    disabled={props.disabled}
                 />
             )}
         </>

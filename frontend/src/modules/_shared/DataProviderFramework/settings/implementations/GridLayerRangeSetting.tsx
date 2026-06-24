@@ -327,6 +327,25 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                 setInternalValue(newValue);
             }
 
+            function handleZoneChange(zoneName: string | null) {
+                const zone = valueConstraints.zones.find((z) => z.name === zoneName);
+                if (zone) {
+                    const newValue: InternalValueType = {
+                        ...(internalValue ?? {
+                            i: [0, 0],
+                            j: [0, 0],
+                            k: { type: "range", range: [0, 0] },
+                        }),
+                        k: {
+                            type: "zone",
+                            range: [zone.start_layer, zone.end_layer],
+                            name: zone.name,
+                        },
+                    };
+                    setInternalValue(newValue);
+                }
+            }
+
             return (
                 <>
                     <div
@@ -347,6 +366,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             onValueChange={(val) =>
                                                 handleInputChange(label, 0, val ?? valueConstraints.range[label][0])
                                             }
+                                            disabled={props.disabled}
                                         />
                                     </div>
                                     <div className="grow">
@@ -365,6 +385,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             valueLabelDisplay="auto"
                                             step={valueConstraints.range[label][2]}
                                             showRangeLocks
+                                            disabled={props.disabled}
                                         />
                                     </div>
                                     <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
@@ -375,6 +396,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             onValueChange={(val) =>
                                                 handleInputChange(label, 1, val ?? valueConstraints.range[label][1])
                                             }
+                                            disabled={props.disabled}
                                         />
                                     </div>
                                 </div>
@@ -391,6 +413,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                 onValueChange={handleRadioChange}
                                 layout="horizontal"
                                 size="small"
+                                disabled={props.disabled}
                             />
                         </div>
                         <div className="flex h-8 items-center">
@@ -404,6 +427,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             onValueChange={(val) =>
                                                 handleInputChange("k", 0, val ?? valueConstraints.range["k"][0])
                                             }
+                                            disabled={props.disabled}
                                         />
                                     </div>
                                     <div className="grow">
@@ -422,6 +446,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             valueLabelDisplay="auto"
                                             step={valueConstraints.range["k"][2]}
                                             showRangeLocks
+                                            disabled={props.disabled}
                                         />
                                     </div>
                                     <div className={resolveClassNames("w-1/5", { hidden: !inputsVisible })}>
@@ -432,6 +457,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                             onValueChange={(val) =>
                                                 handleInputChange("k", 1, val ?? valueConstraints.range["k"][1])
                                             }
+                                            disabled={props.disabled}
                                         />
                                     </div>
                                 </div>
@@ -441,25 +467,9 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                         label: zone.name,
                                         value: zone.name,
                                     }))}
+                                    disabled={props.disabled}
                                     value={internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined}
-                                    onValueChange={(val) => {
-                                        const zone = valueConstraints.zones.find((z) => z.name === val);
-                                        if (zone) {
-                                            const newValue: InternalValueType = {
-                                                ...(internalValue ?? {
-                                                    i: [0, 0],
-                                                    j: [0, 0],
-                                                    k: { type: "range", range: [0, 0] },
-                                                }),
-                                                k: {
-                                                    type: "zone",
-                                                    range: [zone.start_layer, zone.end_layer],
-                                                    name: zone.name,
-                                                },
-                                            };
-                                            setInternalValue(newValue);
-                                        }
-                                    }}
+                                    onValueChange={handleZoneChange}
                                 />
                             )}
                         </div>

@@ -107,10 +107,11 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
 
             return (
                 <NumberInput
-                    value={!props.isOverridden ? (props.value ?? min) : props.overriddenValue}
+                    value={props.value ?? min}
                     min={min}
                     max={max}
                     onValueChange={handleInputChange}
+                    disabled={props.disabled}
                 />
             );
         };

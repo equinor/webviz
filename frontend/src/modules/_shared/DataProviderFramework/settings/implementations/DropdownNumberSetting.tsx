@@ -57,9 +57,9 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
             return (
                 <ComboboxCompositions.WithBrowseButtons
                     items={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
+                    value={props.value}
                     onValueChange={props.onValueChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

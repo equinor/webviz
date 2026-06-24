@@ -102,7 +102,7 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
                     items={curveOptions}
                     value={selectedValue}
                     onValueChange={handleChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

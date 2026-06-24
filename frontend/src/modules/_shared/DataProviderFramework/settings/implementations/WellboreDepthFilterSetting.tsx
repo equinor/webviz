@@ -261,6 +261,7 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
                             items={topSurfaceOptions}
                             value={props.value?.topSurfaceName}
                             onValueChange={handleTopSurfaceChange}
+                            disabled={props.disabled}
                         />
                     </FieldCompositions.Default>
                     <FieldCompositions.Default label="Base Surface">
@@ -268,6 +269,7 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
                             items={baseSurfaceOptions}
                             value={props.value?.baseSurfaceName}
                             onValueChange={handleBaseSurfaceChange}
+                            disabled={props.disabled}
                         />
                     </FieldCompositions.Default>
                     <FieldCompositions.Default label="Realization Number">
@@ -275,6 +277,7 @@ export class WellboreDepthFilterSetting implements CustomSettingImplementation<
                             items={realizationNumOptions}
                             value={props.value?.realizationNum}
                             onValueChange={handleRealizationNumChange}
+                            disabled={props.disabled}
                         />
                     </FieldCompositions.Default>
                 </div>

@@ -67,7 +67,7 @@ export class SelectStringSetting implements CustomSettingImplementation<ValueTyp
                     value={props.value ?? undefined}
                     onValueChange={handleChange}
                     showQuickSelectButtons={true}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                     multiple={true}
                     size={5}
                 />

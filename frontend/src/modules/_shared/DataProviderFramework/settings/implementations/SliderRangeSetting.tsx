@@ -224,6 +224,7 @@ export class SliderRangeSetting implements CustomSettingImplementation<
                             min={min}
                             max={max}
                             onValueChange={(value) => handleInputChange(value, 0)}
+                            disabled={props.disabled}
                         />
                     </div>
                     <div className="flex-4">
@@ -238,6 +239,7 @@ export class SliderRangeSetting implements CustomSettingImplementation<
                             valueLabelDisplay="auto"
                             step={step}
                             showRangeLocks
+                            disabled={props.disabled}
                         />
                     </div>
                     <div className={resolveClassNames("min-w-16 flex-1", { hidden: !inputVisible })}>
@@ -246,6 +248,7 @@ export class SliderRangeSetting implements CustomSettingImplementation<
                             min={min}
                             max={max}
                             onValueChange={(value) => handleInputChange(value, 1)}
+                            disabled={props.disabled}
                         />
                     </div>
                 </div>

@@ -60,6 +60,7 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, V
                     colorPalettes={defaultColorPalettes}
                     type={ColorPaletteSelectorType.Categorical}
                     onValueChange={handleColorPaletteChange}
+                    disabled={props.disabled}
                 />
             );
         };

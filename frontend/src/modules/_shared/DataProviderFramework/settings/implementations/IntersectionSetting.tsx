@@ -252,9 +252,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 });
 
             const enableExtensionLength = extensionLengthConfig !== null && type === IntersectionType.WELLBORE;
-            const validExtensionLength = !props.isOverridden
-                ? createValidExtensionLength(props.value, defaultExtensionLength)
-                : createValidExtensionLength(props.overriddenValue, defaultExtensionLength);
+            const validExtensionLength = createValidExtensionLength(props.value, defaultExtensionLength);
 
             return (
                 <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
@@ -281,24 +279,20 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         placeholder={
                             type === IntersectionType.CUSTOM_POLYLINE ? "Select polyline..." : "Select wellbore..."
                         }
-                        value={!props.isOverridden ? props.value?.uuid : props.overriddenValue?.uuid}
+                        value={props.value?.uuid}
                         onValueChange={handleSelectionChange}
-                        disabled={props.isOverridden}
+                        disabled={props.disabled}
                     />
-                    {enableExtensionLength && (
-                        <>
-                            <span>Extension</span>
-                            <NumberInput
-                                disabled={props.isOverridden}
-                                value={validExtensionLength}
-                                min={extensionLengthConfig?.min}
-                                max={extensionLengthConfig?.max}
-                                onValueChange={handleExtensionLengthChange}
-                                scrubAdornment="m"
-                                scrubAreaPosition="end"
-                            />
-                        </>
-                    )}
+                    <span>Extension</span>
+                    <NumberInput
+                        disabled={props.disabled || !enableExtensionLength}
+                        value={validExtensionLength}
+                        min={extensionLengthConfig?.min}
+                        max={extensionLengthConfig?.max}
+                        onValueChange={handleExtensionLengthChange}
+                        scrubAdornment="m"
+                        scrubAreaPosition="end"
+                    />
                 </div>
             );
         };
