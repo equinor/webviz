@@ -35,7 +35,12 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             {...getDataAttributesForSelectableSize(size, true)}
         >
             <Switch {...switchProps} />
-            <Typography size={getTextSizeForSelectableSize(size)} family="body" data-baseline="center">
+            <Typography
+                size={getTextSizeForSelectableSize(size)}
+                family="body"
+                data-baseline="center"
+                layoutClassName="selectable__wrapper-inner-text"
+            >
                 {children ?? label}
             </Typography>
         </label>

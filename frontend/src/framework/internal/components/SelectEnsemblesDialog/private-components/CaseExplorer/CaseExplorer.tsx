@@ -203,11 +203,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <Field.Root layoutClassName="w-full gap-y-3xs flex h-full min-h-0 flex-col">
+        <div className="gap-y-3xs flex h-full min-h-0 w-full flex-col">
             <div className="gap-x-sm flex w-full items-center">
-                <Field.Label indicator={`(${numberOfCases})`} itemID="">
-                    Cases
-                </Field.Label>
+                <Field.Root>
+                    <Field.Label indicator={`(${numberOfCases})`} itemID="">
+                        Cases
+                    </Field.Label>
+                </Field.Root>
                 <span className="grow" />
                 <span className="text-body-xs text-neutral-subtle italic">
                     Last updated:{" "}
@@ -277,7 +279,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                 </StatusWrapper>
             </div>
             <StatusWrapper
-                className="min-h-0 grow"
+                className="mt-sm min-h-0 grow"
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
                 isPending={casesQuery.isFetching && !casesQuery.isRefetching}
             >
@@ -292,6 +294,6 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     onDataCollated={(data) => setNumberOfCases(data.length)}
                 />
             </StatusWrapper>
-        </Field.Root>
+        </div>
     );
 }

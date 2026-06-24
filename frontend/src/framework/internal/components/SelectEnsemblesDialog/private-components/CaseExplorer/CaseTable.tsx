@@ -35,7 +35,9 @@ export type CaseTableProps = {
 };
 
 // colKey doesn't always match the data field name on CaseInfo_api
-const COL_KEY_TO_FIELD: Record<string, string> = { author: "user" };
+const COL_KEY_TO_FIELD: Record<string, string> = { author: "user", "#": "numSelectedEnsembles" };
+
+type CaseDataWithEnsembleCount = CaseInfo_api & { numSelectedEnsembles: number };
 
 export function CaseTable(props: CaseTableProps): React.ReactNode {
     const { onDataCollated } = props;
@@ -75,7 +77,24 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         }));
     }
 
-    const filteredCaseData = useCaseDataFilter(props.caseData, tableFilterState);
+    const caseDataWithSelectionCount = React.useMemo<CaseDataWithEnsembleCount[]>(() => {
+        if (!props.caseData) return [];
+
+        const numSelectionsByCase = new Map<string, number>();
+
+        for (const ensemble of props.selectedEnsembles) {
+            const caseId = ensemble.ensembleIdent.getCaseUuid();
+            const currentCount = numSelectionsByCase.get(caseId) ?? 0;
+            numSelectionsByCase.set(caseId, currentCount + 1);
+        }
+
+        return props.caseData?.map((caseRow) => ({
+            ...caseRow,
+            numSelectedEnsembles: numSelectionsByCase.get(caseRow.uuid) ?? 0,
+        }));
+    }, [props.caseData, props.selectedEnsembles]);
+
+    const filteredCaseData = useCaseDataFilter(caseDataWithSelectionCount, tableFilterState);
     const collatedCaseData = React.useMemo(
         function sortCaseData() {
             if (!filteredCaseData) return [];
@@ -114,7 +133,8 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             onChangeRowSelection={props.onCaseSelected}
         >
             <Table.Head sticky>
-                <Table.Column colKey="#" width={56} sortable={false} />
+                {/* Tweak alignment so sorting-arrow show up in the middle */}
+                <Table.Column colKey="#" width={56} layoutClassName="text-center! pr-0!" />
                 <Table.Column colKey="name" widthInPercent={24}>
                     Name / id
                 </Table.Column>
@@ -157,23 +177,20 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                     containerRef={tableOverflowWrapperRef}
                     items={collatedCaseData}
                     itemSize={ROW_HEIGHT_PX["small"]}
-                    renderItem={(caseRow: CaseInfo_api) => {
-                        const numSelectedEnsemblesInCase = props.selectedEnsembles.filter(
-                            (e) => e.ensembleIdent.getCaseUuid() === caseRow.uuid,
-                        ).length;
+                    renderItem={(caseRow: CaseDataWithEnsembleCount) => {
                         return (
                             <Table.Row key={caseRow.uuid} rowKey={caseRow.uuid}>
                                 <Table.Cell>
                                     <Tooltip
-                                        content={`${numSelectedEnsemblesInCase} ensemble(s) selected in this case`}
+                                        content={`${caseRow.numSelectedEnsembles} ensemble(s) selected in this case`}
                                     >
                                         <div
                                             className={resolveClassNames(
                                                 "px-3xs py-4xs bg-canvas text-neutral-strong text-body-xs w-full cursor-help rounded-full text-center",
-                                                { "bg-accent!": numSelectedEnsemblesInCase > 0 },
+                                                { "bg-accent!": caseRow.numSelectedEnsembles > 0 },
                                             )}
                                         >
-                                            {numSelectedEnsemblesInCase}/{caseRow.ensembles.length}
+                                            {caseRow.numSelectedEnsembles}/{caseRow.ensembles.length}
                                         </div>
                                     </Tooltip>
                                 </Table.Cell>

@@ -188,7 +188,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const MIN_DIV_WIDTH = 250;
+            const MIN_DIV_WIDTH = 350;
             const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
             function makeDefaultValue() {
@@ -279,7 +279,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                 <div
                     className="gap-x-2xs gap-y-3xs grid items-center"
                     ref={divRef}
-                    style={{ gridTemplateColumns: inputVisible ? "24px 40px 3fr 1fr" : "24px 40px auto" }}
+                    style={{ gridTemplateColumns: inputVisible ? "24px 40px 1fr 6rem " : "24px 40px auto" }}
                 >
                     <div
                         className={resolveClassNames("font-semibold", {
@@ -417,6 +417,8 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
             />
             <div className="text-body-sm">{props.label}</div>
             <Slider
+                layoutClassName="grow"
+                size="small"
                 min={min}
                 max={max}
                 onValueChange={handleSliderChange}
@@ -429,6 +431,7 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
             />
             {props.inputVisible && (
                 <NumberInput
+                    size="small"
                     value={localValue / 1000}
                     min={min / 1000}
                     max={max / 1000}
