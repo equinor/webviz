@@ -225,6 +225,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
             >
                 <TableRootContext.Provider
                     value={{
+                        overflowWrapperRef: innerWrapperRef,
                         availableBodyHeight: availableBodyHeight,
                         sortable: props.sortable,
                         fixed: props.fixed,
