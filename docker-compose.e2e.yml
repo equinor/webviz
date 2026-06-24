@@ -1,0 +1,37 @@
+# Docker compose override used by the "e2e recordings" CI workflow.
+#
+# In CI there are no valid Azure credentials for Cosmos DB, so the backend cannot connect to a real
+# Cosmos DB account. This override spins up the local Cosmos DB Emulator and configures the backend
+# to initialize its persistence stores against the emulator instead.
+#
+# We use the next-generation ("vnext-preview") Linux emulator rather than the legacy emulator. The
+# legacy emulator runs the Windows SQL engine on Linux via a PAL shim and is heavy and crash-prone
+# on GitHub-hosted runners (sqlpal "Last Chance" / resource-starvation crashes). The vnext-preview
+# emulator is a lighter, Linux-native rewrite that uses far less memory and starts more reliably.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up --build --detach
+
+services:
+  backend-primary:
+    environment:
+      - WEBVIZ_USE_COSMOS_DB_EMULATOR=true
+    depends_on:
+      cosmos-db-emulator:
+        condition: service_healthy
+
+  cosmos-db-emulator:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview
+    platform: linux/amd64
+    tty: true
+    ports:
+      - "8081:8081" # Gateway endpoint (HTTP)
+    healthcheck:
+      # The vnext-preview emulator exposes a dedicated health-probe server on port 8080. Its /ready
+      # endpoint only reports success once PostgreSQL, the gateway and the explorer are all up, which
+      # is exactly what the backend needs before it initializes persistence against the emulator.
+      test: curl -fsS http://127.0.0.1:8080/ready -o /dev/null || exit 1
+      interval: 10s
+      retries: 18 # 3 minutes
+      start_period: 20s
+      timeout: 5s

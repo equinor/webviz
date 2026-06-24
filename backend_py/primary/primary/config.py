@@ -39,3 +39,8 @@ if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-dev-db.documents.azure.com:443/")
+
+# When set, the PersistenceStoresSingleton is initialized against the local Cosmos DB Emulator
+# instead of a real Azure Cosmos DB account. This is used for local development and CI (e.g. the
+# e2e recordings workflow) where no valid Azure credentials for Cosmos DB are available.
+USE_COSMOS_DB_EMULATOR = os.getenv("WEBVIZ_USE_COSMOS_DB_EMULATOR", "").lower() in ("true", "1", "yes")

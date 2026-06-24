@@ -318,6 +318,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                             value={selectedAsset}
                             onChange={handleAssetChanged}
                             disabled={assetOptions.length === 0}
+                            wrapperId="asset-dropdown"
                         />
                     </PendingWrapper>
                 </Label>
