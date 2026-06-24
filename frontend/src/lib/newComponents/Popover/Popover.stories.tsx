@@ -2,9 +2,8 @@ import React from "react";
 
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Dropdown } from "@lib/components/Dropdown";
-
 import { Button } from "../Button";
+import { Combobox } from "../Combobox";
 
 import { Popover } from "./index";
 
@@ -80,8 +79,8 @@ export const PersistentPopover: Story = {
                 <Popover.Popup>
                     <Popover.Title hideCloseButton>A persistent popover</Popover.Title>
                     {/* // TODO: Use the new base-ui dropdown once that's implemented */}
-                    <Dropdown
-                        options={[
+                    <Combobox
+                        items={[
                             { label: "Option 1", value: "option1" },
                             { label: "Option 2", value: "option2" },
                             { label: "Option 3", value: "option3" },

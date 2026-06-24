@@ -4,8 +4,8 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { CircularProgress } from "@lib/newComponents/CircularProgress";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -129,7 +129,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {makeContent()}
         </div>
     );

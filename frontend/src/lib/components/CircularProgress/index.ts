@@ -1,1 +1,0 @@
-export { CircularProgress } from "./circularProgress";

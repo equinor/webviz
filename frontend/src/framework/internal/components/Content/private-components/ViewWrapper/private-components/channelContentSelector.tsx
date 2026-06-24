@@ -6,9 +6,9 @@ import { createPortal } from "react-dom";
 
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
-import { Overlay } from "@lib/components/Overlay";
 import { Button } from "@lib/newComponents/Button";
 import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
+import { Scrim } from "@lib/newComponents/Scrim/scrim";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -217,7 +217,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
 
     return createPortal(
         <>
-            <Overlay visible />
+            <Scrim />
             <div
                 id="channel-selector"
                 className="bg-surface z-toast shadow-elevation-overlay border-neutral-subtle absolute flex flex-col overflow-auto rounded border"

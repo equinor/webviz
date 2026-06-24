@@ -3,7 +3,7 @@ import React from "react";
 import { upperFirst } from "lodash";
 
 import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
+import { Select } from "@lib/newComponents/Select";
 
 import type {
     CustomSettingImplementation,
@@ -61,12 +61,12 @@ export class SelectNumberSetting implements CustomSettingImplementation<ValueTyp
             }
 
             return (
-                <div className="mt-1 flex flex-col gap-1">
+                <div className="gap-3xs mt-3xs flex flex-col">
                     <Select
                         filter
                         options={options}
                         value={props.value ?? undefined}
-                        onChange={handleChange}
+                        onValueChange={handleChange}
                         showQuickSelectButtons={true}
                         disabled={props.disabled}
                         multiple={true}
