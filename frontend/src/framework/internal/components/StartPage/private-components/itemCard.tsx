@@ -109,7 +109,9 @@ function PopoverContent(
             {props.isDeleted && (
                 <p className="text-danger-subtle italic">This snapshot has been deleted by the owner.</p>
             )}
-            {props.description && <p className="text-body-sm whitespace-pre-wrap">{props.description}</p>}
+            {props.description && (
+                <p className="text-body-sm wrap-break-word hyphens-auto whitespace-pre-wrap">{props.description}</p>
+            )}
             {props.tooltipInfo && (
                 <ul className="not-first:mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
