@@ -533,6 +533,46 @@ function SliderComponent(
                             onSetLocked={setMaxLocked}
                         />
                     )}
+
+                    {/* Row 2, for marker labels */}
+                    {defaultedProps.markerLabels && (
+                        <div
+                            className={resolveClassNames("grid", {
+                                "-mt-2xs": componentSize === "small",
+                                "-mt-xs": componentSize === "default",
+                                "-mt-sm": componentSize === "large",
+                            })}
+                            style={{ gridColumnStart: showMinLock ? 3 : 1 }}
+                        >
+                            {allMarkers.map((v, i) => (
+                                <DotLabel
+                                    key={i}
+                                    leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
+                                    value={v}
+                                    index={i}
+                                    size={componentSize}
+                                    disabled={props.disabled}
+                                    markerLabels={defaultedProps.markerLabels}
+                                    onClick={(v) => {
+                                        if (!isDualSliderValue(internalValue)) {
+                                            updateValue(v, { reason: "marker-clicked" }, true);
+                                            inputRefs[0].current?.focus();
+                                        } else {
+                                            const nearestThumbIndex = minBy([0, 1], (idx) =>
+                                                Math.abs(internalValue[idx] - v),
+                                            )!;
+
+                                            const newValue = [...internalValue];
+                                            newValue[nearestThumbIndex] = v;
+
+                                            updateValue(newValue, { reason: "marker-clicked" }, true);
+                                            inputRefs[nearestThumbIndex].current?.focus();
+                                        }
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
         />
