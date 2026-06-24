@@ -171,7 +171,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                            onChange={handleEnsembleSelectionChange}
+                            onValueChange={handleEnsembleSelectionChange}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Realization" stacked annotations={selectedRealizationAnnotations}>

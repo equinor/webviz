@@ -232,7 +232,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={computedEnsembleIdent}
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onChange={handleEnsembleSelectionChange}
+                        onValueChange={handleEnsembleSelectionChange}
                     />
                 </SettingWrapper>
             </SettingWrapper.Section>

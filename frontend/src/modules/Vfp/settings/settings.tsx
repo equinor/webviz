@@ -119,7 +119,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                            onChange={setSelectedEnsembleIdent}
+                            onValueChange={setSelectedEnsembleIdent}
                         />
                     </SettingWrapper>
                     <SettingWrapper label="Realization" annotations={selectedRealizationNumberAnnotations}>

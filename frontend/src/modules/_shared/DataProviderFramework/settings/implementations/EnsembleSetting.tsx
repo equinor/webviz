@@ -64,7 +64,7 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
                     ensembles={ensembles}
                     ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                     value={props.value}
-                    onChange={props.onValueChange}
+                    onValueChange={props.onValueChange}
                     disabled={props.disabled}
                     showBrowseButtons
                 />

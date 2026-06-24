@@ -119,7 +119,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedRegularEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                            onChange={handleEnsembleSelectionChange}
+                            onValueChange={handleEnsembleSelectionChange}
                         />
                     </SettingWrapper>
                     <SettingWrapper
