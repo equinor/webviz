@@ -59,6 +59,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
             render={(inputProps, state) => (
                 <div
                     {...fieldStateAttrs}
+                    data-readonly={props.readOnly ? "" : undefined}
                     {...extractDataProps(inputProps)}
                     className={resolveClassNames(
                         layoutClassName,
@@ -66,7 +67,6 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                         "w-full",
                         "pl-sm",
                         "gap-xs flex items-center",
-                        "text-neutral-strong",
                         SELECTABLE_SIZES_CLASSNAMES[size],
                         size === "small" ? "pr-3xs" : "pr-sm",
                     )}
@@ -74,7 +74,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                     {makeStartAdornment(state)}
                     <input
                         {...inputProps}
-                        className="text-neutral-strong w-full min-w-0 flex-auto border-0 bg-transparent p-0 outline-0 data-disabled:cursor-not-allowed"
+                        className="w-full min-w-0 flex-auto border-0 bg-transparent p-0 outline-0"
                         size={inputSize}
                     />
                     {props.endAdornment}

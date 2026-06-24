@@ -36,6 +36,14 @@ export const Default: Story = {
     args: {},
 };
 
+export const Disabled: Story = {
+    args: { disabled: true },
+};
+
+export const Readonly: Story = {
+    args: { readOnly: true },
+};
+
 export const Sizing: Story = {
     argTypes: { size: { table: { disable: true } } },
     render: (args) => (
@@ -63,9 +71,7 @@ export const ScrubAdornment: Story = {
             {...args}
             defaultValue={0}
             scrubAdornment={<Percent />}
-            endAdornment={
-                <span className="px-xs py-4xs bg-accent text-body-xs block rounded">Adornment</span>
-            }
+            endAdornment={<span className="px-xs py-4xs bg-accent text-body-xs block rounded">Adornment</span>}
         />
     ),
 };

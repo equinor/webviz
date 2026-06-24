@@ -61,7 +61,7 @@ export const WithBrowseButtons = React.forwardRef<HTMLInputElement, WithBrowseBu
                 endAdornment={
                     <BrowseButtons
                         size={componentSize}
-                        disabled={buttonsDisabled}
+                        disabled={buttonsDisabled || props.readOnly}
                         onClickNext={handleNext}
                         onClickPrev={handlePrev}
                     />

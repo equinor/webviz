@@ -54,16 +54,13 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
         <NumberFieldBase.Root
             {...baseRootProps}
             {...fieldStateAttrs}
+            data-readonly={props.readOnly ? "" : undefined}
             className={resolveClassNames(
                 baseRootProps.className,
                 "form-element",
                 "bg-canvas grow",
                 "px-xs gap-xs flex items-center",
                 SELECTABLE_SIZES_CLASSNAMES[size],
-                {
-                    "outline-neutral text-neutral-subtle outline -outline-offset-1": !defaultedProps.disabled,
-                    "outline-transparent": defaultedProps.disabled,
-                },
             )}
             render={
                 <NumberFieldBase.Group>
@@ -81,7 +78,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
 
                     <BrowseButtons
                         size={size}
-                        disabled={defaultedProps.disabled}
+                        disabled={defaultedProps.disabled || defaultedProps.readOnly}
                         prevTitle="Increase"
                         nextTitle="Decrease"
                         renderPrev={<NumberFieldBase.Increment />}
