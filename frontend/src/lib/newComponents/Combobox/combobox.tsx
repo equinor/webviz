@@ -7,6 +7,7 @@ import { Clear, Error, UnfoldMore } from "@mui/icons-material";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import { withDefaults } from "../_shared/utils/defaultProps";
 import type { SelectableSize } from "../_shared/utils/size";
 import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
@@ -19,7 +20,6 @@ import { ComboboxValueChipsInput } from "./_components/inputVariants/valueChipsI
 import { ComboboxValueCountInput } from "./_components/inputVariants/valueCountInput";
 import { ComboboxListItem } from "./_components/item";
 import { ComboBoxPopup } from "./_components/popup";
-import { withDefaults } from "../_shared/utils/defaultProps";
 import type { AsyncState, ComboboxGroup, ComboboxItem, ComboboxItems } from "./types";
 
 function isGroupedItems<TValue>(items: ComboboxItems<TValue> | undefined): items is ComboboxGroup<TValue>[] {
