@@ -6,7 +6,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /** Accepts all standard toggle group props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
-export type GroupProps<TValue extends string> = ComponentWrapperProps<Omit<ToggleGroupBaseProps<TValue>, "ref">>;
+export type GroupProps<TValue extends string> = ComponentWrapperProps<ToggleGroupBaseProps<TValue>>;
 
 export const Group = React.forwardRef<HTMLDivElement, GroupProps<string>>(function ToggleGroup<TValue extends string>(
     props: GroupProps<TValue>,

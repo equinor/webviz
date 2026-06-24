@@ -6,10 +6,10 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /** Accepts all standard tabs panel props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
-export type PanelProps = ComponentWrapperProps<Omit<TabsPanelBaseProps, "ref">>;
+export type PanelProps = ComponentWrapperProps<TabsPanelBaseProps>;
 
 export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel(props, ref) {
-    const baseProps = resolveWrapperProps(props) as Omit<TabsPanelBaseProps, "ref">;
+    const baseProps = resolveWrapperProps(props);
 
     return <TabsBase.Panel {...baseProps} ref={ref} className={resolveClassNames(props.layoutClassName, "tabs")} />;
 });

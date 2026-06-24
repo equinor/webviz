@@ -6,7 +6,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /** Accepts all standard tabs root props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
-export type RootProps = ComponentWrapperProps<Omit<TabsRootBaseProps, "ref">>;
+export type RootProps = ComponentWrapperProps<TabsRootBaseProps>;
 
 export const Root = React.forwardRef<HTMLDivElement, RootProps>(function Root(props, ref) {
     const baseProps = resolveWrapperProps(props);

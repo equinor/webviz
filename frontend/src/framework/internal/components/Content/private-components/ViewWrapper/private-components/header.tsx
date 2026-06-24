@@ -378,17 +378,12 @@ function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode
                 <Menu.Popup>
                     {syncedSettings.length > 0 && (
                         <Menu.SubmenuItem
-                            triggerContent={
-                                <Menu.Item
-                                    key="synced-settings"
-                                    icon={
-                                        <Badge badgeContent={syncedSettings.length} tone="info">
-                                            <Link fontSize="inherit" />
-                                        </Badge>
-                                    }
-                                    text="Synced settings"
-                                />
+                            triggerIcon={
+                                <Badge badgeContent={syncedSettings.length} corner="top-left" tone="info">
+                                    <Link fontSize="inherit" />
+                                </Badge>
                             }
+                            triggerContent="Synced settings"
                         >
                             {syncedSettings.map((setting) => (
                                 <Menu.Item

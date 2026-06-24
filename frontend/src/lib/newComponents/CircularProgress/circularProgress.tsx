@@ -1,10 +1,11 @@
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { withDefaults } from "../_shared/utils/defaultProps";
 import { PIXEL_SIZES_CLASSNAMES, type PixelSize } from "../_shared/utils/size";
-import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
+import { resolveWrapperProps, type LayoutClassProps } from "../_shared/utils/wrapperProps";
 
 export type CircularProgressProps = {
-    /** Size of the spinner in pixels. @default 48 */
+    /** Size of the spinner. @default "em" */
     size?: PixelSize;
     /** Color scheme of the spinner. @default "default" */
     tone?: "default" | "on-emphasis";
@@ -22,12 +23,19 @@ const TONE_CLASSNAMES: Record<NonNullable<CircularProgressProps["tone"]>, { trac
 // Circle: cx=48, cy=48, r=22 inside viewBox="22 22 52 52"
 const CIRCUMFERENCE = 2 * Math.PI * 22;
 
-export function CircularProgress(props: CircularProgressProps) {
-    const { size = "em", tone = "default", variant = "indeterminate" } = props;
+const DEFAULT_PROPS = {
+    size: "em",
+    tone: "default",
+    variant: "indeterminate",
+} satisfies Partial<CircularProgressProps>;
 
-    const toneClasses = TONE_CLASSNAMES[tone];
-    const isIndeterminate = variant === "indeterminate";
-    const clampedValue = Math.min(100, Math.max(0, props.value ?? 0));
+export function CircularProgress(props: CircularProgressProps) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps, "size", "tone", "variant", "value");
+
+    const toneClasses = TONE_CLASSNAMES[defaultedProps.tone];
+    const isIndeterminate = defaultedProps.variant === "indeterminate";
+    const clampedValue = Math.min(100, Math.max(0, defaultedProps.value ?? 0));
     const strokeDashoffset = CIRCUMFERENCE * (1 - clampedValue / 100);
 
     return (
@@ -37,10 +45,11 @@ export function CircularProgress(props: CircularProgressProps) {
             aria-valuenow={isIndeterminate ? undefined : clampedValue}
             aria-valuemin={isIndeterminate ? undefined : 0}
             aria-valuemax={isIndeterminate ? undefined : 100}
+            style={baseProps.style}
             className={resolveClassNames(
                 { "animate-spin [animation-duration:1.4s]": isIndeterminate },
-                PIXEL_SIZES_CLASSNAMES[size],
-                props.layoutClassName,
+                PIXEL_SIZES_CLASSNAMES[defaultedProps.size],
+                baseProps.className,
             )}
             /* Avoid using viewBox="0 0 100 100" to prevent blurriness */
             viewBox="22 22 52 52"

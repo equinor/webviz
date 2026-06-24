@@ -9,7 +9,7 @@ import { getIconSizeClassNameForSelectableSize, type SelectableSize } from "@lib
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type CheckboxProps = ComponentWrapperProps<Omit<CheckboxRootProps, "ref">> & {
+export type CheckboxProps = ComponentWrapperProps<CheckboxRootProps> & {
     /** Size of the checkbox. @default "default" */
     size?: SelectableSize;
 };
@@ -23,7 +23,7 @@ export const Checkbox = React.forwardRef<HTMLSpanElement, CheckboxProps>(functio
             {...baseProps}
             ref={ref}
             className={resolveClassNames(
-                props.layoutClassName,
+                baseProps.className,
                 "selectable group/checkbox text-accent-subtle box-border flex aspect-square w-fit appearance-none items-center justify-center rounded-full",
                 getIconSizeClassNameForSelectableSize(size),
             )}

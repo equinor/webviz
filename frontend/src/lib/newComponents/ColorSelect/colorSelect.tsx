@@ -2,12 +2,13 @@ import React from "react";
 
 import { ExpandMore } from "@mui/icons-material";
 
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { Button, type ButtonProps } from "../Button";
 import { ColorTile } from "../ColorTile";
 
 export type ColorSelectProps = Omit<
     ButtonProps,
-    "onClick" | "onChange" | "children" | "iconOnly" | "round" | "tone" | "pressed" | "variant" | "ref"
+    "onClick" | "onChange" | "children" | "iconOnly" | "round" | "tone" | "pressed" | "variant"
 > & {
     /** The current hex color value. */
     value: string;
@@ -19,8 +20,13 @@ export type ColorSelectProps = Omit<
     variant?: Exclude<ButtonProps["variant"], "contained">;
 };
 
+const DEFAULT_PROPS = {
+    variant: "outlined",
+} satisfies Partial<ColorSelectProps>;
+
 export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>(function ColorSelect(props, ref) {
-    const { value, onValueChange, onValueCommit, variant = "outlined", ...buttonProps } = props;
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const { value, onValueChange, onValueCommit, ...buttonProps } = defaultedProps;
     const [selectedColor, setSelectedColor] = React.useState(value);
     const [prevSelectedColor, setPrevSelectedColor] = React.useState(value);
 
@@ -57,13 +63,13 @@ export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>
 
     return (
         <>
-            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} variant={variant} tone="neutral" compact>
-                <ColorTile.Tile color={selectedColor} size={props.size} />
-                {props.size !== "small" && <ExpandMore fontSize="inherit" />}
+            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} tone="neutral" compact>
+                <ColorTile.Tile color={selectedColor} size={defaultedProps.size} />
+                {defaultedProps.size !== "small" && <ExpandMore fontSize="inherit" />}
             </Button>
             <input
-                id={props.id}
-                disabled={props.disabled}
+                id={defaultedProps.id}
+                disabled={defaultedProps.disabled}
                 ref={inputRef}
                 type="color"
                 value={selectedColor}

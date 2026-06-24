@@ -17,8 +17,7 @@ import {
     type ButtonStyleProps,
 } from "../_utils/resolveButtonStyle";
 
-type WrapperProps = ComponentWrapperProps<Omit<ButtonPropsBase, "ref">>;
-export type ButtonProps = WrapperProps &
+export type ButtonProps = ComponentWrapperProps<ButtonPropsBase> &
     ButtonStyleProps & {
         /** Controls the pressed/toggled visual state of the button. */
         pressed?: boolean;

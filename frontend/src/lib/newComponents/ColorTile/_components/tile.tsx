@@ -1,5 +1,6 @@
-import type React from "react";
+import React from "react";
 
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type TileProps = {
@@ -17,14 +18,21 @@ const SIZE_TO_CLASSNAMES: Record<NonNullable<TileProps["size"]>, string> = {
     large: "h-6",
 };
 
-export const Tile: React.FC<TileProps> = (props) => {
+const DEFAULT_PROPS = {
+    grouped: false,
+    size: "default",
+} satisfies Partial<TileProps>;
+
+export const Tile = React.forwardRef<HTMLDivElement, TileProps>(function Tile(props, ref) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
     return (
         <div
-            className={resolveClassNames("box-border rounded", SIZE_TO_CLASSNAMES[props.size || "default"], {
-                "border-neutral-subtle aspect-square border": !props.grouped,
-                "grow not-first-of-type:rounded-l-none not-last-of-type:rounded-r-none": props.grouped,
+            ref={ref}
+            className={resolveClassNames("box-border rounded", SIZE_TO_CLASSNAMES[defaultedProps.size], {
+                "border-neutral-subtle aspect-square border": !defaultedProps.grouped,
+                "grow not-first-of-type:rounded-l-none not-last-of-type:rounded-r-none": defaultedProps.grouped,
             })}
-            style={{ backgroundColor: props.color }}
+            style={{ backgroundColor: defaultedProps.color }}
         />
     );
-};
+});

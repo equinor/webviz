@@ -1,7 +1,6 @@
 import React from "react";
 
-import { omit } from "lodash";
-
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 import {
     getDataAttributesForSelectableSize,
@@ -22,13 +21,19 @@ export type WithLabelProps = CheckboxProps & {
     direction?: "horizontal" | "vertical";
 };
 
+const DEFAULT_PROPS = {
+    direction: "horizontal",
+} satisfies Partial<WithLabelProps>;
+
 export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(function CheckboxWithLabel(props, ref) {
-    const { label, children, direction = "horizontal", layoutClassName, ...checkboxProps } = omit(props, "size");
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const { label, children, direction, layoutClassName, layoutStyle, ...checkboxProps } = defaultedProps;
     const size = useComponentSize(props);
 
     return (
         <label
             ref={ref}
+            style={layoutStyle}
             data-disabled={checkboxProps.disabled || undefined}
             data-readonly={checkboxProps.readOnly || undefined}
             className={resolveClassNames(
@@ -41,7 +46,7 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             data-selectable-wrapper
             {...getDataAttributesForSelectableSize(size, true)}
         >
-            <Checkbox {...checkboxProps} size={size} />
+            <Checkbox {...checkboxProps} />
             <Typography
                 size={getTextSizeForSelectableSize(size)}
                 family="body"

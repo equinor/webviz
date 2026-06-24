@@ -14,7 +14,7 @@ import { useComponentSize } from "../_shared/contexts/componentSizeContext";
 import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
-export type NumberInputProps = ComponentWrapperProps<Omit<NumberFieldRootBaseProps, "className">> & {
+export type NumberInputProps = ComponentWrapperProps<NumberFieldRootBaseProps> & {
     /** Element placed in a draggable scrub area for adjusting the value by dragging. */
     scrubAdornment?: React.ReactNode;
     /** Element rendered at the leading end of the input. */

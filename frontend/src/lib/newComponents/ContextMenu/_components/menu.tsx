@@ -4,20 +4,28 @@ import type { ContextMenuPopupProps, ContextMenuPositionerProps } from "@base-ui
 import { ContextMenu as ContextMenuBase } from "@base-ui/react";
 
 import { ComponentSizeContext } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { PortalContainerContext } from "@lib/newComponents/_shared/contexts/portalContainerContext";
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { Typography } from "@lib/newComponents/Typography";
 
-import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
-
 export type MenuProps = Omit<ContextMenuPopupProps, "className" | "style"> & {
     children: React.ReactNode;
+    /** Size of each menu item. @default "small" */
     itemSize?: SelectableSize;
+    /** Which side of the anchor to display the menu. */
     side?: ContextMenuPositionerProps["side"];
+    /** Alignment of the menu relative to the anchor. */
     align?: ContextMenuPositionerProps["align"];
 };
 
-export function Menu(props: MenuProps) {
-    const { itemSize = "small", side, align, ...otherProps } = props;
+const DEFAULT_PROPS = {
+    itemSize: "small",
+} satisfies Partial<MenuProps>;
+
+export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(function Menu(props, ref) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const { itemSize, side, align, children, ...otherProps } = defaultedProps;
 
     const portalContainer = React.useContext(PortalContainerContext);
 
@@ -28,11 +36,12 @@ export function Menu(props: MenuProps) {
                     {...otherProps}
                     as={ContextMenuBase.Popup}
                     size={getTextSizeForSelectableSize(itemSize)}
+                    ref={ref}
                     layoutClassName="menu__popup"
                 >
-                    <ComponentSizeContext.Provider value={itemSize}>{props.children}</ComponentSizeContext.Provider>
+                    <ComponentSizeContext.Provider value={itemSize}>{children}</ComponentSizeContext.Provider>
                 </Typography>
             </ContextMenuBase.Positioner>
         </ContextMenuBase.Portal>
     );
-}
+});

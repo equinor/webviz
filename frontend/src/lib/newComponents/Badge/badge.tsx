@@ -2,6 +2,7 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { withDefaults } from "../_shared/utils/defaultProps";
 import type { Tone } from "../_shared/types/tones";
 
 export type BadgeProps = {
@@ -15,6 +16,8 @@ export type BadgeProps = {
     children?: React.ReactNode;
     /** When true, hides the badge without removing it from the DOM. @default false */
     invisible?: boolean;
+    /** Accessible label for the badge indicator. Defaults to the badge content when it is a string or number. */
+    ariaLabel?: string;
 };
 
 const TONE_TO_CLASSNAMES: Record<NonNullable<BadgeProps["tone"]>, string> = {
@@ -33,23 +36,34 @@ const CORNER_TO_CLASSNAMES: Record<NonNullable<BadgeProps["corner"]>, string> = 
     "bottom-left": "bottom-0 left-0 -translate-x-2/3 translate-y-2/3",
 };
 
+const DEFAULT_PROPS = {
+    tone: "accent",
+    corner: "top-right",
+    invisible: false,
+} satisfies Partial<BadgeProps>;
+
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(function Badge(props, ref) {
-    const { tone = "accent", corner = "top-right", invisible = false } = props;
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const { ariaLabel: explicitAriaLabel, badgeContent } = defaultedProps;
+    const contentIsTextual = typeof badgeContent === "string" || typeof badgeContent === "number";
+    const ariaLabel = explicitAriaLabel ?? (contentIsTextual ? String(badgeContent) : undefined);
 
     return (
         <span ref={ref} className="relative inline-flex items-center justify-center">
-            {props.children}
+            {defaultedProps.children}
             <span
+                aria-label={ariaLabel}
+                aria-hidden={defaultedProps.invisible || undefined}
                 className={resolveClassNames(
                     "text-body-xs z-elevated px-3xs absolute box-border flex h-4 min-h-2 min-w-4 items-center justify-center rounded-full font-sans leading-none whitespace-nowrap",
-                    TONE_TO_CLASSNAMES[tone],
-                    CORNER_TO_CLASSNAMES[corner],
+                    TONE_TO_CLASSNAMES[defaultedProps.tone],
+                    CORNER_TO_CLASSNAMES[defaultedProps.corner],
                     {
-                        invisible,
+                        invisible: defaultedProps.invisible,
                     },
                 )}
             >
-                {props.badgeContent}
+                {defaultedProps.badgeContent}
             </span>
         </span>
     );

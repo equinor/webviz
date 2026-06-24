@@ -8,7 +8,7 @@ import { getIconSizeClassNameForSelectableSize, type SelectableSize } from "@lib
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-export type RadioProps = ComponentWrapperProps<Omit<RadioRootBaseProps, "ref">> & {
+export type RadioProps = ComponentWrapperProps<RadioRootBaseProps> & {
     /** Size of the radio button. @default "default" */
     size?: SelectableSize;
 };

@@ -9,6 +9,7 @@ export type ContentProps = LayoutClassProps & {
 export function Content(props: ContentProps) {
     return (
         <div
+            style={props.layoutStyle}
             className={resolveClassNames(
                 props.layoutClassName,
                 "group-data-[state=open]/scrollareaGroup:animate-slideDown group-data-[state=closed]/scrollareaGroup:animate-slideUp px-xs py-xs",

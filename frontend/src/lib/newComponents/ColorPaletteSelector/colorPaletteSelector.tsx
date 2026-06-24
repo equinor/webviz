@@ -41,7 +41,7 @@ export type ColorPaletteSelectorProps = Omit<
     type: ColorPaletteSelectorType;
     /** Number of discrete steps shown in the preview. Only used when `type` is `Discrete`. */
     steps?: number;
-    /** Whether the selector is disabled. */
+    /** Whether the selector is disabled. @default false */
     disabled?: boolean;
 };
 

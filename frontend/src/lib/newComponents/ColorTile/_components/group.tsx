@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperProps";
@@ -12,23 +12,24 @@ export type GroupProps = LayoutClassProps & {
     colorPalette: ColorPalette;
     /** Controls the height of each tile. @default "default" */
     size?: "small" | "default" | "large";
-    /** When true, adds a gap between tiles instead of rendering them as a fused strip. */
+    /** When true, adds a gap between tiles instead of rendering them as a fused strip. @default false */
     gap?: boolean;
 };
 
-export const Group: React.FC<GroupProps> = (props) => {
-    const { layoutClassName, gap, colorPalette } = props;
+export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group(props, ref) {
     const size = useComponentSize(props);
     return (
         <div
-            className={resolveClassNames(layoutClassName, "flex", {
-                "gap-x-xs": gap,
-                "border-neutral rounded": !gap,
+            ref={ref}
+            style={props.layoutStyle}
+            className={resolveClassNames(props.layoutClassName, "flex", {
+                "gap-x-xs": props.gap,
+                "border-neutral rounded": !props.gap,
             })}
         >
-            {colorPalette.getColors().map((color) => (
+            {props.colorPalette.getColors().map((color) => (
                 <Tile key={color} color={color} grouped size={size} />
             ))}
         </div>
     );
-};
+});

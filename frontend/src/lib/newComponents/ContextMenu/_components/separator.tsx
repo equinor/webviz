@@ -1,5 +1,7 @@
+import React from "react";
+
 import { ContextMenu as ContextMenuBase } from "@base-ui/react";
 
-export function Separator() {
-    return <ContextMenuBase.Separator className="menu__separator" />;
-}
+export const Separator = React.forwardRef<HTMLDivElement>(function Separator(_, ref) {
+    return <ContextMenuBase.Separator ref={ref} className="menu__separator" />;
+});

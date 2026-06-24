@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
@@ -30,24 +30,23 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
             <div
                 key={`${color}-${i}`}
                 className="h-full grow first-of-type:rounded-l last-of-type:rounded-r"
-                style={{
-                    backgroundColor: color,
-                }}
+                style={{ backgroundColor: color }}
             />,
         );
     }
     return samples;
 }
 
-export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
-    const { layoutClassName } = props;
+export const ColorGradient = React.forwardRef<HTMLDivElement, ColorGradientProps>(function ColorGradient(props, ref) {
     const size = useComponentSize(props);
 
     if (props.steps) {
         return (
             <div
+                ref={ref}
+                style={props.layoutStyle}
                 className={resolveClassNames(
-                    layoutClassName,
+                    props.layoutClassName,
                     SIZE_TO_CLASSNAMES[size],
                     "border-neutral-strong flex rounded border",
                 )}
@@ -59,14 +58,13 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
 
     return (
         <div
+            ref={ref}
+            style={{ ...props.layoutStyle, backgroundImage: props.colorPalette.getGradient() }}
             className={resolveClassNames(
-                layoutClassName,
+                props.layoutClassName,
                 SIZE_TO_CLASSNAMES[size],
                 "border-neutral-strong rounded border",
             )}
-            style={{
-                backgroundImage: props.colorPalette.getGradient(),
-            }}
         />
     );
-};
+});

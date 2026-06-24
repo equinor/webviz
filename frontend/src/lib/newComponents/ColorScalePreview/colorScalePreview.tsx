@@ -1,5 +1,8 @@
+import React from "react";
+
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
 import type { SelectableSize } from "@lib/newComponents/_shared/utils/size";
+import type { LayoutClassProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -25,7 +28,7 @@ export type ColorScalePreviewProps = {
     id: string;
     /** Controls the height of the preview bar. @default "default" */
     size?: SelectableSize;
-};
+} & LayoutClassProps;
 
 const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string> = {
     small: "h-4",
@@ -33,35 +36,39 @@ const SIZE_TO_CLASSNAMES: Record<NonNullable<ColorGradientProps["size"]>, string
     large: "h-6",
 };
 
-export function ColorScalePreview(props: ColorScalePreviewProps): React.ReactNode {
-    const size = useComponentSize(props);
+export const ColorScalePreview = React.forwardRef<SVGSVGElement, ColorScalePreviewProps>(
+    function ColorScalePreview(props, ref) {
+        const size = useComponentSize(props);
 
-    const colorScale = new ColorScale({
-        colorPalette: props.colorPalette,
-        type: props.discrete ? ColorScaleType.Discrete : ColorScaleType.Continuous,
-        gradientType: props.gradientType,
-        steps: props.steps,
-    });
+        const colorScale = new ColorScale({
+            colorPalette: props.colorPalette,
+            type: props.discrete ? ColorScaleType.Discrete : ColorScaleType.Continuous,
+            gradientType: props.gradientType,
+            steps: props.steps,
+        });
 
-    if (props.gradientType === ColorScaleGradientType.Diverging) {
-        colorScale.setRangeAndMidPoint(props.min, props.max, props.divMidPoint);
-    }
+        if (props.gradientType === ColorScaleGradientType.Diverging) {
+            colorScale.setRangeAndMidPoint(props.min, props.max, props.divMidPoint);
+        }
 
-    const colorScaleGradientId = makeGradientId(props.id, props.colorPalette);
+        const colorScaleGradientId = makeGradientId(props.id, props.colorPalette);
 
-    return (
-        <svg
-            className={resolveClassNames("text-neutral-strong w-full rounded", SIZE_TO_CLASSNAMES[size])}
-            version="1.1"
-            xmlns="http://www.w3.org/2000/svg"
-        >
-            <defs>
-                <GradientDef id={props.id} colorScale={colorScale} />
-            </defs>
-            <rect height="100%" width="100%" fill={`url(#${colorScaleGradientId})`} stroke="currentColor" />
-        </svg>
-    );
-}
+        return (
+            <svg
+                ref={ref}
+                style={props.layoutStyle}
+                className={resolveClassNames(props.layoutClassName, "text-neutral-strong w-full rounded", SIZE_TO_CLASSNAMES[size])}
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <defs>
+                    <GradientDef id={props.id} colorScale={colorScale} />
+                </defs>
+                <rect height="100%" width="100%" fill={`url(#${colorScaleGradientId})`} stroke="currentColor" />
+            </svg>
+        );
+    },
+);
 
 type GradientDefProps = {
     id: string;

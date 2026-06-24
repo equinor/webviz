@@ -7,7 +7,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /** Accepts all standard switch props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
-export type SwitchProps = ComponentWrapperProps<Omit<SwitchRootProps, "ref">>;
+export type SwitchProps = ComponentWrapperProps<SwitchRootProps>;
 
 export const Switch = React.forwardRef<HTMLSpanElement, SwitchProps>(function Switch(props, ref) {
     const baseProps = resolveWrapperProps(props);

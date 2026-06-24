@@ -12,7 +12,7 @@ import type { SelectableSize } from "../../_shared/utils/size";
 import { SELECTABLE_SIZES_CLASSNAMES } from "../../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../../_shared/utils/wrapperProps";
 
-export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "ref" | "size" | "type">> & {
+export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "size" | "type">> & {
     /** Element rendered at the start (left) of the input. Replaced by an error icon when the field is invalid. */
     startAdornment?: React.ReactNode;
     /** Element rendered at the end (right) of the input. */

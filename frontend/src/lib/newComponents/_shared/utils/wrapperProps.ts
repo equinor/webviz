@@ -19,7 +19,7 @@ export type LayoutClassProps = {
  */
 export type ComponentWrapperProps<TBaseUIProps extends Record<string, any>> = Omit<
     TBaseUIProps,
-    "className" | "render" | "style"
+    "className" | "render" | "style" | "ref"
 > &
     LayoutClassProps;
 

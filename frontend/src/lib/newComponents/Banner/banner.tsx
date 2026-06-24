@@ -4,7 +4,8 @@ import { Close } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
+import { withDefaults } from "../_shared/utils/defaultProps";
+import { resolveWrapperProps, type LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 
 export type BannerProps = LayoutClassProps & {
@@ -25,21 +26,28 @@ const TONE_TO_CLASSNAMES: Record<NonNullable<Exclude<BannerProps["tone"], "defau
     info: "bg-info-surface border-info-strong",
 };
 
+const DEFAULT_PROPS = {
+    tone: "info",
+    dismissable: false,
+} satisfies Partial<BannerProps>;
+
 export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(function Banner(props, ref) {
-    const { tone = "info", dismissable = false } = props;
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps, "tone", "dismissable", "onDismiss", "children");
 
     return (
         <div
+            {...baseProps}
             ref={ref}
             className={resolveClassNames(
-                props.layoutClassName,
+                baseProps.className,
                 "p-sm gap-x-sm flex items-center rounded border",
-                TONE_TO_CLASSNAMES[tone],
+                TONE_TO_CLASSNAMES[defaultedProps.tone],
             )}
         >
-            <span className="grow">{props.children}</span>
-            {dismissable && (
-                <Button variant="ghost" tone="neutral" size="small" onClick={props.onDismiss} iconOnly>
+            <span className="grow">{defaultedProps.children}</span>
+            {defaultedProps.dismissable && (
+                <Button variant="ghost" tone="neutral" size="small" onClick={defaultedProps.onDismiss} iconOnly>
                     <Close fontSize="inherit" />
                 </Button>
             )}

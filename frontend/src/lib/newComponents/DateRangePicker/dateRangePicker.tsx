@@ -28,7 +28,7 @@ export const DateRangePicker = React.forwardRef<HTMLDivElement, DateRangePickerP
             <DateRangePickerBase
                 {...baseProps}
                 ref={ref}
-                className={resolveClassNames("webviz-eds-date-range-picker", props.layoutClassName)}
+                className={resolveClassNames("webviz-eds-date-range-picker", baseProps.className)}
                 data-size={size}
             />
         );

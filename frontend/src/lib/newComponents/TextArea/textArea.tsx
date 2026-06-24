@@ -9,7 +9,7 @@ export type TextAreaProps = {
     onValueChange?: (value: string) => void;
     /** Optional element rendered below the textarea, aligned to the right. */
     bottomAdornment?: React.ReactNode;
-} & ComponentWrapperProps<Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "className">>;
+} & ComponentWrapperProps<React.TextareaHTMLAttributes<HTMLTextAreaElement>>;
 
 export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(function TextArea(props, ref) {
     const { onValueChange, onChange, bottomAdornment, ...rest } = props;

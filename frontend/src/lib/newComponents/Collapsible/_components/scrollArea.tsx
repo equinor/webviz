@@ -11,6 +11,7 @@ export const ScrollArea = React.forwardRef<HTMLDivElement, ScrollAreaProps>(func
     return (
         <div
             ref={ref}
+            style={props.layoutStyle}
             data-collapsible-scroll-area
             className={resolveClassNames(
                 props.layoutClassName,

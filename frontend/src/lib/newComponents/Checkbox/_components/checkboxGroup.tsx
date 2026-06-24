@@ -11,5 +11,5 @@ export type CheckboxGroupProps = ComponentWrapperProps<CheckboxGroupBaseProps>;
 export const CheckboxGroup = React.forwardRef<HTMLDivElement, CheckboxGroupProps>(function CheckboxGroup(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
-    return <CheckboxGroupBase {...baseProps} ref={ref} className={props.layoutClassName} />;
+    return <CheckboxGroupBase {...baseProps} ref={ref} />;
 });

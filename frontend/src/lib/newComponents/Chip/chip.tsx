@@ -3,20 +3,27 @@ import React from "react";
 
 import { Clear } from "@mui/icons-material";
 
+import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 
 export type ChipProps = {
+    /** The HTML element or component to render as the chip container. @default "div" */
     as?: React.ElementType;
+    /** Content rendered inside the chip. */
     children?: React.ReactNode;
+    /** Controls the color tone of the chip. */
     tone: "accent" | "neutral" | "danger" | "warning";
+    /** When true, disables interaction with the chip. @default false */
     disabled?: boolean;
+    /** When true, shows the chip in a selected/active state. @default false */
     selected?: boolean;
+    /** Element rendered at the leading end of the chip. */
     startAdornment?: React.ReactNode;
+    /** Called when the remove button is clicked. */
     onRemove?: () => void;
-
     /**
      * Utility function that allows you to wrap the button. Generally only relevant for rendering Base-UI function components, such as `Combobox.ChipRemove`
      *
@@ -27,10 +34,17 @@ export type ChipProps = {
     wrapRemoveButton?: (button: React.ReactElement) => React.ReactNode;
 } & ComponentWrapperProps<HTMLAttributes<HTMLElement>>;
 
+const DEFAULT_PROPS = {
+    as: "div",
+    disabled: false,
+    selected: false,
+} satisfies Partial<ChipProps>;
+
 function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): React.ReactNode {
-    const Component = props.as ?? "div";
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const Component = defaultedProps.as;
     const baseProps = resolveWrapperProps(
-        props,
+        defaultedProps,
         "as",
         "children",
         "tone",
@@ -39,27 +53,27 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
         "selected",
         "onRemove",
         "wrapRemoveButton",
-    ) as HTMLAttributes<HTMLElement>;
+    );
 
-    const isDisabled = props.disabled || props.selected;
+    const isDisabled = defaultedProps.disabled || defaultedProps.selected;
 
     const removeButton = (
         <Button
             tabIndex={-1}
             iconOnly
             size="small"
-            tone={props.tone}
+            tone={defaultedProps.tone}
             disabled={isDisabled}
             variant="ghost"
             layoutClassName={resolveClassNames("ml-3xs shrink-0 self-stretch border-l rounded-l-none", {
-                "border-warning": props.tone === "warning",
-                "border-danger": props.tone === "danger",
-                "border-neutral": props.tone === "neutral",
-                "border-accent": props.tone === "accent",
+                "border-warning": defaultedProps.tone === "warning",
+                "border-danger": defaultedProps.tone === "danger",
+                "border-neutral": defaultedProps.tone === "neutral",
+                "border-accent": defaultedProps.tone === "accent",
             })}
             onClick={(e) => {
                 e.stopPropagation();
-                props.onRemove?.();
+                defaultedProps.onRemove?.();
             }}
         >
             <Clear />
@@ -70,7 +84,7 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
         <Component
             {...baseProps}
             ref={ref as any}
-            data-tone={props.tone}
+            data-tone={defaultedProps.tone}
             data-disabled={isDisabled ? "" : undefined}
             aria-disabled={isDisabled}
             className={resolveClassNames(
@@ -83,10 +97,10 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
                 "bg-neutral data-[tone=warning]:bg-warning data-[tone=danger]:bg-danger",
             )}
         >
-            {props.startAdornment}
-            <div className="flex min-w-0 flex-1 items-center self-stretch overflow-x-hidden">{props.children}</div>
-            {props.wrapRemoveButton?.(removeButton) ?? removeButton}
-            {props.selected && (
+            {defaultedProps.startAdornment}
+            <div className="flex min-w-0 flex-1 items-center self-stretch overflow-x-hidden">{defaultedProps.children}</div>
+            {defaultedProps.wrapRemoveButton?.(removeButton) ?? removeButton}
+            {defaultedProps.selected && (
                 <div className="bg-accent-strong absolute top-0 left-0 z-10 block h-full w-full rounded-sm opacity-50" />
             )}
         </Component>

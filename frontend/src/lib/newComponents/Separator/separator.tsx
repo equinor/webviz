@@ -4,17 +4,26 @@ import { Separator as SeparatorBase, type SeparatorProps as SeparatorBaseProps }
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { resolveWrapperProps, type LayoutClassProps } from "../_shared/utils/wrapperProps";
+import { withDefaults } from "../_shared/utils/defaultProps";
+import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 /** Horizontal or vertical divider line. Use `layoutClassName` for spacing. */
-export type SeparatorProps = Pick<SeparatorBaseProps, "orientation"> & LayoutClassProps;
+export type SeparatorProps = ComponentWrapperProps<{
+    /** Whether the separator is horizontal or vertical. @default "horizontal" */
+    orientation?: SeparatorBaseProps["orientation"];
+}>;
+
+const DEFAULT_PROPS = {
+    orientation: "horizontal",
+} satisfies Partial<SeparatorProps>;
 
 export const Separator = React.forwardRef<HTMLDivElement, SeparatorProps>(function Separator(props, ref) {
-    const baseProps = resolveWrapperProps(props, "layoutClassName", "orientation");
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps);
     const resolvedClassNames = resolveClassNames(
-        props.layoutClassName,
+        baseProps.className,
         "bg-neutral-strong/30 [:where(&+&)]:hidden shrink-0 self-stretch",
-        props.orientation === "vertical" ? "w-px  mx-3xs" : "h-px my-3xs",
+        defaultedProps.orientation === "vertical" ? "w-px  mx-3xs" : "h-px my-3xs",
     );
     return <SeparatorBase {...baseProps} className={resolvedClassNames} ref={ref} />;
 });

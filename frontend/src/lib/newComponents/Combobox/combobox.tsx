@@ -39,15 +39,15 @@ export type ComboboxProps<TValue, TMultiple extends boolean | undefined = false>
         noMatchesText?: React.ReactNode;
         /** When true, shows a button to clear the entire selection. @default false */
         showClearAllButton?: boolean;
-        /** startAdornment is shown at the start of the component */
+        /** Element shown at the start of the input. */
         startAdornment?: React.ReactNode;
-        /** endAdornment is shown instead of the trigger icon at the end of the input - only when `multiple` is false */
+        /** Element shown at the end of the input instead of the trigger icon. Only applies when `multiple` is false. */
         endAdornment?: React.ReactNode;
         /** Optional function to render an adornment alongside each item in the dropdown list. */
         renderItemAdornment?: (item: TValue) => React.ReactNode;
         /** Size of the combobox input. @default "default" */
         size?: SelectableSize;
-        /** Only applies when `multiple` is true. "chips" (default) renders a chip per selection; "count" renders "X/N selected". */
+        /** Only applies when `multiple` is true. @default "chips" */
         selectionMode?: "chips" | "count";
         /** Placeholder text shown when no value is selected. Not applicable in count selection mode. @default "Select an option" */
         placeholder?: string;
@@ -75,15 +75,17 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
     ref: React.ForwardedRef<HTMLInputElement>,
 ) {
     const defaultedProps = withDefaults(props, DEFAULT_PROPS);
-    const { renderItemAdornment, ...rest } = defaultedProps;
 
     const baseProps = resolveWrapperProps(
-        rest,
+        defaultedProps,
+        "renderItemAdornment",
         "placeholder",
         "noMatchesText",
         "loadingText",
         "showClearAllButton",
         "selectionMode",
+        "startAdornment",
+        "endAdornment",
         "items",
         "loading",
         "errorText",
@@ -128,7 +130,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 key={getItemValueKey(item)}
                 item={item}
                 isMultiSelect={defaultedProps.multiple}
-                renderItemAdornment={renderItemAdornment}
+                renderItemAdornment={defaultedProps.renderItemAdornment}
             />
         );
     }
@@ -147,7 +149,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                             {...divProps}
                             className={resolveClassNames(
                                 className,
-                                defaultedProps.layoutClassName,
+                                baseProps.className,
                                 "form-element gap-x-sm px-sm flex cursor-text items-center",
                                 size !== "small" ||
                                     (defaultedProps.multiple && defaultedProps.selectionMode === "chips")
@@ -175,7 +177,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                     <ComboboxValueChipsInput
                         ref={ref}
                         getLabelForValue={getLabelForValue}
-                        renderItemAdornment={renderItemAdornment}
+                        renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />
                 )}
@@ -185,7 +187,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 {!defaultedProps.multiple && (
                     <ComboboxSingleValueInput
                         ref={ref}
-                        renderItemAdornment={renderItemAdornment}
+                        renderItemAdornment={defaultedProps.renderItemAdornment}
                         placeholder={defaultedProps.placeholder}
                     />
                 )}
