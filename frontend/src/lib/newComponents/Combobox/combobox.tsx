@@ -141,7 +141,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         >
             <ComboboxBase.InputGroup
                 render={(htmlProps, state) => {
-                    const { children, className: _className, ...divProps } = htmlProps;
+                    const { children, ...divProps } = htmlProps;
                     return (
                         <div
                             {...divProps}

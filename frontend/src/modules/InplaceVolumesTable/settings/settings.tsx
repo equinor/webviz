@@ -145,7 +145,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         value={selectedStatisticOptions}
                         items={statisticOptions}
                         multiple
-                        clearable
+                        showClearAllButton
                         onValueChange={setStatisticOptionsChange}
                     />
                 </SettingWrapper>
@@ -164,7 +164,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     value={selectedGroupByIndices}
                     items={groupByIndicesOptions}
                     multiple
-                    clearable
+                    showClearAllButton
                     onValueChange={setSettledGroupByIndices}
                 />
             </SettingWrapper>
