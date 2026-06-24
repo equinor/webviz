@@ -41,7 +41,12 @@ export const WithLabel = React.forwardRef<HTMLLabelElement, WithLabelProps>(func
             {...getDataAttributesForSelectableSize(size, true)}
         >
             <Radio {...radioProps} size={size} />
-            <Typography size={getTextSizeForSelectableSize(size)} family="body" data-baseline="center">
+            <Typography
+                size={getTextSizeForSelectableSize(size)}
+                family="body"
+                data-baseline="center"
+                layoutClassName="selectable__wrapper-inner-text"
+            >
                 {props.children ?? props.label}
             </Typography>
         </label>
