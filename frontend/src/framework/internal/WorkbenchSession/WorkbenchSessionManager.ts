@@ -692,7 +692,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
                     throw new SessionPersistenceError("Save already in progress. Please wait...");
                 } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    throw new SessionPersistenceError("No changes to save");
+                    // Not an error — silently succeed when there's nothing to persist
+                    return true;
                 } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
                     throw new SessionPersistenceError(result.message);
                 } else {
