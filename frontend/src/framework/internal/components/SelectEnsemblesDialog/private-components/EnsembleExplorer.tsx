@@ -147,11 +147,13 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                         onCaseSelectionChange={handleCaseSelectedChange}
                     />
                     <Separator orientation="horizontal" />
-                    <Field.Root layoutClassName="flex flex-col gap-y-2xs min-h-52 h-52 w-full">
+                    <div className="gap-y-2xs flex h-52 min-h-52 w-full flex-col">
                         <div className="gap-md flex w-full flex-nowrap items-center">
-                            <Field.Label indicator={`(${ensemblesInSelectedCase.length})`}>
-                                Ensembles in selected case
-                            </Field.Label>
+                            <Field.Root>
+                                <Field.Label indicator={`(${ensemblesInSelectedCase.length})`}>
+                                    Ensembles in selected case
+                                </Field.Label>
+                            </Field.Root>
                             <Hidden hidden={!props.multiSelect}>
                                 <Tooltip content="Add all ensembles from selected case">
                                     <Button
@@ -217,7 +219,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                 />
                             ))}
                         </div>
-                    </Field.Root>
+                    </div>
                 </div>
             </Dialog.Body>
             <Dialog.Actions>
