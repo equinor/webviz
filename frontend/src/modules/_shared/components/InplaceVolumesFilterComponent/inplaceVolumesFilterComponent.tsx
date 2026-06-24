@@ -11,11 +11,12 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Select } from "@lib/components/Select";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { Banner } from "@lib/newComponents/Banner";
+import { Select } from "@lib/newComponents/Select";
+import type { SettingAnnotation } from "@lib/newComponents/SettingWrapper";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -28,11 +29,16 @@ export type InplaceVolumesFilterComponentProps = {
     selectedTableNames: string[];
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
-    onChange: (filter: InplaceVolumesFilterSettings) => void;
-    isPending?: boolean;
-    additionalSettings?: React.ReactNode;
-    areCurrentlySelectedTablesComparable?: boolean;
+
+    dataAnnotations?: SettingAnnotation[];
+    selectionAnnotations?: SettingAnnotation[];
     debounceMs?: number;
+    isPending?: boolean;
+    areCurrentlySelectedTablesComparable?: boolean;
+
+    additionalSettings?: React.ReactNode;
+
+    onChange: (filter: InplaceVolumesFilterSettings) => void;
 };
 
 export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterComponentProps): React.ReactNode {
@@ -51,7 +57,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     );
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumesFilterSettings | null>(null);
 
-    const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    // const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
         setEnsembleIdents(props.selectedEnsembleIdents);
@@ -134,19 +140,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         setPrevSyncedFilter(syncedFilter);
     }
 
-    React.useEffect(function mountEffect() {
-        const currentDebounceTimeoutRef = debounceTimeoutRef.current;
-        return function unmountEffect() {
-            if (currentDebounceTimeoutRef) {
-                clearTimeout(currentDebounceTimeoutRef);
-            }
-        };
-    }, []);
-
     function callOnChangeAndMaybePublish(filter: InplaceVolumesFilterSettings, publish: boolean): void {
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
         props.onChange(filter);
         if (publish) {
             syncHelper.publishValue(
@@ -157,23 +151,19 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         }
     }
 
+    const debouncedOnChangeAndMaybePublish = useDebouncedFunction(callOnChangeAndMaybePublish, props.debounceMs ?? 0);
+
     function maybeDebounceOnChange(
         filter: InplaceVolumesFilterSettings,
         publish: boolean,
         dropDebounce?: boolean,
     ): void {
-        if (debounceTimeoutRef.current) {
-            clearTimeout(debounceTimeoutRef.current);
-        }
-
-        if (!props.debounceMs || dropDebounce) {
+        if (dropDebounce) {
+            debouncedOnChangeAndMaybePublish.cancel();
             callOnChangeAndMaybePublish(filter, publish);
-            return;
+        } else {
+            debouncedOnChangeAndMaybePublish(filter, publish);
         }
-
-        debounceTimeoutRef.current = setTimeout(() => {
-            callOnChangeAndMaybePublish(filter, publish);
-        }, props.debounceMs);
     }
 
     function handleEnsembleIdentsChange(newEnsembleIdents: RegularEnsembleIdent[], publish = true): void {
@@ -232,8 +222,8 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     return (
         <>
-            <CollapsibleGroup contentClassName="flex flex-col gap-2" title="Ensembles and table sources" expanded>
-                <SettingWrapper label="Ensembles">
+            <SettingWrapper.Section title="Data" defaultOpen>
+                <SettingWrapper label="Ensembles" stacked>
                     <EnsemblePicker
                         ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         value={ensembleIdents}
@@ -244,6 +234,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 </SettingWrapper>
 
                 <SettingWrapper
+                    stacked
                     loadingOverlay={props.isPending ?? false}
                     label="Table sources"
                     errorOverlay={
@@ -255,13 +246,12 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     <Select
                         options={tableSourceOptions}
                         value={tableNames}
-                        onChange={handleTableNamesChange}
+                        onValueChange={handleTableNamesChange}
                         multiple
                         size={3}
                     />
                 </SettingWrapper>
                 <SettingWrapper
-                    label="Allow table source intersections"
                     help={{
                         title: "Allow table source intersections",
                         content: (
@@ -275,50 +265,66 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         ),
                     }}
                 >
-                    <Checkbox
+                    <SwitchCompositions.WithLabel
                         checked={props.selectedAllowIndicesValuesIntersection}
-                        onChange={(_, checked) => handleAllowIndexValueIntersectionChange(checked)}
-                        label="Allow table source intersections"
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <div className="flex flex-col gap-2">{props.additionalSettings}</div>
-            <div className="flex flex-col gap-2">
-                <CollapsibleGroup title="Index filters" expanded>
-                    <StatusWrapper
-                        className="flex flex-col gap-2"
-                        isPending={props.isPending ?? false}
-                        errorMessage={
-                            !props.areCurrentlySelectedTablesComparable
-                                ? "Selected tables are not comparable due to mismatching index columns"
-                                : undefined
-                        }
+                        onCheckedChange={handleAllowIndexValueIntersectionChange}
                     >
-                        {props.availableIndicesWithValues.map((indexWithValues) => (
-                            <CollapsibleGroup
-                                key={indexWithValues.indexColumn}
-                                title={indexWithValues.indexColumn}
-                                expanded
-                            >
-                                <Select
-                                    options={indexWithValues.values.map((value) => ({
-                                        value: value,
-                                        label: value.toString(),
-                                    }))}
-                                    value={
-                                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)
-                                            ?.values ?? []
-                                    }
-                                    onChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
-                                    multiple
-                                    size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
-                                    showQuickSelectButtons={true}
-                                />
-                            </CollapsibleGroup>
-                        ))}
-                    </StatusWrapper>
-                </CollapsibleGroup>
-            </div>
+                        Allow table source intersections
+                    </SwitchCompositions.WithLabel>
+                </SettingWrapper>
+            </SettingWrapper.Section>
+
+            <SettingWrapper.Section title="Data Selection">
+                {!props.availableIndicesWithValues.length && (
+                    // TODO - Waiting for section overlay. Temp workaround
+                    <Banner layoutClassName="col-span-3" tone="danger">
+                        Selected tables are not comparable due to mismatching index columns
+                    </Banner>
+                )}
+
+                {props.selectionAnnotations?.map((annotation, index) => (
+                    <Banner
+                        layoutClassName="col-span-3"
+                        key={index}
+                        tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
+                    >
+                        {annotation.message}
+                    </Banner>
+                ))}
+
+                {props.availableIndicesWithValues.map((indexWithValues) => {
+                    const options = indexWithValues.values.map((value) => ({
+                        value: value,
+                        label: value.toString(),
+                    }));
+
+                    const value =
+                        indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)?.values ?? [];
+
+                    return (
+                        <SettingWrapper
+                            key={indexWithValues.indexColumn}
+                            label={indexWithValues.indexColumn}
+                            stacked
+                            errorOverlay={
+                                !props.areCurrentlySelectedTablesComparable
+                                    ? "Selected tables are not comparable due to mismatching index columns"
+                                    : undefined
+                            }
+                        >
+                            <Select
+                                options={options}
+                                value={value}
+                                multiple
+                                size={Math.max(Math.min(indexWithValues.values.length, 10), 3)}
+                                showQuickSelectButtons={true}
+                                onValueChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
+                            />
+                        </SettingWrapper>
+                    );
+                })}
+            </SettingWrapper.Section>
+            {props.additionalSettings}
         </>
     );
 }
