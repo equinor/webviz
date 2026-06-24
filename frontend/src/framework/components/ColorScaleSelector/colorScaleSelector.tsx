@@ -30,6 +30,7 @@ export type ColorScaleSelectorProps = {
     workbenchSettings: WorkbenchSettings;
     colorScaleSpecification?: ColorScaleSpecification;
     onChange?: (colorScaleSpecification: ColorScaleSpecification) => void;
+    disabled?: boolean;
 };
 
 export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactNode {
@@ -77,7 +78,12 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
 
     return (
         <>
-            <div className="selectable grow cursor-pointer overflow-hidden rounded" onClick={handleClick}>
+            <div
+                className={resolveClassNames("selectable grow cursor-pointer overflow-hidden rounded", {
+                    "cursor-not-allowed opacity-50": props.disabled,
+                })}
+                onClick={handleClick}
+            >
                 <ColorScalePreview
                     colorPalette={colorScaleSpecification.colorScale.getColorPalette()}
                     gradientType={colorScaleSpecification.colorScale.getGradientType()}
