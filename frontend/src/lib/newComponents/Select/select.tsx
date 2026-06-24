@@ -423,11 +423,8 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     }
 
     return (
-        <div
-            ref={ref}
-            className={resolveClassNames(props.layoutClassName, "gap-y-xs text-body-sm flex flex-col")}
-        >
-            {props.showQuickSelectButtons && (
+        <div ref={ref} className={resolveClassNames(props.layoutClassName, "gap-y-xs text-body-sm flex flex-col")}>
+            {props.showQuickSelectButtons && props.multiple && (
                 <div className="gap-x-3xs flex items-center">
                     <Button
                         onClick={handleSelectAll}
