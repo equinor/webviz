@@ -6,6 +6,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import {
     loadMetadataFromBackendAndCreateEnsembleSet,
     type EnsembleLoadingErrorInfoMap,
+    type EnsembleLoadingWarningInfoMap,
 } from "@framework/internal/EnsembleSetLoader";
 import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 
@@ -23,6 +24,7 @@ export type UseApplyEnsembleSelectionProps = {
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[];
     setIsEnsembleSetLoading: React.Dispatch<React.SetStateAction<boolean>>;
     onLoadingErrorsDetected: () => void;
+    onLoadingWarningsDetected: (warningInfoMap: EnsembleLoadingWarningInfoMap) => void;
     onSuccess: () => void;
 };
 
@@ -45,6 +47,7 @@ export function useApplyEnsembleSelection({
     selectedDeltaEnsembles,
     setIsEnsembleSetLoading,
     onLoadingErrorsDetected,
+    onLoadingWarningsDetected,
     onSuccess,
 }: UseApplyEnsembleSelectionProps) {
     const [newEnsembleSetToApply, setNewEnsembleSetToApply] = React.useState<EnsembleSet | null>(null);
@@ -107,28 +110,36 @@ export function useApplyEnsembleSelection({
             // Set loading state
             setIsEnsembleSetLoading(true);
 
-            loadMetadataFromBackendAndCreateEnsembleSet(
-                queryClient,
-                regularEnsembleSettings,
-                deltaEnsembleSettings,
-            ).then((value: { ensembleSet: EnsembleSet; ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap }) => {
-                // Reset loading state
-                setIsEnsembleSetLoading(false);
+            loadMetadataFromBackendAndCreateEnsembleSet(queryClient, regularEnsembleSettings, deltaEnsembleSettings).then(
+                (value: {
+                    ensembleSet: EnsembleSet;
+                    ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
+                    ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap;
+                }) => {
+                    // Reset loading state
+                    setIsEnsembleSetLoading(false);
 
-                // Handle confirm of error messages if any - call handleApplyEnsembleSelectionWithLoadingError to set ensemble set with errors
-                if (value.ensembleLoadingErrorInfoMap && Object.keys(value.ensembleLoadingErrorInfoMap).length > 0) {
-                    setNewEnsembleSetToApply(value.ensembleSet);
-                    setEnsembleLoadingErrorInfoMap(value.ensembleLoadingErrorInfoMap);
-                    onLoadingErrorsDetected();
-                    return;
-                }
+                    // Handle confirm of error messages if any - call handleApplyEnsembleSelectionWithLoadingError to set ensemble set with errors
+                    if (value.ensembleLoadingErrorInfoMap && Object.keys(value.ensembleLoadingErrorInfoMap).length > 0) {
+                        setNewEnsembleSetToApply(value.ensembleSet);
+                        setEnsembleLoadingErrorInfoMap(value.ensembleLoadingErrorInfoMap);
+                        onLoadingErrorsDetected();
+                        return;
+                    }
 
-                // If no errors, set ensemble set and close dialog
-                workbenchSession.setEnsembleSet(value.ensembleSet);
-                setNewEnsembleSetToApply(null);
-                setEnsembleLoadingErrorInfoMap({});
-                onSuccess();
-            });
+                    // If no errors, set ensemble set and close dialog
+                    workbenchSession.setEnsembleSet(value.ensembleSet);
+                    setNewEnsembleSetToApply(null);
+                    setEnsembleLoadingErrorInfoMap({});
+
+                    // Surface any non-fatal loading warnings (e.g. parameters missing from the standard result)
+                    if (Object.keys(value.ensembleLoadingWarningInfoMap).length > 0) {
+                        onLoadingWarningsDetected(value.ensembleLoadingWarningInfoMap);
+                    }
+
+                    onSuccess();
+                },
+            );
         },
         [
             selectedDeltaEnsembles,
@@ -136,6 +147,7 @@ export function useApplyEnsembleSelection({
             setIsEnsembleSetLoading,
             queryClient,
             onLoadingErrorsDetected,
+            onLoadingWarningsDetected,
             workbenchSession,
             onSuccess,
         ],

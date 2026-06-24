@@ -430,6 +430,10 @@ export type EnsembleParametersAndSensitivities_api = {
      * Sensitivities
      */
     sensitivities: Array<EnsembleSensitivity_api>;
+    /**
+     * Nonstandardparameterswarning
+     */
+    nonStandardParametersWarning?: string | null;
 };
 
 /**

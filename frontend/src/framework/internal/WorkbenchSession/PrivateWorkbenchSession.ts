@@ -17,6 +17,7 @@ import {
     type UserEnsembleSetting,
     type UserDeltaEnsembleSetting,
     type EnsembleLoadingErrorInfoMap,
+    type EnsembleLoadingWarningInfoMap,
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
@@ -104,6 +105,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _settings: PrivateWorkbenchSettings = new PrivateWorkbenchSettings();
 
     private _ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
+    private _ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap = {};
 
     private constructor(queryClient: QueryClient, isSnapshot = false) {
         this._atomStoreMaster = new AtomStoreMaster();
@@ -252,14 +254,18 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             }),
         );
 
-        const { ensembleSet: newSet, ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap } =
-            await loadMetadataFromBackendAndCreateEnsembleSet(
-                this._queryClient,
-                userEnsembleSettings,
-                userDeltaEnsembleSettings,
-            );
+        const {
+            ensembleSet: newSet,
+            ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap,
+            ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMap,
+        } = await loadMetadataFromBackendAndCreateEnsembleSet(
+            this._queryClient,
+            userEnsembleSettings,
+            userDeltaEnsembleSettings,
+        );
         this.setEnsembleSet(newSet);
         this._ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMap;
+        this._ensembleLoadingWarningInfoMap = ensembleLoadingWarningInfoMap;
 
         // This has to be done after loading the ensemble set
         // in order to guarantee that all realization filters for the ensembles exist
@@ -383,6 +389,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     getEnsembleLoadingErrorInfoMap(): EnsembleLoadingErrorInfoMap {
         return this._ensembleLoadingErrorInfoMap;
+    }
+
+    getEnsembleLoadingWarningInfoMap(): EnsembleLoadingWarningInfoMap {
+        return this._ensembleLoadingWarningInfoMap;
     }
 
     getEnsembleSet(): EnsembleSet {

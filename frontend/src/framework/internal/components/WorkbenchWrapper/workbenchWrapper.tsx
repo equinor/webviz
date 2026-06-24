@@ -19,6 +19,7 @@ import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
+import { InitialEnsemblesLoadingWarningInfoDialog } from "../InitialEnsemblesLoadingWarningInfoDialog";
 import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
@@ -74,6 +75,7 @@ export function WorkbenchWrapper() {
                 <ActiveDashboardBoundary>
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
+                    <InitialEnsemblesLoadingWarningInfoDialog workbench={workbench} />
                     <SaveSessionDialog workbench={workbench} saveAsNew />
                     <CreateSnapshotDialog workbench={workbench} />
                     <ActiveSessionRecoveryDialog workbench={workbench} />

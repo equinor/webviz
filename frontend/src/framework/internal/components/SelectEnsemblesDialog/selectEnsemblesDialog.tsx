@@ -127,6 +127,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         onLoadingErrorsDetected: () => {
             setShowEnsemblesLoadingErrorDialog(true);
         },
+        onLoadingWarningsDetected: (warningInfoMap) => {
+            const guiMessageBroker = props.workbench.getGuiMessageBroker();
+            guiMessageBroker.setState(GuiState.EnsemblesLoadingWarningInfoMap, warningInfoMap);
+            guiMessageBroker.setState(GuiState.EnsembleLoadingWarningInfoDialogOpen, true);
+        },
         onSuccess: handleClose,
     });
 
