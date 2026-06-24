@@ -69,7 +69,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 <Popover.Trigger size="small" variant="ghost" iconOnly>
                     <Info />
                 </Popover.Trigger>
-                <Popover.Popup side="left">
+                <Popover.Popup side="bottom">
                     <Popover.Title hideCloseButton>{props.title}</Popover.Title>
                     <Popover.Content as="div" layoutClassName="min-w-2xs">
                         <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
