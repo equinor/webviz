@@ -554,9 +554,11 @@ def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_n
 def _flatten_realization_parameter_names(realization_parameter_dict: dict) -> set[str]:
     """Collect the bare parameter names from a per-realization parameters.json dictionary.
 
-    The parameters.json content is either flat (``{PARAM: value}``) or nested by group
-    (``{GROUP: {PARAM: value}}``). Parameters belonging to LOG10_ groups are skipped, mirroring the
-    handling of the aggregated legacy parameter table.
+    The parameters.json content can be nested by group (``{GROUP: {PARAM: value}}``) or flat with
+    colon-prefixed keys (``{"GROUP:PARAM": value}``) or ungrouped (``{PARAM: value}``). In all cases the
+    bare parameter name (without group prefix) is returned, matching how standard result parameters are
+    named. Parameters belonging to LOG10_ groups are skipped, mirroring the handling of the aggregated
+    legacy parameter table.
 
     Args:
         realization_parameter_dict: Parsed parameters.json content for a single realization
@@ -565,13 +567,19 @@ def _flatten_realization_parameter_names(realization_parameter_dict: dict) -> se
         Set of bare parameter names (without group prefix)
     """
     parameter_names: set[str] = set()
-    for group_or_parameter_name, value in realization_parameter_dict.items():
+    for key, value in realization_parameter_dict.items():
         if isinstance(value, dict):
-            if "LOG10_" in group_or_parameter_name:
+            # Nested format: {GROUP: {PARAM: value}}
+            if "LOG10_" in key:
                 continue
             parameter_names.update(value.keys())
         else:
-            parameter_names.add(group_or_parameter_name)
+            # Flat format: "GROUP:PARAM" or "PARAM"
+            name_components = key.split(":")
+            group_name = name_components[0] if len(name_components) == 2 else None
+            if group_name and "LOG10_" in group_name:
+                continue
+            parameter_names.add(name_components[-1])
     return parameter_names
 
 
