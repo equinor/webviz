@@ -1,6 +1,6 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 
 //
@@ -11,7 +11,7 @@ type AggregationDropdownProps = {
 };
 
 export function AggregationDropdown(props: AggregationDropdownProps): JSX.Element {
-    const itemArr: DropdownOption[] = [
+    const itemArr: ComboboxItem<string>[] = [
         { value: "SINGLE_REAL", label: "Single realization" },
         { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
         { value: SurfaceStatisticFunction_api.STD, label: "Std" },

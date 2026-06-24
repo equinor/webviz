@@ -14,7 +14,6 @@ import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Avatar } from "@lib/newComponents/Avatar";
 import { Button } from "@lib/newComponents/Button";
@@ -24,6 +23,7 @@ import { Field } from "@lib/newComponents/Field";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { Table } from "@lib/newComponents/Table";
 import { TableCompositions } from "@lib/newComponents/Table/compositions";
+import { CopyCellValue } from "@lib/newComponents/Table/compositions/copyCellValue";
 import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
 import { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
 import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";

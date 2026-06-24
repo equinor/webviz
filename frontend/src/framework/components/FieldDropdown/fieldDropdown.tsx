@@ -1,6 +1,6 @@
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 
 export type FieldDropdownProps = {
     ensembleSet: EnsembleSet;
@@ -29,7 +29,7 @@ export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
         }
     }
 
-    const optionsArray: DropdownOption[] = [...fieldIdents].map((id) => ({
+    const optionsArray: ComboboxItem<string>[] = [...fieldIdents].map((id) => ({
         value: id,
         label: id,
     }));

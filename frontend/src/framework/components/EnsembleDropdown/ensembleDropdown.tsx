@@ -6,10 +6,10 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox/combobox";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
 import type { WithBrowseButtonsProps } from "@lib/newComponents/Combobox/compositions/withBrowseButtons";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 
 import { EnsembleColorTile } from "../EnsembleColorTile";
 
@@ -40,7 +40,7 @@ export type EnsembleDropdownProps = (
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { onChange, ensembles, allowDeltaEnsembles, value, ensembleRealizationFilterFunction, ...rest } = props;
 
-    const optionsArray = React.useMemo<DropdownOption[]>(() => {
+    const optionsArray = React.useMemo<ComboboxItem<string>[]>(() => {
         return ensembles.map((ens) => ({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),

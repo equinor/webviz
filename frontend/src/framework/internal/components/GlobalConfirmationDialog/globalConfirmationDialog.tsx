@@ -1,8 +1,8 @@
 import React from "react";
 
 import { type ConfirmActionColor, type ConfirmOptions, ConfirmationService } from "@framework/ConfirmationService";
-import type { ButtonProps } from "@lib/components/Button/newButton";
 import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import type { ButtonProps } from "@lib/newComponents/Button";
 
 export function GlobalConfirmationDialog(): React.ReactNode {
     const [visible, setVisible] = React.useState<boolean>(false);

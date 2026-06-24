@@ -1,6 +1,5 @@
 import type React from "react";
 
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
 
 import type {
@@ -8,6 +7,7 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 
 type ValueType = number | null;
 type ValueConstraints = [number, number];
@@ -98,10 +98,10 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
 
             const rangeSize = end - start;
 
-            const options: DropdownOption[] = Array.from({ length: rangeSize }, (_, index) => {
+            const options: ComboboxItem<number>[] = Array.from({ length: rangeSize }, (_, index) => {
                 const value = start + index;
                 return {
-                    value: value.toString(),
+                    value: value,
                     label: value.toString(),
                 };
             });
@@ -109,8 +109,8 @@ export class NumberRangeDropdownSetting implements CustomSettingImplementation<V
             return (
                 <ComboboxCompositions.WithBrowseButtons
                     items={options}
-                    value={props.value?.toString()}
-                    onValueChange={(val: string) => props.onValueChange(parseInt(val))}
+                    value={props.value}
+                    onValueChange={(val: number) => props.onValueChange(val)}
                     disabled={props.disabled}
                 />
             );

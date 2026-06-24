@@ -12,9 +12,9 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import type { SelectOption } from "@lib/components/Select";
 import { Collapsible } from "@lib/newComponents/Collapsible";
 import { Combobox } from "@lib/newComponents/Combobox";
+import type { SelectOption } from "@lib/newComponents/Select";
 import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";

@@ -1,9 +1,9 @@
 import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import type { WellLogCurve } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 
-import type { DropdownOption } from "@lib/components/Dropdown";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 
-type PlotDropdownOption = DropdownOption<TemplatePlotType>;
+type PlotDropdownOption = ComboboxItem<TemplatePlotType>;
 
 export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },

@@ -1,8 +1,8 @@
 import type React from "react";
 
 import { SurfaceStatisticFunction_api } from "@api";
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 
 import type {
     SettingComponentProps,
@@ -33,7 +33,7 @@ export class StatisticFunctionSetting implements StaticSettingImplementation<Val
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        const itemArr: DropdownOption[] = [
+        const itemArr: ComboboxItem<string>[] = [
             { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },
             { value: SurfaceStatisticFunction_api.STD, label: "Std" },
             { value: SurfaceStatisticFunction_api.MIN, label: "Min" },

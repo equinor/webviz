@@ -1,8 +1,8 @@
 import type React from "react";
 
 import { SurfaceTimeType_api } from "@api";
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
 import {
     isIsoIntervalString,
     isIsoString,
@@ -65,7 +65,7 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
         return function TimeOrIntervalSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
 
-            const options: DropdownOption[] = availableValues.map((value) => {
+            const options: ComboboxItem<string>[] = availableValues.map((value) => {
                 return {
                     value: value.toString(),
                     label: timeTypeToLabel(value),

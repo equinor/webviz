@@ -1,8 +1,8 @@
-import React from "react";
+import type React from "react";
 
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
 import { Avatar } from "@lib/newComponents/Avatar";
+import { CopyCellValue } from "@lib/newComponents/Table/compositions/copyCellValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**
@@ -18,10 +18,8 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
         return props.caseId;
     }
 
-    const highlightRef = React.useRef<HTMLSpanElement>(null);
-
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested} highlightRef={highlightRef}>
+        <CopyCellValue onCopyRequested={handleCopyRequested}>
             <div
                 className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
@@ -33,10 +31,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
                             "text-neutral-subtle-on-emphasis": props.cellRowSelected,
                         })}
                     >
-                        -{" "}
-                        <span ref={highlightRef} className="inline-block">
-                            {props.caseId}
-                        </span>
+                        - <span className="inline-block">{props.caseId}</span>
                     </span>
                 </div>
             </div>
