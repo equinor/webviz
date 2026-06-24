@@ -148,10 +148,10 @@ export const SubMenu: Story = {
                 </Button>
             </Menu.Trigger>
             <Menu.Popup side={side} align={align} itemSize={itemSize}>
-                <Menu.Item>Option 1</Menu.Item>
-                <Menu.Item>Option 2</Menu.Item>
+                <Menu.Item icon={<Square />}>Option 1</Menu.Item>
+                <Menu.Item icon={<Square />}>Option 2</Menu.Item>
                 <Menu.Separator />
-                <Menu.SubmenuItem triggerContent={"Sub menu"}>
+                <Menu.SubmenuItem triggerContent={"Sub menu"} triggerIcon={<Circle />}>
                     <Menu.Item>Option 3</Menu.Item>
                     <Menu.Item>Option 4</Menu.Item>
                     <Menu.Item>Option 5</Menu.Item>

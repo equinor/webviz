@@ -69,7 +69,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 <Popover.Trigger size="small" variant="ghost" iconOnly>
                     <Info />
                 </Popover.Trigger>
-                <Popover.Popup side="left">
+                <Popover.Popup side="bottom">
                     <Popover.Title hideCloseButton>{props.title}</Popover.Title>
                     <Popover.Content as="div" layoutClassName="min-w-2xs">
                         <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
@@ -109,7 +109,9 @@ function PopoverContent(
             {props.isDeleted && (
                 <p className="text-danger-subtle italic">This snapshot has been deleted by the owner.</p>
             )}
-            {props.description && <p className="text-body-sm whitespace-pre-wrap">{props.description}</p>}
+            {props.description && (
+                <p className="text-body-sm wrap-break-word hyphens-auto whitespace-pre-wrap">{props.description}</p>
+            )}
             {props.tooltipInfo && (
                 <ul className="not-first:mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
