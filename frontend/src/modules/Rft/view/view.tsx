@@ -60,13 +60,17 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     );
 
     const depthRange = makeDepthRange(entries);
-    // Derive the applied depth from the persisted user value. The atom holds the user's intent and is
-    // left untouched, but the value actually used for the line and the data channel is clamped into the
-    // current data's depth range. This keeps the line on-plot (and the published value meaningful) when
-    // the underlying data changes, e.g. switching to a well whose depth range excludes the stored depth.
-    const effectiveDepth = depthRange
-        ? Math.min(Math.max(dataChannelDepth ?? (depthRange[0] + depthRange[1]) / 2, depthRange[0]), depthRange[1])
-        : dataChannelDepth;
+    // The depth atom holds the user's intent and is left untouched. When no depth is stored yet we
+    // default to the middle of the current data's range. The stored depth can fall outside the current
+    // data range (e.g. after switching to a well whose range excludes it). In that case we keep the
+    // user's value but flag it as out of range: the line is rendered in a warning style pinned at the
+    // nearest edge, and the data channel publishes no value for that depth (interpolation yields nothing
+    // outside the range) rather than silently reporting a value at a different, clamped depth.
+    const selectedDepth = dataChannelDepth ?? (depthRange ? (depthRange[0] + depthRange[1]) / 2 : null);
+    const isDepthOutOfRange =
+        depthRange !== null &&
+        selectedDepth !== null &&
+        (selectedDepth < depthRange[0] || selectedDepth > depthRange[1]);
 
     const plotContent = useRftPlotBuilder({
         dataAccessor,
@@ -83,7 +87,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     usePublishToDataChannels(viewContext, {
         entries,
         responseName,
-        dataChannelDepth: effectiveDepth,
+        dataChannelDepth: selectedDepth,
         timestampUtcMs,
         makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) =>
             makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles),
@@ -138,8 +142,9 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             {showDepthLine && (
                 <DepthLineOverlay
                     graphDiv={depthLineOverlay.graphDiv}
-                    depth={effectiveDepth}
+                    depth={selectedDepth}
                     depthRange={depthRange}
+                    isOutOfRange={isDepthOutOfRange}
                     onChange={setDataChannelDepth}
                     revision={depthLineOverlay.revision}
                 />
