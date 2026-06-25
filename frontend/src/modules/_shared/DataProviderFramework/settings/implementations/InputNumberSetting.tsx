@@ -1,3 +1,5 @@
+import React from "react";
+
 import { NumberInput } from "@lib/newComponents/NumberInput";
 
 import type {
@@ -5,7 +7,7 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 type ValueType = number | null;
 type ValueConstraintsType = [number, number];
@@ -102,18 +104,16 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
             const min = isStatic ? staticProps?.min : props.valueConstraints?.[0];
             const max = isStatic ? staticProps?.max : props.valueConstraints?.[1];
 
-            const debouncedHandleInputChange = useDebouncedFunction(function handleInputChange(value: number | null) {
-                props.onValueChange(value);
-            }, 200);
-
-            return (
-                <NumberInput
-                    value={!props.isOverridden ? (props.value ?? min) : props.overriddenValue}
-                    min={min}
-                    max={max}
-                    onValueChange={debouncedHandleInputChange}
-                />
+            const settledValue = !props.isOverridden ? (props.value ?? min ?? null) : (props.overriddenValue ?? null);
+            const [immediateValue, setValue] = useDebouncedOnChange<number | null>(
+                settledValue,
+                function handleInputChange(value: number | null) {
+                    props.onValueChange(value);
+                },
+                600,
             );
+
+            return <NumberInput value={immediateValue} min={min} max={max} onValueChange={setValue} allowWheelScrub />;
         };
     }
 }
