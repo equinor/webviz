@@ -27,7 +27,7 @@ function HeadComponent(props: TableHeadProps, ref: React.ForwardedRef<HTMLTableS
         <TableSectionContext.Provider value="head">
             <thead
                 ref={ref}
-                className={resolveClassNames("bg-input text-neutral-strong border-neutral-subtle", {
+                className={resolveClassNames("bg-neutral-canvas text-neutral-strong border-neutral-subtle", {
                     "z-elevated sticky top-0": props.sticky,
                 })}
             >
