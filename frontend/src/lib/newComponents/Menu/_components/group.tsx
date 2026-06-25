@@ -15,7 +15,7 @@ function GroupComponent(props: MenuGroupProps, ref: React.ForwardedRef<HTMLDivEl
     const groupDepth = React.useContext(GroupDepthContext);
 
     return (
-        <MenuBase.Group {...baseProps} ref={ref} style={{ paddingLeft: `${groupDepth}rem` }}>
+        <MenuBase.Group {...baseProps} ref={ref} style={{ paddingLeft: `${groupDepth}rem`, ...baseProps.style }}>
             <GroupDepthContext.Provider value={groupDepth + 1}>{props.children}</GroupDepthContext.Provider>
         </MenuBase.Group>
     );

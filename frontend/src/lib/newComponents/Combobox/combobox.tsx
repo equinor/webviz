@@ -10,6 +10,7 @@ import { useComponentSize } from "../_shared/contexts/componentSizeContext";
 import type { SelectableSize } from "../_shared/utils/size";
 import { SELECTABLE_SIZES_CLASSNAMES } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
+import { Button } from "../Button";
 import { CircularProgress } from "../CircularProgress";
 
 import { ComboboxListGroup } from "./_components/group";
@@ -120,7 +121,7 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
         >
             <ComboboxBase.InputGroup
                 className={resolveClassNames(
-                    "form-element gap-x-sm pl-sm flex cursor-text items-center",
+                    "form-element gap-x-sm px-sm flex cursor-text items-center",
                     size !== "small" || (props.multiple && selectionMode === "chips") ? "py-xs" : undefined,
                     SELECTABLE_SIZES_CLASSNAMES[size],
                 )}
@@ -147,11 +148,11 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
                 )}
 
                 {/* --- Controls --- */}
-                <div className="pr-xs gap-selectable box-border flex h-full shrink-0 items-center justify-center">
+                <div className="gap-selectable -mr-3xs box-border flex h-full shrink-0 items-center justify-center empty:hidden">
                     {clearable && (
                         <ComboboxBase.Clear
-                            className="Clear selectable text-body-sm py-3xs! box-border flex items-center justify-center"
                             aria-label="Clear selection"
+                            render={<Button tone="neutral" iconOnly variant="ghost" size="small" />}
                         >
                             <Clear fontSize="inherit" />
                         </ComboboxBase.Clear>

@@ -23,7 +23,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
     const selectedEnsembleIdents = viewContext.useSettingsToViewInterfaceValue("selectedEnsembleIdents");
     const selectedPvtNums = viewContext.useSettingsToViewInterfaceValue("selectedPvtNums");
     const selectedPhase = viewContext.useSettingsToViewInterfaceValue("selectedPhase");
-    const selectedColorBy = viewContext.useSettingsToViewInterfaceValue("selectedColorBy");
+    const selectedGroupBy = viewContext.useSettingsToViewInterfaceValue("selectedGroupBy");
     const selectedPlots = viewContext.useSettingsToViewInterfaceValue("selectedDependentVariables");
     const { pvtDataAccessor, isFetching, allQueriesFailed } =
         viewContext.useSettingsToViewInterfaceValue("pvtDataAccessorWithStatus");
@@ -68,13 +68,13 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
 
         const pvtPlotBuilder = new PvtPlotBuilder(pvtDataAccessor, makeEnsembleDisplayName);
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
-        pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);
+        pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedGroupBy, colorSet);
 
         return <Plot layout={pvtPlotBuilder.makePlotLayout()} data={pvtPlotBuilder.makePlotData()} />;
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {makeContent()}
         </div>
     );

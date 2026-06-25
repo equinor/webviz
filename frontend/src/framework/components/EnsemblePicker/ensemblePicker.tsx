@@ -37,7 +37,8 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
     const optionsArray = React.useMemo(() => {
         return ensembles.map((ens) => ({
             value: ens.getIdent().toString(),
-            label: ens.getDisplayName(),
+            // Some fields write case names in snake_case, so we make it so words can wrap on underscores as well
+            label: ens.getDisplayName().replaceAll("_", "_\u200b"),
         }));
     }, [ensembles]);
 
@@ -78,7 +79,7 @@ export function EnsemblePicker(props: EnsemblePickerProps): JSX.Element {
                         ensemble,
                         ensembleRealizationFilterFunction,
                     )}
-                    wrapperClassName="w-2 h-2 mr-xs"
+                    wrapperClassName="w-5 h-5"
                     size="small"
                 />
             );

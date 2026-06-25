@@ -13,6 +13,8 @@ export type TableRootContextType = {
     rowSelection: string[];
     columnSort: TableSortState[];
 
+    overflowWrapperRef: React.RefObject<HTMLDivElement>;
+
     onColumnSort: (columnKey: string, direction: SortDirection, additive: boolean) => void;
     onRowSelect: (rowKey: string) => void;
 };
