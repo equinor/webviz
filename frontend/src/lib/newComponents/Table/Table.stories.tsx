@@ -11,7 +11,6 @@ import { Banner } from "../Banner";
 import { Typography } from "../Typography";
 import { Virtualization } from "../Virtualization";
 
-import { TableCompositions } from "./compositions";
 import type { TableSortState } from "./typesAndEnums";
 import { SortDirection } from "./typesAndEnums";
 
@@ -440,57 +439,6 @@ export const WithSortableList: Story = {
             </SortableList>
         );
     },
-};
-
-export const CompositionPendingRows: Story = {
-    name: "Composition – PendingRows",
-    parameters: {
-        docs: {
-            description: {
-                story: 'This composition renders 1 or more skeleton rows, that can be used while data is being fetched. Use `rowCount="fill"` to fill available space or pass a number for a specific count of skeleton rows.',
-            },
-        },
-    },
-    argTypes: {
-        height: { control: "number" },
-        // @ts-expect-error Custom arg for this specific story
-        rowCount: {
-            control: "select",
-            options: ["fill", 3, 5, 10, 20],
-        },
-    },
-    args: {
-        height: 400,
-        // @ts-expect-error Custom arg for this specific story
-        rowCount: "fill" as "fill" | number,
-    },
-
-    render: ({
-        height,
-        // @ts-expect-error Custom arg for this specific story
-        rowCount,
-        ...args
-    }) => (
-        <div className="w-full resize overflow-hidden" style={{ height }}>
-            <Table.Root layoutClassName="w-full h-full" {...args}>
-                <Table.Head sticky>
-                    <Table.Column colKey="id">ID</Table.Column>
-                    <Table.Column colKey="name">Name</Table.Column>
-                    <Table.Column colKey="email">Email</Table.Column>
-                </Table.Head>
-                <Table.Body>
-                    <TableCompositions.PendingRows rowCount={rowCount} />
-                </Table.Body>
-                <Table.Foot sticky>
-                    <Table.Row>
-                        <Table.Cell colSpan={3}>
-                            Total items: <i className="font-light">Loading...</i>
-                        </Table.Cell>
-                    </Table.Row>
-                </Table.Foot>
-            </Table.Root>
-        </div>
-    ),
 };
 
 function ExampleTableDataRows(props: { data: readonly TExampleData[] }): React.ReactNode {

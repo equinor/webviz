@@ -25,9 +25,9 @@ export function PendingRows(props: PendingRowsProps): React.ReactNode {
             return props.rowCount;
         }
 
-        if (rootContext.availableBodyHeight <= 0) return 0;
+        if (rootContext.availableBodyHeight <= 0) return 1;
 
-        return Math.floor(rootContext.availableBodyHeight / rowHeight);
+        return Math.max(Math.floor(rootContext.availableBodyHeight / rowHeight), 1);
     }, [props.rowCount, rootContext.availableBodyHeight, rowHeight]);
 
     return (
