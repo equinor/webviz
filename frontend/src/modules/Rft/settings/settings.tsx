@@ -17,7 +17,10 @@ import type { SelectOption } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper, type SettingAnnotation } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
+    usePropagateAllApiErrorsToStatusWriter,
+    usePropagateQueryErrorsToStatusWriter,
+} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
@@ -48,7 +51,7 @@ import {
     userSelectedTimestampUtcMsAtom,
     userSelectedWellNameAtom,
 } from "./atoms/persistableFixableAtoms";
-import { rftTableDefinitionQueriesAtom } from "./atoms/queryAtoms";
+import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom, rftTableDefinitionQueriesAtom } from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -74,6 +77,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const tableDefinitionQueries = useAtomValue(rftTableDefinitionQueriesAtom);
     usePropagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
+
+    const rftRealizationDataResult = useAtomValue(rftRealizationDataQueriesAtom);
+    const rftObservationsResult = useAtomValue(rftObservationsQueriesAtom);
+    usePropagateAllApiErrorsToStatusWriter(rftRealizationDataResult.errors, statusWriter);
+    usePropagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
 
     const availableResponseNames = useAtomValue(availableResponseNamesAtom);
     const selectedResponseName = useAtomValue(selectedResponseNameAtom);

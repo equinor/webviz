@@ -14,10 +14,10 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
 import type {
-    RftDataAccessorStatus,
     RftEnsembleObservationsData,
     RftEnsembleRealizationData,
-    RftObservationsStatus,
+    RftObservationsResult,
+    RftRealizationDataResult,
 } from "../../typesAndEnums";
 import { RftDataAccessor } from "../../utils/RftDataAccessor";
 
@@ -83,7 +83,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
         };
     });
 
-    function combine(results: UseQueryResult<RftRealizationData_api[], RftApiError>[]): RftDataAccessorStatus {
+    function combine(results: UseQueryResult<RftRealizationData_api[], RftApiError>[]): RftRealizationDataResult {
         const ensembleData: RftEnsembleRealizationData[] = [];
 
         results.forEach(function collectEnsembleData(result, index) {
@@ -131,7 +131,7 @@ export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObserv
         };
     });
 
-    function combine(results: UseQueryResult<RftObservations_api[], RftApiError>[]): RftObservationsStatus {
+    function combine(results: UseQueryResult<RftObservations_api[], RftApiError>[]): RftObservationsResult {
         const observationsData: RftEnsembleObservationsData[] = [];
 
         results.forEach(function collectObservationsData(result, index) {
@@ -143,12 +143,6 @@ export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObserv
 
         return {
             observationsData,
-            isFetching: results.some(function isResultFetching(result) {
-                return result.isFetching;
-            }),
-            isError: results.some(function isResultError(result) {
-                return result.isError;
-            }),
             errors: results
                 .map(function getResultError(result) {
                     return result.error;

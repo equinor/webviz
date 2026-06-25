@@ -1,6 +1,5 @@
 import type { Layout, PlotData } from "plotly.js";
 
-import type { RftObservation_api } from "@api";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -11,6 +10,7 @@ import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_sh
 import {
     RFT_STATISTIC_LABELS,
     type RftDataAccessorLike,
+    type RftEnsembleObservationRows,
     type RftRealizationCurve,
     RftStatistic,
 } from "../../typesAndEnums";
@@ -205,36 +205,60 @@ export class RftPlotBuilder {
         return traces;
     }
 
-    makeObservationTraces(observations: RftObservation_api[], responseName: string): Partial<PlotData>[] {
-        if (observations.length === 0) {
-            return [];
-        }
+    makeObservationTraces(
+        observationsPerEnsemble: RftEnsembleObservationRows[],
+        responseName: string,
+        shownLegendEnsembles = new Set<string>(),
+    ): Partial<PlotData>[] {
+        const traces: Partial<PlotData>[] = [];
 
-        return [
-            {
-                x: observations.map((observation) => observation.value),
-                y: observations.map((observation) => observation.tvd),
+        for (const ensembleObservations of observationsPerEnsemble) {
+            const observations = ensembleObservations.observations;
+            if (observations.length === 0) {
+                continue;
+            }
+
+            const ensembleKey = ensembleObservations.ensembleIdent.toString();
+            const color = this.makeEnsembleColor(ensembleObservations.ensembleIdent);
+            const ensembleDisplayName = this.makeEnsembleDisplayName(ensembleObservations.ensembleIdent);
+            const showLegend = shouldShowLegend(ensembleKey, shownLegendEnsembles);
+
+            traces.push({
+                x: observations.map(function getObservationValue(observation) {
+                    return observation.value;
+                }),
+                y: observations.map(function getObservationDepth(observation) {
+                    return observation.tvd;
+                }),
                 type: "scatter",
                 mode: "markers",
-                name: "Observations",
-                marker: { color: "black", size: 8, symbol: "diamond" },
+                name: ensembleDisplayName,
+                legendgroup: ensembleKey,
+                showlegend: showLegend,
+                marker: { color, size: 8, symbol: "diamond", line: { color: "black", width: 1 } },
                 error_x: {
                     type: "data",
-                    array: observations.map((observation) => observation.error),
+                    array: observations.map(function getObservationError(observation) {
+                        return observation.error;
+                    }),
                     visible: true,
-                    color: "black",
+                    color,
                     thickness: 1,
                     width: 4,
                 },
-                customdata: observations.map((observation) => [observation.error, observation.zone ?? "N/A"]),
+                customdata: observations.map(function getObservationCustomData(observation) {
+                    return [observation.error, observation.zone ?? "N/A"];
+                }),
                 hovertemplate:
-                    "<b>Observation</b>" +
+                    `<b>${ensembleDisplayName} observation</b>` +
                     `<br>${responseName}: %{x}` +
                     "<br>Depth: %{y}" +
                     "<br>Error: %{customdata[0]}" +
                     "<br>Zone: %{customdata[1]}<extra></extra>",
-            },
-        ];
+            });
+        }
+
+        return traces;
     }
 
     makeLayout(size: Size2D, responseName: string, valueRange: [number, number] | null): Partial<Layout> {

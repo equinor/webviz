@@ -2,7 +2,7 @@ import type { ChannelDefinition } from "@framework/types/dataChannnel";
 import { KeyKind } from "@framework/types/dataChannnel";
 
 export enum ChannelIds {
-    RESPONSE_AT_DEPTH = "Response value (per realization at selected depth)",
+    RESPONSE_AT_DEPTH = "RESPONSE_AT_DEPTH",
 }
 
 export const channelDefs: ChannelDefinition[] = [

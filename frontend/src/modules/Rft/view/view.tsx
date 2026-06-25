@@ -13,7 +13,6 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { dataChannelDepthAtom } from "../settings/atoms/baseAtoms";
@@ -30,7 +29,6 @@ const PLOT_CONFIG: Partial<Config> = { scrollZoom: true };
 export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementBoundingRect(wrapperDivRef);
-    const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
     const colorSet = useColorSet(workbenchSettings);
 
@@ -39,19 +37,18 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const timestampUtcMs = viewContext.useSettingsToViewInterfaceValue("timestampUtcMs");
     const visualizationSettings = viewContext.useSettingsToViewInterfaceValue("visualizationSettings");
     const showDepthLine = viewContext.useSettingsToViewInterfaceValue("showDepthLine");
-    const rftDataAccessorStatus = viewContext.useSettingsToViewInterfaceValue("rftDataAccessorStatus");
-    const rftObservationsStatus = viewContext.useSettingsToViewInterfaceValue("rftObservationsStatus");
+    const dataAccessor = viewContext.useSettingsToViewInterfaceValue("dataAccessor");
+    const observationsData = viewContext.useSettingsToViewInterfaceValue("observationsData");
+    const isFetching = viewContext.useSettingsToViewInterfaceValue("isFetching");
+
+    const statusWriter = useViewStatusWriter(viewContext);
+    statusWriter.setLoading(isFetching);
 
     const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
     const depthLineOverlay = usePlotOverlay();
 
-    const propagatedErrorMessages = usePropagateAllApiErrorsToStatusWriter(rftDataAccessorStatus.errors, statusWriter);
-    const propagatedErrorMessage = propagatedErrorMessages[0] ?? null;
     const instanceTitle = makeRftPlotTitle(wellName, responseName, timestampUtcMs);
 
-    statusWriter.setLoading(rftDataAccessorStatus.isFetching);
-
-    const dataAccessor = rftDataAccessorStatus.dataAccessor;
     const entries = React.useMemo(() => dataAccessor?.getEntries() ?? [], [dataAccessor]);
     const selectedEnsembles = React.useMemo(
         () =>
@@ -79,7 +76,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
         responseName,
         timestampUtcMs,
         visualizationSettings,
-        observationsData: rftObservationsStatus.observationsData,
+        observationsData,
         size: wrapperDivSize,
     });
 
@@ -97,7 +94,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             return ensemble?.getColor() ?? colorSet.getFirstColor();
         },
         metaDependencies: [selectedEnsembles, colorSet],
-        isFetching: rftDataAccessorStatus.isFetching,
+        isFetching,
     });
 
     React.useEffect(
@@ -112,18 +109,10 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             return <ContentMessage type={ContentMessageType.INFO}>No RFT selection.</ContentMessage>;
         }
 
-        if (rftDataAccessorStatus.isFetching) {
+        if (isFetching) {
             return (
                 <ContentMessage type={ContentMessageType.INFO}>
                     <CircularProgress />
-                </ContentMessage>
-            );
-        }
-
-        if (rftDataAccessorStatus.isError) {
-            return (
-                <ContentMessage type={ContentMessageType.ERROR}>
-                    {propagatedErrorMessage ?? "Could not load RFT data."}
                 </ContentMessage>
             );
         }

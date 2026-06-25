@@ -7,7 +7,7 @@ import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 
 import type { RftDataAccessorLike, RftEnsembleObservationsData, VisualizationSettings } from "../../typesAndEnums";
-import { extractObservationRows, makeValueRange } from "../utils/plotData";
+import { extractObservationRowsPerEnsemble, makeValueRange } from "../utils/plotData";
 import { RftPlotBuilder } from "../utils/RftPlotBuilder";
 
 export type RftPlotContent = {
@@ -57,9 +57,12 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
 
             const plotBuilder = new RftPlotBuilder(dataAccessor, selectedEnsembles, colorSet);
 
-            const observationRows = visualizationSettings.showObservations
-                ? extractObservationRows(observationsData, wellName, timestampUtcMs, responseName)
+            const observationsPerEnsemble = visualizationSettings.showObservations
+                ? extractObservationRowsPerEnsemble(observationsData, wellName, timestampUtcMs, responseName)
                 : [];
+            const observationRows = observationsPerEnsemble.flatMap(function getEnsembleObservations(ensembleRows) {
+                return ensembleRows.observations;
+            });
             const valueRange = makeValueRange(entries, observationRows);
 
             const shownLegendEnsembles = new Set<string>();
@@ -79,7 +82,7 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
                     ? plotBuilder.makeIndividualRealizationTraces(responseName, shownLegendEnsembles)
                     : []),
                 ...(visualizationSettings.showObservations
-                    ? plotBuilder.makeObservationTraces(observationRows, responseName)
+                    ? plotBuilder.makeObservationTraces(observationsPerEnsemble, responseName, shownLegendEnsembles)
                     : []),
             ];
 

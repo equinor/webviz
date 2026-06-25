@@ -1,15 +1,14 @@
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    rftDataAccessorStatusAtom,
-    rftObservationsStatusAtom,
     selectedResponseNameAtom,
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
     showDepthLineSettingAtom,
     visualizationSettingsAtom,
 } from "./settings/atoms/derivedAtoms";
-import type { RftDataAccessorStatus, RftObservationsStatus, VisualizationSettings } from "./typesAndEnums";
+import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom } from "./settings/atoms/queryAtoms";
+import type { RftDataAccessorLike, RftEnsembleObservationsData, VisualizationSettings } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     wellName: string | null;
@@ -17,8 +16,9 @@ type SettingsToViewInterface = {
     timestampUtcMs: number | null;
     visualizationSettings: VisualizationSettings;
     showDepthLine: boolean;
-    rftDataAccessorStatus: RftDataAccessorStatus;
-    rftObservationsStatus: RftObservationsStatus;
+    dataAccessor: RftDataAccessorLike | null;
+    observationsData: RftEnsembleObservationsData[];
+    isFetching: boolean;
 };
 
 export type Interfaces = {
@@ -31,6 +31,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     timestampUtcMs: (get) => get(selectedTimestampUtcMsAtom),
     visualizationSettings: (get) => get(visualizationSettingsAtom),
     showDepthLine: (get) => get(showDepthLineSettingAtom),
-    rftDataAccessorStatus: (get) => get(rftDataAccessorStatusAtom),
-    rftObservationsStatus: (get) => get(rftObservationsStatusAtom),
+    dataAccessor: (get) => get(rftRealizationDataQueriesAtom).dataAccessor,
+    observationsData: (get) => get(rftObservationsQueriesAtom).observationsData,
+    isFetching: (get) => get(rftRealizationDataQueriesAtom).isFetching,
 };

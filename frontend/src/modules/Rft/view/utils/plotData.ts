@@ -1,7 +1,7 @@
 import type { RftObservation_api } from "@api";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
-import type { RftEnsembleObservationsData } from "../../typesAndEnums";
+import type { RftEnsembleObservationRows, RftEnsembleObservationsData } from "../../typesAndEnums";
 
 export function makeDepthRange(entries: { depths: number[] }[]): [number, number] | null {
     let minDepth = Number.POSITIVE_INFINITY;
@@ -46,24 +46,32 @@ export function makeValueRange(
     return [minValue, maxValue];
 }
 
-export function extractObservationRows(
+export function extractObservationRowsPerEnsemble(
     observationsData: RftEnsembleObservationsData[],
     wellName: string,
     timestampUtcMs: number,
     responseName: string,
-): RftObservation_api[] {
+): RftEnsembleObservationRows[] {
     const dateString = timestampUtcMsToCompactIsoString(timestampUtcMs).split("T")[0];
+    const ensembleObservationRows: RftEnsembleObservationRows[] = [];
 
     for (const ensembleObservations of observationsData) {
-        const matchingGroup = ensembleObservations.observations.find(
-            (group) => group.well_name === wellName && group.date.split("T")[0] === dateString,
-        );
-        if (matchingGroup) {
-            return matchingGroup.observations.filter(
-                (observation) => observation.property.toUpperCase() === responseName.toUpperCase(),
-            );
+        const matchingGroup = ensembleObservations.observations.find(function isMatchingGroup(group) {
+            return group.well_name === wellName && group.date.split("T")[0] === dateString;
+        });
+        if (!matchingGroup) {
+            continue;
         }
+
+        const observations = matchingGroup.observations.filter(function isMatchingResponse(observation) {
+            return observation.property.toUpperCase() === responseName.toUpperCase();
+        });
+        if (observations.length === 0) {
+            continue;
+        }
+
+        ensembleObservationRows.push({ ensembleIdent: ensembleObservations.ensembleIdent, observations });
     }
 
-    return [];
+    return ensembleObservationRows;
 }

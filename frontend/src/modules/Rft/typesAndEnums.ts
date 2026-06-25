@@ -1,4 +1,4 @@
-import type { RftObservations_api, RftRealizationData_api } from "@api";
+import type { RftObservation_api, RftObservations_api, RftRealizationData_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export enum RftStatistic {
@@ -37,6 +37,11 @@ export type RftEnsembleObservationsData = {
     observations: RftObservations_api[];
 };
 
+export type RftEnsembleObservationRows = {
+    ensembleIdent: RegularEnsembleIdent;
+    observations: RftObservation_api[];
+};
+
 export type RftRealizationCurve = {
     ensembleIdent: RegularEnsembleIdent;
     realization: number;
@@ -48,16 +53,14 @@ export type RftDataAccessorLike = {
     getEntries: () => RftRealizationCurve[];
 };
 
-export type RftDataAccessorStatus = {
+export type RftRealizationDataResult = {
     dataAccessor: RftDataAccessorLike | null;
     isFetching: boolean;
     isError: boolean;
     errors: Error[];
 };
 
-export type RftObservationsStatus = {
+export type RftObservationsResult = {
     observationsData: RftEnsembleObservationsData[];
-    isFetching: boolean;
-    isError: boolean;
     errors: Error[];
 };

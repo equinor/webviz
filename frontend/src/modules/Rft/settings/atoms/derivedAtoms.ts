@@ -19,7 +19,7 @@ import {
     userSelectedTimestampUtcMsAtom,
     userSelectedWellNameAtom,
 } from "./persistableFixableAtoms";
-import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom, rftTableDefinitionQueriesAtom } from "./queryAtoms";
+import { rftTableDefinitionQueriesAtom } from "./queryAtoms";
 
 type RftEnsembleTableDefinition = {
     ensembleIdent: RegularEnsembleIdent;
@@ -109,10 +109,6 @@ export const availableTimestampsUtcMsAtom = atom<number[]>((get) => {
 export const selectedTimestampUtcMsAtom = atom<number | null>((get) => {
     return fixupSelectedOrFirstValue(get(userSelectedTimestampUtcMsAtom).value, get(availableTimestampsUtcMsAtom));
 });
-
-export const rftDataAccessorStatusAtom = atom((get) => get(rftRealizationDataQueriesAtom));
-
-export const rftObservationsStatusAtom = atom((get) => get(rftObservationsQueriesAtom));
 
 export const visualizationSettingsAtom = atom((get) => {
     return {
