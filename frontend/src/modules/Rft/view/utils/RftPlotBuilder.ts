@@ -356,12 +356,12 @@ export function calculateFanchartStatistics(entries: RftRealizationCurve[]): Rft
 
     return {
         depths: resampledEntries[0].depths,
-        minValues: calculateStatisticValues(resampledEntries, (values) => Math.min(...values)),
+        minValues: calculateStatisticValues(resampledEntries, computeMin),
         p90Values: calculateStatisticValues(resampledEntries, computeReservesP90),
         p50Values: calculateStatisticValues(resampledEntries, computeP50),
         meanValues: calculateStatisticValues(resampledEntries, calculateMean),
         p10Values: calculateStatisticValues(resampledEntries, computeReservesP10),
-        maxValues: calculateStatisticValues(resampledEntries, (values) => Math.max(...values)),
+        maxValues: calculateStatisticValues(resampledEntries, computeMax),
     };
 }
 
@@ -382,6 +382,14 @@ export function calculateStatisticValues(
 
 function calculateMean(values: number[]): number {
     return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function computeMin(values: number[]): number {
+    return values.reduce((min, value) => (value < min ? value : min), Number.POSITIVE_INFINITY);
+}
+
+function computeMax(values: number[]): number {
+    return values.reduce((max, value) => (value > max ? value : max), Number.NEGATIVE_INFINITY);
 }
 
 function getStatisticValues(statistics: RftFanchartStatistics, statistic: RftStatistic): number[] {
