@@ -16,6 +16,7 @@ import { NumberInput } from "@lib/newComponents/NumberInput";
 import type { SelectOption } from "@lib/newComponents/Select";
 import { Select } from "@lib/newComponents/Select";
 import { SettingWrapper, type SettingAnnotation } from "@lib/newComponents/SettingWrapper";
+import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import {
     usePropagateAllApiErrorsToStatusWriter,
@@ -249,7 +250,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs.toString()] : []}
                             onValueChange={handleTimestampChange}
                             filter={availableTimestampsUtcMs.length > 6}
-                            size={Math.max(1, Math.min(availableTimestampsUtcMs.length, 6))}
+                            size={Math.max(3, Math.min(availableTimestampsUtcMs.length, 6))}
                         />
                     </SettingWrapper>
                 </SettingWrapper.Section>
@@ -296,8 +297,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     </SettingWrapper>
                 </SettingWrapper.Section>
                 <SettingWrapper.Section title="Data channel">
-                    <SettingWrapper label="Depth line">
-                        <CheckboxCompositions.WithLabel
+                    <SettingWrapper>
+                        <SwitchCompositions.WithLabel
                             label="Show depth line in plot"
                             checked={showDepthLine}
                             onCheckedChange={setShowDepthLine}

@@ -51,12 +51,14 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
 
     const entries = React.useMemo(() => dataAccessor?.getEntries() ?? [], [dataAccessor]);
     const selectedEnsembles = React.useMemo(
-        () =>
-            entries.flatMap((entry) => {
-                const ensemble = ensembleSet.findEnsemble(entry.ensembleIdent);
+        function resolveSelectedEnsembles() {
+            const ensembleIdents = dataAccessor?.getEnsembleIdents() ?? [];
+            return ensembleIdents.flatMap(function toEnsemble(ensembleIdent) {
+                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                 return ensemble ? [ensemble] : [];
-            }),
-        [entries, ensembleSet],
+            });
+        },
+        [dataAccessor, ensembleSet],
     );
 
     const depthRange = makeDepthRange(entries);

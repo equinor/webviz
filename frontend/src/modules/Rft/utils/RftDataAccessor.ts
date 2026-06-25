@@ -1,14 +1,27 @@
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+
 import type { RftEnsembleRealizationData, RftRealizationCurve } from "../typesAndEnums";
+
+import { sortCurveByDepth } from "./curveUtils";
 
 export class RftDataAccessor {
     private _entries: RftRealizationCurve[];
+    private _ensembleIdents: RegularEnsembleIdent[];
 
     constructor(ensembleData: RftEnsembleRealizationData[]) {
         this._entries = makeEntries(ensembleData);
+        // The input is already grouped per ensemble, so the idents are unique and order-preserving here.
+        this._ensembleIdents = ensembleData.map(function getEnsembleIdent(item) {
+            return item.ensembleIdent;
+        });
     }
 
     getEntries(): RftRealizationCurve[] {
         return this._entries;
+    }
+
+    getEnsembleIdents(): RegularEnsembleIdent[] {
+        return this._ensembleIdents;
     }
 }
 
@@ -28,12 +41,4 @@ function makeEntries(ensembleData: RftEnsembleRealizationData[]): RftRealization
     }
 
     return entries;
-}
-
-function sortCurveByDepth(depths: number[], values: number[]): { depths: number[]; values: number[] } {
-    const orderedIndices = depths.map((_, index) => index).sort((left, right) => depths[left] - depths[right]);
-    return {
-        depths: orderedIndices.map((index) => depths[index]),
-        values: orderedIndices.map((index) => values[index]),
-    };
 }

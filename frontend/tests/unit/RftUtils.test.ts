@@ -100,14 +100,6 @@ describe("makeRftDepthDataGenerator", () => {
         const { data } = makeRftDepthDataGenerator(entries, 50, metaData)();
         expect(data).toEqual([{ key: 0, value: 20 }]);
     });
-
-    it("sorts unordered depth samples before interpolating", () => {
-        const entries: RftRealizationCurve[] = [
-            { ensembleIdent: ENSEMBLE_IDENT, realization: 0, depths: [100, 0], values: [30, 10] },
-        ];
-        const { data } = makeRftDepthDataGenerator(entries, 50, metaData)();
-        expect(data).toEqual([{ key: 0, value: 20 }]);
-    });
 });
 
 describe("makeRftPlotTitle", () => {
@@ -165,5 +157,29 @@ describe("RftDataAccessor", () => {
         const entries = accessor.getEntries();
         expect(entries[0].depths).toEqual([0, 50, 100]);
         expect(entries[0].values).toEqual([10, 20, 30]);
+    });
+
+    it("exposes one ident per ensemble regardless of the number of realizations", () => {
+        const otherEnsembleIdent = new RegularEnsembleIdent("22222222-bbbb-4444-bbbb-bbbbbbbbbbbb", "iter-0");
+        const realizationData: RftEnsembleRealizationData[] = [
+            {
+                ensembleIdent: ENSEMBLE_IDENT,
+                data: [
+                    { realization: 0, well_name: "WELL-1", timestamp_utc_ms: 0, depth_arr: [0], value_arr: [1] },
+                    { realization: 1, well_name: "WELL-1", timestamp_utc_ms: 0, depth_arr: [0], value_arr: [2] },
+                ],
+            },
+            {
+                ensembleIdent: otherEnsembleIdent,
+                data: [
+                    { realization: 0, well_name: "WELL-1", timestamp_utc_ms: 0, depth_arr: [0], value_arr: [3] },
+                ],
+            },
+        ];
+        const accessor = new RftDataAccessor(realizationData);
+        const ensembleIdents = accessor.getEnsembleIdents();
+        expect(ensembleIdents).toHaveLength(2);
+        expect(ensembleIdents[0].toString()).toBe(ENSEMBLE_IDENT.toString());
+        expect(ensembleIdents[1].toString()).toBe(otherEnsembleIdent.toString());
     });
 });

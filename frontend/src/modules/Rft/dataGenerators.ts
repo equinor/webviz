@@ -1,7 +1,7 @@
 import type { ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
 
 import type { RftRealizationCurve } from "./typesAndEnums";
-import { interpolateCurveValueAtDepth } from "./view/utils/RftPlotBuilder";
+import { interpolateValueAtDepth } from "./utils/curveUtils";
 
 export function makeRftDepthDataGenerator(
     entries: RftRealizationCurve[],
@@ -11,7 +11,7 @@ export function makeRftDepthDataGenerator(
     return () => {
         const data: { key: number; value: number }[] = [];
         for (const entry of entries) {
-            const value = interpolateCurveValueAtDepth(entry.depths, entry.values, depth);
+            const value = interpolateValueAtDepth(entry.depths, entry.values, depth);
             if (Number.isFinite(value)) {
                 data.push({ key: entry.realization, value });
             }

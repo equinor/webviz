@@ -51,6 +51,7 @@ export type RftRealizationCurve = {
 
 export type RftDataAccessorLike = {
     getEntries: () => RftRealizationCurve[];
+    getEnsembleIdents: () => RegularEnsembleIdent[];
 };
 
 export type RftRealizationDataResult = {
