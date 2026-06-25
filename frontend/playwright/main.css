@@ -6,4 +6,4 @@
 @import "tailwindcss" source("..");
 
 /* Import the main project css to get custom rules and such */
-@import "../src/main.css";
+@import "../src/styles/index.css";

@@ -2,6 +2,7 @@ import React from "react";
 
 import { IntersectionType } from "@framework/types/intersection";
 import type { DropdownOption } from "@lib/components/Dropdown";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
