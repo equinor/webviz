@@ -71,7 +71,10 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
             <div
                 className={resolveClassNames(
                     "absolute top-1/2 right-1 z-10 -translate-y-1/2 transform rounded-full bg-gray-100 text-black transition-transform duration-200",
-                    { "scale-100": isHovered || status !== "idle", "scale-0": !isHovered && status === "idle" },
+                    {
+                        "scale-100": isHovered || status !== "idle",
+                        "not-focus-within:scale-0": !isHovered && status === "idle",
+                    },
                 )}
             >
                 <Tooltip content={TOOLTIP_BY_STATUS[status]}>

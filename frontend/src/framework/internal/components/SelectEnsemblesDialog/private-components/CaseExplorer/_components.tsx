@@ -2,7 +2,7 @@ import type React from "react";
 
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
 import { Avatar } from "@lib/newComponents/Avatar";
-import { CopyCellValue } from "@lib/newComponents/Table/compositions/copyCellValue";
+import { TableCompositions } from "@lib/newComponents/Table/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**
@@ -19,7 +19,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
     }
 
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested}>
+        <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
             <div
                 className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
@@ -35,7 +35,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
                     </span>
                 </div>
             </div>
-        </CopyCellValue>
+        </TableCompositions.CopyCellValue>
     );
 }
 
@@ -51,11 +51,11 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
     }
 
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested}>
+        <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
             <div className="flex h-full min-w-0 items-center" title={props.description}>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{props.description}</span>
             </div>
-        </CopyCellValue>
+        </TableCompositions.CopyCellValue>
     );
 }
 

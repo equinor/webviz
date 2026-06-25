@@ -1,3 +1,4 @@
+import { CopyCellValue } from "./copyCellValue";
 import { PendingRow, PendingRows } from "./pendingRows";
 import { VirtualizedRows } from "./virtualizedRows";
 
@@ -8,4 +9,5 @@ export const TableCompositions = {
     PendingRows,
     PendingRow,
     VirtualizedRows,
+    CopyCellValue,
 } as const;

@@ -23,7 +23,6 @@ import { Field } from "@lib/newComponents/Field";
 import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { Table } from "@lib/newComponents/Table";
 import { TableCompositions } from "@lib/newComponents/Table/compositions";
-import { CopyCellValue } from "@lib/newComponents/Table/compositions/copyCellValue";
 import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
 import { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
 import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
@@ -445,11 +444,11 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
                 )}
             </Table.Cell>
             <Table.Cell layoutClassName="group-data-deleted/snapshot-row:line-through">
-                <CopyCellValue onCopyRequested={() => url}>
+                <TableCompositions.CopyCellValue onCopyRequested={() => url}>
                     <div className="group relative flex h-full min-w-0 items-center" title={url}>
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap">{url}</div>
                     </div>
-                </CopyCellValue>
+                </TableCompositions.CopyCellValue>
             </Table.Cell>
             <Table.Cell noPadding>
                 <div className="px-sm gap-x-xs flex items-center">
