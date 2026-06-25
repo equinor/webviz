@@ -6,13 +6,14 @@ import type { PendingRowsProps } from "./index";
 import { TableCompositions } from "./index";
 
 const meta: Meta<typeof TableCompositions.PendingRows> = {
-    title: "Components/Table/Compositions/Pending Rows",
+    title: "Components/Table/Compositions/PendingRows",
     component: TableCompositions.PendingRows,
     parameters: {
         layout: "centered",
         docs: {
             description: {
-                component: "A component that renders one or more skeleton rows to be used during loading states",
+                component:
+                    "A component that renders one or more skeleton rows to be used during loading states. Must be placed inside a `<Table.Body />` component.",
             },
         },
     },
@@ -29,7 +30,7 @@ const meta: Meta<typeof TableCompositions.PendingRows> = {
     decorators: [
         // ! Can't get the layout and stuff to stretch horizontally in a nice way, so hard-coding some sizes here
         (Story) => (
-            <div className="flex h-full w-[80vw] max-w-[850px] items-center">
+            <div className="w-[80vw] max-w-[850px]">
                 <Story />
             </div>
         ),
