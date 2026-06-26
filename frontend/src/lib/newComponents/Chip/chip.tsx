@@ -3,9 +3,9 @@ import React from "react";
 
 import { Clear } from "@mui/icons-material";
 
-import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 
@@ -98,7 +98,9 @@ function ChipComponent(props: ChipProps, ref: React.ForwardedRef<HTMLElement>): 
             )}
         >
             {defaultedProps.startAdornment}
-            <div className="flex min-w-0 flex-1 items-center self-stretch overflow-x-hidden">{defaultedProps.children}</div>
+            <div className="flex min-w-0 flex-1 items-center self-stretch overflow-x-hidden">
+                {defaultedProps.children}
+            </div>
             {defaultedProps.wrapRemoveButton?.(removeButton) ?? removeButton}
             {defaultedProps.selected && (
                 <div className="bg-accent-strong absolute top-0 left-0 z-10 block h-full w-full rounded-sm opacity-50" />
