@@ -79,7 +79,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
     }, [props.caseData]);
 
     return (
-        <Table.Row layoutClassName="font-normal!" sortable={false}>
+        <Table.Row layoutClassName="font-normal!" sortable={false} formOnEmphasis>
             <Table.Cell noPadding></Table.Cell>
             <Table.Cell noPadding>
                 <FilterInput
