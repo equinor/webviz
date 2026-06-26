@@ -53,3 +53,19 @@ export const ReadOnly: Story = {
         readOnly: true,
     },
 };
+
+export const OnEmphasis: Story = {
+    args: { defaultValue: "On a dark background", formOnEmphasis: true },
+    parameters: {
+        docs: {
+            description: {
+                story: "When placing a text input on a darker background, the `formOnEmphasis` prop to swap the background color to one with ensure proper contrast.",
+            },
+        },
+    },
+    render: (args) => (
+        <div className="bg-neutral-canvas py-xl px-3xl rounded">
+            <TextInput {...args} data-on-emphasis />
+        </div>
+    ),
+};
