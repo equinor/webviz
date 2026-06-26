@@ -1,5 +1,6 @@
 import type React from "react";
 
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { NumberInput } from "@lib/newComponents/NumberInput";
 import { Switch } from "@lib/newComponents/Switch";
 
@@ -167,27 +168,30 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             const min = isStatic ? (staticProps?.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
             const max = isStatic ? (staticProps?.max ?? 100) : (props.valueConstraints?.[1] ?? 100);
 
-            function handleBooleanChange(checked: boolean) {
-                props.onValueChange({ enabled: checked, value });
-            }
+            const [immediateValue, setNumberValue, numberController] = useDebouncedOnChange<number | null>(
+                value,
+                function handleNumberSettle(numValue: number | null) {
+                    props.onValueChange({ enabled, value: numValue ?? min });
+                },
+                600,
+            );
 
-            function handleNumberChange(value: number | null) {
-                if (value === null) {
-                    value = min;
-                }
-                props.onValueChange({ enabled, value });
+            function handleBooleanChange(checked: boolean) {
+                numberController.cancel();
+                props.onValueChange({ enabled: checked, value: immediateValue ?? min });
             }
 
             return (
                 <div className="gap-x-2xs flex items-center">
                     <Switch checked={enabled} onCheckedChange={handleBooleanChange} />
                     <NumberInput
-                        value={value}
+                        value={immediateValue}
                         min={min}
                         max={max}
                         disabled={!enabled}
-                        onValueChange={handleNumberChange}
+                        onValueChange={setNumberValue}
                         layoutClassName="grow"
+                        allowWheelScrub
                     />
                 </div>
             );
