@@ -41,16 +41,12 @@ import {
     availableTimestampsUtcMsAtom,
     availableWellNamesAtom,
     ensembleTableDefinitionsAtom,
+} from "./atoms/derivedAtoms";
+import {
     selectedEnsembleIdentsAtom,
     selectedResponseNameAtom,
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
-} from "./atoms/derivedAtoms";
-import {
-    userSelectedEnsembleIdentsAtom,
-    userSelectedResponseNameAtom,
-    userSelectedTimestampUtcMsAtom,
-    userSelectedWellNameAtom,
 } from "./atoms/persistableFixableAtoms";
 import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom, rftTableDefinitionQueriesAtom } from "./atoms/queryAtoms";
 
@@ -59,8 +55,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
-    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
-    const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
+    const setSelectedEnsembleIdents = useSetAtom(selectedEnsembleIdentsAtom);
     const setValidRealizationNumbers = useSetAtom(validRealizationNumbersAtom);
 
     const [showIndividualRealizations, setShowIndividualRealizations] = useAtom(showIndividualRealizationsAtom);
@@ -71,10 +67,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const [dataChannelDepth, setDataChannelDepth] = useAtom(dataChannelDepthAtom);
     const [showDepthLine, setShowDepthLine] = useAtom(showDepthLineAtom);
 
-    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedEnsembleIdentsAtom);
-    const selectedResponseNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedResponseNameAtom);
-    const selectedWellNameAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedWellNameAtom);
-    const selectedTimestampAnnotations = useMakePersistableFixableAtomAnnotations(userSelectedTimestampUtcMsAtom);
+    const selectedEnsembleIdentsAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentsAtom);
+    const selectedResponseNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResponseNameAtom);
+    const selectedWellNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedWellNameAtom);
+    const selectedTimestampAnnotations = useMakePersistableFixableAtomAnnotations(selectedTimestampUtcMsAtom);
 
     const tableDefinitionQueries = useAtomValue(rftTableDefinitionQueriesAtom);
     usePropagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
@@ -85,16 +81,16 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     usePropagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
 
     const availableResponseNames = useAtomValue(availableResponseNamesAtom);
-    const selectedResponseName = useAtomValue(selectedResponseNameAtom);
-    const setUserSelectedResponseName = useSetAtom(userSelectedResponseNameAtom);
+    const selectedResponseName = useAtomValue(selectedResponseNameAtom).value;
+    const setSelectedResponseName = useSetAtom(selectedResponseNameAtom);
 
     const availableWellNames = useAtomValue(availableWellNamesAtom);
-    const selectedWellName = useAtomValue(selectedWellNameAtom);
-    const setUserSelectedWellName = useSetAtom(userSelectedWellNameAtom);
+    const selectedWellName = useAtomValue(selectedWellNameAtom).value;
+    const setSelectedWellName = useSetAtom(selectedWellNameAtom);
 
     const availableTimestampsUtcMs = useAtomValue(availableTimestampsUtcMsAtom);
-    const selectedTimestampUtcMs = useAtomValue(selectedTimestampUtcMsAtom);
-    const setUserSelectedTimestampUtcMs = useSetAtom(userSelectedTimestampUtcMsAtom);
+    const selectedTimestampUtcMs = useAtomValue(selectedTimestampUtcMsAtom).value;
+    const setSelectedTimestampUtcMs = useSetAtom(selectedTimestampUtcMsAtom);
 
     const ensembleTableDefinitions = useAtomValue(ensembleTableDefinitionsAtom);
 
@@ -113,19 +109,19 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }, [setValidRealizationNumbers, validRealizations]);
 
     function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
-        setUserSelectedEnsembleIdents(ensembleIdents);
+        setSelectedEnsembleIdents(ensembleIdents);
     }
 
     function handleResponseNameChange(responseNames: string[]) {
-        setUserSelectedResponseName(responseNames[0] ?? null);
+        setSelectedResponseName(responseNames[0] ?? null);
     }
 
     function handleWellNameChange(wellNames: string[]) {
-        setUserSelectedWellName(wellNames[0] ?? null);
+        setSelectedWellName(wellNames[0] ?? null);
     }
 
     function handleTimestampChange(timestamps: string[]) {
-        setUserSelectedTimestampUtcMs(timestamps[0] !== undefined ? parseInt(timestamps[0]) : null);
+        setSelectedTimestampUtcMs(timestamps[0] !== undefined ? parseInt(timestamps[0]) : null);
     }
 
     function handleStatisticsChange(statistics: string[]) {

@@ -11,7 +11,7 @@ import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { availableResponseNamesAtom, availableTimestampsUtcMsAtom, availableWellNamesAtom } from "./derivedAtoms";
 import { rftTableDefinitionQueriesAtom } from "./queryAtoms";
 
-export const userSelectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
     initialValue: [],
     areEqualFunction: areEnsembleIdentListsEqual,
     isValidFunction: ({ get, value }) => {
@@ -26,7 +26,7 @@ export const userSelectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnse
     },
 });
 
-export const userSelectedResponseNameAtom = persistableFixableAtom<string | null, string[]>({
+export const selectedResponseNameAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableResponseNamesAtom),
@@ -39,7 +39,7 @@ export const userSelectedResponseNameAtom = persistableFixableAtom<string | null
     },
 });
 
-export const userSelectedWellNameAtom = persistableFixableAtom<string | null, string[]>({
+export const selectedWellNameAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableWellNamesAtom),
@@ -52,7 +52,7 @@ export const userSelectedWellNameAtom = persistableFixableAtom<string | null, st
     },
 });
 
-export const userSelectedTimestampUtcMsAtom = persistableFixableAtom<number | null, number[]>({
+export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, number[]>({
     initialValue: null,
     areEqualFunction: isEqual,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,

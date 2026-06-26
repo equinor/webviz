@@ -15,10 +15,10 @@ import {
     showStatisticalLinesAtom,
 } from "./atoms/baseAtoms";
 import {
-    userSelectedEnsembleIdentsAtom,
-    userSelectedResponseNameAtom,
-    userSelectedTimestampUtcMsAtom,
-    userSelectedWellNameAtom,
+    selectedEnsembleIdentsAtom,
+    selectedResponseNameAtom,
+    selectedTimestampUtcMsAtom,
+    selectedWellNameAtom,
 } from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
@@ -54,12 +54,12 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => ({
-    selectedEnsembleIdentStrings: get(userSelectedEnsembleIdentsAtom).value.map((ensembleIdent) =>
+    selectedEnsembleIdentStrings: get(selectedEnsembleIdentsAtom).value.map((ensembleIdent) =>
         ensembleIdent.toString(),
     ),
-    selectedResponseName: get(userSelectedResponseNameAtom).value,
-    selectedWellName: get(userSelectedWellNameAtom).value,
-    selectedTimestampUtcMs: get(userSelectedTimestampUtcMsAtom).value,
+    selectedResponseName: get(selectedResponseNameAtom).value,
+    selectedWellName: get(selectedWellNameAtom).value,
+    selectedTimestampUtcMs: get(selectedTimestampUtcMsAtom).value,
     showIndividualRealizations: get(showIndividualRealizationsAtom),
     showStatisticalLines: get(showStatisticalLinesAtom),
     showStatisticalFan: get(showStatisticalFanAtom),
@@ -72,14 +72,14 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     setIfDefined(
         set,
-        userSelectedEnsembleIdentsAtom,
+        selectedEnsembleIdentsAtom,
         raw.selectedEnsembleIdentStrings?.map((ensembleIdentString) =>
             RegularEnsembleIdent.fromString(ensembleIdentString),
         ),
     );
-    setIfDefined(set, userSelectedResponseNameAtom, raw.selectedResponseName);
-    setIfDefined(set, userSelectedWellNameAtom, raw.selectedWellName);
-    setIfDefined(set, userSelectedTimestampUtcMsAtom, raw.selectedTimestampUtcMs);
+    setIfDefined(set, selectedResponseNameAtom, raw.selectedResponseName);
+    setIfDefined(set, selectedWellNameAtom, raw.selectedWellName);
+    setIfDefined(set, selectedTimestampUtcMsAtom, raw.selectedTimestampUtcMs);
     setIfDefined(set, showIndividualRealizationsAtom, raw.showIndividualRealizations);
     setIfDefined(set, showStatisticalLinesAtom, raw.showStatisticalLines);
     setIfDefined(set, showStatisticalFanAtom, raw.showStatisticalFan);

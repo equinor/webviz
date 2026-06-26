@@ -27,12 +27,12 @@ import {
     selectedResponseNameAtom,
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
-} from "./derivedAtoms";
+} from "./persistableFixableAtoms";
 
 type RftApiError = AxiosError<HTTPValidationError_api>;
 
 export const rftTableDefinitionQueriesAtom = atomWithQueries(function makeRftTableDefinitionQueryOptions(get) {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map(function makeRftTableDefinitionQuery(ensembleIdent) {
         const options = getRftTableDefinitionOptions({
@@ -52,10 +52,10 @@ export const rftTableDefinitionQueriesAtom = atomWithQueries(function makeRftTab
 });
 
 export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRealizationDataQueryOptions(get) {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const selectedWellName = get(selectedWellNameAtom);
-    const selectedResponseName = get(selectedResponseNameAtom);
-    const selectedTimestampUtcMs = get(selectedTimestampUtcMsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const selectedWellName = get(selectedWellNameAtom).value;
+    const selectedResponseName = get(selectedResponseNameAtom).value;
+    const selectedTimestampUtcMs = get(selectedTimestampUtcMsAtom).value;
     const validRealizationNumbers = get(validRealizationNumbersAtom);
 
     const realizationsEncodedAsUintListStr = validRealizationNumbers
@@ -115,7 +115,7 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
 });
 
 export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObservationsQueryOptions(get) {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
     const queries = selectedEnsembleIdents.map(function makeRftObservationsQuery(ensembleIdent) {
         const options = getRftObservationsOptions({
