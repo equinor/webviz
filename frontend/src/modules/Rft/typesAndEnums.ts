@@ -50,8 +50,8 @@ export type RftRealizationCurve = {
 };
 
 export type RftDataAccessorLike = {
-    getEntries: () => RftRealizationCurve[];
-    getEnsembleIdents: () => RegularEnsembleIdent[];
+    getEntries: () => readonly RftRealizationCurve[];
+    getEnsembleIdents: () => readonly RegularEnsembleIdent[];
 };
 
 export type RftRealizationDataResult = {
@@ -63,5 +63,7 @@ export type RftRealizationDataResult = {
 
 export type RftObservationsResult = {
     observationsData: RftEnsembleObservationsData[];
+    isFetching: boolean;
+    isError: boolean;
     errors: Error[];
 };

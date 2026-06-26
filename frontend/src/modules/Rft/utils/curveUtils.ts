@@ -1,4 +1,9 @@
 export function sortCurveByDepth(depths: number[], values: number[]): { depths: number[]; values: number[] } {
+    if (depths.length !== values.length) {
+        throw new Error(
+            `Cannot sort RFT curve: depths and values must have the same length (got ${depths.length} and ${values.length}).`,
+        );
+    }
     const orderedIndices = depths.map((_, index) => index).sort((left, right) => depths[left] - depths[right]);
     return {
         depths: orderedIndices.map((index) => depths[index]),

@@ -3,7 +3,6 @@ import React from "react";
 import type { Layout, PlotData } from "plotly.js";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
-import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 
 import type { RftDataAccessorLike, RftEnsembleObservationsData, VisualizationSettings } from "../../typesAndEnums";
@@ -18,7 +17,6 @@ export type RftPlotContent = {
 type UseRftPlotBuilderParams = {
     dataAccessor: RftDataAccessorLike | null;
     selectedEnsembles: RegularEnsemble[];
-    colorSet: ColorSet;
     wellName: string | null;
     responseName: string | null;
     timestampUtcMs: number | null;
@@ -35,7 +33,6 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
     const {
         dataAccessor,
         selectedEnsembles,
-        colorSet,
         wellName,
         responseName,
         timestampUtcMs,
@@ -44,8 +41,12 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
         size,
     } = params;
 
-    return React.useMemo(
-        function buildPlotContent(): RftPlotContent | null {
+    // The expensive trace building (plotData) and the value range only depend on the data and
+    // visualization settings, not on the plot size. Computing them in a separate memo from the
+    // layout means resizing the plot (which only changes `size`) re-runs the cheap layout memo
+    // without rebuilding all traces.
+    const plotResult = React.useMemo(
+        function buildPlotData(): { plotData: Partial<PlotData>[]; valueRange: [number, number] | null } | null {
             if (!dataAccessor || !wellName || !responseName || timestampUtcMs === null) {
                 return null;
             }
@@ -55,7 +56,7 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
                 return null;
             }
 
-            const plotBuilder = new RftPlotBuilder(dataAccessor, selectedEnsembles, colorSet);
+            const plotBuilder = new RftPlotBuilder(dataAccessor, selectedEnsembles);
 
             const observationsPerEnsemble = visualizationSettings.showObservations
                 ? extractObservationRowsPerEnsemble(observationsData, wellName, timestampUtcMs, responseName)
@@ -86,20 +87,36 @@ export function useRftPlotBuilder(params: UseRftPlotBuilderParams): RftPlotConte
                     : []),
             ];
 
-            const layout = plotBuilder.makeLayout(size, responseName, valueRange);
-
-            return { plotData, layout };
+            return { plotData, valueRange };
         },
         [
             dataAccessor,
             selectedEnsembles,
-            colorSet,
             wellName,
             responseName,
             timestampUtcMs,
             visualizationSettings,
             observationsData,
-            size,
         ],
+    );
+
+    const layout = React.useMemo(
+        function buildLayout(): Partial<Layout> | null {
+            if (!plotResult || !responseName) {
+                return null;
+            }
+            return RftPlotBuilder.makeLayout(size, responseName, plotResult.valueRange);
+        },
+        [plotResult, responseName, size],
+    );
+
+    return React.useMemo(
+        function combinePlotContent(): RftPlotContent | null {
+            if (!plotResult || !layout) {
+                return null;
+            }
+            return { plotData: plotResult.plotData, layout };
+        },
+        [plotResult, layout],
     );
 }

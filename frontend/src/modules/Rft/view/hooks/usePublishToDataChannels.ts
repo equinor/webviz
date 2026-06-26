@@ -9,7 +9,7 @@ import type { Interfaces } from "../../interfaces";
 import type { RftRealizationCurve } from "../../typesAndEnums";
 
 type PublishToDataChannelsParams = {
-    entries: RftRealizationCurve[];
+    entries: readonly RftRealizationCurve[];
     responseName: string | null;
     dataChannelDepth: number | null;
     timestampUtcMs: number | null;

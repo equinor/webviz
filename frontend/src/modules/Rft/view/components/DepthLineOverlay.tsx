@@ -148,7 +148,7 @@ export function DepthLineOverlay(props: DepthLineOverlayProps): React.ReactNode 
             </div>
             <div
                 className={resolveClassNames(
-                    "bg-neutral-strong group-hover:bg-accent-strong-hover group-active:bg-accent-strong-active h-0.5 w-full",
+                    "bg-neutral-strong group-hover:bg-accent-strong-hover group-active:bg-accent-strong-active outline-neutral-subtle h-0.5 w-full outline",
                     {
                         "bg-danger-strong! text-danger-subtle": props.isOutOfRange,
                     },

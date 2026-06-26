@@ -3,7 +3,7 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 
 import type { RftEnsembleObservationRows, RftEnsembleObservationsData } from "../../typesAndEnums";
 
-export function makeDepthRange(entries: { depths: number[] }[]): [number, number] | null {
+export function makeDepthRange(entries: readonly { depths: number[] }[]): [number, number] | null {
     let minDepth = Number.POSITIVE_INFINITY;
     let maxDepth = Number.NEGATIVE_INFINITY;
 
@@ -22,7 +22,7 @@ export function makeDepthRange(entries: { depths: number[] }[]): [number, number
 }
 
 export function makeValueRange(
-    entries: { values: number[] }[],
+    entries: readonly { values: number[] }[],
     observationRows: RftObservation_api[],
 ): [number, number] | null {
     let minValue = Number.POSITIVE_INFINITY;

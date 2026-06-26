@@ -7,7 +7,6 @@ import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { useColorSet } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -23,14 +22,14 @@ import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useRftPlotBuilder } from "./hooks/useRftPlotBuilder";
 import { makeRftPlotTitle } from "./utils/createTitle";
 import { makeDepthRange } from "./utils/plotData";
+import { MISSING_ENSEMBLE_COLOR } from "./utils/RftPlotBuilder";
 
 const PLOT_CONFIG: Partial<Config> = { scrollZoom: true };
 
-export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) {
+export function View({ viewContext, workbenchSession }: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementBoundingRect(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const colorSet = useColorSet(workbenchSettings);
 
     const wellName = viewContext.useSettingsToViewInterfaceValue("wellName");
     const responseName = viewContext.useSettingsToViewInterfaceValue("responseName");
@@ -77,7 +76,6 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     const plotContent = useRftPlotBuilder({
         dataAccessor,
         selectedEnsembles,
-        colorSet,
         wellName,
         responseName,
         timestampUtcMs,
@@ -97,9 +95,15 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             const ensemble = selectedEnsembles.find(
                 (candidate) => candidate.getIdent().toString() === ensembleIdent.toString(),
             );
-            return ensemble?.getColor() ?? colorSet.getFirstColor();
+            if (!ensemble) {
+                console.error(
+                    `Could not resolve color for ensemble ${ensembleIdent.toString()}: not among selected ensembles.`,
+                );
+                return MISSING_ENSEMBLE_COLOR;
+            }
+            return ensemble.getColor();
         },
-        metaDependencies: [selectedEnsembles, colorSet],
+        metaDependencies: [selectedEnsembles],
         isFetching,
     });
 

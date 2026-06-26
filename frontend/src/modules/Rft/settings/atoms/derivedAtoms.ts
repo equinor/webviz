@@ -1,6 +1,7 @@
 import { atom } from "jotai";
 
 import type { RftTableDefinition_api } from "@api";
+import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { selectedEnsembleIdentsAtom, selectedWellNameAtom } from "./persistableFixableAtoms";
@@ -11,14 +12,28 @@ type RftEnsembleTableDefinition = {
     tableDefinition: RftTableDefinition_api;
 };
 
+export const validRealizationNumbersAtom = atom<number[]>((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+
+    const realizationSet = new Set<number>();
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        for (const realization of validEnsembleRealizationsFunction(ensembleIdent)) {
+            realizationSet.add(realization);
+        }
+    }
+    return Array.from(realizationSet).sort((a, b) => a - b);
+});
+
 function intersectArrays<T>(arrays: T[][]): T[] {
     if (arrays.length === 0) {
         return [];
     }
 
-    return arrays.reduce<T[]>((intersection, currentArray) => {
-        return intersection.filter((value) => currentArray.includes(value));
-    }, arrays[0]);
+    return arrays.slice(1).reduce<T[]>((intersection, currentArray) => {
+        const currentSet = new Set(currentArray);
+        return intersection.filter((value) => currentSet.has(value));
+    }, [...arrays[0]]);
 }
 
 export const ensembleTableDefinitionsAtom = atom<RftEnsembleTableDefinition[]>((get) => {

@@ -16,11 +16,11 @@ export class RftDataAccessor {
         });
     }
 
-    getEntries(): RftRealizationCurve[] {
+    getEntries(): readonly RftRealizationCurve[] {
         return this._entries;
     }
 
-    getEnsembleIdents(): RegularEnsembleIdent[] {
+    getEnsembleIdents(): readonly RegularEnsembleIdent[] {
         return this._ensembleIdents;
     }
 }

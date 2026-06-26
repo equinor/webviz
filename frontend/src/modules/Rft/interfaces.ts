@@ -45,5 +45,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     showDepthLine: (get) => get(showDepthLineAtom),
     dataAccessor: (get) => get(rftRealizationDataQueriesAtom).dataAccessor,
     observationsData: (get) => get(rftObservationsQueriesAtom).observationsData,
-    isFetching: (get) => get(rftRealizationDataQueriesAtom).isFetching,
+    isFetching: (get) =>
+        get(rftRealizationDataQueriesAtom).isFetching || get(rftObservationsQueriesAtom).isFetching,
 };

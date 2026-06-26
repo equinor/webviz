@@ -1,5 +1,4 @@
 import type { Getter } from "jotai";
-import { isEqual } from "lodash";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -54,7 +53,6 @@ export const selectedWellNameAtom = persistableFixableAtom<string | null, string
 
 export const selectedTimestampUtcMsAtom = persistableFixableAtom<number | null, number[]>({
     initialValue: null,
-    areEqualFunction: isEqual,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableTimestampsUtcMsAtom),
     isValidFunction: ({ value, precomputedValue: availableTimestamps }) => {

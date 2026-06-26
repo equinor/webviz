@@ -1,6 +1,5 @@
-import React from "react";
-
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { xor } from "lodash";
 
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { ModuleSettingsProps } from "@framework/Module";
@@ -34,7 +33,6 @@ import {
     showObservationsAtom,
     showStatisticalFanAtom,
     showStatisticalLinesAtom,
-    validRealizationNumbersAtom,
 } from "./atoms/baseAtoms";
 import {
     availableResponseNamesAtom,
@@ -57,7 +55,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
     const setSelectedEnsembleIdents = useSetAtom(selectedEnsembleIdentsAtom);
-    const setValidRealizationNumbers = useSetAtom(validRealizationNumbersAtom);
 
     const [showIndividualRealizations, setShowIndividualRealizations] = useAtom(showIndividualRealizationsAtom);
     const [showStatisticalLines, setShowStatisticalLines] = useAtom(showStatisticalLinesAtom);
@@ -94,20 +91,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const ensembleTableDefinitions = useAtomValue(ensembleTableDefinitionsAtom);
 
-    const validRealizations = React.useMemo(() => {
-        const realizationSet = new Set<number>();
-        for (const ensembleIdent of selectedEnsembleIdents) {
-            for (const realization of filterEnsembleRealizationsFunc(ensembleIdent)) {
-                realizationSet.add(realization);
-            }
-        }
-        return Array.from(realizationSet).sort((a, b) => a - b);
-    }, [filterEnsembleRealizationsFunc, selectedEnsembleIdents]);
-
-    React.useEffect(() => {
-        setValidRealizationNumbers(validRealizations);
-    }, [setValidRealizationNumbers, validRealizations]);
-
     function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
@@ -120,8 +103,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setSelectedWellName(wellNames[0] ?? null);
     }
 
-    function handleTimestampChange(timestamps: string[]) {
-        setSelectedTimestampUtcMs(timestamps[0] !== undefined ? parseInt(timestamps[0]) : null);
+    function handleTimestampChange(timestamps: number[]) {
+        setSelectedTimestampUtcMs(timestamps[0] ?? null);
     }
 
     function handleStatisticsChange(statistics: string[]) {
@@ -241,9 +224,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         errorOverlay={tableDefinitionsErrorMessage}
                         stacked
                     >
-                        <Select
+                        <Select<number>
                             options={makeTimestampOptions(availableTimestampsUtcMs)}
-                            value={selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs.toString()] : []}
+                            value={selectedTimestampUtcMs !== null ? [selectedTimestampUtcMs] : []}
                             onValueChange={handleTimestampChange}
                             filter={availableTimestampsUtcMs.length > 6}
                             size={Math.max(3, Math.min(availableTimestampsUtcMs.length, 6))}
@@ -318,8 +301,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     );
 }
 
-function arraysHaveSameValues(left: string[], right: string[]): boolean {
-    return left.length === right.length && left.every((value) => right.includes(value));
+function arraysHaveSameValues<T>(left: T[], right: T[]): boolean {
+    return xor(left, right).length === 0;
 }
 
 function makeStringOptions(values: string[]): SelectOption[] {
@@ -328,8 +311,8 @@ function makeStringOptions(values: string[]): SelectOption[] {
     });
 }
 
-function makeTimestampOptions(timestampsUtcMs: number[]): SelectOption[] {
+function makeTimestampOptions(timestampsUtcMs: number[]): SelectOption<number>[] {
     return timestampsUtcMs.map(function makeTimestampOption(timestampUtcMs) {
-        return { label: timestampUtcMsToCompactIsoString(timestampUtcMs), value: timestampUtcMs.toString() };
+        return { label: timestampUtcMsToCompactIsoString(timestampUtcMs), value: timestampUtcMs };
     });
 }

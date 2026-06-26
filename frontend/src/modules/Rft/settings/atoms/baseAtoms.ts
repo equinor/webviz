@@ -2,8 +2,6 @@ import { atom } from "jotai";
 
 import { RftStatistic } from "../../typesAndEnums";
 
-export const validRealizationNumbersAtom = atom<number[] | null>(null);
-
 export const showIndividualRealizationsAtom = atom<boolean>(false);
 export const showStatisticalLinesAtom = atom<boolean>(true);
 export const showStatisticalFanAtom = atom<boolean>(true);

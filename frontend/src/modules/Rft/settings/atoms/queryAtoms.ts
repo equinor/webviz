@@ -21,7 +21,7 @@ import type {
 } from "../../typesAndEnums";
 import { RftDataAccessor } from "../../utils/RftDataAccessor";
 
-import { validRealizationNumbersAtom } from "./baseAtoms";
+import { validRealizationNumbersAtom } from "./derivedAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedResponseNameAtom,
@@ -44,7 +44,7 @@ export const rftTableDefinitionQueriesAtom = atomWithQueries(function makeRftTab
         });
 
         return function getRftTableDefinitionQueryOptions() {
-            return { ...options, enabled: Boolean(ensembleIdent) };
+            return options;
         };
     });
 
@@ -58,9 +58,8 @@ export const rftRealizationDataQueriesAtom = atomWithQueries(function makeRftRea
     const selectedTimestampUtcMs = get(selectedTimestampUtcMsAtom).value;
     const validRealizationNumbers = get(validRealizationNumbersAtom);
 
-    const realizationsEncodedAsUintListStr = validRealizationNumbers
-        ? encodeAsUintListStr(validRealizationNumbers)
-        : null;
+    const realizationsEncodedAsUintListStr =
+        validRealizationNumbers.length > 0 ? encodeAsUintListStr(validRealizationNumbers) : null;
 
     const queries = selectedEnsembleIdents.map(function makeRftRealizationDataQuery(ensembleIdent) {
         const options = getRftRealizationDataOptions({
@@ -127,7 +126,7 @@ export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObserv
         });
 
         return function getRftObservationsQueryOptions() {
-            return { ...options, enabled: Boolean(ensembleIdent) };
+            return options;
         };
     });
 
@@ -143,6 +142,12 @@ export const rftObservationsQueriesAtom = atomWithQueries(function makeRftObserv
 
         return {
             observationsData,
+            isFetching: results.some(function isResultFetching(result) {
+                return result.isFetching;
+            }),
+            isError: results.some(function isResultError(result) {
+                return result.isError;
+            }),
             errors: results
                 .map(function getResultError(result) {
                     return result.error;

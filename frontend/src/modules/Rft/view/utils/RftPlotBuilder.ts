@@ -1,8 +1,8 @@
+import { formatRgb, parse } from "culori";
 import type { Layout, PlotData } from "plotly.js";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { computeP50, computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
@@ -14,7 +14,12 @@ import {
     type RftRealizationCurve,
     RftStatistic,
 } from "../../typesAndEnums";
-import { interpolateValueAtDepth, sortCurveByDepth } from "../../utils/curveUtils";
+import { interpolateValueAtDepth } from "../../utils/curveUtils";
+
+// Color used for traces whose ensemble can no longer be resolved (e.g. removed from the ensemble set).
+// A neutral gray makes such traces visually distinct instead of reusing the first ensemble's color.
+export const MISSING_ENSEMBLE_COLOR = "#808080";
+
 
 type EnsembleStatisticGroup = {
     ensembleIdent: RegularEnsembleIdent;
@@ -34,12 +39,10 @@ export type RftFanchartStatistics = {
 export class RftPlotBuilder {
     private _dataAccessor: RftDataAccessorLike;
     private _selectedEnsembles: RegularEnsemble[];
-    private _colorSet: ColorSet;
 
-    constructor(dataAccessor: RftDataAccessorLike, selectedEnsembles: RegularEnsemble[], colorSet: ColorSet) {
+    constructor(dataAccessor: RftDataAccessorLike, selectedEnsembles: RegularEnsemble[]) {
         this._dataAccessor = dataAccessor;
         this._selectedEnsembles = selectedEnsembles;
-        this._colorSet = colorSet;
     }
 
     makeLegendTraces(shownLegendEnsembles = new Set<string>()): Partial<PlotData>[] {
@@ -52,8 +55,13 @@ export class RftPlotBuilder {
             }
         }
 
-        return Array.from(firstEntryByEnsemble.entries()).map(([ensembleKey, entry]) => {
+        // Register every ensemble as having a legend entry before producing the traces, so the
+        // mutation of the shared set is an explicit step rather than a side-effect hidden in `map`.
+        for (const ensembleKey of firstEntryByEnsemble.keys()) {
             shownLegendEnsembles.add(ensembleKey);
+        }
+
+        return Array.from(firstEntryByEnsemble.entries()).map(([ensembleKey, entry]) => {
             return {
                 x: [null],
                 y: [null],
@@ -262,7 +270,7 @@ export class RftPlotBuilder {
         return traces;
     }
 
-    makeLayout(size: Size2D, responseName: string, valueRange: [number, number] | null): Partial<Layout> {
+    static makeLayout(size: Size2D, responseName: string, valueRange: [number, number] | null): Partial<Layout> {
         return {
             height: size.height,
             width: size.width,
@@ -301,7 +309,11 @@ export class RftPlotBuilder {
         const ensemble = this._selectedEnsembles.find(
             (candidate) => candidate.getIdent().toString() === ensembleIdent.toString(),
         );
-        return ensemble?.getColor() ?? this._colorSet.getFirstColor();
+        if (!ensemble) {
+            console.error(`Could not resolve color for ensemble ${ensembleIdent.toString()}: not among selected ensembles.`);
+            return MISSING_ENSEMBLE_COLOR;
+        }
+        return ensemble.getColor();
     }
 
     private makeEnsembleDisplayName(ensembleIdent: RegularEnsembleIdent): string {
@@ -325,11 +337,11 @@ function resampleEntriesToCommonDepths(entries: RftRealizationCurve[]): RftReali
     }
 
     return entries.map((entry) => {
-        const sorted = sortCurveByDepth(entry.depths, entry.values);
+        // Entries are already sorted by depth (RftDataAccessor sorts on construction), so interpolate directly.
         return {
             ...entry,
             depths: commonDepths,
-            values: commonDepths.map((depth) => interpolateValueAtDepth(sorted.depths, sorted.values, depth)),
+            values: commonDepths.map((depth) => interpolateValueAtDepth(entry.depths, entry.values, depth)),
         };
     });
 }
@@ -409,12 +421,9 @@ function getStatisticLineDash(statistic: RftStatistic): PlotData["line"]["dash"]
 }
 
 function makeTransparentColor(color: string, opacity: number): string {
-    if (!color.startsWith("#") || color.length !== 7) {
+    const parsed = parse(color);
+    if (!parsed) {
         return color;
     }
-
-    const red = parseInt(color.slice(1, 3), 16);
-    const green = parseInt(color.slice(3, 5), 16);
-    const blue = parseInt(color.slice(5, 7), 16);
-    return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+    return formatRgb({ ...parsed, alpha: opacity });
 }
