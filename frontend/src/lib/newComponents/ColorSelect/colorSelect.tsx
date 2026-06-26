@@ -3,6 +3,7 @@ import React from "react";
 import { ExpandMore } from "@mui/icons-material";
 
 import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
+
 import { Button, type ButtonProps } from "../Button";
 import { ColorTile } from "../ColorTile";
 
@@ -63,7 +64,14 @@ export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>
 
     return (
         <>
-            <Button {...buttonProps} ref={ref} onClick={handleButtonClick} tone="neutral" compact>
+            <Button
+                {...buttonProps}
+                ref={ref}
+                onClick={handleButtonClick}
+                tone="neutral"
+                compact
+                iconOnly={defaultedProps.size === "small"}
+            >
                 <ColorTile.Tile color={selectedColor} size={defaultedProps.size} />
                 {defaultedProps.size !== "small" && <ExpandMore fontSize="inherit" />}
             </Button>
