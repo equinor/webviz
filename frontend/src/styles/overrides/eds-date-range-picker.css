@@ -27,7 +27,7 @@
 
     /* Field wrapper */
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply gap-4xs h-5 items-center rounded bg-transparent p-0 shadow-none!;
+        @apply gap-4xs flex h-5 items-center rounded bg-transparent p-0 text-inherit! shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
@@ -36,19 +36,43 @@
 
     /* Segments (date input fields) */
     & [class*="Segment"] {
-        @apply text-body-md text-neutral-subtle data-placeholder:text-neutral-subtle focus-within:bg-canvas h-5! outline-0;
+        @apply text-body-md focus-within:bg-canvas h-5! text-inherit outline-0;
+    }
+
+    /* Segments (date input fields) */
+    & [class*="Segment"] {
+        @apply text-body-md focus-within:bg-canvas h-5! text-inherit outline-0;
+    }
+
+    & .placeholder,
+    ::placeholder {
+        @apply text-neutral-subtle/75;
+    }
+
+    & [class*="Segment"]:has(+ .placeholder),
+    [class*="StyledTypography"]:has(+ .placeholder) {
+        @apply text-neutral-subtle/50;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled;
+
+        & .placeholder,
+        ::placeholder {
+            @apply text-disabled/80;
+        }
     }
 
     & [class*="Typography"] {
-        @apply text-neutral-subtle;
+        @apply text-inherit;
     }
 
     & [data-size="small"] [class*="Typography"] {
-        @apply text-body-xs! h-3!;
+        @apply text-body-xs! leading-body-xs-squished! h-3!;
     }
 
     &[data-size="small"] [class*="Segment"] {
-        @apply text-body-xs! h-3!;
+        @apply text-body-xs! leading-body-xs-squished! h-3!;
     }
 
     &[data-size="large"] [class*="Segment"] {
@@ -56,7 +80,7 @@
     }
 
     & [class*="Segment"]:focus-visible {
-        @apply focusable;
+        @apply focusable rounded-xs outline-none;
     }
 
     & [class*="Toggle__StyledButton"] {
@@ -69,5 +93,9 @@
 
     & [class*="Toggle__StyledButton"]:focus-visible {
         @apply outline-focus;
+    }
+
+    & [class*="HelperText__Container"] {
+        display: none;
     }
 }

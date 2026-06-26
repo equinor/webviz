@@ -34,6 +34,8 @@ export const DateRangePicker = React.forwardRef<HTMLDivElement, DateRangePickerP
                 value={activeValue}
                 className={resolveClassNames("webviz-eds-date-range-picker", baseProps.className)}
                 data-size={size}
+                data-disabled={props.disabled ? "" : undefined}
+                data-readonly={props.readOnly ? "" : undefined}
             />
         );
     },
