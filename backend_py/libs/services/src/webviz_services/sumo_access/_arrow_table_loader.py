@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from typing import Literal
 
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
@@ -161,35 +160,38 @@ class ArrowTableLoader:
             return column_name_and_aggregated_table_pairs[0][1]
 
         # Since we're going to just append the "value" columns below, we need to ensure that the shared columns
-        # (the columns that are not in column_names) are equal across all tables. The aggregated tables returned
-        # from Sumo do not have a guaranteed column or row order, so we normalize each table to a canonical column
-        # order and sort by the shared key columns before comparing and appending.
+        # (the columns that are not in column_names) are equal across all tables.
         first_column_name, first_aggregated_table = column_name_and_aggregated_table_pairs[0]
-        shared_column_names = sorted(first_aggregated_table.drop(first_column_name).column_names)
-
-        normalized_pairs = [
-            (column_name, _normalize_aggregated_table(aggregated_table, column_name, shared_column_names))
-            for column_name, aggregated_table in column_name_and_aggregated_table_pairs
-        ]
-
-        first_column_name, first_aggregated_table = normalized_pairs[0]
         shared_columns_first_table = first_aggregated_table.drop(first_column_name)
-        for this_column_name, this_aggregated_table in normalized_pairs[1:]:
+
+        # NOTE: The merge below appends value columns positionally, so it relies on all tables having
+        # identical row ordering. We assume the aggregated tables are returned with a stable, matching
+        # row order. If that assumption ever breaks, the equals() check below will fail. Sorting would
+        # probably require all shared key columns (e.g. REAL, WELL, DATE) to produce a deterministic total order;
+        # but sorting on REAL alone might be sufficient since each realization spans many rows.
+
+        for i in range(1, len(column_name_and_aggregated_table_pairs)):
+            this_column_name, this_aggregated_table = column_name_and_aggregated_table_pairs[i]
             shared_columns_this_table = this_aggregated_table.drop(this_column_name)
+
+            if set(shared_columns_first_table.column_names) != set(shared_columns_this_table.column_names):
+                raise InvalidDataError(
+                    f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}",
+                    Service.SUMO,
+                )
+
+            # Reorder so the column ordering matches before comparing the contents
+            shared_columns_this_table = shared_columns_this_table.select(shared_columns_first_table.column_names)
+
             if not shared_columns_first_table.equals(shared_columns_this_table):
-                if shared_columns_first_table.column_names != shared_columns_this_table.column_names:
-                    raise InvalidDataError(
-                        f"The shared columns are not equal: Aggregated table for {first_column_name} has shared columns {shared_columns_first_table.column_names}, and aggregated table for {this_column_name} has shared columns {shared_columns_this_table.column_names}",
-                        Service.SUMO,
-                    )
                 raise InvalidDataError(
                     f"The shared columns are not equal: Aggregated table for {first_column_name} and aggregated table for {this_column_name} has same shared columns {shared_columns_this_table.column_names}. Although the column names match, their contents (values or order) differ.",
                     Service.SUMO,
                 )
-
         # Now we can merge the tables by appending the "value" columns
         merged_aggregated_table = first_aggregated_table
-        for column_name, aggregated_table in normalized_pairs[1:]:
+        for i in range(1, len(column_name_and_aggregated_table_pairs)):
+            column_name, aggregated_table = column_name_and_aggregated_table_pairs[i]
             merged_aggregated_table = merged_aggregated_table.append_column(column_name, aggregated_table[column_name])
 
         return merged_aggregated_table
@@ -238,22 +240,6 @@ class ArrowTableLoader:
         if self._req_tagname is not None:
             info_str += f", tagname={self._req_tagname}"
         return info_str
-
-
-def _normalize_aggregated_table(
-    aggregated_table: pa.Table, value_column_name: str, shared_column_names: list[str]
-) -> pa.Table:
-    """
-    Normalize an aggregated table to a canonical column order (sorted shared columns followed by the value column)
-    and sort the rows by the shared key columns. This makes the shared columns directly comparable and ensures the
-    rows are aligned across tables before appending value columns.
-    """
-    ordered_column_names = shared_column_names + [value_column_name]
-    reordered_table = aggregated_table.select(ordered_column_names)
-    sort_keys: list[tuple[str, Literal["ascending", "descending"]]] = [
-        (column_name, "ascending") for column_name in shared_column_names
-    ]
-    return reordered_table.sort_by(sort_keys)
 
 
 async def _is_agg_valid_for_reals_async(agg_sumo_table_obj: Table, sc_tables: SearchContext) -> bool:
