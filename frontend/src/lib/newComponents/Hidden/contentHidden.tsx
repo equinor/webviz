@@ -7,6 +7,10 @@ export type ContentHiddenProps = {
     hidden?: boolean;
 };
 
-export function ContentHidden(props: ContentHiddenProps): React.ReactNode {
-    return <div className={props.hidden ? "hidden" : "contents"}>{props.children}</div>;
-}
+export const ContentHidden = React.forwardRef<HTMLDivElement, ContentHiddenProps>(function ContentHidden(props, ref) {
+    return (
+        <div ref={ref} className={props.hidden ? "hidden" : "contents"}>
+            {props.children}
+        </div>
+    );
+});

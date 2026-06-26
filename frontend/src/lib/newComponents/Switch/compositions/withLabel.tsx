@@ -12,7 +12,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { SwitchProps } from "../_components/switch";
 import { Switch } from "../_components/switch";
 
-export type WithLabelProps = Omit<SwitchProps, "ref"> & {
+export type WithLabelProps = SwitchProps & {
     /** Text label rendered next to the switch. Ignored when `children` is provided. */
     label?: string;
     /** Custom content rendered next to the switch. Takes precedence over `label`. */

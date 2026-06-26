@@ -9,16 +9,14 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type MenuSeparatorProps = ComponentWrapperProps<SeparatorBaseProps>;
 
-function SeparatorComponent(props: MenuSeparatorProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const Separator = React.forwardRef<HTMLDivElement, MenuSeparatorProps>(function Separator(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
     return (
         <BaseMenu.Separator
             {...baseProps}
             ref={ref}
-            className={resolveClassNames("menu__separator", props.layoutClassName)}
+            className={resolveClassNames("menu__separator", baseProps.className)}
         />
     );
-}
-
-export const Separator = React.forwardRef(SeparatorComponent);
+});

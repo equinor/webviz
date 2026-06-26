@@ -11,10 +11,8 @@ export type MenuTriggerProps = ComponentWrapperProps<MenuBaseTriggerProps> & {
     children: React.ReactElement;
 };
 
-function TriggerComponent(props: MenuTriggerProps, ref: React.ForwardedRef<HTMLButtonElement>): React.ReactNode {
+export const Trigger = React.forwardRef<HTMLButtonElement, MenuTriggerProps>(function Trigger(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
     return <MenuBase.Trigger {...baseProps} ref={ref} render={props.children} />;
-}
-
-export const Trigger = React.forwardRef(TriggerComponent);
+});

@@ -1,15 +1,17 @@
-import type React from "react";
+import React from "react";
+
 import type { HTMLAttributes } from "react";
 
-import { defaults } from "lodash";
-
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import type { ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
 
 export type ContentProps = ComponentWrapperProps<HTMLAttributes<HTMLElement>> & {
+    /** The HTML element or component to render as. @default "p" */
     as?: React.ElementType;
-    fontSize?: "xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
+    /** Font size of the content text. @default "md" */
+    fontSize?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
     children: React.ReactNode;
 };
 
@@ -18,13 +20,19 @@ const DEFAULT_PROPS = {
     as: "p",
 } satisfies Partial<ContentProps>;
 
-export function Content(props: ContentProps): React.ReactNode {
-    const defaultedProps = defaults({}, props, DEFAULT_PROPS);
-    const baseProps = resolveWrapperProps(props, "fontSize", "as");
+export const Content = React.forwardRef<HTMLElement, ContentProps>(function Content(props, ref) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps, "fontSize", "as");
 
     return (
-        <Typography {...baseProps} as={defaultedProps.as} family="body" size={defaultedProps.fontSize}>
-            {props.children}
+        <Typography
+            {...baseProps}
+            ref={ref}
+            as={defaultedProps.as}
+            family="body"
+            size={defaultedProps.fontSize}
+        >
+            {defaultedProps.children}
         </Typography>
     );
-}
+});

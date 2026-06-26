@@ -27,8 +27,9 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, TextAreaProps>(fun
         <div
             data-disabled={props.disabled ? "" : undefined}
             data-readonly={props.readOnly ? "" : undefined}
+            style={baseProps.style}
             className={resolveClassNames(
-                props.layoutClassName,
+                baseProps.className,
                 "form-element",
                 "w-full",
                 "text-neutral",

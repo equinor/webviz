@@ -14,7 +14,9 @@ import { Cell } from "./cell";
 import { Row } from "./row";
 
 export type TableBodyProps = {
+    /** Message shown when the table has no data rows. Set to `false` to disable. @default "No data found" */
     emptyMessage?: string | false;
+    /** The table rows. */
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.HTMLAttributes<HTMLTableSectionElement>>;
 
@@ -22,10 +24,7 @@ const DEFAULT_PROPS = {
     emptyMessage: "No data found",
 } satisfies Partial<TableBodyProps>;
 
-export function BodyComponent(
-    props: TableBodyProps,
-    ref: React.ForwardedRef<HTMLTableSectionElement>,
-): React.ReactNode {
+export const Body = React.forwardRef<HTMLTableSectionElement, TableBodyProps>(function Body(props, ref): React.ReactNode {
     const defaultedProps = withDefaults(props, DEFAULT_PROPS);
     const baseProps = resolveWrapperProps(defaultedProps, "emptyMessage");
     const rootContext = useTableRootContext();
@@ -36,7 +35,7 @@ export function BodyComponent(
             <NoDataRow message={defaultedProps.emptyMessage} />
         </tbody>
     );
-}
+});
 
 function NoDataRow(props: { message: string | false }) {
     const columnContext = useTableColumnContext();
@@ -56,4 +55,3 @@ function NoDataRow(props: { message: string | false }) {
     );
 }
 
-export const Body = React.forwardRef<HTMLTableSectionElement, TableBodyProps>(BodyComponent);

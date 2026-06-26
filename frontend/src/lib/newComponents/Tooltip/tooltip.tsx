@@ -22,7 +22,7 @@ export type DefaultTooltipProps = {
     Pick<TriggerProps, (typeof TRIGGER_PROPS)[number]> &
     Pick<PopupProps, (typeof POPUP_PROPS)[number]>;
 
-function TooltipComp(props: DefaultTooltipProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const Tooltip = React.forwardRef<HTMLDivElement, DefaultTooltipProps>(function Tooltip(props, ref): React.ReactNode {
     const rootProps = pick(props, ...ROOT_PROPS);
     const triggerProps = pick(props, ...TRIGGER_PROPS);
     const popupProps = pick(props, ...POPUP_PROPS);
@@ -37,6 +37,4 @@ function TooltipComp(props: DefaultTooltipProps, ref: React.ForwardedRef<HTMLDiv
             </Popup>
         </Root>
     );
-}
-
-export const Tooltip = React.forwardRef<HTMLDivElement, DefaultTooltipProps>(TooltipComp);
+});

@@ -1,3 +1,6 @@
+import React from "react";
+
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { SelectableSize } from "../_shared/utils/size";
@@ -19,22 +22,41 @@ export type LinearProgressProps = {
     size?: SelectableSize;
 } & LayoutClassProps;
 
-export function LinearProgress(props: LinearProgressProps) {
-    const { variant = "indeterminate", size = "default", tone = "default" } = props;
+const DEFAULT_PROPS = {
+    variant: "indeterminate",
+    size: "default",
+    tone: "default",
+} satisfies Partial<LinearProgressProps>;
 
-    if (variant === "indeterminate") {
-        return <IndefiniteLinearProgress className={props.layoutClassName} size={size} tone={tone} />;
-    } else {
+export const LinearProgress = React.forwardRef<HTMLDivElement, LinearProgressProps>(function LinearProgress(
+    props,
+    ref,
+) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+
+    if (defaultedProps.variant === "indeterminate") {
         return (
-            <DeterminateLinearProgress
-                value={props.value ?? 0}
-                className={props.layoutClassName}
-                size={size}
-                tone={tone}
+            <IndefiniteLinearProgress
+                ref={ref}
+                className={defaultedProps.layoutClassName}
+                style={defaultedProps.layoutStyle}
+                size={defaultedProps.size}
+                tone={defaultedProps.tone}
             />
         );
     }
-}
+
+    return (
+        <DeterminateLinearProgress
+            ref={ref}
+            value={defaultedProps.value ?? 0}
+            className={defaultedProps.layoutClassName}
+            style={defaultedProps.layoutStyle}
+            size={defaultedProps.size}
+            tone={defaultedProps.tone}
+        />
+    );
+});
 
 const SIZE_TO_CLASSNAMES: Record<NonNullable<LinearProgressProps["size"]>, string> = {
     small: "h-0.5",
@@ -47,17 +69,22 @@ const TONE_CLASSNAMES: Record<NonNullable<LinearProgressProps["tone"]>, { track:
     "on-emphasis": { track: "bg-neutral", progress: "bg-surface" },
 };
 
-type IndefiniteLinearProgressProps = {
+type InnerProgressProps = {
+    ref: React.Ref<HTMLDivElement>;
     className?: string;
+    style?: React.CSSProperties;
     size: NonNullable<LinearProgressProps["size"]>;
     tone: NonNullable<LinearProgressProps["tone"]>;
 };
-function IndefiniteLinearProgress(props: IndefiniteLinearProgressProps) {
-    const { className, size, tone } = props;
+
+function IndefiniteLinearProgress(props: InnerProgressProps) {
+    const { className, style, size, tone } = props;
     return (
         <div
+            ref={props.ref}
             aria-label="Progress bar"
             role="progressbar"
+            style={style}
             className={resolveClassNames(
                 "relative w-full overflow-hidden rounded",
                 TONE_CLASSNAMES[tone].track,
@@ -75,16 +102,18 @@ function IndefiniteLinearProgress(props: IndefiniteLinearProgressProps) {
     );
 }
 
-type DeterminateLinearProgressProps = IndefiniteLinearProgressProps & {
+type DeterminateLinearProgressProps = InnerProgressProps & {
     value: number;
 };
 
 function DeterminateLinearProgress(props: DeterminateLinearProgressProps) {
-    const { value, className, size, tone } = props;
+    const { value, className, style, size, tone } = props;
     return (
         <div
+            ref={props.ref}
             aria-label="Progress bar"
             role="progressbar"
+            style={style}
             className={resolveClassNames(
                 "relative w-full overflow-hidden rounded",
                 TONE_CLASSNAMES[tone].track,

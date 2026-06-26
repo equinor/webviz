@@ -1,3 +1,5 @@
+import React from "react";
+
 import type { FieldLabelProps as FieldLabelBaseProps } from "@base-ui/react";
 import { Field as FieldBase } from "@base-ui/react";
 
@@ -10,13 +12,14 @@ export type LabelProps = ComponentWrapperProps<FieldLabelBaseProps> & {
     indicator?: string;
 };
 
-export function Label(props: LabelProps) {
+export const Label = React.forwardRef<HTMLLabelElement, LabelProps>(function Label(props, ref) {
     const baseProps = resolveWrapperProps(props, "indicator");
 
     return (
         <FieldBase.Label
             {...baseProps}
-            className={resolveClassNames(props.layoutClassName, "gap-x-selectable flex items-center")}
+            ref={ref}
+            className={resolveClassNames(baseProps.className, "gap-x-selectable flex items-center")}
             render={<Typography as="label" family="body" variant="strong" size="md" tone="neutral" />}
         >
             {props.children}
@@ -27,4 +30,4 @@ export function Label(props: LabelProps) {
             )}
         </FieldBase.Label>
     );
-}
+});

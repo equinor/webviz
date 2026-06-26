@@ -26,7 +26,7 @@ export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(pr
             ref={ref}
             data-position={indicatorPosition}
             data-size={size}
-            className={resolveClassNames(props.layoutClassName, "tabs__list")}
+            className={resolveClassNames(baseProps.className, "tabs__list")}
         >
             {props.children}
             <TabsBase.Indicator className="tabs__indicator" />

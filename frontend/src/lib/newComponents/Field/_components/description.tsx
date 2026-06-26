@@ -1,3 +1,5 @@
+import React from "react";
+
 import { Field as FieldBase } from "@base-ui/react";
 import type { FieldDescriptionProps as FieldDescriptionBaseProps } from "@base-ui/react";
 
@@ -8,13 +10,14 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 /** Accepts all standard field description props except `className`, `render`, and `style`. Use `layoutClassName` for layout adjustments. */
 export type DescriptionProps = ComponentWrapperProps<FieldDescriptionBaseProps>;
 
-export function Description(props: DescriptionProps) {
+export const Description = React.forwardRef<HTMLParagraphElement, DescriptionProps>(function Description(props, ref) {
     const baseProps = resolveWrapperProps(props);
     return (
         <FieldBase.Description
             {...baseProps}
-            className={resolveClassNames("text-neutral-subtle", props.layoutClassName)}
+            ref={ref}
+            className={resolveClassNames("text-neutral-subtle", baseProps.className)}
             render={<Paragraph size="sm" />}
         />
     );
-}
+});

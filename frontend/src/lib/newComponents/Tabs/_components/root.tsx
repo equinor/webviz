@@ -11,5 +11,5 @@ export type RootProps = ComponentWrapperProps<TabsRootBaseProps>;
 export const Root = React.forwardRef<HTMLDivElement, RootProps>(function Root(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
-    return <TabsBase.Root {...baseProps} ref={ref} className={resolveClassNames(props.layoutClassName, "tabs")} />;
+    return <TabsBase.Root {...baseProps} ref={ref} className={resolveClassNames(baseProps.className, "tabs")} />;
 });

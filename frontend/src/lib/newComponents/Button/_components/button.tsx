@@ -22,13 +22,13 @@ export type ButtonProps = ComponentWrapperProps<ButtonPropsBase> &
         /** Controls the pressed/toggled visual state of the button. */
         pressed?: boolean;
 
-        /** Button size */
+        /** Button size. @default "default" */
         size?: SelectableSize;
 
         /** Icon to be displayed inside the button next to the label. When an icon is provided without children, the button will be rendered as an icon-only button. */
         icon?: React.ReactNode;
 
-        /** Position of the icon inside the button. Defaults to "start" */
+        /** Position of the icon inside the button. @default "start" */
         iconPosition?: "start" | "end";
     };
 

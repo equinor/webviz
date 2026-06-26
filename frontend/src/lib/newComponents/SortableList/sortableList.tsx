@@ -106,7 +106,8 @@ const DEFAULT_SCROLL_TIME = 100;
 // Defines the size of the area at the top and bottom of the scroll container where auto-scrolling should start
 const AUTO_SCROLL_EDGE_PX = 20;
 
-export const SortableList = function SortableListImpl(props: SortableListProps) {
+export const SortableList = Object.assign(
+    React.forwardRef<HTMLDivElement, SortableListProps>(function SortableList(props, ref): React.ReactNode {
     const { onItemMoved, isMoveAllowed } = props;
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -160,6 +161,7 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
     );
 
     const mainRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle(ref, () => mainRef.current!);
 
     const scrollPosByEl = React.useRef(new WeakMap<HTMLElement, number>());
 
@@ -710,15 +712,17 @@ export const SortableList = function SortableListImpl(props: SortableListProps) 
             </SortableListContext.Provider>
         </div>
     );
-} as SortableListCompound;
-
-SortableList.Content = Content;
-SortableList.ScrollContainer = ScrollContainer;
-SortableList.Item = Item;
-SortableList.Group = Group;
-SortableList.NoDropZone = NoDropZone;
-SortableList.GroupContent = GroupContent;
-SortableList.DragHandle = DragHandle;
+}),
+    {
+        Content,
+        ScrollContainer,
+        Item,
+        Group,
+        NoDropZone,
+        DragHandle,
+        GroupContent,
+    },
+);
 
 export enum HoveredArea {
     TOP = "top",

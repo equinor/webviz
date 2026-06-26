@@ -9,13 +9,13 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FieldStateContext } from "./FieldStateContext";
 
 export type RootProps = ComponentWrapperProps<FieldRootBaseProps> & {
-    /** When true, uses `display: contents` so the field integrates into a parent grid layout. */
+    /** When true, uses `display: contents` so the field integrates into a parent grid layout. @default false */
     inline?: boolean;
-    /** When true, applies warning styling and state to the field. */
+    /** When true, applies warning styling and state to the field. @default false */
     warning?: boolean;
 };
 
-function RootComponent(props: RootProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const Root = React.forwardRef<HTMLDivElement, RootProps>(function Root(props, ref) {
     const baseProps = resolveWrapperProps(props, "inline", "warning");
 
     const fieldState = React.useMemo(
@@ -29,16 +29,10 @@ function RootComponent(props: RootProps, ref: React.ForwardedRef<HTMLDivElement>
                 {...baseProps}
                 ref={ref}
                 data-warning={props.warning || undefined}
-                className={
-                    props.inline
-                        ? resolveClassNames("contents", props.layoutClassName)
-                        : resolveClassNames("gap-y-xs flex flex-col items-start", props.layoutClassName)
-                }
+                className={resolveClassNames(baseProps.className, props.inline ? "contents" : "gap-y-xs flex flex-col")}
             >
                 {props.children}
             </FieldBase.Root>
         </FieldStateContext.Provider>
     );
-}
-
-export const Root = React.forwardRef<HTMLDivElement, RootProps>(RootComponent);
+});

@@ -13,12 +13,10 @@ export type ColumnMetaData = {
     leafCount: number;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ColumnComponent(_props: TableColumnProps, _ref: React.ForwardedRef<HTMLElement>): React.ReactNode {
-    return null;
-}
-
 /**
  * This Component is virtual: it's just used to help developers structure the table
  */
-export const Column = React.forwardRef<HTMLElement, TableColumnProps>(ColumnComponent);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const Column = React.forwardRef<HTMLElement, TableColumnProps>(function Column(_props, _ref): React.ReactNode {
+    return null;
+});

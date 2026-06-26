@@ -1,7 +1,8 @@
 import React from "react";
 
-import { defaults, omit } from "lodash";
+import { omit } from "lodash";
 
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { Tooltip } from "@lib/newComponents/Tooltip";
 
 import type { MenuItemProps, MenuPopupProps, MenuRootProps, MenuTriggerProps } from "..";
@@ -13,7 +14,7 @@ const DEFAULT_PROPS = {
     itemSize: "default",
 } satisfies Partial<ComposedMenuProps>;
 
-const RootPropsContext = React.createContext<(typeof DEFAULT_PROPS & ComposedMenuProps) | null>(null);
+const RootPropsContext = React.createContext<ComposedMenuProps | null>(null);
 
 export type ComposedMenuProps = {
     /** The list of items displayed in the menu */
@@ -42,43 +43,45 @@ export type ComposedMenuProps = {
     closeOnClick?: MenuItemProps["closeOnClick"];
 } & MenuRootProps;
 
-function DefaultComposedMenuComponent(
-    props: ComposedMenuProps,
-    ref: React.ForwardedRef<HTMLButtonElement>,
-): React.ReactNode {
-    const propsWithDefaults = React.useMemo(() => defaults({}, props, DEFAULT_PROPS), [props]);
+/**
+ * Display a dropdown menu containing one or more actions
+ */
+export const DefaultComposedMenu = React.forwardRef<HTMLButtonElement, ComposedMenuProps>(
+    function DefaultComposedMenu(props, ref) {
+        const propsWithDefaults = withDefaults(props, DEFAULT_PROPS);
 
-    const baseProps = omit(propsWithDefaults, [
-        "items",
-        "flat",
-        "onActionClicked",
-        "children",
-        "align",
-        "side",
-        "itemSize",
-        "closeOnClick",
-    ]);
+        const baseProps = omit(propsWithDefaults, [
+            "items",
+            "flat",
+            "onActionClicked",
+            "children",
+            "align",
+            "side",
+            "itemSize",
+            "closeOnClick",
+        ]);
 
-    return (
-        <Menu.Root {...baseProps}>
-            <RootPropsContext.Provider value={propsWithDefaults}>
-                <Menu.Trigger ref={ref} disabled={!propsWithDefaults.items.length}>
-                    {propsWithDefaults.children}
-                </Menu.Trigger>
+        return (
+            <Menu.Root {...baseProps}>
+                <RootPropsContext.Provider value={propsWithDefaults}>
+                    <Menu.Trigger ref={ref} disabled={!propsWithDefaults.items.length}>
+                        {propsWithDefaults.children}
+                    </Menu.Trigger>
 
-                <Menu.Popup
-                    side={propsWithDefaults.side}
-                    align={propsWithDefaults.align}
-                    itemSize={propsWithDefaults.itemSize}
-                >
-                    {propsWithDefaults.items.map((item, i) => (
-                        <MenuItemComponent key={makeKey(item, i)} item={item} />
-                    ))}
-                </Menu.Popup>
-            </RootPropsContext.Provider>
-        </Menu.Root>
-    );
-}
+                    <Menu.Popup
+                        side={propsWithDefaults.side}
+                        align={propsWithDefaults.align}
+                        itemSize={propsWithDefaults.itemSize}
+                    >
+                        {propsWithDefaults.items.map((item, i) => (
+                            <MenuItemComponent key={makeKey(item, i)} item={item} />
+                        ))}
+                    </Menu.Popup>
+                </RootPropsContext.Provider>
+            </Menu.Root>
+        );
+    },
+);
 
 function MenuItemComponent(props: { item: MenuItem }) {
     if (isItemGroup(props.item)) {
@@ -157,8 +160,3 @@ function isItemGroup(item: MenuItem): item is SubMenu {
 function isDivider(item: MenuItem): item is Divider {
     return Object.hasOwn(item, "type") && (item as Divider).type === "divider";
 }
-
-/**
- * Display a dropdown menu containing one or more actions
- */
-export const DefaultComposedMenu = React.forwardRef(DefaultComposedMenuComponent);

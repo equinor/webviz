@@ -8,7 +8,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 import { Button as Button_, type ButtonProps as ButtonProps_ } from "../../Button";
 
 export type ButtonProps<TValue extends string> = ComponentWrapperProps<
-    Omit<ToggleBaseProps<TValue>, "variant" | "ref" | "children">
+    Omit<ToggleBaseProps<TValue>, "variant" | "children">
 > & {
     /** Additional props forwarded to the underlying `Button` component (e.g. `size`, `tone`, `iconOnly`). */
     buttonProps?: Omit<ButtonProps_, "ref">;

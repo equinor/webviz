@@ -1,15 +1,19 @@
-import type React from "react";
+import React from "react";
 
 import { Popover as PopoverBase } from "@base-ui/react";
 import { Close } from "@mui/icons-material";
 
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { Button } from "@lib/newComponents/Button";
 import { Separator } from "@lib/newComponents/Separator";
 import { Typography } from "@lib/newComponents/Typography";
 
 export type TitleProps = {
-    fontSize?: "xs" | "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
+    /** Font size of the title text. @default "md" */
+    fontSize?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "6xl";
+    /** When true, hides the close button in the top-right corner. @default false */
     hideCloseButton?: boolean;
+    /** When true, the separator does not extend beyond the padding area. @default false */
     containedSeparator?: boolean;
     children: React.ReactNode;
 };
@@ -19,7 +23,7 @@ const DEFAULT_PROPS = {
 } satisfies Partial<TitleProps>;
 
 export function Title(props: TitleProps): React.ReactNode {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
     return (
         <>
             <div className="flex w-full items-center justify-between">

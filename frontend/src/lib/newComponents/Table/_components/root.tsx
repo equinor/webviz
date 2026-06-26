@@ -63,8 +63,8 @@ export type TableRootProps = {
     SelectProps &
     BaseProps;
 
-function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableElement>): React.ReactNode {
-    const { layoutClassName, sortable, selectable, onChangeColumnSort, onChangeRowSelection, ...otherProps } = props;
+export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(function Root(props, ref): React.ReactNode {
+    const { sortable, selectable, onChangeColumnSort, onChangeRowSelection, ...otherProps } = props;
 
     const innerTableRef = React.useRef<HTMLTableElement>(null);
     const innerWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -128,6 +128,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
         "width",
         "overflowWrapperRef",
     );
+    const { className: wrapperClassName, style: wrapperStyle, ...tableBaseProps } = baseProps;
 
     let headColumnMetaData: TableColumnContextType = {
         columns: [],
@@ -214,15 +215,16 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
     return (
         <div
             ref={innerWrapperRef}
-            className={resolveClassNames("relative overflow-auto", layoutClassName)}
+            className={resolveClassNames(wrapperClassName, "relative overflow-auto")}
             style={{
+                ...wrapperStyle,
                 height: props.height,
                 maxHeight: props.maxHeight,
                 width: props.width,
             }}
         >
             <Typography
-                {...baseProps}
+                {...tableBaseProps}
                 layoutClassName={resolveClassNames("w-full border-separate border-spacing-[0]", {
                     "table-fixed": props.fixed,
                 })}
@@ -254,7 +256,7 @@ function RootComponent(props: TableRootProps, ref: React.ForwardedRef<HTMLTableE
             </Typography>
         </div>
     );
-}
+});
 
 /** The table head component *might* be wrapped in virtual context components, so we need to recursively dig down for it */
 export function recursivelyFindHeadChild(children: React.ReactNode): React.ReactElement | null {
@@ -317,4 +319,3 @@ function recursivelyProcessColumnChildren(columnParent: React.ReactNode, depth =
     };
 }
 
-export const Root = React.forwardRef<HTMLTableElement, TableRootProps>(RootComponent);

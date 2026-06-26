@@ -11,5 +11,5 @@ export type PanelProps = ComponentWrapperProps<TabsPanelBaseProps>;
 export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
-    return <TabsBase.Panel {...baseProps} ref={ref} className={resolveClassNames(props.layoutClassName, "tabs")} />;
+    return <TabsBase.Panel {...baseProps} ref={ref} className={resolveClassNames(baseProps.className, "tabs")} />;
 });

@@ -10,7 +10,7 @@ export type MenuGroupProps = ComponentWrapperProps<MenuGroupBaseProps>;
 // Context to track nested groups.
 const GroupDepthContext = React.createContext<number>(0);
 
-function GroupComponent(props: MenuGroupProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const Group = React.forwardRef<HTMLDivElement, MenuGroupProps>(function Group(props, ref) {
     const baseProps = resolveWrapperProps(props);
     const groupDepth = React.useContext(GroupDepthContext);
 
@@ -19,6 +19,4 @@ function GroupComponent(props: MenuGroupProps, ref: React.ForwardedRef<HTMLDivEl
             <GroupDepthContext.Provider value={groupDepth + 1}>{props.children}</GroupDepthContext.Provider>
         </MenuBase.Group>
     );
-}
-
-export const Group = React.forwardRef(GroupComponent);
+});

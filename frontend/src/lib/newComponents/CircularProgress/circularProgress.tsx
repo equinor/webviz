@@ -1,3 +1,5 @@
+import React from "react";
+
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { withDefaults } from "../_shared/utils/defaultProps";
@@ -29,7 +31,7 @@ const DEFAULT_PROPS = {
     variant: "indeterminate",
 } satisfies Partial<CircularProgressProps>;
 
-export function CircularProgress(props: CircularProgressProps) {
+export const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps>(function CircularProgress(props, ref): React.ReactNode {
     const defaultedProps = withDefaults(props, DEFAULT_PROPS);
     const baseProps = resolveWrapperProps(defaultedProps, "size", "tone", "variant", "value");
 
@@ -40,16 +42,17 @@ export function CircularProgress(props: CircularProgressProps) {
 
     return (
         <svg
+            {...baseProps}
+            ref={ref}
             aria-hidden="true"
             role="progressbar"
             aria-valuenow={isIndeterminate ? undefined : clampedValue}
             aria-valuemin={isIndeterminate ? undefined : 0}
             aria-valuemax={isIndeterminate ? undefined : 100}
-            style={baseProps.style}
             className={resolveClassNames(
+                baseProps.className,
                 { "animate-spin [animation-duration:1.4s]": isIndeterminate },
                 PIXEL_SIZES_CLASSNAMES[defaultedProps.size],
-                baseProps.className,
             )}
             /* Avoid using viewBox="0 0 100 100" to prevent blurriness */
             viewBox="22 22 52 52"
@@ -72,4 +75,4 @@ export function CircularProgress(props: CircularProgressProps) {
             />
         </svg>
     );
-}
+});

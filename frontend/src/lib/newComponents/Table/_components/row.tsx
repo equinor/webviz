@@ -19,7 +19,7 @@ export type TableRowProps = {
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.TableHTMLAttributes<HTMLTableRowElement>>;
 
-function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRowElement>): React.ReactNode {
+export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(function Row(props, ref): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "rowKey", "sortable", "selectable");
 
     const rootContext = useTableRootContext();
@@ -35,7 +35,7 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
             {...baseProps}
             ref={ref}
             data-selected={isSelected ? "" : undefined}
-            className={resolveClassNames(props.layoutClassName, {
+            className={resolveClassNames(baseProps.className, {
                 "font-normal": sectionContext === "body",
                 "font-extrabold": sectionContext !== "body",
                 "text-neutral-subtle": !isSelected,
@@ -56,6 +56,4 @@ function RowComponent(props: TableRowProps, ref: React.ForwardedRef<HTMLTableRow
             </TableRootContext.Provider>
         </tr>
     );
-}
-
-export const Row = React.forwardRef<HTMLTableRowElement, TableRowProps>(RowComponent);
+});

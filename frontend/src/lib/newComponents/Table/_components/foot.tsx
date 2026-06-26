@@ -5,11 +5,13 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { TableSectionContext } from "../_contexts/tableSectionContext";
 
 export type TableFootProps = {
+    /** When true, the footer row sticks to the bottom of the scroll container. @default false */
     sticky?: boolean;
+    /** The footer row content. */
     children?: React.ReactNode;
 };
 
-function FootComponent(props: TableFootProps, ref: React.ForwardedRef<HTMLTableSectionElement>): React.ReactNode {
+export const Foot = React.forwardRef<HTMLTableSectionElement, TableFootProps>(function Foot(props, ref): React.ReactNode {
     return (
         <TableSectionContext.Provider value="foot">
             <tfoot
@@ -22,6 +24,4 @@ function FootComponent(props: TableFootProps, ref: React.ForwardedRef<HTMLTableS
             </tfoot>
         </TableSectionContext.Provider>
     );
-}
-
-export const Foot = React.forwardRef<HTMLTableSectionElement, TableFootProps>(FootComponent);
+});

@@ -6,6 +6,7 @@ import { isEqual } from "lodash";
 import { useFieldStateDataAttributes } from "@lib/newComponents/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { withDefaults } from "../_shared/utils/defaultProps";
 import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 import { TextInput } from "../TextInput";
@@ -44,7 +45,7 @@ export type SelectProps<TValue = string> = LayoutClassProps & {
     onValueChange?: (values: TValue[]) => void;
     /** Text shown when the list is empty and no filter is active. */
     placeholder?: string;
-    /** When true, shows a filter input above the list. */
+    /** When true, shows a filter input above the list. @default false */
     filter?: boolean;
     /** Placeholder text for the filter input. @default "Filter options..." */
     filterPlaceholder?: string;
@@ -52,7 +53,7 @@ export type SelectProps<TValue = string> = LayoutClassProps & {
     size?: number;
     /** Height of each option row in pixels. @default 24 */
     optionHeight?: number;
-    /** When true, allows selecting multiple values via Ctrl+click and Shift+click. */
+    /** When true, allows selecting multiple values via Ctrl+click and Shift+click. @default false */
     multiple?: boolean;
     /** CSS width applied to the list container. */
     width?: string | number;
@@ -61,6 +62,13 @@ export type SelectProps<TValue = string> = LayoutClassProps & {
     /** When true, shows "Select all" and "Unselect all" buttons above the list. */
     showQuickSelectButtons?: boolean;
 };
+
+const DEFAULT_PROPS = {
+    size: 1,
+    multiple: false,
+    filter: false,
+    filterPlaceholder: "Filter options...",
+} satisfies Partial<SelectProps>;
 
 const noMatchingOptionsText = "No matching options";
 
@@ -80,12 +88,9 @@ function ensureKeyboardSelectionInView(
 }
 
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
-    const { onValueChange: onChange } = props;
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS as Partial<SelectProps<TValue>>);
+    const { onValueChange: onChange } = defaultedProps;
     const fieldStateAttrs = useFieldStateDataAttributes();
-
-    const sizeWithDefault = props.size ?? 1;
-    const multipleWithDefault = props.multiple ?? false;
-    const filterWithDefault = props.filter ?? false;
 
     const [filterString, setFilterString] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -165,7 +170,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     return;
                 }
 
-                if (!multipleWithDefault) {
+                if (!defaultedProps.multiple) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -198,7 +203,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     return;
                 }
 
-                if (!multipleWithDefault) {
+                if (!defaultedProps.multiple) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -242,7 +247,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -257,7 +262,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -270,14 +275,14 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
                 if (e.key === "PageDown") {
                     e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + sizeWithDefault);
+                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + defaultedProps.size);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -285,14 +290,14 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
                 if (e.key === "PageUp") {
                     e.preventDefault();
-                    const newIndex = Math.max(0, currentFocusIndex - sizeWithDefault);
+                    const newIndex = Math.max(0, currentFocusIndex - defaultedProps.size);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -309,7 +314,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     e.preventDefault();
                     const newIndex = filteredOptions.length - 1;
                     setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex(Math.max(0, newIndex - sizeWithDefault + 1));
+                    setVirtualizationStartIndex(Math.max(0, newIndex - defaultedProps.size + 1));
                     makeKeyboardSelection(newIndex, modifiers);
                 }
 
@@ -332,8 +337,8 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         [
             currentFocusIndex,
             filteredOptions,
-            sizeWithDefault,
-            multipleWithDefault,
+            defaultedProps.size,
+            defaultedProps.multiple,
             handleOnChange,
             handleSelectAll,
             selectionAnchor,
@@ -349,7 +354,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
         setCurrentFocusIndex(index);
 
-        if (!multipleWithDefault) {
+        if (!defaultedProps.multiple) {
             setSelectedOptionValues([option.value]);
             handleOnChange([option.value]);
             return;
@@ -423,7 +428,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     }
 
     return (
-        <div ref={ref} className={resolveClassNames(props.layoutClassName, "gap-y-xs text-body-sm flex flex-col")}>
+        <div ref={ref} style={props.layoutStyle} className={resolveClassNames(props.layoutClassName, "gap-y-xs text-body-sm flex flex-col")}>
             {props.showQuickSelectButtons && props.multiple && (
                 <div className="gap-x-3xs flex items-center">
                     <Button
@@ -452,13 +457,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 className={resolveClassNames("relative", { "cursor-not-allowed": !!props.disabled })}
                 style={{ width: props.width, minWidth: props.width }}
             >
-                {filterWithDefault && (
+                {defaultedProps.filter && (
                     <TextInput
                         id={props.id}
                         type="text"
                         value={filterString}
                         onValueChange={handleFilterChange}
-                        placeholder={props.filterPlaceholder ?? "Filter options..."}
+                        placeholder={defaultedProps.filterPlaceholder}
                         disabled={props.disabled}
                         endAdornment={
                             filterString && (
@@ -481,7 +486,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     })}
                     {...fieldStateAttrs}
                     data-disabled={props.disabled === true ? true : undefined}
-                    style={{ height: sizeWithDefault * (props.optionHeight ?? 24) + 2 }}
+                    style={{ height: defaultedProps.size * (props.optionHeight ?? 24) + 2 }}
                     ref={virtualizationRef}
                     tabIndex={props.disabled ? -1 : 0}
                 >

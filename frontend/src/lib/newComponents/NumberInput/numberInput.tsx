@@ -12,6 +12,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { BrowseButtons } from "../_shared/components/browseButtons";
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
 import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
+import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type NumberInputProps = ComponentWrapperProps<NumberFieldRootBaseProps> & {
@@ -34,11 +35,11 @@ const DEFAULT_PROPS = {
     placeholder: "Enter a number...",
 } satisfies Partial<NumberInputProps>;
 
-function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<HTMLInputElement>): React.ReactNode {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
-    const size = useComponentSize(props);
+export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(function NumberInput(props, ref) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const size = useComponentSize(defaultedProps);
     const fieldStateAttrs = useFieldStateDataAttributes();
-    const baseRootProps = resolveWrapperProps(
+    const baseProps = resolveWrapperProps(
         defaultedProps,
         "scrubAdornment",
         "startAdornment",
@@ -52,11 +53,11 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
 
     return (
         <NumberFieldBase.Root
-            {...baseRootProps}
+            {...baseProps}
             {...fieldStateAttrs}
             data-readonly={props.readOnly ? "" : undefined}
             className={resolveClassNames(
-                baseRootProps.className,
+                baseProps.className,
                 "form-element",
                 "bg-canvas grow",
                 "px-xs gap-xs flex items-center",
@@ -88,7 +89,7 @@ function NumberInputComponent(props: NumberInputProps, ref: React.ForwardedRef<H
             }
         ></NumberFieldBase.Root>
     );
-}
+});
 
 function makeScrubAdornment(scrubAdornment: React.ReactNode): React.ReactNode {
     const wrapperClassName =
@@ -130,4 +131,3 @@ function CursorGrowIcon(props: React.ComponentProps<"svg">) {
     );
 }
 
-export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(NumberInputComponent);

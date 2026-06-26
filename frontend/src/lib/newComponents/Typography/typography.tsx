@@ -3,6 +3,7 @@ import React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { TextSize } from "../_shared/utils/size";
+import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type TypographyProps = ComponentWrapperProps<React.HTMLAttributes<HTMLElement>> & {
@@ -321,42 +322,33 @@ const FAMILY_CLASSES: Record<NonNullable<TypographyProps["family"]>, string> = {
     mono: "font-mono",
 };
 
-function TypographyComponent<Element extends HTMLElement>(
-    props: TypographyProps,
-    ref: React.ForwardedRef<Element>,
-): React.ReactNode {
-    const {
-        family = "body",
-        size,
-        variant = "subtle",
-        as = "span",
-        lineHeight = "default",
-        weight = "normal",
-        tracking = "normal",
-        tone,
-        children,
-        italic,
-        ...rest
-    } = props;
+const DEFAULT_PROPS = {
+    family: "body",
+    variant: "subtle",
+    as: "span" as React.ElementType,
+    lineHeight: "default",
+    weight: "normal",
+    tracking: "normal",
+} satisfies Partial<TypographyProps>;
 
-    const baseProps = resolveWrapperProps(rest);
+export const Typography = React.forwardRef<HTMLElement, TypographyProps>(function Typography(props, ref): React.ReactNode {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps, "size", "as", "family", "variant", "lineHeight", "weight", "tracking", "tone", "children", "italic");
 
-    const Component = as;
+    const Component = defaultedProps.as;
 
     const resolvedClassName = resolveClassNames(
         baseProps.className,
-        FAMILY_CLASSES[family],
-        FONT_SIZE_CLASSES[family === "header" ? "header" : "body"][size][lineHeight][tracking],
-        WEIGHT_CLASSES[weight],
-        tone ? TONE_CLASSES[tone][variant] : "",
-        { italic: italic },
+        FAMILY_CLASSES[defaultedProps.family],
+        FONT_SIZE_CLASSES[defaultedProps.family === "header" ? "header" : "body"][defaultedProps.size][defaultedProps.lineHeight][defaultedProps.tracking],
+        WEIGHT_CLASSES[defaultedProps.weight],
+        defaultedProps.tone ? TONE_CLASSES[defaultedProps.tone][defaultedProps.variant] : "",
+        { italic: defaultedProps.italic },
     );
 
     return (
         <Component ref={ref} {...baseProps} className={resolvedClassName}>
-            {children}
+            {defaultedProps.children}
         </Component>
     );
-}
-
-export const Typography = React.forwardRef(TypographyComponent);
+});

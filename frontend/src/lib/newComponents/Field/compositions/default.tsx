@@ -31,7 +31,7 @@ export type DefaultProps = {
     indicator?: string;
 } & Omit<FieldRootProps, "inline">;
 
-function DefaultComponent(props: DefaultProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const Default = React.forwardRef<HTMLDivElement, DefaultProps>(function Default(props, ref) {
     const baseProps = omit(props, "label", "children", "description", "info", "indicator", "singleError", "gridLayout");
 
     function makeLabel() {
@@ -89,9 +89,4 @@ function DefaultComponent(props: DefaultProps, ref: React.ForwardedRef<HTMLDivEl
             <GenericErrors layoutClassName="--errorWrapper" single={props.singleError} />
         </Field.Root>
     );
-}
-
-/**
- * A standard layout for a field
- */
-export const Default = React.forwardRef<HTMLDivElement, DefaultProps>(DefaultComponent);
+});

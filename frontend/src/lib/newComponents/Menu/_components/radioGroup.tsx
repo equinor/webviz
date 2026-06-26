@@ -7,7 +7,7 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newCompone
 
 export type MenuRadioGroupProps = ComponentWrapperProps<MenuRadioGroupBaseProps>;
 
-function RadioGroupComponent(props: MenuRadioGroupProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const RadioGroup = React.forwardRef<HTMLDivElement, MenuRadioGroupProps>(function RadioGroup(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
     return (
@@ -15,6 +15,4 @@ function RadioGroupComponent(props: MenuRadioGroupProps, ref: React.ForwardedRef
         // This will be supported in 1.5
         <MenuBase.Group {...baseProps} ref={ref} render={<MenuBase.RadioGroup />} />
     );
-}
-
-export const RadioGroup = React.forwardRef(RadioGroupComponent);
+});

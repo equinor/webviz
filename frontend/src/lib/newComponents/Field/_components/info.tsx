@@ -6,9 +6,13 @@ import type { PopoverPopupProps } from "@lib/newComponents/Popover";
 import { Popover } from "@lib/newComponents/Popover";
 
 export type InfoProps = {
+    /** Optional title rendered at the top of the popover. */
     title?: React.ReactNode;
+    /** Which side of the trigger to display the popover. */
     side?: PopoverPopupProps["side"];
+    /** Alignment of the popover relative to the trigger. */
     align?: PopoverPopupProps["align"];
+    /** The content rendered inside the popover. */
     children: React.ReactNode;
 };
 

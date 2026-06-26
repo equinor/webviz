@@ -16,7 +16,7 @@ import { SortDirection } from "../typesAndEnums";
 
 import type { TableCellProps } from "./types";
 
-function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableCellElement>): React.ReactNode {
+export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(function Cell(props, ref): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "colKey", "sortable", "widthInPercent", "noPadding");
 
     const sectionContext = useTableSectionContext();
@@ -60,7 +60,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             role={isSortable ? "button" : undefined}
             style={{ fontWeight: "inherit", height: `${cellHeightPx}px`, ...baseProps.style }}
             className={resolveClassNames(
-                props.layoutClassName,
+                baseProps.className,
                 "border-neutral-subtle group/cell relative text-left align-middle whitespace-nowrap",
                 {
                     "truncate overflow-hidden": rootContext.fixed,
@@ -107,9 +107,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
             )}
         </CellTag>
     );
-}
-
-export const Cell = React.forwardRef<HTMLTableCellElement, TableCellProps>(CellComponent);
+});
 
 function SortingIcon(props: { direction: SortDirection }): React.ReactNode {
     switch (props.direction) {

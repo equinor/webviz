@@ -11,7 +11,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type MenuGroupLabelProps = ComponentWrapperProps<MenuGroupLabelBaseProps>;
 
-function GroupLabelComponent(props: MenuGroupLabelProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const GroupLabel = React.forwardRef<HTMLDivElement, MenuGroupLabelProps>(function GroupLabel(props, ref) {
     const baseProps = resolveWrapperProps(props);
     const menuItemSize = useComponentSize();
     const labelTextSize = getNextTextSize(getTextSizeForSelectableSize(menuItemSize), -1);
@@ -20,10 +20,8 @@ function GroupLabelComponent(props: MenuGroupLabelProps, ref: React.ForwardedRef
         <MenuBase.GroupLabel
             {...baseProps}
             ref={ref}
-            className={resolveClassNames("menu__item text-neutral-strong!", props.layoutClassName)}
-            render={<Typography ref={ref} as="div" size={labelTextSize} weight="bolder" />}
+            className={resolveClassNames("menu__item text-neutral-strong!", baseProps.className)}
+            render={<Typography as="div" size={labelTextSize} weight="bolder" />}
         />
     );
-}
-
-export const GroupLabel = React.forwardRef(GroupLabelComponent);
+});

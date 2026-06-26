@@ -1,3 +1,5 @@
+import React from "react";
+
 export type HiddenProps = {
     /** The content to show or hide. */
     children: React.ReactNode;

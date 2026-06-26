@@ -18,8 +18,16 @@ export type SubmenuItemProps = ComponentWrapperProps<SubmenuRootBaseProps> & {
     children: React.ReactNode;
 };
 
-function SubmenuItemComponent(props: SubmenuItemProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "triggerContent", "children");
+export const SubmenuItem = React.forwardRef<HTMLDivElement, SubmenuItemProps>(function SubmenuItem(props, ref) {
+    const baseProps = resolveWrapperProps(
+        props,
+        "triggerContent",
+        "triggerIcon",
+        "triggerText",
+        "triggerDescription",
+        "children",
+    );
+
     return (
         <MenuBase.SubmenuRoot {...baseProps}>
             <SubMenuTriggerItem
@@ -35,6 +43,4 @@ function SubmenuItemComponent(props: SubmenuItemProps, ref: React.ForwardedRef<H
             </Popup>
         </MenuBase.SubmenuRoot>
     );
-}
-
-export const SubmenuItem = React.forwardRef(SubmenuItemComponent);
+});

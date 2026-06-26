@@ -19,7 +19,7 @@ export const Group = React.forwardRef<HTMLDivElement, GroupProps<string>>(functi
             {...baseProps}
             ref={ref}
             className={resolveClassNames(
-                props.layoutClassName,
+                baseProps.className,
                 "flex items-center justify-center",
                 // Bring hovered/focused button outline above its neighbours
                 "*:relative [&>*:focus-visible]:z-10 [&>*:hover]:z-10",

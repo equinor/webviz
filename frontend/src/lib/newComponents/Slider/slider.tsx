@@ -5,7 +5,7 @@ import { Tooltip } from "@base-ui/react";
 import type { SliderRootProps as SliderRootBaseProps, SliderRootState } from "@base-ui/react/slider";
 import { Slider as SliderBase } from "@base-ui/react/slider";
 import { Lock, LockOpen } from "@mui/icons-material";
-import { chain, clamp, clone, defaults, isEqual, minBy } from "lodash";
+import { chain, clamp, clone, isEqual, minBy } from "lodash";
 import { Key } from "ts-key-enum";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -19,6 +19,7 @@ import {
     SELECTABLE_SIZES_CLASSNAMES,
     type SelectableSize,
 } from "../_shared/utils/size";
+import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 import { Typography } from "../Typography";
@@ -118,10 +119,10 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
     /** Hides the slider indicator */
     noIndicator?: boolean;
 
-    /** Additional slider values to show a mark at. The slider will *always* show markers at the ends */
+    /** Additional slider values to show a mark at. The slider will *always* show markers at the ends. @default [] */
     markers?: number[];
 
-    /** Snaps the allowed slider values to the values defined in markers (including min/max) */
+    /** Snaps the allowed slider values to the values defined in markers (including min/max). @default false */
     snapToMarkers?: boolean;
 
     /**
@@ -170,13 +171,13 @@ const DEFAULT_PROPS = {
 
 type InternalOnChangeCallback = (value: number | number[], eventDetails: SliderChangeEventDetails) => void;
 
-function SliderComponent(
+export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | number[]>>(function Slider(
     // ! Note: To simplify internal logic, we always type the slider props as number | number[] using some direct
     // ! casting. Externally, slider users will see the change event's with the same type as the provided values
     props: SliderProps<number | number[]>,
-    ref: React.ForwardedRef<HTMLDivElement>,
+    ref,
 ): React.ReactNode {
-    const defaultedProps = defaults({}, props, DEFAULT_PROPS);
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
 
     const onValueChange = props.onValueChange as InternalOnChangeCallback;
     const onValueCommitted = props.onValueCommitted as InternalOnChangeCallback;
@@ -368,7 +369,7 @@ function SliderComponent(
     return (
         <SliderBase.Root
             {...baseProps}
-            className={resolveClassNames("px-2xs grid items-center", props.layoutClassName)}
+            className={resolveClassNames(baseProps.className, "px-2xs grid items-center")}
             ref={wrapperRef}
             value={internalValue}
             onValueChange={onValueChangeInternal}
@@ -577,7 +578,9 @@ function SliderComponent(
             )}
         />
     );
-}
+}) as <Value extends number | readonly number[] = number | readonly number[]>(
+    props: SliderProps<Value> & React.RefAttributes<HTMLDivElement>,
+) => React.ReactNode;
 
 function Thumb(props: {
     size: SelectableSize;
@@ -994,8 +997,3 @@ function getMarkerPercentage(value: number, min: number, max: number) {
     return ((value - min) / range) * 100;
 }
 
-export const Slider = React.forwardRef(SliderComponent) as <
-    Value extends number | readonly number[] = number | readonly number[],
->(
-    props: SliderProps<Value> & React.RefAttributes<HTMLDivElement>,
-) => React.ReactNode;

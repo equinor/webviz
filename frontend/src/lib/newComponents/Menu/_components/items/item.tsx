@@ -9,10 +9,8 @@ import { resolveWrapperProps } from "@lib/newComponents/_shared/utils/wrapperPro
 
 export type MenuItemProps = ComponentWrapperProps<MenuBaseItemProps> & MenuItemContentProps;
 
-function ItemComponent(props: MenuItemProps, ref: React.ForwardedRef<HTMLDivElement>): React.ReactNode {
+export const Item = React.forwardRef<HTMLDivElement, MenuItemProps>(function Item(props, ref) {
     const baseProps = resolveWrapperProps(props);
 
     return <SharedMenuItem ref={ref} {...baseProps} />;
-}
-
-export const Item = React.forwardRef(ItemComponent);
+});

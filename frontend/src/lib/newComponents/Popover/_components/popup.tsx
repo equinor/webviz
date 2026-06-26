@@ -3,6 +3,8 @@ import React from "react";
 import type { PopoverPositionerProps as PopoverPositionerBaseProps } from "@base-ui/react/popover";
 import { Popover as PopoverBase } from "@base-ui/react/popover";
 
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
+
 import { PortalContainerContext } from "../../_shared/contexts/portalContainerContext";
 
 export type PopupProps = {
@@ -12,7 +14,7 @@ export type PopupProps = {
     align?: PopoverPositionerBaseProps["align"];
     /** Which side of the trigger to display the popover. @default "bottom" */
     side?: PopoverPositionerBaseProps["side"];
-    /** When true, the popover repositions to stay in view while scrolling. */
+    /** When true, the popover repositions to stay in view while scrolling. @default true */
     sticky?: PopoverPositionerBaseProps["sticky"];
 
     /** The element to position the popover against. By default, it will be positioned against the trigger */
@@ -25,7 +27,7 @@ const DEFAULT_PROPS = {
 } satisfies Partial<PopupProps>;
 
 export function Popup(props: PopupProps): React.ReactNode {
-    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
     const portalContainer = React.useContext(PortalContainerContext);
 
     return (

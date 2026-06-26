@@ -26,8 +26,7 @@ export type TextInputProps = ComponentWrapperProps<Omit<InputBaseProps, "size" |
 };
 
 export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(function TextInput(props, ref) {
-    const { inputSize, layoutClassName, ...rest } = props;
-    const baseProps = resolveWrapperProps(rest, "startAdornment", "endAdornment", "size");
+    const baseProps = resolveWrapperProps(props, "startAdornment", "endAdornment", "size", "inputSize");
 
     const size = useComponentSize(props);
     const fieldStateAttrs = useFieldStateDataAttributes();
@@ -62,7 +61,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                     data-readonly={props.readOnly ? "" : undefined}
                     {...extractDataProps(inputProps)}
                     className={resolveClassNames(
-                        layoutClassName,
+                        baseProps.className,
                         "form-element",
                         "w-full",
                         "pl-sm",
@@ -75,7 +74,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(func
                     <input
                         {...inputProps}
                         className="w-full min-w-0 flex-auto border-0 bg-transparent p-0 outline-0"
-                        size={inputSize}
+                        size={props.inputSize}
                     />
                     {props.endAdornment}
                 </div>

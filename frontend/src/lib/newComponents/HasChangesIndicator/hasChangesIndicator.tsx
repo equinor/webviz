@@ -1,5 +1,8 @@
+import React from "react";
+
 import { Circle } from "@mui/icons-material";
 
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import type { PixelSize } from "@lib/newComponents/_shared/utils/size";
 
 import { Tooltip } from "../Tooltip";
@@ -13,12 +16,22 @@ export type HasChangesIndicatorProps = {
     tooltip?: string;
 };
 
+const DEFAULT_PROPS = {
+    visible: true,
+    tooltip: "You have unsaved changes",
+} satisfies Partial<HasChangesIndicatorProps>;
+
 export function HasChangesIndicator(props: HasChangesIndicatorProps): React.ReactNode {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+
+    if (!defaultedProps.visible) return null;
+
     return (
-        props.visible !== false && (
-            <Tooltip content={props.tooltip ?? "You have unsaved changes"}>
-                <Circle style={props.size !== undefined ? { fontSize: props.size } : undefined} color="warning" />
-            </Tooltip>
-        )
+        <Tooltip content={defaultedProps.tooltip}>
+            <Circle
+                style={defaultedProps.size !== undefined ? { fontSize: defaultedProps.size } : undefined}
+                color="warning"
+            />
+        </Tooltip>
     );
 }

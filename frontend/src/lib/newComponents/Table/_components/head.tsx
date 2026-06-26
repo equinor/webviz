@@ -11,11 +11,13 @@ import { Row } from "./row";
 import type { TableCellProps } from "./types";
 
 export type TableHeadProps = {
+    /** When true, the header row sticks to the top of the scroll container. @default false */
     sticky?: boolean;
+    /** The column definitions. */
     children?: React.ReactNode;
 };
 
-function HeadComponent(props: TableHeadProps, ref: React.ForwardedRef<HTMLTableSectionElement>): React.ReactNode {
+export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(function Head(props, ref): React.ReactNode {
     const columnContext = useTableColumnContext();
 
     const tableRows = React.useMemo(
@@ -51,7 +53,7 @@ function HeadComponent(props: TableHeadProps, ref: React.ForwardedRef<HTMLTableS
             </thead>
         </TableSectionContext.Provider>
     );
-}
+});
 
 type HeaderCellDef = {
     colSpan: number;
@@ -103,4 +105,3 @@ function doRecursivelyBuildHeaderRows(
     return headerCellAcc;
 }
 
-export const Head = React.forwardRef<HTMLTableSectionElement, TableHeadProps>(HeadComponent);

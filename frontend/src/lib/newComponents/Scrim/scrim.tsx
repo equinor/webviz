@@ -3,6 +3,7 @@ import React from "react";
 import { createPortal } from "@lib/utils/createPortal";
 
 export type ScrimProps = {
+    /** When true, the scrim is hidden. @default false */
     hidden?: boolean;
 };
 

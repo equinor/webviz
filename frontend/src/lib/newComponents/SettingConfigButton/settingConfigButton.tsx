@@ -19,11 +19,8 @@ export type SettingConfigButtonProps = {
     onDiscard?: () => void;
 } & Omit<ButtonProps, "buttonRef" | "ref" | "onClick">;
 
-function SettingConfigButtonComponent(
-    props: SettingConfigButtonProps,
-    ref: React.ForwardedRef<HTMLButtonElement>,
-): React.ReactNode {
-    const { formTitle, size, layoutClassName, formContent, onOpen, onApply, onDiscard, ...baseProps } = props;
+export const SettingConfigButton = React.forwardRef<HTMLButtonElement, SettingConfigButtonProps>(function SettingConfigButton(props, ref): React.ReactNode {
+    const { formTitle, size, layoutClassName, formContent, onOpen, onApply, onDiscard, ...restProps } = props;
 
     const [modalOpen, setModalOpen] = React.useState(false);
 
@@ -62,7 +59,7 @@ function SettingConfigButtonComponent(
                 size={size}
                 tone="neutral"
                 onClick={handleClick}
-                {...baseProps}
+                {...restProps}
             >
                 {props.children}
                 <SettingsDialogIcon className="ml-auto" size={16} />
@@ -77,6 +74,4 @@ function SettingConfigButtonComponent(
             </Dialog.Popup>
         </>
     );
-}
-
-export const SettingConfigButton = React.forwardRef(SettingConfigButtonComponent);
+});
