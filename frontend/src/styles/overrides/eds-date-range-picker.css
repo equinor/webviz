@@ -1,5 +1,5 @@
 .webviz-eds-date-range-picker {
-    @apply form-element bg-canvas box-border rounded border-none;
+    @apply form-element box-border rounded border-none;
 
     /* default size */
     @apply min-h-selectable-md px-sm py-xs;
