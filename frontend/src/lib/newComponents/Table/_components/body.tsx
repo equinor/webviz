@@ -1,6 +1,7 @@
 import React from "react";
 
 import { useComponentSize } from "@lib/newComponents/_shared/contexts/componentSizeContext";
+import { withDefaults } from "@lib/newComponents/_shared/utils/defaultProps";
 import { getNextTextSize, getTextSizeForSelectableSize } from "@lib/newComponents/_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/newComponents/_shared/utils/wrapperProps";
 import { Typography } from "@lib/newComponents/Typography";
@@ -17,22 +18,27 @@ export type TableBodyProps = {
     children?: React.ReactNode;
 } & ComponentWrapperProps<React.HTMLAttributes<HTMLTableSectionElement>>;
 
+const DEFAULT_PROPS = {
+    emptyMessage: "No data found",
+} satisfies Partial<TableBodyProps>;
+
 export function BodyComponent(
     props: TableBodyProps,
     ref: React.ForwardedRef<HTMLTableSectionElement>,
 ): React.ReactNode {
-    const baseProps = resolveWrapperProps(props, "emptyMessage");
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const baseProps = resolveWrapperProps(defaultedProps, "emptyMessage");
     const rootContext = useTableRootContext();
 
     return (
         <tbody {...baseProps} ref={ref} tabIndex={rootContext.selectable ? 0 : undefined}>
-            <TableSectionContext.Provider value="body">{props.children}</TableSectionContext.Provider>
-            <NoDataRow message={props.emptyMessage} />
+            <TableSectionContext.Provider value="body">{defaultedProps.children}</TableSectionContext.Provider>
+            <NoDataRow message={defaultedProps.emptyMessage} />
         </tbody>
     );
 }
 
-function NoDataRow(props: { message?: string | false }) {
+function NoDataRow(props: { message: string | false }) {
     const columnContext = useTableColumnContext();
     const size = useComponentSize();
     const textSize = getTextSizeForSelectableSize(size);
@@ -43,7 +49,7 @@ function NoDataRow(props: { message?: string | false }) {
         <Row layoutClassName="not-only:hidden" selectable={false}>
             <Cell colSpan={columnContext.leafCount}>
                 <Typography italic layoutClassName="opacity-50" size={getNextTextSize(textSize, 1)}>
-                    {props.message ?? "No data found"}
+                    {props.message}
                 </Typography>
             </Cell>
         </Row>

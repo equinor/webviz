@@ -40,6 +40,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
     const isMultiSort = rootContext.sortable === "multiple";
     const isSorted = currentSortDirection !== SortDirection.NONE;
     const percentWidth = props.widthInPercent ? `${props.widthInPercent}%` : undefined;
+    const activeCellWidth = props.width ?? percentWidth;
 
     const cellHeightPx = rootContext.compact ? ROW_HEIGHT_PX_COMPACT[componentSize] : ROW_HEIGHT_PX[componentSize];
 
@@ -54,7 +55,7 @@ function CellComponent(props: TableCellProps, ref: React.ForwardedRef<HTMLTableC
         <CellTag
             {...baseProps}
             ref={ref}
-            width={props.width ?? percentWidth}
+            width={activeCellWidth}
             tabIndex={isSortable ? 0 : undefined}
             role={isSortable ? "button" : undefined}
             style={{ fontWeight: "inherit", height: `${cellHeightPx}px`, ...baseProps.style }}

@@ -25,6 +25,7 @@ export function PendingRows(props: PendingRowsProps): React.ReactNode {
             return props.rowCount;
         }
 
+        // When using "fill", we want to show *at least* 1 row, to avoid the "empty table" text from appearing on small sizes
         if (rootContext.availableBodyHeight <= 0) return 1;
 
         return Math.max(Math.floor(rootContext.availableBodyHeight / rowHeight), 1);
