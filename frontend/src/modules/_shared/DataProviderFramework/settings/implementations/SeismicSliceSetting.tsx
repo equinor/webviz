@@ -3,10 +3,10 @@ import React from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { Button } from "@lib/components/Button";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {

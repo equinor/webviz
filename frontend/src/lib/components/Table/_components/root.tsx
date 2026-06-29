@@ -1,12 +1,12 @@
 import React from "react";
 
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 import { ComponentSizeContext, useComponentSize } from "@lib/components/_shared/contexts/componentSizeContext";
 import type { SelectableSize } from "@lib/components/_shared/utils/size";
 import { getTextSizeForSelectableSize } from "@lib/components/_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/components/_shared/utils/wrapperProps";
 import { Typography } from "@lib/components/Typography";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { TableColumnContextType } from "../_contexts/tableColumnContext";

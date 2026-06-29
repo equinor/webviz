@@ -1,5 +1,6 @@
 import { defaults } from "lodash";
-import { Prettify } from "./prettify";
+
+import type { Prettify } from "./prettify";
 
 type WithDefaults<TProps, TDefaults extends Partial<TProps>> = Prettify<
     Omit<TProps, keyof TDefaults> & Required<Pick<TProps, Extract<keyof TDefaults, keyof TProps>>>

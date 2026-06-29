@@ -11,10 +11,12 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { Hidden } from "@lib/components/Hidden";
+import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import {
@@ -29,8 +31,6 @@ import type { Interfaces } from "../interfaces";
 import { AggregationDropdown } from "../UiComponents";
 
 import { surfaceAddressAtom } from "./atoms/baseAtoms";
-import { NumberInput } from "@lib/components/NumberInput";
-import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.None]: "Static",

@@ -5,10 +5,10 @@ import PersonIcon from "@mui/icons-material/Person";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { withDefaults } from "../_shared/utils/defaultProps";
 import type { PixelSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { CircularProgress } from "../CircularProgress";
-import { withDefaults } from "../_shared/utils/defaultProps";
 
 export type AvatarUserData = {
     /** URL of the user's profile image. */

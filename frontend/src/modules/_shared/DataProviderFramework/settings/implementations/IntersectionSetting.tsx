@@ -1,10 +1,11 @@
 import React from "react";
 
 import { IntersectionType } from "@framework/types/intersection";
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
     CustomSettingImplementation,
@@ -18,7 +19,7 @@ import {
     isValueValid,
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
-import type { ComboboxItem } from "@lib/components/Combobox/types";
+
 
 export type IntersectionSettingOption = {
     type: IntersectionType;
@@ -254,17 +255,6 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(null);
             }
 
-            function handleExtensionLengthChange(numValue: number | null) {
-                if (numValue === null) {
-                    return;
-                }
-                if (props.value && props.value.type === IntersectionType.WELLBORE) {
-                    const newValue = { ...props.value, extensionLength: numValue };
-                    setCachedValueForIntersectionType(type, newValue);
-                    props.onValueChange(newValue);
-                }
-            }
-
             const options: ComboboxItem<string>[] = availableValues
                 .filter((value) => value.type === type)
                 .map((value) => {
@@ -273,9 +263,6 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         value: value.uuid,
                     };
                 });
-
-            const enableExtensionLength = extensionLengthConfig !== null && type === IntersectionType.WELLBORE;
-            const validExtensionLength = createValidExtensionLength(props.value, defaultExtensionLength);
 
             return (
                 <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
@@ -309,14 +296,14 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     <span>Extension</span>
                     <NumberInput
                         disabled={props.disabled || !enableExtensionLength}
-                        value={validExtensionLength}
+                        value={immediateExtensionLength}
                         min={extensionLengthConfig?.min}
                         max={extensionLengthConfig?.max}
-                                onValueChange={setExtensionLength}
-                                scrubAdornment="m"
-                                scrubAreaPosition="end"
-                                allowWheelScrub
-                            />
+                        onValueChange={setExtensionLength}
+                        scrubAdornment="m"
+                        scrubAreaPosition="end"
+                        allowWheelScrub
+                    />
                 </div>
             );
         };

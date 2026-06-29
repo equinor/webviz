@@ -1,20 +1,17 @@
 import React from "react";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { loadWorkbenchSessionFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
 import {
     extractLayout,
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dialog } from "@lib/components/Dialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
 import { timeAgo } from "@lib/utils/dates";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { AlertDialog } from "@lib/components/AlertDialog";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;
@@ -27,7 +24,6 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     );
 
     const activeSession = useActiveSession();
-    const isLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
 
     const [sessionData, setSessionData] = React.useState<WorkbenchSessionDataContainer | null>(null);
 

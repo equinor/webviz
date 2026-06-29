@@ -10,10 +10,10 @@ import {
     Remove,
 } from "@mui/icons-material";
 
-import { AddPathPointIcon, AxesLayerIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
 import { Button } from "@lib/components/Button";
 import { Separator } from "@lib/components/Separator";
 import { TextInput } from "@lib/components/TextInput";
+import { AddPathPointIcon, AxesLayerIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";

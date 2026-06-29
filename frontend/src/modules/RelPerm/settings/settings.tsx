@@ -7,7 +7,6 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
@@ -18,6 +17,7 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import type { SettingAnnotation } from "@lib/components/SettingWrapper";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 

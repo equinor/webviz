@@ -2,11 +2,11 @@ import React from "react";
 
 import { clamp } from "lodash-es";
 
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";

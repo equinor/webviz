@@ -12,9 +12,9 @@ import {
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
-import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

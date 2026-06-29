@@ -9,7 +9,6 @@ import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DateRangePicker } from "@lib/components/DateRangePicker";
@@ -22,6 +21,7 @@ import { SortDirection as TableSortDirection } from "@lib/components/Table/types
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Virtualization } from "@lib/components/Virtualization";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";

@@ -1,9 +1,9 @@
 import React from "react";
 
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
@@ -124,7 +124,7 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueConstraints?.[1] ?? 0);
             const step = isStatic ? (staticOptions.step ?? 1) : (props.valueConstraints?.[2] ?? 1);
 
-            const settledValue = !props.isOverridden ? (props.value ?? min) : (props.overriddenValue ?? min);
+            const settledValue = props.value ?? min;
             const [immediateValue, setValue] = useDebouncedOnChange<number>(
                 settledValue,
                 function handleValueSettle(value: number) {

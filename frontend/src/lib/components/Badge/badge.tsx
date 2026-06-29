@@ -2,8 +2,8 @@ import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { withDefaults } from "../_shared/utils/defaultProps";
 import type { Tone } from "../_shared/types/tones";
+import { withDefaults } from "../_shared/utils/defaultProps";
 
 export type BadgeProps = {
     /** Controls the color tone of the badge. @default "accent" */

@@ -2,9 +2,9 @@ import React from "react";
 
 import { AssignmentTurnedIn, ContentPaste, ContentPasteOff } from "@mui/icons-material";
 
-import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { Button, type ButtonProps } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type CopyCellValueProps = {

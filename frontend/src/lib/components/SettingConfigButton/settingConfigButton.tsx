@@ -1,8 +1,8 @@
 import React from "react";
 
-import { SettingsDialogIcon } from "@lib/icons";
 import { Button, type ButtonProps } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
+import { SettingsDialogIcon } from "@lib/icons";
 
 export type SettingConfigButtonProps = {
     /** The title shown in the modal dialog header. */

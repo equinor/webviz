@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Menu as MenuBase } from "@base-ui/react";
 import type { MenuRootProps as MenuBaseRootProps } from "@base-ui/react";

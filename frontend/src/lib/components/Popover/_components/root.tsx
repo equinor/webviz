@@ -1,5 +1,3 @@
-import React from "react";
-
 import type { PopoverRootProps } from "@base-ui/react";
 import { Popover } from "@base-ui/react";
 

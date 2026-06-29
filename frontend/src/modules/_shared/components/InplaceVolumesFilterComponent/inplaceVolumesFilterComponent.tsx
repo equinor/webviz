@@ -11,12 +11,12 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { Banner } from "@lib/components/Banner";
 import { Select } from "@lib/components/Select";
 import type { SettingAnnotation } from "@lib/components/SettingWrapper";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;

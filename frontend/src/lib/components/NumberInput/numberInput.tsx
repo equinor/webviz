@@ -11,8 +11,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { BrowseButtons } from "../_shared/components/browseButtons";
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
-import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { withDefaults } from "../_shared/utils/defaultProps";
+import { SELECTABLE_SIZES_CLASSNAMES, type SelectableSize } from "../_shared/utils/size";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 
 export type NumberInputProps = ComponentWrapperProps<NumberFieldRootBaseProps> & {

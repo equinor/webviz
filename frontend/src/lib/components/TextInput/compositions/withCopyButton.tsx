@@ -2,10 +2,10 @@ import React from "react";
 
 import { AssignmentTurnedIn, ContentPaste } from "@mui/icons-material";
 
-import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { Button } from "@lib/components/Button";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useTimeoutFunction } from "@lib/hooks/useTimeoutFunction";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type WithCopyButtonProps = {

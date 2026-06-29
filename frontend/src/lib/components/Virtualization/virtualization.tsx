@@ -3,6 +3,7 @@ import React from "react";
 import { isEqual } from "lodash-es";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+
 import { withDefaults } from "../_shared/utils/defaultProps";
 
 export type VirtualizationProps<T = any> = {

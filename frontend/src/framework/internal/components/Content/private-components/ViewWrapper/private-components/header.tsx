@@ -28,7 +28,6 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -38,6 +37,7 @@ import { Popover } from "@lib/components/Popover";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

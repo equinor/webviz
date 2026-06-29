@@ -13,13 +13,13 @@ import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useComponentSize } from "../_shared/contexts/componentSizeContext";
+import { withDefaults } from "../_shared/utils/defaultProps";
 import {
     getNextTextSize,
     getTextSizeForSelectableSize,
     SELECTABLE_SIZES_CLASSNAMES,
     type SelectableSize,
 } from "../_shared/utils/size";
-import { withDefaults } from "../_shared/utils/defaultProps";
 import { resolveWrapperProps, type ComponentWrapperProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
 import { Typography } from "../Typography";

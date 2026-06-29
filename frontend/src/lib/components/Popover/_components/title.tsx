@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Popover as PopoverBase } from "@base-ui/react";
 import { Close } from "@mui/icons-material";

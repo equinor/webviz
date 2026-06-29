@@ -1,5 +1,4 @@
 import React from "react";
-
 import type { HTMLAttributes } from "react";
 
 import { withDefaults } from "@lib/components/_shared/utils/defaultProps";

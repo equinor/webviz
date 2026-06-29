@@ -3,12 +3,12 @@ import React from "react";
 import { cloneDeep, isEqual } from "lodash-es";
 
 import type { Grid3dZone_api } from "@api";
-import { useElementSize } from "@lib/hooks/useElementSize";
 import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {

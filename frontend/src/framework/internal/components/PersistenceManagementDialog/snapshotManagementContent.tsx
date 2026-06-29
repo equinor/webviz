@@ -14,7 +14,6 @@ import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Avatar } from "@lib/components/Avatar";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -29,6 +28,7 @@ import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Virtualization } from "@lib/components/Virtualization";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { formatDate } from "@lib/utils/dates";
 
 import { tableSortDirToApiSortDir } from "./_utils";

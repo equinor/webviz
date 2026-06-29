@@ -140,7 +140,7 @@ export function FmuAnimatedLogo(props: FmuAnimatedLogoProps): React.ReactNode {
             style={{ overflow: "visible" }}
             {...props}
         >
-            {/* eslint-disable-next-line react/no-danger */}
+            { }
             <style dangerouslySetInnerHTML={{ __html: CSS }} />
             <g>
                 <g className="fmu-spinner fmu-ghost1" transform="rotate(-2 234.4 238.3)">

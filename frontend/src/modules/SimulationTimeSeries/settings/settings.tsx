@@ -13,7 +13,6 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
@@ -24,6 +23,7 @@ import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 

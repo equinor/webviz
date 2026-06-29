@@ -6,6 +6,7 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Collapsible } from "@lib/components/Collapsible";
+import { Hidden } from "@lib/components/Hidden";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Select } from "@lib/components/Select";
 import { SettingWrapper } from "@lib/components/SettingWrapper";
@@ -14,7 +15,6 @@ import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { TextInput } from "@lib/components/TextInput";
 
 import type { Interfaces } from "../interfaces";
-import { Hidden } from "@lib/components/Hidden";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

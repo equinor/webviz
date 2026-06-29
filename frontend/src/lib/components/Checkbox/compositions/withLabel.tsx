@@ -1,7 +1,7 @@
 import React from "react";
 
-import { withDefaults } from "@lib/components/_shared/utils/defaultProps";
 import { useComponentSize } from "@lib/components/_shared/contexts/componentSizeContext";
+import { withDefaults } from "@lib/components/_shared/utils/defaultProps";
 import { getDataAttributesForSelectableSize, getTextSizeForSelectableSize } from "@lib/components/_shared/utils/size";
 import { Typography } from "@lib/components/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

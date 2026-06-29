@@ -1,8 +1,8 @@
 import type React from "react";
 
-import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Switch } from "@lib/components/Switch";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
     CustomSettingImplementation,

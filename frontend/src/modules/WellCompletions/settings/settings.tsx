@@ -11,7 +11,6 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { SortAscendingIcon, SortDescendingIcon } from "@lib/icons";
 import { Button } from "@lib/components/Button";
 import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
@@ -21,6 +20,7 @@ import { Slider } from "@lib/components/Slider";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
+import { SortAscendingIcon, SortDescendingIcon } from "@lib/icons";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 

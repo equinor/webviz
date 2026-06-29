@@ -8,8 +8,6 @@ import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@a
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
-import { useValidArrayState } from "@lib/hooks/useValidArrayState";
-import { useValidState } from "@lib/hooks/useValidState";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Combobox } from "@lib/components/Combobox";
@@ -19,6 +17,8 @@ import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { useValidArrayState } from "@lib/hooks/useValidArrayState";
+import { useValidState } from "@lib/hooks/useValidState";
 
 import { readInitialStateFromLocalStorage, storeStateInLocalStorage } from "./_utils";
 import { CaseTable } from "./CaseTable";
