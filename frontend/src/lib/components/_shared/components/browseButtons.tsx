@@ -43,7 +43,7 @@ export function BrowseButtons(props: BrowseButtonsProps): React.ReactNode {
                 title={defaultedProps.prevTitle}
                 disabled={defaultedProps.disabled}
                 size={props.size}
-                onClick={defaultedProps.onClickNext}
+                onClick={defaultedProps.onClickPrev}
                 render={props.renderPrev}
             >
                 <KeyboardArrowUp />
@@ -54,7 +54,7 @@ export function BrowseButtons(props: BrowseButtonsProps): React.ReactNode {
                 title={defaultedProps.nextTitle}
                 disabled={defaultedProps.disabled}
                 size={props.size}
-                onClick={defaultedProps.onClickPrev}
+                onClick={defaultedProps.onClickNext}
                 render={props.renderNext}
             >
                 <KeyboardArrowDown />
