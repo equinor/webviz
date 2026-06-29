@@ -42,7 +42,7 @@ export default eslintTypescript.config(
     // ! Make sure prettier is *after* other plugins, so it can override
     configPrettier,
 
-    { ignores: ["scripts/", "playwright/", "coverage/", "dist/", "src/api/"] },
+    { ignores: ["scripts/", "playwright/", "coverage/", "dist/"] },
 
     // Other configs  -------------------------------------------------------------------
     {
@@ -54,11 +54,11 @@ export default eslintTypescript.config(
         },
     },
     // Custom rules ---------------------------------------------------------------------
-    // {
-    //     // generate-api will end up using this config (disregarding the src/api ignore above). The generated code uses the occasional ts-comment, so we need to relax the rule a bit for these
-    //     files: ["src/api/**"],
-    //     rules: { "@typescript-eslint/ban-ts-comment": "warn" },
-    // },
+    {
+        // generate-api will end up using this config (disregarding the src/api ignore above). The generated code uses the occasional ts-comment, so we need to relax the rule a bit for these
+        files: ["src/api/**"],
+        rules: { "@typescript-eslint/ban-ts-comment": "off" },
+    },
     {
         rules: {
             "@typescript-eslint/no-unused-expressions": ["warn", { allowShortCircuit: true, allowTernary: true }], // Allow some useful "unused" expressions, such as `foo && foo()`

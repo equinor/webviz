@@ -6,6 +6,7 @@ import axios from "axios";
 import { createSseClient } from "../core/serverSentEvents.gen";
 import type { HttpMethod } from "../core/types.gen";
 import { getValidRequestBody } from "../core/utils.gen";
+
 import type { Client, Config, RequestOptions } from "./types.gen";
 import { buildUrl, createConfig, mergeConfigs, mergeHeaders, setAuthParams } from "./utils.gen";
 
