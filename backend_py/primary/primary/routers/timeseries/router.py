@@ -750,8 +750,9 @@ async def get_derived_vector_table_hybrid(
             expected_store_key=cache_key)
 
         job_coro = bgjob_create_and_store_derived_table_async(
-            authenticated_user=authenticated_user, 
+            user_id=user_id, 
             task_id=task_meta.task_id,
+            sumo_access_token=sumo_access_token,
             case_uuid=case_uuid,
             ensemble_name=ensemble_name,
             vector_names=vector_names
