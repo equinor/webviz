@@ -5,8 +5,7 @@ import pyarrow.parquet as pq
 
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
-from webviz_services.utils.authenticated_user import AuthenticatedUser
-from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user
+from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 
 from .create_derived_table import create_derived_smry_table_async
@@ -15,13 +14,13 @@ from .batch_aggregate import ensure_vectors_aggregated_async
 LOGGER = logging.getLogger(__name__)
 
 
-async def bgjob_create_and_store_derived_table_async(authenticated_user: AuthenticatedUser, task_id: str, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> bool:
+async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str, sumo_access_token: str, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> bool:
     perf_metrics = PerfMetrics()
     log_prefix = f"##BGJOB-{task_id}: "
 
     LOGGER.info(f"{log_prefix}Starting background job for creating derived summary table")
 
-    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    task_tracker = get_task_meta_tracker_for_user_id(user_id)
     initial_task_meta = await task_tracker.get_task_meta_async(task_id)
     if initial_task_meta is None:
         LOGGER.error(f"{log_prefix}Task not found in tracker, aborting")
@@ -40,8 +39,7 @@ async def bgjob_create_and_store_derived_table_async(authenticated_user: Authent
         await task_tracker.set_status_message_async(task_id, status_message=msg)
 
     try:
-        access_token = authenticated_user.get_sumo_access_token()
-        sumo_client = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(sumo_access_token)
         perf_metrics.record_lap("init")
 
         await ensure_vectors_aggregated_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
@@ -50,7 +48,7 @@ async def bgjob_create_and_store_derived_table_async(authenticated_user: Authent
         derived_table_pa, derived_table_info = await create_derived_smry_table_async(sumo_client, case_uuid, ensemble_name, None, vector_names, progress_cb=_update_status_msg_async)
         perf_metrics.record_lap("create-table")
 
-        task_tracker.set_status_message_async(task_id, status_message="Storing derived summary table")
+        await task_tracker.set_status_message_async(task_id, status_message="Storing derived summary table")
 
         byte_stream = io.BytesIO()
         pq.write_table(derived_table_pa, byte_stream, compression="zstd")
