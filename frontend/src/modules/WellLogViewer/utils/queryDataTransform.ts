@@ -9,7 +9,7 @@ import type {
     WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import { chain, clone, round, set } from "lodash";
+import { chain, clone, round, set } from "lodash-es";
 
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";

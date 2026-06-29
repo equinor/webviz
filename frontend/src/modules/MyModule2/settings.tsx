@@ -3,7 +3,7 @@ import React from "react";
 import { NumberInput } from "@mui/base/Unstable_NumberInput/NumberInput";
 import { Check } from "@mui/icons-material";
 import { useAtom } from "jotai";
-import { random, range } from "lodash";
+import { random, range } from "lodash-es";
 
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";

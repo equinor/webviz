@@ -1,7 +1,7 @@
 import React from "react";
 
 import { FilterAlt } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";

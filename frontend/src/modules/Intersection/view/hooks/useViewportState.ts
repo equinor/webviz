@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash-es";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";

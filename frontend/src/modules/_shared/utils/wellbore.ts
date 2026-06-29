@@ -1,7 +1,7 @@
 import type { Color } from "@deck.gl/core";
 import type { Point3D } from "@webviz/subsurface-viewer";
 import type { LineString, Point } from "geojson";
-import { clamp, sortedIndex } from "lodash";
+import { clamp, sortedIndex } from "lodash-es";
 import simplify from "simplify-js";
 
 import type { WellboreTrajectory_api } from "@api";

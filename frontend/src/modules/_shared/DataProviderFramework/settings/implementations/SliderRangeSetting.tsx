@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";

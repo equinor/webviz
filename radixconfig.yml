@@ -50,6 +50,8 @@ spec:
                 envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
               - name: WEBVIZ-PSEUDONYM-HMAC-KEY
                 envVar: WEBVIZ_PSEUDONYM_HMAC_KEY
+              - name: WEBVIZ-SESSION-STORE-FERNET-KEY
+                envVar: WEBVIZ_SESSION_STORE_FERNET_KEY
               - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
                 envVar: WEBVIZ_REDIS_AUTH_STORE_PASSWORD
               - name: WEBVIZ-REDIS-CACHE-PASSWORD

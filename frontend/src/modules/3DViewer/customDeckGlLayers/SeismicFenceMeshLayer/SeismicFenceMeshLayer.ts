@@ -11,7 +11,7 @@ import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
 import { transfer, wrap } from "comlink";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";

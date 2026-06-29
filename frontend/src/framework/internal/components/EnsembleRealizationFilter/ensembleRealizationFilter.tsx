@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Check, Clear } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";

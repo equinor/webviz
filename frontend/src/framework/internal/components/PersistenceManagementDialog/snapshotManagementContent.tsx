@@ -2,7 +2,7 @@ import React from "react";
 
 import { Close, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { omit } from "lodash";
+import { omit } from "lodash-es";
 
 import type { GetSnapshotAccessLogsData_api, GraphUser_api, SnapshotAccessLog_api, Options } from "@api";
 import { getSnapshotAccessLogsInfiniteOptions, getUserInfoOptions, SnapshotAccessLogSortBy_api } from "@api";

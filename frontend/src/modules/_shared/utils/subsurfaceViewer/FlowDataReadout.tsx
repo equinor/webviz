@@ -1,13 +1,11 @@
 import React from "react";
 
 import { ChevronRight } from "@mui/icons-material";
+import { defaults } from "lodash-es";
 
+import type { FlowDataColors, InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
-import type {
-    InjectionPhase,
-    ProductionPhase,
-} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 
 import { formatNumber } from "../numberFormatting";
 
@@ -19,10 +17,10 @@ type Phase = "injection" | "production";
 export type FlowDataReadoutProps = {
     phase: Phase;
     name: string;
-    // TODO: Get colors down here (and limits?)
     oil?: number;
     gas?: number;
     water?: number;
+    colors?: FlowDataColors;
 };
 
 const COLORS = {
@@ -43,6 +41,8 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
 
     if (props.oil == null && props.gas == null && props.water == null) return null;
 
+    const colorConf = defaults({}, props.colors, COLORS[props.phase]);
+
     return (
         <div className="-ml-2 text-xs">
             <button
@@ -60,11 +60,11 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
                         invisible: !collapsed,
                     })}
                 >
-                    <InlineFlowValueText value={props.oil} color={COLORS[props.phase].oil} />
+                    <InlineFlowValueText value={props.oil} color={colorConf.oil} />
                     <span className="first-of-type:hidden [:where(&+&)]:hidden"> | </span>
-                    <InlineFlowValueText value={props.gas} color={COLORS[props.phase].gas} />
+                    <InlineFlowValueText value={props.gas} color={colorConf.gas} />
                     <span className="first-of-type:hidden [:where(&+&)]:hidden"> | </span>
-                    <InlineFlowValueText value={props.water} color={COLORS[props.phase].water} />
+                    <InlineFlowValueText value={props.water} color={colorConf.water} />
                 </p>
 
                 <ChevronRight className="ml-auto" fontSize="inherit" />
@@ -72,9 +72,9 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
 
             {!collapsed && (
                 <ul className="bg-gray-200 px-2 w-full space-y-1">
-                    <FlowValueText value={props.oil} name="Oil" color={COLORS[props.phase].oil} unit="Sm³" />
-                    <FlowValueText value={props.gas} name="Gas" color={COLORS[props.phase].gas} unit="Sm³" />
-                    <FlowValueText value={props.water} name="Water" color={COLORS[props.phase].water} unit="m³" />
+                    <FlowValueText value={props.oil} name="Oil" color={colorConf.oil} unit="Sm³" />
+                    <FlowValueText value={props.gas} name="Gas" color={colorConf.gas} unit="Sm³" />
+                    <FlowValueText value={props.water} name="Water" color={colorConf.water} unit="m³" />
                 </ul>
             )}
         </div>
@@ -102,10 +102,14 @@ function FlowValueText(props: { value?: number; name: string; color: string; uni
     );
 }
 
-export function renderProductionReadout(name: string, value: ProductionReadoutValue) {
-    return <FlowDataReadout name={name} phase="production" oil={value.oil} gas={value.gas} water={value.water} />;
+type FlowReadoutArgs = Pick<FlowDataReadoutProps, "colors">;
+
+export function renderProductionReadout(name: string, value: ProductionReadoutValue, args: FlowReadoutArgs = {}) {
+    return (
+        <FlowDataReadout name={name} phase="production" oil={value.oil} gas={value.gas} water={value.water} {...args} />
+    );
 }
 
-export function renderInjectionReadout(name: string, value: InjectionReadoutValue) {
-    return <FlowDataReadout name={name} phase="injection" gas={value.gas} water={value.water} />;
+export function renderInjectionReadout(name: string, value: InjectionReadoutValue, args: FlowReadoutArgs = {}) {
+    return <FlowDataReadout name={name} phase="injection" gas={value.gas} water={value.water} {...args} />;
 }

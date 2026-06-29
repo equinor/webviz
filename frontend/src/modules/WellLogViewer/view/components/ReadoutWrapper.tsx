@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import { chain, maxBy } from "lodash";
+import { chain, maxBy } from "lodash-es";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";

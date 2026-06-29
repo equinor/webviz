@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Deselect, SelectAll } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

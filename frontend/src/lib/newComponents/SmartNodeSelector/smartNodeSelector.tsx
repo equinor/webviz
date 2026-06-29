@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import _ from "lodash";
+import { cloneDeep } from "lodash-es";
 
 import {
     type FieldStateDataAttributes,
@@ -983,7 +983,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         if (this.clipboardData === null) return;
         const selections = this.clipboardData;
         if (selections && selections.length > 0) {
-            const newSelections = _.cloneDeep(this.state.nodeSelections);
+            const newSelections = cloneDeep(this.state.nodeSelections);
             if (this.lastNodeSelection().isEmpty()) {
                 newSelections.pop();
             }

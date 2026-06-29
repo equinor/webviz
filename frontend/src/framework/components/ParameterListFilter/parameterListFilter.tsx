@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { Parameter } from "@framework/EnsembleParameters";
 import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
