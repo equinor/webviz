@@ -1,6 +1,7 @@
 import React from "react";
 
 import { IntersectionType } from "@framework/types/intersection";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
@@ -172,7 +173,28 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 [type],
             );
 
+            const enableExtensionLength = extensionLengthConfig !== null && type === IntersectionType.WELLBORE;
+            const settledExtensionLength = createValidExtensionLength(props.value, defaultExtensionLength);
+
+            const [immediateExtensionLength, setExtensionLength, extensionLengthController] = useDebouncedOnChange<
+                number | null
+            >(
+                settledExtensionLength,
+                function handleExtensionLengthSettle(numValue: number | null) {
+                    if (numValue === null) {
+                        return;
+                    }
+                    if (props.value && props.value.type === IntersectionType.WELLBORE) {
+                        const newValue = { ...props.value, extensionLength: numValue };
+                        setCachedValueForIntersectionType(type, newValue);
+                        props.onValueChange(newValue);
+                    }
+                },
+                600,
+            );
+
             function handleSelectionChange(selectedValue: string | null) {
+                extensionLengthController.cancel();
                 const selected = availableValues.find((v) => v.uuid === selectedValue) ?? null;
                 if (!selected) {
                     setCachedValueForIntersectionType(type, null);
@@ -197,6 +219,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             }
 
             function handleCategoryChange(value: IntersectionSettingValue["type"]) {
+                extensionLengthController.cancel();
                 setType(value);
 
                 // Use cached value if still valid for current constraints, otherwise pick first available
@@ -289,10 +312,11 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         value={validExtensionLength}
                         min={extensionLengthConfig?.min}
                         max={extensionLengthConfig?.max}
-                        onValueChange={handleExtensionLengthChange}
-                        scrubAdornment="m"
-                        scrubAreaPosition="end"
-                    />
+                                onValueChange={setExtensionLength}
+                                scrubAdornment="m"
+                                scrubAreaPosition="end"
+                                allowWheelScrub
+                            />
                 </div>
             );
         };

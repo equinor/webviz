@@ -1,6 +1,6 @@
 import React from "react";
 
-import { clamp } from "lodash";
+import { clamp } from "lodash-es";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";

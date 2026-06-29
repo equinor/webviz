@@ -1,7 +1,7 @@
 import React from "react";
 
-import { debounce } from "lodash";
-import type { DebouncedFunc } from "lodash";
+import { debounce } from "lodash-es";
+import type { DebouncedFunc } from "lodash-es";
 
 type DebounceCommitController = Pick<DebouncedFunc<() => void>, "cancel" | "flush">;
 

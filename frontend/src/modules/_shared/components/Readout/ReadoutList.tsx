@@ -1,6 +1,6 @@
 import React from "react";
 
-import { chain } from "lodash";
+import { chain } from "lodash-es";
 
 import type { CategoricalReadout, ReadoutProperty } from "./types";
 

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close, Deselect, SelectAll } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { useFieldStateDataAttributes } from "@lib/components/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

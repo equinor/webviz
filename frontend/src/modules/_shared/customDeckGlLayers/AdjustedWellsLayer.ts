@@ -11,7 +11,10 @@ import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import type { MarkerData } from "@webviz/subsurface-viewer/dist/layers/wells/layers/flatWellMarkersLayer";
 import type { WellFeature } from "@webviz/subsurface-viewer/dist/layers/wells/types";
 import { GetBoundingBox } from "@webviz/subsurface-viewer/dist/layers/wells/utils/spline";
+import type { WellsLayerProps } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 import { SubLayerId } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+
+import type { FlowDataColors } from "@framework/types/wellbore";
 
 import type { ReadoutProperty } from "../components/Readout/types";
 import type { LayerPickInfoWithReadout } from "../utils/subsurfaceViewerLayers";
@@ -22,8 +25,18 @@ import {
     getWellMetaReadout,
 } from "../utils/subsurfaceViewerLayers";
 
+export interface AdjustedWellsLayerProps extends WellsLayerProps {
+    productionColors: FlowDataColors;
+    injectionColors: FlowDataColors;
+}
+
 export class AdjustedWellsLayer extends WellsLayer {
     static layerName: string = "AdjustedWellsLayer";
+
+    constructor(props?: Partial<AdjustedWellsLayerProps>) {
+        // ! Subsurface comp does not allow us to override the prop type. With how Deck.gl works, we need to access the new props using this.props in the later life-cycles to get the most recent values. We're just adding new fields, so forwarding them directly wont affect the base layer, so this is okay
+        super(props as any);
+    }
 
     filterSubLayer(context: FilterContext): boolean {
         if (context.layer.id.includes("labels")) {
@@ -95,6 +108,7 @@ export class AdjustedWellsLayer extends WellsLayer {
     }
 
     getPickingInfo({ info, sourceLayer }: GetPickingInfoParams): LayerPickInfoWithReadout<WellFeature> {
+        const props = this.props as unknown as AdjustedWellsLayerProps;
         const superInfo = super.getPickingInfo({ info });
         // The well's layer modifies the z-coordinate during picking, so we need to scale it back so readouts are correct
         // ! Mutates the original coordinate object
@@ -123,7 +137,7 @@ export class AdjustedWellsLayer extends WellsLayer {
         }
 
         properties.push(...getWellMetaReadout(wellFeature));
-        properties.push(...getFlowReadout(wellFeature));
+        properties.push(...getFlowReadout(wellFeature, props.productionColors, props.injectionColors));
 
         return {
             ...superInfo,

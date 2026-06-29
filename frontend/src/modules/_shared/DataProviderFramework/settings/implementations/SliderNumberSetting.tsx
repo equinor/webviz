@@ -1,7 +1,6 @@
 import React from "react";
 
-import { debounce } from "lodash";
-
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
@@ -125,43 +124,26 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueConstraints?.[1] ?? 0);
             const step = isStatic ? (staticOptions.step ?? 1) : (props.valueConstraints?.[2] ?? 1);
 
-            const [prevValue, setPrevValue] = React.useState(props.value ?? min);
-            const [localValue, setLocalValue] = React.useState(props.value ?? min);
-
-            // Update local value when props value changes
-            if (props.value !== prevValue) {
-                setPrevValue(props.value ?? min);
-                setLocalValue(props.value ?? min);
-            }
-
-            // Create debounced update function with useRef to preserve reference
-            const debouncedOnValueChange = React.useRef(
-                debounce((value: number) => {
+            const settledValue = !props.isOverridden ? (props.value ?? min) : (props.overriddenValue ?? min);
+            const [immediateValue, setValue] = useDebouncedOnChange<number>(
+                settledValue,
+                function handleValueSettle(value: number) {
                     onValueChange(value);
-                }, 500),
-            ).current;
-
-            // Clean up debounce on unmount
-            React.useEffect(() => {
-                return () => {
-                    debouncedOnValueChange.cancel();
-                };
-            }, [debouncedOnValueChange]);
+                },
+                500,
+            );
 
             const handleSliderChange = React.useCallback(
                 function handleSliderChange(value: number | readonly number[]) {
-                    const newValue = Array.isArray(value) ? value[0] : value;
-                    setLocalValue(newValue);
-                    debouncedOnValueChange(newValue);
+                    setValue(Array.isArray(value) ? value[0] : value);
                 },
-                [debouncedOnValueChange],
+                [setValue],
             );
 
             const handleInputChange = React.useCallback(
                 function handleInputChange(value: number | null) {
                     if (value === null) {
-                        setLocalValue(min);
-                        debouncedOnValueChange(min);
+                        setValue(min);
                         return;
                     }
                     const allowedValues = Array.from(
@@ -171,13 +153,10 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                     const closestValue = allowedValues.reduce((prev, curr) =>
                         Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
                     );
-
-                    setLocalValue(closestValue);
-                    debouncedOnValueChange(closestValue);
+                    setValue(closestValue);
                 },
-                [debouncedOnValueChange, min, max, step],
+                [setValue, min, max, step],
             );
-
             return (
                 <div className="gap-x-sm flex items-center" ref={divRef}>
                     <div className="grow">
@@ -185,7 +164,7 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                             min={min}
                             max={max}
                             onValueChange={handleSliderChange}
-                            value={localValue}
+                            value={immediateValue}
                             valueLabelDisplay="auto"
                             step={step}
                             disabled={props.disabled}
@@ -193,12 +172,13 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
                     </div>
                     <div className={resolveClassNames("w-24", { hidden: !inputVisible })}>
                         <NumberInput
-                            value={localValue}
+                            value={immediateValue}
                             min={min}
                             max={max}
                             onValueChange={handleInputChange}
                             scrubAdornment="%"
                             scrubAreaPosition="end"
+                            allowWheelScrub
                             disabled={props.disabled}
                         />
                     </div>

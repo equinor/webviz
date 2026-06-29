@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 

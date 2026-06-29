@@ -1,6 +1,6 @@
 import React from "react";
 
-import { upperFirst } from "lodash";
+import { upperFirst } from "lodash-es";
 
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";

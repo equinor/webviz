@@ -3,7 +3,7 @@ import React from "react";
 import { HorizontalRule, MultilineChart, ShowChart, ViewDay } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
-import { get } from "lodash";
+import { get } from "lodash-es";
 
 import { WellLogCurveTypeEnum_api } from "@api";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";

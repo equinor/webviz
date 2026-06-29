@@ -1,4 +1,4 @@
-import { clamp } from "lodash";
+import { clamp } from "lodash-es";
 
 export const SIZE_NAMES = ["extra-small", "small", "medium-small", "medium", "large"] as const;
 export type SizeName = (typeof SIZE_NAMES)[any];

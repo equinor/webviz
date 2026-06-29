@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Button } from "@lib/components/Button";
