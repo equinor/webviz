@@ -55,6 +55,11 @@ export default eslintTypescript.config(
     },
     // Custom rules ---------------------------------------------------------------------
     {
+        // generate-api will end up using this config (disregarding the src/api ignore above). The generated code uses the occasional ts-comment, so we need to relax the rule a bit for these
+        files: ["src/api/**"],
+        rules: { "@typescript-eslint/ban-ts-comment": "warn" },
+    },
+    {
         rules: {
             "@typescript-eslint/no-unused-expressions": ["warn", { allowShortCircuit: true, allowTernary: true }], // Allow some useful "unused" expressions, such as `foo && foo()`
             "@typescript-eslint/consistent-type-imports": "warn",
