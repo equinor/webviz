@@ -24,6 +24,7 @@ azure-cosmos = "^4.9.0"
 nanoid = "^2.0.0"
 fsspec = ">=2022.11.0"
 
+azure-servicebus = "^7.14.3"
 msgpack = "^1.1.2"
 
 webviz-core-utils = { path = "../libs/core_utils", develop = true }

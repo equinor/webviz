@@ -49,6 +49,7 @@ from primary.utils.azure_service_credentials import ClientSecretVars, create_cre
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
+from primary.utils.message_bus import MessageBusSingleton
 from primary.utils.user_cache import UserCacheFactory
 
 from . import config
@@ -112,6 +113,13 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     )
     await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_services_credential)
 
+    LOGGER.info(
+        f"Using credential for azure services to initialize MessageBusSingleton with: {config.SERVICE_BUS_FQ_NAMESPACE=}"
+    )
+    await MessageBusSingleton.initialize_with_credential_async(
+        config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential
+    )
+
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     UserCacheFactory.initialize(use_shared_client=True, redis_url=config.REDIS_CACHE_URL)
@@ -119,6 +127,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # This part, after the yield, will be executed after the application has finished.
     yield
 
+    await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
     await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()

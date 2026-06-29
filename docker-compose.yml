@@ -34,6 +34,8 @@ services:
       - WEBVIZ_SESSION_STORE_FERNET_KEY
       - WEBVIZ_REDIS_AUTH_STORE_PASSWORD
       - WEBVIZ_REDIS_CACHE_PASSWORD
+      - WEBVIZ_SERVICE_BUS_FQ_NAMESPACE
+      - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
@@ -103,6 +105,34 @@ services:
     user: "999:999"
     # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
     command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--loglevel", "notice"]
+
+
+  pyworker-tables:
+    build:
+      context: .
+      dockerfile: ./backend_py/pyworker_tables/Dockerfile
+    environment:
+      - AZURE_TENANT_ID
+      - AZURE_CLIENT_ID
+      - AZURE_CLIENT_SECRET
+      - WEBVIZ_SUMO_ENV
+      - WEBVIZ_REDIS_CACHE_PASSWORD
+      - WEBVIZ_SERVICE_BUS_FQ_NAMESPACE
+      - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
+      - APPLICATIONINSIGHTS_CONNECTION_STRING
+      # For debugging instrumentation
+      - OTEL_LOG_LEVEL=debug
+      - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
+    volumes:
+      - ./backend_py/pyworker_tables/src:/home/appuser/backend_py/pyworker_tables/src
+      - ./backend_py/libs:/home/appuser/backend_py/libs
+    command: ["watchfiles", "python -m pyworker_tables.worker_main", "/home/appuser/backend_py/pyworker_tables/src"]
+    #command: ["python", "-m", "pyworker_tables.worker_main"]
+    #restart: on-failure
+    #stop_grace_period: 30s
+    restart: always
+    # depends_on:
+    #   - sb-emulator
 
 
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,

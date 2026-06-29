@@ -326,3 +326,95 @@ async def get_ri_isect(
 #         "proto": request.headers.get("x-forwarded-proto"),
 #         "host": request.headers.get("host"),
 #     }
+
+
+import nanoid
+
+from azure.servicebus import ServiceBusMessage
+from primary.utils.message_bus import MessageBusSingleton, MessageBus
+from primary import config
+
+from cryptography.fernet import Fernet
+
+from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg
+
+from opentelemetry import trace
+tracer = trace.get_tracer(__name__)
+
+
+
+
+
+@router.get("/sb/{msg_text}")
+async def get_send_sb_msg(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    msg_text: Annotated[str, Path(description="The string to send")],
+    count: Annotated[int, Query(description="Number of messages to send")] = 1,
+    # fmt:on
+) -> str:
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    queue_name = "test-queue"
+    LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
+
+    message_bus: MessageBus = MessageBusSingleton.get_instance()
+    sender = message_bus.get_sender(queue_name=queue_name)
+    perf_metrics.record_lap("get-sender")
+
+    # for i in range(count):
+    #     with tracer.start_as_current_span(f"SigSubmittingMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
+    #         msg = ServiceBusMessage(subject="dummy", body=msg_text)
+    #         await sender.send_messages(msg)
+    #         LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
+    #     if i == 0:
+    #         perf_metrics.record_lap("send-first-msg")
+
+    # if count > 1:
+    #     perf_metrics.record_lap("send-remaining-msgs")
+
+    # LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
+    # return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
+
+    my_dummy_access_token = f"MyToken__{msg_text}"
+
+    fernet = Fernet(config.SERVICE_BUS_PAYLOAD_FERNET_KEY)
+    encrypted_access_token = fernet.encrypt(my_dummy_access_token.encode())
+
+    user_id = authenticated_user.get_user_id()
+    task_tracker = get_task_meta_tracker_for_user_id(user_id)
+    task_id = nanoid.generate(size=12)
+    _task_meta = await task_tracker.register_task_async(task_system="sig_test", task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
+
+    with tracer.start_as_current_span("SubmitCreateDerivedSmryTableMsg", kind=trace.SpanKind.PRODUCER):
+        msg = CreateDerivedSmryTableMsg(
+            user_id=user_id,
+            task_id=task_id,
+            case_uuid="485041ce-ad72-48a3-ac8c-484c0ed95cf8",
+            ensemble_name="iter-0",
+            vector_names=["PORO", "PERMX", "PERMY", "PERMZ"],
+            encrypted_access_token=encrypted_access_token,
+        )
+        
+        sb_msg = ServiceBusMessage(subject="create-derived-smry-table", body=msg.model_dump_json())
+        await sender.send_messages(sb_msg)
+        perf_metrics.record_lap("send-first-msg")
+        # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")
+        # return f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=} in {perf_metrics.to_string()}"
+
+    while True:
+        task_meta = await task_tracker.get_task_meta_async(task_id)
+        LOGGER.info(f"Waiting for task {task_id} to complete, current state: {task_meta.state if task_meta else 'N/A'}")
+        if task_meta is None:
+            raise RuntimeError(f"Task meta for task_id {task_id} not found")
+        if task_meta.state in [TaskState.SUCCEEDED, TaskState.FAILED, TaskState.CANCELLED]:
+            break
+        await asyncio.sleep(0.1)    
+
+    LOGGER.info(f"Task {task_id} completed with state: {task_meta.state}")
+    return f"Task {task_id} completed with state: {task_meta.state} in {perf_metrics.to_string()}"
+
+

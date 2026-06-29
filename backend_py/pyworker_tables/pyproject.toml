@@ -1,0 +1,26 @@
+[project]
+name = "pyworker-tables"
+version = "0.0.1"
+requires-python = "^3.13"
+dynamic = ["dependencies"]
+
+[tool.poetry]
+requires-poetry = ">=2.1"
+packages = [{ include = "pyworker_tables", from = "src" }]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+aiohttp = "^3.13.4"
+azure-servicebus = "^7.14.3"
+azure-storage-blob = "^12.28.0"
+azure-monitor-opentelemetry = "^1.8.6"
+
+# Currently used in docker compose
+watchfiles = "^1.1.0"
+
+webviz-core-utils = { path = "../libs/core_utils", develop = true }
+webviz-server-schemas = { path = "../libs/server_schemas", develop = true }
+webviz-services = { path = "../libs/services", develop = true }

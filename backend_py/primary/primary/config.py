@@ -39,3 +39,8 @@ if _is_on_radix_platform:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-db.documents.azure.com:443/")
 else:
     COSMOS_DB_URL = os.getenv("WEBVIZ_COSMOS_DB_URL", "https://webviz-dev-db.documents.azure.com:443/")
+
+
+# !!!!!!!!!!!!!!!!!!
+SERVICE_BUS_FQ_NAMESPACE = os.environ["WEBVIZ_SERVICE_BUS_FQ_NAMESPACE"]
+SERVICE_BUS_PAYLOAD_FERNET_KEY = os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"]

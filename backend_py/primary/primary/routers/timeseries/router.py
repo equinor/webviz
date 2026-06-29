@@ -669,6 +669,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import BaseModel
 
+from azure.servicebus import ServiceBusMessage
+from cryptography.fernet import Fernet
+
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
@@ -677,10 +680,14 @@ from webviz_services.derived_smry_table.create_and_store_job import bgjob_create
 
 from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroErrorInfo
 
+from primary import config
+from primary.utils.message_bus import MessageBus, MessageBusSingleton
 #from primary.utils.user_cache import UserCache, get_user_cache_for_user
+
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_core_utils.background_tasks import run_in_background_task
 
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg
 
 
 
@@ -742,21 +749,53 @@ async def get_derived_vector_table_hybrid(
 
     new_task_was_submitted = False
     if not task_meta:
+        fernet = Fernet(config.SERVICE_BUS_PAYLOAD_FERNET_KEY)
+        encrypted_access_token = fernet.encrypt(sumo_access_token.encode())
+
+        # !!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!
+        # Introduce error for testing purposes
+        if "FGIR" in vector_names:
+            encrypted_access_token = b"ILLEGAL VALUE FOR FGIR"
+
+        task_id = nanoid.generate(size=12)
+        msg = CreateDerivedSmryTableMsg(
+            user_id=user_id,
+            task_id=task_id,
+            case_uuid=case_uuid,
+            ensemble_name=ensemble_name,
+            vector_names=vector_names,
+            encrypted_access_token=encrypted_access_token,
+        )
+
+        # !!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!
+        # Introduce error for testing purposes
+        #msg.case_uuid = ""
+
         task_meta = await task_tracker.register_task_with_fingerprint_async(
             task_system="background_task",
-            task_id=nanoid.generate(size=12),
+            task_id=task_id,
             fingerprint=task_fp,
             ttl_s=5 * 60,
             expected_store_key=cache_key)
 
-        job_coro = bgjob_create_and_store_derived_table_async(
-            authenticated_user=authenticated_user, 
-            task_id=task_meta.task_id,
-            case_uuid=case_uuid,
-            ensemble_name=ensemble_name,
-            vector_names=vector_names
-        )
-        run_in_background_task(job_coro)
+        # job_coro = bgjob_create_and_store_derived_table_async(
+        #     authenticated_user=authenticated_user, 
+        #     task_id=task_meta.task_id,
+        #     case_uuid=case_uuid,
+        #     ensemble_name=ensemble_name,
+        #     vector_names=vector_names
+        # )
+        # run_in_background_task(job_coro)
+
+        message_bus: MessageBus = MessageBusSingleton.get_instance()
+        sender = message_bus.get_sender(queue_name="test-queue")
+        sb_msg = ServiceBusMessage(subject="create-derived-smry-table", body=msg.model_dump_json())
+        await sender.send_messages(sb_msg)
+        
         new_task_was_submitted = True
         LOGGER.info(f"{dbg_prefix}Submitted new task to create derived table [{table_handle=}, {task_meta.task_id=}]")
         perf_metrics.record_lap("start-task")
