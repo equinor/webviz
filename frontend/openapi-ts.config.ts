@@ -25,9 +25,10 @@ export default defineConfig({
     input: "http://localhost:5000/openapi.json",
     output: {
         postProcess: [
-            // Open-Api will run eslint according to our `eslint.config` file, where the auto-generated folders
-            // are explicitly ignored. Therefore, we need to pass this argument to "unignore" the folders again
-            { command: "eslint", args: ["--ignore-pattern='!src/api/'"] },
+            {
+                command: "eslint",
+                args: ["--fix", "--debug", "src/api", "--ignore-pattern='!src/api'"],
+            },
             "prettier",
         ],
         path: "./src/api/autogen/",
