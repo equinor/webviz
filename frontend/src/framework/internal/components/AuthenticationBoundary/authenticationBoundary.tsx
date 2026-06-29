@@ -1,5 +1,5 @@
-import FmuLogo from "@assets/fmu.svg";
-import FmuLogoAnimated from "@assets/fmuAnimated.svg";
+import { FmuAnimatedLogo } from "@assets/FmuAnimatedLogo";
+import { FmuLogo } from "@assets/FmuLogo";
 
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
@@ -24,7 +24,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
     if (authState === AuthState.NotLoggedIn) {
         content = (
             <div className="gap-y-xl flex w-1/2 flex-col items-center">
-                <img src={FmuLogo} alt="FMU Analysis logo" className="h-32 w-32" />
+                <FmuLogo className="h-32 w-32" />
                 <Heading as="h1">FMU Analysis</Heading>
                 <DataSharingLabel />
                 <Paragraph size="xl">Please sign in to continue.</Paragraph>
@@ -37,7 +37,7 @@ export function AuthenticationBoundary(props: AuthenticationBoundaryProps) {
     } else if (authState === AuthState.Loading) {
         content = (
             <>
-                <img src={FmuLogoAnimated} alt="FMU Analysis animated logo" className="h-32 w-32" />
+                <FmuAnimatedLogo className="h-32 w-32" />
                 <Paragraph size="lg">Checking if user is signed in...</Paragraph>
             </>
         );
