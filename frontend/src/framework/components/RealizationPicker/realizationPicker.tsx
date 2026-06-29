@@ -21,7 +21,7 @@ export type RealizationPickerProps = {
     initialRangeValues?: readonly string[];
     debounceTimeMs?: number;
     realizationNumberLimits: RealizationNumberLimits;
-    onChange?: (selectedRangeTags: readonly string[]) => void;
+    onValueChange?: (selectedRangeTags: readonly string[]) => void;
 };
 
 function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLInputElement>) {
@@ -35,7 +35,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
     const [settledRangeValues, setRangeValues] = useOptInControlledValue<readonly string[]>(
         props.initialRangeValues ?? [],
         props.rangeValues,
-        props.onChange,
+        props.onValueChange,
     );
 
     const [rangeValues, setRangeValuesDebounced] = useDebouncedOnChange(

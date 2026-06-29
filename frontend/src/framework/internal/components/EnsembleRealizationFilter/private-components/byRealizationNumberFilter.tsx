@@ -142,7 +142,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                         rangeValues={selectedRangeTags}
                         realizationNumberLimits={realizationNumberLimits}
                         debounceTimeMs={500}
-                        onChange={handleRealizationPickChange}
+                        onValueChange={handleRealizationPickChange}
                         disabled={props.disabled}
                     />
                     <PickedRealizationCounter
