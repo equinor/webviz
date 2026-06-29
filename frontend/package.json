@@ -33,8 +33,8 @@
     ],
     "dependencies": {
         "@base-ui/react": "^1.4.1",
-        "@equinor/eds-core-react": "^2.4.0",
-        "@equinor/esv-intersection": "^4.1.2",
+        "@equinor/eds-core-react": "^2.6.1",
+        "@equinor/esv-intersection": "^4.1.5",
         "@mui/base": "^5.0.0-beta.3",
         "@mui/icons-material": "^7.0.0",
         "@tanstack/query-core": "^5.62.16",
