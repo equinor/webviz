@@ -1,4 +1,4 @@
-import { groupBy, isEqual, keys } from "lodash";
+import { groupBy, isEqual, keys } from "lodash-es";
 
 import { type WellborePick_api, getWellborePicksInStratColumnOptions } from "@api";
 import { IntersectionType } from "@framework/types/intersection";

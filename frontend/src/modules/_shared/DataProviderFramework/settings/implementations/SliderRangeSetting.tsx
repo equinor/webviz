@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Lock, LockOpen } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";

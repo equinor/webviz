@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isNaN } from "lodash";
+import { isNaN } from "lodash-es";
 
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { Dropdown } from "@lib/components/Dropdown";

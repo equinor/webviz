@@ -1,5 +1,5 @@
 import type { Getter } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";

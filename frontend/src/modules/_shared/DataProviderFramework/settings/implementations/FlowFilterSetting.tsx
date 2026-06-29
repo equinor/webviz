@@ -1,6 +1,6 @@
 import React from "react";
 
-import { clamp } from "lodash";
+import { clamp } from "lodash-es";
 
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { Input } from "@lib/components/Input";

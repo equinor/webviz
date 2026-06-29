@@ -3,7 +3,7 @@ import React from "react";
 import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
 import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
