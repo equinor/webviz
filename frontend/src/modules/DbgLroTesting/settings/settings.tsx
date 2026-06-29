@@ -13,8 +13,8 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
-import { getCalcSomethingOnDerivedTableOptions } from "@api/@tanstack/react-query.gen";
-import { getDerivedTableInfoOptions } from "@api/@tanstack/react-query.gen";
+import { getCalcSomethingOnDerivedTableOptions } from "@api";
+import { getDerivedTableInfoOptions } from "@api";
 
 import { Label } from "@lib/components/Label";
 import { Select } from "@lib/components/Select";
