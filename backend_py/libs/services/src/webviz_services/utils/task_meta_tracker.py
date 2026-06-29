@@ -52,7 +52,8 @@ class TaskMeta:
     task_system: str
     task_id: str
     state: TaskState
-    status_message: str | None          # Human-readable description of the current or final task status
+    status_message: str | None          # Human-readable description of the current or final task status, should be suitable for end-user consumption
+    internal_error_message: str | None  # Internal error message for failed tasks, not meant for end-user consumption
 
     expected_store_key: str | None
 
@@ -117,6 +118,7 @@ class TaskMetaTracker:
             task_id=task_id,
             state=state,
             status_message=None,
+            internal_error_message=None,
             expected_store_key=expected_store_key,
             registered_at_utc_s=registered_at_utc_s,
             updated_at_utc_s=updated_at_utc_s,
@@ -167,6 +169,10 @@ class TaskMetaTracker:
         if status_message == "":
             status_message = None
 
+        internal_error_message: str | None = value_dict.get("internalErrorMessage")
+        if internal_error_message == "":
+            internal_error_message = None
+
         expected_store_key: str | None = value_dict.get("expectedStoreKey")
         if expected_store_key == "":
             expected_store_key = None
@@ -181,6 +187,7 @@ class TaskMetaTracker:
             task_id=task_id,
             state=task_state,
             status_message=status_message,
+            internal_error_message=internal_error_message,
             expected_store_key=expected_store_key,
             registered_at_utc_s=registered_at_utc_s,
             updated_at_utc_s=updated_at_utc_s,
@@ -196,35 +203,20 @@ class TaskMetaTracker:
         return await self.get_task_meta_async(task_id)
 
     async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
-        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+        return await self._do_set_state_async(
+            task_id=task_id, 
+            new_state=new_state, 
+            status_message=status_message, 
+            internal_error_message=None
+            )
 
-        if not await self._redis_client.exists(redis_hash_name):
-            # For now, log a warning and ignore the update if the task hash does not exist.
-            # Maybe we should raise an error instead to surface potential issues earlier?
-            LOGGER.warning(f"set_state_async: task hash does not exist, ignoring update ({task_id=}, {new_state=})")
-            return False
-
-        time_now_utc_s = time.time()
-
-        update_dict: dict[str, str | float] = {
-            "state": new_state,
-            "updatedAtUtcS": time_now_utc_s,
-        }
-
-        if new_state == TaskState.RUNNING:
-            update_dict["startedAtUtcS"] = time_now_utc_s
-        elif new_state in [TaskState.SUCCEEDED, TaskState.FAILED, TaskState.CANCELLED]:
-            update_dict["completedAtUtcS"] = time_now_utc_s
-
-        # Clear status message when state changes (unless a new one is provided)
-        if status_message is not None:
-            update_dict["statusMessage"] = status_message
-        else:
-            update_dict["statusMessage"] = ""
-
-        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
-
-        return True
+    async def fail_task_async(self, task_id: str, status_message: str | None = None, internal_error_message: str | None = None) -> bool:
+        return await self._do_set_state_async(
+            task_id=task_id,
+            new_state=TaskState.FAILED,
+            status_message=status_message,
+            internal_error_message=internal_error_message
+            )
 
     async def set_status_message_async(self, task_id: str, status_message: str) -> None:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
@@ -275,6 +267,42 @@ class TaskMetaTracker:
         pattern = f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:*"
         async for key in self._redis_client.scan_iter(match=pattern):
             await self._redis_client.pexpire(key, 1)
+
+    async def _do_set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None, internal_error_message: str | None) -> bool:
+        redis_hash_name = self._make_full_redis_key_for_task(task_id)
+
+        if not await self._redis_client.exists(redis_hash_name):
+            # For now, log a warning and ignore the update if the task hash does not exist.
+            # Maybe we should raise an error instead to surface potential issues earlier?
+            LOGGER.warning(f"_do_set_state_async: task hash does not exist, ignoring update ({task_id=}, {new_state=})")
+            return False
+
+        time_now_utc_s = time.time()
+
+        update_dict: dict[str, str | float] = {
+            "state": new_state,
+            "updatedAtUtcS": time_now_utc_s,
+        }
+
+        if new_state == TaskState.RUNNING:
+            update_dict["startedAtUtcS"] = time_now_utc_s
+        elif new_state in [TaskState.SUCCEEDED, TaskState.FAILED, TaskState.CANCELLED]:
+            update_dict["completedAtUtcS"] = time_now_utc_s
+
+        # Clear status message when state changes (unless a new one is provided)
+        if status_message is not None:
+            update_dict["statusMessage"] = status_message
+        else:
+            update_dict["statusMessage"] = ""
+
+        if new_state == TaskState.FAILED and internal_error_message is not None:
+            update_dict["internalErrorMessage"] = internal_error_message
+        else:
+            update_dict["internalErrorMessage"] = ""
+
+        await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
+
+        return True
 
     async def _find_task_id_for_fingerprint_async(self, fingerprint: str) -> str | None:
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)

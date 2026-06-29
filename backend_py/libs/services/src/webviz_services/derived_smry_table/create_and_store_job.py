@@ -30,7 +30,7 @@ async def bgjob_create_and_store_derived_table_async(authenticated_user: Authent
     cache_key = initial_task_meta.expected_store_key
     if not cache_key:
         LOGGER.error(f"{log_prefix}No cache_key (expected_store_key) found in task meta, cannot proceed")
-        await task_tracker.set_state_async(task_id, TaskState.FAILED, status_message="Internal error: missing expected_store_key in task meta")
+        await task_tracker.fail_task_async(task_id, status_message="Internal error: missing expected_store_key in task meta")
         return False
 
     await task_tracker.set_state_async(task_id, TaskState.RUNNING, status_message="Creating derived summary table")
@@ -71,5 +71,5 @@ async def bgjob_create_and_store_derived_table_async(authenticated_user: Authent
 
     except Exception as e:
         LOGGER.error(f"{log_prefix}Failed to create derived summary table: {e}")
-        await task_tracker.set_state_async(task_id, TaskState.FAILED, status_message=str(e))
+        await task_tracker.fail_task_async(task_id, status_message="Failed to create derived summary table", internal_error_message=repr(e))
         raise

@@ -22,6 +22,7 @@ async def ensure_vectors_aggregated_async(sumo_client: SumoClient, case_uuid: st
 
     #vectors_to_aggregate = vector_names
 
+    await progress_cb("Checking if any vectors need aggregation")
     vectors_to_aggregate = await _find_columns_needing_aggregation_async(sumo_client, case_uuid, ensemble_name, vector_names)
     if not vectors_to_aggregate:
         LOGGER.debug("ensure_vectors_aggregated_async() - No vectors needed aggregation")
@@ -30,6 +31,8 @@ async def ensure_vectors_aggregated_async(sumo_client: SumoClient, case_uuid: st
     LOGGER.debug(f"ensure_vectors_aggregated_async() - Vectors needing aggregation: {vectors_to_aggregate}")
 
     vec_count = len(vectors_to_aggregate)
+    await progress_cb(f"Found {vec_count} vectors needing aggregation")
+
     sumo_status_holder = _SumoTaskStatusHolder(status="not started")
     agg_task = asyncio.create_task(_batch_aggregate_vectors_async(sumo_client, case_uuid, ensemble_name, vectors_to_aggregate, sumo_status_holder))
 
