@@ -31,8 +31,10 @@ class SmdaEndpoints:
     WELLBORE_STRATIGRAPHY = "wellbore-stratigraphy"
     WELLBORE_STRAT_COLUMN = "wellbore-strat-columns"
     WELLBORE_SURVEY_HEADERS = "wellbore-survey-headers"
+    WELLBORE_PLAN_SURVEY_HEADERS = "wellbore-plan-survey-headers"
     WELLHEADERS = "wellheaders"
     WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
+    WELLBORE_PLAN_SURVEY_SAMPLES = "wellbore-plan-survey-samples"
     WELLBORE_PICKS = "wellbore-picks"
     WELLBORE_PICKS_STRAT_COLUM = "wellbore-picks-columns"
 
@@ -231,12 +233,92 @@ class SmdaAccess:
 
         return [WellboreHeader(**result) for result in survey_header_results]
 
+    async def get_planned_wellbore_headers_async(self, field_identifier: str) -> List[WellboreHeader]:
+        """
+        Get planned wellbore header information for all planned wellbores in a field.
+
+        Planned wellbores are fetched from the wellbore-plan-survey-headers endpoint, filtered on
+        survey_status "planned". The other status value is "principal", which are wellbores that have
+        already been drilled and are therefore returned by get_wellbore_headers_async instead.
+        """
+        projection = [
+            "wellbore_uuid",
+            "unique_wellbore_identifier",
+            "well_uuid",
+            "unique_well_identifier",
+            "well_easting",
+            "well_northing",
+            "depth_reference_point",
+            "depth_reference_elevation",
+            "tvd_min",
+            "tvd_max",
+            "tvd_unit",
+            "md_min",
+            "md_max",
+            "md_unit",
+            "wellbore_status",
+            "kickoff_depth_md",
+            "kickoff_depth_tvd",
+        ]
+        params = {
+            "_projection": ",".join(projection),
+            "_sort": "unique_wellbore_identifier",
+            "field_identifier": field_identifier,
+            "survey_status": "planned",
+        }
+
+        planned_survey_header_results = await self._smda_get_request_async(
+            endpoint=SmdaEndpoints.WELLBORE_PLAN_SURVEY_HEADERS, params=params
+        )
+
+        if not planned_survey_header_results:
+            # Planned wellbores are optional, so an empty result is not an error.
+            return []
+
+        # The plan-survey-headers endpoint does not expose wellbore_purpose or parent_wellbore, so these
+        # required WellboreHeader fields are set to None for planned wellbores.
+        for survey_header in planned_survey_header_results:
+            survey_header["wellbore_purpose"] = None
+            survey_header["parent_wellbore"] = None
+
+        return [WellboreHeader(**result) for result in planned_survey_header_results]
+
     async def get_wellbore_trajectories_async(
         self, field_identifier: str, wellbore_uuids: Optional[List[str]] = None
     ) -> List[WellboreTrajectory]:
         """
         Get wellbore trajectories (survey samples) for all wells in a field, optionally with a subset of wellbores.
         """
+        return await self._get_wellbore_trajectories_async(
+            endpoint=SmdaEndpoints.WELLBORE_SURVEY_SAMPLES,
+            field_identifier=field_identifier,
+            wellbore_uuids=wellbore_uuids,
+            no_data_message=f"No wellbore surveys found for {field_identifier=}, {wellbore_uuids=}.",
+        )
+
+    async def get_planned_wellbore_trajectories_async(
+        self, field_identifier: str, wellbore_uuids: Optional[List[str]] = None
+    ) -> List[WellboreTrajectory]:
+        """
+        Get planned wellbore trajectories (plan survey samples) for all planned wells in a field,
+        optionally with a subset of wellbores.
+        """
+        return await self._get_wellbore_trajectories_async(
+            endpoint=SmdaEndpoints.WELLBORE_PLAN_SURVEY_SAMPLES,
+            field_identifier=field_identifier,
+            wellbore_uuids=wellbore_uuids,
+            no_data_message=f"No planned wellbore surveys found for {field_identifier=}, {wellbore_uuids=}.",
+            raise_on_empty=False,
+        )
+
+    async def _get_wellbore_trajectories_async(
+        self,
+        endpoint: str,
+        field_identifier: str,
+        wellbore_uuids: Optional[List[str]] = None,
+        no_data_message: str | None = None,
+        raise_on_empty: bool = True,
+    ) -> List[WellboreTrajectory]:
         params = {
             "_projection": "wellbore_uuid, unique_wellbore_identifier,easting,northing,tvd_msl,md",
             "_sort": "unique_wellbore_identifier,md",
@@ -245,10 +327,12 @@ class SmdaAccess:
         if wellbore_uuids:
             params["wellbore_uuid"] = ", ".join(wellbore_uuids)
 
-        result = await self._smda_get_request_async(endpoint=SmdaEndpoints.WELLBORE_SURVEY_SAMPLES, params=params)
+        result = await self._smda_get_request_async(endpoint=endpoint, params=params)
 
         if not result:
-            raise NoDataError(f"No wellbore surveys found for {field_identifier=}, {wellbore_uuids=}.", Service.SMDA)
+            if raise_on_empty:
+                raise NoDataError(no_data_message or "No wellbore surveys found.", Service.SMDA)
+            return []
 
         # Convert the result to polars for processing
         resultdf = pl.DataFrame(result)

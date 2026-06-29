@@ -7,7 +7,7 @@ import { isEqual } from "lodash-es";
 import type { WellboreHeader_api } from "@api";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import { IntersectionType } from "@framework/types/intersection";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { BBox } from "@lib/utils/bbox";
@@ -183,7 +183,7 @@ function useDataBounds(
         let combinedBbox: BBox | null = null;
 
         if (viewIntersection && intersectionReferenceSystem) {
-            if (viewIntersection.type === IntersectionType.WELLBORE) {
+            if (isWellboreIntersectionType(viewIntersection.type)) {
                 const wellborePathBoundingBox = createBBoxForWellborePath(
                     intersectionReferenceSystem.projectedPath,
                     viewExtensionLength,

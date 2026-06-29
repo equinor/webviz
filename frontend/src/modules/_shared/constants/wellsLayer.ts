@@ -26,7 +26,7 @@ function getColor(d: Feature): [number, number, number, number] {
 export const DEFAULT_WELLS_LAYER_PROPS: Omit<Partial<WellsLayerProps>, "data" | "id"> = {
     refine: false,
     pickable: true,
-    outline: true,
+    outline: false,
     ZIncreasingDownwards: true,
 
     lineStyle: { width: getLineStyleWidth, color: getColor },

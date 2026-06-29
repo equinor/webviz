@@ -11,7 +11,10 @@ export function createValidExtensionLength(
     intersection: IntersectionSettingValue | null,
     fallbackExtensionLength = 0,
 ): number {
-    if (intersection?.type === IntersectionType.WELLBORE) {
+    if (
+        intersection &&
+        (intersection.type === IntersectionType.WELLBORE || intersection.type === IntersectionType.PLANNED_WELLBORE)
+    ) {
         return intersection.extensionLength ?? fallbackExtensionLength;
     }
     return fallbackExtensionLength;
