@@ -5,7 +5,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { getVectorListOptions } from "@api/@tanstack/react-query.gen";
+import { getVectorListOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { atomWithQuery } from "jotai-tanstack-query";
 

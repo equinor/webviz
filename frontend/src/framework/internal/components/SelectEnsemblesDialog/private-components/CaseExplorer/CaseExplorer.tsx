@@ -2,7 +2,7 @@ import React from "react";
 
 import { Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@api";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";

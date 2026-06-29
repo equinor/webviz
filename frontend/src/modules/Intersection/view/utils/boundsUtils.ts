@@ -1,5 +1,5 @@
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { cloneDeep } from "lodash";
+import { cloneDeep } from "lodash-es";
 
 import type { BBox } from "@lib/utils/bbox";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";

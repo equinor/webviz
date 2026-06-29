@@ -1,5 +1,5 @@
 import { atom } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import type { ParameterIdent } from "@framework/EnsembleParameters";

@@ -30,7 +30,7 @@ import {
     SeismicCanvasLayer,
     WellborepathLayer,
 } from "@equinor/esv-intersection";
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash-es";
 
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";

@@ -11,7 +11,7 @@
 
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import type { ColorScaleOptions } from "@lib/utils/ColorScale";

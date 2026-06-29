@@ -11,7 +11,7 @@ import {
 } from "@deck.gl/core";
 import { Geometry, Model } from "@luma.gl/engine";
 import { phongLighting } from "@luma.gl/shadertools";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import * as vec3 from "@lib/utils/vec3";
 import type { Vec3 } from "@lib/utils/vec3";

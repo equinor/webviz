@@ -5,7 +5,7 @@ import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { Key } from "ts-key-enum";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
