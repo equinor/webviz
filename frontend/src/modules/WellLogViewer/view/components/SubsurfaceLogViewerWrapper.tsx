@@ -9,7 +9,7 @@ import type {
     WellPickProps,
 } from "@webviz/well-log-viewer/dist/components/WellLogView";
 import type { ColormapFunction } from "@webviz/well-log-viewer/dist/utils/color-function";
-import { isNaN } from "lodash";
+import { isNaN } from "lodash-es";
 
 import type { WellboreHeader_api } from "@api";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";

@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { clone, isEqual } from "lodash";
+import { clone, isEqual } from "lodash-es";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";

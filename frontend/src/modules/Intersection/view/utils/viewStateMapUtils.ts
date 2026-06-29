@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { ViewStateMap } from "../typesAndEnums";
 

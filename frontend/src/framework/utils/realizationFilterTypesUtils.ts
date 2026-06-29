@@ -1,4 +1,4 @@
-import { isEqual, range } from "lodash";
+import { isEqual, range } from "lodash-es";
 
 import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 

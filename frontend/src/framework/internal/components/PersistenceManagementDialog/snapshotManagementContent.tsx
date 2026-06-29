@@ -3,7 +3,7 @@ import React from "react";
 import { DateRangePicker } from "@equinor/eds-core-react";
 import { Close, Delete, FileOpen, Refresh, Search } from "@mui/icons-material";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { omit } from "lodash";
+import { omit } from "lodash-es";
 
 import type {
     GetSnapshotAccessLogsData_api,

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { Tooltip } from "@lib/components/Tooltip";
 import { useElementSize } from "@lib/hooks/useElementSize";

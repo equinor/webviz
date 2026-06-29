@@ -8,7 +8,7 @@ import type {
     PerforationProperties,
     WellsPickInfo,
 } from "@webviz/subsurface-viewer/dist/layers/wells/types";
-import { isNaN } from "lodash";
+import { isNaN } from "lodash-es";
 
 import { HoverTopic } from "@framework/HoverService";
 import type { HoverData } from "@framework/HoverService";
