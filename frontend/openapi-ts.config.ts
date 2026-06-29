@@ -24,7 +24,12 @@ function addSuffix(name: string, categoricalSuffix = "", coreSuffix = "_api"): s
 export default defineConfig({
     input: "http://localhost:5000/openapi.json",
     output: {
-        postProcess: ["eslint", "prettier"],
+        postProcess: [
+            // Open-Api will run eslint according to our `eslint.config` file, where the auto-generated folders
+            // are explicitly ignored. Therefore, we need to pass this argument to "unignore" the folders again
+            { command: "eslint", args: ["--ignore-pattern='!src/api/'"] },
+            "prettier",
+        ],
         path: "./src/api/autogen/",
         // (Revert v0.67) Don't append js to relative paths
         tsConfigPath: null,
