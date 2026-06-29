@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import _ from "lodash";
+import { defaults, mapValues, take } from "lodash-es";
 
 import { useStableProp } from "@lib/hooks/useStableProp";
 import { Button } from "@lib/newComponents/Button";
@@ -47,7 +47,7 @@ export type ReadoutBoxProps = {
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     const maxNumItemsOrDefault = props.maxNumItems ?? 3;
-    const visibleReadoutItems = _.take(props.readoutItems, maxNumItemsOrDefault);
+    const visibleReadoutItems = take(props.readoutItems, maxNumItemsOrDefault);
 
     const [flipped, setFlipped] = React.useState<boolean>(false);
     const [stableEdgeDistanceRem] = useStableProp(props.edgeDistanceRem);
@@ -181,9 +181,9 @@ function computeEdgeDistance(edgeDistanceProp?: number | PartialEdgeDistance): E
     if (typeof edgeDistanceProp === "number") {
         edgesRem = { left: edgeDistanceProp, right: edgeDistanceProp, bottom: edgeDistanceProp };
     } else {
-        edgesRem = _.defaults({}, edgeDistanceProp ?? {}, DEFAULT_EDGE_DISTANCE);
+        edgesRem = defaults({}, edgeDistanceProp ?? {}, DEFAULT_EDGE_DISTANCE);
     }
-    return _.mapValues(edgesRem, convertRemToPixels);
+    return mapValues(edgesRem, convertRemToPixels);
 }
 
 function makeFormattedInfoValue(value: string | number | boolean | number[]): string {

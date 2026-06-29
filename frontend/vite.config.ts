@@ -52,16 +52,18 @@ export default defineConfig(({ mode, command }) => {
         },
         define: define,
         resolve: {
-            alias: Object.keys(aliases.compilerOptions.paths).reduce(
-                (prev, current) => ({
-                    ...prev,
-                    [current.replace("/*", "")]: path.resolve(
+            alias: [
+                ...Object.keys(aliases.compilerOptions.paths).map((current) => ({
+                    find: current.replace("/*", ""),
+                    replacement: path.resolve(
                         __dirname,
-                        aliases.compilerOptions.paths[current][0].replace("/*", ""),
+                        aliases.compilerOptions.paths[current as keyof typeof aliases.compilerOptions.paths][0].replace(
+                            "/*",
+                            "",
+                        ),
                     ),
-                }),
-                {},
-            ),
+                })),
+            ],
         },
         server: {
             port: 8080,

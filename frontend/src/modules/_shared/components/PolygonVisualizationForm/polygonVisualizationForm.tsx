@@ -1,6 +1,6 @@
 import { Link, LinkOff } from "@mui/icons-material";
 import { parseHex, type Rgb } from "culori";
-import { isNaN } from "lodash";
+import { isNaN } from "lodash-es";
 
 import { Button } from "@lib/newComponents/Button";
 import { ColorSelect } from "@lib/newComponents/ColorSelect";

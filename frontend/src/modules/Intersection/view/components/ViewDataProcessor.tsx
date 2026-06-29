@@ -2,7 +2,7 @@ import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { WellboreHeader_api } from "@api";
 import type { HoverService } from "@framework/HoverService";

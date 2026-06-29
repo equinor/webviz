@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEmpty, orderBy, range } from "lodash";
+import { isEmpty, orderBy, range } from "lodash-es";
 import { v4 } from "uuid";
 
 import { useElementSize } from "@lib/hooks/useElementSize";

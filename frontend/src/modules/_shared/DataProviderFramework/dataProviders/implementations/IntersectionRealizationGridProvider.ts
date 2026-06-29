@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";

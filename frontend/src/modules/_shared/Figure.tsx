@@ -1,4 +1,4 @@
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 import type { Annotations, AxisType, Data, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 
 /**

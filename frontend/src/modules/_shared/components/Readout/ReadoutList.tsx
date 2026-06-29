@@ -1,6 +1,6 @@
 import React from "react";
 
-import { chain } from "lodash";
+import { chain } from "lodash-es";
 
 import type { CategoricalReadout, ReadoutProperty } from "./types";
 
@@ -108,7 +108,7 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     const valueFormat = property.format ?? String;
 
     if (property.render) {
-        return property.render(property.name, property.value);
+        return property.render(property.name, property.value, property.renderArgs);
     }
 
     return (

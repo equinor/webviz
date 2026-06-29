@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { chain, isEqual, sortBy } from "lodash";
+import { chain, isEqual, sortBy } from "lodash-es";
 
 import type { WellboreLogCurveHeader_api } from "@api";
 import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { RealizationPicker } from "@framework/components/RealizationPicker";
 import type { RealizationNumberLimits } from "@framework/components/RealizationPicker/_utils";
