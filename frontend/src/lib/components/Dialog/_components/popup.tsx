@@ -66,7 +66,7 @@ export function Popup(props: PopupProps) {
                 <DialogBase.Backdrop className="dialog__backdrop" />
                 <DialogBase.Popup
                     ref={setPopupContainer}
-                    className={`dialog__popup z-modal flex flex-col${defaultedProps.stacked ? "dialog__popup--stacked" : ""}`}
+                    className={`dialog__popup z-modal flex flex-col ${defaultedProps.stacked ? "dialog__popup--stacked" : ""}`}
                     style={{
                         width: defaultedProps.width,
                         height: defaultedProps.height,
