@@ -1,5 +1,5 @@
 import { defineConfig } from "@hey-api/openapi-ts";
-import { upperFirst } from "lodash";
+import { upperFirst } from "lodash-es";
 
 import { makePlugin as cacheBustingPlugin } from "./open-api/cachebusting-plugin";
 
