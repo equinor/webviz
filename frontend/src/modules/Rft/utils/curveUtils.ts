@@ -31,5 +31,7 @@ export function interpolateValueAtDepth(sortedDepths: number[], sortedValues: nu
         }
     }
 
+    // Reached only when the loop body never runs (single-element array) or targetDepth equals the
+    // last depth. The range guard above guarantees targetDepth matches sortedDepths' last value here.
     return sortedValues[sortedDepths.length - 1];
 }

@@ -73,9 +73,13 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(
         set,
         selectedEnsembleIdentsAtom,
-        raw.selectedEnsembleIdentStrings?.map((ensembleIdentString) =>
-            RegularEnsembleIdent.fromString(ensembleIdentString),
-        ),
+        raw.selectedEnsembleIdentStrings?.flatMap((ensembleIdentString) => {
+            try {
+                return [RegularEnsembleIdent.fromString(ensembleIdentString)];
+            } catch {
+                return [];
+            }
+        }),
     );
     setIfDefined(set, selectedResponseNameAtom, raw.selectedResponseName);
     setIfDefined(set, selectedWellNameAtom, raw.selectedWellName);

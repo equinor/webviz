@@ -45,7 +45,12 @@ export const ensembleTableDefinitionsAtom = atom<RftEnsembleTableDefinition[]>((
             return [];
         }
 
-        return [{ ensembleIdent: selectedEnsembleIdents[index], tableDefinition: queryResult.data }];
+        const ensembleIdent = selectedEnsembleIdents[index];
+        if (!ensembleIdent) {
+            return [];
+        }
+
+        return [{ ensembleIdent, tableDefinition: queryResult.data }];
     });
 });
 
