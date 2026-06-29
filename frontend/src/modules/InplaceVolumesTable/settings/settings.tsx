@@ -8,12 +8,11 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -129,8 +128,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     const tableSettings = (
-        <SettingWrapper.Section title="Result and grouping" defaultOpen>
-            <SettingWrapper label="Table type" stacked>
+        <Setting.Section title="Result and grouping" defaultOpen>
+            <Setting.Field label="Table type" stacked>
                 <Combobox
                     value={selectedTableType}
                     items={Object.values(TableType).map((val: TableType) => {
@@ -138,9 +137,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     })}
                     onValueChange={handleSelectedTableTypeChange}
                 />
-            </SettingWrapper>
+            </Setting.Field>
             {settledSelectedTableType === TableType.STATISTICAL && (
-                <SettingWrapper label="Statistics">
+                <Setting.Field label="Statistics">
                     <Combobox
                         value={selectedStatisticOptions}
                         items={statisticOptions}
@@ -148,9 +147,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         showClearAllButton
                         onValueChange={setStatisticOptionsChange}
                     />
-                </SettingWrapper>
+                </Setting.Field>
             )}
-            <SettingWrapper label="Results" annotations={selectedResultNamesAnnotations}>
+            <Setting.Field label="Results" annotations={selectedResultNamesAnnotations}>
                 <Select
                     value={selectedResultNames}
                     options={resultNameOptions}
@@ -158,8 +157,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     size={5}
                     onValueChange={setSelectedResultNames}
                 />
-            </SettingWrapper>
-            <SettingWrapper label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
+            </Setting.Field>
+            <Setting.Field label="Grouping" annotations={selectedGroupByIndicesAnnotations}>
                 <Combobox
                     value={selectedGroupByIndices}
                     items={groupByIndicesOptions}
@@ -167,13 +166,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     showClearAllButton
                     onValueChange={setSettledGroupByIndices}
                 />
-            </SettingWrapper>
-        </SettingWrapper.Section>
+            </Setting.Field>
+        </Setting.Section>
     );
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
+        <Setting.ScrollArea>
+            <Setting.Panel>
                 <InplaceVolumesFilterComponent
                     debounceMs={DEBOUNCE_TIME_MS}
                     ensembleSet={ensembleSet}
@@ -194,7 +193,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     selectionAnnotations={selectedIndicesWithValuesAnnotations}
                     onChange={handleFilterChange}
                 />
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

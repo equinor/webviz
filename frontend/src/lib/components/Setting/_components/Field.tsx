@@ -1,10 +1,10 @@
 import React from "react";
 
-import { Field } from "@lib/components/Field";
+import { Field as FieldPrimitive } from "@lib/components/Field";
 import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { SettingsLayoutContext } from "..";
+import { SettingLayoutContext } from "..";
 
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
@@ -32,12 +32,12 @@ export type Overlay = {
 };
 
 /**
- * Props for the SettingWrapper component.
+ * Props for the Setting.Field component.
  *
  * Note: Annotations can be provided either as an array of SettingAnnotation objects OR as individual
  * plain string properties (errorAnnotation, warningAnnotation, infoAnnotation), but not both.
  */
-export type SettingWrapperProps = {
+export type SettingFieldProps = {
     /** The input control(s) rendered as the setting's content. */
     children: React.ReactNode;
     /** When true, forces the setting to use a stacked layout regardless of the group context. */
@@ -89,20 +89,12 @@ export type SettingWrapperProps = {
           }
     );
 
-function isNotAnnotationList(props: SettingWrapperProps): props is SettingWrapperProps & PlainAnnotationStrings {
+function isNotAnnotationList(props: SettingFieldProps): props is SettingFieldProps & PlainAnnotationStrings {
     return props.annotations === undefined;
 }
 
-/**
- * A wrapper component for module settings that provides consistent styling for labels, help text,
- * annotations, and overlay states.
- *
- * Supports two ways to display annotations: either through an array of SettingAnnotation objects
- * or via individual string properties (errorAnnotation, warningAnnotation, infoAnnotation).
- * These two approaches are mutually exclusive and cannot be combined.
- */
-export function SettingWrapper(props: SettingWrapperProps) {
-    const groupContext = React.useContext(SettingsLayoutContext);
+export function Field(props: SettingFieldProps) {
+    const groupContext = React.useContext(SettingLayoutContext);
     const generatedInputId = React.useId();
 
     React.useLayoutEffect(() => {
@@ -137,7 +129,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
     if (!props.label) {
         return (
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-                <Field.Root inline invalid={isInvalid} warning={isWarning}>
+                <FieldPrimitive.Root inline invalid={isInvalid} warning={isWarning}>
                     <div
                         className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
                             "col-span-2": !!props.help,
@@ -156,10 +148,10 @@ export function SettingWrapper(props: SettingWrapperProps) {
                     </div>
                     {props.help && (
                         <div className="self-center">
-                            <Field.Info side="right">
+                            <FieldPrimitive.Info side="right">
                                 <Heading as="h6">{props.help.title}</Heading>
                                 {props.help.content}
-                            </Field.Info>
+                            </FieldPrimitive.Info>
                         </div>
                     )}
                     {annotations.length > 0 && (
@@ -172,7 +164,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
                             <Annotations annotations={annotations} />
                         </div>
                     )}
-                </Field.Root>
+                </FieldPrimitive.Root>
             </div>
         );
     }
@@ -182,17 +174,17 @@ export function SettingWrapper(props: SettingWrapperProps) {
     if (isStacked) {
         return (
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-                <Field.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
+                <FieldPrimitive.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
                     <div className="gap-x-2xs flex w-full items-center justify-between">
-                        {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
+                        {props.label && <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>}
                         {props.help && (
-                            <Field.Info side="right">
+                            <FieldPrimitive.Info side="right">
                                 <Heading as="h6">{props.help.title}</Heading>
                                 {props.help.content}
-                            </Field.Info>
+                            </FieldPrimitive.Info>
                         )}
                     </div>
-                    {props.description && <Field.Description>{props.description}</Field.Description>}
+                    {props.description && <FieldPrimitive.Description>{props.description}</FieldPrimitive.Description>}
                     <div className={resolveClassNames(props.contentClassName, "relative w-full")}>
                         <div
                             style={{ display: "contents" }}
@@ -205,19 +197,19 @@ export function SettingWrapper(props: SettingWrapperProps) {
                         {overlay && <Overlay type={overlay.type} message={overlay.message} />}
                     </div>
                     <Annotations annotations={annotations} />
-                </Field.Root>
+                </FieldPrimitive.Root>
             </div>
         );
     }
 
     return (
         <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
-            <Field.Root inline invalid={isInvalid} warning={isWarning}>
+            <FieldPrimitive.Root inline invalid={isInvalid} warning={isWarning}>
                 <div className="gap-y-4xs flex flex-col justify-center">
                     <div className="gap-x-2xs flex items-center">
-                        {props.label && <Field.Label {...(htmlFor && { htmlFor })}>{props.label}</Field.Label>}
+                        {props.label && <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>}
                     </div>
-                    {props.description && <Field.Description>{props.description}</Field.Description>}
+                    {props.description && <FieldPrimitive.Description>{props.description}</FieldPrimitive.Description>}
                 </div>
                 <div
                     className={resolveClassNames(props.contentClassName, "relative w-full items-center", {
@@ -236,10 +228,10 @@ export function SettingWrapper(props: SettingWrapperProps) {
                 </div>
                 {props.help && (
                     <div className="self-center">
-                        <Field.Info side="right">
+                        <FieldPrimitive.Info side="right">
                             <Heading as="h6">{props.help.title}</Heading>
                             {props.help.content}
-                        </Field.Info>
+                        </FieldPrimitive.Info>
                     </div>
                 )}
                 {annotations.length > 0 && (
@@ -247,7 +239,7 @@ export function SettingWrapper(props: SettingWrapperProps) {
                         <Annotations annotations={annotations} />
                     </div>
                 )}
-            </Field.Root>
+            </FieldPrimitive.Root>
         </div>
     );
 }

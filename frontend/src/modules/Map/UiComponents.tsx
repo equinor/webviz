@@ -1,7 +1,7 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 
 //
 // Sub-component for aggregation/statistic selection
@@ -23,7 +23,7 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
     ];
 
     return (
-        <SettingWrapper label="Aggregation/statistic">
+        <Setting.Field label="Aggregation/statistic">
             <ComboboxCompositions.WithBrowseButtons
                 items={itemArr}
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
@@ -33,6 +33,6 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
                     )
                 }
             />
-        </SettingWrapper>
+        </Setting.Field>
     );
 }

@@ -3,7 +3,7 @@ import React from "react";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 const MIN_SELECTOR_SIZE = 3;
@@ -113,7 +113,7 @@ export function ParametersSelector({
 
     return (
         <div className="gap-y-sm flex flex-col">
-            <SettingWrapper label="Parameter groups" stacked>
+            <Setting.Field label="Parameter groups" stacked>
                 <Select
                     options={groupSelectOptions}
                     value={selectedGroupFilterValues}
@@ -125,8 +125,8 @@ export function ParametersSelector({
                     )}
                     showQuickSelectButtons
                 />
-            </SettingWrapper>
-            <SettingWrapper label="Parameters" stacked>
+            </Setting.Field>
+            <Setting.Field label="Parameters" stacked>
                 <SwitchCompositions.WithLabel
                     label="Auto-select all on group change"
                     checked={autoSelectAllOnGroupChange}
@@ -147,7 +147,7 @@ export function ParametersSelector({
                     filter
                     showQuickSelectButtons
                 />
-            </SettingWrapper>
+            </Setting.Field>
         </div>
     );
 }

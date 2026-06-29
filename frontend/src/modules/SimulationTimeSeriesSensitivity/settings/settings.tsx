@@ -11,10 +11,9 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox/combobox";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -111,18 +110,18 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const selectedSensitivityNamesAnnotations = useMakePersistableFixableAtomAnnotations(selectedSensitivityNamesAtom);
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensemble" annotations={selectedRegularEnsembleIdentAnnotations}>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensemble" annotations={selectedRegularEnsembleIdentAnnotations}>
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedRegularEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                             onValueChange={handleEnsembleSelectionChange}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Vector"
                         annotations={selectedVectorNameAndTagAnnotations}
                         loadingOverlay={vectorListQuery.isFetching}
@@ -141,8 +140,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             lineBreakAfterTag={true}
                             onValueChange={handleVectorSelectChange}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Frequency">
+                    </Setting.Field>
+                    <Setting.Field label="Frequency">
                         <Combobox
                             value={resampleFrequency}
                             onValueChange={setResamplingFrequency}
@@ -153,10 +152,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 }),
                             ]}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot" defaultOpen>
-                    <SettingWrapper label="Visualization" stacked>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot" defaultOpen>
+                    <Setting.Field label="Visualization" stacked>
                         <CheckboxCompositions.WithLabel
                             label="Mean over realizations"
                             checked={showStatistics}
@@ -172,8 +171,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             checked={showHistorical}
                             onCheckedChange={setShowHistorical}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Sensitivity filter"
                         annotations={selectedSensitivityNamesAnnotations}
                         stacked
@@ -190,9 +189,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             multiple
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

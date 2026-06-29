@@ -2,8 +2,8 @@ import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 
-export type GroupProps = {
-    /** The SettingWrapper items to render inside the group. */
+export type PanelProps = {
+    /** The Setting.Field items to render inside the panel. */
     children?: React.ReactNode;
 };
 
@@ -13,7 +13,7 @@ const LAYOUT_BREAKPOINT = 350;
 
 export const LayoutContext = React.createContext<Layout>("inline");
 
-export const Group = React.forwardRef<HTMLDivElement, GroupProps>(function Group(props, ref) {
+export const Panel = React.forwardRef<HTMLDivElement, PanelProps>(function Panel(props, ref) {
     const [layout, setLayout] = React.useState<Layout>("stacked");
     const localRef = React.useRef<HTMLDivElement>(null);
     const size = useElementSize(localRef);

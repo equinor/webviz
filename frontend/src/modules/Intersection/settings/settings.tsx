@@ -6,7 +6,7 @@ import { useAtom } from "jotai";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
@@ -52,15 +52,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
 
     return (
         <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
-            <SettingWrapper.Group>
-                <SettingWrapper label="Field" annotations={selectedFieldIdentifierAnnotations}>
+            <Setting.Panel>
+                <Setting.Field label="Field" annotations={selectedFieldIdentifierAnnotations}>
                     <FieldDropdown
                         ensembleSet={ensembleSet}
                         value={selectedFieldIdentifier.value}
                         onChange={handleFieldIdentifierChange}
                     />
-                </SettingWrapper>
-            </SettingWrapper.Group>
+                </Setting.Field>
+            </Setting.Panel>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

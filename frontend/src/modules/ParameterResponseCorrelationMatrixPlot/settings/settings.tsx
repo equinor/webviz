@@ -5,9 +5,8 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 
@@ -93,13 +92,13 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
     const correlationSliderRef = React.useRef<HTMLDivElement>(null);
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Matrix type" stacked>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Matrix type" stacked>
                         <Combobox items={plotTypeItems} value={plotType} onValueChange={(v) => v && setPlotType(v)} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={`Correlation Cutoff (absolute): ${correlationThreshold}`}
                         stacked
                         labelFor={correlationSliderRef}
@@ -134,8 +133,8 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
                                 />
                             </div>
                         </div>
-                    </SettingWrapper>
-                    <SettingWrapper label="Scale and labels" stacked>
+                    </Setting.Field>
+                    <Setting.Field label="Scale and labels" stacked>
                         <div className="gap-vertical-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
                                 label="Show parameter labels"
@@ -150,16 +149,16 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
                                 size="small"
                             />
                         </div>
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Parameter selection" defaultOpen>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Parameter selection" defaultOpen>
                     <ParametersSelector
                         allParameterIdents={availableParameterIdents}
                         selectedParameterIdents={parameterIdents}
                         onChange={setParameterIdents}
                     />
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

@@ -14,13 +14,12 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
 import { Hidden } from "@lib/components/Hidden";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
@@ -270,10 +269,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const vectorListQueriesErrorAnnotation = useVectorListQueriesErrorAnnotation();
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getEnsembleArray()}
                             value={selectedEnsembleIdents.value ?? []}
@@ -281,8 +280,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                             onValueChange={handleEnsembleSelectChange}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={
                             <span className="gap-x-2xs flex items-center">
                                 Vectors
@@ -328,8 +327,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 inputRef={vectorSelectorRef}
                             />
                         </>
-                    </SettingWrapper>
-                    <SettingWrapper label="Resampling frequency" warningAnnotation={resampleFrequencyWarningAnnotation}>
+                    </Setting.Field>
+                    <Setting.Field label="Resampling frequency" warningAnnotation={resampleFrequencyWarningAnnotation}>
                         <Combobox
                             items={[
                                 { value: "RAW", label: "None (Raw)" },
@@ -340,10 +339,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             value={resampleFrequency ?? "RAW"}
                             onValueChange={handleFrequencySelectionChange}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Limit subplots by">
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Limit subplots by">
                         <div className="gap-x-xs flex w-full min-w-0 items-center">
                             <div className="w-28 shrink-0">
                                 <Combobox
@@ -364,8 +363,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 />
                             </div>
                         </div>
-                    </SettingWrapper>
-                    <SettingWrapper label="Group by">
+                    </Setting.Field>
+                    <Setting.Field label="Group by">
                         <RadioCompositions.GroupWithLabels
                             value={groupBy}
                             options={Object.values(GroupBy).map((val: GroupBy) => {
@@ -375,8 +374,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             layout="horizontal"
                             size="small"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Visualization mode" stacked>
+                    </Setting.Field>
+                    <Setting.Field label="Visualization mode" stacked>
                         <RadioCompositions.GroupWithLabels
                             value={visualizationMode}
                             options={Object.values(VisualizationMode).map((val: VisualizationMode) => {
@@ -385,14 +384,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={(value) => handleVisualizationModeChange(value)}
                             size="small"
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                     <Hidden hidden={visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS}>
-                        <SettingWrapper label="Statistic options" stacked>
+                        <Setting.Field label="Statistic options" stacked>
                             <>{makeStatisticCheckboxes()}</>
-                        </SettingWrapper>
+                        </Setting.Field>
                     </Hidden>
                     <Hidden hidden={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}>
-                        <SettingWrapper
+                        <Setting.Field
                             label="Color realizations by parameter"
                             stacked
                             annotations={selectedParameterIdentStringAnnotations}
@@ -423,10 +422,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                     disabled={!colorRealizationsByParameter}
                                 />
                             </div>
-                        </SettingWrapper>
+                        </Setting.Field>
                     </Hidden>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

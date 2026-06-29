@@ -13,8 +13,8 @@ import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Banner } from "@lib/components/Banner";
 import { Select } from "@lib/components/Select";
-import type { SettingAnnotation } from "@lib/components/SettingWrapper";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import type { SettingAnnotation } from "@lib/components/Setting";
+import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
@@ -222,8 +222,8 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     return (
         <>
-            <SettingWrapper.Section title="Data" defaultOpen>
-                <SettingWrapper label="Ensembles" stacked>
+            <Setting.Section title="Data" defaultOpen>
+                <Setting.Field label="Ensembles" stacked>
                     <EnsemblePicker
                         ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         value={ensembleIdents}
@@ -231,9 +231,9 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                         onValueChange={handleEnsembleIdentsChange}
                     />
-                </SettingWrapper>
+                </Setting.Field>
 
-                <SettingWrapper
+                <Setting.Field
                     stacked
                     loadingOverlay={props.isPending ?? false}
                     label="Table sources"
@@ -250,8 +250,8 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         multiple
                         size={3}
                     />
-                </SettingWrapper>
-                <SettingWrapper
+                </Setting.Field>
+                <Setting.Field
                     help={{
                         title: "Allow table source intersections",
                         content: (
@@ -271,10 +271,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     >
                         Allow table source intersections
                     </SwitchCompositions.WithLabel>
-                </SettingWrapper>
-            </SettingWrapper.Section>
+                </Setting.Field>
+            </Setting.Section>
 
-            <SettingWrapper.Section title="Data Selection">
+            <Setting.Section title="Data Selection">
                 {!props.availableIndicesWithValues.length && (
                     // TODO - Waiting for section overlay. Temp workaround
                     <Banner layoutClassName="col-span-3" tone="danger">
@@ -302,7 +302,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         indicesWithValues.find((el) => el.indexColumn === indexWithValues.indexColumn)?.values ?? [];
 
                     return (
-                        <SettingWrapper
+                        <Setting.Field
                             key={indexWithValues.indexColumn}
                             label={indexWithValues.indexColumn}
                             stacked
@@ -320,10 +320,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                                 showQuickSelectButtons={true}
                                 onValueChange={(value) => handleIndexValuesChange(indexWithValues.indexColumn, value)}
                             />
-                        </SettingWrapper>
+                        </Setting.Field>
                     );
                 })}
-            </SettingWrapper.Section>
+            </Setting.Section>
             {props.additionalSettings}
         </>
     );

@@ -5,11 +5,10 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Hidden } from "@lib/components/Hidden";
 import { NumberInput } from "@lib/components/NumberInput";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { Switch } from "@lib/components/Switch";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { TextInput } from "@lib/components/TextInput";
@@ -25,10 +24,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [showHiddenSettings, setShowHiddenSettings] = React.useState(false);
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="First setting group" defaultOpen>
-                    <SettingWrapper
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="First setting group" defaultOpen>
+                    <Setting.Field
                         label="Ensembles"
                         help={{
                             title: "Ensembles",
@@ -43,8 +42,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             allowDeltaEnsembles={false}
                             onValueChange={setEnsembles}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Second setting"
                         help={{
                             title: "Second setting",
@@ -52,8 +51,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         }}
                     >
                         <NumberInput value={0} onValueChange={() => {}} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Second setting"
                         description="Use a stacked layout if a description is necessary - otherwise, move the description to the help section."
                         help={{
@@ -63,8 +62,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         stacked
                     >
                         <NumberInput value={0} onValueChange={() => {}} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         help={{
                             title: "Show other settings",
                             content: "This setting has no label or description. The input spans the whole width.",
@@ -75,10 +74,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             checked={showHiddenSettings}
                             label="Show other settings"
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                     <Hidden hidden={!showHiddenSettings} keepMounted>
                         <>
-                            <SettingWrapper
+                            <Setting.Field
                                 label="Setting with a pretty pretty long label"
                                 help={{
                                     title: "Fourth setting",
@@ -89,8 +88,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     <Switch onCheckedChange={setSetting4Enabled} checked={setting4Enabled} />
                                     <NumberInput value={0} onValueChange={() => {}} disabled={!setting4Enabled} />
                                 </div>
-                            </SettingWrapper>
-                            <SettingWrapper
+                            </Setting.Field>
+                            <Setting.Field
                                 label="Fifth setting"
                                 help={{
                                     title: "Fifth setting",
@@ -112,12 +111,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                         disabled={!setting5Enabled}
                                     />
                                 </div>
-                            </SettingWrapper>
+                            </Setting.Field>
                         </>
                     </Hidden>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Settings with overlays" defaultOpen>
-                    <SettingWrapper
+                </Setting.Section>
+                <Setting.Section title="Settings with overlays" defaultOpen>
+                    <Setting.Field
                         label="First setting"
                         help={{
                             title: "First setting",
@@ -126,14 +125,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         overlay={{ type: "info", message: "This is an informational overlay." }}
                     >
                         <TextInput value="" onValueChange={() => {}} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Setting with a long label"
                         overlay={{ type: "warning", message: "This is a warning overlay." }}
                     >
                         <TextInput value="" onValueChange={() => {}} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Setting with a large input"
                         stacked
                         overlay={{ type: "error", message: "This is an error overlay." }}
@@ -147,8 +146,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             multiple
                             size={5}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Loading setting"
                         help={{
                             title: "Loading setting",
@@ -157,8 +156,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         overlay={{ type: "loading" }}
                     >
                         <TextInput value="" onValueChange={() => {}} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Long running"
                         help={{
                             title: "Long running",
@@ -167,10 +166,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         overlay={{ type: "loading", message: "This task is taking longer than expected..." }}
                     >
                         <TextInput value="" onValueChange={() => {}} />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Settings with annotations" defaultOpen>
-                    <SettingWrapper
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Settings with annotations" defaultOpen>
+                    <Setting.Field
                         label="First setting"
                         help={{
                             title: "First setting",
@@ -179,8 +178,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         errorAnnotation="Do not use large settings as inline - use stacked layout instead."
                     >
                         <Select onValueChange={() => {}} options={[]} size={5} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Second setting"
                         help={{
                             title: "Second setting",
@@ -189,8 +188,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         warningAnnotation="This is a warning annotation."
                     >
                         <TextInput value="" onValueChange={() => {}} />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Third setting"
                         help={{
                             title: "Third setting",
@@ -199,9 +198,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         infoAnnotation="This is an info annotation."
                     >
                         <TextInput value="" onValueChange={() => {}} />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

@@ -3,11 +3,10 @@ import { useAtom } from "jotai";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
 import { Hidden } from "@lib/components/Hidden";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
@@ -67,21 +66,21 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         plotType === PlotType.ScatterWithColorMapping;
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Plot type" defaultOpen>
-                    <SettingWrapper label="Plot type">
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot type" defaultOpen>
+                    <Setting.Field label="Plot type">
                         <Combobox<PlotType>
                             items={plotTypeItems}
                             value={plotType}
                             onValueChange={(value) => value && setPlotType(value)}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
+                    </Setting.Field>
+                </Setting.Section>
                 <Hidden hidden={plotType === null}>
-                    <SettingWrapper.Section title="Plot settings" defaultOpen>
+                    <Setting.Section title="Plot settings" defaultOpen>
                         <Hidden hidden={plotType !== PlotType.Histogram}>
-                            <SettingWrapper label="Number of bins" stacked>
+                            <Setting.Field label="Number of bins" stacked>
                                 <Slider
                                     value={numBins}
                                     onValueChange={handleNumBinsChange}
@@ -89,10 +88,10 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                                     max={30}
                                     valueLabelDisplay="auto"
                                 />
-                            </SettingWrapper>
+                            </Setting.Field>
                         </Hidden>
                         <Hidden hidden={!showAxesSettings}>
-                            <SettingWrapper label="Axes" stacked contentClassName="flex flex-col gap-y-xs">
+                            <Setting.Field label="Axes" stacked contentClassName="flex flex-col gap-y-xs">
                                 <>
                                     <CheckboxCompositions.WithLabel
                                         label="Shared X axes"
@@ -107,10 +106,10 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                                         size="small"
                                     />
                                 </>
-                            </SettingWrapper>
+                            </Setting.Field>
                         </Hidden>
                         <Hidden hidden={plotType !== PlotType.BarChart}>
-                            <SettingWrapper label="Orientation" stacked>
+                            <Setting.Field label="Orientation" stacked>
                                 <RadioCompositions.GroupWithLabels
                                     value={orientation}
                                     options={[
@@ -120,10 +119,10 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                                     onValueChange={(value) => setOrientation(value as "h" | "v")}
                                     size="small"
                                 />
-                            </SettingWrapper>
+                            </Setting.Field>
                         </Hidden>
                         <Hidden hidden={plotType !== PlotType.BarChart}>
-                            <SettingWrapper label="Sort bars by" stacked>
+                            <Setting.Field label="Sort bars by" stacked>
                                 <RadioCompositions.GroupWithLabels
                                     value={barSortBy}
                                     options={[
@@ -133,11 +132,11 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                                     onValueChange={(value) => setBarSortBy(value as typeof barSortBy)}
                                     size="small"
                                 />
-                            </SettingWrapper>
+                            </Setting.Field>
                         </Hidden>
-                    </SettingWrapper.Section>
+                    </Setting.Section>
                 </Hidden>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

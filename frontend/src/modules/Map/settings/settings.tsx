@@ -15,7 +15,7 @@ import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
@@ -218,26 +218,26 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     let chooseRealizationElement: JSX.Element | null = null;
     if (aggregation === null) {
         chooseRealizationElement = (
-            <SettingWrapper label="Realization">
+            <Setting.Field label="Realization">
                 <NumberInput value={realizationNum} onValueChange={handleRealizationTextChanged} />
-            </SettingWrapper>
+            </Setting.Field>
         );
     }
 
     return (
-        <SettingWrapper.Group>
-            <SettingWrapper.Section title="Data" defaultOpen>
-                <SettingWrapper label="Ensemble">
+        <Setting.Panel>
+            <Setting.Section title="Data" defaultOpen>
+                <Setting.Field label="Ensemble">
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={computedEnsembleIdent}
                         ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
                         onValueChange={handleEnsembleSelectionChange}
                     />
-                </SettingWrapper>
-            </SettingWrapper.Section>
-            <SettingWrapper.Section title="Selection" defaultOpen>
-                <SettingWrapper label="Time Type" stacked>
+                </Setting.Field>
+            </Setting.Section>
+            <Setting.Section title="Selection" defaultOpen>
+                <Setting.Field label="Time Type" stacked>
                     <RadioCompositions.GroupWithLabels
                         size="small"
                         value={timeType}
@@ -246,15 +246,15 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                         })}
                         onValueChange={handleTimeModeChange}
                     />
-                </SettingWrapper>
-                <SettingWrapper>
+                </Setting.Field>
+                <Setting.Field>
                     <SwitchCompositions.WithLabel
                         onCheckedChange={(checked) => toggleUseObserved(checked)}
                         checked={useObserved}
                         label="Use observed surfaces"
                     />
-                </SettingWrapper>
-                <SettingWrapper
+                </Setting.Field>
+                <Setting.Field
                     label="Surface name"
                     loadingOverlay={realizationSurfacesMetaQuery.isLoading || observedSurfacesMetaQuery.isLoading}
                     errorAnnotation={realizationSurfacesMetaQuery.error ? "Error loading surface directory" : undefined}
@@ -266,8 +266,8 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                         onValueChange={handleSurfNameSelectionChange}
                         size={5}
                     />
-                </SettingWrapper>
-                <SettingWrapper
+                </Setting.Field>
+                <Setting.Field
                     label="Surface attribute"
                     loadingOverlay={realizationSurfacesMetaQuery.isLoading || observedSurfacesMetaQuery.isLoading}
                     errorAnnotation={realizationSurfacesMetaQuery.error ? "Error loading surface directory" : undefined}
@@ -279,9 +279,9 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                         onValueChange={handleSurfAttributeSelectionChange}
                         size={5}
                     />
-                </SettingWrapper>
+                </Setting.Field>
                 <Hidden hidden={timeType === SurfaceTimeType.None}>
-                    <SettingWrapper
+                    <Setting.Field
                         label={timeType === SurfaceTimeType.TimePoint ? "Time point" : "Time interval"}
                         loadingOverlay={realizationSurfacesMetaQuery.isLoading || observedSurfacesMetaQuery.isLoading}
                         errorAnnotation={
@@ -295,15 +295,15 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                             onValueChange={handleTimeOrIntervalSelectionChange}
                             size={5}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                 </Hidden>
                 <AggregationDropdown
                     selectedAggregation={aggregation}
                     onAggregationSelectionChange={handleAggregationChanged}
                 />
                 {chooseRealizationElement}
-            </SettingWrapper.Section>
-        </SettingWrapper.Group>
+            </Setting.Section>
+        </Setting.Panel>
     );
 }
 

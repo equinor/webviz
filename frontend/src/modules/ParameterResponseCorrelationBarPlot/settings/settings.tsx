@@ -1,8 +1,7 @@
 import { useAtom } from "jotai";
 
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
-import { Collapsible } from "@lib/components/Collapsible";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 
 import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
@@ -22,10 +21,10 @@ export function Settings() {
         setCorrCutOff(newValue);
     }
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Max number of parameters">
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Max number of parameters">
                         <Slider
                             value={numParams}
                             onValueChange={handleNumParamsChange}
@@ -34,8 +33,8 @@ export function Settings() {
                             max={500}
                             valueLabelDisplay="auto"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label={`Correlation cutoff (absolute): ${corrCutOff}`}>
+                    </Setting.Field>
+                    <Setting.Field label={`Correlation cutoff (absolute): ${corrCutOff}`}>
                         <Slider
                             value={corrCutOff}
                             onValueChange={handleCorrCutOffChange}
@@ -44,17 +43,17 @@ export function Settings() {
                             max={1}
                             valueLabelDisplay="auto"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper>
+                    </Setting.Field>
+                    <Setting.Field>
                         <CheckboxCompositions.WithLabel
                             label="Show parameter labels"
                             checked={showLabels}
                             onCheckedChange={setShowLabels}
                             size="small"
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

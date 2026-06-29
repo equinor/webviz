@@ -7,15 +7,14 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { NumberInput } from "@lib/components/NumberInput";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import { Setting, type SettingAnnotation } from "@lib/components/Setting";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper, type SettingAnnotation } from "@lib/newComponents/SettingWrapper";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import {
     usePropagateAllApiErrorsToStatusWriter,
@@ -46,7 +45,11 @@ import {
     selectedTimestampUtcMsAtom,
     selectedWellNameAtom,
 } from "./atoms/persistableFixableAtoms";
-import { rftObservationsQueriesAtom, rftRealizationDataQueriesAtom, rftTableDefinitionQueriesAtom } from "./atoms/queryAtoms";
+import {
+    rftObservationsQueriesAtom,
+    rftRealizationDataQueriesAtom,
+    rftTableDefinitionQueriesAtom,
+} from "./atoms/queryAtoms";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
@@ -173,10 +176,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     ].filter(Boolean) as SettingAnnotation[];
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdents}
@@ -184,10 +187,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                             onValueChange={handleEnsembleSelectionChange}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Selections" defaultOpen>
-                    <SettingWrapper
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Selections" defaultOpen>
+                    <Setting.Field
                         label="Response"
                         annotations={selectedResponseNameAnnotations}
                         loadingOverlay={tableDefinitionsArePending}
@@ -201,8 +204,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             filter={availableResponseNames.length > 6}
                             size={Math.max(1, Math.min(availableResponseNames.length, 4))}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Well"
                         annotations={wellNameAnnotations}
                         loadingOverlay={tableDefinitionsArePending}
@@ -216,8 +219,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             filter={availableWellNames.length > 6}
                             size={Math.max(1, Math.min(availableWellNames.length, 10))}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Date"
                         annotations={timestampAnnotations}
                         loadingOverlay={tableDefinitionsArePending}
@@ -231,10 +234,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             filter={availableTimestampsUtcMs.length > 6}
                             size={Math.max(3, Math.min(availableTimestampsUtcMs.length, 6))}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot" defaultOpen>
-                    <SettingWrapper label="Display" stacked contentClassName="flex flex-col gap-y-xs">
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot" defaultOpen>
+                    <Setting.Field label="Display" stacked contentClassName="flex flex-col gap-y-xs">
                         <>
                             <CheckboxCompositions.WithLabel
                                 label="Individual realizations"
@@ -261,8 +264,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 size="small"
                             />
                         </>
-                    </SettingWrapper>
-                    <SettingWrapper label="Statistic lines" stacked>
+                    </Setting.Field>
+                    <Setting.Field label="Statistic lines" stacked>
                         <Combobox
                             multiple
                             items={Object.entries(RFT_STATISTIC_LABELS).map(([value, label]) => ({
@@ -273,18 +276,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={handleStatisticsChange}
                             placeholder="Select statistics..."
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Data channel">
-                    <SettingWrapper>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Data channel">
+                    <Setting.Field>
                         <SwitchCompositions.WithLabel
                             label="Show depth line in plot"
                             checked={showDepthLine}
                             onCheckedChange={setShowDepthLine}
                             size="small"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Depth (TVD)"
                         description="Publishes the response value interpolated at this depth, per realization, as a data channel. The depth can also be dragged in the plot."
                         stacked
@@ -294,10 +297,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={debouncedHandleDataChannelDepthChange}
                             placeholder="No depth selected"
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }
 

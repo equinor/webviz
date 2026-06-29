@@ -8,10 +8,9 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -108,18 +107,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentAnnotations}>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
                             ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                             onValueChange={handleEnsembleSelectionChange}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Realization" annotations={selectedRealizationAnnotations}>
+                    </Setting.Field>
+                    <Setting.Field label="Realization" annotations={selectedRealizationAnnotations}>
                         <Combobox
                             items={availableRealizations.map((real) => {
                                 return { value: real, label: real.toString() };
@@ -127,8 +126,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedRealization.value}
                             onValueChange={setSelectedRealization}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Frequency">
+                    </Setting.Field>
+                    <Setting.Field label="Frequency">
                         <Combobox
                             items={Object.values(Frequency_api).map((val: Frequency_api) => {
                                 return { value: val, label: FrequencyEnumToStringMapping[val] };
@@ -136,8 +135,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedResamplingFrequency}
                             onValueChange={(v) => v && setSelectedResamplingFrequency(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Node Types">
+                    </Setting.Field>
+                    <Setting.Field label="Node Types">
                         <Select
                             options={Object.values(NodeType_api).map((val: NodeType_api) => {
                                 return { value: val, label: NodeTypeEnumToStringMapping[val] };
@@ -147,10 +146,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             size={3}
                             multiple
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Network" defaultOpen>
-                    <SettingWrapper
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Network" defaultOpen>
+                    <Setting.Field
                         label="Tree Type"
                         loadingOverlay={selectedTreeType.isLoading}
                         errorOverlay={selectedTreeType.depsHaveError ? "Could not load tree types." : undefined}
@@ -163,8 +162,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedTreeType.value ?? undefined}
                             onValueChange={(v) => v && setSelectedTreeType(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Edge options"
                         annotations={selectedEdgeKeyAnnotations}
                         loadingOverlay={selectedEdgeKey.isLoading}
@@ -179,8 +178,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedEdgeKey.value ?? undefined}
                             onValueChange={(v) => v && setSelectedEdgeKey(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Node options"
                         annotations={selectedNodeKeyAnnotations}
                         loadingOverlay={selectedNodeKey.isLoading}
@@ -195,8 +194,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedNodeKey.value ?? undefined}
                             onValueChange={(v) => v && setSelectedNodeKey(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={`Time step${selectedDateTime.value ? `: (${selectedDateTime.value})` : ""}`}
                         loadingOverlay={selectedDateTime.isLoading}
                         annotations={selectedDateTimeAnnotations}
@@ -211,9 +210,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             valueLabelFormat={createValueLabelFormat}
                             onValueChange={handleSelectedTimeStepIndexChange}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

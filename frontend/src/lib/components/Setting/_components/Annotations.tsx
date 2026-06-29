@@ -2,7 +2,7 @@ import { Error, Info, Warning } from "@mui/icons-material";
 
 import { Paragraph } from "@lib/components/Typography/compositions";
 
-import type { SettingAnnotation } from "./SettingWrapper";
+import type { SettingAnnotation } from "./Field";
 
 export type AnnotationsProps = {
     annotations: SettingAnnotation[];

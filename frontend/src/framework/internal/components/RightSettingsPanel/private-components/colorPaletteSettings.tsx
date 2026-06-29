@@ -5,11 +5,10 @@ import { Numbers, Palette } from "@mui/icons-material";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
-import { Collapsible } from "@lib/components/Collapsible";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
 import { NumberInput } from "@lib/components/NumberInput";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSettingsProps = {
@@ -53,10 +52,10 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
 
     return (
         <Drawer title="Color palette settings" icon={<Palette />} visible={true} onClose={props.onClose}>
-            <Collapsible.ScrollArea>
-                <SettingWrapper.Group>
-                    <SettingWrapper.Section title="Categorical colors" defaultOpen>
-                        <SettingWrapper label="Palette">
+            <Setting.ScrollArea>
+                <Setting.Panel>
+                    <Setting.Section title="Categorical colors" defaultOpen>
+                        <Setting.Field label="Palette">
                             <ColorPaletteSelector
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteSelectorType.Categorical]}
                                 colorPalettes={colorPalettes[ColorPaletteSelectorType.Categorical]}
@@ -65,10 +64,10 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
                                     handleColorPaletteSelected(palette, ColorPaletteType.Categorical)
                                 }
                             />
-                        </SettingWrapper>
-                    </SettingWrapper.Section>
-                    <SettingWrapper.Section title="Sequential colors" defaultOpen>
-                        <SettingWrapper label="Gradient">
+                        </Setting.Field>
+                    </Setting.Section>
+                    <Setting.Section title="Sequential colors" defaultOpen>
+                        <Setting.Field label="Gradient">
                             <ColorPaletteSelector
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]}
                                 colorPalettes={colorPalettes[ColorPaletteType.ContinuousSequential]}
@@ -77,8 +76,8 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
                                     handleColorPaletteSelected(palette, ColorPaletteType.ContinuousSequential)
                                 }
                             />
-                        </SettingWrapper>
-                        <SettingWrapper label="Discrete steps">
+                        </Setting.Field>
+                        <Setting.Field label="Discrete steps">
                             <div className="gap-x-xs flex w-full items-center">
                                 <span className="min-w-40 grow">
                                     <ColorGradient
@@ -104,10 +103,10 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
                                     />
                                 </span>
                             </div>
-                        </SettingWrapper>
-                    </SettingWrapper.Section>
-                    <SettingWrapper.Section title="Diverging colors" defaultOpen>
-                        <SettingWrapper label="Gradient">
+                        </Setting.Field>
+                    </Setting.Section>
+                    <Setting.Section title="Diverging colors" defaultOpen>
+                        <Setting.Field label="Gradient">
                             <ColorPaletteSelector
                                 selectedColorPaletteId={selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]}
                                 colorPalettes={colorPalettes[ColorPaletteType.ContinuousDiverging]}
@@ -116,8 +115,8 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
                                     handleColorPaletteSelected(palette, ColorPaletteType.ContinuousDiverging)
                                 }
                             />
-                        </SettingWrapper>
-                        <SettingWrapper label="Discrete steps">
+                        </Setting.Field>
+                        <Setting.Field label="Discrete steps">
                             <div className="gap-x-xs flex w-full items-center">
                                 <span className="min-w-40 grow">
                                     <ColorGradient
@@ -143,10 +142,10 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
                                     />
                                 </span>
                             </div>
-                        </SettingWrapper>
-                    </SettingWrapper.Section>
-                </SettingWrapper.Group>
-            </Collapsible.ScrollArea>
+                        </Setting.Field>
+                    </Setting.Section>
+                </Setting.Panel>
+            </Setting.ScrollArea>
         </Drawer>
     );
 });

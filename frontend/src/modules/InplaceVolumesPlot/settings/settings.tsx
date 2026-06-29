@@ -7,10 +7,9 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -108,63 +107,63 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
 
     const plotSettings = (
-        <SettingWrapper.Section title="Plot settings" defaultOpen>
-            <SettingWrapper label="Plot type">
+        <Setting.Section title="Plot settings" defaultOpen>
+            <Setting.Field label="Plot type">
                 <Combobox
                     value={selectedPlotType}
                     items={plotTypeOptions}
                     onValueChange={(v) => v && setSelectedPlotType(v)}
                 />
-            </SettingWrapper>
-            <SettingWrapper label="First Result" annotations={selectedFirstResultNameAnnotations}>
+            </Setting.Field>
+            <Setting.Field label="First Result" annotations={selectedFirstResultNameAnnotations}>
                 <Combobox
                     value={selectedFirstResultName.value}
                     items={resultNameOptions}
                     onValueChange={setSelectedFirstResultName}
                 />
-            </SettingWrapper>
+            </Setting.Field>
 
             {selectedPlotType === PlotType.BAR && (
-                <SettingWrapper label="Selector" annotations={selectedSelectorColumnAnnotations}>
+                <Setting.Field label="Selector" annotations={selectedSelectorColumnAnnotations}>
                     <Combobox
                         value={selectedSelectorColumn.value}
                         items={selectorOptions}
                         disabled={selectedPlotType !== PlotType.BAR}
                         onValueChange={setSelectedSelectorColumn}
                     />
-                </SettingWrapper>
+                </Setting.Field>
             )}
 
             {selectedPlotType === PlotType.SCATTER && (
-                <SettingWrapper label="Second Result" annotations={selectedSecondResultNameAnnotations}>
+                <Setting.Field label="Second Result" annotations={selectedSecondResultNameAnnotations}>
                     <Combobox
                         value={selectedSecondResultName.value}
                         items={resultNameOptions}
                         disabled={selectedPlotType !== PlotType.SCATTER}
                         onValueChange={setSelectedSecondResultName}
                     />
-                </SettingWrapper>
+                </Setting.Field>
             )}
-            <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
+            <Setting.Field label="Subplot by" annotations={selectedSubplotByAnnotations}>
                 <Combobox
                     value={selectedSubplotBy.value}
                     items={subplotOptions}
                     onValueChange={(v) => v && setSelectedSubplotBy}
                 />
-            </SettingWrapper>
-            <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
+            </Setting.Field>
+            <Setting.Field label="Color by" annotations={selectedColorByAnnotations}>
                 <Combobox
                     value={selectedColorBy.value}
                     items={colorByOptions}
                     onValueChange={(v) => v && setSelectedColorBy}
                 />
-            </SettingWrapper>
-        </SettingWrapper.Section>
+            </Setting.Field>
+        </Setting.Section>
     );
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
+        <Setting.ScrollArea>
+            <Setting.Panel>
                 <InplaceVolumesFilterComponent
                     debounceMs={DEBOUNCE_TIME_MS}
                     ensembleSet={ensembleSet}
@@ -184,7 +183,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     onChange={handleFilterChange}
                 />
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

@@ -15,7 +15,7 @@ import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { Collapsible } from "@lib/components/Collapsible";
 import { Combobox } from "@lib/components/Combobox";
 import type { SelectOption } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -105,16 +105,16 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
                 defaultOpen
             >
                 <Collapsible.Content layoutClassName="flex flex-col gap-y-xs">
-                    <SettingWrapper label="Field" annotations={fieldSettingAnnotations}>
+                    <Setting.Field label="Field" annotations={fieldSettingAnnotations}>
                         <FieldDropdown
                             value={selectedField.value}
                             ensembleSet={ensembleSet}
                             fallbackFieldList={allFields.map((f) => f.fieldIdentifier)}
                             onChange={setSelectedField}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
 
-                    <SettingWrapper
+                    <Setting.Field
                         label="Wellbore"
                         annotations={wellboreSettingAnnotations}
                         errorOverlay={wellboreHeadersErrorMessage}
@@ -124,7 +124,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
                             value={selectedWellboreHeader ? selectedWellboreHeader.wellboreUuid : null}
                             onValueChange={handleWellboreSelectionChange}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                 </Collapsible.Content>
             </Collapsible.Group>
             <Collapsible.Group title="Log viewer settings" defaultOpen>
