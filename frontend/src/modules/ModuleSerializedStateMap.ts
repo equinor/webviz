@@ -19,6 +19,7 @@ import type { SerializedSettings as ParameterResponseCorrelationParallelCoordsPl
 import type { SerializedSettings as ParameterResponseCrossPlotSettings } from "@modules/ParameterResponseCrossPlot/settings/persistence";
 import type { SerializedSettings as PvtSettings } from "@modules/Pvt/settings/persistence";
 import type { SerializedSettings as RelPermSettings } from "@modules/RelPerm/settings/persistence";
+import type { SerializedSettings as RftSettings } from "@modules/Rft/settings/persistence";
 import type { SerializedSettings as SensitivityPlotSettings } from "@modules/SensitivityPlot/settings/persistence";
 import type { SerializedSettings as SimulationTimeSeriesSettings } from "@modules/SimulationTimeSeries/settings/persistence";
 import type { SerializedView as SimulationTimeSeriesView } from "@modules/SimulationTimeSeries/view/persistence";
@@ -87,6 +88,10 @@ export type ModuleSerializedStateMap = {
   },
   "RelPerm": {
     settings?: Partial<RelPermSettings>,
+    view?: never,
+  },
+  "Rft": {
+    settings?: Partial<RftSettings>,
     view?: never,
   },
   "SensitivityPlot": {
