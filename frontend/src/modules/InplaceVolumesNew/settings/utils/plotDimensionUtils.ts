@@ -1,4 +1,4 @@
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 

@@ -1,4 +1,4 @@
-import { NumberInput } from "@lib/newComponents/NumberInput";
+import { NumberInput } from "@lib/components/NumberInput";
 
 import type {
     CustomSettingImplementation,

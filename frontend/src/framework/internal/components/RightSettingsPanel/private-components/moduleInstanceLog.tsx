@@ -13,8 +13,8 @@ import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { Button } from "@lib/newComponents/Button";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 import { createPortal } from "@lib/utils/createPortal";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -126,13 +126,7 @@ export const ModuleInstanceLog = React.memo(function ModuleInstanceLog(props: Mo
 
     return (
         <div ref={ref} className="h-full w-full">
-            <Drawer
-                title={makeTitle()}
-                icon={<History />}
-                visible={true}
-                onClose={handleClose}
-                actions={makeActions()}
-            >
+            <Drawer title={makeTitle()} icon={<History />} visible={true} onClose={handleClose} actions={makeActions()}>
                 <div className="px-xs py-xs gap-y-4xs text-body-sm flex h-full flex-col overflow-y-auto">
                     {moduleInstance ? (
                         <LogList

@@ -2,9 +2,9 @@ import React from "react";
 
 import { Add, ArrowDropDown } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
-import type { MenuItem } from "@lib/newComponents/Menu/compositions/types";
+import { Button } from "@lib/components/Button";
+import { MenuCompositions } from "@lib/components/Menu/compositions";
+import type { MenuItem } from "@lib/components/Menu/compositions/types";
 
 export type Action = {
     identifier: string;

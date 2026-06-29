@@ -11,7 +11,7 @@ import { KeyKind } from "@framework/types/dataChannnel";
 import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Tag } from "@lib/newComponents/Tag";
+import { Tag } from "@lib/components/Tag";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";

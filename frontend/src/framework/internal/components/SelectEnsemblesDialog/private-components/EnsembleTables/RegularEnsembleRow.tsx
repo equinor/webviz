@@ -3,12 +3,12 @@ import type React from "react";
 import { Delete, DragIndicator } from "@mui/icons-material";
 
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Button } from "@lib/newComponents/Button";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { SortableList } from "@lib/newComponents/SortableList";
-import { Table } from "@lib/newComponents/Table";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { SortableList } from "@lib/components/SortableList";
+import { Table } from "@lib/components/Table";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
 

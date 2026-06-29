@@ -6,10 +6,10 @@ import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { type EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox/combobox";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { WithBrowseButtonsProps } from "@lib/newComponents/Combobox/compositions/withBrowseButtons";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { Combobox, type ComboboxProps } from "@lib/components/Combobox/combobox";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { WithBrowseButtonsProps } from "@lib/components/Combobox/compositions/withBrowseButtons";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import { EnsembleColorTile } from "../EnsembleColorTile";
 

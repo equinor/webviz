@@ -2,12 +2,12 @@ import { Link, LinkOff } from "@mui/icons-material";
 import { parseHex, type Rgb } from "culori";
 import { isNaN } from "lodash";
 
-import { Button } from "@lib/newComponents/Button";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Switch } from "@lib/newComponents/Switch";
-import { Typography } from "@lib/newComponents/Typography";
+import { Button } from "@lib/components/Button";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { Combobox } from "@lib/components/Combobox";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Switch } from "@lib/components/Switch";
+import { Typography } from "@lib/components/Typography";
 import {
     calculateBackgroundColorForColor,
     calculateLabelPosition,

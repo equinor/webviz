@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,

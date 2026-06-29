@@ -2,9 +2,9 @@ import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
+import { Collapsible } from "@lib/components/Collapsible";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
 

@@ -16,9 +16,9 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { type Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Paragraph } from "@lib/components/Typography/compositions";
 
 import { CrashView } from "./crashView";
 
@@ -113,11 +113,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     if (moduleInstanceViewStateInvalid) {
         return (
             <div className="gap-y-xs px-xs py-xs flex h-full w-full flex-col items-center justify-center">
-                <Paragraph
-                    size="sm"
-                    tone="warning"
-                    layoutClassName="mx-2xs my-2xs text-center max-w-96"
-                >
+                <Paragraph size="sm" tone="warning" layoutClassName="mx-2xs my-2xs text-center max-w-96">
                     The persisted view state for this module&apos;s view is invalid and could not be applied. It has
                     most likely been outdated by a module update. You can reset the module to its default view to
                     continue using it.

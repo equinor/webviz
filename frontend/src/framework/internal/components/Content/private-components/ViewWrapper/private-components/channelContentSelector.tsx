@@ -6,9 +6,9 @@ import { createPortal } from "react-dom";
 
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
-import { Button } from "@lib/newComponents/Button";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Scrim } from "@lib/newComponents/Scrim/scrim";
+import { Button } from "@lib/components/Button";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Scrim } from "@lib/components/Scrim/scrim";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 

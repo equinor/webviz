@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 
 import type { Interfaces } from "../interfaces";
 

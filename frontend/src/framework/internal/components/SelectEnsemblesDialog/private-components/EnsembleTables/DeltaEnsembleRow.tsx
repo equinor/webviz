@@ -3,16 +3,16 @@ import type React from "react";
 import { Delete, DragIndicator, FolderOpen } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Button } from "@lib/newComponents/Button";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { Field } from "@lib/newComponents/Field";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { SortableList } from "@lib/newComponents/SortableList";
-import { Table } from "@lib/newComponents/Table";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Field } from "@lib/components/Field";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { SortableList } from "@lib/components/SortableList";
+import { Table } from "@lib/components/Table";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import type { InternalDeltaEnsembleSetting } from "../../types";
 

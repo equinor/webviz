@@ -1,6 +1,6 @@
 import FmuLogoAnimated from "@assets/fmuAnimated.svg";
 
-import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 
 export type LoadingOverlayProps = {
     text: string;

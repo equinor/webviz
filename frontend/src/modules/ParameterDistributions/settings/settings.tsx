@@ -8,11 +8,11 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent as RegularEnsembleIdentClass } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Collapsible } from "@lib/components/Collapsible";
+import { Combobox } from "@lib/components/Combobox";
+import { Hidden } from "@lib/components/Hidden";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 

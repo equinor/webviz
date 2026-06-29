@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Switch } from "@lib/newComponents/Switch";
+import { Switch } from "@lib/components/Switch";
 
 import type {
     CustomSettingImplementation,

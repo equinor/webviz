@@ -4,7 +4,7 @@ import { Close } from "@mui/icons-material";
 import _ from "lodash";
 
 import { useStableProp } from "@lib/hooks/useStableProp";
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 
@@ -107,8 +107,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 "z-elevated border-neutral-subtle bg-surface/75 pointer-events-none absolute grid items-center rounded-sm border backdrop-blur-xs",
                 {
                     "px-2xs py-3xs text-body-sm w-72 gap-2": !props.compact,
-                    "gap-x-2xs gap-y-2xs px-2xs py-2xs text-body-xs min-w-52":
-                        props.compact,
+                    "gap-x-2xs gap-y-2xs px-2xs py-2xs text-body-xs min-w-52": props.compact,
                     "text-neutral-subtle": props.textGrayedOut,
                 },
             )}

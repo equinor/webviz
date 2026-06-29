@@ -2,8 +2,8 @@ import FmuLogo from "@assets/fmu.svg";
 import FmuLogoAnimated from "@assets/fmuAnimated.svg";
 
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { Button } from "@lib/newComponents/Button";
-import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/components/Button";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DataSharingLabel } from "./private-components/DataSharingLabel";

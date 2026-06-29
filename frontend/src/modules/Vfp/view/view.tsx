@@ -2,7 +2,7 @@ import React from "react";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import {
     ContentError,
     ContentMessage,

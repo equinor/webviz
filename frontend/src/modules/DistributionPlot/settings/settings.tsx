@@ -2,13 +2,13 @@ import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Collapsible } from "@lib/components/Collapsible";
+import { Combobox } from "@lib/components/Combobox";
+import { Hidden } from "@lib/components/Hidden";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
 import { BarSortBy, PlotType } from "../typesAndEnums";

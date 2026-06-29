@@ -1,6 +1,6 @@
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import { Combobox, type ComboboxProps } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { Combobox, type ComboboxProps } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 export type FieldDropdownProps = {
     ensembleSet: EnsembleSet;

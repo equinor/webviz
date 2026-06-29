@@ -3,8 +3,8 @@ import React from "react";
 import { Add } from "@mui/icons-material";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { SortableList } from "@lib/newComponents/SortableList";
-import type { IsMoveAllowedArgs } from "@lib/newComponents/SortableList";
+import { SortableList } from "@lib/components/SortableList";
+import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { ColorSelect } from "@lib/components/ColorSelect";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";

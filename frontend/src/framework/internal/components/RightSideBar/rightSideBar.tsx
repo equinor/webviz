@@ -11,12 +11,19 @@ import {
     WebAssetOutlined,
 } from "@mui/icons-material";
 
-import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import {
+    GuiEvent,
+    GuiState,
+    RightDrawerContent,
+    useGuiState,
+    useGuiValue,
+    useSetGuiState,
+} from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/newComponents/Badge";
-import { Tabs, type TabsTabProps } from "@lib/newComponents/Tabs";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Badge } from "@lib/components/Badge";
+import { Tabs, type TabsTabProps } from "@lib/components/Tabs";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -51,7 +58,10 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     }
 
     function ensureSettingsPanelIsVisible() {
-        if (guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+        if (
+            guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+            SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+        ) {
             forceSettingsPanelVisible();
         }
     }

@@ -6,10 +6,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { Avatar } from "@lib/newComponents/Avatar";
-import { Button } from "@lib/newComponents/Button";
-import { Popover } from "@lib/newComponents/Popover";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
+import { Avatar } from "@lib/components/Avatar";
+import { Button } from "@lib/components/Button";
+import { Popover } from "@lib/components/Popover";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 
 export type ItemCardProps = {
     id: string;

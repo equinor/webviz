@@ -12,11 +12,11 @@ import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolum
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { Banner } from "@lib/newComponents/Banner";
-import { Select } from "@lib/newComponents/Select";
-import type { SettingAnnotation } from "@lib/newComponents/SettingWrapper";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import { Banner } from "@lib/components/Banner";
+import { Select } from "@lib/components/Select";
+import type { SettingAnnotation } from "@lib/components/SettingWrapper";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;

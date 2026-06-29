@@ -5,12 +5,12 @@ import { isEqual, orderBy } from "lodash";
 import type { CaseInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { Table } from "@lib/newComponents/Table";
-import { TableCompositions } from "@lib/newComponents/Table/compositions";
-import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
-import { SortDirection, type TableSortState } from "@lib/newComponents/Table/typesAndEnums";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Virtualization } from "@lib/newComponents/Virtualization";
+import { Table } from "@lib/components/Table";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
+import { SortDirection, type TableSortState } from "@lib/components/Table/typesAndEnums";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Virtualization } from "@lib/components/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

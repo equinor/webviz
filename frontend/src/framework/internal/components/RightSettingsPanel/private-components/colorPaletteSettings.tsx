@@ -5,11 +5,11 @@ import { Numbers, Palette } from "@mui/icons-material";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { ColorGradient } from "@lib/newComponents/ColorGradient";
-import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Collapsible } from "@lib/components/Collapsible";
+import { ColorGradient } from "@lib/components/ColorGradient";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
+import { NumberInput } from "@lib/components/NumberInput";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorPaletteSettingsProps = {
@@ -52,12 +52,7 @@ export const ColorPaletteSettings = React.memo(function ColorPaletteSettings(pro
     }
 
     return (
-        <Drawer
-            title="Color palette settings"
-            icon={<Palette />}
-            visible={true}
-            onClose={props.onClose}
-        >
+        <Drawer title="Color palette settings" icon={<Palette />} visible={true} onClose={props.onClose}>
             <Collapsible.ScrollArea>
                 <SettingWrapper.Group>
                     <SettingWrapper.Section title="Categorical colors" defaultOpen>

@@ -4,12 +4,12 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItems } from "@lib/newComponents/Combobox/types";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { Select, type SelectOption } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Collapsible } from "@lib/components/Collapsible";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItems } from "@lib/components/Combobox/types";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { Select, type SelectOption } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 

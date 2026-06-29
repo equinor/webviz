@@ -2,9 +2,9 @@ import React from "react";
 
 import { orderBy } from "lodash";
 
-import { Table } from "@lib/newComponents/Table";
-import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
-import { SortDirection } from "@lib/newComponents/Table/typesAndEnums";
+import { Table } from "@lib/components/Table";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
 
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";

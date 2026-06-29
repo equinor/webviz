@@ -7,12 +7,12 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Typography } from "@lib/newComponents/Typography";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { Heading } from "@lib/components/Typography/compositions";
 
 Icon.add({ folder_open });
 

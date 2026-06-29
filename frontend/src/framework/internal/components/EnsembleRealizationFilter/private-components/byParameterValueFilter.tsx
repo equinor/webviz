@@ -12,15 +12,15 @@ import {
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { Button } from "@lib/newComponents/Button";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Field } from "@lib/newComponents/Field";
-import { Slider } from "@lib/newComponents/Slider";
-import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
-import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
-import type { SmartNodeSelectorTag } from "@lib/newComponents/SmartNodeSelector/smartNodeSelector";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Typography } from "@lib/newComponents/Typography";
+import { Button } from "@lib/components/Button";
+import { Combobox } from "@lib/components/Combobox";
+import { Field } from "@lib/components/Field";
+import { Slider } from "@lib/components/Slider";
+import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
 import {

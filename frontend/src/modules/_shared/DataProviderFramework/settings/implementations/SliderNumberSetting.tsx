@@ -3,8 +3,8 @@ import React from "react";
 import { debounce } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Slider } from "@lib/newComponents/Slider";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Slider } from "@lib/components/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {

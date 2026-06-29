@@ -2,7 +2,7 @@ import type React from "react";
 
 import { useAtom } from "jotai";
 
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 import { horizontalLayoutAtom, limitDomainToDataAtom } from "../atoms/baseAtoms";
 

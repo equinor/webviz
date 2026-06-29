@@ -2,8 +2,8 @@ import type React from "react";
 
 import { ModuleDevState, type Module } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
-import type { PopoverPopupProps } from "@lib/newComponents/Popover";
-import { Popover } from "@lib/newComponents/Popover";
+import type { PopoverPopupProps } from "@lib/components/Popover";
+import { Popover } from "@lib/components/Popover";
 
 import { DevStateIcon, PersistenceIcon } from "./moduleIcons";
 import { PreviewImage } from "./previewImage";

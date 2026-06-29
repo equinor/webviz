@@ -8,7 +8,7 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
-import { Combobox } from "@lib/newComponents/Combobox";
+import { Combobox } from "@lib/components/Combobox";
 
 export type EnsemblePickerProps = (
     | {

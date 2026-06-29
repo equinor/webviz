@@ -2,7 +2,7 @@ import type React from "react";
 
 import { HelpOutline, Mouse } from "@mui/icons-material";
 
-import { Popover } from "@lib/newComponents/Popover";
+import { Popover } from "@lib/components/Popover";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 

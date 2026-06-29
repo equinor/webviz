@@ -8,7 +8,7 @@ import {
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
 import type { ContinuousParameter, DiscreteParameter } from "@framework/EnsembleParameters";
 import { ParameterType } from "@framework/EnsembleParameters";
-import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 const CONTINUOUS_PARAMETER: ContinuousParameter = {
     type: ParameterType.CONTINUOUS,

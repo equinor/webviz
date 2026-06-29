@@ -11,10 +11,10 @@ import {
     SyncAlt,
 } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { Menu } from "@lib/newComponents/Menu";
-import { Separator } from "@lib/newComponents/Separator";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Menu } from "@lib/components/Menu";
+import { Separator } from "@lib/components/Separator";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
 

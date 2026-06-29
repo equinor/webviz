@@ -1,7 +1,7 @@
 import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import type { WellLogCurve } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 type PlotDropdownOption = ComboboxItem<TemplatePlotType>;
 

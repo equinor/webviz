@@ -7,7 +7,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 import type { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 
 import type { Interfaces } from "./interfaces";
 

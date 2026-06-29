@@ -2,8 +2,8 @@ import React from "react";
 
 import { upperFirst } from "lodash";
 
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 import type {
     CustomSettingImplementation,

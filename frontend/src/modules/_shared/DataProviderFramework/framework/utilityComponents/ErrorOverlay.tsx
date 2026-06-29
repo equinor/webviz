@@ -1,7 +1,7 @@
 import React from "react";
 
-import { AlertDialog } from "@lib/newComponents/AlertDialog/alertDialog";
-import { Button } from "@lib/newComponents/Button";
+import { AlertDialog } from "@lib/components/AlertDialog/alertDialog";
+import { Button } from "@lib/components/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic, type ItemDelegate } from "../../delegates/ItemDelegate";

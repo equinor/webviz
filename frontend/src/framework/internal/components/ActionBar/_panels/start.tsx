@@ -4,11 +4,11 @@ import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBrok
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import { Badge } from "@lib/newComponents/Badge";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Separator } from "@lib/newComponents/Separator";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Badge } from "@lib/components/Badge";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Separator } from "@lib/components/Separator";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type StartPanelProps = {

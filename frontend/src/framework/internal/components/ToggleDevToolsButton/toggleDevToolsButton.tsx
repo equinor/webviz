@@ -4,8 +4,8 @@ import { DeveloperMode } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Toggle } from "@lib/newComponents/Toggle";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Toggle } from "@lib/components/Toggle";
+import { Tooltip } from "@lib/components/Tooltip";
 import { isDevMode } from "@lib/utils/devMode";
 
 export type ToggleDevToolsButtonProps = {

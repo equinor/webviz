@@ -12,15 +12,15 @@ import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncS
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { SortAscendingIcon, SortDescendingIcon } from "@lib/icons";
-import { Button } from "@lib/newComponents/Button";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Collapsible } from "@lib/components/Collapsible";
+import { Combobox } from "@lib/components/Combobox";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Slider } from "@lib/components/Slider";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 

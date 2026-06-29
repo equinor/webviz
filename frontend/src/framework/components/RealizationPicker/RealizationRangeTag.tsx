@@ -5,7 +5,7 @@ import { Key } from "ts-key-enum";
 
 import type { FocusableListItem } from "@lib/hooks/useListFocus";
 import { Direction } from "@lib/hooks/useListFocus";
-import { Chip } from "@lib/newComponents/Chip";
+import { Chip } from "@lib/components/Chip";
 
 import type { RealizationNumberLimits, SelectionValidityInfo } from "./_utils";
 import { computeTagValidityInfo, sanitizeRangeInput, SelectionValidity } from "./_utils";

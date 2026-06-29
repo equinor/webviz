@@ -9,10 +9,10 @@ import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
-import { Table } from "@lib/newComponents/Table";
-import { TableCompositions } from "@lib/newComponents/Table/compositions";
-import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { Table } from "@lib/components/Table";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 
 import type { Interfaces } from "../interfaces";
 

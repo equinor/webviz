@@ -2,8 +2,8 @@ import type React from "react";
 
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { SortableList } from "@lib/newComponents/SortableList";
+import { Button } from "@lib/components/Button";
+import { SortableList } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type SortableListGroupProps = {

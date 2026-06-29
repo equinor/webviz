@@ -10,7 +10,7 @@ import type {
     Options,
 } from "@api";
 import { getSessionsMetadata } from "@api";
-import type { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
+import type { SortDirection as TableSortDirection } from "@lib/components/Table/typesAndEnums";
 
 import { QUERY_PAGE_SIZE } from "./constants";
 

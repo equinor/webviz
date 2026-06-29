@@ -2,10 +2,10 @@ import React from "react";
 
 import { Close, FilterList, Search } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { MenuCompositions } from "@lib/components/Menu/compositions";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type DrawerFilterItem<T extends string | number> = {
     icon: React.ReactNode;

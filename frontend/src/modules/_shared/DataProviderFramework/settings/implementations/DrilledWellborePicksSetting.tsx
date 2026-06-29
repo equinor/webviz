@@ -1,8 +1,8 @@
 import type React from "react";
 
 import type { WellborePick_api } from "@api";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 import type {
     CustomSettingImplementation,

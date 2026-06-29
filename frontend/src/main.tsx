@@ -6,7 +6,7 @@ import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 import { toastManager } from "@framework/toastManager";
-import { Toast } from "@lib/newComponents/Toast";
+import { Toast } from "@lib/components/Toast";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";

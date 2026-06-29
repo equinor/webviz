@@ -3,9 +3,9 @@ import { category, dashboard, folder_open, github, external_link, add } from "@e
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Heading } from "@lib/components/Typography/compositions";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";

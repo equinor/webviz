@@ -1,6 +1,6 @@
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { Dialog } from "@lib/newComponents/Dialog";
+import { Dialog } from "@lib/components/Dialog";
 
 export type EnsemblesLoadingErrorInfoDialogProps = {
     open: boolean;

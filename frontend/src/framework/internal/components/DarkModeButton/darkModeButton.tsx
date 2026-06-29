@@ -3,8 +3,8 @@ import React from "react";
 import { DarkMode, LightMode } from "@mui/icons-material";
 
 import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
-import { Button } from "@lib/newComponents/Button";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 const LOCAL_STORAGE_KEY = "colorScheme";
 
@@ -21,11 +21,14 @@ export function DarkModeButton(): React.ReactNode {
         setMainDataAttribute("color-scheme", colorScheme);
     }, [colorScheme]);
 
-    const toggleDarkMode = React.useCallback(function toggleDarkMode() {
-        const newScheme = colorScheme === "dark" ? "light" : "dark";
-        localStorage.setItem(LOCAL_STORAGE_KEY, newScheme);
-        setColorScheme(newScheme);
-    }, [colorScheme]);
+    const toggleDarkMode = React.useCallback(
+        function toggleDarkMode() {
+            const newScheme = colorScheme === "dark" ? "light" : "dark";
+            localStorage.setItem(LOCAL_STORAGE_KEY, newScheme);
+            setColorScheme(newScheme);
+        },
+        [colorScheme],
+    );
 
     return (
         <Tooltip content="Toggle dark mode">

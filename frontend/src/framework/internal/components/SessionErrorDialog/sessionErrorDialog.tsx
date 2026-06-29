@@ -8,9 +8,9 @@ import { GuiEvent, useRegisterGuiEventSubscriber, type GuiEventPayloads } from "
 import { SessionPersistenceAction } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
 import { useSymbolicateStackTrace } from "@lib/hooks/useSymbolicateStackTrace";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Dialog } from "@lib/newComponents/Dialog";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dialog } from "@lib/components/Dialog";
 
 export type SessionErrorDialogProps = {
     workbench: Workbench;

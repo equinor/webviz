@@ -5,16 +5,16 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Switch } from "@lib/newComponents/Switch";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
-import { TextInput } from "@lib/newComponents/TextInput";
+import { Collapsible } from "@lib/components/Collapsible";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Switch } from "@lib/components/Switch";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { TextInput } from "@lib/components/TextInput";
 
 import type { Interfaces } from "../interfaces";
-import { Hidden } from "@lib/newComponents/Hidden";
+import { Hidden } from "@lib/components/Hidden";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

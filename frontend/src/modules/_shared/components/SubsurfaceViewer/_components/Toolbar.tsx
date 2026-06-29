@@ -11,9 +11,9 @@ import {
 } from "@mui/icons-material";
 
 import { AddPathPointIcon, AxesLayerIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
-import { Button } from "@lib/newComponents/Button";
-import { Separator } from "@lib/newComponents/Separator";
-import { TextInput } from "@lib/newComponents/TextInput";
+import { Button } from "@lib/components/Button";
+import { Separator } from "@lib/components/Separator";
+import { TextInput } from "@lib/components/TextInput";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";

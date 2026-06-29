@@ -1,9 +1,9 @@
 import { useAtom } from "jotai";
 
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Collapsible } from "@lib/components/Collapsible";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Slider } from "@lib/components/Slider";
 
 import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
 

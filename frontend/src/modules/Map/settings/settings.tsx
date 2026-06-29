@@ -10,11 +10,11 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Hidden } from "@lib/components/Hidden";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import {
@@ -29,8 +29,8 @@ import type { Interfaces } from "../interfaces";
 import { AggregationDropdown } from "../UiComponents";
 
 import { surfaceAddressAtom } from "./atoms/baseAtoms";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import { NumberInput } from "@lib/components/NumberInput";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.None]: "Static",

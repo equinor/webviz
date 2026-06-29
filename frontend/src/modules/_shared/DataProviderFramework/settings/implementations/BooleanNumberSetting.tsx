@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Switch } from "@lib/newComponents/Switch";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Switch } from "@lib/components/Switch";
 
 import type {
     CustomSettingImplementation,

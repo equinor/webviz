@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link, Warning } from "@mui/icons-material";
 
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Banner } from "@lib/newComponents/Banner";
-import { TextInputCompositions } from "@lib/newComponents/TextInput/compositions";
-import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Banner } from "@lib/components/Banner";
+import { TextInputCompositions } from "@lib/components/TextInput/compositions";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 
 export type ConfirmationProps = {
     snapshotUrl: string;

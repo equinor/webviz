@@ -4,7 +4,7 @@ import { Error, Info, Warning } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/types/statusWriter";
 import { StatusMessageType } from "@framework/types/statusWriter";
-import { Popover } from "@lib/newComponents/Popover";
+import { Popover } from "@lib/components/Popover";
 
 export type StatusMessagesProps = { statusMessages: readonly StatusMessage[] };
 

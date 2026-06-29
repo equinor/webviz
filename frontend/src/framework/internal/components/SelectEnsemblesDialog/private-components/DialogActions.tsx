@@ -2,8 +2,8 @@ import type React from "react";
 
 import { Check } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
 
 export interface DialogActionsProps {
     isLoading: boolean;

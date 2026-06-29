@@ -1,6 +1,6 @@
 import { Warning } from "@mui/icons-material";
 
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type ErrorBadgeProps = {
     numErrors: number;

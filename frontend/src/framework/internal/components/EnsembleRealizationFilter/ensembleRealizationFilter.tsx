@@ -13,12 +13,12 @@ import {
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
-import { Button } from "@lib/newComponents/Button";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator/hasChangesIndicator";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { Separator } from "@lib/newComponents/Separator";
+import { Button } from "@lib/components/Button";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
+import { Hidden } from "@lib/components/Hidden";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { Separator } from "@lib/components/Separator";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ByParameterValueFilter } from "./private-components/byParameterValueFilter";

@@ -4,9 +4,9 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { isEqual } from "lodash";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Button } from "@lib/newComponents/Button";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Slider } from "@lib/newComponents/Slider";
+import { Button } from "@lib/components/Button";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Slider } from "@lib/components/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {

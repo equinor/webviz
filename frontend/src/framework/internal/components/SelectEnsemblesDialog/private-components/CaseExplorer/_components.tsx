@@ -1,8 +1,8 @@
 import type React from "react";
 
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { Avatar } from "@lib/newComponents/Avatar";
-import { TableCompositions } from "@lib/newComponents/Table/compositions";
+import { Avatar } from "@lib/components/Avatar";
+import { TableCompositions } from "@lib/components/Table/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**

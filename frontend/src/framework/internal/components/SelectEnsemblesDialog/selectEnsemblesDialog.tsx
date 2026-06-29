@@ -6,8 +6,8 @@ import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { Form } from "@lib/newComponents/Form";
+import { Dialog } from "@lib/components/Dialog";
+import { Form } from "@lib/components/Form";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -112,21 +112,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     // Apply selection hook
-    const {
-        handleApplyEnsembleSelection,
-        handleApplyEnsembleSelectionWithLoadingError,
-        ensembleLoadingErrorInfoMap,
-    } = useApplyEnsembleSelection({
-        queryClient,
-        workbenchSession,
-        selectedRegularEnsembles,
-        selectedDeltaEnsembles,
-        setIsEnsembleSetLoading,
-        onLoadingErrorsDetected: () => {
-            setShowEnsemblesLoadingErrorDialog(true);
-        },
-        onSuccess: handleClose,
-    });
+    const { handleApplyEnsembleSelection, handleApplyEnsembleSelectionWithLoadingError, ensembleLoadingErrorInfoMap } =
+        useApplyEnsembleSelection({
+            queryClient,
+            workbenchSession,
+            selectedRegularEnsembles,
+            selectedDeltaEnsembles,
+            setIsEnsembleSetLoading,
+            onLoadingErrorsDetected: () => {
+                setShowEnsemblesLoadingErrorDialog(true);
+            },
+            onSuccess: handleClose,
+        });
 
     const handleFormSubmit = React.useCallback(
         function handleFormSubmit(e: React.FormEvent) {

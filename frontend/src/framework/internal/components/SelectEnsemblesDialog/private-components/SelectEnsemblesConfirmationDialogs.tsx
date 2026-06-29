@@ -2,7 +2,7 @@ import type React from "react";
 
 import { EnsemblesLoadingErrorInfo } from "@framework/components/EnsemblesLoadingErrorInfo/ensemblesLoadingErrorInfo";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
 
 import type { StateTuple } from "../_hooks";
 

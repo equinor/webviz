@@ -2,7 +2,7 @@ import type React from "react";
 
 import { Close } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ReadoutList } from "../../Readout/ReadoutList";

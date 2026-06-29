@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SettingConfigButton } from "@lib/newComponents/SettingConfigButton/settingConfigButton";
+import { SettingConfigButton } from "@lib/components/SettingConfigButton/settingConfigButton";
 import type { PolygonVisualizationSpec } from "@modules/_shared/components/PolygonVisualizationForm";
 import { PolygonVisualizationForm, PolylinePreview } from "@modules/_shared/components/PolygonVisualizationForm";
 import { LabelPositionType } from "@modules/_shared/DataProviderFramework/visualization/deckgl/polygonUtils";

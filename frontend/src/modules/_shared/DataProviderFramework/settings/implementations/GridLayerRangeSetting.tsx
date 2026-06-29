@@ -4,11 +4,11 @@ import { cloneDeep, isEqual } from "lodash";
 
 import type { Grid3dZone_api } from "@api";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Button } from "@lib/newComponents/Button";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { Slider } from "@lib/newComponents/Slider";
+import { Button } from "@lib/components/Button";
+import { Combobox } from "@lib/components/Combobox";
+import { NumberInput } from "@lib/components/NumberInput";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { Slider } from "@lib/components/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {

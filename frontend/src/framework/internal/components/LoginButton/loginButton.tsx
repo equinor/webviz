@@ -4,10 +4,10 @@ import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { Avatar } from "@lib/newComponents/Avatar";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Popover } from "@lib/newComponents/Popover";
+import { Avatar } from "@lib/components/Avatar";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Popover } from "@lib/components/Popover";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { makeInitials } from "@lib/utils/userNames";
 

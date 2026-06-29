@@ -25,15 +25,15 @@ import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/co
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
-import { Button, type ButtonProps } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { HasChangesIndicator } from "@lib/newComponents/HasChangesIndicator";
-import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
-import { Popover } from "@lib/newComponents/Popover";
-import { Separator } from "@lib/newComponents/Separator";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Typography } from "@lib/newComponents/Typography";
-import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Button, type ButtonProps } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
+import { MenuCompositions } from "@lib/components/Menu/compositions";
+import { Popover } from "@lib/components/Popover";
+import { Separator } from "@lib/components/Separator";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

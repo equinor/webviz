@@ -1,13 +1,13 @@
 import type React from "react";
 
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 
 import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 type ValueType = number | null;
 type ValueConstraints = [number, number];

@@ -1,10 +1,10 @@
 import React from "react";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 const MIN_SELECTOR_SIZE = 3;
 const MAX_SELECTOR_SIZE = 10;

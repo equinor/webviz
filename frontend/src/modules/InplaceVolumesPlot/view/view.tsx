@@ -8,7 +8,7 @@ import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 
 import type { Interfaces } from "../interfaces";
 

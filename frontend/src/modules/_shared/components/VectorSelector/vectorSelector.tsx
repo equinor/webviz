@@ -3,8 +3,8 @@ import React from "react";
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { vectorDefinitions } from "@assets/vectorDefinitions";
 
-import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
-import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/newComponents/SmartNodeSelector";
+import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/components/SmartNodeSelector";
 
 import aquifer from "./private-assets/aquifer.svg";
 import block from "./private-assets/block.svg";

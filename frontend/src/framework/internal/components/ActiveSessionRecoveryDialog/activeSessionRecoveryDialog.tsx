@@ -7,14 +7,14 @@ import {
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Dialog } from "@lib/newComponents/Dialog";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dialog } from "@lib/components/Dialog";
 import { timeAgo } from "@lib/utils/dates";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
 
 export type ActiveSessionRecoveryDialogProps = {
     workbench: Workbench;

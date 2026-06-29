@@ -3,8 +3,8 @@ import React from "react";
 import { isEqual } from "lodash";
 
 import type { Parameter } from "@framework/EnsembleParameters";
-import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
-import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
+import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import {

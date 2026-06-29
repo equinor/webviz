@@ -1,7 +1,7 @@
 import React from "react";
 
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { ColorSelect } from "@lib/components/ColorSelect";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 import type {
@@ -78,12 +78,7 @@ export class SingleColorSetting implements StaticSettingImplementation<ValueType
             }
 
             return (
-                <ColorSelect
-                    onValueChange={handleColorChange}
-                    value={color!}
-                    size="small"
-                    disabled={props.disabled}
-                />
+                <ColorSelect onValueChange={handleColorChange} value={color!} size="small" disabled={props.disabled} />
             );
         };
     }

@@ -2,9 +2,9 @@ import type React from "react";
 
 import { GridView, Settings, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { Menu } from "@lib/newComponents/Menu";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Menu } from "@lib/components/Menu";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import { ViewLayout } from "../enums/viewLayout";
 

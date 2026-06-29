@@ -5,7 +5,7 @@ import type { ViewContext } from "@framework/ModuleContext";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
-import { Tag } from "@lib/newComponents/Tag";
+import { Tag } from "@lib/components/Tag";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import type { EnsemblePerRealizationResponse } from "@modules/_shared/SensitivityProcessing/types";

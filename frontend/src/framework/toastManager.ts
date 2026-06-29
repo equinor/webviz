@@ -1,3 +1,3 @@
-import { createToastManager } from "@lib/newComponents/Toast";
+import { createToastManager } from "@lib/components/Toast";
 
 export const toastManager = createToastManager();

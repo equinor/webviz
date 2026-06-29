@@ -4,11 +4,11 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Collapsible } from "@lib/components/Collapsible";
+import { Combobox } from "@lib/components/Combobox";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Slider } from "@lib/components/Slider";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 
 import type { Interfaces } from "../interfaces";

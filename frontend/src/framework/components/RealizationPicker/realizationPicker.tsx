@@ -7,7 +7,7 @@ import { Key } from "ts-key-enum";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Direction, useListFocus } from "@lib/hooks/useListFocus";
 import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { RealizationNumberLimits } from "./_utils";

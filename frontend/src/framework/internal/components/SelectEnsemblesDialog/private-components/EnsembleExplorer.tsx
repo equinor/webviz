@@ -5,14 +5,14 @@ import { Add, Check, CheckBox, CheckBoxOutlineBlank, Close, FilterList, Remove }
 import { type EnsembleInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Button } from "@lib/newComponents/Button";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { Field } from "@lib/newComponents/Field";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { Separator } from "@lib/newComponents/Separator";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Typography } from "@lib/newComponents/Typography";
+import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
+import { Field } from "@lib/components/Field";
+import { Hidden } from "@lib/components/Hidden";
+import { Separator } from "@lib/components/Separator";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { InternalRegularEnsembleSetting } from "../types";

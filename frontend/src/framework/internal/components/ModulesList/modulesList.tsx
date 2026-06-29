@@ -7,7 +7,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { debugFlagIsEnabled, SHOW_DEBUG_MODULES_FLAG } from "@framework/utils/debug";
 import type { Workbench } from "@framework/Workbench";
-import { Collapsible } from "@lib/newComponents/Collapsible";
+import { Collapsible } from "@lib/components/Collapsible";
 import { isDevMode } from "@lib/utils/devMode";
 
 import { ModuleDetailsPopover } from "./moduleDetailsPopover";

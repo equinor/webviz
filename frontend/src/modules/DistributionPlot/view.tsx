@@ -9,7 +9,7 @@ import type { ChannelReceiverChannelContent, ChannelReceiverReturnData } from "@
 import { KeyKind } from "@framework/types/dataChannnel";
 import { useColorSet, useContinuousColorScale } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Tag } from "@lib/newComponents/Tag";
+import { Tag } from "@lib/components/Tag";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import type { Size2D } from "@lib/utils/geometry";

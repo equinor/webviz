@@ -7,10 +7,10 @@ import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags"
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
+import { TextInput } from "@lib/components/TextInput";
+import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type TemplatesDialogProps = {

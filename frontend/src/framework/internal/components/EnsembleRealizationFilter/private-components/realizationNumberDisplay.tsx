@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Paragraph } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type RealizationNumberDisplayProps = {

@@ -5,7 +5,7 @@ import { Help } from "@mui/icons-material";
 import { GuiEvent, type GuiMessageBroker } from "@framework/GuiMessageBroker";
 import type { ModuleDevState } from "@framework/Module";
 import type { DrawPreviewFunc } from "@framework/Preview";
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, pointRelativeToDomRect, type Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

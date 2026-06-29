@@ -3,8 +3,8 @@ import React from "react";
 import { DensityMedium, DensitySmall } from "@mui/icons-material";
 
 import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
-import { Button } from "@lib/newComponents/Button";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 const LOCAL_STORAGE_KEY = "density";
 

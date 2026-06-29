@@ -10,8 +10,8 @@ import {
 } from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
-import { ContentHidden } from "@lib/newComponents/Hidden";
+import { AlertDialog } from "@lib/components/AlertDialog";
+import { ContentHidden } from "@lib/components/Hidden";
 
 import { ModulesList } from "../ModulesList";
 

@@ -4,9 +4,9 @@ import { clamp } from "lodash";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Slider } from "@lib/newComponents/Slider";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Slider } from "@lib/components/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";

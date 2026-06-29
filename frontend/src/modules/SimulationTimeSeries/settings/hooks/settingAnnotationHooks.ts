@@ -1,7 +1,7 @@
 import type { QueryObserverResult } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 
-import type { SettingAnnotation } from "@lib/newComponents/SettingWrapper";
+import type { SettingAnnotation } from "@lib/components/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { makeResampleFrequencyWarningString } from "@modules/SimulationTimeSeries/utils/resamplingFrequencyUtils";
 

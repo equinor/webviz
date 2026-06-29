@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import { FieldCompositions } from "@lib/components/Field/compositions";
 
 import type {
     CustomSettingImplementation,

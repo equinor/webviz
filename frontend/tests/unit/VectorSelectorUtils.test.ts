@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 import {
     addVectorToVectorSelectorData,
     createVectorSelectorDataFromVectors,

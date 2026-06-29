@@ -1,7 +1,7 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { SettingWrapper } from "@lib/components/SettingWrapper";
 
 //
 // Sub-component for aggregation/statistic selection
