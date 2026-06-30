@@ -304,6 +304,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         }
 
         if (!isEqual(prevZFactor, props.zFactor)) {
+            // eslint-disable-next-line react-hooks/immutability -- The Esv controller offers no immutable way to adjust this
             esvController.zoomPanHandler.zFactor = props.zFactor ?? 1;
 
             // At zFactor 10, showing a full wellbore path would hit the default 0.1 limit

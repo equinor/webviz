@@ -9,21 +9,19 @@ export type TimeAgoProps = {
 };
 
 export function TimeAgo(props: TimeAgoProps): React.ReactNode {
-    const [timeString, setTimeString] = React.useState<string>(timeAgo(Date.now() - props.datetimeMs, props.shorten));
+    const [time, setTime] = React.useState<number>(() => Date.now());
 
     React.useEffect(
         function updateTimeString() {
-            setTimeString(timeAgo(Date.now() - props.datetimeMs, props.shorten));
-
-            function update() {
-                setTimeString(timeAgo(Date.now() - props.datetimeMs, props.shorten));
-            }
-
-            const intervalId = setInterval(update, props.updateIntervalMs ?? 30000);
-
+            const intervalId = setInterval(() => setTime(Date.now()), props.updateIntervalMs ?? 30000);
             return () => clearInterval(intervalId);
         },
-        [props.datetimeMs, props.updateIntervalMs, props.shorten],
+        [props.updateIntervalMs],
+    );
+
+    const timeString = React.useMemo(
+        () => timeAgo(time - props.datetimeMs, props.shorten),
+        [props.datetimeMs, props.shorten, time],
     );
 
     return <> {timeString} </>;
