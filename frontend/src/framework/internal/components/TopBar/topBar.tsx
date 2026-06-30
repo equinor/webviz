@@ -4,6 +4,7 @@ import { Icon } from "@equinor/eds-core-react";
 import { category } from "@equinor/eds-icons";
 import {
     AddLink,
+    Apps,
     ArrowDropDown,
     Close,
     Edit,
@@ -12,12 +13,14 @@ import {
     Info,
     Link,
     Lock,
+    OpenInNew,
     Refresh,
     Save,
     SaveAs,
 } from "@mui/icons-material";
 
 import { FmuLogo } from "@assets/FmuLogo";
+import SumoLogo from "@assets/sumo.svg";
 
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
@@ -66,6 +69,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     },
                 )}
             >
+                <FmuAppsButton />
                 <LogoWithText />
                 <div className="gap-x-xs flex min-w-0 grow items-center">
                     {hasActiveSession ? (
@@ -89,6 +93,39 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         </>
     );
 }
+
+function FmuAppsButton(): React.ReactNode {
+    return (
+        <Popover.Root>
+            <Tooltip content="FMU Apps" side="bottom">
+                <Popover.Trigger variant="ghost" tone="accent" iconOnly>
+                    <Apps fontSize="small" />
+                </Popover.Trigger>
+            </Tooltip>
+            <Popover.Popup side="bottom">
+                <Popover.Content>
+                    <Button.AsLink variant="ghost" tone="accent" target="_blank" href="https://sumo.fmu.equinor.com/">
+                        <div className="gap-2xs flex flex-col items-center">
+                            <img src={SumoLogo} className="h-5 w-5" />
+                            <span>
+                                Sumo <OpenInNew />
+                            </span>
+                        </div>
+                    </Button.AsLink>
+                    <Button.AsLink variant="ghost" tone="accent" target="_blank" href="https://fmu.equinor.com/">
+                        <div className="gap-2xs flex flex-col items-center">
+                            <FmuLogo className="h-5 w-5" />
+                            <span>
+                                FMU Analysis <OpenInNew />
+                            </span>
+                        </div>
+                    </Button.AsLink>
+                </Popover.Content>
+            </Popover.Popup>
+        </Popover.Root>
+    );
+}
+
 function LogoWithText(): React.ReactNode {
     return (
         <div className="gap-x-sm flex flex-row items-center">
