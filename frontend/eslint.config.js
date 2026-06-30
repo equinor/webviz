@@ -13,6 +13,7 @@ export default eslintTypescript.config(
     reactPlugin.configs.flat.recommended,
     reactPlugin.configs.flat["jsx-runtime"],
     importPlugin.flatConfigs.recommended,
+    reactHooksPlugin.configs.flat.recommended,
     // Configure typescript resolver
     // ! Make sure "eslint-import-resolver-typescript" is installed
     {
@@ -27,10 +28,11 @@ export default eslintTypescript.config(
     // ! Currently unable to directly import recommended hooks-plugin config. Need to manually set them up for now
     // ! See: https://github.com/facebook/react/issues/32431
     // Once resolved, replace with this: reactHooksPlugin.configs["recommended-latest"],
-    {
-        plugins: { "react-hooks": reactHooksPlugin },
-        rules: { ...reactHooksPlugin.configs.recommended.rules },
-    },
+    // {
+    //     plugins: { "react-hooks": reactHooksPlugin },
+    //     rules: { ...reactHooksPlugin.configs.recommended.rules },
+    // },
+
     // Specify react version (stops a warning when running lint)
     { settings: { react: { version: "detect" } } },
     // Make import plugin work with typescript files
@@ -58,6 +60,15 @@ export default eslintTypescript.config(
         // generate-api will end up using this config (disregarding the src/api ignore above). The generated code uses the occasional ts-comment, so we need to relax the rule a bit for these
         files: ["src/api/**"],
         rules: { "@typescript-eslint/ban-ts-comment": "off" },
+    },
+
+    {
+        rules: {
+            // TODO: These rules were introduced after deps update. It's relevant in a lot of files and might so we'll hold off while we wait for the EDS branch to be merged
+            "react-hooks/set-state-in-effect": "off",
+            "react-hooks/refs": "off",
+            "react-hooks/purity": "off",
+        },
     },
     {
         rules: {
