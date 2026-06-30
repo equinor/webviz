@@ -398,7 +398,7 @@ export class Tag extends React.Component<TagProps> {
                         !isDuplicate &&
                         treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-3xs" />}
                     {(valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1 && (
-                        <span className="mr-3xs flex h-4 w-4 shrink-0 items-center justify-center">
+                        <span className="mr-xs flex h-4 w-4 shrink-0 items-center justify-center">
                             {treeNodeSelection.icons()[0]}
                         </span>
                     )}

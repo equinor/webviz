@@ -202,7 +202,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             ),
                         }}
                     >
-                        <div className="gap-vertical-xs flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
                                 disabled={isChartSettingsDisabled}
                                 label="Show realization points"

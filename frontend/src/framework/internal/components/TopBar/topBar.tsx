@@ -59,7 +59,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
         <>
             <div
                 className={resolveClassNames(
-                    "border-neutral-subtle shadow-elevation-raised z-sticky gap-x-sm py-2xs px-xs flex flex-row items-center border-b-2",
+                    "border-neutral-subtle shadow-elevation-raised gap-x-sm py-2xs px-xs flex flex-row items-center border-b-2",
                     {
                         "bg-surface": hasActiveSession,
                         "bg-transparent": !hasActiveSession,

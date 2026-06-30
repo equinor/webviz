@@ -6,19 +6,21 @@ import { vectorDefinitions } from "@assets/vectorDefinitions";
 import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/components/SmartNodeSelector";
 
-import aquifer from "./private-assets/aquifer.svg";
-import block from "./private-assets/block.svg";
-import calculated from "./private-assets/calculated.svg";
-import field from "./private-assets/field.svg";
-import group from "./private-assets/group.svg";
-import misc from "./private-assets/misc.svg";
-import network from "./private-assets/network.svg";
-import others from "./private-assets/others.svg";
-import region_region from "./private-assets/region-region.svg";
-import region from "./private-assets/region.svg";
-import segment from "./private-assets/segment.svg";
-import well_completion from "./private-assets/well-completion.svg";
-import well from "./private-assets/well.svg";
+import {
+    AquiferIcon,
+    BlockIcon,
+    CalculatedIcon,
+    FieldIcon,
+    GroupIcon,
+    MiscIcon,
+    NetworkIcon,
+    OthersIcon,
+    RegionIcon,
+    RegionRegionIcon,
+    SegmentIcon,
+    WellCompletionIcon,
+    WellIcon,
+} from "./private-assets/icons";
 import { VectorSelection } from "./private-utils/VectorSelection";
 
 export type VectorSelectorProps = SmartNodeSelectorProps & {
@@ -167,20 +169,21 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         numMetaNodes: number,
         vectorDefinitions: VectorDefinitionsType,
     ): TreeDataNode[] {
+        const iconStyle = { fontSize: "1.25em" } as const;
         const typeIcons: Record<string, JSX.Element> = {
-            aquifer: <img src={aquifer} alt="aquifer" />,
-            block: <img src={block} alt="block" />,
-            calculated: <img src={calculated} alt="calculated" />,
-            field: <img src={field} alt="field" />,
-            group: <img src={group} alt="group" />,
-            misc: <img src={misc} alt="misc" />,
-            network: <img src={network} alt="network" />,
-            others: <img src={others} alt="others" />,
-            region: <img src={region} alt="region" />,
-            "region-region": <img src={region_region} alt="region-region" />,
-            segment: <img src={segment} alt="segment" />,
-            well: <img src={well} alt="well" />,
-            "well-completion": <img src={well_completion} alt="well-completion" />,
+            aquifer: <AquiferIcon style={iconStyle} />,
+            block: <BlockIcon style={iconStyle} />,
+            calculated: <CalculatedIcon style={iconStyle} />,
+            field: <FieldIcon style={iconStyle} />,
+            group: <GroupIcon style={iconStyle} />,
+            misc: <MiscIcon style={iconStyle} />,
+            network: <NetworkIcon style={iconStyle} />,
+            others: <OthersIcon style={iconStyle} />,
+            region: <RegionIcon style={iconStyle} />,
+            "region-region": <RegionRegionIcon style={iconStyle} />,
+            segment: <SegmentIcon style={iconStyle} />,
+            well: <WellIcon style={iconStyle} />,
+            "well-completion": <WellCompletionIcon style={iconStyle} />,
         };
         const populateData = (data: TreeDataNode[] | undefined, level: number) => {
             const newData: TreeDataNode[] = [];

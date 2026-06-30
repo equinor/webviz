@@ -103,7 +103,7 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
                         stacked
                         labelFor={correlationSliderRef}
                     >
-                        <div className="gap-vertical-xs flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <Slider
                                 value={correlationThreshold}
                                 onValueChange={handleThresholdChanged}
@@ -111,8 +111,9 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
                                 max={1}
                                 step={0.01}
                                 ref={correlationSliderRef}
+                                markerLabels
                             />
-                            <div className="gap-vertical-xs flex flex-col">
+                            <div className="flex flex-col">
                                 <CheckboxCompositions.WithLabel
                                     label="Blank individual cells below cutoff"
                                     checked={hideIndividualCells}
@@ -135,7 +136,7 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
                         </div>
                     </Setting.Field>
                     <Setting.Field label="Scale and labels" stacked>
-                        <div className="gap-vertical-xs flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
                                 label="Show parameter labels"
                                 checked={showLabels}

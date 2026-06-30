@@ -269,7 +269,9 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value: number) => roundContinuousValue(value)}
                 onValueChange={(newValue) => handleContinuousParameterValueRangeChange(parameterIdentString, newValue)}
-                showRangeLocks
+                markerLabels={(value: number) => roundContinuousValue(value)}
+                disabled={props.disabled}
+                layoutClassName="mx-md"
             />
         );
     }

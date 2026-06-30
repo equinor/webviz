@@ -3,6 +3,7 @@ import React from "react";
 import { Search } from "@mui/icons-material";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import type { LayoutElement } from "@framework/internal/Dashboard";
 import { ModuleDataTags, type ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { TemplateRegistry, type Template } from "@framework/TemplateRegistry";
@@ -12,6 +13,8 @@ import { Dialog } from "@lib/components/Dialog";
 import { TextInput } from "@lib/components/TextInput";
 import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
 
 export type TemplatesDialogProps = {
     workbench: Workbench;
@@ -140,7 +143,7 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     return (
         <div className="gap-y-sm px-sm py-xs flex flex-col">
             <Heading as="h6">{props.template.name}</Heading>
-            {drawTemplatePreview(props.template, 180, 150)}
+            <DashboardPreview layout={templateToLayoutElements(props.template)} width={180} height={150} />
             <div className="text-neutral-subtle text-sm">{props.template.description}</div>
             <div>
                 <strong>Modules:</strong>
@@ -162,53 +165,11 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     );
 }
 
-function drawTemplatePreview(template: Template, width: number, height: number): React.ReactNode {
-    return (
-        <svg
-            width={width}
-            height={height}
-            viewBox={`0 0 ${width} ${height}`}
-            xmlns="http://www.w3.org/2000/svg"
-            version="1.1"
-        >
-            {template.moduleInstances.map((element, idx) => {
-                const w = element.layout.relWidth * width;
-                const h = element.layout.relHeight * height;
-                const x = element.layout.relX * width;
-                const y = element.layout.relY * height;
-                const strokeWidth = 2;
-                const headerHeight = 10;
-                const module = ModuleRegistry.getModule(element.moduleName);
-                const drawFunc = module.getDrawPreviewFunc();
-                return (
-                    <g key={`${element.moduleName}-${idx}`}>
-                        <rect x={x} y={y} width={w} height={h} fill="white" stroke="#aaa" strokeWidth={strokeWidth} />
-                        <rect
-                            x={x + strokeWidth / 2}
-                            y={y + strokeWidth / 2}
-                            width={w - strokeWidth}
-                            height={headerHeight}
-                            fill="#eee"
-                            strokeWidth="0"
-                        />
-                        <text
-                            x={x + strokeWidth}
-                            y={y + headerHeight / 2 + strokeWidth / 2}
-                            dominantBaseline="middle"
-                            textAnchor="start"
-                            fontSize="3"
-                            fill="#000"
-                        >
-                            {element.moduleName}
-                        </text>
-                        <g transform={`translate(${x + 2 * strokeWidth}, ${y + headerHeight + 2 * strokeWidth})`}>
-                            {drawFunc && drawFunc(w - 4 * strokeWidth, h - headerHeight - 4 * strokeWidth)}
-                        </g>
-                    </g>
-                );
-            })}
-        </svg>
-    );
+function templateToLayoutElements(template: Template): LayoutElement[] {
+    return template.moduleInstances.map((instance) => ({
+        moduleName: instance.moduleName,
+        ...instance.layout,
+    }));
 }
 
 type TemplatesListItemProps = {
@@ -233,7 +194,9 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
                 onClick={props.onClick}
             >
                 <div style={{ width: 64, height: 64 }}>
-                    {props.template && drawTemplatePreview(props.template, 64, 64)}
+                    {props.template && (
+                        <DashboardPreview layout={templateToLayoutElements(props.template)} width={64} height={64} />
+                    )}
                 </div>
                 <div>
                     <div className="font-bolder">{props.template.name}</div>

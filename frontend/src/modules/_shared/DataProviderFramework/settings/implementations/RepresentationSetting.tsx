@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
@@ -86,7 +86,7 @@ export class RepresentationSetting implements CustomSettingImplementation<ValueT
             }
 
             return (
-                <ComboboxCompositions.WithBrowseButtons
+                <Combobox
                     items={options}
                     value={props.value}
                     onValueChange={props.onValueChange}

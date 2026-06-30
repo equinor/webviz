@@ -112,7 +112,7 @@ export function ParametersSelector({
         }));
 
     return (
-        <div className="gap-y-sm flex flex-col">
+        <>
             <Setting.Field label="Parameter groups" stacked>
                 <Select
                     options={groupSelectOptions}
@@ -127,27 +127,29 @@ export function ParametersSelector({
                 />
             </Setting.Field>
             <Setting.Field label="Parameters" stacked>
-                <SwitchCompositions.WithLabel
-                    label="Auto-select all on group change"
-                    checked={autoSelectAllOnGroupChange}
-                    onCheckedChange={setAutoSelectAllOnGroupChange}
-                    size="small"
-                />
-                <Select
-                    value={selectedParameterIdents.map((p) => p.toString())}
-                    onValueChange={handleParameterChange}
-                    options={parameterSelectOptions}
-                    multiple={true}
-                    size={Math.min(
-                        MAX_SELECTOR_SIZE,
-                        parameterSelectOptions.length > MIN_SELECTOR_SIZE
-                            ? parameterSelectOptions.length
-                            : MIN_SELECTOR_SIZE,
-                    )}
-                    filter
-                    showQuickSelectButtons
-                />
+                <div className="gap-y-xs flex flex-col">
+                    <SwitchCompositions.WithLabel
+                        label="Auto-select all on group change"
+                        checked={autoSelectAllOnGroupChange}
+                        onCheckedChange={setAutoSelectAllOnGroupChange}
+                        size="small"
+                    />
+                    <Select
+                        value={selectedParameterIdents.map((p) => p.toString())}
+                        onValueChange={handleParameterChange}
+                        options={parameterSelectOptions}
+                        multiple={true}
+                        size={Math.min(
+                            MAX_SELECTOR_SIZE,
+                            parameterSelectOptions.length > MIN_SELECTOR_SIZE
+                                ? parameterSelectOptions.length
+                                : MIN_SELECTOR_SIZE,
+                        )}
+                        filter
+                        showQuickSelectButtons
+                    />
+                </div>
             </Setting.Field>
-        </div>
+        </>
     );
 }

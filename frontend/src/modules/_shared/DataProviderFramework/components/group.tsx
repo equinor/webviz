@@ -76,7 +76,7 @@ function Header(props: HeaderProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames(
-                "bg-neutral-canvas sortable-list-item-header border-b-neutral-subtle px-3xs gap-x-3xs text-body-sm flex h-8 w-full items-center border-b",
+                "bg-neutral/50 sortable-list-item-header border-b-neutral-subtle px-3xs gap-x-3xs text-body-sm flex h-8 w-full items-center border-b",
                 {
                     "bg-neutral-hovered!": props.hovered,
                 },

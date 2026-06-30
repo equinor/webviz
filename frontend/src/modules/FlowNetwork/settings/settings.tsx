@@ -12,6 +12,7 @@ import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
+import { Typography } from "@lib/components/Typography";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -196,7 +197,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label={`Time step${selectedDateTime.value ? `: (${selectedDateTime.value})` : ""}`}
+                        label="Time step"
                         loadingOverlay={selectedDateTime.isLoading}
                         annotations={selectedDateTimeAnnotations}
                         errorOverlay={selectedDateTime.depsHaveError ? "Could not load time steps." : undefined}
@@ -210,6 +211,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             valueLabelFormat={createValueLabelFormat}
                             onValueChange={handleSelectedTimeStepIndexChange}
                         />
+                        <Typography tone="neutral" size="sm">
+                            {selectedDateTime.value ? selectedDateTime.value : "No time step selected"}
+                        </Typography>
                     </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>

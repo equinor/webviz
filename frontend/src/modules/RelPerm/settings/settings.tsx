@@ -343,7 +343,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 </Setting.Section>
                 <Setting.Section title="Plot">
                     <Setting.Field label="Display">
-                        <div className="gap-vertical-xs flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
                                 label="Individual realizations"
                                 checked={showIndividualRealizations}

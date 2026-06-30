@@ -34,7 +34,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                         const x = element.relX * width;
                         const y = element.relY * height;
                         const strokeWidth = 2;
-                        const headerHeight = 10;
+                        const headerHeight = 6;
                         const module = ModuleRegistry.getModule(element.moduleName);
                         const drawFunc = module.getDrawPreviewFunc();
                         return (
@@ -44,8 +44,8 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                                     y={y}
                                     width={w}
                                     height={h}
-                                    fill="white"
-                                    stroke="#aaa"
+                                    fill="var(--eds-color-bg-canvas)"
+                                    stroke="var(--eds-color-border-neutral-subtle)"
                                     strokeWidth={strokeWidth}
                                 />
                                 <rect
@@ -53,7 +53,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                                     y={y + strokeWidth / 2}
                                     width={w - strokeWidth}
                                     height={headerHeight}
-                                    fill="#eee"
+                                    fill="var(--eds-color-bg-neutral-fill-muted-default)"
                                     strokeWidth="0"
                                 />
                                 <text
@@ -62,7 +62,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                                     dominantBaseline="middle"
                                     textAnchor="start"
                                     fontSize="3"
-                                    fill="#000"
+                                    fill="currentColor"
                                 >
                                     {element.moduleName}
                                 </text>

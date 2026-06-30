@@ -2,7 +2,7 @@ import React from "react";
 
 import { Combobox as ComboboxBase } from "@base-ui/react";
 import type { ComboboxRootProps } from "@base-ui/react";
-import { Clear, Error, UnfoldMore } from "@mui/icons-material";
+import { Clear, Error, ExpandMore } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -194,23 +194,20 @@ function ComboboxComponent<TValue, TMultiple extends boolean | undefined = false
 
                 {/* --- Controls --- */}
                 <div className="gap-selectable -mr-3xs box-border flex h-full shrink-0 items-center justify-center empty:hidden">
+                    <ComboboxBase.Trigger
+                        className="box-border flex items-center justify-center"
+                        aria-label="Open options"
+                    >
+                        <ExpandMore />
+                    </ComboboxBase.Trigger>
                     {defaultedProps.showClearAllButton && (
                         <ComboboxBase.Clear
                             aria-label="Clear selection"
                             render={<Button tone="neutral" iconOnly variant="ghost" size="small" />}
                         >
-                            <Clear fontSize="inherit" />
+                            <Clear />
                         </ComboboxBase.Clear>
                     )}
-                    {(!defaultedProps.multiple || defaultedProps.selectionMode === "count") &&
-                        !defaultedProps.endAdornment && (
-                            <ComboboxBase.Trigger
-                                className="box-border flex items-center justify-center"
-                                aria-label="Open options"
-                            >
-                                <UnfoldMore fontSize="inherit" />
-                            </ComboboxBase.Trigger>
-                        )}
                     {defaultedProps.endAdornment && (
                         <div className="flex items-center">{defaultedProps.endAdornment}</div>
                     )}

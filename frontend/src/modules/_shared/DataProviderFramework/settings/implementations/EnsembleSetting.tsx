@@ -66,7 +66,6 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
                     value={props.value}
                     onValueChange={props.onValueChange}
                     disabled={props.disabled}
-                    showBrowseButtons
                 />
             );
         };

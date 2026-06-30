@@ -108,7 +108,7 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
             <ComboboxCompositions.WithBrowseButtons
                 {...rest}
                 items={optionsArray}
-                value={value?.toString()}
+                value={value?.toString() ?? null}
                 onValueChange={handleSelectionChange}
                 renderItemAdornment={renderItemAdornment}
             />
@@ -119,7 +119,7 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
         <Combobox
             {...rest}
             items={optionsArray}
-            value={value?.toString()}
+            value={value?.toString() ?? null}
             onValueChange={handleSelectionChange}
             renderItemAdornment={renderItemAdornment}
         />

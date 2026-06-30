@@ -165,6 +165,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     multiple
                     showClearAllButton
                     onValueChange={setSettledGroupByIndices}
+                    placeholder="Select one ore more groups..."
                 />
             </Setting.Field>
         </Setting.Section>

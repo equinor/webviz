@@ -312,6 +312,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                         scrubAdornment="steps"
                         scrubAreaPosition="end"
                         onValueChange={handleNumStepsChange}
+                        size="small"
                     />
                 </div>
             </FieldCompositions.Default>

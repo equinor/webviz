@@ -268,7 +268,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     <Tooltip content="Filter cases by selected Standard Results" delay="medium">
                         <Combobox
                             value={selectedStandardResults}
-                            placeholder="Standard Results"
+                            placeholder="Filter by Standard Results..."
                             multiple
                             items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
                             disabled={casesStandardResults.length === 0}
