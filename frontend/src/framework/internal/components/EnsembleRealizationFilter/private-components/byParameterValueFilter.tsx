@@ -265,11 +265,12 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 max={parameterMinMax.max}
                 min={parameterMinMax.min}
                 step={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max)}
+                largeStep={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max) * 10}
                 value={immediateValue ?? [valueSelection.start, valueSelection.end]}
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value: number) => roundContinuousValue(value)}
+                markerLabels={(value) => roundContinuousValue(value)}
                 onValueChange={(newValue) => handleContinuousParameterValueRangeChange(parameterIdentString, newValue)}
-                showRangeLocks
             />
         );
     }
