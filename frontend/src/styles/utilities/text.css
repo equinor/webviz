@@ -1,12 +1,10 @@
-@layer utilities {
+@utility truncate-small-squished-fix {
     /* 
      * When using leading-body-sm-squished, the line height becomes so small that truncation
      * causes text to get cut under it's baseline. This ads a small reverted bottom padding
      * to expand the content box slightly (without affecting layout)
     */
-    .truncate-small-squished-fix {
-        @apply truncate;
-        padding-bottom: 0.25rem;
-        margin-bottom: -0.25rem;
-    }
+    @apply truncate;
+    padding-bottom: 0.25rem;
+    margin-bottom: -0.25rem;
 }
