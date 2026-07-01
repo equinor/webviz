@@ -5,11 +5,11 @@
     @apply min-h-selectable-md px-sm py-xs;
 
     &[data-size="small"] {
-        @apply min-h-selectable-sm pl-sm pr-xs py-3xs;
+        @apply min-h-selectable-sm pl-sm py-3xs;
     }
 
     &[data-size="large"] {
-        @apply min-h-selectable-lg px-md py-sm;
+        @apply min-h-selectable-lg pl-md py-sm;
     }
 
     /* Icon size */
@@ -27,7 +27,10 @@
 
     /* Field wrapper */
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply gap-4xs flex h-5 items-center rounded bg-transparent p-0 text-inherit! shadow-none!;
+        [role="presentation"] {
+            @apply inline!;
+        }
+        @apply gap-4xs h-full items-center rounded bg-transparent p-0 text-inherit! shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
@@ -36,12 +39,12 @@
 
     /* Segments (date input fields) */
     & [class*="Segment"] {
-        @apply text-body-md focus-within:bg-canvas h-5! text-inherit outline-0;
+        @apply text-body-md focus-within:bg-canvas text-inherit outline-0;
     }
 
     /* Segments (date input fields) */
     & [class*="Segment"] {
-        @apply text-body-md focus-within:bg-canvas h-5! text-inherit outline-0;
+        @apply text-body-md focus-within:bg-canvas inline text-inherit outline-0;
     }
 
     & .placeholder,
@@ -72,11 +75,11 @@
     }
 
     &[data-size="small"] [class*="Segment"] {
-        @apply text-body-xs! leading-body-xs-squished! h-3!;
+        @apply text-body-xs! leading-body-xs-squished!;
     }
 
     &[data-size="large"] [class*="Segment"] {
-        @apply text-body-lg h-6!;
+        @apply text-body-lg;
     }
 
     & [class*="Segment"]:focus-visible {
@@ -84,7 +87,7 @@
     }
 
     & [class*="Toggle__StyledButton"] {
-        @apply text-accent-subtle hover:bg-accent-hover active:bg-accent-active aspect-square rounded!;
+        @apply text-accent-subtle hover:bg-accent-hover active:bg-accent-active aspect-square rounded! align-middle;
     }
 
     &[data-size="small"] [class*="Toggle__StyledButton"] {
