@@ -192,7 +192,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             items={nodeMetadataList.map((item) => {
                                 return { label: item.label, value: item.key };
                             })}
-                            value={selectedNodeKey.value ?? undefined}
+                            value={selectedNodeKey.value ?? null}
                             onValueChange={(v) => v && setSelectedNodeKey(v)}
                         />
                     </Setting.Field>
@@ -215,7 +215,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                         return createValueLabelFormat(v);
                                     }
                                 }}
-                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
+                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : 0}
                                 valueLabelFormat={createValueLabelFormat}
                                 onValueChange={handleSelectedTimeStepIndexChange}
                             />
