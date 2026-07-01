@@ -192,7 +192,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                 items={availableRealizations.map((real) => {
                                     return { label: real.toString(), value: real };
                                 })}
-                                value={selectedRealization.value ?? undefined}
+                                value={selectedRealization.value ?? null}
                                 onValueChange={(v) => v !== null && setSelectedRealization(v)}
                                 disabled={!isSingleRealizationMode}
                                 placeholder="Select realization..."

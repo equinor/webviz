@@ -160,7 +160,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             items={availableTreeTypes.map((type) => {
                                 return { value: type, label: type };
                             })}
-                            value={selectedTreeType.value ?? undefined}
+                            value={selectedTreeType.value ?? null}
                             onValueChange={(v) => v && setSelectedTreeType(v)}
                         />
                     </Setting.Field>
@@ -176,7 +176,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             items={edgeMetadataList.map((item) => {
                                 return { label: item.label, value: item.key };
                             })}
-                            value={selectedEdgeKey.value ?? undefined}
+                            value={selectedEdgeKey.value ?? null}
                             onValueChange={(v) => v && setSelectedEdgeKey(v)}
                         />
                     </Setting.Field>
