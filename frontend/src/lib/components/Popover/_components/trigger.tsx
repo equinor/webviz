@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import type { PopoverTriggerProps as PopoverTriggerBaseProps } from "@base-ui/react/popover";
 import { Popover as PopoverBase } from "@base-ui/react/popover";
@@ -15,7 +15,7 @@ export type TriggerProps = ComponentWrapperProps<
     children: React.ReactNode;
 } & Omit<PopoverTriggerBaseProps, "className" | "nativeButton" | "render">;
 
-function TriggerComponent(props: TriggerProps, ref: React.ForwardedRef<HTMLButtonElement>) {
+export function Trigger(props: TriggerProps): React.ReactNode {
     const baseProps = resolveWrapperProps(props, "variant", "size", "tone", "round", "iconOnly", "compact", "children");
 
     return (
@@ -24,7 +24,6 @@ function TriggerComponent(props: TriggerProps, ref: React.ForwardedRef<HTMLButto
             render={(p, state) => (
                 <Button
                     {...p}
-                    ref={ref}
                     round={props.round}
                     iconOnly={props.iconOnly}
                     variant={props.variant}
@@ -39,5 +38,3 @@ function TriggerComponent(props: TriggerProps, ref: React.ForwardedRef<HTMLButto
         />
     );
 }
-
-export const Trigger = React.forwardRef<HTMLButtonElement, TriggerProps>(TriggerComponent);

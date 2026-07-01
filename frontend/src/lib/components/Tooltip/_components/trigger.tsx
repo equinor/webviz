@@ -1,5 +1,4 @@
 import type React from "react";
-import { forwardRef } from "react";
 
 import type { TooltipTriggerProps as TooltipTriggerBaseProps } from "@base-ui/react/tooltip";
 import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
@@ -25,13 +24,11 @@ export type TriggerProps = WrappedTriggerProps & {
     delay?: keyof typeof DELAY_MS_MAP;
 };
 
-function TriggerComponent(props: TriggerProps, ref: React.ForwardedRef<HTMLButtonElement>) {
+export function Trigger(props: TriggerProps): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
     const baseProps = resolveWrapperProps(defaultedProps, "delay", "children");
 
     const delayMs = DELAY_MS_MAP[defaultedProps.delay];
 
-    return <TooltipBase.Trigger {...baseProps} ref={ref} delay={delayMs} render={props.children} />;
+    return <TooltipBase.Trigger {...baseProps} delay={delayMs} render={props.children} />;
 }
-
-export const Trigger = forwardRef(TriggerComponent);
