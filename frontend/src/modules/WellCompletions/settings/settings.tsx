@@ -225,6 +225,9 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             min={0}
                             max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
                             markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
+                            markerLabels={(v, i) =>
+                                (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
+                            }
                             valueLabelFormat={createValueLabelFormat}
                             onValueChange={(value) =>
                                 isSingleTimeStepMode

@@ -12,7 +12,7 @@ import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
-import { Typography } from "@lib/components/Typography";
+import { TextInput } from "@lib/components/TextInput";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -202,18 +202,36 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         annotations={selectedDateTimeAnnotations}
                         errorOverlay={selectedDateTime.depsHaveError ? "Could not load time steps." : undefined}
                     >
-                        <Slider
-                            valueLabelDisplay="auto"
-                            min={0}
-                            max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
-                            markers={availableDateTimes.map((_, index) => index)}
-                            value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
-                            valueLabelFormat={createValueLabelFormat}
-                            onValueChange={handleSelectedTimeStepIndexChange}
-                        />
-                        <Typography tone="neutral" size="sm">
-                            {selectedDateTime.value ? selectedDateTime.value : "No time step selected"}
-                        </Typography>
+                        <div className="gap-sm flex">
+                            <Slider
+                                layoutClassName="grow w-full"
+                                valueLabelDisplay="auto"
+                                disabled={!availableDateTimes.length}
+                                min={0}
+                                max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
+                                markers={availableDateTimes.map((_, index) => index)}
+                                markerLabels={(v, i) => {
+                                    if (i === 0 || i === availableDateTimes.length - 1) {
+                                        return createValueLabelFormat(v);
+                                    }
+                                }}
+                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
+                                valueLabelFormat={createValueLabelFormat}
+                                onValueChange={handleSelectedTimeStepIndexChange}
+                            />
+                            <div className="relative flex shrink">
+                                <span className="px-sm pointer-events-none invisible whitespace-nowrap">
+                                    {selectedDateTime.value ?? "No time step selected"}
+                                </span>
+                                <TextInput
+                                    layoutClassName="absolute! inset-0"
+                                    value={selectedDateTime.value ?? ""}
+                                    placeholder="No time step selected"
+                                    size="small"
+                                    readOnly
+                                />
+                            </div>
+                        </div>
                     </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>
