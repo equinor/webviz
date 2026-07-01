@@ -84,16 +84,22 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
 
     if (!isEqual(stratigraphyColorSet, prevStratigraphyColorSet)) {
         setPrevStratigraphyColorSet(stratigraphyColorSet);
-        if (stratigraphyColorSet) {
-            setSelectedStratigraphyColorSet(stratigraphyColorSet);
-        }
     }
+
     if (!isEqual(syncedEnsembleIdents, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedEnsembleIdents);
-        if (syncedEnsembleIdents) {
+    }
+
+    React.useEffect(() => {
+        if (prevSyncedEnsembleIdents) {
             setSyncedEnsembleIdents(syncedEnsembleIdents);
         }
-    }
+    }, [prevSyncedEnsembleIdents, setSyncedEnsembleIdents, syncedEnsembleIdents]);
+    React.useEffect(() => {
+        if (prevStratigraphyColorSet) {
+            setSelectedStratigraphyColorSet(stratigraphyColorSet);
+        }
+    }, [prevStratigraphyColorSet, setSelectedStratigraphyColorSet, stratigraphyColorSet]);
 
     useMakeSettingsStatusWriterMessages(statusWriter);
 
