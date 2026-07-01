@@ -5,7 +5,8 @@ import { AlertDialog as AlertDialogBase, type AlertDialogRootProps } from "@base
 import { AlertDialogNestingContext } from "../../contexts/alertDialogNestingContext";
 import type { ButtonProps } from "../Button";
 import { Button } from "../Button";
-import { Paragraph, Heading } from "../Typography/compositions";
+import { Typography } from "../Typography";
+import { Heading } from "../Typography/compositions";
 
 export type AlertDialogAction = {
     /** The button label text. */
@@ -60,12 +61,10 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                     />
                     <AlertDialogBase.Description
                         className="dialog__popup__child"
-                        render={(baseProps) => (
-                            <Paragraph size="md" {...baseProps}>
-                                {children}
-                            </Paragraph>
-                        )}
-                    />
+                        render={<Typography as="div" size="md" />}
+                    >
+                        {children}
+                    </AlertDialogBase.Description>
                     <div className="dialog__popup__child gap-x-md flex items-center justify-end">
                         {secondaryActions?.map((action, index) =>
                             action.closesDialog ? (

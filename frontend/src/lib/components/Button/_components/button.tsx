@@ -39,7 +39,14 @@ const DEFAULT_PROPS = {
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
     const defaultedProps = withDefaults(props, DEFAULT_PROPS);
-    const baseProps = resolveWrapperProps(defaultedProps, "pressed", "size", ...STYLE_PROP_KEYS);
+    const baseProps = resolveWrapperProps(
+        defaultedProps,
+        "pressed",
+        "size",
+        "iconPosition",
+        "icon",
+        ...STYLE_PROP_KEYS,
+    );
     const size = useComponentSize(defaultedProps);
 
     let iconOnly = defaultedProps.iconOnly;
