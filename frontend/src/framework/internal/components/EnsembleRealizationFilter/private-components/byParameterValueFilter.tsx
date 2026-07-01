@@ -386,8 +386,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     );
 
     return (
-        <div className="gap-4xs grow flex-col">
-            <div className="pb-2xs flex flex-col">
+        <div className="space-y-2xs grow flex-col">
+            <div className="flex flex-col">
                 <Field.Root invalid={reportIconText !== null}>
                     <Field.Label>Select parameters to add</Field.Label>
                     <div className="gap-x-xs flex w-full items-center p-1">
