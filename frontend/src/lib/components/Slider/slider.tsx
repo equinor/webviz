@@ -172,6 +172,8 @@ const DEFAULT_PROPS = {
 
 type InternalOnChangeCallback = (value: number | number[], eventDetails: SliderChangeEventDetails) => void;
 
+type MarkerVariant = "dot" | "tick" | "none";
+
 export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | number[]>>(function Slider(
     // ! Note: To simplify internal logic, we always type the slider props as number | number[] using some direct
     // ! casting. Externally, slider users will see the change event's with the same type as the provided values
@@ -214,6 +216,9 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     const wrapperRef = React.useRef<HTMLDivElement>(null);
     const minGutterDotRef = React.useRef<HTMLDivElement | null>(null);
     const maxGutterDotRef = React.useRef<HTMLDivElement | null>(null);
+    const controllerRef = React.useRef<HTMLDivElement | null>(null);
+
+    React.useImperativeHandle(ref, () => controllerRef.current as HTMLDivElement);
 
     const [internalValue, setInternalValue] = React.useState(defaultedProps.value ?? defaultedProps.defaultValue);
     const [prevMin, setPrevMin] = React.useState(defaultedProps.min);
@@ -248,6 +253,10 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     });
 
     const wrapperSize = useElementSize(wrapperRef);
+    const controllerSize = useElementSize(controllerRef);
+
+    const thumbSize = React.useMemo(() => ({ small: 6, default: 8, large: 10 })[componentSize], [componentSize]);
+    const markSize = React.useMemo(() => ({ small: 4, default: 6, large: 8 })[componentSize], [componentSize]);
 
     if (props.value !== undefined && props.value !== internalValue) {
         setInternalValue(props.value);
@@ -261,6 +270,17 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
         },
         [defaultedProps.thumbAriaLabel],
     );
+
+    // We generally want to use the dots, but if there's not
+    // enough room, we use simple ticks as a fall-back
+    const activeMarkerVariant = React.useMemo<MarkerVariant>(() => {
+        if (allMarkers.length * (markSize + 4) < controllerSize.width) {
+            return "dot";
+        } else if (allMarkers.length * 3 < controllerSize.width) {
+            return "tick";
+        }
+        return "none";
+    }, [allMarkers.length, controllerSize.width, markSize]);
 
     // To preserve built-in base-ui defaults, we only pass a function to the thumbs if any thumb-labels were configured
     const getThumbAriaLabel = defaultedProps.thumbAriaLabel ? getThumbAriaLabelFunc : undefined;
@@ -384,8 +404,8 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                     "--lock-gutter-size": `${clamp(wrapperSize.width * 0.1, 20, 40)}px`,
 
                     // Couldn't find any EDS variable for these sizes; these pixels sizes are used in the design doc
-                    "--thumb-size": `${{ small: 6, default: 8, large: 10 }[componentSize]}px`,
-                    "--mark-size": `${{ small: 4, default: 6, large: 8 }[componentSize]}px`,
+                    "--thumb-size": `${thumbSize}px`,
+                    "--mark-size": `${markSize}px`,
 
                     // Needed to avoid some jumpiness in some cases
                     "--mark-thumb-diff": "calc(var(--thumb-size) - var(--mark-size))",
@@ -405,7 +425,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                     )}
 
                     <SliderBase.Control
-                        ref={ref}
+                        ref={controllerRef}
                         className={resolveClassNames(
                             "group/slider-comp py-xs flex w-full cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed",
                             SELECTABLE_SIZES_CLASSNAMES[componentSize],
@@ -506,7 +526,9 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                             />
 
                             {allMarkers.map((v, i) => (
-                                <Dot
+                                <Marker
+                                    // We always keep the min and max markers as dots
+                                    variant={i !== 0 && i !== allMarkers.length - 1 ? activeMarkerVariant : "dot"}
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                     key={i}
                                 />
@@ -547,7 +569,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                             style={{ gridColumnStart: showMinLock ? 3 : 1 }}
                         >
                             {allMarkers.map((v, i) => (
-                                <DotLabel
+                                <MarkerLabel
                                     key={i}
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                     value={v}
@@ -767,14 +789,30 @@ const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>
     );
 });
 
-function Dot(props: { leftPosPercent: number }) {
+function Marker(props: { variant: MarkerVariant; leftPosPercent: number }) {
+    if (props.variant === "tick") {
+        return <TickMarker leftPosPercent={props.leftPosPercent} />;
+    }
+
+    if (props.variant === "dot") {
+        return <DotMarker leftPosPercent={props.leftPosPercent} />;
+    }
+}
+
+function TickMarker(props: { leftPosPercent: number }) {
+    const className = "bg-neutral-active w-0.5 h-1 -bottom-1.5  absolute z-1 -translate-x-1/2";
+
+    return <div className={className} style={{ left: `${props.leftPosPercent}%` }} />;
+}
+
+function DotMarker(props: { leftPosPercent: number }) {
     const className =
         "border border-neutral box-content size-(--mark-size) rounded-full absolute bg-surface z-1 top-0 -translate-y-1/4 -translate-x-1/2";
 
     return <div className={className} style={{ left: `${props.leftPosPercent}%` }} />;
 }
 
-function DotLabel(props: {
+function MarkerLabel(props: {
     leftPosPercent: number;
     value: number;
     index: number;
@@ -823,7 +861,7 @@ function DotLabel(props: {
             size={getNextTextSize(textSize, -1)}
             tone="neutral"
             // To make the marker labels "float", while still applying their height to the parent, we cram them all in the same grid cell, and then align them to their markers using a margin
-            layoutClassName="cursor-pointer font-bolder px-2xs py-4xs block -translate-x-1/2 rounded-sm not-data-disabled:hover:bg-input focus:outline-focus justify-self-start"
+            layoutClassName="cursor-pointer font-bolder px-2xs py-4xs block -translate-x-1/2 rounded-sm not-data-disabled:hover:bg-input focus:outline-focus justify-self-start whitespace-nowrap"
             layoutStyle={{
                 // @ts-expect-error -- CSS type doesn't recognize variables
                 "--tw-translate-x": getTranslateXOverrides(),
