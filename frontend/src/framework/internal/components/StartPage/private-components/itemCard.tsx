@@ -58,7 +58,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="min-w-0 grow truncate">{props.title}</div>
+                <div className="truncate-small-squished-fix min-w-0 grow">{props.title}</div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
                 <span className="text-body-xs text-neutral-subtle w-16 shrink-0 text-right whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
@@ -87,7 +87,7 @@ function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     return (
         <div className="mx-sm gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic no-underline!">
             <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
-            <span className="min-w-0 flex-1 truncate no-underline!">{name}</span>
+            <span className="truncate-squished-small-fix min-w-0 flex-1 no-underline!">{name}</span>
         </div>
     );
 }
