@@ -103,7 +103,7 @@ function FmuAppsButton(): React.ReactNode {
                 </Popover.Trigger>
             </Tooltip>
             <Popover.Popup side="bottom">
-                <Popover.Content>
+                <Popover.Content as="div">
                     <Button.AsLink variant="ghost" tone="accent" target="_blank" href="https://sumo.fmu.equinor.com/">
                         <div className="gap-2xs flex flex-col items-center">
                             <img src={SumoLogo} className="h-5 w-5" />
