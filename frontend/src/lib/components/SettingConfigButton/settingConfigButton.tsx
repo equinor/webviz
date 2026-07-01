@@ -53,18 +53,20 @@ export const SettingConfigButton = React.forwardRef<HTMLButtonElement, SettingCo
 
         return (
             <>
-                <Button
-                    layoutClassName={layoutClassName}
-                    ref={ref}
-                    variant="outlined"
-                    size={size}
-                    tone="neutral"
-                    onClick={handleClick}
-                    {...restProps}
-                >
-                    {props.children}
-                    <SettingsDialogIcon className="ml-auto" size={16} />
-                </Button>
+                <div className={layoutClassName}>
+                    <Button
+                        ref={ref}
+                        variant="outlined"
+                        size={size}
+                        tone="neutral"
+                        onClick={handleClick}
+                        layoutClassName="w-full"
+                        {...restProps}
+                    >
+                        <span className="min-w-0 flex-1 truncate">{props.children}</span>
+                        <SettingsDialogIcon className="ml-auto" size={16} />
+                    </Button>
+                </div>
 
                 <Dialog.Popup open={modalOpen} onOpenChange={handleCancel} modal>
                     <Dialog.Header closeIconVisible>

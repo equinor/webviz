@@ -5,6 +5,7 @@ import { isEqual, orderBy } from "lodash";
 import type { CaseInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
 import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
 import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
@@ -22,7 +23,8 @@ export type CaseTableProps = {
     isPending?: boolean;
     selectedCase?: string | null;
 
-    selectedEnsembles: UserEnsembleSetting[];
+    ensembleSelection: UserEnsembleSetting[];
+    newEnsembleSelection: UserEnsembleSetting[];
 
     caseData: CaseInfo_api[] | undefined;
 
@@ -37,7 +39,13 @@ export type CaseTableProps = {
 // colKey doesn't always match the data field name on CaseInfo_api
 const COL_KEY_TO_FIELD: Record<string, string> = { author: "user", "#": "numSelectedEnsembles" };
 
-type CaseDataWithEnsembleCount = CaseInfo_api & { numSelectedEnsembles: number };
+type EnsembleCounts = {
+    numSelectedEnsembles: number;
+    numRemovedEnsembles: number;
+    numAddedEnsembles: number;
+    hasChanges: boolean;
+};
+type CaseDataWithEnsembleCount = CaseInfo_api & EnsembleCounts;
 
 export function CaseTable(props: CaseTableProps): React.ReactNode {
     const { onDataCollated } = props;
@@ -80,19 +88,59 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
     const caseDataWithSelectionCount = React.useMemo<CaseDataWithEnsembleCount[]>(() => {
         if (!props.caseData) return [];
 
-        const numSelectionsByCase = new Map<string, number>();
+        const numSelectionsByCase = new Map<string, EnsembleCounts>();
 
-        for (const ensemble of props.selectedEnsembles) {
+        for (const ensemble of props.newEnsembleSelection) {
             const caseId = ensemble.ensembleIdent.getCaseUuid();
-            const currentCount = numSelectionsByCase.get(caseId) ?? 0;
-            numSelectionsByCase.set(caseId, currentCount + 1);
+            const currentCount = numSelectionsByCase.get(caseId) ?? {
+                numSelectedEnsembles: 0,
+                numRemovedEnsembles: 0,
+                numAddedEnsembles: 0,
+                hasChanges: false,
+            };
+            const newSelectedEnsembles = currentCount.numSelectedEnsembles + 1;
+            let newAddedEnsembles = currentCount.numAddedEnsembles;
+            if (!props.ensembleSelection.some((e) => e.ensembleIdent.equals(ensemble.ensembleIdent))) {
+                newAddedEnsembles += 1;
+            }
+            numSelectionsByCase.set(caseId, {
+                ...currentCount,
+                numSelectedEnsembles: newSelectedEnsembles,
+                numAddedEnsembles: newAddedEnsembles,
+                hasChanges: currentCount.hasChanges || newAddedEnsembles > 0,
+            });
         }
 
-        return props.caseData?.map((caseRow) => ({
-            ...caseRow,
-            numSelectedEnsembles: numSelectionsByCase.get(caseRow.uuid) ?? 0,
-        }));
-    }, [props.caseData, props.selectedEnsembles]);
+        for (const ensemble of props.ensembleSelection) {
+            const caseId = ensemble.ensembleIdent.getCaseUuid();
+            const currentCount = numSelectionsByCase.get(caseId) ?? {
+                numSelectedEnsembles: 0,
+                numRemovedEnsembles: 0,
+                numAddedEnsembles: 0,
+                hasChanges: false,
+            };
+            let newRemovedEnsembles = currentCount.numRemovedEnsembles;
+            if (!props.newEnsembleSelection.some((e) => e.ensembleIdent.equals(ensemble.ensembleIdent))) {
+                newRemovedEnsembles += 1;
+            }
+            numSelectionsByCase.set(caseId, {
+                ...currentCount,
+                numRemovedEnsembles: newRemovedEnsembles,
+                hasChanges: currentCount.hasChanges || newRemovedEnsembles > 0,
+            });
+        }
+
+        return props.caseData?.map((caseRow) => {
+            const counts = numSelectionsByCase.get(caseRow.uuid);
+            return {
+                ...caseRow,
+                numSelectedEnsembles: counts?.numSelectedEnsembles ?? 0,
+                numRemovedEnsembles: counts?.numRemovedEnsembles ?? 0,
+                numAddedEnsembles: counts?.numAddedEnsembles ?? 0,
+                hasChanges: counts?.hasChanges ?? false,
+            };
+        });
+    }, [props.caseData, props.ensembleSelection, props.newEnsembleSelection]);
 
     const filteredCaseData = useCaseDataFilter(caseDataWithSelectionCount, tableFilterState);
     const collatedCaseData = React.useMemo(
@@ -106,11 +154,20 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                 return orderBy(filteredCaseData, "updatedAtUtcMs", SortDirection.DESC);
             }
 
-            return orderBy(
-                filteredCaseData,
-                activeSorts.map((s) => COL_KEY_TO_FIELD[s.columnKey] ?? s.columnKey),
-                activeSorts.map((s) => s.direction as "asc" | "desc"),
-            );
+            const sortFields: string[] = [];
+            const sortDirections: ("asc" | "desc")[] = [];
+            for (const s of activeSorts) {
+                const field = COL_KEY_TO_FIELD[s.columnKey] ?? s.columnKey;
+                const dir = s.direction as "asc" | "desc";
+                if (field === "numSelectedEnsembles") {
+                    sortFields.push("hasChanges", field);
+                    sortDirections.push(dir, dir);
+                } else {
+                    sortFields.push(field);
+                    sortDirections.push(dir);
+                }
+            }
+            return orderBy(filteredCaseData, sortFields, sortDirections);
         },
         [filteredCaseData, tableSortState],
     );
@@ -134,7 +191,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         >
             <Table.Head sticky>
                 {/* Tweak alignment so sorting-arrow show up in the middle */}
-                <Table.Column colKey="#" width={56} layoutClassName="text-center! pr-0!" />
+                <Table.Column colKey="#" width={42} layoutClassName="text-center! pr-0!" />
                 <Table.Column colKey="name" widthInPercent={24}>
                     Name / id
                 </Table.Column>
@@ -180,17 +237,27 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                     renderItem={(caseRow: CaseDataWithEnsembleCount) => {
                         return (
                             <Table.Row key={caseRow.uuid} rowKey={caseRow.uuid}>
-                                <Table.Cell>
+                                <Table.Cell layoutClassName="text-center! px-xs">
                                     <Tooltip
                                         content={`${caseRow.numSelectedEnsembles} ensemble(s) selected in this case`}
                                     >
                                         <div
                                             className={resolveClassNames(
-                                                "px-3xs py-4xs bg-canvas text-neutral-strong text-body-xs w-full cursor-help rounded-full text-center",
-                                                { "bg-accent!": caseRow.numSelectedEnsembles > 0 },
+                                                "px-3xs py-4xs bg-canvas text-body-xs text-neutral-strong relative cursor-help rounded text-center",
+                                                {
+                                                    "bg-accent!": caseRow.numSelectedEnsembles > 0,
+                                                },
                                             )}
                                         >
                                             {caseRow.numSelectedEnsembles}/{caseRow.ensembles.length}
+                                            {caseRow.hasChanges && (
+                                                <div className="z-elevated absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
+                                                    <HasChangesIndicator
+                                                        size="em"
+                                                        tooltip={`${caseRow.numAddedEnsembles} ensemble(s) will be added, ${caseRow.numRemovedEnsembles} ensemble(s) will be removed`}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </Tooltip>
                                 </Table.Cell>

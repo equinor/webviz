@@ -22,7 +22,7 @@ import { DeltaEnsembleRow, type RegularEnsembleOption } from "./DeltaEnsembleRow
 import { RegularEnsembleRow } from "./RegularEnsembleRow";
 
 export type EnsembleTablesProps = {
-    nextEnsembleColor: string;
+    colorGenerator: Generator<string, never, undefined>;
     selectedRegularEnsembles: InternalRegularEnsembleSetting[];
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[];
     selectableEnsemblesForDelta: EnsembleIdentWithCaseName[];
@@ -98,7 +98,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     function handleCreateDeltaEnsemble() {
         props.onCreateDeltaEnsemble({
             uuid: v4(),
-            color: props.nextEnsembleColor,
+            color: props.colorGenerator.next().value,
             comparisonEnsembleIdent: null,
             referenceEnsembleIdent: null,
             comparisonEnsembleCaseName: null,

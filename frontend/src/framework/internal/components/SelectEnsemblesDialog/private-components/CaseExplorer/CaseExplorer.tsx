@@ -34,7 +34,8 @@ export type CaseSelection = {
 
 export type CaseExplorerProps = {
     queriesDisabled: boolean;
-    selectedEnsembles: UserEnsembleSetting[];
+    ensembleSelection: UserEnsembleSetting[];
+    newEnsembleSelection: UserEnsembleSetting[];
     onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -287,7 +288,8 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     caseData={caseData}
                     isPending={casesQuery.isPending}
                     selectedCase={selectedCaseUuid}
-                    selectedEnsembles={props.selectedEnsembles}
+                    ensembleSelection={props.ensembleSelection}
+                    newEnsembleSelection={props.newEnsembleSelection}
                     showOnlyMyCases={showOnlyMyCases}
                     showOnlyOfficialCases={showOnlyOfficialCases}
                     onCaseSelected={setSelectedCaseUuid}

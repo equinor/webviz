@@ -3,11 +3,11 @@ import React from "react";
 import { Add, Check, CheckBox, CheckBoxOutlineBlank, Close, FilterList, Remove } from "@mui/icons-material";
 
 import { type EnsembleInfo_api } from "@api";
-import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Field } from "@lib/components/Field";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
 import { Hidden } from "@lib/components/Hidden";
 import { Separator } from "@lib/components/Separator";
 import { TextInput } from "@lib/components/TextInput";
@@ -21,121 +21,170 @@ import { CaseExplorer, type CaseSelection } from "./CaseExplorer/CaseExplorer";
 
 export type EnsembleExplorerProps = {
     queriesDisabled: boolean;
-    nextEnsembleColor: string;
-    selectedEnsembles: UserEnsembleSetting[];
+
+    colorGenerator: Generator<string, never, undefined>;
+
+    // The ensembles that are currently selected. This is used to determine which ensembles are already selected and should be displayed as such in the UI.
+    selectedEnsembles: InternalRegularEnsembleSetting[];
+
+    // Whether multiple ensembles can be selected at once. If true, the UI will allow selecting multiple ensembles.
     multiSelect?: boolean;
-    onSelectEnsemble: (newEnsemble: InternalRegularEnsembleSetting) => void;
-    onRemoveEnsembles?: (...ensembleIdents: RegularEnsembleIdent[]) => void;
+
+    // Callback function that is called when the new ensemble selection is confirmed
+    onSelectionChange: (selection: InternalRegularEnsembleSetting[]) => void;
+
+    // Callback function that is called when an ensemble is selected. This is used to immediately select an ensemble without having to confirm the selection.
+    onSelect: (ensemble: InternalRegularEnsembleSetting) => void;
+
+    // Callback function that is called when the dialog is requested to be closed, either by clicking the cancel button or the close icon.
     onRequestClose?: () => void;
 };
 
 export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode {
-    const [selectedCaseName, setSelectedCaseName] = React.useState<string | null>(null);
-    const [selectedCaseUuid, setSelectedCaseUuid] = React.useState<string | null>(null);
-    const [ensemblesInSelectedCase, setEnsemblesInSelectedCase] = React.useState<EnsembleInfo_api[]>([]);
+    const [prevSelectedEnsembles, setPrevSelectedEnsembles] = React.useState<InternalRegularEnsembleSetting[]>(
+        props.selectedEnsembles,
+    );
+    const [localSelection, setLocalSelection] = React.useState<InternalRegularEnsembleSetting[]>(
+        props.selectedEnsembles,
+    );
+
+    const [selectedCase, setSelectedCase] = React.useState<CaseSelection | null>(null);
+
     const [filterText, setFilterText] = React.useState("");
+
+    if (prevSelectedEnsembles !== props.selectedEnsembles) {
+        setPrevSelectedEnsembles(props.selectedEnsembles);
+        setLocalSelection(props.selectedEnsembles);
+    }
 
     const filteredEnsembles = React.useMemo(
         function filterEnsemblesInCase() {
+            if (!selectedCase) {
+                return [];
+            }
+
             if (filterText.trim() === "") {
-                return ensemblesInSelectedCase;
+                return selectedCase.filteredEnsembles;
             }
             const searchText = filterText.toLowerCase();
-            return ensemblesInSelectedCase.filter((ens) => ens.name.toLowerCase().includes(searchText));
+            return selectedCase.filteredEnsembles.filter((ens) => ens.name.toLowerCase().includes(searchText));
         },
-        [filterText, ensemblesInSelectedCase],
+        [filterText, selectedCase],
     );
 
     function handleCaseSelectedChange(caseSelection: CaseSelection | null) {
         if (!caseSelection) {
-            setSelectedCaseName(null);
-            setSelectedCaseUuid(null);
-            setEnsemblesInSelectedCase([]);
+            setSelectedCase(null);
             return;
         }
 
-        // Sort alphabetically by name
+        // Sort ensembles alphabetically by name
         const selectedCaseSortedEnsembles = [...caseSelection.filteredEnsembles].sort((a, b) =>
             a.name.localeCompare(b.name),
         );
 
-        setSelectedCaseName(caseSelection.caseName);
-        setSelectedCaseUuid(caseSelection.caseUuid);
-        setEnsemblesInSelectedCase(selectedCaseSortedEnsembles);
+        setSelectedCase({
+            ...caseSelection,
+            filteredEnsembles: selectedCaseSortedEnsembles,
+        });
     }
 
     function isEnsembleSelected(ensembleName: string): boolean {
-        return props.selectedEnsembles.some(
+        return localSelection.some(
             (sel) =>
-                sel.ensembleIdent.getCaseUuid() === selectedCaseUuid &&
+                sel.ensembleIdent.getCaseUuid() === selectedCase?.caseUuid &&
                 sel.ensembleIdent.getEnsembleName() === ensembleName,
         );
     }
 
     function handleSelectEnsemble(ensembleName: string) {
-        if (!selectedCaseUuid || !selectedCaseName) return;
-        let ensembleIdent: RegularEnsembleIdent;
+        if (!selectedCase) return;
+
+        if (props.multiSelect === false) {
+            try {
+                props.onSelect({
+                    ensembleIdent: new RegularEnsembleIdent(selectedCase.caseUuid, ensembleName),
+                    color: props.colorGenerator.next().value,
+                    caseName: selectedCase.caseName,
+                    customName: null,
+                });
+                return;
+            } catch (error) {
+                console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+                return;
+            }
+        }
+
+        if (isEnsembleSelected(ensembleName)) return;
+
         try {
-            ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ensembleName);
+            setLocalSelection((prev) => [
+                ...prev,
+                {
+                    ensembleIdent: new RegularEnsembleIdent(selectedCase.caseUuid, ensembleName),
+                    color: props.colorGenerator.next().value,
+                    caseName: selectedCase.caseName,
+                    customName: null,
+                },
+            ]);
         } catch (error) {
             console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
-            return;
         }
-        props.onSelectEnsemble({
-            ensembleIdent,
-            caseName: selectedCaseName,
-            color: props.nextEnsembleColor,
-            customName: null,
-        });
+    }
+
+    function handleSelectAllEnsembles() {
+        if (!selectedCase) return;
+
+        for (const ens of selectedCase.filteredEnsembles) {
+            if (isEnsembleSelected(ens.name)) continue;
+            handleSelectEnsemble(ens.name);
+        }
     }
 
     function handleUnselectEnsemble(ensembleName: string) {
-        if (!selectedCaseUuid) return;
-        let ensembleIdent: RegularEnsembleIdent;
+        if (!selectedCase) return;
+
         try {
-            ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ensembleName);
+            const ensembleIdent = new RegularEnsembleIdent(selectedCase.caseUuid, ensembleName);
+            setLocalSelection((prev) => removeEnsembleFromSelection(prev, ensembleIdent));
         } catch (error) {
             console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
-            return;
-        }
-        props.onRemoveEnsembles?.(ensembleIdent);
-    }
-
-    function handleSelectAll() {
-        if (!selectedCaseUuid || !selectedCaseName) return;
-        for (const ens of ensemblesInSelectedCase) {
-            if (isEnsembleSelected(ens.name)) continue;
-            try {
-                const ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ens.name);
-                props.onSelectEnsemble({
-                    ensembleIdent,
-                    caseName: selectedCaseName,
-                    color: props.nextEnsembleColor,
-                    customName: null,
-                });
-            } catch (error) {
-                console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
-            }
         }
     }
 
     function handleRemoveAll() {
-        if (!selectedCaseUuid || !props.onRemoveEnsembles) return;
-        const toRemove: RegularEnsembleIdent[] = [];
-        for (const ens of ensemblesInSelectedCase) {
-            try {
-                const ensembleIdent = new RegularEnsembleIdent(selectedCaseUuid, ens.name);
-                if (props.selectedEnsembles.some((sel) => sel.ensembleIdent.equals(ensembleIdent))) {
-                    toRemove.push(ensembleIdent);
-                }
-            } catch (error) {
-                console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
-            }
-        }
-        if (toRemove.length > 0) {
-            props.onRemoveEnsembles(...toRemove);
+        if (!selectedCase) return;
+
+        for (const ens of selectedCase.filteredEnsembles) {
+            if (!isEnsembleSelected(ens.name)) continue;
+            handleUnselectEnsemble(ens.name);
         }
     }
+
+    function handleConfirmSelection() {
+        props.onSelectionChange?.(localSelection);
+        props.onRequestClose?.();
+    }
+
+    function handleCancelSelection() {
+        setLocalSelection(props.selectedEnsembles);
+        props.onRequestClose?.();
+    }
+
+    const selectionChanges = React.useMemo(
+        function computeSelectionChanges() {
+            const added = localSelection.filter(
+                (sel) => !props.selectedEnsembles.some((prev) => prev.ensembleIdent.equals(sel.ensembleIdent)),
+            );
+            const removed = props.selectedEnsembles.filter(
+                (prev) => !localSelection.some((sel) => sel.ensembleIdent.equals(prev.ensembleIdent)),
+            );
+            return { added, removed };
+        },
+        [localSelection, props.selectedEnsembles],
+    );
+
+    const ensemblesInSelectedCase = selectedCase?.filteredEnsembles ?? [];
 
     return (
         <>
@@ -143,7 +192,8 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                 <div className="gap-y-sm relative flex h-full w-full flex-col">
                     <CaseExplorer
                         queriesDisabled={props.queriesDisabled}
-                        selectedEnsembles={props.selectedEnsembles}
+                        ensembleSelection={props.selectedEnsembles}
+                        newEnsembleSelection={localSelection}
                         onCaseSelectionChange={handleCaseSelectedChange}
                     />
                     <Separator orientation="horizontal" />
@@ -159,7 +209,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                     <Button
                                         variant="contained"
                                         size="small"
-                                        onClick={handleSelectAll}
+                                        onClick={handleSelectAllEnsembles}
                                         tone="accent"
                                         disabled={
                                             ensemblesInSelectedCase.length === 0 ||
@@ -207,29 +257,63 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
                                 }
                             />
                         </div>
-                        <div className="form-element gap-x-sm group/grid text-body-sm grid w-full grow grid-cols-[2rem_1fr] content-start overflow-auto">
-                            {filteredEnsembles.map((ens) => (
-                                <EnsembleRow
-                                    key={ens.name}
-                                    ensemble={ens}
-                                    selected={isEnsembleSelected(ens.name)}
-                                    onSelect={() => handleSelectEnsemble(ens.name)}
-                                    onUnselect={() => handleUnselectEnsemble(ens.name)}
-                                    singleSelect={!props.multiSelect}
-                                />
-                            ))}
+                        <div className="form-element group/grid text-body-sm gap-x-2xs grid w-full grow grid-cols-[2rem_1rem_1fr] content-start overflow-auto">
+                            {selectedCase &&
+                                filteredEnsembles.map((ens) => (
+                                    <EnsembleRow
+                                        key={ens.name}
+                                        ensemble={ens}
+                                        selected={isEnsembleSelected(ens.name)}
+                                        onSelect={() => handleSelectEnsemble(ens.name)}
+                                        onUnselect={() => handleUnselectEnsemble(ens.name)}
+                                        singleSelect={!props.multiSelect}
+                                        status={computeEnsembleStatus(
+                                            props.selectedEnsembles,
+                                            localSelection,
+                                            selectedCase?.caseUuid,
+                                            ens.name,
+                                        )}
+                                    />
+                                ))}
                         </div>
                     </div>
                 </div>
             </Dialog.Body>
             <Dialog.Actions>
                 {props.multiSelect ? (
-                    <Button onClick={() => props.onRequestClose?.()} variant="contained">
-                        Done
-                    </Button>
+                    <>
+                        <Tooltip
+                            content={`By clicking "Apply" you confirm to add ${selectionChanges.added.length} and remove ${selectionChanges.removed.length} ensembles from your previous selection.`}
+                        >
+                            <div className="text-body-sm text-neutral-strong mr-sm flex h-full cursor-help items-center justify-end">
+                                {selectionChanges.added.length > 0 && (
+                                    <span className="text-success-subtle">
+                                        <Add /> {selectionChanges.added.length}
+                                    </span>
+                                )}
+                                {selectionChanges.added.length > 0 && selectionChanges.removed.length > 0 && (
+                                    <span className="mx-2xs">|</span>
+                                )}
+                                {selectionChanges.removed.length > 0 && (
+                                    <span className="text-danger-subtle">
+                                        <Remove /> {selectionChanges.removed.length}
+                                    </span>
+                                )}
+                                {selectionChanges.added.length > 0 || selectionChanges.removed.length > 0 ? (
+                                    <span className="mx-2xs">ensembles</span>
+                                ) : null}
+                            </div>
+                        </Tooltip>
+                        <Button onClick={handleCancelSelection} variant="ghost" tone="neutral">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleConfirmSelection} variant="contained">
+                            Apply
+                        </Button>
+                    </>
                 ) : (
                     <>
-                        <Button onClick={() => props.onRequestClose?.()} tone="neutral" variant="contained">
+                        <Button onClick={handleCancelSelection} tone="neutral" variant="contained">
                             Cancel
                         </Button>
                     </>
@@ -241,6 +325,7 @@ export function EnsembleExplorer(props: EnsembleExplorerProps): React.ReactNode 
 type EnsembleRowProps = {
     ensemble: EnsembleInfo_api;
     selected: boolean;
+    status: "added" | "removed" | "unchanged";
     onSelect: () => void;
     onUnselect: () => void;
     singleSelect: boolean;
@@ -293,7 +378,7 @@ function EnsembleRow(props: EnsembleRowProps) {
                 "selectable group/row px-2xs hover:bg-neutral focus-within:bg-accent focus-within:hover:bg-accent-hover active:bg-accent-active min-h-selectable-md col-span-3 grid grid-cols-subgrid items-center justify-items-center rounded-none!",
                 {
                     "bg-accent-strong! text-accent-strong-on-emphasis! hover:bg-accent-strong-hover! active:bg-accent-strong-active!":
-                        props.selected && !props.singleSelect,
+                        props.selected,
                 },
             )}
             ref={rowRef}
@@ -301,9 +386,21 @@ function EnsembleRow(props: EnsembleRowProps) {
             onKeyDown={handleKeyDown}
             onClick={handleClick}
         >
-            <span className="text-body-md">{makeIcon()}</span>
+            <span className="text-body-md flex w-full items-center justify-end">{makeIcon()}</span>
+            <span className="flex w-full items-center">
+                {props.status !== "unchanged" && (
+                    <HasChangesIndicator
+                        size="em"
+                        tooltip={
+                            props.status === "added"
+                                ? "This ensemble is going to be added to your selection."
+                                : "This ensemble is going to be removed from your previous selection. All custom names and colors will be lost."
+                        }
+                    />
+                )}
+            </span>
             <span
-                className={resolveClassNames("gap-sm flex items-center justify-self-start", {
+                className={resolveClassNames("gap-sm flex w-full items-center", {
                     "font-bolder": props.selected && !props.singleSelect,
                 })}
             >
@@ -312,4 +409,35 @@ function EnsembleRow(props: EnsembleRowProps) {
             </span>
         </div>
     );
+}
+
+function removeEnsembleFromSelection(
+    selection: InternalRegularEnsembleSetting[],
+    ensembleIdent: RegularEnsembleIdent,
+): InternalRegularEnsembleSetting[] {
+    return selection.filter((sel) => !sel.ensembleIdent.equals(ensembleIdent));
+}
+
+function computeEnsembleStatus(
+    prevSelection: InternalRegularEnsembleSetting[],
+    newSelection: InternalRegularEnsembleSetting[],
+    caseUuid: string,
+    ensembleName: string,
+): "added" | "removed" | "unchanged" {
+    try {
+        const ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
+        const wasSelected = prevSelection.some((sel) => sel.ensembleIdent.equals(ensembleIdent));
+        const isSelected = newSelection.some((sel) => sel.ensembleIdent.equals(ensembleIdent));
+
+        if (wasSelected && !isSelected) {
+            return "removed";
+        } else if (!wasSelected && isSelected) {
+            return "added";
+        } else {
+            return "unchanged";
+        }
+    } catch (error) {
+        console.error(`Failed to create RegularEnsembleIdent with following error: `, error);
+        return "unchanged";
+    }
 }

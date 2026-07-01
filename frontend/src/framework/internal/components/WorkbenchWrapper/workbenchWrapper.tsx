@@ -53,7 +53,7 @@ export function WorkbenchWrapper() {
 
     let content: React.ReactNode;
     const loadingOverlayNote = `Note that the first time an ensemble is loaded in Webviz,
-                it could take a while to collect all parameter values...`;
+                it might take a while to collect all parameter values...`;
     if (isEnsembleSetLoading) {
         content = <LoadingOverlay text="Loading ensemble set..." note={loadingOverlayNote} />;
     } else if (!isInitialized) {

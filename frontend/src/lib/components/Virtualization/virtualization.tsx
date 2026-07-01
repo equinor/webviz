@@ -3,6 +3,7 @@ import React from "react";
 import { isEqual } from "lodash-es";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { elementIsVisible } from "@lib/utils/htmlElementUtils";
 
 import { withDefaults } from "../_shared/utils/defaultProps";
 
@@ -70,6 +71,14 @@ export function Virtualization(props: VirtualizationProps) {
         function mountScrollEffect() {
             function handleScroll() {
                 if (defaultedProps.containerRef.current) {
+                    // When the container is hidden (e.g. display:none),
+                    // scrollTop reads as 0. Skip range updates in that state so we don't
+                    // overwrite a valid scroll position that the browser will restore on
+                    // re-display.
+                    if (!elementIsVisible(defaultedProps.containerRef.current)) {
+                        return;
+                    }
+
                     const scrollPosition =
                         defaultedProps.direction === "vertical"
                             ? defaultedProps.containerRef.current.scrollTop

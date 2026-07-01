@@ -27,6 +27,20 @@ export type SelectEnsemblesDialogProps = {
     workbench: Workbench;
 };
 
+function* makeColorGenerator(colors: string[], usedColors: string[]): Generator<string, never, undefined> {
+    const usedSet = new Set(usedColors);
+    for (const color of colors) {
+        if (!usedSet.has(color)) {
+            yield color;
+        }
+    }
+    let index = usedColors.length % Math.max(colors.length, 1);
+    while (true) {
+        yield colors[index % colors.length];
+        index++;
+    }
+}
+
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [showEnsembleExplorer, setShowEnsembleExplorer] = React.useState<boolean>(false);
     const [hasExplorerBeenOpened, setHasExplorerBeenOpened] = React.useState<boolean>(false);
@@ -133,20 +147,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         [handleApplyEnsembleSelection],
     );
 
-    // Determine next ensemble color
-    const nextEnsembleColor = React.useMemo(() => {
+    const colorGenerator = React.useMemo(() => {
         const usedColors = [...selectedRegularEnsembles, ...selectedDeltaEnsembles].map((ens) => ens.color);
-
-        for (let i = 0; i < colorSet.getColorArray().length; i++) {
-            const candidateColor = colorSet.getColor(i);
-
-            if (!usedColors.includes(candidateColor)) {
-                return candidateColor;
-            }
-        }
-
-        // Default to an existing color (looping)
-        return colorSet.getColor(usedColors.length % colorSet.getColorArray().length);
+        return makeColorGenerator(colorSet.getColorArray(), usedColors);
     }, [selectedDeltaEnsembles, selectedRegularEnsembles, colorSet]);
 
     const handleCloseEnsembleExplorer = React.useCallback(
@@ -180,7 +183,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             onSubmit={handleFormSubmit}
                         >
                             <EnsembleTables
-                                nextEnsembleColor={nextEnsembleColor}
+                                colorGenerator={colorGenerator}
                                 selectedRegularEnsembles={selectedRegularEnsembles}
                                 selectedDeltaEnsembles={selectedDeltaEnsembles}
                                 selectableEnsemblesForDelta={selectableEnsemblesForDelta}
@@ -226,16 +229,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>
                             {ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                ? "Add ensembles"
+                                ? "Change ensemble selection"
                                 : "Select ensemble"}
                         </Dialog.Title>
                     </Dialog.Header>
                     <EnsembleExplorer
                         queriesDisabled={!showEnsembleExplorer}
-                        nextEnsembleColor={nextEnsembleColor}
+                        colorGenerator={colorGenerator}
                         selectedEnsembles={selectedRegularEnsembles}
-                        onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                        onRemoveEnsembles={selectionHandlers.handleRemoveRegularEnsembles}
+                        onSelectionChange={selectionHandlers.handleSetRegularEnsembles}
+                        onSelect={selectionHandlers.handleSelectEnsemble}
                         multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
                         onRequestClose={handleCloseEnsembleExplorer}
                     />

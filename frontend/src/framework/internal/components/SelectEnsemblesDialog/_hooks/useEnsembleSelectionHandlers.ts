@@ -26,6 +26,7 @@ export type UseEnsembleSelectionHandlersResult = {
     handleSelectEnsemble: (newItem: InternalRegularEnsembleSetting) => void;
     handleExploreRegularEnsemble: () => void;
     handleUpdateRegularEnsemble: (updatedItem: InternalRegularEnsembleSetting) => void;
+    handleSetRegularEnsembles: (newItems: InternalRegularEnsembleSetting[]) => void;
     handleRemoveRegularEnsembles: (...removedItems: RegularEnsembleIdent[]) => void;
     handleMoveRegularEnsemble: (movedEnsemble: InternalRegularEnsembleSetting, newIndex: number) => void;
     handleAddDeltaEnsemble: (newItem: InternalDeltaEnsembleSetting) => void;
@@ -274,6 +275,7 @@ export function useEnsembleSelectionHandlers({
         handleSelectEnsemble,
         handleExploreRegularEnsemble,
         handleUpdateRegularEnsemble,
+        handleSetRegularEnsembles: setSelectedRegularEnsembles,
         handleRemoveRegularEnsembles,
         handleMoveRegularEnsemble,
         handleAddDeltaEnsemble,
