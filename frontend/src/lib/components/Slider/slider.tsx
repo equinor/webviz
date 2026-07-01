@@ -26,7 +26,8 @@ import { Typography } from "../Typography";
 
 type SnapTarget = "nearest" | "next" | "prev";
 
-const TRACK_CLASS_NAME = "not-data-disabled:group-hover:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas";
+const TRACK_CLASS_NAME =
+    "not-data-disabled:group-hover/slider-comp:bg-neutral-hover data-dragging:bg-neutral-hover bg-canvas";
 const INDICATOR_CLASS_NAME = "bg-accent-strong data-disabled:bg-disabled";
 const TRACK_HEIGHT_CLASS_NAMES = {
     // Same size for small and default, as h-0.5 seems way to small
@@ -406,7 +407,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                     <SliderBase.Control
                         ref={ref}
                         className={resolveClassNames(
-                            "group py-xs flex w-full cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed",
+                            "group/slider-comp py-xs flex w-full cursor-pointer touch-none items-center select-none data-disabled:cursor-not-allowed",
                             SELECTABLE_SIZES_CLASSNAMES[componentSize],
                             {
                                 "pl-(--lock-gutter-size)": showMinLock,
