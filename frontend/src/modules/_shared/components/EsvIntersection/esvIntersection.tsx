@@ -90,7 +90,10 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
             // so the Strict Mode re-mount initializes the fresh instance placed
             // here by the previous cleanup, not the already-destroyed original.
             const ctrl = controllerRef.current;
-            ctrl.initialize(containerRef.current);
+            // Fire-and-forget: the controller's initialize() is async,
+            // but we don't need to await it here as it handles its own errors and the effect doesn't depend on its completion.
+            // The controller will be ready to receive commands once the promise resolves.
+            void ctrl.initialize(containerRef.current).catch(console.error);
             return function destroyController() {
                 ctrl.destroy();
                 // Synchronous replacement: the next effect invocation (Strict Mode
@@ -104,7 +107,6 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         // containerRef and controllerRef are stable refs; forceControllerUpdate is a
         // stable setter — none need to be listed. Empty deps means this effect only
         // runs on mount/unmount (and the Strict Mode double-invoke), not on re-renders.
-
         [],
     );
 

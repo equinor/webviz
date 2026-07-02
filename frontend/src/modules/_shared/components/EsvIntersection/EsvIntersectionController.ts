@@ -134,6 +134,32 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
         this.setLifeCycleState(EsvIntersectionLifeCycleState.INITIALIZING);
 
         try {
+            // Initialise Pixi FIRST — before touching the DOM. PixiRenderApplication.init()
+            // creates its own off-screen canvas (context: null) so it does not need the
+            // container yet. This means React Strict Mode can run the effect cleanup (calling
+            // destroy()) during the await without leaving orphaned DOM elements in the
+            // container, which would conflict with the next controller's initialisation.
+            const pixiRenderApplication = new PixiRenderApplication();
+            await pixiRenderApplication.init({
+                context: null,
+                antialias: true,
+                hello: false,
+                premultipliedAlpha: false,
+                preserveDrawingBuffer: false,
+                backgroundColor: "#fff",
+                clearBeforeRender: true,
+                backgroundAlpha: 0,
+            });
+
+            // Guard: destroy() was called while awaiting Pixi init. Return immediately
+            // without touching the container — no DOM cleanup needed because we have not
+            // created the ESV Controller yet.
+            if (this._lifeCycleState === EsvIntersectionLifeCycleState.DESTROYED) {
+                return;
+            }
+
+            // Only reach here when the controller is still alive. Create the ESV Controller
+            // now (DOM mutations happen here) so the container is only touched once.
             const esvController = new Controller({
                 container,
                 axisOptions: { xLabel: "", yLabel: "", unitOfMeasure: "" },
@@ -151,24 +177,6 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
             esvController.addLayer(gridLayer);
             esvController.hideLayer("grid");
             esvController.hideAxisLabels();
-
-            const pixiRenderApplication = new PixiRenderApplication();
-            await pixiRenderApplication.init({
-                context: null,
-                antialias: true,
-                hello: false,
-                premultipliedAlpha: false,
-                preserveDrawingBuffer: false,
-                backgroundColor: "#fff",
-                clearBeforeRender: true,
-                backgroundAlpha: 0,
-            });
-
-            // Guard: destroy() may have been called while awaiting pixi init.
-            if (this._lifeCycleState === EsvIntersectionLifeCycleState.DESTROYED) {
-                esvController.destroy();
-                return;
-            }
 
             const interactionHandler = new InteractionHandler(esvController, container, {
                 intersectionOptions: { threshold: this._intersectionThreshold },
@@ -430,7 +438,12 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                 if (userLayer.options.order !== undefined) {
                     existingEsvLayer.order = userLayer.options.order + 1;
                 }
-                // Re-register with interaction handler in case hoverable changed
+                interactionHandler.removeLayer(userLayer.id);
+                if (userLayer.hoverable) {
+                    interactionHandler.addLayer(existingEsvLayer);
+                }
+            } else if (prevUserLayer?.hoverable !== userLayer.hoverable) {
+                // Options unchanged but hoverable toggled - re-register independently.
                 interactionHandler.removeLayer(userLayer.id);
                 if (userLayer.hoverable) {
                     interactionHandler.addLayer(existingEsvLayer);

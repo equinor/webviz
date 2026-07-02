@@ -171,11 +171,7 @@ export class InteractionHandler {
 
         this._dynamicHighlightItems = highlightItems;
 
-        this._highlightOverlay.setHighlightItems([
-            ...this._dynamicHighlightItems,
-            ...this._staticHighlightItems,
-            ...highlightItems,
-        ]);
+        this._highlightOverlay.setHighlightItems([...this._dynamicHighlightItems, ...this._staticHighlightItems]);
 
         this.publish(InteractionHandlerTopic.READOUT_ITEMS_CHANGE, { items: readoutItems });
     }
