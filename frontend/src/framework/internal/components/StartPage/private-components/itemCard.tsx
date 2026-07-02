@@ -24,7 +24,7 @@ export type ItemCardProps = {
 };
 
 export function ItemCard(props: ItemCardProps): React.ReactNode {
-    const showOwnerRow = props.ownerId !== undefined;
+    const showOwnerColumn = props.ownerId !== undefined;
 
     const ownerInfo = useUserGraphInfo(props.ownerId);
 
@@ -59,7 +59,8 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 onClick={handleClick}
             >
                 <div className="truncate-small-squished-fix text-body-md min-w-0 grow">{props.title}</div>
-                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
+                {/* Guarantee consistent height of the owner row, even if the owner is not shown. */}
+                {showOwnerColumn ? <OwnerLine owner={ownerInfo} /> : <span className="block h-4" />}
                 <span className="text-body-xs text-neutral-subtle w-16 shrink-0 text-right whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
