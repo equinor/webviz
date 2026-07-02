@@ -52,7 +52,17 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(containerRef);
 
-    const [controller, setController] = React.useState(() => new EsvIntersectionController());
+    // Store the controller in a ref so it can be replaced synchronously in the
+    // cleanup. React Strict Mode runs effect -> cleanup -> effect again before any
+    // queued state update takes effect. If we used useState and created the new
+    // controller in the cleanup via setState (async), the Strict Mode re-invocation
+    // would see the destroyed instance and throw. With a ref the cleanup sets the
+    // new instance immediately, so the next effect invocation picks it up.
+    const controllerRef = React.useRef(new EsvIntersectionController());
+    // Counter used only to trigger a re-render after the controller is replaced,
+    // so pub/sub subscriptions and effect deps ([controller, ...]) move to the new one.
+    const [, forceControllerUpdate] = React.useState(0);
+    const controller = controllerRef.current;
 
     const readoutItems = usePublishSubscribeTopicValue(controller, EsvIntersectionControllerTopic.READOUT_ITEMS_CHANGE);
     const viewport = usePublishSubscribeTopicValue(controller, EsvIntersectionControllerTopic.VIEWPORT_CHANGE);
@@ -76,13 +86,26 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     React.useEffect(
         function initializeController() {
             if (!containerRef.current) return;
-            controller.initialize(containerRef.current);
+            // Read from the ref each invocation — not a captured closure value —
+            // so the Strict Mode re-mount initializes the fresh instance placed
+            // here by the previous cleanup, not the already-destroyed original.
+            const ctrl = controllerRef.current;
+            ctrl.initialize(containerRef.current);
             return function destroyController() {
-                controller.destroy();
-                setController(new EsvIntersectionController());
+                ctrl.destroy();
+                // Synchronous replacement: the next effect invocation (Strict Mode
+                // re-mount or a real remount) will read this new instance from the ref.
+                controllerRef.current = new EsvIntersectionController();
+                // Schedule a re-render so [controller, ...] effects and pub/sub
+                // subscriptions switch to the new instance.
+                forceControllerUpdate((n) => n + 1);
             };
         },
-        [controller],
+        // containerRef and controllerRef are stable refs; forceControllerUpdate is a
+        // stable setter — none need to be listed. Empty deps means this effect only
+        // runs on mount/unmount (and the Strict Mode double-invoke), not on re-renders.
+
+        [],
     );
 
     React.useEffect(() => {
