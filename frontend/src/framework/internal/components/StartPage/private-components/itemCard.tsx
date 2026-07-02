@@ -58,7 +58,7 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="truncate-small-squished-fix min-w-0 grow">{props.title}</div>
+                <div className="truncate-small-squished-fix text-body-md min-w-0 grow">{props.title}</div>
                 {showOwnerRow && <OwnerLine owner={ownerInfo} />}
                 <span className="text-body-xs text-neutral-subtle w-16 shrink-0 text-right whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />

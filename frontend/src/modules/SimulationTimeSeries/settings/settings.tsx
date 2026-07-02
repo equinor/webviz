@@ -22,7 +22,7 @@ import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
-import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
@@ -121,16 +121,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         setSubplotLimitDirection(newLimitDirection);
     }
 
-    function handleSubplotMaxDirectionElementsChange(value: number | null) {
-        if (value === null) {
-            return;
-        }
-        setSubplotMaxDirectionElements(value);
-    }
-
-    const debouncedHandleSubplotMaxDirectionElementsChange = useDebouncedFunction(
-        handleSubplotMaxDirectionElementsChange,
-        150,
+    const [immediateSubplotMaxDirectionElements, setImmediateSubplotMaxDirectionElements] = useDebouncedOnChange(
+        subplotMaxDirectionElements,
+        function handleSubplotMaxDirectionElementsSettle(newValue: number | null) {
+            if (newValue === null) {
+                return;
+            }
+            setSubplotMaxDirectionElements(newValue);
+        },
+        600,
     );
 
     function handleGroupByChange(newValue: GroupBy) {
@@ -355,11 +354,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             </div>
                             <div className="min-w-0 flex-1">
                                 <NumberInput
-                                    value={subplotMaxDirectionElements}
+                                    value={immediateSubplotMaxDirectionElements}
                                     disabled={subplotLimitDirection === SubplotLimitDirection.NONE}
                                     min={1}
                                     max={12}
-                                    onValueChange={debouncedHandleSubplotMaxDirectionElementsChange}
+                                    onValueChange={setImmediateSubplotMaxDirectionElements}
                                 />
                             </div>
                         </div>
