@@ -1,5 +1,6 @@
 import path from "path";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import jotaiDebugLabel from "jotai-babel/plugin-debug-label";
@@ -18,7 +19,7 @@ const paths = {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command }) => {
-    const define = {
+    const define: Record<string, any> = {
         "process.env": {},
     };
 
@@ -31,12 +32,9 @@ export default defineConfig(({ mode, command }) => {
     return {
         plugins: [
             tailwindPlugin(),
-            react({
-                babel: {
-                    plugins: [jotaiDebugLabel, jotaiReactRefresh],
-                },
-            }),
+            react(),
             vitePluginChecker({ typescript: true }),
+            babel({ plugins: [jotaiDebugLabel, jotaiReactRefresh] }),
             glsl({
                 include: "**/*.glsl",
                 defaultExtension: "glsl",

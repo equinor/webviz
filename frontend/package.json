@@ -87,8 +87,9 @@
     },
     "devDependencies": {
         "@hey-api/openapi-ts": "~0.99.0",
-        "@playwright/experimental-ct-react": "~1.61.0",
-        "@playwright/test": "~1.61.0",
+        "@playwright/experimental-ct-react": "~1.61.1",
+        "@playwright/test": "~1.61.1",
+        "@rolldown/plugin-babel": "^0.2.3",
         "@tailwindcss/vite": "^4.2.2",
         "@types/culori": "^4.0.0",
         "@types/geojson": "^7946.0.16",
@@ -99,8 +100,8 @@
         "@types/react-dom": "^18.2.7",
         "@types/react-plotly.js": "^2.6.0",
         "@types/uuid": "^10.0.0",
-        "@vitejs/plugin-react": "^5.1.4",
-        "@vitest/coverage-istanbul": "^4.0.18",
+        "@vitejs/plugin-react": "^6.0.3",
+        "@vitest/coverage-istanbul": "^4.1.9",
         "dependency-cruiser": "^17.4.3",
         "eslint": "^9.39.4",
         "eslint-config-prettier": "^10.0.2",
@@ -117,9 +118,9 @@
         "tailwindcss": "^4.2.2",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.25.0",
-        "vite": "^7.3.2",
-        "vite-plugin-checker": "^0.12.0",
+        "vite": "^8.1.0",
+        "vite-plugin-checker": "^0.14.4",
         "vite-plugin-glsl": "^1.3.1",
-        "vitest": "^4.0.18"
+        "vitest": "^4.1.9"
     }
 }
