@@ -28,7 +28,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[]): ReadoutItem[] {
     const nonSeparatorInfos = wellLogInfo.filter(({ type }) => type !== "separator");
     const infosByTrack = groupBy(nonSeparatorInfos, "iTrack");
-    const sortedEntries = sortBy(entries(infosByTrack), 0);
+    const sortedEntries = sortBy(entries(infosByTrack), ([iTrack]) => Number(iTrack));
 
     return sortedEntries.map(([iTrack, infos]) => infoToReadoutItem(infos, Number(iTrack), templateTracks));
 }

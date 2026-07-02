@@ -110,7 +110,7 @@ function createWellLogJsonFromProduct(
 
     const accData = factoryProduct.accumulatedData;
     const curveData = accData[DATA_ACC_KEY] ?? [];
-    const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY] ?? [];
+    const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY] ?? new Set();
 
     return createWellLogSets(curveData, wellboreTrajectory, wellPickProps, duplicatedCurveNames, !limitDomainToData);
 }

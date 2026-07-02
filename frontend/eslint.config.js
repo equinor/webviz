@@ -55,8 +55,8 @@ export default eslintTypescript.config(
     },
     // Custom rules ---------------------------------------------------------------------
     {
+        // Lodash-es exposes the "chain" utility in its typing, but the function will fail due to tree-shaking in production. This rule config should flag any use of chain as an error
         rules: {
-            // Lodash-es exposes the "chain" utility in it's typing, but the function will fail due to tree-shaking in production. This rule config should flag these as
             "no-restricted-imports": [
                 "error",
                 {
