@@ -70,7 +70,7 @@
         "wonka": "^6.3.4"
     },
     "overrides": {
-        "@playwright/experimental-ct-core": {
+        "@playwright/experimental-ct-react": {
             "vite": "$vite"
         },
         "react-plotly.js": {
