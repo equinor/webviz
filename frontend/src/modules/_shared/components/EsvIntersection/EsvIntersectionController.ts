@@ -302,6 +302,10 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
     }
 
     setIntersectionReferenceSystem(system: IntersectionReferenceSystem): void {
+        if (system === this._intersectionReferenceSystem) {
+            return;
+        }
+
         this._intersectionReferenceSystem = system;
         if (this._lifeCycleState === EsvIntersectionLifeCycleState.INITIALIZED) {
             this.applyIntersectionReferenceSystem();
