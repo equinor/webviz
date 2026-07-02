@@ -1,122 +1,23 @@
 import React from "react";
 
-import type {
-    Annotation,
-    AxisOptions,
-    CalloutOptions,
-    GeomodelLayerLabelsOptions,
-    IntersectionReferenceSystem,
-    Layer,
-    LayerOptions,
-    OnRescaleEvent,
-    ReferenceLine,
-    SchematicData,
-    SchematicLayerOptions,
-    SeismicCanvasData,
-    SurfaceData,
-    WellborepathLayerOptions,
-} from "@equinor/esv-intersection";
-import {
-    CalloutCanvasLayer,
-    Controller,
-    GeomodelCanvasLayer,
-    GeomodelLabelsLayer,
-    GeomodelLayerV2,
-    GridLayer,
-    ImageLayer,
-    PixiRenderApplication,
-    ReferenceLineLayer,
-    SchematicLayer,
-    SeismicCanvasLayer,
-    WellborepathLayer,
-} from "@equinor/esv-intersection";
-import { cloneDeep, isEqual } from "lodash-es";
+import type { AxisOptions, IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { useIsMountedRef } from "@lib/hooks/useIsMountedRef";
-import type { ColorScale } from "@lib/utils/ColorScale";
-import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
 import type { Size2D } from "@lib/utils/geometry";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { InteractionHandlerTopicPayload } from "./interaction/InteractionHandler";
-import { InteractionHandler, InteractionHandlerTopic } from "./interaction/InteractionHandler";
-import type { PolylineIntersectionData, PolylineIntersectionLayerOptions } from "./layers/PolylineIntersectionLayer";
-import { PolylineIntersectionLayer } from "./layers/PolylineIntersectionLayer";
-import type { SeismicLayerData } from "./layers/SeismicLayer";
-import { SeismicLayer } from "./layers/SeismicLayer";
-import type { SurfaceStatisticalFanchartsData } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
-import { SurfaceStatisticalFanchartsCanvasLayer } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
+import type { Bounds } from "./EsvIntersectionController";
+import { EsvIntersectionController, EsvIntersectionControllerTopic } from "./EsvIntersectionController";
+import type { EsvLayer } from "./EsvLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
-import { isValidBounds, isValidViewport } from "./utils/validationUtils";
 
-export enum LayerType {
-    CALLOUT_CANVAS = "callout-canvas",
-    GEOMODEL_CANVAS = "geomodel-canvas",
-    GEOMODEL_LABELS = "geomodel-labels",
-    GEOMODEL_V2 = "geomodel-v2",
-    POLYLINE_INTERSECTION = "polyline-intersection",
-    IMAGE_CANVAS = "image-canvas",
-    REFERENCE_LINE = "reference-line",
-    SCHEMATIC = "schematic-layer",
-    SEISMIC_CANVAS = "seismic-canvas",
-    SEISMIC = "seismic",
-    SURFACE_STATISTICAL_FANCHARTS_CANVAS = "surface-statistical-fancharts-canvas",
-    WELLBORE_PATH = "wellborepath",
-}
+export type { Bounds };
 
-type LayerDataTypeMap = {
-    [LayerType.CALLOUT_CANVAS]: Annotation[];
-    [LayerType.GEOMODEL_CANVAS]: SurfaceData;
-    [LayerType.GEOMODEL_LABELS]: SurfaceData;
-    [LayerType.GEOMODEL_V2]: SurfaceData;
-    [LayerType.IMAGE_CANVAS]: unknown;
-    [LayerType.POLYLINE_INTERSECTION]: PolylineIntersectionData;
-    [LayerType.REFERENCE_LINE]: ReferenceLine[];
-    [LayerType.SCHEMATIC]: SchematicData;
-    [LayerType.SEISMIC]: SeismicLayerData;
-    [LayerType.SEISMIC_CANVAS]: SeismicCanvasData;
-    [LayerType.SURFACE_STATISTICAL_FANCHARTS_CANVAS]: SurfaceStatisticalFanchartsData;
-    [LayerType.WELLBORE_PATH]: [number, number][];
-};
-
-type LayerOptionsMap = {
-    [LayerType.CALLOUT_CANVAS]: CalloutOptions<Annotation[]>;
-    [LayerType.GEOMODEL_CANVAS]: LayerOptions<SurfaceData>;
-    [LayerType.GEOMODEL_LABELS]: GeomodelLayerLabelsOptions<SurfaceData>;
-    [LayerType.GEOMODEL_V2]: LayerOptions<SurfaceData>;
-    [LayerType.IMAGE_CANVAS]: LayerOptions<unknown>;
-    [LayerType.POLYLINE_INTERSECTION]: PolylineIntersectionLayerOptions;
-    [LayerType.REFERENCE_LINE]: LayerOptions<ReferenceLine[]>;
-    [LayerType.SCHEMATIC]: SchematicLayerOptions<SchematicData>;
-    [LayerType.SEISMIC]: LayerOptions<SeismicLayerData>;
-    [LayerType.SEISMIC_CANVAS]: LayerOptions<SeismicCanvasData & { colorScale?: ColorScale }>;
-    [LayerType.SURFACE_STATISTICAL_FANCHARTS_CANVAS]: LayerOptions<SurfaceStatisticalFanchartsData>;
-    [LayerType.WELLBORE_PATH]: WellborepathLayerOptions<[number, number][]>;
-};
-
-export type LayerItem = {
-    [T in keyof LayerOptionsMap]: {
-        type: T;
-        options: LayerOptionsMap[T];
-    };
-}[keyof LayerOptionsMap] & {
-    id: string;
-    name: string;
-    hoverable?: boolean;
-};
-
-export interface EsvIntersectionReadoutEvent {
+export type EsvIntersectionReadoutEvent = {
     readoutItems: ReadoutItem[];
-}
-
-export type Bounds = {
-    x: [number, number];
-    y: [number, number];
 };
-
-export type ZoomTransform = { x: number; y: number; k: number };
 
 export type EsvIntersectionProps = {
     size?: Size2D;
@@ -124,7 +25,7 @@ export type EsvIntersectionProps = {
     axesOptions?: AxisOptions;
     showAxesLabels?: boolean;
     showAxes?: boolean;
-    layers?: LayerItem[];
+    layers?: EsvLayer[];
     bounds?: Bounds;
     viewport?: Viewport;
     intersectionReferenceSystem?: IntersectionReferenceSystem;
@@ -136,504 +37,129 @@ export type EsvIntersectionProps = {
     onMousePositionChange?: (position: { x: number; y: number } | null) => void;
 };
 
-function makeLayer<T extends keyof LayerDataTypeMap>(
-    type: T,
-    id: string,
-    options: LayerOptionsMap[T],
-    pixiRenderApplication: PixiRenderApplication,
-): Layer<LayerDataTypeMap[T]> {
-    switch (type) {
-        case LayerType.CALLOUT_CANVAS:
-            return new CalloutCanvasLayer(id, options as CalloutOptions<Annotation[]>) as unknown as Layer<
-                LayerDataTypeMap[T]
-            >;
-        case LayerType.GEOMODEL_CANVAS:
-            return new GeomodelCanvasLayer(id, options as LayerOptions<SurfaceData>) as unknown as Layer<
-                LayerDataTypeMap[T]
-            >;
-        case LayerType.GEOMODEL_LABELS:
-            return new GeomodelLabelsLayer(id, options as LayerOptions<SurfaceData>) as unknown as Layer<
-                LayerDataTypeMap[T]
-            >;
-        case LayerType.GEOMODEL_V2:
-            return new GeomodelLayerV2(
-                pixiRenderApplication,
-                id,
-                options as LayerOptions<SurfaceData>,
-            ) as unknown as Layer<LayerDataTypeMap[T]>;
-        case LayerType.POLYLINE_INTERSECTION:
-            return new PolylineIntersectionLayer(
-                pixiRenderApplication,
-                id,
-                options as PolylineIntersectionLayerOptions,
-            ) as unknown as Layer<LayerDataTypeMap[T]>;
-        case LayerType.IMAGE_CANVAS:
-            return new ImageLayer(id, options as LayerOptions<unknown>) as unknown as Layer<LayerDataTypeMap[T]>;
-        case LayerType.REFERENCE_LINE:
-            return new ReferenceLineLayer(id, options as LayerOptions<ReferenceLine[]>) as unknown as Layer<
-                LayerDataTypeMap[T]
-            >;
-        case LayerType.SCHEMATIC:
-            return new SchematicLayer(
-                pixiRenderApplication,
-                id,
-                options as SchematicLayerOptions<SchematicData>,
-            ) as unknown as Layer<LayerDataTypeMap[T]>;
-        case LayerType.SEISMIC:
-            return new SeismicLayer(id, options as LayerOptions<SeismicLayerData>) as unknown as Layer<
-                LayerDataTypeMap[T]
-            >;
-        case LayerType.SEISMIC_CANVAS:
-            return new SeismicCanvasLayer(id, options as LayerOptions<SeismicCanvasData>) as unknown as Layer<
-                LayerDataTypeMap[T]
-            >;
-        case LayerType.SURFACE_STATISTICAL_FANCHARTS_CANVAS:
-            return new SurfaceStatisticalFanchartsCanvasLayer(
-                id,
-                options as LayerOptions<SurfaceStatisticalFanchartsData>,
-            ) as unknown as Layer<LayerDataTypeMap[T]>;
-        case LayerType.WELLBORE_PATH:
-            return new WellborepathLayer(
-                id,
-                options as WellborepathLayerOptions<[number, number][]>,
-            ) as unknown as Layer<LayerDataTypeMap[T]>;
-
-        default:
-            throw new Error("Unsupported layer type");
-    }
-}
-
-function isPixiLayer(layer: Layer<unknown>): boolean {
-    return (
-        layer instanceof GeomodelLayerV2 ||
-        layer instanceof SchematicLayer ||
-        layer instanceof PolylineIntersectionLayer
-    );
-}
+const DEFAULT_PROPS = {
+    showGrid: false,
+    showAxes: false,
+    showAxesLabels: false,
+    zFactor: 1,
+    intersectionThreshold: 10,
+} satisfies Partial<EsvIntersectionProps>;
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    const { onReadout, onMousePositionChange, onViewportChange } = props;
-
-    const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);
-    const [prevIntersectionReferenceSystem, setPrevIntersectionReferenceSystem] = React.useState<
-        IntersectionReferenceSystem | null | undefined
-    >(null);
-    const [prevShowGrid, setPrevShowGrid] = React.useState<boolean | undefined>(undefined);
-    const [prevLayers, setPrevLayers] = React.useState<LayerItem[] | undefined>(undefined);
-    const [prevBounds, setPrevBounds] = React.useState<Bounds | undefined>(undefined);
-    const [prevViewport, setPrevViewport] = React.useState<Viewport | undefined>(undefined);
-    const [prevShowAxesLabels, setPrevShowAxesLabels] = React.useState<boolean | undefined>(undefined);
-    const [prevShowAxes, setPrevShowAxes] = React.useState<boolean | undefined>(undefined);
-    const [prevZFactor, setPrevZFactor] = React.useState<number | undefined>(undefined);
-    const [prevHighlightItems, setPrevHighlightItems] = React.useState<HighlightItem[] | undefined>(undefined);
-
-    const [layerIds, setLayerIds] = React.useState<string[]>([]);
-
-    const [esvController, setEsvController] = React.useState<Controller | null>(null);
-    const [interactionHandler, setInteractionHandler] = React.useState<InteractionHandler | null>(null);
-    const [pixiRenderApplication, setPixiRenderApplication] = React.useState<PixiRenderApplication | null>(null);
-
-    // Viewport originating from user interaction (drag/pan/zoom).
-    // - Only this state triggers onViewportChange propagation — external (prop-driven) viewport applications never touch it.
-    const [internalViewport, setInternalViewport] = React.useState<Viewport | null>(null);
-
-    // Tracks what is currently applied to the canvas (both user and prop-driven)
-    // - Used as the guard in the render body to avoid redundant esvController.setViewport() calls.
-    const canvasViewportRef = React.useRef<Viewport | null>(null);
-
-    const isMountedRef = useIsMountedRef();
-
-    // True while a container resize is being applied. A single resize can produce
-    // multiple onRescale callbacks, so a one-shot `automaticChanges` flag is not enough
-    // to keep all of them from being emitted as user-driven viewport changes.
-    const resizeInProgressRef = React.useRef<boolean>(false);
+    const defaultedProps = { ...DEFAULT_PROPS, ...props };
+    const { onReadout, onViewportChange, onMousePositionChange } = defaultedProps;
 
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const automaticChanges = React.useRef<boolean>(true);
-
     const containerSize = useElementSize(containerRef);
 
-    if (esvController && interactionHandler && pixiRenderApplication) {
-        if (
-            !isEqual(prevIntersectionReferenceSystem, props.intersectionReferenceSystem) &&
-            props.intersectionReferenceSystem
-        ) {
-            automaticChanges.current = true;
-            esvController.setReferenceSystem(props.intersectionReferenceSystem);
-            setPrevIntersectionReferenceSystem(props.intersectionReferenceSystem);
-        }
+    const [controller, setController] = React.useState(() => new EsvIntersectionController());
 
-        if (!isEqual(prevAxesOptions, props.axesOptions)) {
-            if (props.axesOptions?.xLabel) {
-                esvController.axis?.setLabelX(props.axesOptions.xLabel);
-            }
-            if (props.axesOptions?.yLabel) {
-                esvController.axis?.setLabelY(props.axesOptions.yLabel);
-            }
-            if (props.axesOptions?.unitOfMeasure) {
-                esvController.axis?.setUnitOfMeasure(props.axesOptions.unitOfMeasure);
-            }
-            setPrevAxesOptions(props.axesOptions);
-        }
-
-        if (prevShowGrid !== props.showGrid) {
-            if (props.showGrid) {
-                esvController.showLayer("grid");
-            } else {
-                esvController.hideLayer("grid");
-            }
-            setPrevShowGrid(props.showGrid);
-        }
-
-        if (prevShowAxes !== props.showAxes) {
-            if (props.showAxes) {
-                esvController.showAxis();
-            } else {
-                esvController.hideAxis();
-            }
-            setPrevShowAxes(props.showAxes);
-        }
-
-        if (prevShowAxesLabels !== props.showAxesLabels) {
-            if (props.showAxesLabels) {
-                esvController.showAxisLabels();
-            } else {
-                esvController.hideAxisLabels();
-            }
-            setPrevShowAxesLabels(props.showAxesLabels);
-        }
-
-        if (!isEqual(prevZFactor, props.zFactor)) {
-            esvController.zoomPanHandler.zFactor = props.zFactor ?? 1;
-
-            // At zFactor 10, showing a full wellbore path would hit the default 0.1 limit
-            automaticChanges.current = true;
-            esvController.zoomPanHandler.setMinZoomLevel(0.1 / (props.zFactor ?? 1));
-            esvController.zoomPanHandler.setMaxZoomLevel(256 / (props.zFactor ?? 1));
-            esvController.zoomPanHandler.updateTranslateExtent();
-
-            setPrevZFactor(props.zFactor);
-        }
-
-        if (!isEqual(prevHighlightItems, props.highlightItems)) {
-            interactionHandler.setStaticHighlightItems(props.highlightItems ?? []);
-            setPrevHighlightItems(props.highlightItems);
-        }
-
-        if (!isEqual(prevBounds, props.bounds)) {
-            if (props.bounds && isValidBounds(props.bounds)) {
-                automaticChanges.current = true;
-                esvController.setBounds(props.bounds.x, props.bounds.y);
-            }
-            setPrevBounds(props.bounds);
-        }
-
-        if (
-            !isEqual(prevViewport, props.viewport) ||
-            (prevViewport &&
-                props.viewport &&
-                (!fuzzyCompare(prevViewport[0], props.viewport[0], 0.0001) ||
-                    !fuzzyCompare(prevViewport[1], props.viewport[1], 0.0001) ||
-                    !fuzzyCompare(prevViewport[2], props.viewport[2], 0.0001)))
-        ) {
-            if (props.viewport) {
-                const canvas = canvasViewportRef.current;
-                if (
-                    !canvas ||
-                    !fuzzyCompare(canvas[0], props.viewport[0], 0.0001) ||
-                    !fuzzyCompare(canvas[1], props.viewport[1], 0.0001) ||
-                    !fuzzyCompare(canvas[2], props.viewport[2], 0.0001)
-                ) {
-                    automaticChanges.current = true;
-                    canvasViewportRef.current = props.viewport;
-                    esvController.setViewport(...props.viewport);
-                }
-            }
-            setPrevViewport(props.viewport);
-        }
-
-        if (!isEqual(prevLayers, props.layers)) {
-            let newLayerIds = layerIds;
-            automaticChanges.current = true;
-
-            // Remove layers that are not in the new list
-            if (prevLayers) {
-                for (const layer of prevLayers) {
-                    if (!props.layers?.find((el) => el.id === layer.id)) {
-                        newLayerIds = newLayerIds.filter((el) => el !== layer.id);
-                        esvController.removeLayer(layer.id);
-                        interactionHandler.removeLayer(layer.id);
-                    }
-                }
-            }
-
-            // Add or update layers
-            if (props.layers) {
-                for (const layer of props.layers) {
-                    if (!esvController.getLayer(layer.id)) {
-                        const newLayerOptions = cloneDeep(layer.options);
-                        // Grid layer has order 1 and should not be considered when setting order for other layers
-                        // Hence, the internal order of the new layer is increased by 1
-                        if (newLayerOptions.order !== undefined) {
-                            newLayerOptions.order = newLayerOptions.order + 1;
-                        }
-                        const newLayer = makeLayer(layer.type, layer.id, newLayerOptions, pixiRenderApplication);
-                        newLayerIds.push(layer.id);
-                        esvController.addLayer(newLayer);
-                        newLayer?.element?.setAttribute("width", containerSize.width.toString());
-                        newLayer?.element?.setAttribute("height", containerSize.height.toString());
-                        if (layer.hoverable) {
-                            interactionHandler.addLayer(newLayer);
-                        }
-                    } else {
-                        const existingLayer = esvController.getLayer(layer.id);
-                        if (existingLayer) {
-                            // The last pixi layer does always hold the canvas element. If the last layer is removed and the other pixi layers are only updated,
-                            // they don't have a canvas to draw to anymore. Hence, in order to add a new canvas, the old layer gets removed and a new one added.
-                            if (isPixiLayer(existingLayer)) {
-                                esvController.removeLayer(layer.id);
-                                const newLayerOptions = cloneDeep(layer.options);
-                                if (newLayerOptions.order !== undefined) {
-                                    newLayerOptions.order = newLayerOptions.order + 1;
-                                }
-                                const newLayer = makeLayer(
-                                    layer.type,
-                                    layer.id,
-                                    newLayerOptions,
-                                    pixiRenderApplication,
-                                );
-                                esvController.addLayer(newLayer);
-                            } else {
-                                existingLayer.onUpdate({ data: cloneDeep(layer.options.data) });
-                                if (layer.options.order !== undefined) {
-                                    existingLayer.order = layer.options.order + 1;
-                                }
-                                existingLayer?.element?.setAttribute("width", containerSize.width.toString());
-                                existingLayer?.element?.setAttribute("height", containerSize.height.toString());
-                            }
-                            interactionHandler.removeLayer(layer.id);
-                            if (layer.hoverable) {
-                                interactionHandler.addLayer(existingLayer);
-                            }
-                        }
-                    }
-                }
-            }
-
-            setLayerIds(newLayerIds);
-            setPrevLayers(props.layers);
-        }
-    }
-
-    const initializePixiApplication = React.useCallback(
-        async function initializePixiApplication() {
-            const newPixiRenderApplication = new PixiRenderApplication();
-            await newPixiRenderApplication.init({
-                context: null,
-                antialias: true,
-                hello: false,
-                premultipliedAlpha: false,
-                preserveDrawingBuffer: false,
-                backgroundColor: "#fff",
-                clearBeforeRender: true,
-                backgroundAlpha: 0,
-            });
-
-            if (isMountedRef.current) {
-                setPixiRenderApplication(newPixiRenderApplication);
-            }
-        },
-        [isMountedRef],
+    const readoutItems = usePublishSubscribeTopicValue(controller, EsvIntersectionControllerTopic.READOUT_ITEMS_CHANGE);
+    const viewport = usePublishSubscribeTopicValue(controller, EsvIntersectionControllerTopic.VIEWPORT_CHANGE);
+    const mousePosition = usePublishSubscribeTopicValue(
+        controller,
+        EsvIntersectionControllerTopic.MOUSE_POSITION_CHANGE,
     );
 
+    // Keep refs to the latest callbacks so effects only re-run when the pub/sub
+    // VALUE changes, not when the parent re-renders and creates a new callback
+    // identity. Without this, a linked viewport update changes the parent's
+    // callback identity, the effect re-fires with the controller's stale
+    // _latestViewport, and the stale value propagates back — causing oscillation.
+    const onReadoutRef = React.useRef(onReadout);
+    onReadoutRef.current = onReadout;
+    const onViewportChangeRef = React.useRef(onViewportChange);
+    onViewportChangeRef.current = onViewportChange;
+    const onMousePositionChangeRef = React.useRef(onMousePositionChange);
+    onMousePositionChangeRef.current = onMousePositionChange;
+
     React.useEffect(
-        // ! HMR causes the viewport to reset, since this re-triggers. Shouldn't matter in production,
-        // ! and a fix would need some larger re-structuring, so we're leaving it as is for now...
-        function handleMount() {
-            if (!containerRef.current) {
-                return;
-            }
-
-            const newEsvController = new Controller({
-                container: containerRef.current,
-                axisOptions: {
-                    xLabel: "",
-                    yLabel: "",
-                    unitOfMeasure: "",
-                },
-            });
-
-            const oldOnRescaleFunction = newEsvController.zoomPanHandler.onRescale;
-
-            newEsvController.zoomPanHandler.onRescale = function handleRescale(event: OnRescaleEvent) {
-                if (!automaticChanges.current && !resizeInProgressRef.current && canvasViewportRef.current !== null) {
-                    const k = event.transform.k;
-
-                    // Prevent division by zero
-                    if (k === 0 || Number.isNaN(k)) {
-                        return;
-                    }
-
-                    const xSpan = newEsvController.zoomPanHandler.xSpan;
-                    const displ = xSpan / k;
-                    const unitsPerPixel = displ / event.width;
-
-                    const dx0 = event.xBounds[0] - event.transform.x * unitsPerPixel;
-                    const cx = dx0 + displ / 2;
-
-                    const dy0 = event.yBounds[0] - event.transform.y * (unitsPerPixel / event.zFactor);
-                    const cy = dy0 + displ / event.zFactor / event.viewportRatio / 2;
-
-                    const candidateViewport: Viewport = [cx, cy, displ];
-                    if (!isValidViewport(candidateViewport)) {
-                        return;
-                    }
-
-                    canvasViewportRef.current = candidateViewport;
-                    setInternalViewport(candidateViewport);
-                }
-                automaticChanges.current = false;
-                oldOnRescaleFunction(event);
-            };
-
-            const gridLayer = new GridLayer("grid", {
-                order: 1,
-            });
-
-            newEsvController.addLayer(gridLayer);
-            newEsvController.hideLayer("grid");
-            newEsvController.hideAxisLabels();
-
-            initializePixiApplication();
-            setEsvController(newEsvController);
-
-            const newInteractionHandler = new InteractionHandler(newEsvController, containerRef.current, {
-                intersectionOptions: {
-                    threshold: props.intersectionThreshold ?? 10,
-                },
-            });
-
-            setInteractionHandler(newInteractionHandler);
-
-            return function handleUnmount() {
-                setEsvController(null);
-                setLayerIds([]);
-                setPrevLayers([]);
-                setPrevAxesOptions(undefined);
-                setPrevIntersectionReferenceSystem(null);
-                setPrevShowGrid(undefined);
-                setPrevBounds(undefined);
-                setPrevViewport(undefined);
-                setPrevShowAxesLabels(undefined);
-                setPrevShowAxes(undefined);
-                setPrevIntersectionReferenceSystem(null);
-                setInteractionHandler(null);
-                setPixiRenderApplication(null);
-                setPrevZFactor(undefined);
-                newInteractionHandler.destroy();
-                newEsvController.destroy();
+        function initializeController() {
+            if (!containerRef.current) return;
+            controller.initialize(containerRef.current);
+            return function destroyController() {
+                controller.destroy();
+                setController(new EsvIntersectionController());
             };
         },
-        [initializePixiApplication, props.intersectionThreshold],
+        [controller],
     );
 
+    React.useEffect(() => {
+        onReadoutRef.current?.({ readoutItems });
+    }, [readoutItems]);
+    React.useEffect(() => {
+        if (viewport) onViewportChangeRef.current?.(viewport);
+    }, [viewport]);
+    React.useEffect(() => {
+        onMousePositionChangeRef.current?.(mousePosition);
+    }, [mousePosition]);
+
+    React.useEffect(() => {
+        controller.setLayers(defaultedProps.layers ?? []);
+    }, [controller, defaultedProps.layers]);
+    React.useEffect(() => {
+        if (defaultedProps.viewport) controller.setViewport(defaultedProps.viewport);
+    }, [controller, defaultedProps.viewport]);
+    React.useEffect(() => {
+        if (defaultedProps.bounds) controller.setBounds(defaultedProps.bounds);
+    }, [controller, defaultedProps.bounds]);
+    React.useEffect(() => {
+        controller.setZFactor(defaultedProps.zFactor);
+    }, [controller, defaultedProps.zFactor]);
+    React.useEffect(() => {
+        controller.setShowGrid(defaultedProps.showGrid);
+    }, [controller, defaultedProps.showGrid]);
+    React.useEffect(() => {
+        controller.setShowAxes(defaultedProps.showAxes);
+    }, [controller, defaultedProps.showAxes]);
+    React.useEffect(() => {
+        controller.setShowAxesLabels(defaultedProps.showAxesLabels);
+    }, [controller, defaultedProps.showAxesLabels]);
+    React.useEffect(() => {
+        if (defaultedProps.axesOptions) controller.setAxesOptions(defaultedProps.axesOptions);
+    }, [controller, defaultedProps.axesOptions]);
+    React.useEffect(() => {
+        if (defaultedProps.intersectionReferenceSystem)
+            controller.setIntersectionReferenceSystem(defaultedProps.intersectionReferenceSystem);
+    }, [controller, defaultedProps.intersectionReferenceSystem]);
+    React.useEffect(() => {
+        controller.setHighlightItems(defaultedProps.highlightItems ?? []);
+    }, [controller, defaultedProps.highlightItems]);
+    React.useEffect(() => {
+        controller.setIntersectionThreshold(defaultedProps.intersectionThreshold);
+    }, [controller, defaultedProps.intersectionThreshold]);
+
     React.useEffect(
-        function handleReadoutFunctionChange() {
-            if (!interactionHandler) {
-                return;
+        function handleResize() {
+            if (containerSize.width && containerSize.height) {
+                controller.adjustToSize(containerSize.width, containerSize.height);
             }
-
-            function handleReadoutItemsChange(
-                payload: InteractionHandlerTopicPayload[InteractionHandlerTopic.READOUT_ITEMS_CHANGE],
-            ) {
-                if (onReadout) {
-                    onReadout({ readoutItems: payload.items });
-                }
-            }
-
-            const unsubscribe = interactionHandler.subscribe(
-                InteractionHandlerTopic.READOUT_ITEMS_CHANGE,
-                handleReadoutItemsChange,
-            );
-
-            return function handleRemoveReadoutFunction() {
-                unsubscribe();
-            };
         },
-        [onReadout, interactionHandler],
+        [controller, containerSize.width, containerSize.height],
     );
 
     const handleMouseMove = React.useCallback(
         function handleMouseMove(event: React.MouseEvent) {
-            if (!esvController || !onMousePositionChange || !containerRef.current) {
-                return;
-            }
-
-            const { xScale, yScale } = esvController.currentStateAsEvent;
+            if (!containerRef.current) return;
             const rect = containerRef.current.getBoundingClientRect();
-            const pixelX = event.clientX - rect.left;
-            const pixelY = event.clientY - rect.top;
-            onMousePositionChange({ x: xScale.invert(pixelX), y: yScale.invert(pixelY) });
+            controller.notifyMouseMove(event.clientX - rect.left, event.clientY - rect.top);
         },
-        [esvController, onMousePositionChange],
+        [controller],
     );
 
     const handleMouseLeave = React.useCallback(
         function handleMouseLeave() {
-            if (onMousePositionChange) {
-                onMousePositionChange(null);
-            }
+            controller.notifyMouseLeave();
         },
-        [onMousePositionChange],
-    );
-
-    const onViewportChangeRef = React.useRef(onViewportChange);
-    onViewportChangeRef.current = onViewportChange;
-    React.useEffect(
-        function propagateViewportChange() {
-            if (onViewportChangeRef.current && internalViewport) {
-                onViewportChangeRef.current(internalViewport);
-                setPrevViewport(internalViewport);
-            }
-        },
-        [internalViewport],
-    );
-
-    React.useEffect(
-        function handleResize() {
-            if (esvController && containerSize.width && containerSize.height) {
-                automaticChanges.current = true;
-                resizeInProgressRef.current = true;
-                esvController.adjustToSize(containerSize.width, containerSize.height);
-                const size = {
-                    width: esvController.currentStateAsEvent.width,
-                    height: esvController.currentStateAsEvent.height,
-                };
-                if (pixiRenderApplication?.renderer) {
-                    pixiRenderApplication.renderer.resize(size.width, size.height);
-                    pixiRenderApplication.render();
-                }
-                const gridLayer = esvController.getLayer("grid");
-                gridLayer?.element?.setAttribute("width", size.width.toString());
-                gridLayer?.element?.setAttribute("height", size.height.toString());
-
-                // Clear after the browser paints so any rescale callbacks scheduled
-                // by the resize have settled before user-driven emissions resume.
-                const handle = requestAnimationFrame(() => {
-                    resizeInProgressRef.current = false;
-                });
-                return () => cancelAnimationFrame(handle);
-            }
-            return undefined;
-        },
-        [containerSize.width, containerSize.height, esvController, pixiRenderApplication],
+        [controller],
     );
 
     return (
         <div
             ref={containerRef}
-            className={resolveClassNames({ "w-full h-full": props.size === undefined })}
-            style={{ ...props.size }}
+            className={resolveClassNames({ "w-full h-full": defaultedProps.size === undefined })}
+            style={{ ...defaultedProps.size }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         />

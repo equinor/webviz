@@ -1,4 +1,4 @@
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { PolylineIntersectionLayer } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionRealizationGridData,
     IntersectionRealizationGridSettings,
@@ -68,11 +68,9 @@ export function createGridLayerItemsMaker({
     const gridIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
         makeLayerItems: () => {
             return [
-                {
-                    id: `${id}-grid-layer`,
-                    name: name,
-                    type: LayerType.POLYLINE_INTERSECTION,
-                    options: {
+                new PolylineIntersectionLayer(
+                    `${id}-grid-layer`,
+                    {
                         data: {
                             fenceMeshSections: transformedPolylineIntersection.fenceMeshSections.map((section) => ({
                                 verticesUzArr: section.verticesUzFloat32Arr,
@@ -99,8 +97,8 @@ export function createGridLayerItemsMaker({
                             propertyUnit: "",
                         },
                     },
-                    hoverable: true,
-                },
+                    { name, hoverable: true },
+                ),
             ];
         },
     };

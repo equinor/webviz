@@ -51,6 +51,10 @@ export class IntersectionHandler {
         this._intersectionCalculators.delete(id);
     }
 
+    setThreshold(threshold: number): void {
+        this._options.threshold = threshold;
+    }
+
     subscribe<T extends IntersectionHandlerTopic>(
         topic: T,
         callback: (payload: IntersectionHandlerTopicPayload[T]) => void,

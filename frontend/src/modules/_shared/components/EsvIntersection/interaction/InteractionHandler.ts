@@ -29,6 +29,7 @@ export type InteractionHandlerOptions = {
 export class InteractionHandler {
     private _intersectionHandler: IntersectionHandler;
     private _highlightOverlay: HighlightOverlay;
+    private _dynamicHighlightItems: HighlightItem[] = [];
     private _staticHighlightItems: HighlightItem[] = [];
     private _layerDataItems: LayerDataItem[] = [];
     private _schematicLayer: SchematicLayer<SchematicData> | null = null;
@@ -70,6 +71,10 @@ export class InteractionHandler {
         }
     }
 
+    setIntersectionThreshold(threshold: number): void {
+        this._intersectionHandler.setThreshold(threshold);
+    }
+
     removeAllLayers() {
         for (const layerDataObject of this._layerDataItems) {
             this._intersectionHandler.removeIntersectionObject(layerDataObject.id);
@@ -80,7 +85,7 @@ export class InteractionHandler {
 
     setStaticHighlightItems(highlightItems: HighlightItem[]) {
         this._staticHighlightItems = highlightItems;
-        this._highlightOverlay.setHighlightItems([...this._staticHighlightItems]);
+        this._highlightOverlay.setHighlightItems([...this._dynamicHighlightItems, ...this._staticHighlightItems]);
     }
 
     subscribe<T extends InteractionHandlerTopic>(
@@ -164,7 +169,13 @@ export class InteractionHandler {
             }
         }
 
-        this._highlightOverlay.setHighlightItems([...this._staticHighlightItems, ...highlightItems]);
+        this._dynamicHighlightItems = highlightItems;
+
+        this._highlightOverlay.setHighlightItems([
+            ...this._dynamicHighlightItems,
+            ...this._staticHighlightItems,
+            ...highlightItems,
+        ]);
 
         this.publish(InteractionHandlerTopic.READOUT_ITEMS_CHANGE, { items: readoutItems });
     }
