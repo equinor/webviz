@@ -1,6 +1,6 @@
 import React from "react";
 
-import { chain } from "lodash-es";
+import { entries, groupBy, map, sortBy, uniq } from "lodash-es";
 
 import type { CategoricalReadout, ReadoutProperty } from "./types";
 
@@ -15,14 +15,12 @@ export type ReadoutListProps = {
 
 export function ReadoutList(props: ReadoutListProps): React.ReactNode {
     let titleCount = 0;
-    const numGroups = chain(props.readouts).map("group").uniq().value().length;
+    const numGroups = uniq(map(props.readouts, "group")).length;
 
     const groupEntries = React.useMemo(() => {
-        return chain(props.readouts)
-            .groupBy((readout) => readout.group ?? "default")
-            .entries()
-            .sortBy(([group]) => (group === "default" ? 0 : 1)) // Default should always be first
-            .value();
+        const readoutsByGroup = groupBy(props.readouts, (readout) => readout.group ?? "default");
+        const readoutsByGroupEntries = entries(readoutsByGroup);
+        return sortBy(readoutsByGroupEntries, ([group]) => (group === "default" ? 0 : 1)); // Default should always be first
     }, [props.readouts]);
 
     function makeTitleAdornment() {

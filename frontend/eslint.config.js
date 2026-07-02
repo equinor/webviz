@@ -56,6 +56,37 @@ export default eslintTypescript.config(
     // Custom rules ---------------------------------------------------------------------
     {
         rules: {
+            // Lodash-es exposes the "chain" utility in it's typing, but the function will fail due to tree-shaking in production. This rule config should flag these as
+            "no-restricted-imports": [
+                "error",
+                {
+                    paths: [
+                        {
+                            name: "lodash-es",
+                            importNames: ["chain"],
+                            message:
+                                "`lodash-es` is meant to be tree-shaken, therefore importing `chain` from lodash-es causes issues in production. Do not import `chain` from lodash-es",
+                        },
+                    ],
+                },
+            ],
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector: "MemberExpression[object.name='_'][property.name='chain']",
+                    message:
+                        "`lodash-es` is meant to be tree-shaken, therefore `_.chain` causes issues in production. Do not use `_.chain`",
+                },
+                {
+                    selector: "CallExpression[callee.name='_']",
+                    message:
+                        "`lodash-es` is meant to be tree-shaken, therefore `_(value)` is equivalent of using `_.chain` which causes issues in production. Do not use `_.chain`",
+                },
+            ],
+        },
+    },
+    {
+        rules: {
             "@typescript-eslint/no-unused-expressions": ["warn", { allowShortCircuit: true, allowTernary: true }], // Allow some useful "unused" expressions, such as `foo && foo()`
             "@typescript-eslint/consistent-type-imports": "warn",
             "@typescript-eslint/no-explicit-any": "off",
