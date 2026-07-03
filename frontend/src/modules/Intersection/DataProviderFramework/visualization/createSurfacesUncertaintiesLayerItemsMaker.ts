@@ -1,6 +1,6 @@
 import type { IntersectionReferenceSystem, SurfaceLine } from "@equinor/esv-intersection";
 
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { GeomodelLabelsLayer, SurfaceStatisticalFanchartsCanvasLayer } from "@modules/_shared/components/EsvIntersection";
 import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
 import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
@@ -77,37 +77,35 @@ export function createSurfacesUncertaintiesLayerItemsMaker({
     }
 
     const surfacesUncertaintiesLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
+        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null, order: number) => {
             if (!intersectionReferenceSystem) {
                 throw new Error("IntersectionReferenceSystem is required to create intersection surface layer items");
             }
 
             return [
-                {
-                    id: `${id}-uncertainty-surfaces-layer`,
-                    name: name,
-                    type: LayerType.SURFACE_STATISTICAL_FANCHARTS_CANVAS,
-                    hoverable: true,
-                    options: {
+                new SurfaceStatisticalFanchartsCanvasLayer(
+                    `${id}-uncertainty-surfaces-layer`,
+                    {
+                        order,
                         data: {
                             fancharts,
                         },
-
-                        referenceSystem: intersectionReferenceSystem ?? undefined,
+                        referenceSystem: intersectionReferenceSystem,
                     },
-                },
-                {
-                    id: `${id}-uncertainty-surfaces-labels`,
-                    name: `${name}-labels`,
-                    type: LayerType.GEOMODEL_LABELS,
-                    options: {
+                    { name, hoverable: true },
+                ),
+                new GeomodelLabelsLayer(
+                    `${id}-uncertainty-surfaces-labels`,
+                    {
+                        order,
                         data: {
                             areas: [],
                             lines: labelData,
                         },
-                        referenceSystem: intersectionReferenceSystem ?? undefined,
+                        referenceSystem: intersectionReferenceSystem,
                     },
-                },
+                    { name: `${name}-labels` },
+                ),
             ];
         },
     };

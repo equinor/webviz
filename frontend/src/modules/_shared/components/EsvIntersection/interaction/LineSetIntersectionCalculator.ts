@@ -14,11 +14,11 @@ export class LineSetIntersectionCalculator implements IntersectionCalculator {
     private _lineIntersectionCalculators: LineIntersectionCalculator[];
     private _lines: number[][][];
 
-    constructor(lines: number[][][], margin: number = 0) {
+    constructor(lines: number[][][], getMargin: () => number = () => 0) {
         this._lines = lines;
         const lineIntersectionCalculators: LineIntersectionCalculator[] = [];
         for (const line of lines) {
-            lineIntersectionCalculators.push(new LineIntersectionCalculator(line, margin));
+            lineIntersectionCalculators.push(new LineIntersectionCalculator(line, getMargin));
         }
         this._lineIntersectionCalculators = lineIntersectionCalculators;
     }

@@ -1,6 +1,6 @@
 import type { IntersectionReferenceSystem, SurfaceData } from "@equinor/esv-intersection";
 
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { GeomodelCanvasLayer, GeomodelLabelsLayer } from "@modules/_shared/components/EsvIntersection";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type {
     EsvLayerItemsMaker,
@@ -42,31 +42,30 @@ export function createSurfacesLayerItemsMaker({
     };
 
     const surfaceIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
+        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null, order: number) => {
             if (!intersectionReferenceSystem) {
                 throw new Error("IntersectionReferenceSystem is required to create intersection surface layer items");
             }
 
             return [
-                {
-                    id: `${id}-surfaces-layer`,
-                    name: name,
-                    type: LayerType.GEOMODEL_CANVAS,
-                    hoverable: true,
-                    options: {
+                new GeomodelCanvasLayer(
+                    `${id}-surfaces-layer`,
+                    {
+                        order,
                         data: surfaceData,
                         referenceSystem: intersectionReferenceSystem,
                     },
-                },
-                {
-                    id: `${id}-surfaces-labels`,
-                    name: `${name}-labels`,
-                    type: LayerType.GEOMODEL_LABELS,
-                    options: {
+                    { name, hoverable: true },
+                ),
+                new GeomodelLabelsLayer(
+                    `${id}-surfaces-labels`,
+                    {
+                        order,
                         data: surfaceData,
                         referenceSystem: intersectionReferenceSystem,
                     },
-                },
+                    { name: `${name}-labels` },
+                ),
             ];
         },
     };
