@@ -44,7 +44,12 @@ export function makeIntersectionCalculatorFromIntersectionItem(
     options: Required<IntersectionHandlerOptions>,
     controller: Controller,
 ): IntersectionCalculator {
-    const getThreshold = () => options.threshold;
+    const getThreshold = () => {
+        const { xScale, yScale } = controller.currentStateAsEvent;
+        const dataMarginX = Math.abs(xScale.invert(options.threshold) - xScale.invert(0));
+        const dataMarginY = Math.abs(yScale.invert(options.threshold) - yScale.invert(0));
+        return Math.max(dataMarginX, dataMarginY);
+    };
     switch (intersectionItem.shape) {
         case IntersectionItemShape.POINT:
             return new PointIntersectionCalculator(intersectionItem.data, getThreshold);

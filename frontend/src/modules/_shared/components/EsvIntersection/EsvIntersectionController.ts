@@ -134,11 +134,9 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
         this.setLifeCycleState(EsvIntersectionLifeCycleState.INITIALIZING);
 
         try {
-            // Initialise Pixi FIRST — before touching the DOM. PixiRenderApplication.init()
+            // Initialize Pixi FIRST — before touching the DOM. PixiRenderApplication.init()
             // creates its own off-screen canvas (context: null) so it does not need the
-            // container yet. This means React Strict Mode can run the effect cleanup (calling
-            // destroy()) during the await without leaving orphaned DOM elements in the
-            // container, which would conflict with the next controller's initialisation.
+            // container yet.
             const pixiRenderApplication = new PixiRenderApplication();
             await pixiRenderApplication.init({
                 context: null,
@@ -438,13 +436,38 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                 }
                 this.resizeLayerElement(newEsvLayer);
             } else if (!isEqual(prevUserLayer?.options, userLayer.options)) {
-                existingEsvLayer.onUpdate({ data: cloneDeep((userLayer.options as any).data) });
-                if (userLayer.options.order !== undefined) {
-                    existingEsvLayer.order = userLayer.options.order + 1;
-                }
-                interactionHandler.removeLayer(userLayer.id);
-                if (userLayer.hoverable) {
-                    interactionHandler.addLayer(existingEsvLayer);
+                const structuralChanged = !isEqual(
+                    optionsWithoutDataAndOrder(prevUserLayer?.options),
+                    optionsWithoutDataAndOrder(userLayer.options),
+                );
+
+                if (structuralChanged) {
+                    // Structural options (e.g. referenceSystem) changed - ESV layers have no
+                    // setters for these, so tear down the old instance and create a fresh one.
+                    esvController.removeLayer(userLayer.id);
+                    interactionHandler.removeLayer(userLayer.id);
+                    this._esvLayerMap.delete(userLayer.id);
+
+                    const opts = cloneDeep(userLayer.options);
+                    if (opts.order !== undefined) {
+                        opts.order += 1;
+                    }
+                    const newEsvLayer = makeEsvLayerInstance(userLayer, opts, pixiApp);
+                    esvController.addLayer(newEsvLayer);
+                    this._esvLayerMap.set(userLayer.id, newEsvLayer);
+                    if (userLayer.hoverable) {
+                        interactionHandler.addLayer(newEsvLayer);
+                    }
+                    this.resizeLayerElement(newEsvLayer);
+                } else {
+                    existingEsvLayer.onUpdate({ data: cloneDeep((userLayer.options as any).data) });
+                    if (userLayer.options.order !== undefined) {
+                        existingEsvLayer.order = userLayer.options.order + 1;
+                    }
+                    interactionHandler.removeLayer(userLayer.id);
+                    if (userLayer.hoverable) {
+                        interactionHandler.addLayer(existingEsvLayer);
+                    }
                 }
             } else if (prevUserLayer?.hoverable !== userLayer.hoverable) {
                 // Options unchanged but hoverable toggled - re-register independently.
@@ -604,6 +627,13 @@ function makeEsvLayerInstance(
         default:
             throw new Error(`Unsupported layer type: ${(userLayer as EsvLayer).layerType}`);
     }
+}
+
+function optionsWithoutDataAndOrder(opts: EsvLayerOptionsMap[EsvLayerType] | undefined): Record<string, unknown> {
+    if (!opts) return {};
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { data: _data, order: _order, ...rest } = opts as Record<string, unknown>;
+    return rest;
 }
 
 const EPSILON = 0.001;
