@@ -59,7 +59,7 @@ function makeRegularEnsembleOptionsForDeltaEnsemble(
         ...selectableEnsemblesNotAmongSelected.map((ens) => ({
             ensembleIdent: ens.ensembleIdent,
             caseName: ens.caseName,
-            adornment: <History fontSize="small" />,
+            adornment: <History style={{fontSize: "1rem"}} />,
         })),
     ];
 }

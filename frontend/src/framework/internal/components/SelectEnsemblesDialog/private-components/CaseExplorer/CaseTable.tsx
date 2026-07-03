@@ -193,7 +193,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                 {/* Tweak alignment so sorting-arrow show up in the middle */}
                 <Table.Column colKey="#" width={42} layoutClassName="text-center! pr-0!" />
                 <Table.Column colKey="name" widthInPercent={24}>
-                    Name / id
+                    Case (ID)
                 </Table.Column>
                 <Table.Column colKey="description" widthInPercent={18}>
                     Description

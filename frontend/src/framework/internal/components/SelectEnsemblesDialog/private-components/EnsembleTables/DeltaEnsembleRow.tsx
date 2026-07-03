@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Delete, DragIndicator, FolderOpen } from "@mui/icons-material";
+import { Delete, DragIndicator, FolderOpen, History } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Button } from "@lib/components/Button";
@@ -135,11 +135,11 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
     }
 
     function renderEnsembleIdentAdornment(value: string) {
-        if (value === SELECT_OTHER_VALUE) return <FolderOpen fontSize="small" />;
+        if (value === SELECT_OTHER_VALUE) return <FolderOpen style={{fontSize: "1rem"}} />;
 
         const ensemble = props.regularEnsembleOptions.find((ens) => ens.ensembleIdent.toString() === value);
 
-        return ensemble?.adornment;
+        return ensemble?.adornment ?? <History style={{fontSize: "1rem"}} />;
     }
 
     return (
