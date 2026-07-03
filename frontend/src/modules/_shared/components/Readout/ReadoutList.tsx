@@ -93,11 +93,11 @@ function ReadoutPropertyList(props: { properties?: ReadoutProperty<any>[] }): Re
     if (!props.properties?.length) return null;
 
     return (
-        <ul className="ml-1.5 border-l-4 pl-2 border-gray-200 text-gray-700  [&_.--readout-label]:font-bold">
+        <div className="ml-1.5 border-l-4 pl-2 border-gray-200 text-gray-700 [&_.--readout-label]:font-bold grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
             {props.properties.map((property, idx) => (
                 <ReadoutPropertyItem key={`${property.name}-${idx}`} property={property} />
             ))}
-        </ul>
+        </div>
     );
 }
 
@@ -106,13 +106,13 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     const valueFormat = property.format ?? String;
 
     if (property.render) {
-        return property.render(property.name, property.value, property.renderArgs);
+        return <div className="col-span-2">{property.render(property.name, property.value, property.renderArgs)}</div>;
     }
 
     return (
-        <li className="flex gap-2 text-xs">
-            <span className="--readout-label">{property.name}:</span>
-            <span>{valueFormat(property.value)}</span>
-        </li>
+        <>
+            <span className="--readout-label text-xs">{property.name}:</span>
+            <span className="text-xs text-right">{valueFormat(property.value)}</span>
+        </>
     );
 }

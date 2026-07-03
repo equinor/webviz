@@ -178,7 +178,7 @@ function getObjectNameFromPickInfo(info: LayerPickInfo<unknown>): string {
 
 function sanitizeSubsurfaceValue(value: any): string {
     if (typeof value === "number") {
-        return formatNumber(value, 0);
+        return formatNumber(value);
     } else {
         return String(value);
     }
@@ -244,7 +244,7 @@ export function getDepthFromSubsurfaceReadout(wellsLayerInfo: WellsPickInfo) {
     function formatDepth(v: number | null): string {
         if (v === null) return "--";
 
-        return v.toFixed(0) + " m";
+        return formatNumber(v, { unit: "m" });
     }
 
     properties.push({ name: "MD", value: sanitizedMd, format: formatDepth });
