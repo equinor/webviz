@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { chain, isEqual, sortBy } from "lodash-es";
+import { entries, groupBy, isEqual, sortBy } from "lodash-es";
 
 import type { WellboreLogCurveHeader_api } from "@api";
 import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
@@ -19,9 +19,9 @@ type ValueConstraintsType = WellboreLogCurveHeader_api[];
 
 export class LogCurveSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     defaultValue: ValueType = null;
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<WellboreLogCurveHeader_api[]>(
-        (a, b) => isEqual(a, b),
-    );
+    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<
+        WellboreLogCurveHeader_api[]
+    >((a, b) => isEqual(a, b));
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -84,12 +84,10 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
             const selectedValue = makeSelectValueForCurveHeader(props.value);
             const availableValues = props.valueConstraints ?? [];
 
-            const curveOptions = chain(availableValues)
-                .groupBy("logName")
-                .entries()
-                .map(makeLogOptionGroup)
-                .sortBy([sortStatLogsToTop, "label"])
-                .value();
+            const valuesByLogName = groupBy(availableValues, "logName");
+            const valuesByLogNameEntries = entries(valuesByLogName);
+            const logOptionGroups = valuesByLogNameEntries.map(makeLogOptionGroup);
+            const sortedCurveOptions = sortBy(logOptionGroups, [sortStatLogsToTop, "label"]);
 
             function handleChange(selectedIdent: string) {
                 const selected = availableValues.find((v) => makeSelectValueForCurveHeader(v) === selectedIdent);
@@ -100,7 +98,7 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
             return (
                 <Dropdown
                     filter
-                    options={curveOptions}
+                    options={sortedCurveOptions}
                     value={selectedValue}
                     onChange={handleChange}
                     disabled={props.isOverridden}
@@ -118,9 +116,12 @@ function makeCurveOption(curve: WellboreLogCurveHeader_api): DropdownOption {
 }
 
 function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): DropdownOptionGroup {
+    const curveOptions = logCurves.map(makeCurveOption);
+    const sortedCurveOptions = sortBy(curveOptions, "label");
+
     return {
         label: logName,
-        options: chain(logCurves).map(makeCurveOption).sortBy("label").value(),
+        options: sortedCurveOptions,
     };
 }
 
