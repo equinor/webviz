@@ -44,24 +44,25 @@ export function makeIntersectionCalculatorFromIntersectionItem(
     options: IntersectionHandlerOptions,
     controller: Controller,
 ): IntersectionCalculator {
+    const getThreshold = () => options.threshold ?? 0;
     switch (intersectionItem.shape) {
         case IntersectionItemShape.POINT:
-            return new PointIntersectionCalculator(intersectionItem.data, options.threshold);
+            return new PointIntersectionCalculator(intersectionItem.data, getThreshold);
         case IntersectionItemShape.LINE:
-            return new LineIntersectionCalculator(intersectionItem.data, options.threshold);
+            return new LineIntersectionCalculator(intersectionItem.data, getThreshold);
         case IntersectionItemShape.LINE_SET:
-            return new LineSetIntersectionCalculator(intersectionItem.data, options.threshold);
+            return new LineSetIntersectionCalculator(intersectionItem.data, getThreshold);
         case IntersectionItemShape.POLYGON:
             return new PolygonIntersectionCalculator(intersectionItem.data);
         case IntersectionItemShape.POLYGONS:
             return new PolygonsIntersectionCalculator(intersectionItem.data);
         case IntersectionItemShape.WELLBORE_PATH:
-            return new WellborePathIntersectionCalculator(controller, options.threshold);
+            return new WellborePathIntersectionCalculator(controller, getThreshold);
         case IntersectionItemShape.FANCHART:
             return new FanchartIntersectionCalculator(
                 intersectionItem.data.lines,
                 intersectionItem.data.hull,
-                options.threshold,
+                getThreshold,
             );
         case IntersectionItemShape.RECTANGLE:
             return new RectangleIntersectionCalculator(intersectionItem.data);

@@ -454,7 +454,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                 }
             }
 
-            this._userLayerMap.set(userLayer.id, userLayer);
+            this._userLayerMap.set(userLayer.id, cloneDeep(userLayer));
         }
 
         this.ensurePixiCanvasInDom();

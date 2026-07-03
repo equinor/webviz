@@ -26,26 +26,13 @@ export function makeViewProvidersVisualizationLayerItems(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, never>, GroupType>,
     intersectionReferenceSystem: IntersectionReferenceSystem,
 ): EsvLayer[] {
-    // Make EsvLayers per provider, using maker function
-    // The children are returned in the order they are added to the view
-    const perProviderLayerItems: EsvLayer[][] = [];
-    for (const item of view.children) {
-        if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-            perProviderLayerItems.push(item.visualization.makeLayerItems(intersectionReferenceSystem));
-        }
-    }
-
-    // Assign ESV layer order, i.e. reverse
-    const numProviders = perProviderLayerItems.length;
-    for (const [index, providerLayerItems] of perProviderLayerItems.entries()) {
-        const layerItemOrder = numProviders - index;
-        for (const providerItem of providerLayerItems) {
-            (providerItem.options as { order?: number }).order = layerItemOrder;
-        }
-    }
-
-    // Flatten the array of arrays into a single array
-    return perProviderLayerItems.flat();
+    const providerItems = view.children.filter(
+        (item) => item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
+    );
+    const numProviders = providerItems.length;
+    return providerItems.flatMap((item, index) =>
+        item.visualization.makeLayerItems(intersectionReferenceSystem, numProviders - index),
+    );
 }
 
 /**

@@ -41,7 +41,7 @@ export enum VisualizationTarget {
 }
 
 export interface EsvLayerItemsMaker {
-    makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => EsvLayer[];
+    makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null, order: number) => EsvLayer[];
 }
 
 export type DataProviderVisualizationTargetTypes = {

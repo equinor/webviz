@@ -61,11 +61,11 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
     private _boundingBox: BoundingBox2D;
     private _points: number[][];
     private _subLines: SubLine[] = [];
-    private _margin: number;
+    private _getMargin: () => number;
 
-    constructor(points: number[][], margin: number = 0) {
+    constructor(points: number[][], getMargin: () => number = () => 0) {
         this._points = points;
-        this._margin = margin;
+        this._getMargin = getMargin;
         this._boundingBox = this.makeBoundingBoxAndSubLines();
     }
 
@@ -255,12 +255,13 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
     }
 
     calcIntersection(point: number[]): LineIntersectedItem | null {
-        if (!this._boundingBox.contains(point, this._margin)) {
+        const margin = this._getMargin();
+        if (!this._boundingBox.contains(point, margin)) {
             return null;
         }
 
         for (const subLine of this._subLines) {
-            const intersectedSubline = subLine.getIntersectedSubLine(point, this._margin);
+            const intersectedSubline = subLine.getIntersectedSubLine(point, margin);
             if (intersectedSubline) {
                 const result = this.interpolate(
                     point,

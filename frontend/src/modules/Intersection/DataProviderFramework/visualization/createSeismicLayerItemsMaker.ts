@@ -92,11 +92,12 @@ export function createSeismicLayerItemsMaker({
     }
 
     const intersectionSeismicLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: () => {
+        makeLayerItems: (_, order) => {
             return [
                 new SeismicLayer(
                     `${id}-seismic-layer`,
                     {
+                        order,
                         data: {
                             propertyName: attribute ?? "",
                             propertyUnit: "",

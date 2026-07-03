@@ -25,11 +25,12 @@ export function createWellborePicksLayerItemsMaker({
     const pickData = transformFormationData(selectedWellborePicks, emptyUnitList);
 
     const wellborePicksLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem) => {
+        makeLayerItems: (intersectionReferenceSystem, order) => {
             return [
                 new CalloutCanvasLayer(
                     `${id}-wellbore-picks-layer`,
                     {
+                        order,
                         data: getPicksData(pickData),
                         referenceSystem: intersectionReferenceSystem ?? undefined,
                     },

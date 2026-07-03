@@ -42,7 +42,7 @@ export function createSurfacesLayerItemsMaker({
     };
 
     const surfaceIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
+        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null, order: number) => {
             if (!intersectionReferenceSystem) {
                 throw new Error("IntersectionReferenceSystem is required to create intersection surface layer items");
             }
@@ -51,6 +51,7 @@ export function createSurfacesLayerItemsMaker({
                 new GeomodelCanvasLayer(
                     `${id}-surfaces-layer`,
                     {
+                        order,
                         data: surfaceData,
                         referenceSystem: intersectionReferenceSystem,
                     },
@@ -59,6 +60,7 @@ export function createSurfacesLayerItemsMaker({
                 new GeomodelLabelsLayer(
                     `${id}-surfaces-labels`,
                     {
+                        order,
                         data: surfaceData,
                         referenceSystem: intersectionReferenceSystem,
                     },

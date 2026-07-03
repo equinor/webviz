@@ -66,11 +66,12 @@ export function createGridLayerItemsMaker({
     }
 
     const gridIntersectionLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: () => {
+        makeLayerItems: (_, order) => {
             return [
                 new PolylineIntersectionLayer(
                     `${id}-grid-layer`,
                     {
+                        order,
                         data: {
                             fenceMeshSections: transformedPolylineIntersection.fenceMeshSections.map((section) => ({
                                 verticesUzArr: section.verticesUzFloat32Arr,

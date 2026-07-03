@@ -77,7 +77,7 @@ export function createSurfacesUncertaintiesLayerItemsMaker({
     }
 
     const surfacesUncertaintiesLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => {
+        makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null, order: number) => {
             if (!intersectionReferenceSystem) {
                 throw new Error("IntersectionReferenceSystem is required to create intersection surface layer items");
             }
@@ -86,6 +86,7 @@ export function createSurfacesUncertaintiesLayerItemsMaker({
                 new SurfaceStatisticalFanchartsCanvasLayer(
                     `${id}-uncertainty-surfaces-layer`,
                     {
+                        order,
                         data: {
                             fancharts,
                         },
@@ -96,6 +97,7 @@ export function createSurfacesUncertaintiesLayerItemsMaker({
                 new GeomodelLabelsLayer(
                     `${id}-uncertainty-surfaces-labels`,
                     {
+                        order,
                         data: {
                             areas: [],
                             lines: labelData,
