@@ -2,7 +2,7 @@ import type React from "react";
 
 import { EnsemblesLoadingErrorInfo } from "@framework/components/EnsemblesLoadingErrorInfo/ensemblesLoadingErrorInfo";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
 
 import type { StateTuple } from "../_hooks";
 
@@ -28,21 +28,21 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
             <AlertDialog
                 open={showCancelDialog}
                 onOpenChange={(open) => setShowCancelDialog(open)}
-                title="Unsaved changes"
+                title="Close without saving changes?"
                 primaryAction={{
-                    label: "Yes, cancel",
-                    onClick: props.onConfirmCancel,
-                    tone: "danger",
+                    label: "Cancel",
+                    onClick: () => setShowCancelDialog(false),
+                    tone: "neutral",
                 }}
                 secondaryActions={[
                     {
-                        label: "No, don't cancel",
-                        onClick: () => setShowCancelDialog(false),
-                        tone: "neutral",
+                        label: "Yes, close without saving",
+                        onClick: props.onConfirmCancel,
+                        tone: "danger",
                     },
                 ]}
             >
-                You have unsaved changes which will be lost. Are you sure you want to cancel?
+                You have unsaved changes which will be lost. Are you sure you want to close without saving?
             </AlertDialog>
             <AlertDialog
                 open={showEnsemblesLoadingErrorDialog}

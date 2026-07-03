@@ -6,14 +6,13 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Banner } from "@lib/newComponents/Banner";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import { Banner } from "@lib/components/Banner";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Hidden } from "@lib/components/Hidden";
+import { Setting } from "@lib/components/Setting";
+import { Slider } from "@lib/components/Slider";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -133,58 +132,58 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const plotSettings = (
         <>
-            <SettingWrapper.Section title="Data Visualization" defaultOpen>
+            <Setting.Section title="Data Visualization" defaultOpen>
                 {showFaciesFractionGroupingWarning && (
                     <Banner tone="warning">
                         <strong>Note:</strong> FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or
                         Color by; otherwise every fraction collapses to 1.
                     </Banner>
                 )}
-                <SettingWrapper label="Response" annotations={selectedFirstResultNameAnnotations}>
+                <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>
                     <Combobox
                         value={selectedFirstResultName.value}
                         items={resultNameOptions}
                         onValueChange={setSelectedFirstResultName}
                     />
-                </SettingWrapper>
+                </Setting.Field>
 
-                <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
+                <Setting.Field label="Subplot by" annotations={selectedSubplotByAnnotations}>
                     <Combobox
                         value={selectedSubplotBy.value}
                         items={subplotOptions}
                         onValueChange={(v) => v && setSelectedSubplotBy(v)}
                     />
-                </SettingWrapper>
+                </Setting.Field>
 
-                <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
+                <Setting.Field label="Color by" annotations={selectedColorByAnnotations}>
                     <Combobox
                         value={selectedColorBy.value}
                         items={colorByOptions}
                         onValueChange={(v) => v && setSelectedColorBy(v)}
                     />
-                </SettingWrapper>
+                </Setting.Field>
 
-                <SettingWrapper stacked>
+                <Setting.Field stacked>
                     <SwitchCompositions.WithLabel
                         label="Show statistics table below plot"
                         checked={showTable}
                         onCheckedChange={setShowTable}
                         size="small"
                     />
-                </SettingWrapper>
-            </SettingWrapper.Section>
+                </Setting.Field>
+            </Setting.Section>
 
-            <SettingWrapper.Section title="Plot Settings" defaultOpen>
-                <SettingWrapper label="Plot Type">
+            <Setting.Section title="Plot Settings" defaultOpen>
+                <Setting.Field label="Plot Type">
                     <Combobox
                         value={selectedPlotType}
                         items={plotTypeOptions}
                         onValueChange={(v) => v && setSelectedPlotType(v)}
                     />
-                </SettingWrapper>
+                </Setting.Field>
 
                 <Hidden hidden={selectedPlotType !== PlotType.HISTOGRAM}>
-                    <SettingWrapper
+                    <Setting.Field
                         label="Histogram Type"
                         help={{ title: "Histogram Type", content: <HistogramTypeInfoContent /> }}
                     >
@@ -198,11 +197,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             ]}
                             onValueChange={(v: HistogramType | null) => v && handleOptionChange("histogramType")(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Max bins">
+                    </Setting.Field>
+                    <Setting.Field label="Max bins">
                         <Slider
-                            // ! Temp workaround - Avoids markers overflowing. Framework update branch will rework label position to
-                            layoutClassName="pb-lg"
                             value={plotOptions.histogramBins}
                             min={5}
                             step={1}
@@ -211,21 +208,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             markers={[10, 15, 20, 25]}
                             valueLabelDisplay="auto"
                             disabled={selectedPlotType !== PlotType.HISTOGRAM}
-                            // Value is always a number, so cast is safe
-                            onValueChange={(v) => handleOptionChange("histogramBins")(v as number)}
+                            onValueChange={(v) => handleOptionChange("histogramBins")(v)}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                 </Hidden>
                 <Hidden hidden={selectedPlotType !== PlotType.BAR}>
-                    <SettingWrapper label="Create bar for each" annotations={selectedSelectorColumnAnnotations}>
+                    <Setting.Field label="Create bar for each" annotations={selectedSelectorColumnAnnotations}>
                         <Combobox
                             value={selectedSelectorColumn.value}
                             items={selectorOptions}
                             onValueChange={setSelectedSelectorColumn}
                             disabled={selectedPlotType !== PlotType.BAR}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Sort bars by">
+                    </Setting.Field>
+                    <Setting.Field label="Sort bars by">
                         <Combobox
                             value={plotOptions.barSortBy}
                             items={[
@@ -234,10 +230,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             ]}
                             onValueChange={(v) => v && handleOptionChange("barSortBy")(v)}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                 </Hidden>
 
-                <SettingWrapper stacked label="Visuals">
+                <Setting.Field stacked label="Visuals">
                     <SwitchCompositions.WithLabel
                         label="Hide plots where all values are equal"
                         checked={plotOptions.hideConstants}
@@ -279,9 +275,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             size="small"
                         />
                     )}
-                </SettingWrapper>
+                </Setting.Field>
 
-                <SettingWrapper label="Axes" stacked>
+                <Setting.Field label="Axes" stacked>
                     <SwitchCompositions.WithLabel
                         label="Shared x axis"
                         checked={plotOptions.sharedXAxis}
@@ -294,14 +290,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         onCheckedChange={handleOptionChange("sharedYAxis")}
                         size="small"
                     />
-                </SettingWrapper>
-            </SettingWrapper.Section>
+                </Setting.Field>
+            </Setting.Section>
         </>
     );
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
+        <Setting.ScrollArea>
+            <Setting.Panel>
                 <InplaceVolumesFilterComponent
                     debounceMs={DEBOUNCE_TIME_MS}
                     ensembleSet={ensembleSet}
@@ -321,7 +317,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     onChange={handleFilterChange}
                 />
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

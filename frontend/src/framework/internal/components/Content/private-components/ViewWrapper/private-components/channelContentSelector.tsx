@@ -6,9 +6,9 @@ import { createPortal } from "react-dom";
 
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ChannelContentDefinition } from "@framework/types/dataChannnel";
-import { Overlay } from "@lib/components/Overlay";
-import { Button } from "@lib/newComponents/Button";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
+import { Button } from "@lib/components/Button";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Scrim } from "@lib/components/Scrim/scrim";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { Vec2 } from "@lib/utils/vec2";
 
@@ -217,7 +217,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
 
     return createPortal(
         <>
-            <Overlay visible />
+            <Scrim />
             <div
                 id="channel-selector"
                 className="bg-surface z-toast shadow-elevation-overlay border-neutral-subtle absolute flex flex-col overflow-auto rounded border"
@@ -233,8 +233,8 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     className="bg-neutral px-2xs text-body-sm font-bolder flex h-12 items-center"
                 >
                     <div className="grow">
-                        Make <i className="text-accent-subtle font-bold">{props.receiver.getDisplayName()}</i> subscribe
-                        to...
+                        Make <i className="text-accent-subtle font-bolder">{props.receiver.getDisplayName()}</i>{" "}
+                        subscribe to...
                     </div>
                     <Button variant="ghost" tone="neutral" size="small" onClick={handleCancelChannelSelection} iconOnly>
                         <Close fontSize="small" />

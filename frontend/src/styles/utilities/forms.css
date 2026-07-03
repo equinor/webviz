@@ -1,5 +1,18 @@
+@theme {
+    --form-element-background: var(--eds-color-bg-neutral-canvas);
+}
+
+*[data-form-on-emphasis] {
+    --form-element-background: var(--eds-color-bg-neutral-surface);
+}
+*[data-form-on-normal] {
+    --form-element-background: var(--eds-color-bg-neutral-canvas);
+}
+
 @utility form-element {
-    @apply focusable bg-canvas outline-neutral rounded outline -outline-offset-2;
+    @apply focusable outline-neutral text-neutral-strong rounded outline -outline-offset-2;
+
+    background-color: var(--form-element-background);
 
     transition:
         background-color 150ms,
@@ -21,6 +34,10 @@
         & * {
             cursor: not-allowed;
         }
+    }
+
+    &[data-readonly] {
+        @apply outline-transparent;
     }
 
     /* data-warning and data-invalid are set by Field.Root (via FieldStateContext) and propagated

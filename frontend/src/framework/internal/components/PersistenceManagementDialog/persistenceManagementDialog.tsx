@@ -3,8 +3,8 @@ import type React from "react";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { Tabs } from "@lib/newComponents/Tabs";
+import { Dialog } from "@lib/components/Dialog";
+import { Tabs } from "@lib/components/Tabs";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { SessionManagementContent } from "./sessionManagementContent";

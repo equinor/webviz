@@ -1,8 +1,8 @@
-import React from "react";
+import type React from "react";
 
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
-import { Avatar } from "@lib/newComponents/Avatar";
+import { Avatar } from "@lib/components/Avatar";
+import { TableCompositions } from "@lib/components/Table/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**
@@ -18,10 +18,8 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
         return props.caseId;
     }
 
-    const highlightRef = React.useRef<HTMLSpanElement>(null);
-
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested} highlightRef={highlightRef}>
+        <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
             <div
                 className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
@@ -33,14 +31,11 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
                             "text-neutral-subtle-on-emphasis": props.cellRowSelected,
                         })}
                     >
-                        -{" "}
-                        <span ref={highlightRef} className="inline-block">
-                            {props.caseId}
-                        </span>
+                        - <span className="inline-block">{props.caseId}</span>
                     </span>
                 </div>
             </div>
-        </CopyCellValue>
+        </TableCompositions.CopyCellValue>
     );
 }
 
@@ -56,11 +51,11 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
     }
 
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested}>
+        <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
             <div className="flex h-full min-w-0 items-center" title={props.description}>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{props.description}</span>
             </div>
-        </CopyCellValue>
+        </TableCompositions.CopyCellValue>
     );
 }
 

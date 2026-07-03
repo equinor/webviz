@@ -1,8 +1,8 @@
 import type React from "react";
 
+import { NumberInput } from "@lib/components/NumberInput";
+import { Switch } from "@lib/components/Switch";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Switch } from "@lib/newComponents/Switch";
 
 import type {
     CustomSettingImplementation,
@@ -183,12 +183,12 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
 
             return (
                 <div className="gap-x-2xs flex items-center">
-                    <Switch checked={enabled} onCheckedChange={handleBooleanChange} />
+                    <Switch disabled={props.disabled} checked={enabled} onCheckedChange={handleBooleanChange} />
                     <NumberInput
                         value={immediateValue}
                         min={min}
                         max={max}
-                        disabled={!enabled}
+                        disabled={props.disabled || !enabled}
                         onValueChange={setNumberValue}
                         layoutClassName="grow"
                         allowWheelScrub

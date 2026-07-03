@@ -192,6 +192,12 @@ export const propertyGroups = {
         // Gap (y-axis)
         "gap-y": { property: "row-gap", axis: "y" },
 
+        // Space between children (x-axis)
+        "space-x": { type: "child-selector", selector: "> * + *", property: "margin-inline-start", axis: "x" },
+
+        // Space between children (y-axis)
+        "space-y": { type: "child-selector", selector: "> * + *", property: "margin-block-start", axis: "y" },
+
         // Combined: two properties from x/y token pairs; shorthand for axis-agnostic tokens
         p:   { type: "combined", inlineProperty: "padding-inline", blockProperty: "padding-block", shorthandProperty: "padding", negative: false },
         m:   { type: "combined", inlineProperty: "margin-inline",  blockProperty: "margin-block",  shorthandProperty: "margin",  negative: true  },

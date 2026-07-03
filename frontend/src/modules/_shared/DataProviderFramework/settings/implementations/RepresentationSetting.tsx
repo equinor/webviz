@@ -1,7 +1,7 @@
 import type React from "react";
 
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,
@@ -86,11 +86,11 @@ export class RepresentationSetting implements CustomSettingImplementation<ValueT
             }
 
             return (
-                <ComboboxCompositions.WithBrowseButtons
+                <Combobox
                     items={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
+                    value={props.value}
                     onValueChange={props.onValueChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

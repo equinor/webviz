@@ -1,16 +1,18 @@
 import type React from "react";
 
-import { Delete, DragIndicator, FolderOpen, WarningOutlined } from "@mui/icons-material";
+import { Delete, DragIndicator, FolderOpen, History } from "@mui/icons-material";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Button } from "@lib/newComponents/Button";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { SortableList } from "@lib/newComponents/SortableList";
-import { Table } from "@lib/newComponents/Table";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Field } from "@lib/components/Field";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { SortableList } from "@lib/components/SortableList";
+import { Table } from "@lib/components/Table";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import type { InternalDeltaEnsembleSetting } from "../../types";
 
@@ -62,14 +64,14 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
     const comparisonEnsValue = comparisonEnsembleIdent ? createEnsembleOptionValue(comparisonEnsembleIdent) : null;
     const referenceEnsValue = referenceEnsembleIdent ? createEnsembleOptionValue(referenceEnsembleIdent) : null;
 
-    function onColorChange(newColor: string) {
+    function handleColorChange(newColor: string) {
         props.onUpdate({
             ...props.deltaEnsembleSetting,
             color: newColor,
         });
     }
 
-    function onNameChange(newName: string) {
+    function handleNameChange(newName: string) {
         props.onUpdate({
             ...props.deltaEnsembleSetting,
             customName: newName || null,
@@ -133,15 +135,12 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
     }
 
     function renderEnsembleIdentAdornment(value: string) {
-        if (value === SELECT_OTHER_VALUE) return <FolderOpen fontSize="small" />;
+        if (value === SELECT_OTHER_VALUE) return <FolderOpen style={{fontSize: "1rem"}} />;
 
         const ensemble = props.regularEnsembleOptions.find((ens) => ens.ensembleIdent.toString() === value);
 
-        return ensemble?.adornment;
+        return ensemble?.adornment ?? <History style={{fontSize: "1rem"}} />;
     }
-
-    const isValid =
-        !!props.deltaEnsembleSetting.comparisonEnsembleIdent && !!props.deltaEnsembleSetting.referenceEnsembleIdent;
 
     return (
         <SortableList.Item key={props.deltaEnsembleSetting.uuid} id={props.deltaEnsembleSetting.uuid}>
@@ -152,28 +151,48 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                     </SortableList.DragHandle>
                 </Table.Cell>
                 <Table.Cell>
-                    <ColorSelect size="small" value={props.deltaEnsembleSetting.color} onChange={onColorChange} />
+                    <ColorSelect
+                        size="small"
+                        value={props.deltaEnsembleSetting.color}
+                        onValueCommit={handleColorChange}
+                    />
                 </Table.Cell>
                 <Table.Cell>
                     <TextInput
                         size="small"
                         value={props.deltaEnsembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
-                        onValueChange={onNameChange}
+                        onValueChange={handleNameChange}
                     />
                 </Table.Cell>
                 <Table.Cell>
-                    <Combobox
-                        size="small"
-                        value={comparisonEnsValue ?? ""}
-                        placeholder="Select comparison ensemble..."
-                        items={ensembleDropdownOptions}
-                        onValueChange={handleComparisonEnsembleChange}
-                        renderItemAdornment={renderEnsembleIdentAdornment}
-                    />
+                    <Field.Root
+                        validate={() => (!comparisonEnsembleIdent ? "Please select a comparison ensemble" : null)}
+                        validationMode="onSubmit"
+                        layoutClassName="w-full"
+                    >
+                        <Combobox
+                            size="small"
+                            value={comparisonEnsValue ?? ""}
+                            placeholder="Select comparison ensemble..."
+                            items={ensembleDropdownOptions}
+                            onValueChange={handleComparisonEnsembleChange}
+                            renderItemAdornment={renderEnsembleIdentAdornment}
+                            layoutClassName="w-full"
+                        />
+                        <FieldCompositions.GenericErrors include={["customError"]} single />
+                    </Field.Root>
                 </Table.Cell>
                 <Table.Cell>
-                    <div className="gap-y-2xs flex items-center">
+                    <Field.Root
+                        validate={() => {
+                            if (!referenceEnsembleIdent) return "Please select a reference ensemble";
+                            if (props.isDuplicate) return "This delta ensemble is a duplicate";
+                            return null;
+                        }}
+                        validationMode="onSubmit"
+                        layoutClassName="w-full"
+                    >
                         <Combobox
                             size="small"
                             value={referenceEnsValue ?? ""}
@@ -181,15 +200,10 @@ export function DeltaEnsembleRow(props: DeltaEnsembleRowProps): React.ReactNode 
                             items={ensembleDropdownOptions}
                             onValueChange={handleReferenceEnsembleChange}
                             renderItemAdornment={renderEnsembleIdentAdornment}
+                            layoutClassName="w-full"
                         />
-                        {isValid && props.isDuplicate && (
-                            <Tooltip content="This delta ensemble is a duplicate of another delta ensemble in the selection.">
-                                <span tabIndex={0} className="text-warning-subtle inline-block rounded">
-                                    <WarningOutlined fontSize="small" />
-                                </span>
-                            </Tooltip>
-                        )}
-                    </div>
+                        <FieldCompositions.GenericErrors include={["customError"]} single />
+                    </Field.Root>
                 </Table.Cell>
                 <Table.Cell>
                     <div className="flex flex-row">

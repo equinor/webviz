@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/experimental-ct-react";
 
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 test.use({ viewport: { width: 1920, height: 1080 } });
 

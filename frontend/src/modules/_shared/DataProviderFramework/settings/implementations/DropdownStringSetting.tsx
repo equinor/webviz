@@ -1,7 +1,8 @@
 import type React from "react";
 
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
+import { Combobox } from "@lib/components/Combobox";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,
@@ -20,13 +21,18 @@ type ValueConstraintsType = string[];
 
 export class DropdownStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _staticOptions: ComboboxItem<ValueType>[] | null = null;
+    private _showBrowseButtons: boolean = false;
     valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<string[]>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
-    constructor(props?: { options?: ValueType[] | ComboboxItem<ValueType>[] }) {
+    constructor(props?: { options?: ValueType[] | ComboboxItem<ValueType>[]; showBrowseButtons?: boolean }) {
+        if (props?.showBrowseButtons) {
+            this._showBrowseButtons = true;
+        }
+
         if (!props?.options) return;
 
         const options = props.options;
@@ -64,6 +70,12 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
         const isStatic = this.getIsStatic();
         const staticOptions = this._staticOptions;
 
+        let Component: typeof Combobox | typeof ComboboxCompositions.WithBrowseButtons =
+            ComboboxCompositions.WithBrowseButtons;
+        if (!this._showBrowseButtons) {
+            Component = Combobox;
+        }
+
         return function DropdownStringSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             let options: ComboboxItem<ValueType>[];
 
@@ -79,11 +91,11 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
             }
 
             return (
-                <ComboboxCompositions.WithBrowseButtons
+                <Component
                     items={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
+                    value={props.value}
                     onValueChange={props.onValueChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

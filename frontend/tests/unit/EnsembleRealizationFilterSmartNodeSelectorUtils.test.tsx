@@ -10,7 +10,7 @@ import {
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
 } from "@framework/internal/components/EnsembleRealizationFilter/private-utils/smartNodeSelectorUtils";
-import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 describe("createSmartNodeSelectorTagListFromParameterList", () => {
     const param1: Parameter = {

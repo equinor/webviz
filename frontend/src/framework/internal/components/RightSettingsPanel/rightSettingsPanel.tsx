@@ -3,14 +3,15 @@ import React from "react";
 import {
     GuiEvent,
     GuiState,
+    RightDrawerContent,
     useGuiValue,
     useRegisterGuiEventSubscriber,
     useSetGuiState,
 } from "@framework/GuiMessageBroker";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import type { Workbench } from "@framework/Workbench";
-import { Dialog } from "@lib/components/Dialog";
-import { Button } from "@lib/newComponents/Button";
+import { AlertDialog } from "@lib/components/AlertDialog";
+import { ContentHidden } from "@lib/components/Hidden";
 
 import { ModulesList } from "../ModulesList";
 
@@ -20,16 +21,18 @@ import { RealizationFilterSettings } from "./private-components/realizationFilte
 
 type RightSettingsPanelProps = { workbench: Workbench };
 
-export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => {
+export const RightSettingsPanel = React.memo(function RightSettingsPanel(props: RightSettingsPanelProps) {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
 
+    const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
     const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
 
     const handleOnClose = React.useCallback(
         function handleOnClose() {
+            console.debug("Request to close right settings panel received");
             if (numberOfUnsavedRealizationFilters !== 0) {
                 setDialogOpen(true);
                 return;
@@ -71,30 +74,43 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
 
     return (
         <div className="bg-surface flex h-full w-full flex-col">
-            <ModulesList workbench={props.workbench} onClose={handleOnClose} />
-            <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
-            <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
-            <ColorPaletteSettings workbench={props.workbench} onClose={handleOnClose} />
-            <Dialog
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.ModulesList}>
+                <ModulesList workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.RealizationFilterSettings}>
+                <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.ModuleInstanceLog}>
+                <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <ContentHidden hidden={drawerContent !== RightDrawerContent.ColorPaletteSettings}>
+                <ColorPaletteSettings workbench={props.workbench} onClose={handleOnClose} />
+            </ContentHidden>
+            <AlertDialog
                 open={dialogOpen}
-                onClose={handleDialogCloseClick}
+                onOpenChange={handleDialogCloseClick}
                 title="Unsaved changes - Realization filter"
-                modal={true}
-                showCloseCross={true}
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={handleDialogDiscardClick} tone="danger" variant="ghost">
-                            Discard
-                        </Button>
-                        <Button onClick={handleDialogSaveClick} tone="accent">
-                            Save
-                        </Button>
-                    </div>
-                }
+                primaryAction={{
+                    label: "Cancel",
+                    onClick: handleDialogCloseClick,
+                    tone: "accent",
+                }}
+                secondaryActions={[
+                    {
+                        label: "Discard changes",
+                        onClick: handleDialogDiscardClick,
+                        tone: "danger",
+                    },
+                    {
+                        label: "Save changes",
+                        onClick: handleDialogSaveClick,
+                        tone: "accent",
+                    },
+                ]}
             >
                 You have unsaved realization filter changes which are not applied to their respective ensemble yet. Do
                 you want to save the changes?
-            </Dialog>
+            </AlertDialog>
         </div>
     );
-};
+});

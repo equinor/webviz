@@ -10,8 +10,8 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { KeyKind } from "@framework/types/dataChannnel";
 import type { ChannelReceiverChannelContent } from "@framework/types/dataChannnel";
 import { useContinuousColorScale } from "@framework/WorkbenchSettings";
+import { Tag } from "@lib/components/Tag";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Tag } from "@lib/newComponents/Tag";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import type { Size2D } from "@lib/utils/geometry";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
@@ -132,11 +132,11 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
                             <p className="font-medium">Data channel required for use.</p>
                             <p>Add a module supporting data channels to the dashboard and connect it to this module.</p>
                             <p>
-                                Modules supporting data channels have an <Input fontSize="small" /> icon on their
-                                toolbar.
+                                Modules supporting data channels have an <Input fontSize="small" className="mx-xs" />{" "}
+                                icon on their toolbar.
                             </p>
                             <p>Drag from this icon to a response below:</p>
-                            <div className="gap-sm flex flex-wrap">
+                            <div className="gap-sm flex flex-wrap items-center justify-center">
                                 <Tag label="Response" />
                                 <Tag label="Response" />
                                 <Tag label="Response" />

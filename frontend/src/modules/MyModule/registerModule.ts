@@ -2,8 +2,8 @@ import { ModuleCategory, ModuleDevState, type ModuleInterfaceTypes } from "@fram
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 ModuleRegistry.registerModule<ModuleInterfaceTypes>({
-    moduleName: "MyModule3",
-    defaultTitle: "My Module 3",
+    moduleName: "MyModule",
+    defaultTitle: "My Module",
     category: ModuleCategory.DEBUG,
     devState: ModuleDevState.DEV,
     description: "My module description",

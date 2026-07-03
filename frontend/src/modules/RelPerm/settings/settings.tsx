@@ -7,17 +7,16 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Hidden } from "@lib/components/Hidden";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { SettingAnnotation } from "@lib/components/Setting";
+import { Setting } from "@lib/components/Setting";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
-import type { SettingAnnotation } from "@lib/newComponents/SettingWrapper";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -268,10 +267,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentsAnnotations} stacked>
                         <EnsemblePicker
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdents}
@@ -279,9 +278,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
                             onValueChange={handleEnsembleSelectionChange}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                     <Hidden hidden={!showTableSetting}>
-                        <SettingWrapper
+                        <Setting.Field
                             label="Table"
                             annotations={tableNameAnnotations}
                             overlay={
@@ -295,27 +294,27 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 filter={availableTableNames.length > 6}
                                 size={1}
                             />
-                        </SettingWrapper>
+                        </Setting.Field>
                     </Hidden>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Selection">
+                </Setting.Section>
+                <Setting.Section title="Selection">
                     {(tableDefinitionsArePending || tableDefinitionsErrorMessage) && (
                         // TODO - Waiting for section overlay. Temp workaround
-                        <SettingWrapper
+                        <Setting.Field
                             loadingOverlay={tableDefinitionsArePending}
                             errorOverlay={tableDefinitionsErrorMessage}
                         >
                             <div className="h-20" />
-                        </SettingWrapper>
+                        </Setting.Field>
                     )}
-                    <SettingWrapper label="Curve type">
+                    <Setting.Field label="Curve type">
                         <RadioCompositions.GroupWithLabels
                             options={makeEnumOptions(CURVE_TYPE_LABELS)}
                             value={selectedCurveType}
                             onValueChange={setSelectedCurveType}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Curves" annotations={selectedCurveNamesAnnotations}>
+                    </Setting.Field>
+                    <Setting.Field label="Curves" annotations={selectedCurveNamesAnnotations}>
                         <Combobox
                             items={makeStringItems(availableCurveNames)}
                             value={selectedCurveNames}
@@ -323,16 +322,16 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             placeholder="Select curves..."
                             multiple
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Saturation axis" annotations={selectedSaturationAxisNameAnnotations}>
+                    </Setting.Field>
+                    <Setting.Field label="Saturation axis" annotations={selectedSaturationAxisNameAnnotations}>
                         <RadioCompositions.GroupWithLabels
                             options={makeStringItems(availableSaturationAxisNames)}
                             value={selectedSaturationAxisName}
                             onValueChange={handleSaturationAxisChange}
                             layout="horizontal"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="SatNum" help={SATURATION_AXIS_HELP} annotations={selectedSatnumsAnnotations}>
+                    </Setting.Field>
+                    <Setting.Field label="SatNum" help={SATURATION_AXIS_HELP} annotations={selectedSatnumsAnnotations}>
                         <Combobox
                             items={makeNumberItems(availableSatnums)}
                             value={selectedSatnums}
@@ -340,11 +339,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             placeholder="Select SATNUMs..."
                             multiple
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot">
-                    <SettingWrapper label="Display">
-                        <div className="gap-vertical-xs flex flex-col">
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot">
+                    <Setting.Field label="Display">
+                        <div className="gap-y-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
                                 label="Individual realizations"
                                 checked={showIndividualRealizations}
@@ -361,8 +360,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 onCheckedChange={setShowStatisticalFan}
                             />
                         </div>
-                    </SettingWrapper>
-                    <SettingWrapper label="Statistic lines">
+                    </Setting.Field>
+                    <Setting.Field label="Statistic lines">
                         <Combobox
                             items={makeEnumItems(REL_PERM_STATISTIC_LABELS)}
                             value={selectedStatistics}
@@ -370,23 +369,23 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             placeholder="Select statistics..."
                             multiple
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Color by">
+                    </Setting.Field>
+                    <Setting.Field label="Color by">
                         <Combobox<ColorBy>
                             items={makeEnumItems(COLOR_BY_LABELS)}
                             value={selectedColorBy}
                             onValueChange={handleColorByChange}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Subplot by">
+                    </Setting.Field>
+                    <Setting.Field label="Subplot by">
                         <Combobox<GroupBy>
                             items={makeEnumItems(GROUP_BY_LABELS)}
                             value={selectedGroupBy}
                             onValueChange={handleGroupByChange}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                     {selectedCurveType === CurveType.RELPERM && (
-                        <SettingWrapper label="Y-axis">
+                        <Setting.Field label="Y-axis">
                             <CheckboxCompositions.WithLabel
                                 label="Logarithmic scale"
                                 checked={selectedYAxisScale === YAxisScale.LOG}
@@ -394,11 +393,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                     setSelectedYAxisScale(checked ? YAxisScale.LOG : YAxisScale.LINEAR);
                                 }}
                             />
-                        </SettingWrapper>
+                        </Setting.Field>
                     )}
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }
 

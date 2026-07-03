@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Dialog } from "@lib/components/Dialog";
-import { Button } from "@lib/newComponents/Button";
+import { AlertDialog } from "@lib/components/AlertDialog/alertDialog";
+import { Button } from "@lib/components/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic, type ItemDelegate } from "../../delegates/ItemDelegate";
@@ -30,28 +30,29 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
 
     return (
         <>
-            <Dialog
+            <AlertDialog
                 title={`${props.itemDelegate.getName()} - Persisted values could not be applied`}
                 open={dialogOpen}
-                modal
-                variant="error"
-                showCloseCross
-                actions={
-                    <Button onClick={acceptDeserializationErrors} variant="contained">
-                        Confirm and load anyways
-                    </Button>
-                }
-                onClose={() => setDialogOpen(false)}
+                primaryAction={{
+                    label: "Acknowledge and clear errors",
+                    onClick: acceptDeserializationErrors,
+                }}
+                secondaryActions={[
+                    {
+                        label: "Cancel",
+                        onClick: () => setDialogOpen(false),
+                    },
+                ]}
             >
                 <div className="overflow-auto">
-                    <ul className="list-disc pl-4">
+                    <ul className="pl-lg list-disc">
                         {deserializationErrors.map((error, index) => (
                             <li key={index}>{error}</li>
                         ))}
                     </ul>
                 </div>
-            </Dialog>
-            <div className="absolute inset-0 z-20 flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden bg-red-100/80 p-4">
+            </AlertDialog>
+            <div className="z-overlay gap-2xs bg-danger/80 p-xs absolute inset-0 flex h-full w-full flex-col items-center justify-center overflow-hidden">
                 <Button onClick={() => setDialogOpen(true)} variant="contained" size="small" tone="danger">
                     Error loading - click for details
                 </Button>

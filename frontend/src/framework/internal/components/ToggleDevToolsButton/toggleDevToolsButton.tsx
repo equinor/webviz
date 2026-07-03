@@ -1,19 +1,18 @@
 import React from "react";
 
-import { BugReport } from "@mui/icons-material";
+import { DeveloperMode } from "@mui/icons-material";
 
 import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Toggle } from "@lib/newComponents/Toggle";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Toggle } from "@lib/components/Toggle";
+import { Tooltip } from "@lib/components/Tooltip";
 import { isDevMode } from "@lib/utils/devMode";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ToggleDevToolsButtonProps = {
     guiMessageBroker: GuiMessageBroker;
 };
 
-export const ToggleDevToolsButton: React.FC<ToggleDevToolsButtonProps> = (props) => {
+export function ToggleDevToolsButton(props: ToggleDevToolsButtonProps): React.ReactNode {
     const [devToolsVisible, setDevToolsVisible] = useGuiState(props.guiMessageBroker, GuiState.DevToolsVisible);
 
     React.useEffect(() => {
@@ -29,20 +28,16 @@ export const ToggleDevToolsButton: React.FC<ToggleDevToolsButtonProps> = (props)
     }
 
     return (
-        <Tooltip content={devToolsVisible ? "Hide dev tools" : "Show dev tools"} side="right">
-            <div
-                className={resolveClassNames(
-                    "text-m absolute right-1.5 bottom-16 z-50 m-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gray-800 p-2 text-white shadow-sm",
-                )}
-            >
+        <Tooltip content={devToolsVisible ? "Hide dev tools" : "Show dev tools"} side="bottom">
+            <span>
                 <Toggle.Button
                     pressed={devToolsVisible}
-                    buttonProps={{ size: "small", tone: "accent" }}
+                    buttonProps={{ tone: "accent", iconOnly: true }}
                     onPressedChange={() => setDevToolsVisible(!devToolsVisible)}
                 >
-                    <BugReport fontSize="inherit" />
+                    <DeveloperMode fontSize="inherit" />
                 </Toggle.Button>
-            </div>
+            </span>
         </Tooltip>
     );
-};
+}

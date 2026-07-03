@@ -147,6 +147,16 @@ function validateConfig() {
                     if (typeof prefixDef.shorthandProperty !== "string") {
                         throw new Error(`Combined prefix "${groupName}.${prefix}" is missing \`shorthandProperty\`.`);
                     }
+                } else if (prefixDef.type === "child-selector") {
+                    if (typeof prefixDef.selector !== "string") {
+                        throw new Error(`Child-selector prefix "${groupName}.${prefix}" is missing \`selector\`.`);
+                    }
+                    if (typeof prefixDef.property !== "string") {
+                        throw new Error(`Child-selector prefix "${groupName}.${prefix}" is missing \`property\`.`);
+                    }
+                    if (prefixDef.axis != null && prefixDef.axis !== "x" && prefixDef.axis !== "y") {
+                        throw new Error(`Child-selector prefix "${groupName}.${prefix}" has invalid \`axis\`.`);
+                    }
                 } else {
                     if (typeof prefixDef.property !== "string") {
                         throw new Error(`Property group "${groupName}" prefix "${prefix}" is missing a \`property\` string.`);
@@ -192,10 +202,14 @@ function generateGroupFile(groupName) {
 
             if (token.axis && prefixAxis && token.axis !== prefixAxis) continue;
 
-            lines.push(utilityLine(`${prefix}-${className}`, cssProperty, value));
+            if (typeof prefixDef === "object" && prefixDef.type === "child-selector") {
+                lines.push(`@utility ${prefix}-${className} { ${prefixDef.selector} { ${cssProperty}: ${value}; } }`);
+            } else {
+                lines.push(utilityLine(`${prefix}-${className}`, cssProperty, value));
 
-            if (token.negative === true && NEGATIVE_PREFIXES.has(prefix) && value !== "0" && value !== "0px") {
-                lines.push(utilityLine(`-${prefix}-${className}`, cssProperty, `calc(${value} * -1)`));
+                if (token.negative === true && NEGATIVE_PREFIXES.has(prefix) && value !== "0" && value !== "0px") {
+                    lines.push(utilityLine(`-${prefix}-${className}`, cssProperty, `calc(${value} * -1)`));
+                }
             }
         }
 

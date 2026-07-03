@@ -4,12 +4,12 @@ import { Clear } from "@mui/icons-material";
 import { orderBy } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
+import { Button } from "@lib/components/Button";
+import { Table } from "@lib/components/Table";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { TextInput } from "@lib/components/TextInput";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
-import { Button } from "@lib/newComponents/Button";
-import { Table } from "@lib/newComponents/Table";
-import { TableCompositions } from "@lib/newComponents/Table/compositions";
-import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
-import { TextInput } from "@lib/newComponents/TextInput";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 

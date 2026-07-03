@@ -6,17 +6,16 @@ import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker"
 import { MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
 import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
-import { AlertDialog } from "@lib/newComponents/AlertDialog";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Dialog } from "@lib/newComponents/Dialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dialog } from "@lib/components/Dialog";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
 import { Confirmation } from "./_private-components/confirmation";
 import { Form } from "./_private-components/form";
-
 
 export type MakeSnapshotDialogProps = {
     workbench: Workbench;

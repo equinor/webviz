@@ -1,6 +1,6 @@
 import React from "react";
 
-import { NumberInput } from "@lib/newComponents/NumberInput";
+import { NumberInput } from "@lib/components/NumberInput";
 
 import type {
     SettingComponentProps,
@@ -61,7 +61,6 @@ export class StaticRotationSetting implements StaticSettingImplementation<ValueT
 
         return function LoopNumberInputSetting(props: SettingComponentProps<ValueType>) {
             const { onValueChange } = props;
-            const value = props.isOverridden ? props.overriddenValue : props.value;
 
             const handleInputChange = React.useCallback(
                 function handleInputChange(newVal: number | null) {
@@ -87,8 +86,8 @@ export class StaticRotationSetting implements StaticSettingImplementation<ValueT
 
             return (
                 <NumberInput
-                    value={value}
-                    disabled={props.isOverridden}
+                    value={props.value}
+                    disabled={props.disabled}
                     min={loopAround ? undefined : min}
                     max={loopAround ? undefined : max}
                     step={step}

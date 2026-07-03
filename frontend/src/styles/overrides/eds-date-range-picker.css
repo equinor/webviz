@@ -1,15 +1,15 @@
 .webviz-eds-date-range-picker {
-    @apply form-element bg-canvas box-border rounded border-none;
+    @apply form-element box-border rounded border-none;
 
     /* default size */
-    @apply h-selectable-md px-sm py-xs;
+    @apply min-h-selectable-md px-sm py-xs;
 
     &[data-size="small"] {
-        @apply h-selectable-sm pl-sm pr-xs py-3xs;
+        @apply min-h-selectable-sm pl-sm py-3xs;
     }
 
     &[data-size="large"] {
-        @apply h-selectable-lg px-md py-sm;
+        @apply min-h-selectable-lg pl-md py-sm;
     }
 
     /* Icon size */
@@ -27,44 +27,67 @@
 
     /* Field wrapper */
     & [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-5 rounded bg-transparent p-0 shadow-none!;
+        [role="presentation"] {
+            @apply inline!;
+        }
+        @apply gap-4xs h-full items-center rounded bg-transparent p-0 text-inherit! shadow-none!;
     }
 
     & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
         @apply outline-0!;
     }
 
-    &[data-size="small"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-4!;
-    }
-
-    &[data-size="large"] [class*="FieldWrapper__StyledInputFieldWrapper"] {
-        @apply h-6!;
+    /* Segments (date input fields) */
+    & [class*="Segment"] {
+        @apply text-body-md focus-within:bg-canvas text-inherit outline-0;
     }
 
     /* Segments (date input fields) */
     & [class*="Segment"] {
-        @apply text-body-md text-neutral-subtle data-placeholder:text-neutral-subtle h-3 outline-0;
+        @apply text-body-md focus-within:bg-canvas inline text-inherit outline-0;
+    }
+
+    & .placeholder,
+    ::placeholder {
+        @apply text-neutral-subtle/75;
+    }
+
+    & [class*="Segment"]:has(+ .placeholder),
+    [class*="StyledTypography"]:has(+ .placeholder) {
+        @apply text-neutral-subtle/50;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled;
+
+        & .placeholder,
+        ::placeholder {
+            @apply text-disabled/80;
+        }
+    }
+
+    & [class*="Typography"] {
+        @apply text-inherit;
+    }
+
+    & [data-size="small"] [class*="Typography"] {
+        @apply text-body-xs! leading-body-xs-squished! h-3!;
     }
 
     &[data-size="small"] [class*="Segment"] {
-        @apply text-body-xs;
+        @apply text-body-xs! leading-body-xs-squished!;
     }
 
     &[data-size="large"] [class*="Segment"] {
-        @apply text-body-lg h-4;
+        @apply text-body-lg;
     }
 
     & [class*="Segment"]:focus-visible {
-        @apply focusable;
+        @apply focusable rounded-xs outline-none;
     }
 
     & [class*="Toggle__StyledButton"] {
-        @apply rounded! aspect-square;
-    }
-
-    & [class*="Toggle__StyledButton"]:hover {
-        background-color: var(--eds-color-bg-neutral-fill-muted-hover) !important;
+        @apply text-accent-subtle hover:bg-accent-hover active:bg-accent-active aspect-square rounded! align-middle;
     }
 
     &[data-size="small"] [class*="Toggle__StyledButton"] {
@@ -73,5 +96,9 @@
 
     & [class*="Toggle__StyledButton"]:focus-visible {
         @apply outline-focus;
+    }
+
+    & [class*="HelperText__Container"] {
+        display: none;
     }
 }

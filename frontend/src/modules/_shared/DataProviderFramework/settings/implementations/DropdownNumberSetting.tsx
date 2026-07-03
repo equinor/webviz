@@ -1,7 +1,7 @@
 import type React from "react";
 
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,
@@ -47,7 +47,7 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
         return function DropdownNumberSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
 
-            const options: DropdownOption<number>[] = availableValues.map((value) => {
+            const options: ComboboxItem<number>[] = availableValues.map((value) => {
                 return {
                     value: value,
                     label: value === null ? "None" : value.toString(),
@@ -57,9 +57,9 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
             return (
                 <ComboboxCompositions.WithBrowseButtons
                     items={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
+                    value={props.value}
                     onValueChange={props.onValueChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

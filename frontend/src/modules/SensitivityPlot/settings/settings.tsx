@@ -5,10 +5,9 @@ import { useAtom, useSetAtom } from "jotai";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { Setting } from "@lib/components/Setting";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
@@ -101,17 +100,17 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         : undefined;
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Reference sensitivity">
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Reference sensitivity">
                         <Combobox<string>
                             items={sensitivityNames.map((s) => ({ label: s, value: s }))}
                             value={referenceSensitivityName}
                             onValueChange={setReferenceSensitivityName}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Plot type">
+                    </Setting.Field>
+                    <Setting.Field label="Plot type">
                         <Combobox<DisplayComponentType>
                             items={[
                                 {
@@ -126,8 +125,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             value={displayComponentType}
                             onValueChange={(value) => value && setDisplayComponentType(value)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Scaling">
+                    </Setting.Field>
+                    <Setting.Field label="Scaling">
                         <Combobox<SensitivityScaling>
                             items={[
                                 {
@@ -146,8 +145,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             value={sensitivityScaling}
                             onValueChange={(value) => value && setSensitivityScaling(value)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Sensitivity sort order">
+                    </Setting.Field>
+                    <Setting.Field label="Sensitivity sort order">
                         <Combobox<SensitivitySortBy>
                             items={[
                                 {
@@ -162,16 +161,16 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             value={sensitivitySortBy}
                             onValueChange={(value) => value && setSensitivitySortBy(value)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Data filtering">
+                    </Setting.Field>
+                    <Setting.Field label="Data filtering">
                         <CheckboxCompositions.WithLabel
                             label="Hide sensitivities without impact"
                             checked={hideZeroY}
                             onCheckedChange={setHideZeroY}
                             size="small"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Color by" infoAnnotation={chartSettingsInfoAnnotation}>
+                    </Setting.Field>
+                    <Setting.Field label="Color by" infoAnnotation={chartSettingsInfoAnnotation}>
                         <Combobox<ColorBy>
                             disabled={isChartSettingsDisabled}
                             items={[
@@ -187,8 +186,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             value={colorBy}
                             onValueChange={(value) => value && setColorBy(value)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Chart options"
                         stacked
                         infoAnnotation={chartSettingsInfoAnnotation}
@@ -203,7 +202,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             ),
                         }}
                     >
-                        <div className="gap-vertical-xs flex flex-col">
+                        <div className="gap-y-xs flex flex-col">
                             <CheckboxCompositions.WithLabel
                                 disabled={isChartSettingsDisabled}
                                 label="Show realization points"
@@ -226,9 +225,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                 size="small"
                             />
                         </div>
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

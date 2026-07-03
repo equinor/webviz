@@ -10,6 +10,7 @@ import type { Preview } from "@storybook/react";
 
 import { DarkModeButton } from "../src/framework/internal/components/DarkModeButton";
 import { DensityModeToggle } from "../src/framework/internal/components/DensityModeToggle";
+import { UserSettingsProvider } from "../src/framework/internal/providers/UserSettingsProvider";
 
 // @ts-expect-error -- CSS imports are not typed
 import "../src/styles/index.css";
@@ -52,9 +53,11 @@ const preview: Preview = {
             </>
         ),
         (Story) => (
-            <ThemeProvider theme={theme}>
-                <Story />
-            </ThemeProvider>
+            <UserSettingsProvider>
+                <ThemeProvider theme={theme}>
+                    <Story />
+                </ThemeProvider>
+            </UserSettingsProvider>
         ),
     ],
 

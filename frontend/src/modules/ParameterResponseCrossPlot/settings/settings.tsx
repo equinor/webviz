@@ -5,11 +5,10 @@ import { useAtom, useSetAtom } from "jotai";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { Select } from "@lib/components/Select";
+import { Setting } from "@lib/components/Setting";
 import { useSyncSetting } from "@modules/_shared/hooks/useSyncSetting";
 
 import type { Interfaces } from "../interfaces";
@@ -71,27 +70,27 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     }));
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Plot type">
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Plot type">
                         <Combobox<PlotType>
                             items={plotTypes}
                             value={plotType}
                             onValueChange={(v) => v && setPlotType(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper>
+                    </Setting.Field>
+                    <Setting.Field>
                         <CheckboxCompositions.WithLabel
                             label="Show trendline"
                             checked={showTrendline}
                             onCheckedChange={setShowTrendline}
                             size="small"
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Parameter selection" defaultOpen>
-                    <SettingWrapper label="Parameter" stacked>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Parameter selection" defaultOpen>
+                    <Setting.Field label="Parameter" stacked>
                         <Select
                             value={parameterIdentString.value ? [parameterIdentString.value] : []}
                             onValueChange={handleParameterChanged}
@@ -100,9 +99,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             size={20}
                             filter
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

@@ -6,7 +6,8 @@ import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
-import { Dialog } from "@lib/newComponents/Dialog";
+import { Dialog } from "@lib/components/Dialog";
+import { Form } from "@lib/components/Form";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -20,12 +21,25 @@ import { makeHashFromSelectedEnsembles } from "./_utils";
 import { DialogActions } from "./private-components/DialogActions";
 import { EnsembleExplorer } from "./private-components/EnsembleExplorer";
 import { EnsembleTables } from "./private-components/EnsembleTables";
-import { ExplorerTitle } from "./private-components/ExplorerTitle";
 import { SelectEnsemblesConfirmationDialogs } from "./private-components/SelectEnsemblesConfirmationDialogs";
 
 export type SelectEnsemblesDialogProps = {
     workbench: Workbench;
 };
+
+function* makeColorGenerator(colors: string[], usedColors: string[]): Generator<string, never, undefined> {
+    const usedSet = new Set(usedColors);
+    for (const color of colors) {
+        if (!usedSet.has(color)) {
+            yield color;
+        }
+    }
+    let index = usedColors.length % Math.max(colors.length, 1);
+    while (true) {
+        yield colors[index % colors.length];
+        index++;
+    }
+}
 
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [showEnsembleExplorer, setShowEnsembleExplorer] = React.useState<boolean>(false);
@@ -112,38 +126,30 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     // Apply selection hook
-    const {
-        handleApplyEnsembleSelection,
-        handleApplyEnsembleSelectionWithLoadingError,
-        hasInvalidDeltaEnsembles,
-        hasDuplicateDeltaEnsembles,
-        ensembleLoadingErrorInfoMap,
-    } = useApplyEnsembleSelection({
-        queryClient,
-        workbenchSession,
-        selectedRegularEnsembles,
-        selectedDeltaEnsembles,
-        setIsEnsembleSetLoading,
-        onLoadingErrorsDetected: () => {
-            setShowEnsemblesLoadingErrorDialog(true);
+    const { handleApplyEnsembleSelection, handleApplyEnsembleSelectionWithLoadingError, ensembleLoadingErrorInfoMap } =
+        useApplyEnsembleSelection({
+            queryClient,
+            workbenchSession,
+            selectedRegularEnsembles,
+            selectedDeltaEnsembles,
+            setIsEnsembleSetLoading,
+            onLoadingErrorsDetected: () => {
+                setShowEnsemblesLoadingErrorDialog(true);
+            },
+            onSuccess: handleClose,
+        });
+
+    const handleFormSubmit = React.useCallback(
+        function handleFormSubmit(e: React.FormEvent) {
+            e.preventDefault();
+            handleApplyEnsembleSelection();
         },
-        onSuccess: handleClose,
-    });
+        [handleApplyEnsembleSelection],
+    );
 
-    // Determine next ensemble color
-    const nextEnsembleColor = React.useMemo(() => {
+    const colorGenerator = React.useMemo(() => {
         const usedColors = [...selectedRegularEnsembles, ...selectedDeltaEnsembles].map((ens) => ens.color);
-
-        for (let i = 0; i < colorSet.getColorArray().length; i++) {
-            const candidateColor = colorSet.getColor(i);
-
-            if (!usedColors.includes(candidateColor)) {
-                return candidateColor;
-            }
-        }
-
-        // Default to an existing color (looping)
-        return colorSet.getColor(usedColors.length % colorSet.getColorArray().length);
+        return makeColorGenerator(colorSet.getColorArray(), usedColors);
     }, [selectedDeltaEnsembles, selectedRegularEnsembles, colorSet]);
 
     const handleCloseEnsembleExplorer = React.useCallback(
@@ -169,16 +175,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             >
                 <div className="flex h-full flex-col">
                     <Dialog.Header closeIconVisible>
-                        <ExplorerTitle
-                            showExplorer={showEnsembleExplorer}
-                            explorerMode={ensembleExplorerMode}
-                            onClose={handleCloseEnsembleExplorer}
-                        />
+                        <Dialog.Title>Ensembles used in this session</Dialog.Title>
                     </Dialog.Header>
                     <Dialog.Body layoutClassName="grow min-h-0">
-                        <div className="relative flex h-full min-h-0 w-full flex-col">
+                        <Form
+                            layoutClassName="relative flex h-full min-h-0 w-full flex-col"
+                            onSubmit={handleFormSubmit}
+                        >
                             <EnsembleTables
-                                nextEnsembleColor={nextEnsembleColor}
+                                colorGenerator={colorGenerator}
                                 selectedRegularEnsembles={selectedRegularEnsembles}
                                 selectedDeltaEnsembles={selectedDeltaEnsembles}
                                 selectableEnsemblesForDelta={selectableEnsemblesForDelta}
@@ -201,76 +206,50 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 <DialogActions
                                     isLoading={isEnsembleSetLoading}
                                     disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
-                                    disableApply={
-                                        isEnsembleSetLoading ||
-                                        hasInvalidDeltaEnsembles() ||
-                                        hasDuplicateDeltaEnsembles() ||
-                                        !hasUnappliedChanges
-                                    }
-                                    hasDuplicatedDeltaEnsembles={hasDuplicateDeltaEnsembles()}
+                                    disableApply={isEnsembleSetLoading || !hasUnappliedChanges}
                                     onDiscard={handleClose}
-                                    onApply={handleApplyEnsembleSelection}
                                 />
                             </Dialog.Actions>
-                        </div>
+                        </Form>
                     </Dialog.Body>
                 </div>
-                <SelectEnsemblesConfirmationDialogs
-                    ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
-                    showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
-                    showLoadingErrorsDialogState={[
-                        showEnsemblesLoadingErrorDialog,
-                        setShowEnsemblesLoadingErrorDialog,
-                    ]}
-                    onConfirmCancel={handleClose}
-                    onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
-                />
                 <Dialog.Popup
                     open={showEnsembleExplorer}
                     onOpenChange={(open: boolean) => {
                         if (!open) {
-                            handleCancel();
+                            handleCloseEnsembleExplorer();
                         }
                     }}
                     width={`${dialogSizePercent.width}%`}
                     height={`${dialogSizePercent.height}%`}
                     modal
+                    keepMounted
+                    stacked
                 >
-                    <Dialog.Header>
-                        <ExplorerTitle
-                            showExplorer={showEnsembleExplorer}
-                            explorerMode={ensembleExplorerMode}
-                            onClose={handleCloseEnsembleExplorer}
-                        />
+                    <Dialog.Header closeIconVisible>
+                        <Dialog.Title>
+                            {ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
+                                ? "Change ensemble selection"
+                                : "Select ensemble"}
+                        </Dialog.Title>
                     </Dialog.Header>
                     <EnsembleExplorer
                         queriesDisabled={!showEnsembleExplorer}
-                        nextEnsembleColor={nextEnsembleColor}
-                        selectedEnsembles={
-                            ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                ? selectedRegularEnsembles
-                                : []
-                        }
-                        onSelectEnsemble={selectionHandlers.handleSelectEnsemble}
-                        onRemoveEnsembles={
-                            ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE
-                                ? selectionHandlers.handleRemoveRegularEnsembles
-                                : undefined
-                        }
+                        colorGenerator={colorGenerator}
+                        selectedEnsembles={selectedRegularEnsembles}
+                        onSelectionChange={selectionHandlers.handleSetRegularEnsembles}
+                        onSelect={selectionHandlers.handleSelectEnsemble}
                         multiSelect={ensembleExplorerMode === EnsembleExplorerMode.ADD_REGULAR_ENSEMBLE}
                         onRequestClose={handleCloseEnsembleExplorer}
                     />
-                    <SelectEnsemblesConfirmationDialogs
-                        ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
-                        showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
-                        showLoadingErrorsDialogState={[
-                            showEnsemblesLoadingErrorDialog,
-                            setShowEnsemblesLoadingErrorDialog,
-                        ]}
-                        onConfirmCancel={handleClose}
-                        onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
-                    />
                 </Dialog.Popup>
+                <SelectEnsemblesConfirmationDialogs
+                    ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
+                    showCancelDialogState={[showCancelDialog, setShowCancelDialog]}
+                    showLoadingErrorsDialogState={[showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog]}
+                    onConfirmCancel={handleClose}
+                    onConfirmContinue={handleApplyEnsembleSelectionWithLoadingError}
+                />
             </Dialog.Popup>
         </>
     );

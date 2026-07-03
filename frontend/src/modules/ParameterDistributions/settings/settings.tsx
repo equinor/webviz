@@ -8,11 +8,10 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent as RegularEnsembleIdentClass } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { CheckboxCompositions } from "@lib/newComponents/Checkbox/compositions";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Hidden } from "@lib/newComponents/Hidden";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { Hidden } from "@lib/components/Hidden";
+import { Setting } from "@lib/components/Setting";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
@@ -113,10 +112,10 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const selectedParameterIdentsAnnotation = useMakePersistableFixableAtomAnnotations(selectedParameterIdentsAtom);
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Analysis mode">
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Analysis mode">
                         <Combobox
                             items={Object.values(EnsembleMode).map((type: EnsembleMode) => ({
                                 value: type,
@@ -126,9 +125,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             value={selectedEnsembleMode}
                             onValueChange={(v) => v && setSelectedEnsembleMode(v)}
                         />
-                    </SettingWrapper>
+                    </Setting.Field>
                     <Hidden hidden={selectedEnsembleMode !== EnsembleMode.INDEPENDENT}>
-                        <SettingWrapper
+                        <Setting.Field
                             label="Selected ensembles"
                             annotations={selectedEnsembleIdentsAnnotation}
                             stacked
@@ -139,10 +138,10 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 value={selectedEnsembleIdents.value ?? []}
                                 onValueChange={setSelectedEnsembleIdents}
                             />
-                        </SettingWrapper>
+                        </Setting.Field>
                     </Hidden>
                     <Hidden hidden={selectedEnsembleMode !== EnsembleMode.PRIOR_POSTERIOR}>
-                        <SettingWrapper label="Prior ensemble" annotations={selectedPriorEnsembleIdentAnnotation}>
+                        <Setting.Field label="Prior ensemble" annotations={selectedPriorEnsembleIdentAnnotation}>
                             <Combobox
                                 items={ensembleComboItems}
                                 value={selectedPriorEnsembleIdent.value?.toString() ?? null}
@@ -154,10 +153,10 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     )
                                 }
                             />
-                        </SettingWrapper>
+                        </Setting.Field>
                     </Hidden>
                     <Hidden hidden={selectedEnsembleMode !== EnsembleMode.PRIOR_POSTERIOR}>
-                        <SettingWrapper
+                        <Setting.Field
                             label="Posterior ensemble"
                             annotations={selectedPosteriorEnsembleIdentAnnotation}
                         >
@@ -172,9 +171,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     )
                                 }
                             />
-                        </SettingWrapper>
+                        </Setting.Field>
                     </Hidden>
-                    <SettingWrapper
+                    <Setting.Field
                         label="Parameter sort method"
                         annotations={selectedParameterSortingMethodAnnotation}
                         help={{
@@ -193,10 +192,10 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             value={selectedParameterSortingMethod.value}
                             onValueChange={(v) => v && setSelectedParameterSortingMethod(v)}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Selections" defaultOpen>
-                    <SettingWrapper
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Selections" defaultOpen>
+                    <Setting.Field
                         label="Parameter options"
                         stacked
                         help={{
@@ -246,18 +245,18 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                 size="small"
                             />
                         </React.Fragment>
-                    </SettingWrapper>
+                    </Setting.Field>
 
-                    <SettingWrapper annotations={selectedParameterIdentsAnnotation} stacked>
+                    <Setting.Field annotations={selectedParameterIdentsAnnotation} stacked>
                         <ParametersSelector
                             allParameterIdents={intersectedParameterIdents}
                             selectedParameterIdents={selectedParameterIdents.value ?? []}
                             onChange={setSelectedParameterIdents}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot" defaultOpen>
-                    <SettingWrapper label="Plot type">
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot" defaultOpen>
+                    <Setting.Field label="Plot type">
                         <Combobox
                             items={Object.values(ParameterDistributionPlotType).map(
                                 (type: ParameterDistributionPlotType) => ({
@@ -268,8 +267,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             value={selectedVisualizationType}
                             onValueChange={(v) => v && setSelectedVisualizationType(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Histogram mode">
+                    </Setting.Field>
+                    <Setting.Field label="Histogram mode">
                         <Combobox
                             items={Object.values(HistogramMode).map((mode: HistogramMode) => ({
                                 value: mode,
@@ -279,8 +278,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             disabled={selectedVisualizationType !== ParameterDistributionPlotType.HISTOGRAM}
                             onValueChange={(v) => v && setHistogramMode(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Additional markers" stacked>
+                    </Setting.Field>
+                    <Setting.Field label="Additional markers" stacked>
                         <CheckboxCompositions.WithLabel
                             label="Show individual realization values"
                             disabled={selectedVisualizationType === ParameterDistributionPlotType.HISTOGRAM}
@@ -294,9 +293,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             onCheckedChange={setShowPercentilesAndMeanLines}
                             size="small"
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

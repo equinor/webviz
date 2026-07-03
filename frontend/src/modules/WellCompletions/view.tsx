@@ -4,8 +4,8 @@ import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { Banner } from "@lib/newComponents/Banner";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
+import { Banner } from "@lib/components/Banner";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 import type { Interfaces } from "./interfaces";

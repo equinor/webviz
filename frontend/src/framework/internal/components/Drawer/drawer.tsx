@@ -1,11 +1,11 @@
 import React from "react";
 
-import { Close, MoreVert, Search } from "@mui/icons-material";
+import { Close, FilterList, Search } from "@mui/icons-material";
 
+import { Button } from "@lib/components/Button";
+import { MenuCompositions } from "@lib/components/Menu/compositions";
+import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Button } from "@lib/newComponents/Button";
-import { MenuCompositions } from "@lib/newComponents/Menu/compositions";
-import { TextInput } from "@lib/newComponents/TextInput";
 
 export type DrawerFilterItem<T extends string | number> = {
     icon: React.ReactNode;
@@ -71,7 +71,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                     <span className="text-header-xs font-bolder grow p-0">{props.title}</span>
                     {props.actions}
                     {props.onClose && (
-                        <Tooltip title="Close">
+                        <Tooltip content="Close">
                             <Button variant="ghost" tone="neutral" iconOnly onClick={props.onClose} size="small">
                                 <Close fontSize="inherit" />
                             </Button>
@@ -81,7 +81,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
             )}
             <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="bg-surface py-3xs flex gap-2">
+                    <div className="bg-surface py-3xs gap-xs px-2xs flex">
                         {props.showSearch && (
                             <div className="grow">
                                 <TextInput
@@ -104,14 +104,14 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                     icon: item.icon,
                                 }))}
                             >
-                                <Button variant="ghost" iconOnly>
-                                    <MoreVert fontSize="small" />
+                                <Button variant="ghost" iconOnly size="small">
+                                    <FilterList fontSize="small" />
                                 </Button>
                             </MenuCompositions.Default>
                         )}
                     </div>
                 )}
-                {props.headerChildren && <div className="bg-slate-50 p-2">{props.headerChildren}</div>}
+                {props.headerChildren && <div className="bg-canvas p-xs">{props.headerChildren}</div>}
                 <div className="h-0 max-h-full min-h-0 grow overflow-y-auto">{props.children}</div>
             </div>
         </div>

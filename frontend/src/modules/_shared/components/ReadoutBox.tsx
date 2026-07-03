@@ -3,8 +3,8 @@ import React from "react";
 import { Close } from "@mui/icons-material";
 import { defaults, mapValues, take } from "lodash-es";
 
+import { Button } from "@lib/components/Button";
 import { useStableProp } from "@lib/hooks/useStableProp";
-import { Button } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 

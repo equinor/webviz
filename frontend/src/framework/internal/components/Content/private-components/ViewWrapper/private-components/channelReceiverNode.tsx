@@ -10,7 +10,7 @@ import { useActiveSession } from "@framework/internal/components/ActiveSessionBo
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { KeyKind } from "@framework/types/dataChannnel";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";

@@ -2,7 +2,7 @@ import type React from "react";
 
 import type { WellborePick_api } from "@api";
 import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/newComponents/Select";
+import { Select } from "@lib/components/Select";
 
 import type {
     CustomSettingImplementation,
@@ -90,7 +90,7 @@ export class DrilledWellborePicksSetting implements CustomSettingImplementation<
                         value={props.value ?? []}
                         onValueChange={handleChange}
                         showQuickSelectButtons={true}
-                        disabled={props.isOverridden}
+                        disabled={props.disabled}
                         multiple={true}
                         size={5}
                     />

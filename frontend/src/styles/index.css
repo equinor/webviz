@@ -25,6 +25,7 @@
 @import "./utilities/forms.css";
 @import "./utilities/selectable.css";
 @import "./utilities/sizes.css";
+@import "./utilities/text.css";
 @import "./utilities/z-index.css";
 
 /* Components */
@@ -39,8 +40,8 @@
 
 /* Base styles */
 @import "./base/app.css";
-@import "./base/tailwind-compat.css";
 @import "./base/scrollbar.css";
 
 /* Overrides */
 @import "./overrides/eds-date-range-picker.css";
+@import "./overrides/group-tree-plot.css";

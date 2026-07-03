@@ -3,9 +3,9 @@ import { category, dashboard, folder_open, github, external_link, add } from "@e
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Button } from "@lib/newComponents/Button";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Heading } from "@lib/components/Typography/compositions";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
@@ -51,25 +51,25 @@ export function StartPage(props: StartPageProps) {
                     <section className="gap-y-xs flex flex-col">
                         <Heading as="h3">Start</Heading>
                         <Tooltip
-                            placement="right"
-                            title="Create a new free session and save it later on demand."
-                            enterDelay="medium"
+                            side="right"
+                            content="Create a new free session and save it later on demand."
+                            delay="medium"
                         >
                             <Button variant="ghost" onClick={handleNewSession}>
                                 <Icon name="category" fontSize="inherit" />
                                 New session
                             </Button>
                         </Tooltip>
-                        <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
+                        <Tooltip side="right" content="Open an existing session." delay="medium">
                             <Button variant="ghost" onClick={openOverviewDialogOnSessions}>
                                 <Icon name="folder_open" fontSize="inherit" />
                                 Open session or snapshot...
                             </Button>
                         </Tooltip>
                         <Tooltip
-                            placement="right"
-                            title="Start from a template to quickly set up a session with predefined settings and data."
-                            enterDelay="medium"
+                            side="right"
+                            content="Start from a template to quickly set up a session with predefined settings and data."
+                            delay="medium"
                         >
                             <Button variant="ghost" onClick={handleOpenTemplatesDialog}>
                                 <Icon name="dashboard" fontSize="inherit" />
@@ -80,16 +80,18 @@ export function StartPage(props: StartPageProps) {
                     <RecentSessions workbench={props.workbench} />
                     <section className="gap-y-sm flex flex-col">
                         <Heading as="h3">Resources</Heading>
-                        <a
+
+                        <Button.AsLink
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="gap-selectable text-link px-md py-2xs flex w-max items-center rounded"
+                            variant="ghost"
+                            tone="accent"
+                            external
                         >
-                            <Icon name="github" />
+                            <Icon name="github" fontSize="inherit" />
                             Webviz on GitHub
-                            <Icon name="external_link" className="h-4" />
-                        </a>
+                        </Button.AsLink>
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>

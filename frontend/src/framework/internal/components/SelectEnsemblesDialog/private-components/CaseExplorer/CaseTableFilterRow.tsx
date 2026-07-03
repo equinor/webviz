@@ -4,13 +4,13 @@ import { Close } from "@mui/icons-material";
 
 import type { CaseInfo_api } from "@api";
 import { edsDateRangeToEpochMsRange } from "@framework/utils/edsDateUtils";
-import { Button } from "@lib/newComponents/Button";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { DateRangePicker } from "@lib/newComponents/DateRangePicker";
-import type { DateRange } from "@lib/newComponents/DateRangePicker/dateRangePicker";
-import { Table } from "@lib/newComponents/Table";
-import type { TextInputProps } from "@lib/newComponents/TextInput";
-import { TextInput } from "@lib/newComponents/TextInput";
+import { Button } from "@lib/components/Button";
+import { Combobox } from "@lib/components/Combobox";
+import { DateRangePicker } from "@lib/components/DateRangePicker";
+import type { DateRange } from "@lib/components/DateRangePicker/dateRangePicker";
+import { Table } from "@lib/components/Table";
+import type { TextInputProps } from "@lib/components/TextInput";
+import { TextInput } from "@lib/components/TextInput";
 
 export type CaseTableFilterState = {
     name?: string;
@@ -79,7 +79,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
     }, [props.caseData]);
 
     return (
-        <Table.Row layoutClassName="font-normal!" sortable={false}>
+        <Table.Row layoutClassName="font-normal!" sortable={false} formOnEmphasis>
             <Table.Cell noPadding></Table.Cell>
             <Table.Cell noPadding>
                 <FilterInput
@@ -102,6 +102,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             </Table.Cell>
             <Table.Cell noPadding>
                 <Combobox
+                    layoutClassName="h-full"
                     value={props.filterState["status"] ?? []}
                     items={statusOptions}
                     disabled={props.disableStatusFilter}
@@ -112,13 +113,14 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             </Table.Cell>
             <Table.Cell noPadding>
                 <DateRangePicker
-                    layoutClassName="overflow-hidden"
+                    layoutClassName="overflow-hidden h-full"
                     value={props.filterState["dateRange"] ?? { from: null, to: null }}
                     onChange={(v) => props.onFilterStateChange("dateRange", v)}
                 />
             </Table.Cell>
             <Table.Cell noPadding>
                 <Combobox
+                    layoutClassName="h-full"
                     value={props.filterState["model"] ?? []}
                     items={casesModelNames}
                     multiple
@@ -128,6 +130,7 @@ export function CaseTableFilterRow(props: CaseTableFilterRowProps): React.ReactN
             </Table.Cell>
             <Table.Cell noPadding>
                 <Combobox
+                    layoutClassName="h-full"
                     value={props.filterState["revision"] ?? []}
                     items={casesModelRevisions}
                     multiple
@@ -159,6 +162,7 @@ function FilterInput(props: TextInputProps) {
                     variant="ghost"
                     tone="neutral"
                     size="small"
+                    data-density="comfortable"
                 >
                     <Close fontSize="inherit" />
                 </Button>

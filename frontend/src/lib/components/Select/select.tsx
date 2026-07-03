@@ -1,14 +1,15 @@
 import React from "react";
 
-import { Deselect, SelectAll } from "@mui/icons-material";
+import { Close, Deselect, SelectAll } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
+import { useFieldStateDataAttributes } from "@lib/components/Field";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { BaseComponentProps } from "../BaseComponent";
-import { BaseComponent } from "../BaseComponent";
+import { withDefaults } from "../_shared/utils/defaultProps";
+import type { LayoutClassProps } from "../_shared/utils/wrapperProps";
 import { Button } from "../Button";
-import { Input } from "../Input";
+import { TextInput } from "../TextInput";
 import { Virtualization } from "../Virtualization";
 
 enum KeyModifier {
@@ -17,28 +18,57 @@ enum KeyModifier {
 }
 
 export type SelectOption<TValue = string> = {
+    /** The underlying data value for this option. */
     value: TValue;
+    /** Optional element rendered before the label. */
     adornment?: React.ReactNode;
+    /** The display text shown in the list. */
     label: string;
+    /** Tooltip shown on hover. Falls back to `label` if not provided. */
     hoverText?: string;
+    /** When true, prevents this option from being selected. */
     disabled?: boolean;
 };
 
-export type SelectProps<TValue = string> = {
+export type SelectProps<TValue = string> = LayoutClassProps & {
+    /** HTML id applied to the filter input when `filter` is true. */
     id?: string;
+    /** HTML id applied to the outer wrapper element. */
     wrapperId?: string;
+    /** When true, disables the entire select and makes it non-interactive. */
+    disabled?: boolean;
+    /** The list of options to display. */
     options: SelectOption<TValue>[];
+    /** The currently selected values. */
     value?: TValue[];
-    onChange?: (values: TValue[]) => void;
+    /** Called when the selection changes. */
+    onValueChange?: (values: TValue[]) => void;
+    /** Text shown when the list is empty and no filter is active. */
     placeholder?: string;
+    /** When true, shows a filter input above the list. @default false */
     filter?: boolean;
+    /** Placeholder text for the filter input. @default "Filter options..." */
+    filterPlaceholder?: string;
+    /** Number of visible rows. @default 1 */
     size?: number;
+    /** Height of each option row in pixels. @default 24 */
     optionHeight?: number;
+    /** When true, allows selecting multiple values via Ctrl+click and Shift+click. @default false */
     multiple?: boolean;
+    /** CSS width applied to the list container. */
     width?: string | number;
+    /** Debounce delay in milliseconds applied to `onValueChange` calls. */
     debounceTimeMs?: number;
+    /** When true, shows "Select all" and "Unselect all" buttons above the list. */
     showQuickSelectButtons?: boolean;
-} & BaseComponentProps;
+};
+
+const DEFAULT_PROPS = {
+    size: 1,
+    multiple: false,
+    filter: false,
+    filterPlaceholder: "Filter options...",
+} satisfies Partial<SelectProps>;
 
 const noMatchingOptionsText = "No matching options";
 
@@ -58,11 +88,9 @@ function ensureKeyboardSelectionInView(
 }
 
 function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
-    const { onChange } = props;
-
-    const sizeWithDefault = props.size ?? 1;
-    const multipleWithDefault = props.multiple ?? false;
-    const filterWithDefault = props.filter ?? false;
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS as Partial<SelectProps<TValue>>);
+    const { onValueChange: onChange } = defaultedProps;
+    const fieldStateAttrs = useFieldStateDataAttributes();
 
     const [filterString, setFilterString] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -115,6 +143,16 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         [onChange, props.debounceTimeMs],
     );
 
+    const handleSelectAll = React.useCallback(
+        function handleSelectAll() {
+            if (!onChange) {
+                return;
+            }
+            onChange(props.options.map((option) => option.value));
+        },
+        [onChange, props.options],
+    );
+
     React.useEffect(function handleMount() {
         return function handleUnmount() {
             if (debounceTimerRef.current) {
@@ -132,7 +170,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     return;
                 }
 
-                if (!multipleWithDefault) {
+                if (!defaultedProps.multiple) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -165,7 +203,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     return;
                 }
 
-                if (!multipleWithDefault) {
+                if (!defaultedProps.multiple) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -209,7 +247,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -224,7 +262,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -237,14 +275,14 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
                 if (e.key === "PageDown") {
                     e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + sizeWithDefault);
+                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + defaultedProps.size);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -252,14 +290,14 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
                 if (e.key === "PageUp") {
                     e.preventDefault();
-                    const newIndex = Math.max(0, currentFocusIndex - sizeWithDefault);
+                    const newIndex = Math.max(0, currentFocusIndex - defaultedProps.size);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(
                             prev,
                             reportedVirtualizationStartIndex,
                             newIndex,
-                            sizeWithDefault,
+                            defaultedProps.size,
                         ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
@@ -276,8 +314,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     e.preventDefault();
                     const newIndex = filteredOptions.length - 1;
                     setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex(Math.max(0, newIndex - sizeWithDefault + 1));
+                    setVirtualizationStartIndex(Math.max(0, newIndex - defaultedProps.size + 1));
                     makeKeyboardSelection(newIndex, modifiers);
+                }
+
+                if (e.key === "a" && e.ctrlKey) {
+                    e.preventDefault();
+                    handleSelectAll();
                 }
             }
 
@@ -294,9 +337,10 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         [
             currentFocusIndex,
             filteredOptions,
-            sizeWithDefault,
-            multipleWithDefault,
+            defaultedProps.size,
+            defaultedProps.multiple,
             handleOnChange,
+            handleSelectAll,
             selectionAnchor,
             selectedOptionValues,
             reportedVirtualizationStartIndex,
@@ -310,7 +354,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
         setCurrentFocusIndex(index);
 
-        if (!multipleWithDefault) {
+        if (!defaultedProps.multiple) {
             setSelectedOptionValues([option.value]);
             handleOnChange([option.value]);
             return;
@@ -367,20 +411,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
     }
 
-    function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setFilterString(event.target.value);
-        filterOptions(options, event.target.value);
+    function handleFilterChange(value: string) {
+        setFilterString(value);
+        filterOptions(options, value);
     }
 
     function handleVirtualizationScroll(index: number) {
         setReportedVirtualizationStartIndex(index);
-    }
-
-    function handleSelectAll() {
-        if (!onChange) {
-            return;
-        }
-        onChange(props.options.map((option) => option.value));
     }
 
     function handleUnselectAll() {
@@ -391,57 +428,74 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
     }
 
     return (
-        <BaseComponent ref={ref} disabled={props.disabled} className="flex flex-col gap-2 text-sm">
-            {props.showQuickSelectButtons && (
-                <div className="flex items-center gap-2">
+        <div
+            ref={ref}
+            style={props.layoutStyle}
+            className={resolveClassNames(props.layoutClassName, "gap-y-xs text-body-sm flex flex-col")}
+        >
+            {props.showQuickSelectButtons && props.multiple && (
+                <div className="gap-x-3xs flex items-center">
                     <Button
                         onClick={handleSelectAll}
-                        startIcon={<SelectAll fontSize="inherit" />}
-                        variant="text"
+                        variant="ghost"
                         title="Select all"
                         size="small"
                         disabled={props.disabled}
                     >
+                        <SelectAll fontSize="inherit" />
                         Select all
                     </Button>
                     <Button
                         onClick={handleUnselectAll}
-                        startIcon={<Deselect fontSize="inherit" />}
-                        variant="text"
+                        variant="ghost"
                         title="Unselect all"
                         size="small"
                         disabled={props.disabled}
                     >
-                        Unselect all
+                        <Deselect fontSize="inherit" /> Unselect all
                     </Button>
                 </div>
             )}
             <div
                 id={props.wrapperId}
-                className={resolveClassNames("relative", {
-                    "no-select": props.disabled,
-                    "pointer-events-none": props.disabled,
-                    "opacity-30": props.disabled,
-                })}
+                className={resolveClassNames("relative", { "cursor-not-allowed": !!props.disabled })}
                 style={{ width: props.width, minWidth: props.width }}
             >
-                {filterWithDefault && (
-                    <Input
+                {defaultedProps.filter && (
+                    <TextInput
                         id={props.id}
                         type="text"
                         value={filterString}
-                        onChange={handleFilterChange}
-                        placeholder="Filter options..."
+                        onValueChange={handleFilterChange}
+                        placeholder={defaultedProps.filterPlaceholder}
+                        disabled={props.disabled}
+                        endAdornment={
+                            filterString && (
+                                <Button
+                                    variant="ghost"
+                                    size="small"
+                                    iconOnly
+                                    disabled={props.disabled}
+                                    onClick={() => handleFilterChange("")}
+                                >
+                                    <Close style={{ fontSize: 16 }} />
+                                </Button>
+                            )
+                        }
                     />
                 )}
                 <div
-                    className="input-comp w-full overflow-y-auto rounded-md border border-gray-300 bg-white"
-                    style={{ height: sizeWithDefault * (props.optionHeight ?? 24) + 2 }}
+                    className={resolveClassNames("form-element group w-full overflow-y-auto", {
+                        "text-disabled! pointer-events-none overflow-hidden!": !!props.disabled,
+                    })}
+                    {...fieldStateAttrs}
+                    data-disabled={props.disabled === true ? true : undefined}
+                    style={{ height: defaultedProps.size * (props.optionHeight ?? 24) + 2 }}
                     ref={virtualizationRef}
-                    tabIndex={0}
+                    tabIndex={props.disabled ? -1 : 0}
                 >
                     {filteredOptions.length === 0 && (
-                        <div className="flex items-center p-1 text-gray-400 select-none">
+                        <div className="px-xs flex h-full w-full items-center justify-center select-none">
                             {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
                         </div>
                     )}
@@ -450,25 +504,23 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                         items={filteredOptions}
                         itemSize={props.optionHeight ?? 24}
                         onScroll={handleVirtualizationScroll}
-                        renderItem={(option, index) => {
+                        renderItem={(option: SelectOption<TValue>, index: number) => {
                             return (
                                 <div
-                                    key={option.value}
+                                    key={String(option.value)}
                                     className={resolveClassNames(
-                                        "cursor-pointer",
-                                        "pl-2",
-                                        "pr-2",
-                                        "flex",
-                                        "gap-2",
-                                        "items-center",
-                                        "select-none",
+                                        "px-xs py-xs group-data-disabled:text-disabled! gap-x-2xs flex items-center select-none",
                                         {
-                                            "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
-                                            "box-border bg-blue-600 text-white hover:bg-blue-700":
+                                            "hover:bg-accent-hover": !selectedOptionValues.includes(option.value),
+                                            "bg-accent-strong text-accent-strong-on-emphasis hover:bg-accent-strong-hover group-data-disabled:bg-disabled! box-border":
                                                 selectedOptionValues.includes(option.value),
-                                            "pointer-events-none": option.disabled,
-                                            "text-gray-400": option.disabled,
-                                            outline: index === currentFocusIndex && hasFocus,
+                                            "cursor-pointer": !option.disabled,
+                                            "text-disabled bg-neutral-canvas cursor-not-allowed": option.disabled,
+                                            outline:
+                                                index === currentFocusIndex &&
+                                                hasFocus &&
+                                                !option.disabled &&
+                                                !props.disabled,
                                         },
                                     )}
                                     onClick={(e) => handleOptionClick(e, option, index)}
@@ -489,7 +541,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     />
                 </div>
             </div>
-        </BaseComponent>
+        </div>
     );
 }
 

@@ -1,14 +1,15 @@
 import React from "react";
 
+import { Info } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import type { GraphUser_api } from "@api";
 import { getUserInfoOptions } from "@api";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { Tooltip } from "@lib/components/Tooltip";
-import { Avatar } from "@lib/newComponents/Avatar";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Avatar } from "@lib/components/Avatar";
+import { Button } from "@lib/components/Button";
+import { Popover } from "@lib/components/Popover";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 
 export type ItemCardProps = {
     id: string;
@@ -23,7 +24,7 @@ export type ItemCardProps = {
 };
 
 export function ItemCard(props: ItemCardProps): React.ReactNode {
-    const showOwnerRow = props.ownerId !== undefined;
+    const showOwnerColumn = props.ownerId !== undefined;
 
     const ownerInfo = useUserGraphInfo(props.ownerId);
 
@@ -46,40 +47,48 @@ export function ItemCard(props: ItemCardProps): React.ReactNode {
     }
 
     return (
-        <Tooltip
-            title={<TooltipContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />}
-            placement="left"
-            enterDelay="medium"
-        >
-            <a
-                className={resolveClassNames(
-                    "gap-y-xs px-selectable py-selectable h-selectable-md text-accent-subtle text-body-md flex w-full min-w-0 items-center rounded",
-                    {
-                        "cursor-not-allowed italic line-through opacity-50": props.isDeleted,
-                        "hover:bg-accent-hover": !props.isDeleted,
-                    },
-                )}
+        <Button.Group layoutClassName="w-full" split>
+            <Button.AsLink
+                variant="ghost"
+                size="small"
+                data-is-deleted={props.isDeleted ? "" : undefined}
+                layoutClassName="flex-1 min-w-0 data-is-deleted:line-through"
+                compact
+                disabled={props.isDeleted}
                 href={props.href}
                 onClick={handleClick}
             >
-                <div className="min-w-0 flex-[1_1_0px] truncate">{props.title}</div>
-                {showOwnerRow && <OwnerLine owner={ownerInfo} />}
-                <span className="text-body-xs w-24 shrink-0 text-right whitespace-nowrap">
+                <div className="truncate-small-squished-fix text-body-md min-w-0 grow">{props.title}</div>
+                {/* Guarantee consistent height of the owner row, even if the owner is not shown. */}
+                {showOwnerColumn ? <OwnerLine owner={ownerInfo} /> : <span className="block h-4" />}
+                <span className="text-body-xs text-neutral-subtle w-16 shrink-0 text-right whitespace-nowrap">
                     ~<TimeAgo datetimeMs={new Date(props.timestamp).getTime()} updateIntervalMs={5000} shorten />
                 </span>
-            </a>
-        </Tooltip>
+            </Button.AsLink>
+
+            <Popover.Root>
+                <Popover.Trigger size="small" variant="ghost" iconOnly>
+                    <Info />
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Title hideCloseButton>{props.title}</Popover.Title>
+                    <Popover.Content as="div" layoutClassName="min-w-2xs">
+                        <PopoverContent {...props} owner={ownerInfo} tooltipInfo={allTooltipInfo} />
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>
+        </Button.Group>
     );
 }
 
 function OwnerLine(props: { owner: GraphUser_api | null }): React.ReactNode {
     const name = props.owner?.principal_name?.split("@")?.[0].toLocaleLowerCase();
-    const avatarFn = useUserAvatar(name ?? "", props.owner?.display_name);
+    const avatarFn = useUserAvatar(props.owner?.id ?? "", props.owner?.display_name);
 
     return (
-        <div className="gap-y-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic">
+        <div className="mx-sm gap-xs text-body-sm flex w-16 shrink-0 items-center justify-start italic no-underline!">
             <Avatar size={16} userData={props.owner !== null ? avatarFn : undefined} />
-            <span className="min-w-0 flex-1 truncate">{name}</span>
+            <span className="truncate-squished-small-fix min-w-0 flex-1 no-underline!">{name}</span>
         </div>
     );
 }
@@ -93,19 +102,19 @@ function useUserGraphInfo(ownerId: string | undefined): GraphUser_api | null {
     return userInfoQuery.data ?? null;
 }
 
-function TooltipContent(
+function PopoverContent(
     props: { owner: GraphUser_api | null; tooltipInfo?: Record<string, string> } & ItemCardProps,
 ): React.ReactNode {
-    if (props.isDeleted) {
-        return "This item has been deleted.";
-    }
     return (
-        <div className="w-2xs text-base whitespace-normal">
-            <h6>{props.title}</h6>
-            <hr className="mb-xs bg-floating h-px" />
-            {props.description && <p className="text-sm whitespace-pre-wrap">{props.description}</p>}
+        <>
+            {props.isDeleted && (
+                <p className="text-danger-subtle italic">This snapshot has been deleted by the owner.</p>
+            )}
+            {props.description && (
+                <p className="text-body-sm wrap-break-word hyphens-auto whitespace-pre-wrap">{props.description}</p>
+            )}
             {props.tooltipInfo && (
-                <ul className="mt-sm truncate text-sm">
+                <ul className="not-first:mt-sm text-body-sm truncate">
                     {Object.entries(props.tooltipInfo).map(([k, v]) => (
                         <li key={k} className="truncate">
                             {k}: <strong>{v}</strong>
@@ -113,7 +122,6 @@ function TooltipContent(
                     ))}
                 </ul>
             )}
-            <span className="text-neutral mt-xs text-body-sm block italic">Click to open</span>
-        </div>
+        </>
     );
 }

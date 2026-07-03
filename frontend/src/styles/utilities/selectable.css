@@ -7,14 +7,14 @@
     transition: background-color 150ms;
 
     &[data-selectable-wrapper] {
-        @apply px-selectable py-selectable;
+        @apply px-selectable;
     }
     .selectable[data-selectable-wrapper] & {
         @apply -mx-[4.8px]! -my-[6px]! p-0! focus:shadow-none! focus:outline-0;
     }
 
     &[data-disabled] {
-        @apply text-disabled! text-fill-disabled! cursor-not-allowed bg-transparent;
+        @apply text-disabled! cursor-not-allowed bg-transparent;
     }
 
     &[data-readonly] {
@@ -29,5 +29,12 @@
         &:focus-within {
             box-shadow: none;
         }
+    }
+
+    & .selectable__wrapper-inner-text {
+        /* 
+            This prop affects height of text flex-children, but is not present in some browsers, like firefox. Reverting this to ensure wrapped buttons look the same across browsers
+        */
+        text-box: "none";
     }
 }

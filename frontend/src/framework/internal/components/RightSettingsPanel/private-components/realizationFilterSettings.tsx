@@ -5,7 +5,7 @@ import { isEqual } from "lodash-es";
 
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
-import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
 import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
@@ -23,9 +23,10 @@ import { useActiveSession } from "../../ActiveSessionBoundary";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
-export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
+export const RealizationFilterSettings = React.memo(function RealizationFilterSettings(
+    props: RealizationFilterSettingsProps,
+) {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
     const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
@@ -383,55 +384,52 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         }
 
         return (
-            <div className="px-xs py-2xs gap-y-2xs flex flex-col overflow-y-auto">
-                <div className="grow space-y-4">
-                    {ensembleSet.getEnsembleArray().map((ensemble) => {
-                        const ensembleIdent = ensemble.getIdent();
-                        const isActive =
-                            activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
-                        const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
+            <div className="px-xs py-2xs gap-y-xs flex flex-col overflow-y-auto">
+                {ensembleSet.getEnsembleArray().map((ensemble) => {
+                    const ensembleIdent = ensemble.getIdent();
+                    const isActive =
+                        activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
+                    const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
 
-                        const selections =
-                            ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
-                        const currentFilteredRealizations = realizationFilterSet
-                            .getRealizationFilterForEnsembleIdent(ensembleIdent)
-                            .getFilteredRealizations();
+                    const selections = ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+                    const currentFilteredRealizations = realizationFilterSet
+                        .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                        .getFilteredRealizations();
 
-                        if (!selections) {
-                            return null;
-                        }
-                        return (
-                            <EnsembleRealizationFilter
-                                key={ensembleIdent.toString()}
-                                ensemble={ensemble}
-                                filteredRealizationNumbers={currentFilteredRealizations}
-                                selections={selections}
-                                hasUnsavedSelections={ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]}
-                                isActive={isActive}
-                                isAnotherFilterActive={isAnotherActive}
-                                onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
-                                onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
-                                onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
-                                onApplyClick={() => handleApplyClick(ensembleIdent)}
-                                onDiscardClick={() => handleDiscardClick(ensembleIdent)}
-                            />
-                        );
-                    })}
-                </div>
+                    if (!selections) {
+                        return null;
+                    }
+                    return (
+                        <EnsembleRealizationFilter
+                            key={ensembleIdent.toString()}
+                            ensemble={ensemble}
+                            filteredRealizationNumbers={currentFilteredRealizations}
+                            selections={selections}
+                            hasUnsavedSelections={ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]}
+                            isActive={isActive}
+                            isAnotherFilterActive={isAnotherActive}
+                            onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
+                            onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
+                            onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
+                            onApplyClick={() => handleApplyClick(ensembleIdent)}
+                            onDiscardClick={() => handleDiscardClick(ensembleIdent)}
+                        />
+                    );
+                })}
             </div>
         );
     }
 
     return (
-        <div className={`w-full ${drawerContent === RightDrawerContent.RealizationFilterSettings ? "h-full" : "h-0"}`}>
+        <div className="h-full w-full">
             <Drawer
                 title="Realization Filter"
                 icon={<FilterAlt />}
-                visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
+                visible={true}
                 onClose={handleFilterSettingsClose}
             >
                 {createEnsembleRealizationFilterList()}
             </Drawer>
         </div>
     );
-};
+});

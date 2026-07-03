@@ -7,13 +7,12 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { ComboboxItem } from "@lib/newComponents/Combobox/types";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import { Setting } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -115,10 +114,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     }
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Selection" defaultOpen>
-                    <SettingWrapper label="Ensembles" annotations={selectedEnsemblesAnnotations} stacked>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Selection" defaultOpen>
+                    <Setting.Field label="Ensembles" annotations={selectedEnsemblesAnnotations} stacked>
                         <EnsembleSelect
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
@@ -128,8 +127,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple={selectedGroupBy === GroupBy.ENSEMBLE}
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Group by"
                         stacked
                         help={{
@@ -164,8 +163,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             layout="horizontal"
                             size="small"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Realizations" annotations={selectedRealizationsAnnotations} stacked>
+                    </Setting.Field>
+                    <Setting.Field label="Realizations" annotations={selectedRealizationsAnnotations} stacked>
                         <Select
                             options={makeRealizationOptions(availableRealizationNumbers)}
                             value={selectedRealizations.value.map((el) => el.toString())}
@@ -174,8 +173,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple={selectedGroupBy === GroupBy.ENSEMBLE}
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="PVT Num"
                         annotations={selectedPvtNumsAnnotations}
                         loadingOverlay={selectedPvtNums.isLoading}
@@ -190,26 +189,26 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple={selectedGroupBy === GroupBy.PVT_NUM}
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Phase">
+                    </Setting.Field>
+                    <Setting.Field label="Phase">
                         <ComboboxCompositions.WithBrowseButtons
                             items={makePhaseItems()}
                             value={selectedPhase}
                             onValueChange={(val) => val !== null && setSelectedPhase(val)}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Visualization" defaultOpen>
-                    <SettingWrapper label="Show plot for" stacked>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Visualization" defaultOpen>
+                    <Setting.Field label="Show plot for" stacked>
                         <DependentVariableSelector
                             dependentVariables={makeDependentVariableOptions(selectedPhase)}
                             value={selectedDependentVariables}
                             onChange={handleVisualizePlotsChange}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }
 

@@ -4,12 +4,12 @@ import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@fra
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { Banner } from "@lib/newComponents/Banner";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { TextArea } from "@lib/newComponents/TextArea";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Typography } from "@lib/newComponents/Typography";
+import { Banner } from "@lib/components/Banner";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { TextArea } from "@lib/components/TextArea";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";

@@ -8,8 +8,8 @@ import { PickedRealizationCounter } from "@framework/components/RealizationPicke
 import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
 import { missingNumbers } from "@framework/utils/numberUtils";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
 
 import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,
@@ -142,7 +142,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                         rangeValues={selectedRangeTags}
                         realizationNumberLimits={realizationNumberLimits}
                         debounceTimeMs={500}
-                        onChange={handleRealizationPickChange}
+                        onValueChange={handleRealizationPickChange}
                         disabled={props.disabled}
                     />
                     <PickedRealizationCounter

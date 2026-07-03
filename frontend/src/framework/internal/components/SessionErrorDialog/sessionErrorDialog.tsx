@@ -7,10 +7,10 @@ import { getAliveOptions } from "@api";
 import { GuiEvent, useRegisterGuiEventSubscriber, type GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { SessionPersistenceAction } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Dialog } from "@lib/components/Dialog";
 import { useSymbolicateStackTrace } from "@lib/hooks/useSymbolicateStackTrace";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Dialog } from "@lib/newComponents/Dialog";
 
 export type SessionErrorDialogProps = {
     workbench: Workbench;
@@ -88,7 +88,7 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
             </Dialog.Header>
             <Dialog.Body layoutClassName="flex flex-col gap-y-2xs">
                 <p>{body}</p>
-                <p className="bg-canvas px-sm py-sm overflow-x-scroll rounded font-mono text-sm whitespace-nowrap">
+                <p className="bg-canvas p-sm text-body-sm overflow-x-scroll rounded font-mono whitespace-nowrap">
                     <strong>{errorEventPayload?.error?.name}</strong>: {errorEventPayload?.error?.message}
                 </p>
                 <p>

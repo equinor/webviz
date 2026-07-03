@@ -4,10 +4,10 @@ import type { BaseUIEvent } from "@base-ui/react";
 import { Close } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
+import { Button } from "@lib/components/Button";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { Direction, useListFocus } from "@lib/hooks/useListFocus";
 import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
-import { Button } from "@lib/newComponents/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { RealizationNumberLimits } from "./_utils";
@@ -21,7 +21,7 @@ export type RealizationPickerProps = {
     initialRangeValues?: readonly string[];
     debounceTimeMs?: number;
     realizationNumberLimits: RealizationNumberLimits;
-    onChange?: (selectedRangeTags: readonly string[]) => void;
+    onValueChange?: (selectedRangeTags: readonly string[]) => void;
 };
 
 function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLInputElement>) {
@@ -35,7 +35,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
     const [settledRangeValues, setRangeValues] = useOptInControlledValue<readonly string[]>(
         props.initialRangeValues ?? [],
         props.rangeValues,
-        props.onChange,
+        props.onValueChange,
     );
 
     const [rangeValues, setRangeValuesDebounced] = useDebouncedOnChange(
@@ -188,7 +188,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                 className={resolveClassNames(
                     "gap-3xs flex min-w-0 grow flex-wrap items-center",
                     // Equivalent to SELECTABLE_SIZES_CLASSNAMES["small"],
-                    "h-selectable-sm text-body-sm",
+                    "min-h-selectable-sm text-body-sm",
                 )}
                 onFocus={() => (rootHasFocusRef.current = true)}
                 onBlur={onRootBlur}

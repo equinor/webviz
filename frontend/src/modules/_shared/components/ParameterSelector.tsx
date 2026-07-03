@@ -1,10 +1,10 @@
 import React from "react";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import type { SelectOption } from "@lib/newComponents/Select";
-import { Select } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import { Setting } from "@lib/components/Setting";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 
 const MIN_SELECTOR_SIZE = 3;
 const MAX_SELECTOR_SIZE = 10;
@@ -112,8 +112,8 @@ export function ParametersSelector({
         }));
 
     return (
-        <div className="gap-y-sm flex flex-col">
-            <SettingWrapper label="Parameter groups" stacked>
+        <>
+            <Setting.Field label="Parameter groups" stacked>
                 <Select
                     options={groupSelectOptions}
                     value={selectedGroupFilterValues}
@@ -125,29 +125,31 @@ export function ParametersSelector({
                     )}
                     showQuickSelectButtons
                 />
-            </SettingWrapper>
-            <SettingWrapper label="Parameters" stacked>
-                <SwitchCompositions.WithLabel
-                    label="Auto-select all on group change"
-                    checked={autoSelectAllOnGroupChange}
-                    onCheckedChange={setAutoSelectAllOnGroupChange}
-                    size="small"
-                />
-                <Select
-                    value={selectedParameterIdents.map((p) => p.toString())}
-                    onValueChange={handleParameterChange}
-                    options={parameterSelectOptions}
-                    multiple={true}
-                    size={Math.min(
-                        MAX_SELECTOR_SIZE,
-                        parameterSelectOptions.length > MIN_SELECTOR_SIZE
-                            ? parameterSelectOptions.length
-                            : MIN_SELECTOR_SIZE,
-                    )}
-                    filter
-                    showQuickSelectButtons
-                />
-            </SettingWrapper>
-        </div>
+            </Setting.Field>
+            <Setting.Field label="Parameters" stacked>
+                <div className="gap-y-xs flex flex-col">
+                    <SwitchCompositions.WithLabel
+                        label="Auto-select all on group change"
+                        checked={autoSelectAllOnGroupChange}
+                        onCheckedChange={setAutoSelectAllOnGroupChange}
+                        size="small"
+                    />
+                    <Select
+                        value={selectedParameterIdents.map((p) => p.toString())}
+                        onValueChange={handleParameterChange}
+                        options={parameterSelectOptions}
+                        multiple={true}
+                        size={Math.min(
+                            MAX_SELECTOR_SIZE,
+                            parameterSelectOptions.length > MIN_SELECTOR_SIZE
+                                ? parameterSelectOptions.length
+                                : MIN_SELECTOR_SIZE,
+                        )}
+                        filter
+                        showQuickSelectButtons
+                    />
+                </div>
+            </Setting.Field>
+        </>
     );
 }

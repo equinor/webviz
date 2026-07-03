@@ -44,11 +44,11 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
     const colorConf = defaults({}, props.colors, COLORS[props.phase]);
 
     return (
-        <div className="-ml-2 text-xs">
+        <div className="-ml-2xs text-xs">
             <button
                 className={resolveClassNames(
-                    "pl-2 pr-1 rounded-r-sm flex items-center gap-2 hover:bg-gray-300 w-full",
-                    { "bg-gray-300": !collapsed },
+                    "pl-2xs pr-3xs gap-2xs hover:bg-neutral-hover flex w-full items-center rounded-r-sm",
+                    { "bg-neutral-subtle": !collapsed },
                 )}
                 onClick={() => setCollapsed(!collapsed)}
             >

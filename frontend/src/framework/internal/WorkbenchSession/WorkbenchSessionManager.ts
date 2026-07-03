@@ -532,7 +532,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         if (this.hasDirtyChanges()) {
             const result = await ConfirmationService.confirm({
-                title: "Unsaved changes",
+                title: "Save changes before closing session?",
                 message: "You have unsaved changes in your current session. Do you want to save them before closing?",
                 actions: [
                     { id: "cancel", label: "Cancel", color: "secondary" },
@@ -692,7 +692,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 if (result.reason === PersistFailureReason.SAVE_IN_PROGRESS) {
                     throw new SessionPersistenceError("Save already in progress. Please wait...");
                 } else if (result.reason === PersistFailureReason.NO_CHANGES) {
-                    throw new SessionPersistenceError("No changes to save");
+                    // Not an error — silently succeed when there's nothing to persist
+                    return true;
                 } else if (result.reason === PersistFailureReason.CONTENT_TOO_LARGE) {
                     throw new SessionPersistenceError(result.message);
                 } else {
@@ -1017,7 +1018,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     async deleteSnapshot(snapshotId: string): Promise<boolean> {
         const result = await ConfirmationService.confirm({
-            title: "Are you sure?",
+            title: "Really delete snapshot?",
             message:
                 "This snapshot will be deleted and will no longer be available to any user. This action cannot be reversed.",
             actions: [

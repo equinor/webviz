@@ -3,12 +3,12 @@ import type React from "react";
 import { Delete, DragIndicator } from "@mui/icons-material";
 
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Button } from "@lib/newComponents/Button";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { SortableList } from "@lib/newComponents/SortableList";
-import { Table } from "@lib/newComponents/Table";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { SortableList } from "@lib/components/SortableList";
+import { Table } from "@lib/components/Table";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import type { InternalRegularEnsembleSetting } from "../../types";
 
@@ -19,21 +19,21 @@ export type RegularEnsembleRowProps = {
 };
 
 export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactNode {
-    function onColorChange(newColor: string) {
+    function handleColorChange(newColor: string) {
         props.onUpdate({
             ...props.ensembleSetting,
             color: newColor,
         });
     }
 
-    function onNameChange(newName: string) {
+    function handleNameChange(newName: string) {
         props.onUpdate({
             ...props.ensembleSetting,
             customName: newName || null,
         });
     }
 
-    function onDelete() {
+    function handleDelete() {
         props.onDelete(props.ensembleSetting.ensembleIdent);
     }
 
@@ -49,14 +49,14 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                     </SortableList.DragHandle>
                 </Table.Cell>
                 <Table.Cell>
-                    <ColorSelect size="small" value={props.ensembleSetting.color} onChange={onColorChange} />
+                    <ColorSelect size="small" value={props.ensembleSetting.color} onValueCommit={handleColorChange} />
                 </Table.Cell>
                 <Table.Cell>
                     <TextInput
                         size="small"
                         value={props.ensembleSetting.customName ?? ""}
                         placeholder="Give a custom name..."
-                        onValueChange={onNameChange}
+                        onValueChange={handleNameChange}
                     />
                 </Table.Cell>
                 <Table.Cell layoutClassName="truncate" title={props.ensembleSetting.caseName}>
@@ -69,7 +69,7 @@ export function RegularEnsembleRow(props: RegularEnsembleRowProps): React.ReactN
                 </Table.Cell>
                 <Table.Cell>
                     <Tooltip content="Remove this ensemble from the list" delay="medium">
-                        <Button variant="ghost" tone="danger" onClick={onDelete} size="small" iconOnly>
+                        <Button variant="ghost" tone="danger" onClick={handleDelete} size="small" iconOnly>
                             <Delete fontSize="inherit" />
                         </Button>
                     </Tooltip>

@@ -2,11 +2,11 @@ import React from "react";
 
 import { clamp } from "lodash-es";
 
+import { ColorSelect } from "@lib/components/ColorSelect";
+import { NumberInput } from "@lib/components/NumberInput";
+import { Slider } from "@lib/components/Slider";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { Slider } from "@lib/newComponents/Slider";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { FLOW_COLORS } from "@modules/_shared/constants/colors";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
@@ -188,7 +188,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
             const divRef = React.useRef<HTMLDivElement>(null);
             const divSize = useElementSize(divRef);
 
-            const MIN_DIV_WIDTH = 250;
+            const MIN_DIV_WIDTH = 350;
             const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
             function makeDefaultValue() {
@@ -279,7 +279,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                 <div
                     className="gap-x-2xs gap-y-3xs grid items-center"
                     ref={divRef}
-                    style={{ gridTemplateColumns: inputVisible ? "24px 40px 3fr 1fr" : "24px 40px auto" }}
+                    style={{ gridTemplateColumns: inputVisible ? "24px 40px 1fr 6rem " : "24px 40px auto" }}
                 >
                     <div
                         className={resolveClassNames("font-semibold", {
@@ -297,6 +297,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("production", "oil", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "oil", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
@@ -306,6 +307,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("production", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "gas", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Water"
@@ -315,6 +317,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("production", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("production", "water", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <div
                         className={resolveClassNames("mt-2 font-semibold", {
@@ -332,6 +335,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("injection", "water", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "water", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                     <SliderNumberSettingComponent
                         label="Gas"
@@ -341,6 +345,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         onValueChange={(newValue) => handleValueChange("injection", "gas", newValue)}
                         onColorChange={(newColor) => handleColorChange("injection", "gas", newColor)}
                         inputVisible={inputVisible}
+                        disabled={props.disabled}
                     />
                 </div>
             );
@@ -356,6 +361,7 @@ type SliderNumberSettingProps = {
     onValueChange: (newValue: number) => void;
     onColorChange: (newColor: string) => void;
     inputVisible: boolean;
+    disabled?: boolean;
 };
 
 function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
@@ -401,9 +407,18 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
 
     return (
         <>
-            <ColorSelect value={props.color} onChange={props.onColorChange} size="small" compact variant="ghost" />
+            <ColorSelect
+                value={props.color}
+                onValueChange={props.onColorChange}
+                size="small"
+                compact
+                variant="ghost"
+                disabled={props.disabled}
+            />
             <div className="text-body-sm">{props.label}</div>
             <Slider
+                layoutClassName="grow"
+                size="small"
                 min={min}
                 max={max}
                 onValueChange={handleSliderChange}
@@ -412,14 +427,17 @@ function SliderNumberSettingComponent(props: SliderNumberSettingProps) {
                 valueLabelFormat={(val: number) => formatNumber(val)}
                 step={step}
                 inverted
+                disabled={props.disabled}
             />
             {props.inputVisible && (
                 <NumberInput
+                    size="small"
                     value={localValue / 1000}
                     min={min / 1000}
                     max={max / 1000}
                     onValueChange={handleInputChange}
                     endAdornment="K"
+                    disabled={props.disabled}
                 />
             )}
         </>

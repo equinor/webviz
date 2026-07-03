@@ -7,7 +7,6 @@ import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSess
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
-import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { Workbench } from "@framework/Workbench";
@@ -54,7 +53,7 @@ export function WorkbenchWrapper() {
 
     let content: React.ReactNode;
     const loadingOverlayNote = `Note that the first time an ensemble is loaded in Webviz,
-                it could take a while to collect all parameter values...`;
+                it might take a while to collect all parameter values...`;
     if (isEnsembleSetLoading) {
         content = <LoadingOverlay text="Loading ensemble set..." note={loadingOverlayNote} />;
     } else if (!isInitialized) {
@@ -90,7 +89,6 @@ export function WorkbenchWrapper() {
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
-            <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
             <SessionErrorDialog workbench={workbench} />
         </>
     );

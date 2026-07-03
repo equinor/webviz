@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link, Warning } from "@mui/icons-material";
 
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -102,8 +102,8 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="px-2xs py-4xs flex w-32 items-center">{props.setting.getLabel()}</div>
-            <div className="px-2xs py-4xs w-full">
+            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center">{props.setting.getLabel()}</div>
+            <div className="px-2xs py-4xs w-full min-w-0">
                 <StatusWrapper isPending={actuallyLoading}>
                     <div className="gap-y-3xs flex min-w-0 flex-col">
                         <div
@@ -121,10 +121,9 @@ export function SettingManagerComponent<
                                 onValueChange={handleValueChanged}
                                 value={value}
                                 isValueValid={isValid}
-                                isOverridden={isExternallyControlled}
-                                overriddenValue={value}
                                 valueConstraints={valueConstraints}
                                 globalSettings={globalSettings}
+                                disabled={!isSettingEnabled(attributes.enabled)}
                                 workbenchSession={props.manager.getWorkbenchSession()}
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />

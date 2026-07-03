@@ -7,12 +7,12 @@ import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
-import { Typography } from "@lib/newComponents/Typography";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Typography } from "@lib/components/Typography";
+import { Heading } from "@lib/components/Typography/compositions";
 
 Icon.add({ folder_open });
 
@@ -54,14 +54,14 @@ export function RecentList<TItemType, TQueryData = unknown>(
         if (isFirstTimeFetching) {
             if (itemsQuery.status === "pending") {
                 return (
-                    <span className="gap-selectable text-neutral-subtle flex items-center">
-                        <CircularProgress size={24} /> Loading recent items...
+                    <span className="gap-sm text-neutral-subtle flex items-center">
+                        <CircularProgress size={16} /> Loading recent items...
                     </span>
                 );
             }
 
             if (itemsQuery.status === "error") {
-                return <span className="text-danger-subtle">Could not fetch recent items...</span>;
+                return <span className="text-warning-subtle">Could not fetch recent items...</span>;
             }
         }
 
@@ -90,17 +90,17 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="gap-x-xs flex min-w-0 flex-col">
-            <div className="gap-y-xs flex items-center">
+        <section className="gap-xs flex w-96 min-w-64 flex-col">
+            <div className="gap-xs flex items-center">
                 <Heading as="h4" layoutClassName="grow">
                     {props.title}
                 </Heading>
-                <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
+                <Tooltip content="Refresh" side="bottom" delay="medium">
                     <Button size="small" variant="ghost" iconOnly onClick={refresh}>
                         {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="small" />}
                     </Button>
                 </Tooltip>
-                <Tooltip title="Show all" placement="bottom" enterDelay="medium">
+                <Tooltip content="Show all" side="bottom" delay="medium">
                     <Button size="small" variant="ghost" iconOnly onClick={props.onDialogIconClick}>
                         <Icon name="folder_open" />
                     </Button>
@@ -110,7 +110,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
             </Typography>
-            <div className="mt-xs gap-y-xs gap-x-xs gap-y-xs min-h-16 min-w-0">{makeContent()}</div>
+            <div className="mt-xs gap-xs min-h-16 min-w-0">{makeContent()}</div>
         </section>
     );
 }

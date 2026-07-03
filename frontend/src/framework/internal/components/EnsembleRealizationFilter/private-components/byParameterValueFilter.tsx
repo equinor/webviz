@@ -11,15 +11,16 @@ import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
+import { Button } from "@lib/components/Button";
+import { Combobox } from "@lib/components/Combobox";
+import { Field } from "@lib/components/Field";
 import { Slider } from "@lib/components/Slider";
+import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Button } from "@lib/newComponents/Button";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Field } from "@lib/newComponents/Field";
-import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
-import { SmartNodeSelector } from "@lib/newComponents/SmartNodeSelector";
-import type { SmartNodeSelectorTag } from "@lib/newComponents/SmartNodeSelector/smartNodeSelector";
-import { Typography } from "@lib/newComponents/Typography";
+import { Typography } from "@lib/components/Typography";
+import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
 import {
@@ -39,6 +40,15 @@ export type ByParameterValueFilterProps = {
 
 export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (props) => {
     const { ensembleParameters, parameterIdentStringToValueSelectionReadonlyMap, onFilterChange } = props;
+
+    const [immediateSliderValues, setImmediateSliderValues] = React.useState<Record<string, [number, number]>>({});
+    const [prevParamMap, setPrevParamMap] = React.useState(parameterIdentStringToValueSelectionReadonlyMap);
+
+    // When the external map changes (parameter added/removed, or discard), reset local slider state
+    if (prevParamMap !== parameterIdentStringToValueSelectionReadonlyMap) {
+        setPrevParamMap(parameterIdentStringToValueSelectionReadonlyMap);
+        setImmediateSliderValues({});
+    }
 
     const [smartNodeSelectorSelection, setSmartNodeSelectorSelection] = React.useState<SmartNodeSelectorSelection>({
         selectedIds: [],
@@ -86,8 +96,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
                 let newParameterValueSelection: ParameterValueSelection = newDiscreteValueSelection;
                 if (parameter.type === ParameterType.CONTINUOUS) {
-                    const max = Math.max(...parameter.values);
-                    const min = Math.min(...parameter.values);
+                    const max = roundContinuousValue(Math.max(...parameter.values));
+                    const min = roundContinuousValue(Math.min(...parameter.values));
                     const numberRange: Readonly<NumberRange> = { start: min, end: max };
                     newParameterValueSelection = numberRange;
                 }
@@ -144,12 +154,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         [parameterIdentStringToValueSelectionReadonlyMap, onFilterChange],
     );
 
-    const handleContinuousParameterValueRangeChange = React.useCallback(
-        function handleContinuousParameterValueRangeChange(parameterIdentString: string, valueSelection: number[]) {
-            if (valueSelection.length !== 2) {
-                throw new Error(`Value selection must have 2 values`);
-            }
-
+    const handleContinuousRangeChange = React.useCallback(
+        function handleContinuousRangeChange(parameterIdentString: string, valueSelection: number[]) {
             const parameter = ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
             if (!parameter) {
                 throw new Error(`Parameter ${parameterIdentString} not found`);
@@ -165,7 +171,6 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             }
 
             const newRangeSelection: Readonly<NumberRange> = { start: valueSelection[0], end: valueSelection[1] };
-
             setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newRangeSelection);
         },
         [
@@ -173,6 +178,26 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             parameterIdentStringToValueSelectionReadonlyMap,
             setNewParameterValueSelectionAndTriggerOnChange,
         ],
+    );
+
+    const debouncedHandleContinuousRangeChange = useDebouncedFunction(handleContinuousRangeChange, 200);
+
+    const handleContinuousParameterValueRangeChange = React.useCallback(
+        function handleContinuousParameterValueRangeChange(
+            parameterIdentString: string,
+            valueSelection: readonly number[],
+        ) {
+            if (valueSelection.length !== 2) {
+                throw new Error(`Value selection must have 2 values`);
+            }
+            const rounded: [number, number] = [
+                roundContinuousValue(valueSelection[0]),
+                roundContinuousValue(valueSelection[1]),
+            ];
+            setImmediateSliderValues((prev) => ({ ...prev, [parameterIdentString]: rounded }));
+            debouncedHandleContinuousRangeChange(parameterIdentString, rounded);
+        },
+        [debouncedHandleContinuousRangeChange],
     );
 
     const handleDiscreteParameterValueSelectionChange = React.useCallback(
@@ -234,18 +259,19 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const parameterIdent = ParameterIdent.fromString(parameterIdentString);
         const parameterMinMax = ensembleParameters.getContinuousParameterMinMax(parameterIdent);
 
+        const immediateValue = immediateSliderValues[parameterIdentString];
         return (
             <Slider
-                debounceTimeMs={200} // To prevent immediate re-render
                 max={parameterMinMax.max}
                 min={parameterMinMax.min}
                 step={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max)}
-                value={[valueSelection.start, valueSelection.end]}
+                largeStep={createContinuousValueSliderStep(parameterMinMax.min, parameterMinMax.max) * 10}
+                value={immediateValue ?? [valueSelection.start, valueSelection.end]}
                 valueLabelDisplay="auto"
-                orientation="horizontal"
-                onChange={(_, newValue) =>
-                    handleContinuousParameterValueRangeChange(parameterIdentString, newValue as number[])
-                }
+                valueLabelFormat={(value: number) => roundContinuousValue(value)}
+                markerLabels={(value) => roundContinuousValue(value)}
+                onValueChange={(newValue) => handleContinuousParameterValueRangeChange(parameterIdentString, newValue)}
+                disabled={props.disabled}
             />
         );
     }
@@ -268,7 +294,9 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                     items={uniqueValues.map((elm) => {
                         return { label: elm, value: elm };
                     })}
-                    onValueChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
+                    onValueChange={(value: string[]) =>
+                        handleDiscreteParameterValueSelectionChange(parameterIdentString, value)
+                    }
                     multiple
                     size="small"
                 />
@@ -283,7 +311,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                         return { label: String(elm), value: String(elm) };
                     })}
                     value={valueSelection.map(String)}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string[]) =>
                         handleDiscreteParameterValueSelectionChange(parameterIdentString, value.map(Number))
                     }
                     multiple
@@ -358,8 +386,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     );
 
     return (
-        <div className="grow flex-col gap-2">
-            <div className="flex flex-col pb-2">
+        <div className="space-y-2xs grow flex-col">
+            <div className="flex flex-col">
                 <Field.Root invalid={reportIconText !== null}>
                     <Field.Label>Select parameters to add</Field.Label>
                     <div className="gap-x-xs flex w-full items-center p-1">
@@ -372,7 +400,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                                 caseInsensitiveMatching={true}
                             />
                         </div>
-                        <Tooltip title={addButtonText ?? ""}>
+                        <Tooltip content={addButtonText ?? ""}>
                             <Button
                                 variant="contained"
                                 disabled={isAddButtonDisabled}
@@ -396,6 +424,12 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         </div>
     );
 };
+
+const CONTINUOUS_VALUE_DECIMAL_PLACES = 4;
+
+function roundContinuousValue(value: number): number {
+    return parseFloat(value.toFixed(CONTINUOUS_VALUE_DECIMAL_PLACES));
+}
 
 /**
  * Text and disabled state for add parameter button

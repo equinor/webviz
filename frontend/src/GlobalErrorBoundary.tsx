@@ -2,7 +2,7 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { reportErrorToGithub } from "@lib/utils/errors";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
@@ -95,43 +95,48 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
             return (
                 <div className="bg-danger-canvas flex h-screen w-screen items-center justify-center">
                     <div className="bg-surface flex w-1/2 min-w-[600px] flex-col shadow-sm">
-                        <div className="bg-danger-strong text-danger-strong-on-emphasis px-xs py-xs flex w-full items-center shadow-sm">
+                        <div className="bg-danger-strong text-danger-strong-on-emphasis p-xs font-bolder flex w-full items-center shadow-sm">
                             Application terminated with error
                         </div>
-                        <div className="px-sm py-sm gap-y-sm flex w-full grow flex-col">
-                            The application was terminated due to the following error:
-                            <div className="bg-neutral text-body-sm px-xs py-xs my-2 overflow-x-scroll font-mono whitespace-nowrap">
-                                <strong>{this.state.error.name}</strong>: {this.state.error.message}
-                            </div>
-                            You can use the following URL to start a clean session:
-                            <div>
-                                <div className="bg-neutral text-body-sm px-xs py-xs my-2 flex items-center font-mono whitespace-nowrap">
-                                    <a href={freshStartUrl.toString()} className="grow">
-                                        {freshStartUrl.toString()}
-                                    </a>
-                                    <Button
-                                        onClick={copyToClipboard}
-                                        title="Copy URL to clipboard"
-                                        tone="neutral"
-                                        variant="ghost"
-                                        iconOnly
-                                    >
-                                        <ContentCopy fontSize="small" />
-                                    </Button>
+                        <div className="px-sm py-sm gap-y-md flex w-full grow flex-col">
+                            <div className="gap-y-xs flex flex-col">
+                                The application was terminated due to the following error:
+                                <div className="bg-neutral text-body-sm p-xs overflow-x-scroll font-mono whitespace-nowrap">
+                                    <strong>{this.state.error.name}</strong>: {this.state.error.message}
                                 </div>
-                                <div
-                                    className={resolveClassNames(
-                                        "text-success-subtle text-body-sm font-bolder m-2 h-2 whitespace-nowrap transition-opacity",
-                                        {
-                                            "opacity-0": !this.state.copiedToClipboard,
-                                        },
-                                    )}
-                                >
-                                    Copied to clipboard
+                            </div>
+                            <div className="gap-y-2xs flex flex-col">
+                                You can use the following URL to start a clean session:
+                                <div>
+                                    <div className="bg-neutral text-body-sm p-xs flex items-center font-mono whitespace-nowrap">
+                                        <a href={freshStartUrl.toString()} className="grow">
+                                            {freshStartUrl.toString()}
+                                        </a>
+                                        <Button
+                                            onClick={copyToClipboard}
+                                            title="Copy URL to clipboard"
+                                            tone="accent"
+                                            variant="ghost"
+                                            iconOnly
+                                            size="small"
+                                        >
+                                            <ContentCopy fontSize="small" />
+                                        </Button>
+                                    </div>
+                                    <div
+                                        className={resolveClassNames(
+                                            "text-success-subtle text-body-sm font-bolder h-2 whitespace-nowrap transition-opacity",
+                                            {
+                                                "opacity-0": !this.state.copiedToClipboard,
+                                            },
+                                        )}
+                                    >
+                                        Copied to clipboard
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="gap-x-xs px-sm py-sm flex bg-slate-100 shadow-sm">
+                        <div className="gap-x-xs p-sm bg-canvas flex shadow-sm">
                             <Button
                                 onClick={() => this.state.error && reportIssue(this.state.error)}
                                 disabled={this.state.symbolicatingStack}

@@ -1,7 +1,7 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";

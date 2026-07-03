@@ -2,9 +2,9 @@ import React from "react";
 
 import { Add } from "@mui/icons-material";
 
+import { SortableList } from "@lib/components/SortableList";
+import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { SortableList } from "@lib/newComponents/SortableList";
-import type { IsMoveAllowedArgs } from "@lib/newComponents/SortableList";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import type { GroupDelegate } from "@modules/_shared/DataProviderFramework/delegates/GroupDelegate";
@@ -157,7 +157,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                     {props.additionalHeaderComponents}
                 </div>
                 <div
-                    className="relative flex w-full grow flex-col"
+                    className="bg-canvas relative flex w-full grow flex-col"
                     style={{ height: listSize.height - convertRemToPixels(12) }}
                 >
                     <SortableList
@@ -167,7 +167,7 @@ export function DataProviderManagerComponent(props: DataProviderManagerComponent
                     >
                         <SortableList.Content>
                             <SortableList.ScrollContainer>
-                                <div className="bg-canvas relative h-full min-h-0 grow overflow-auto">
+                                <div className="relative h-full min-h-0 grow overflow-auto">
                                     {items.length === 0 && (
                                         <div className="gap-x-3xs -mt-3xs text-body-sm flex h-full items-center justify-center">
                                             {props.emptyContentPlaceholder ?? (

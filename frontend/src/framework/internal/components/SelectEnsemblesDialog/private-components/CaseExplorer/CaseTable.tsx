@@ -5,12 +5,13 @@ import { isEqual, orderBy } from "lodash";
 import type { CaseInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
-import { Table } from "@lib/newComponents/Table";
-import { TableCompositions } from "@lib/newComponents/Table/compositions";
-import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
-import { SortDirection, type TableSortState } from "@lib/newComponents/Table/typesAndEnums";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Virtualization } from "@lib/newComponents/Virtualization";
+import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
+import { Table } from "@lib/components/Table";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
+import { SortDirection, type TableSortState } from "@lib/components/Table/typesAndEnums";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Virtualization } from "@lib/components/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -22,7 +23,8 @@ export type CaseTableProps = {
     isPending?: boolean;
     selectedCase?: string | null;
 
-    selectedEnsembles: UserEnsembleSetting[];
+    ensembleSelection: UserEnsembleSetting[];
+    newEnsembleSelection: UserEnsembleSetting[];
 
     caseData: CaseInfo_api[] | undefined;
 
@@ -34,6 +36,17 @@ export type CaseTableProps = {
     onDataCollated?: (collatedData: CaseInfo_api[]) => void;
 };
 
+// colKey doesn't always match the data field name on CaseInfo_api
+const COL_KEY_TO_FIELD: Record<string, string> = { author: "user", "#": "numSelectedEnsembles" };
+
+type EnsembleCounts = {
+    numSelectedEnsembles: number;
+    numRemovedEnsembles: number;
+    numAddedEnsembles: number;
+    hasChanges: boolean;
+};
+type CaseDataWithEnsembleCount = CaseInfo_api & EnsembleCounts;
+
 export function CaseTable(props: CaseTableProps): React.ReactNode {
     const { onDataCollated } = props;
     const tableOverflowWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -44,10 +57,12 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
     }, [userInfo]);
 
     const [tableFilterState, setTableFilterState] = React.useState<CaseTableFilterState>({});
-    const [tableSortState, setTableSortState] = React.useState<TableSortState | null>({
-        columnKey: "updatedAtUtcMs",
-        direction: SortDirection.DESC,
-    });
+    const [tableSortState, setTableSortState] = React.useState<TableSortState[] | undefined>([
+        {
+            columnKey: "updatedAtUtcMs",
+            direction: SortDirection.DESC,
+        },
+    ]);
 
     const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState(props.showOnlyMyCases);
     const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState(props.showOnlyOfficialCases);
@@ -70,22 +85,89 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         }));
     }
 
-    // TODO: Support multiple sort state
-    const filteredCaseData = useCaseDataFilter(props.caseData, tableFilterState);
+    const caseDataWithSelectionCount = React.useMemo<CaseDataWithEnsembleCount[]>(() => {
+        if (!props.caseData) return [];
+
+        const numSelectionsByCase = new Map<string, EnsembleCounts>();
+
+        for (const ensemble of props.newEnsembleSelection) {
+            const caseId = ensemble.ensembleIdent.getCaseUuid();
+            const currentCount = numSelectionsByCase.get(caseId) ?? {
+                numSelectedEnsembles: 0,
+                numRemovedEnsembles: 0,
+                numAddedEnsembles: 0,
+                hasChanges: false,
+            };
+            const newSelectedEnsembles = currentCount.numSelectedEnsembles + 1;
+            let newAddedEnsembles = currentCount.numAddedEnsembles;
+            if (!props.ensembleSelection.some((e) => e.ensembleIdent.equals(ensemble.ensembleIdent))) {
+                newAddedEnsembles += 1;
+            }
+            numSelectionsByCase.set(caseId, {
+                ...currentCount,
+                numSelectedEnsembles: newSelectedEnsembles,
+                numAddedEnsembles: newAddedEnsembles,
+                hasChanges: currentCount.hasChanges || newAddedEnsembles > 0,
+            });
+        }
+
+        for (const ensemble of props.ensembleSelection) {
+            const caseId = ensemble.ensembleIdent.getCaseUuid();
+            const currentCount = numSelectionsByCase.get(caseId) ?? {
+                numSelectedEnsembles: 0,
+                numRemovedEnsembles: 0,
+                numAddedEnsembles: 0,
+                hasChanges: false,
+            };
+            let newRemovedEnsembles = currentCount.numRemovedEnsembles;
+            if (!props.newEnsembleSelection.some((e) => e.ensembleIdent.equals(ensemble.ensembleIdent))) {
+                newRemovedEnsembles += 1;
+            }
+            numSelectionsByCase.set(caseId, {
+                ...currentCount,
+                numRemovedEnsembles: newRemovedEnsembles,
+                hasChanges: currentCount.hasChanges || newRemovedEnsembles > 0,
+            });
+        }
+
+        return props.caseData?.map((caseRow) => {
+            const counts = numSelectionsByCase.get(caseRow.uuid);
+            return {
+                ...caseRow,
+                numSelectedEnsembles: counts?.numSelectedEnsembles ?? 0,
+                numRemovedEnsembles: counts?.numRemovedEnsembles ?? 0,
+                numAddedEnsembles: counts?.numAddedEnsembles ?? 0,
+                hasChanges: counts?.hasChanges ?? false,
+            };
+        });
+    }, [props.caseData, props.ensembleSelection, props.newEnsembleSelection]);
+
+    const filteredCaseData = useCaseDataFilter(caseDataWithSelectionCount, tableFilterState);
     const collatedCaseData = React.useMemo(
         function sortCaseData() {
             if (!filteredCaseData) return [];
 
-            const { columnKey: sortKey, direction: sortDirection } = tableSortState ?? {};
+            const activeSorts = (tableSortState ?? []).filter((s) => s.direction !== SortDirection.NONE);
 
-            if (!sortKey || !sortDirection) return filteredCaseData;
-
-            if (sortDirection === SortDirection.NONE) {
+            if (activeSorts.length === 0) {
                 // Sort cases by date descending (to prevent random order when no sorting is applied in the table)
-                return orderBy(filteredCaseData, "updatedAtUtcMs", SortDirection.ASC);
+                return orderBy(filteredCaseData, "updatedAtUtcMs", SortDirection.DESC);
             }
 
-            return orderBy(filteredCaseData, sortKey, sortDirection);
+            const sortFields: string[] = [];
+            const sortDirections: ("asc" | "desc")[] = [];
+            for (const s of activeSorts) {
+                const field = COL_KEY_TO_FIELD[s.columnKey] ?? s.columnKey;
+                const dir = s.direction as "asc" | "desc";
+                if (field === "numSelectedEnsembles") {
+                    sortFields.push("hasChanges", field);
+                    sortDirections.push(dir, dir);
+                } else {
+                    sortFields.push(field);
+                    sortDirections.push(dir);
+                }
+            }
+            return orderBy(filteredCaseData, sortFields, sortDirections);
         },
         [filteredCaseData, tableSortState],
     );
@@ -100,7 +182,7 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             size="small"
             compact
             fixed
-            sortable
+            sortable="multiple"
             selectable
             columnSorting={tableSortState}
             rowSelection={props.selectedCase}
@@ -108,9 +190,10 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             onChangeRowSelection={props.onCaseSelected}
         >
             <Table.Head sticky>
-                <Table.Column colKey="#" width={56} sortable={false}></Table.Column>
+                {/* Tweak alignment so sorting-arrow show up in the middle */}
+                <Table.Column colKey="#" width={42} layoutClassName="text-center! pr-0!" />
                 <Table.Column colKey="name" widthInPercent={24}>
-                    Name / id
+                    Case (ID)
                 </Table.Column>
                 <Table.Column colKey="description" widthInPercent={18}>
                     Description
@@ -151,23 +234,30 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                     containerRef={tableOverflowWrapperRef}
                     items={collatedCaseData}
                     itemSize={ROW_HEIGHT_PX["small"]}
-                    renderItem={(caseRow: CaseInfo_api) => {
-                        const numSelectedEnsemblesInCase = props.selectedEnsembles.filter(
-                            (e) => e.ensembleIdent.getCaseUuid() === caseRow.uuid,
-                        ).length;
+                    renderItem={(caseRow: CaseDataWithEnsembleCount) => {
                         return (
                             <Table.Row key={caseRow.uuid} rowKey={caseRow.uuid}>
-                                <Table.Cell>
+                                <Table.Cell layoutClassName="text-center! px-xs">
                                     <Tooltip
-                                        content={`${numSelectedEnsemblesInCase} ensemble(s) selected in this case`}
+                                        content={`${caseRow.numSelectedEnsembles} ensemble(s) selected in this case`}
                                     >
                                         <div
                                             className={resolveClassNames(
-                                                "px-3xs py-4xs bg-canvas text-neutral-strong text-body-xs w-full cursor-help rounded-full text-center",
-                                                { "bg-accent!": numSelectedEnsemblesInCase > 0 },
+                                                "px-3xs py-4xs bg-canvas text-body-xs text-neutral-strong relative cursor-help rounded text-center",
+                                                {
+                                                    "bg-accent!": caseRow.numSelectedEnsembles > 0,
+                                                },
                                             )}
                                         >
-                                            {numSelectedEnsemblesInCase}/{caseRow.ensembles.length}
+                                            {caseRow.numSelectedEnsembles}/{caseRow.ensembles.length}
+                                            {caseRow.hasChanges && (
+                                                <div className="z-elevated absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
+                                                    <HasChangesIndicator
+                                                        size="em"
+                                                        tooltip={`${caseRow.numAddedEnsembles} ensemble(s) will be added, ${caseRow.numRemovedEnsembles} ensemble(s) will be removed`}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     </Tooltip>
                                 </Table.Cell>

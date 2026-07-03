@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Switch } from "@lib/newComponents/Switch";
+import { Switch } from "@lib/components/Switch";
 
 import type {
     CustomSettingImplementation,
@@ -39,7 +39,7 @@ export class BooleanSetting implements CustomSettingImplementation<ValueType, Va
                 props.onValueChange(checked);
             }
 
-            return <Switch checked={props.value} onCheckedChange={handleChange} />;
+            return <Switch disabled={props.disabled} checked={props.value} onCheckedChange={handleChange} />;
         };
     }
 }

@@ -11,12 +11,19 @@ import {
     WebAssetOutlined,
 } from "@mui/icons-material";
 
-import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import {
+    GuiEvent,
+    GuiState,
+    RightDrawerContent,
+    useGuiState,
+    useGuiValue,
+    useSetGuiState,
+} from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { Badge } from "@lib/newComponents/Badge";
-import { Tabs, type TabsTabProps } from "@lib/newComponents/Tabs";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Badge } from "@lib/components/Badge";
+import { Tabs, type TabsTabProps } from "@lib/components/Tabs";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import {
@@ -35,14 +42,8 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
 
     const [drawerContent, setDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
 
-    const [rightSettingsPanelIsCollapsed, setRightSettingsPanelIsCollapsed] = useGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelIsCollapsed,
-    );
-    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent,
-    );
+    const setRightSettingsPanelIsCollapsed = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelIsCollapsed);
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     const numberOfUnsavedRealizationFilters = useGuiValue(guiMessageBroker, GuiState.NumberOfUnsavedRealizationFilters);
@@ -57,14 +58,17 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     }
 
     function ensureSettingsPanelIsVisible() {
-        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+        if (
+            guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+            SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+        ) {
             forceSettingsPanelVisible();
         }
     }
 
     function handleSelectPanelContent(targetContent: RightDrawerContent) {
         const isSameContent = targetContent === drawerContent;
-        if (isSameContent && rightSettingsPanelIsCollapsed) {
+        if (isSameContent && guiMessageBroker.getState(GuiState.RightSettingsPanelIsCollapsed)) {
             forceSettingsPanelVisible();
             return;
         }
@@ -79,22 +83,18 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
 
     return (
         <SideBar position="right" className="border-neutral-subtle border-l-2">
-            <Tabs.Root
-                value={drawerContent}
-                onValueChange={handleSelectPanelContent}
-                orientation="vertical"
-                layoutClassName="-ml-[2px]"
-            >
+            <Tabs.Root value={drawerContent ?? null} orientation="vertical" layoutClassName="-ml-[2px]">
                 <Tabs.List indicatorPosition="start" size="small">
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.ModulesList}
                         tooltip="Show modules list"
                         icon={<WebAssetOutlined fontSize="small" />}
                         activeIcon={<WebAsset fontSize="small" />}
                         disabled={isSnapshot}
                         disabledTooltip="Modules cannot be changed in snapshot mode"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.ModulesList)}
                     />
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.RealizationFilterSettings}
                         tooltip={RealizationFilterButtonTooltip(
                             numberOfUnsavedRealizationFilters,
@@ -112,18 +112,21 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                         )}
                         disabled={isSnapshot}
                         disabledTooltip="Realization filters cannot be changed in snapshot mode"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.RealizationFilterSettings)}
                     />
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.ModuleInstanceLog}
                         icon={<HistoryOutlined fontSize="small" />}
                         activeIcon={<History fontSize="small" />}
                         tooltip="Open module log"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.ModuleInstanceLog)}
                     />
-                    <Toggle
+                    <Tab
                         value={RightDrawerContent.ColorPaletteSettings}
                         tooltip="Show color settings"
                         icon={<PaletteOutlined fontSize="small" />}
                         activeIcon={<Palette fontSize="small" />}
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.ColorPaletteSettings)}
                     />
                 </Tabs.List>
             </Tabs.Root>
@@ -131,7 +134,7 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
     );
 };
 
-type ToggleProps = TabsTabProps & {
+type TabProps = TabsTabProps & {
     value: string;
     /**
      * The icon rendered on the left side of the text
@@ -160,7 +163,7 @@ function resolveTabIcon(
     return icon;
 }
 
-function Toggle(props: ToggleProps) {
+function Tab(props: TabProps) {
     const { icon, activeIcon, disabledTooltip, tooltip, ...baseProps } = props;
     return (
         <Tooltip content={props.disabled ? disabledTooltip : tooltip} side="left">
@@ -199,6 +202,7 @@ function RealizationFilterButtonIcon(
             badgeContent={numberOfUnsavedRealizationFilters ? "!" : numberOfEffectiveRealizationFilters || undefined}
             tone={numberOfUnsavedRealizationFilters ? "warning" : "accent"}
             invisible={!numberOfUnsavedRealizationFilters && !numberOfEffectiveRealizationFilters}
+            corner="top-left"
         >
             {active ? <FilterAlt fontSize="small" /> : <FilterAltOutlined fontSize="small" />}
         </Badge>

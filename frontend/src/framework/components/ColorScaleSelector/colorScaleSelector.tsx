@@ -4,15 +4,15 @@ import { isEqual } from "lodash-es";
 
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
-import { Button } from "@lib/newComponents/Button";
-import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/newComponents/ColorPaletteSelector";
-import { ColorScalePreview } from "@lib/newComponents/ColorScalePreview";
-import { Dialog } from "@lib/newComponents/Dialog";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { Switch } from "@lib/newComponents/Switch";
-import { Typography } from "@lib/newComponents/Typography";
+import { Button } from "@lib/components/Button";
+import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
+import { ColorScalePreview } from "@lib/components/ColorScalePreview";
+import { Dialog } from "@lib/components/Dialog";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { NumberInput } from "@lib/components/NumberInput";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { Switch } from "@lib/components/Switch";
+import { Typography } from "@lib/components/Typography";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { createPortal } from "@lib/utils/createPortal";
@@ -30,6 +30,7 @@ export type ColorScaleSelectorProps = {
     workbenchSettings: WorkbenchSettings;
     colorScaleSpecification?: ColorScaleSpecification;
     onChange?: (colorScaleSpecification: ColorScaleSpecification) => void;
+    disabled?: boolean;
 };
 
 export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactNode {
@@ -77,7 +78,12 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
 
     return (
         <>
-            <div className="selectable grow cursor-pointer overflow-hidden rounded" onClick={handleClick}>
+            <div
+                className={resolveClassNames("selectable grow cursor-pointer overflow-hidden rounded", {
+                    "cursor-not-allowed opacity-50": props.disabled,
+                })}
+                onClick={handleClick}
+            >
                 <ColorScalePreview
                     colorPalette={colorScaleSpecification.colorScale.getColorPalette()}
                     gradientType={colorScaleSpecification.colorScale.getGradientType()}
@@ -274,7 +280,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
     );
 
     return (
-        <div className="gap-y-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
+        <div className="gap-sm grid grid-cols-[auto_minmax(0,1fr)] flex-col items-center">
             <FieldCompositions.Default label="Gradient type" gridLayout>
                 <RadioCompositions.GroupWithLabels
                     value={colorScaleSpecification.colorScale.getGradientType()}
@@ -306,6 +312,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                         scrubAdornment="steps"
                         scrubAreaPosition="end"
                         onValueChange={handleNumStepsChange}
+                        size="small"
                     />
                 </div>
             </FieldCompositions.Default>
@@ -622,7 +629,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     className={resolveClassNames(
                         "absolute -top-6 flex h-7 -translate-x-1/2 transform cursor-ew-resize flex-col",
                         {
-                            "z-50": isDragging,
+                            "z-overlay": isDragging,
                             hidden:
                                 props.gradientType === ColorScaleGradientType.Sequential || !areBoundariesUserDefined,
                         },

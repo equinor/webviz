@@ -4,12 +4,11 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import type { ComboboxItems } from "@lib/newComponents/Combobox/types";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { Select, type SelectOption } from "@lib/newComponents/Select";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItems } from "@lib/components/Combobox/types";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { Select, type SelectOption } from "@lib/components/Select";
+import { Setting } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -111,18 +110,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
-                            onChange={setSelectedEnsembleIdent}
+                            onValueChange={setSelectedEnsembleIdent}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Realization" annotations={selectedRealizationNumberAnnotations}>
+                    </Setting.Field>
+                    <Setting.Field label="Realization" annotations={selectedRealizationNumberAnnotations}>
                         <Combobox<number>
                             items={availableRealizationNumbers.map((real) => {
                                 return { value: real, label: real.toString() };
@@ -130,8 +129,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedRealizationNumber.value}
                             onValueChange={setSelectedRealizationNumber}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="VFP Name"
                         annotations={selectedVfpTableNameAnnotations}
                         loadingOverlay={selectedVfpTableName.isLoading}
@@ -148,10 +147,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedVfpTableName.value}
                             onValueChange={setSelectedVfpTableName}
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot" defaultOpen>
-                    <SettingWrapper label="Pressure Option">
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot" defaultOpen>
+                    <Setting.Field label="Pressure Option">
                         <RadioCompositions.GroupWithLabels
                             value={userSelectedPressureOption}
                             options={[
@@ -161,8 +160,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             onValueChange={setUserSelectedPressureOption}
                             layout="horizontal"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Color By"
                         annotations={selectedColorByAnnotations}
                         loadingOverlay={selectedColorBy.isLoading}
@@ -177,8 +176,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             value={selectedColorBy.value}
                             onValueChange={(v) => v && setSelectedColorBy(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={thpLabel}
                         annotations={selectedThpIndicesAnnotations}
                         loadingOverlay={selectedThpIndices.isLoading}
@@ -196,8 +195,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={wfrLabel}
                         annotations={vfpDataAccessor?.isInjTable() ? undefined : selectedWfrIndicesAnnotations}
                         loadingOverlay={selectedWfrIndices.isLoading}
@@ -220,8 +219,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={gfrLabel}
                         annotations={vfpDataAccessor?.isInjTable() ? undefined : selectedGfrIndicesAnnotations}
                         loadingOverlay={selectedGfrIndices.isLoading}
@@ -244,8 +243,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label={alqLabel}
                         annotations={vfpDataAccessor?.isInjTable() ? undefined : selectedAlqIndicesAnnotations}
                         loadingOverlay={selectedAlqIndices.isLoading}
@@ -268,10 +267,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             multiple
                             showQuickSelectButtons
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }
 

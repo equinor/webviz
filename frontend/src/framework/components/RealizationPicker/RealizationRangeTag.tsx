@@ -3,9 +3,9 @@ import React from "react";
 import { Error } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
+import { Chip } from "@lib/components/Chip";
 import type { FocusableListItem } from "@lib/hooks/useListFocus";
 import { Direction } from "@lib/hooks/useListFocus";
-import { Chip } from "@lib/newComponents/Chip";
 
 import type { RealizationNumberLimits, SelectionValidityInfo } from "./_utils";
 import { computeTagValidityInfo, sanitizeRangeInput, SelectionValidity } from "./_utils";

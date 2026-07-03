@@ -3,7 +3,7 @@ import type React from "react";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorScalePreview } from "@lib/newComponents/ColorScalePreview";
+import { ColorScalePreview } from "@lib/components/ColorScalePreview";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import type {
@@ -82,6 +82,7 @@ export class ColorScaleSetting implements CustomSettingImplementation<ValueType,
 
             return (
                 <ColorScaleSelector
+                    disabled={props.disabled}
                     workbenchSettings={props.workbenchSettings}
                     colorScaleSpecification={props.value ?? undefined}
                     onChange={handleChange}

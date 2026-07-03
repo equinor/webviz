@@ -906,8 +906,8 @@ export const LayoutBoxComponents: React.FC<{
         return (
             <div
                 className={resolveClassNames(
-                    "text-accent-strong-on-emphasis pointer-events-none absolute flex items-center justify-center",
-                    { "bg-accent-strong": hovered, "bg-transparent": !hovered },
+                    "text-accent-subtle text-body-sm font-bolder pointer-events-none absolute flex items-center justify-center",
+                    { "bg-accent": hovered, "bg-transparent": !hovered },
                 )}
                 key={flatBoxes[0].toString()}
                 style={{

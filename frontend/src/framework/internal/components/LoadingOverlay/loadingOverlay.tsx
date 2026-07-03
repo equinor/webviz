@@ -1,6 +1,6 @@
-import FmuLogoAnimated from "@assets/fmuAnimated.svg";
+import { FmuAnimatedLogo } from "@assets/FmuAnimatedLogo";
 
-import { Heading, Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 
 export type LoadingOverlayProps = {
     text: string;
@@ -11,7 +11,7 @@ export function LoadingOverlay(props: LoadingOverlayProps): JSX.Element {
     return (
         <div className="z-tooltip bg-backdrop/20 fixed inset-0 flex h-full w-full items-center justify-center backdrop-blur-xs">
             <div className="gap-y-md flex flex-col items-center justify-center">
-                <img src={FmuLogoAnimated} alt="FMU Analysis animated logo" className="h-32 w-32" />
+                <FmuAnimatedLogo className="h-32 w-32" />
                 <div className="gap-y-xs flex flex-col items-center justify-center text-center">
                     <Heading as="h6">{props.text}</Heading>
                     {props.note && (

@@ -4,10 +4,10 @@ import { ChevronLeft, ChevronRight, Settings, WarningRounded } from "@mui/icons-
 
 import { useModuleWarning } from "@framework/internal/components/LeftSettingsPanel/_hooks";
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import { Banner } from "@lib/newComponents/Banner";
-import { Button } from "@lib/newComponents/Button";
-import { Tabs } from "@lib/newComponents/Tabs";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Banner } from "@lib/components/Banner";
+import { Button } from "@lib/components/Button";
+import { Tabs } from "@lib/components/Tabs";
+import { Tooltip } from "@lib/components/Tooltip";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 type ModuleSettingsHeaderProps = {

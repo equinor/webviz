@@ -4,7 +4,7 @@ import { Error, Info, Warning } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/types/statusWriter";
 import { StatusMessageType } from "@framework/types/statusWriter";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Popover } from "@lib/components/Popover";
 
 export type StatusMessagesProps = { statusMessages: readonly StatusMessage[] };
 
@@ -36,16 +36,19 @@ function StatusMessage(props: { messages: StatusMessage[]; children: React.React
     if (!props.messages.length) return null;
 
     return (
-        <Tooltip
-            title={
-                <ul>
-                    {props.messages.map((m, i) => (
-                        <li key={i}>{m.message}</li>
-                    ))}
-                </ul>
-            }
-        >
-            {props.children}
-        </Tooltip>
+        <Popover.Root>
+            <Popover.Trigger tone="neutral" size="small" variant="ghost" iconOnly>
+                {props.children}
+            </Popover.Trigger>
+            <Popover.Popup>
+                <Popover.Content>
+                    <ul>
+                        {props.messages.map((m, i) => (
+                            <li key={i}>{m.message}</li>
+                        ))}
+                    </ul>
+                </Popover.Content>
+            </Popover.Popup>
+        </Popover.Root>
     );
 }

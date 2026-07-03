@@ -2,7 +2,7 @@ import { Folder, MoreHoriz } from "@mui/icons-material";
 
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import type { TreeDataNode } from "@lib/newComponents/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 const NON_GROUPED_PARENT_NODE = "Generic";
 

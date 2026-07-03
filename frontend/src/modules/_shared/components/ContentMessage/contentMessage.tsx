@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Typography } from "@lib/newComponents/Typography";
+import { Typography } from "@lib/components/Typography";
 
 export enum ContentMessageType {
     INFO = "info",

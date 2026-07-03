@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Paragraph } from "@lib/newComponents/Typography/compositions";
+import { Paragraph } from "@lib/components/Typography/compositions";
 import { pluralize } from "@lib/utils/strings";
 
 import { calcNumberOfUniqueRealizations, type RealizationNumberLimits } from "./_utils";

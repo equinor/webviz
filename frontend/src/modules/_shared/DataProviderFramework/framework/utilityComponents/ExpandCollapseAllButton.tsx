@@ -2,8 +2,8 @@ import type React from "react";
 
 import { UnfoldLessDouble, UnfoldMoreDouble } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 
 import type { ItemGroup } from "../../interfacesAndTypes/entities";
 

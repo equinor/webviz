@@ -1,11 +1,11 @@
 import React from "react";
 
 import { IntersectionType } from "@framework/types/intersection";
-import type { DropdownOption } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { NumberInput } from "@lib/components/NumberInput";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import { NumberInput } from "@lib/newComponents/NumberInput";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -19,6 +19,7 @@ import {
     isValueValid,
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
+
 
 export type IntersectionSettingOption = {
     type: IntersectionType;
@@ -254,7 +255,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(null);
             }
 
-            const options: DropdownOption<string>[] = availableValues
+            const options: ComboboxItem<string>[] = availableValues
                 .filter((value) => value.type === type)
                 .map((value) => {
                     return {
@@ -288,25 +289,21 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                         placeholder={
                             type === IntersectionType.CUSTOM_POLYLINE ? "Select polyline..." : "Select wellbore..."
                         }
-                        value={!props.isOverridden ? props.value?.uuid : props.overriddenValue?.uuid}
+                        value={props.value?.uuid}
                         onValueChange={handleSelectionChange}
-                        disabled={props.isOverridden}
+                        disabled={props.disabled}
                     />
-                    {enableExtensionLength && (
-                        <>
-                            <span>Extension</span>
-                            <NumberInput
-                                disabled={props.isOverridden}
-                                value={immediateExtensionLength}
-                                min={extensionLengthConfig?.min}
-                                max={extensionLengthConfig?.max}
-                                onValueChange={setExtensionLength}
-                                scrubAdornment="m"
-                                scrubAreaPosition="end"
-                                allowWheelScrub
-                            />
-                        </>
-                    )}
+                    <span>Extension</span>
+                    <NumberInput
+                        disabled={props.disabled || !enableExtensionLength}
+                        value={immediateExtensionLength}
+                        min={extensionLengthConfig?.min}
+                        max={extensionLengthConfig?.max}
+                        onValueChange={setExtensionLength}
+                        scrubAdornment="m"
+                        scrubAreaPosition="end"
+                        allowWheelScrub
+                    />
                 </div>
             );
         };

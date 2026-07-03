@@ -3,8 +3,8 @@ import type React from "react";
 import { chain, isEqual, sortBy } from "lodash-es";
 
 import type { WellboreLogCurveHeader_api } from "@api";
-import { ComboboxCompositions } from "@lib/newComponents/Combobox/compositions";
-import type { ComboboxItem, ComboboxGroup } from "@lib/newComponents/Combobox/types";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem, ComboboxGroup } from "@lib/components/Combobox/types";
 import { makeSelectValueForCurveHeader } from "@modules/_shared/utils/wellLog";
 
 import type {
@@ -102,7 +102,7 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
                     items={curveOptions}
                     value={selectedValue}
                     onValueChange={handleChange}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                 />
             );
         };

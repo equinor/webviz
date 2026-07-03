@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ColorSelect } from "@lib/newComponents/ColorSelect";
+import { ColorSelect } from "@lib/components/ColorSelect";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ActionGroup } from "../../Actions";
@@ -101,7 +101,9 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             id={props.group.getItemDelegate().getId()}
             title={
                 <div className="gap-x-2xs relative flex min-w-0 items-center">
-                    {color && <ColorSelect onChange={handleColorChange} value={color} size="small" variant="ghost" />}
+                    {color && (
+                        <ColorSelect onValueChange={handleColorChange} value={color} size="small" variant="ghost" />
+                    )}
                     <div className="min-w-0 grow">
                         <EditName item={props.group} />
                     </div>

@@ -2,9 +2,8 @@ import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
+import { Setting } from "@lib/components/Setting";
+import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
 
@@ -27,10 +26,10 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
         setCorrCutOff(newValue);
     }
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Max number of parameters">
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Max number of parameters">
                         <Slider
                             value={numParams}
                             onValueChange={handleNumParamsChange}
@@ -39,8 +38,8 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             max={500}
                             valueLabelDisplay="auto"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label={`Correlation cutoff (absolute): ${corrCutOff}`}>
+                    </Setting.Field>
+                    <Setting.Field label={`Correlation cutoff (absolute): ${corrCutOff}`}>
                         <Slider
                             value={corrCutOff}
                             onValueChange={handleCorrCutOffChange}
@@ -49,9 +48,9 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             max={1}
                             valueLabelDisplay="auto"
                         />
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

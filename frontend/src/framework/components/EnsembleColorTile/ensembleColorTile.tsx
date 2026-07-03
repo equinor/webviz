@@ -2,8 +2,8 @@ import { FilterAlt } from "@mui/icons-material";
 
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
-import { ColorTileWithBadge } from "@lib/newComponents/ColorTileWithBadge";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { ColorTileWithBadge } from "@lib/components/ColorTileWithBadge";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type EnsembleColorTileProps = {
     ensemble: RegularEnsemble | DeltaEnsemble;

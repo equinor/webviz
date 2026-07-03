@@ -1,9 +1,7 @@
 import React from "react";
 
-import { isEqual } from "lodash-es";
-
 import { Tooltip } from "@lib/components/Tooltip";
-import { useElementSize } from "@lib/hooks/useElementSize";
+import { Paragraph } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type RealizationNumberDisplayProps = {
@@ -15,139 +13,126 @@ export type RealizationNumberDisplayProps = {
 };
 
 export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> = (props) => {
-    const divRef = React.useRef<HTMLDivElement>(null);
-    const divSize = useElementSize(divRef);
+    // Since the function prop is not guaranteed to be stable, we wrap it in a ref so we can safely memoize against it
+    const onRealizationNumberClickRef = React.useRef(props.onRealizationNumberClick);
+    onRealizationNumberClickRef.current = props.onRealizationNumberClick;
 
-    const [prevSelectedRealizations, setPrevSelectedRealizations] = React.useState<readonly number[]>();
-    const [allRealizationsInRange, setAllRealizationsInRange] = React.useState<number[]>(
-        Array.from({ length: Math.max(...props.availableRealizations) + 1 }, (_, i) => i),
+    const handleRealizationElementClick = React.useCallback(
+        function handleRealizationElementClickFunc(realization: number) {
+            if (props.disableOnClick) return;
+            if (!props.selectedRealizations.includes(realization)) {
+                onRealizationNumberClickRef.current([...props.selectedRealizations, realization]);
+                return;
+            }
+            onRealizationNumberClickRef.current(props.selectedRealizations.filter((r) => r !== realization));
+        },
+        [props.disableOnClick, props.selectedRealizations],
     );
-
-    if (!isEqual(props.selectedRealizations, prevSelectedRealizations)) {
-        setPrevSelectedRealizations(props.selectedRealizations);
-        setAllRealizationsInRange(Array.from({ length: Math.max(...props.availableRealizations) + 1 }, (_, i) => i));
-    }
-
-    function handleRealizationElementClick(realization: number) {
-        if (props.disableOnClick) {
-            return;
-        }
-        if (!props.selectedRealizations.includes(realization)) {
-            props.onRealizationNumberClick([...props.selectedRealizations, realization]);
-            return;
-        }
-        const newRealizationNumberSelections = props.selectedRealizations.filter(
-            (selectedRealization) => selectedRealization !== realization,
-        );
-        props.onRealizationNumberClick(newRealizationNumberSelections);
-    }
 
     const isCompact = props.showAsCompact ?? false;
     const dotSizePx = isCompact ? 9 : 12;
     const gapPx = isCompact ? 3 : 4;
     const labelWidthPx = 28;
+    const labelHeightPx = 16;
 
-    // Number of dots per row (multiple of 5), accounting for label column in non-compact mode.
-    // Total grid width = labelWidthPx + N * (dotSizePx + gapPx), so available = divSize.width - labelWidthPx.
-    const availableWidth = isCompact ? divSize.width : divSize.width - labelWidthPx;
-    const candidateNumPerRow = Math.max(5, Math.floor(availableWidth / (dotSizePx + gapPx)));
-    const remainder = candidateNumPerRow % 5;
-    const numPerRow = remainder === 0 ? candidateNumPerRow : candidateNumPerRow - remainder;
+    const maxRealization = props.availableRealizations.length > 0 ? Math.max(...props.availableRealizations) : -1;
+    const allRealizations = Array.from({ length: maxRealization + 1 }, (_, i) => i);
 
-    const gridTemplateColumns = isCompact
-        ? `repeat(${numPerRow}, ${dotSizePx}px)`
-        : `${labelWidthPx}px repeat(${numPerRow}, ${dotSizePx}px)`;
-
-    // Build a linear-gradient that draws 1px vertical separator lines centered in the gap after
-    // every 5th dot column. Using a background on the outer container makes the lines continuous
-    // across all rows and row gaps without any per-cell logic.
-    const dotOffset = isCompact ? 0 : labelWidthPx + gapPx;
-    const separatorStops: string[] = [];
-    for (let col = 5; col < numPerRow; col += 5) {
-        // Center of the gap between dot (col-1) and dot col
-        const lineCenter = dotOffset + col * (dotSizePx + gapPx) - gapPx / 2;
-        separatorStops.push(
-            `transparent ${lineCenter - 0.5}px`,
-            `rgba(0,0,0,0.15) ${lineCenter - 0.5}px`,
-            `rgba(0,0,0,0.15) ${lineCenter + 0.5}px`,
-            `transparent ${lineCenter + 0.5}px`,
+    if (allRealizations.length === 0) {
+        return (
+            <Paragraph size="sm" tone="neutral" layoutClassName="text-center w-full py-sm">
+                No realizations
+            </Paragraph>
         );
     }
-    const backgroundImage =
-        separatorStops.length > 0 ? `linear-gradient(to right, ${separatorStops.join(", ")})` : undefined;
 
-    const gridElements: React.ReactNode[] = [];
+    const selectedRealizationsSet = new Set(props.selectedRealizations);
+    const availableRealizationsSet = new Set(props.availableRealizations);
 
-    if (!isCompact) {
-        gridElements.push(<span key="col-header-corner" />);
-        for (let col = 0; col < numPerRow; col++) {
-            gridElements.push(
-                <span
-                    key={`col-header-${col}`}
-                    className="text-neutral-subtle self-end text-center text-[10px] leading-none select-none"
-                >
-                    {col % 5 === 0 ? col : ""}
-                </span>,
-            );
-        }
-    }
-
-    for (let rowStart = 0; rowStart < allRealizationsInRange.length; rowStart += numPerRow) {
-        const rowRealizations = allRealizationsInRange.slice(rowStart, rowStart + numPerRow);
-
-        if (!isCompact) {
-            gridElements.push(
-                <span
-                    key={`label-${rowStart}`}
-                    className="text-neutral-subtle flex items-center justify-end text-[10px] leading-none select-none"
-                >
-                    {allRealizationsInRange[rowStart]}
-                </span>,
-            );
-        }
-
-        for (const realization of rowRealizations) {
-            const isAvailable = props.availableRealizations.includes(realization);
-            const isSelected = props.selectedRealizations.includes(realization);
-            const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
-
-            gridElements.push(
-                <Tooltip
-                    key={realization}
-                    title={isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
-                >
-                    <div
-                        style={{ width: dotSizePx, height: dotSizePx }}
-                        className={resolveClassNames("flex aspect-square items-center justify-center rounded-full", {
-                            "bg-accent-strong": isSelected,
-                            "bg-accent": !isSelected && isAvailable,
-                            "bg-disabled": !isSelected && !isAvailable,
-                            "hover:bg-accent-strong-hover hover:outline-accent-strong hover:outline":
-                                !isCompact && isSelected,
-                            "hover:bg-accent-hover hover:outline-accent hover:outline":
-                                !isCompact && !isSelected && isAvailable,
-                            "cursor-pointer": !isCompact && !props.disableOnClick && isAvailable,
-                            "cursor-not-allowed": !isCompact && !props.disableOnClick && !isAvailable,
-                        })}
-                        onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
-                    />
-                </Tooltip>,
-            );
-        }
-    }
+    const numGroups = Math.ceil(allRealizations.length / 5);
+    const groups = Array.from({ length: numGroups }, (_, g) => allRealizations.slice(g * 5, g * 5 + 5));
 
     return (
-        <div ref={divRef}>
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns,
-                    gap: `${gapPx}px`,
-                    alignItems: "center",
-                    backgroundImage,
-                }}
-            >
-                {gridElements}
+        /*
+         * padding-left reserves space for the row labels positioned to the left of each group.
+         * Only the label of the first group on each visual row is visible — the rest are covered
+         * by the dot wrappers of the preceding group (z-index 1 > label z-index 0).
+         */
+        <div style={{ paddingLeft: isCompact ? 0 : labelWidthPx, paddingTop: isCompact ? 0 : labelHeightPx }}>
+            <div className="isolate flex flex-wrap" style={{ gap: gapPx }}>
+                {groups.map((group) => (
+                    <div key={group[0]} className="relative">
+                        {!isCompact && (
+                            <>
+                                {/*
+                                 * Shifted left into the padding area.
+                                 */}
+                                <span
+                                    style={{
+                                        left: -labelWidthPx,
+                                        width: labelWidthPx - gapPx,
+                                    }}
+                                    className="text-neutral-subtle absolute z-0 flex h-full items-center justify-end text-[10px] leading-none select-none"
+                                >
+                                    {group[0]}
+                                </span>
+                                {/*
+                                 * Shifted top into the padding area.
+                                 */}
+                                <span
+                                    style={{
+                                        top: -labelHeightPx,
+                                        width: labelWidthPx,
+                                        height: labelHeightPx,
+                                    }}
+                                    className="text-neutral-subtle absolute z-0 flex h-full items-center text-[10px] leading-none select-none"
+                                >
+                                    {group[0]}
+                                </span>
+                            </>
+                        )}
+                        <div className="bg-surface relative z-1 flex" style={{ gap: gapPx, paddingRight: gapPx }}>
+                            {group.map((realization) => {
+                                const isAvailable = availableRealizationsSet.has(realization);
+                                const isSelected = selectedRealizationsSet.has(realization);
+                                const isClickDisabled = isCompact || props.disableOnClick || !isAvailable;
+
+                                return (
+                                    <Tooltip
+                                        key={realization}
+                                        content={
+                                            isAvailable ? `real-${realization}` : `real-${realization} (unavailable)`
+                                        }
+                                    >
+                                        <div
+                                            style={{ width: dotSizePx, height: dotSizePx }}
+                                            className={resolveClassNames("aspect-square rounded-full", {
+                                                "bg-accent-strong": isSelected,
+                                                "bg-accent": !isSelected && isAvailable,
+                                                "bg-disabled": !isSelected && !isAvailable,
+                                                "hover:bg-accent-strong-hover hover:outline-accent-strong hover:outline":
+                                                    !isCompact && isSelected && !props.disableOnClick,
+                                                "hover:bg-accent-hover hover:outline-accent hover:outline":
+                                                    !isCompact && !isSelected && isAvailable && !props.disableOnClick,
+                                                "cursor-pointer": !isCompact && !props.disableOnClick && isAvailable,
+                                                "cursor-not-allowed":
+                                                    !isCompact && !props.disableOnClick && !isAvailable,
+                                            })}
+                                            onClick={
+                                                isClickDisabled
+                                                    ? undefined
+                                                    : () => handleRealizationElementClick(realization)
+                                            }
+                                        />
+                                    </Tooltip>
+                                );
+                            })}
+                            {Array.from({ length: 5 - group.length }).map((_, i) => (
+                                <div key={`placeholder-${i}`} style={{ width: dotSizePx, height: dotSizePx }} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

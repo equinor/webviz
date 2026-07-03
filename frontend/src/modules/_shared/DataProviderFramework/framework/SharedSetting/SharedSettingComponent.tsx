@@ -2,7 +2,7 @@ import type React from "react";
 
 import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
 
-import { Button } from "@lib/newComponents/Button";
+import { Button } from "@lib/components/Button";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 

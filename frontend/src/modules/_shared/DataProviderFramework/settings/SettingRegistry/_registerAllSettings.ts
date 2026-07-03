@@ -122,8 +122,12 @@ SettingRegistry.registerSetting(Setting.SMDA_INTERPRETER, "SMDA Interpreter", Dr
 SettingRegistry.registerSetting(Setting.WELLBORES, "Wellbores", DrilledWellboresSetting);
 SettingRegistry.registerSetting(Setting.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
 SettingRegistry.registerSetting(Setting.STRAT_COLUMN, "Stratigraphic Column", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.SURFACE_NAME, "Surface Name", DropdownStringSetting, {
+    customConstructorParameters: [{ showBrowseButtons: true }],
+});
+SettingRegistry.registerSetting(Setting.FORMATION_NAME, "Formation Name", DropdownStringSetting, {
+    customConstructorParameters: [{ showBrowseButtons: true }],
+});
 SettingRegistry.registerSetting(Setting.SURFACE_NAMES, "Surface Names", SelectStringSetting);
 SettingRegistry.registerSetting(Setting.TIME_OR_INTERVAL, "Time or Interval", TimeOrIntervalSetting);
 SettingRegistry.registerSetting(Setting.TIME_POINT, "Time Point", TimeOrIntervalSetting);

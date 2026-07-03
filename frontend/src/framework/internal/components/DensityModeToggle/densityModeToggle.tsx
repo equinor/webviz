@@ -2,36 +2,24 @@ import React from "react";
 
 import { DensityMedium, DensitySmall } from "@mui/icons-material";
 
-import { setMainDataAttribute } from "@framework/internal/utils/getSetMainDataAttribute";
+import { useUserSettings } from "@framework/internal/providers/UserSettingsProvider";
+import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Button } from "@lib/newComponents/Button";
-
-const LOCAL_STORAGE_KEY = "density";
-
-function resolveInitialDensity(): string {
-    return localStorage.getItem(LOCAL_STORAGE_KEY) ?? "spacious";
-}
 
 export function DensityModeToggle(): React.ReactNode {
-    const [density, setDensity] = React.useState<string>(() => resolveInitialDensity());
-
-    React.useLayoutEffect(() => {
-        setMainDataAttribute("density", density);
-    }, [density]);
+    const { settings, setDensity } = useUserSettings();
 
     const toggleDenseMode = React.useCallback(
         function toggleDenseMode() {
-            const newDensity = density === "comfortable" ? "spacious" : "comfortable";
-            localStorage.setItem(LOCAL_STORAGE_KEY, newDensity);
-            setDensity(newDensity);
+            setDensity(settings.density === "comfortable" ? "spacious" : "comfortable");
         },
-        [density],
+        [settings.density, setDensity],
     );
 
     return (
-        <Tooltip title="Toggle density mode">
+        <Tooltip content="Toggle density mode">
             <Button variant="ghost" tone="accent" iconOnly onClick={toggleDenseMode}>
-                {density === "comfortable" ? <DensitySmall fontSize="inherit" /> : <DensityMedium fontSize="inherit" />}
+                {settings.density === "comfortable" ? <DensitySmall fontSize="inherit" /> : <DensityMedium fontSize="inherit" />}
             </Button>
         </Tooltip>
     );

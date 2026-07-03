@@ -15,6 +15,18 @@
     --spacing: initial;
 }
 
+@layer base {
+    :focus,
+    :focus-within {
+        outline-color: var(--eds-color-border-focus);
+    }
+
+    :focus-visible {
+        outline-style: solid; /* Some UAs only let you overwrite default if you specify a style */
+        outline-color: var(--eds-color-border-focus);
+    }
+}
+
 /* Global semantic tokens */
 @theme inline {
     --radius-rounded: var(--eds-spacing-border-radius-rounded);

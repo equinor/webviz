@@ -3,9 +3,9 @@ import type React from "react";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -57,11 +57,11 @@ export function DataProviderComponent(props: DataProviderComponentProps): React.
             startAdornment={<StartActions dataProvider={props.dataProvider} />}
             endAdornment={<EndActions dataProvider={props.dataProvider} />}
         >
-            <div className="bg-surface relative">
+            <div className="bg-neutral/20 relative">
                 <ErrorOverlay itemDelegate={props.dataProvider.getItemDelegate()} isExpanded={isExpanded} />
                 <div
                     className={resolveClassNames(
-                        "[&>*:nth-child(4n-2)]:bg-canvas [&>*:nth-child(4n-3)]:bg-canvas text-body-sm border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
+                        "[&>*:nth-child(4n-2)]:bg-surface [&>*:nth-child(4n-3)]:bg-surface text-body-sm border-neutral-subtle grid grid-cols-[auto_1fr] items-stretch border",
                         {
                             hidden: !isExpanded,
                         },

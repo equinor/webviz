@@ -1,16 +1,20 @@
 import React from "react";
 
 import type { BaseUIEvent, PopoverRootActions } from "@base-ui/react";
-import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
-
 import {
-    GuiEvent,
-    GuiState,
-    RightDrawerContent,
-    useGuiState,
-    useGuiValue,
-    useSetGuiState,
-} from "@framework/GuiMessageBroker";
+    Close,
+    CloseFullscreen,
+    Error,
+    History,
+    Input,
+    Link,
+    MoreVert,
+    OpenInFull,
+    Output,
+    Warning,
+} from "@mui/icons-material";
+
+import { GuiEvent, GuiState, RightDrawerContent, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
@@ -24,14 +28,16 @@ import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/Mod
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
+import { Badge } from "@lib/components/Badge";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { LinearProgress } from "@lib/components/LinearProgress";
+import { Menu } from "@lib/components/Menu";
+import { Popover } from "@lib/components/Popover";
+import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
-import { Badge } from "@lib/newComponents/Badge";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { LinearProgress } from "@lib/newComponents/LinearProgress";
-import { Popover } from "@lib/newComponents/Popover";
-import { Separator } from "@lib/newComponents/Separator";
-import { Typography } from "@lib/newComponents/Typography";
+import { Typography } from "@lib/components/Typography";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -43,6 +49,8 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
+
+const COMPACT_WIDTH_THRESHOLD_PX = 320;
 
 export const Header: React.FC<HeaderProps> = (props) => {
     const dashboard = useActiveDashboard();
@@ -69,30 +77,56 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const invalidPersistedState = persistedSettingsInvalid || persistedViewInvalid;
 
-    const handleMaximizeClick = React.useCallback(
-        function handleMaximizeClick(e: React.PointerEvent<HTMLButtonElement>) {
-            const currentLayout = dashboard.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({
-                ...l,
-                maximized: l.moduleInstanceId === moduleInstanceId,
-            }));
-            dashboard.setLayout(tweakedLayout);
-            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
 
-            e.preventDefault();
-            e.stopPropagation();
+    const channelManager = props.moduleInstance.getChannelManager();
+    const receivers = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+
+    const editConnections = React.useCallback(
+        function editConnections() {
+            guiMessageBroker.setState(GuiState.EditDataChannelConnections, true);
+            guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
+                moduleInstanceId,
+            });
+        },
+        [guiMessageBroker, moduleInstanceId],
+    );
+
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
+    const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+
+    const showLog = React.useCallback(
+        function showLog() {
+            if (
+                guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+                SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+            ) {
+                setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
+            }
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+            setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
+        },
+        [guiMessageBroker, setRightSettingsPanelWidth, dashboard, moduleInstanceId, setRightDrawerContent],
+    );
+
+    const headerRef = React.useRef<HTMLDivElement>(null);
+    const { width: headerWidth } = useElementSize(headerRef);
+    const isCompact = headerWidth < COMPACT_WIDTH_THRESHOLD_PX;
+
+    const maximize = React.useCallback(
+        function maximize() {
+            const currentLayout = dashboard.getLayout();
+            dashboard.setLayout(
+                currentLayout.map((l) => ({ ...l, maximized: l.moduleInstanceId === moduleInstanceId })),
+            );
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
         },
         [moduleInstanceId, dashboard],
     );
 
-    const handleRestoreClick = React.useCallback(
-        function handleRestoreClick(e: React.PointerEvent<HTMLButtonElement>) {
-            const currentLayout = dashboard.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: false }));
-            dashboard.setLayout(tweakedLayout);
-
-            e.preventDefault();
-            e.stopPropagation();
+    const restore = React.useCallback(
+        function restore() {
+            dashboard.setLayout(dashboard.getLayout().map((l) => ({ ...l, maximized: false })));
         },
         [dashboard],
     );
@@ -120,15 +154,37 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
+    const numErrors = hotStatusMessages.filter((m) => m.type === StatusMessageType.Error).length;
+    const numWarnings = hotStatusMessages.filter((m) => m.type === StatusMessageType.Warning).length;
+
+    const sharedActionProps: HeaderActionsProps = {
+        workbench: props.workbench,
+        moduleInstance: props.moduleInstance,
+        isMaximized: props.isMaximized,
+        isMinimized: props.isMinimized,
+        isSnapshotMode: isSnapshot,
+        onMaximize: maximize,
+        onRestore: restore,
+    };
+
+    const compactActionProps: CompactHeaderActionsProps = {
+        ...sharedActionProps,
+        isLoading,
+        numErrors,
+        numWarnings,
+        hasDataReceiver: receivers.length > 0,
+        onShowLog: showLog,
+        onEditConnections: editConnections,
+    };
 
     return (
         <div
+            ref={headerRef}
             className={resolveClassNames(
-                "px-xs gap-x-xs shadow-elevation-raised py-4xs relative flex touch-none items-center text-lg select-none",
+                "px-xs gap-4xs bg-neutral shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
                 {
-                    "bg-danger-canvas": hasErrors || invalidPersistedState,
-                    "bg-neutral-subtle": !hasErrors && props.isMinimized && !invalidPersistedState,
-                    "bg-neutral-canvas": !hasErrors && !props.isMinimized && !invalidPersistedState,
+                    "bg-danger-canvas!": hasErrors || invalidPersistedState,
+                    "bg-neutral-subtle!": !hasErrors && !invalidPersistedState && props.isMinimized,
                 },
             )}
             onDoubleClick={handleDoubleClick}
@@ -142,34 +198,83 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 isSnapshotMode={isSnapshot}
                 onPointerDown={props.onPointerDown}
             />
+
+            {!isCompact ? (
+                <DefaultHeaderActions {...sharedActionProps} />
+            ) : (
+                <CompactHeaderActions {...compactActionProps} />
+            )}
+
+            <div className="gap-4xs flex shrink-0 items-center">
+                <Separator orientation="vertical" />
+                <Tooltip content={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
+                    <Button
+                        onPointerDown={handleRemoveClick}
+                        onPointerUp={handlePointerUp}
+                        disabled={isSnapshot}
+                        tone="danger"
+                        variant="ghost"
+                        size="small"
+                        iconOnly
+                    >
+                        <Close fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+            </div>
+        </div>
+    );
+};
+
+type HeaderActionsProps = {
+    workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
+    isMaximized?: boolean;
+    isMinimized?: boolean;
+    isSnapshotMode?: boolean;
+    onMaximize: () => void;
+    onRestore: () => void;
+};
+
+function DefaultHeaderActions(props: HeaderActionsProps): React.ReactNode {
+    function handlePointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
+    }
+
+    function handleMaximizePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        props.onMaximize();
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function handleRestorePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        props.onRestore();
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    return (
+        <>
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
-
             <Separator orientation="vertical" />
-
             <StatusIndicator
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
             />
-
             <Separator orientation="vertical" />
-
             <DataChannelButtons
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
                 isMaximized={props.isMaximized}
-                isSnapshotMode={isSnapshot}
+                isSnapshotMode={props.isSnapshotMode}
             />
-
             <Separator orientation="vertical" />
-
             {props.isMaximized ? (
-                <Tooltip title="Restore">
+                <Tooltip content="Restore">
                     <Button
-                        onPointerDown={handleRestoreClick}
+                        onPointerDown={handleRestorePointerDown}
                         onPointerUp={handlePointerUp}
-                        title="Restore"
                         variant="ghost"
                         tone="neutral"
                         size="small"
@@ -179,11 +284,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     </Button>
                 </Tooltip>
             ) : (
-                <Tooltip title="Maximize">
+                <Tooltip content="Maximize">
                     <Button
-                        onPointerDown={handleMaximizeClick}
+                        onPointerDown={handleMaximizePointerDown}
                         onPointerUp={handlePointerUp}
-                        title="Maximize"
                         variant="ghost"
                         tone="neutral"
                         size="small"
@@ -193,22 +297,166 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     </Button>
                 </Tooltip>
             )}
-            <Tooltip title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
-                <Button
-                    onPointerDown={handleRemoveClick}
-                    onPointerUp={handlePointerUp}
-                    disabled={isSnapshot}
-                    tone="danger"
-                    variant="ghost"
-                    size="small"
-                    iconOnly
-                >
-                    <Close fontSize="inherit" />
-                </Button>
-            </Tooltip>
+        </>
+    );
+}
+
+type MenuBadgeProps = {
+    numErrors: number;
+    numWarnings: number;
+    numSyncedSettings: number;
+    children: React.ReactNode;
+};
+
+function MenuBadge(props: MenuBadgeProps): React.ReactNode {
+    const hasErrors = props.numErrors > 0;
+    const hasWarnings = props.numWarnings > 0;
+    const hasSyncedSettings = props.numSyncedSettings > 0;
+
+    if (hasErrors) {
+        return (
+            <Badge badgeContent={props.numErrors} tone="danger">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    if (hasWarnings) {
+        return (
+            <Badge badgeContent={props.numWarnings} tone="warning">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    if (hasSyncedSettings) {
+        return (
+            <Badge badgeContent={props.numSyncedSettings} tone="info">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    return props.children;
+}
+
+type CompactHeaderActionsProps = HeaderActionsProps & {
+    isLoading: boolean;
+    numErrors: number;
+    numWarnings: number;
+    hasDataReceiver: boolean;
+    onShowLog: () => void;
+    onEditConnections: () => void;
+};
+
+function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode {
+    const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
+
+    return (
+        <div className="gap-4xs flex shrink-0 items-center">
+            <DataChannelButtons
+                workbench={props.workbench}
+                moduleInstance={props.moduleInstance}
+                isMinimized={false}
+                isMaximized={props.isMaximized}
+                isSnapshotMode={props.isSnapshotMode}
+                showChannelsOnly
+            />
+            <Separator orientation="vertical" />
+            <Menu.Root>
+                <Menu.Trigger>
+                    <Button variant="ghost" size="small" tone="neutral" iconOnly title="More options">
+                        <MenuBadge
+                            numErrors={props.numErrors}
+                            numWarnings={props.numWarnings}
+                            numSyncedSettings={syncedSettings.length}
+                        >
+                            <MoreVert fontSize="inherit" />
+                        </MenuBadge>
+                    </Button>
+                </Menu.Trigger>
+                <Menu.Popup>
+                    {syncedSettings.length > 0 && (
+                        <Menu.SubmenuItem
+                            triggerIcon={
+                                <Badge badgeContent={syncedSettings.length} corner="top-left" tone="info">
+                                    <Link fontSize="inherit" />
+                                </Badge>
+                            }
+                            triggerContent="Synced settings"
+                        >
+                            {syncedSettings.map((setting) => (
+                                <Menu.Item
+                                    key={setting}
+                                    icon={<Link fontSize="inherit" />}
+                                    text={`Syncs "${SyncSettingsMeta[setting].name}" across the dashboard`}
+                                />
+                            ))}
+                        </Menu.SubmenuItem>
+                    )}
+                    {props.numErrors > 0 || props.numWarnings > 0 ? (
+                        <Menu.Item
+                            icon={
+                                <span className="relative flex size-[1em] items-center justify-center">
+                                    {props.numErrors > 0 ? (
+                                        <>
+                                            <Error fontSize="inherit" color="error" />
+                                            {props.numWarnings > 0 && (
+                                                <Warning
+                                                    fontSize="inherit"
+                                                    color="warning"
+                                                    className="absolute -right-1 -bottom-1 text-[0.65em]!"
+                                                />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Warning fontSize="inherit" color="warning" />
+                                    )}
+                                </span>
+                            }
+                            text={[
+                                props.numErrors > 0 ? `${props.numErrors} error${props.numErrors > 1 ? "s" : ""}` : "",
+                                props.numWarnings > 0
+                                    ? `${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`
+                                    : "",
+                            ]
+                                .filter(Boolean)
+                                .join(", ")}
+                            onClick={props.onShowLog}
+                        />
+                    ) : (
+                        <Menu.Item
+                            icon={<History fontSize="inherit" />}
+                            text="Show module log"
+                            onClick={props.onShowLog}
+                        />
+                    )}
+                    {props.hasDataReceiver && !props.isSnapshotMode && (
+                        <Menu.Item
+                            icon={<Input fontSize="inherit" />}
+                            text="Edit data connections"
+                            onClick={props.onEditConnections}
+                        />
+                    )}
+                    <Menu.Separator />
+                    {props.isMaximized ? (
+                        <Menu.Item
+                            icon={<CloseFullscreen fontSize="inherit" />}
+                            text="Restore"
+                            onClick={props.onRestore}
+                        />
+                    ) : (
+                        <Menu.Item
+                            icon={<OpenInFull fontSize="inherit" />}
+                            text="Maximize"
+                            onClick={props.onMaximize}
+                        />
+                    )}
+                </Menu.Popup>
+            </Menu.Root>
         </div>
     );
-};
+}
 
 type ModuleLoadingBarProps = {
     moduleInstance: ModuleInstance<any, any>;
@@ -223,7 +471,7 @@ function ModuleLoadingBar(props: ModuleLoadingBarProps) {
                 hidden: !isLoading,
             })}
         >
-            <LinearProgress variant="indeterminate" />
+            <LinearProgress variant="indeterminate" size="small" />
         </div>
     );
 }
@@ -248,13 +496,10 @@ function ModuleTitle(props: ModuleTitleProps) {
 
     return (
         <div
-            className={resolveClassNames(
-                "py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center",
-                {
-                    "cursor-grabbing": props.isDragged,
-                    "cursor-move": !props.isDragged && !props.isSnapshotMode,
-                },
-            )}
+            className={resolveClassNames("py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center", {
+                "cursor-grabbing": props.isDragged,
+                "cursor-move": !props.isDragged && !props.isSnapshotMode,
+            })}
             onPointerDown={handlePointerDown}
         >
             <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>
@@ -283,7 +528,7 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
         <div className="gap-x-2xs flex items-center">
             {syncedSettings.map((setting) => (
                 <Tooltip
-                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
+                    content={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
                     key={setting}
                 >
                     <span className="bg-info-strong px-3xs py-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
@@ -301,6 +546,7 @@ type DataChannelButtonsProps = {
     isMinimized?: boolean;
     isMaximized?: boolean;
     isSnapshotMode?: boolean;
+    showChannelsOnly?: boolean;
 };
 
 function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
@@ -397,7 +643,7 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
                     </Badge>
                 </Button>
             )}
-            {hasDataReceiver && (
+            {hasDataReceiver && !props.showChannelsOnly && (
                 <Button
                     title={makeChannelInButtonTitle()}
                     onPointerDown={handleReceiverPointerDown}
@@ -435,16 +681,16 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent,
-    );
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
 
     function handleShowLogClick(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+        if (
+            guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+            SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+        ) {
             setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
 
@@ -455,7 +701,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <ul className="gap-y-2xs px-2xs py-2xs flex flex-col">
+            <ul className="gap-y-2xs p-2xs flex flex-col">
                 {hotStatusMessages.map((entry, i) => (
                     <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
                         <Typography
@@ -479,8 +725,8 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (isLoading) {
         stateIndicators.push(
-            <Tooltip key="header-loading" title="This module is currently loading new content.">
-                <div className="flex cursor-help items-center justify-center px-1">
+            <Tooltip key="header-loading" content="This module is currently loading new content.">
+                <div className="px-3xs flex cursor-help items-center justify-center">
                     <CircularProgress size={16} />
                 </div>
             </Tooltip>,
@@ -502,22 +748,24 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
         stateIndicators.push(
             <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
                 <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
-                    <Tooltip title={badgeTitle} placement="bottom">
+                    <Tooltip content={badgeTitle} side="bottom">
                         <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
-                            <Error
-                                fontSize="inherit"
-                                color="error"
-                                style={{ display: numErrors === 0 ? "none" : "block" }}
-                            />
-                            <div className="overflow-hidden">
-                                <Warning
+                            <div className="gap-x-4xs flex items-center whitespace-nowrap">
+                                <Error
                                     fontSize="inherit"
-                                    color="warning"
-                                    style={{ display: numWarnings === 0 ? "none" : "block" }}
-                                    className={resolveClassNames({
-                                        "-ml-3": numErrors > 0,
-                                    })}
+                                    color="error"
+                                    style={{ display: numErrors === 0 ? "none" : "block" }}
                                 />
+                                <div className="overflow-hidden">
+                                    <Warning
+                                        fontSize="inherit"
+                                        color="warning"
+                                        style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                        className={resolveClassNames({
+                                            "-ml-xs": numErrors > 0,
+                                        })}
+                                    />
+                                </div>
                             </div>
                         </Badge>
                     </Tooltip>
@@ -547,7 +795,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (stateIndicators.length === 0) {
         stateIndicators.push(
-            <Tooltip title="Show complete log for this module" key="header-module-log">
+            <Tooltip content="Show complete log for this module" key="header-module-log">
                 <Button onPointerDown={handleShowLogClick} variant="ghost" tone="neutral" size="small" iconOnly>
                     <History fontSize="inherit" />
                 </Button>

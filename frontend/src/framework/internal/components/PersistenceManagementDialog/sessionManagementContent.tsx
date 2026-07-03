@@ -9,19 +9,19 @@ import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { DateRangePicker } from "@lib/components/DateRangePicker";
+import { Field } from "@lib/components/Field";
+import { Table } from "@lib/components/Table";
+import { TableCompositions } from "@lib/components/Table/compositions";
+import { ROW_HEIGHT_PX } from "@lib/components/Table/constants";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { SortDirection as TableSortDirection } from "@lib/components/Table/typesAndEnums";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Virtualization } from "@lib/components/Virtualization";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { DateRangePicker } from "@lib/newComponents/DateRangePicker";
-import { Field } from "@lib/newComponents/Field";
-import { Table } from "@lib/newComponents/Table";
-import { TableCompositions } from "@lib/newComponents/Table/compositions";
-import { ROW_HEIGHT_PX } from "@lib/newComponents/Table/constants";
-import type { TableSortState } from "@lib/newComponents/Table/typesAndEnums";
-import { SortDirection as TableSortDirection } from "@lib/newComponents/Table/typesAndEnums";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
-import { Virtualization } from "@lib/newComponents/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
@@ -104,7 +104,7 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                                     tone="neutral"
                                     iconOnly
                                 >
-                                    <Close fontSize="inherit" />
+                                    <Close />
                                 </Button>
                             </Tooltip>
                         }
@@ -116,46 +116,54 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                 </Field.Root>
             </div>
             <div className="gap-x-4xs flex items-center">
-                <Tooltip.Provider>
-                    <Tooltip content="Start and open new session" side="bottom">
-                        <Button tone="accent" onClick={handleNewSessionClick} variant="contained">
-                            <Add fontSize="inherit" /> New session
+                <Tooltip.Provider side="bottom">
+                    <Tooltip content="Start and open new session">
+                        <Button tone="accent" onClick={handleNewSessionClick} variant="contained" icon={<Add />}>
+                            New session
                         </Button>
                     </Tooltip>
                     <span className="grow" />
-                    <Tooltip content="Edit the selected session" side="bottom">
-                        <Button tone="accent" variant="ghost" disabled={!selectedSession} onClick={handleEditClick}>
-                            <Edit fontSize="inherit" /> Edit
+                    <Tooltip content="Edit the selected session">
+                        <Button
+                            tone="accent"
+                            variant="ghost"
+                            disabled={!selectedSession}
+                            onClick={handleEditClick}
+                            icon={<Edit />}
+                        >
+                            Edit
                         </Button>
                     </Tooltip>
-                    <Tooltip content="Open the selected session" side="bottom">
+                    <Tooltip content="Open the selected session">
                         <Button
                             tone="accent"
                             variant="ghost"
                             disabled={!selectedSession}
                             onClick={handleOpenSessionClick}
+                            icon={<FileOpen />}
                         >
-                            <FileOpen fontSize="inherit" /> Open
+                            Open
                         </Button>
                     </Tooltip>
-                    <Tooltip content="Delete the selected session" side="bottom">
+                    <Tooltip content="Delete the selected session">
                         <Button
                             tone="danger"
                             disabled={!selectedSession || deletePending}
                             onClick={handleDeleteClick}
                             variant="ghost"
+                            icon={deletePending ? <CircularProgress /> : <Delete />}
                         >
-                            {deletePending ? <CircularProgress size={16} /> : <Delete fontSize="inherit" />} Delete
+                            Delete
                         </Button>
                     </Tooltip>
 
-                    <Tooltip content="Refresh list" side="top">
-                        <Button tone="accent" onClick={queryRefreshActionRef.current?.refresh} variant="ghost">
-                            {queryRefreshActionRef.current?.isRefreshing ? (
-                                <CircularProgress size={16} />
-                            ) : (
-                                <Refresh fontSize="inherit" />
-                            )}{" "}
+                    <Tooltip content="Refresh list">
+                        <Button
+                            tone="accent"
+                            onClick={queryRefreshActionRef.current?.refresh}
+                            variant="ghost"
+                            icon={queryRefreshActionRef.current?.isRefreshing ? <CircularProgress /> : <Refresh />}
+                        >
                             Refresh
                         </Button>
                     </Tooltip>
@@ -302,11 +310,11 @@ function SessionTable(props: SessionTableProps) {
                     items={tableDataWithPendingRows}
                     itemSize={ROW_HEIGHT_PX["small"]}
                     direction="vertical"
-                    renderItem={(item, idx) => {
+                    renderItem={(item: SessionMetadata_api | typeof PENDING_ROW, idx) => {
                         if (item === PENDING_ROW) {
                             return <TableCompositions.PendingRow key={`pending-row--${idx}`} />;
                         } else {
-                            return <SessionRow item={item} />;
+                            return <SessionRow key={item.id} item={item} />;
                         }
                     }}
                     onScroll={onTableScrollIndexChange}

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { chain } from "lodash-es";
+import { groupBy, sortBy, uniq } from "lodash-es";
 
 import type { CategoricalReadout, ReadoutProperty } from "./types";
 
@@ -15,14 +15,11 @@ export type ReadoutListProps = {
 
 export function ReadoutList(props: ReadoutListProps): React.ReactNode {
     let titleCount = 0;
-    const numGroups = chain(props.readouts).map("group").uniq().value().length;
+    const numGroups = uniq(props.readouts.map((r) => r.group)).length;
 
     const groupEntries = React.useMemo(() => {
-        return chain(props.readouts)
-            .groupBy((readout) => readout.group ?? "default")
-            .entries()
-            .sortBy(([group]) => (group === "default" ? 0 : 1)) // Default should always be first
-            .value();
+        const grouped = groupBy(props.readouts, (readout) => readout.group ?? "default");
+        return sortBy(Object.entries(grouped), ([group]) => (group === "default" ? 0 : 1));
     }, [props.readouts]);
 
     function makeTitleAdornment() {
@@ -35,9 +32,9 @@ export function ReadoutList(props: ReadoutListProps): React.ReactNode {
     }
 
     return (
-        <ul className={props.className + " space-y-2"}>
+        <ul className={`${props.className ?? ""} space-y-2`}>
             {groupEntries.map(([group, groupReadouts], groupIdx) => (
-                <li key={group}>
+                <li key={group} className="group">
                     {numGroups > 1 && group !== "default" && (
                         <GroupTitle name={group} endAdornment={makeTitleAdornment()} />
                     )}
@@ -60,8 +57,8 @@ function GroupTitle(props: { name: string | "default" | undefined; endAdornment?
     if (!props.name || props.name === "default") return null;
 
     return (
-        <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 mt-2 first:mt-0">
-            {props.name} <hr className="w-full h-px bg-black" /> {props.endAdornment}
+        <div className="gap-3xs font-bolder text-neutral-subtle mt-xs mb-3xs text-body-sm tracking-body-xs-wide flex items-center uppercase group-first:mt-0">
+            {props.name} <div className="bg-neutral-strong h-px w-full" /> {props.endAdornment}
         </div>
     );
 }
@@ -70,7 +67,7 @@ function ReadoutItem(props: { readout: CategoricalReadout; titleAdornment: React
     const { readout } = props;
 
     return (
-        <li className="text-sm">
+        <li className="text-body-sm">
             <ReadoutItemTitle name={readout.name} icon={readout.icon} titleAdornment={props.titleAdornment} />
             <ReadoutPropertyList properties={readout.properties} />
         </li>
@@ -83,9 +80,9 @@ function ReadoutItemTitle(props: {
     titleAdornment: React.ReactNode;
 }): React.ReactNode {
     return (
-        <div className="flex items-center gap-1 mb-1">
-            {props.icon && <span className="w-4 h-4">{props.icon}</span>}
-            <span className="font-semibold text-sm text-black h-4">{props.name}</span>
+        <div className="mb-3xs gap-3xs flex items-center">
+            {props.icon && <span className="h-4 w-4">{props.icon}</span>}
+            <span className="text-body-sm font-bolder text-neutral-strong h-4">{props.name}</span>
             {props.titleAdornment}
         </div>
     );
@@ -95,11 +92,11 @@ function ReadoutPropertyList(props: { properties?: ReadoutProperty<any>[] }): Re
     if (!props.properties?.length) return null;
 
     return (
-        <ul className="ml-1.5 border-l-4 pl-2 border-gray-200 text-gray-700  [&_.--readout-label]:font-bold">
+        <dl className="ml-4xs border-neutral-subtle pl-2xs text-neutral-subtle w-full border-l-2">
             {props.properties.map((property, idx) => (
                 <ReadoutPropertyItem key={`${property.name}-${idx}`} property={property} />
             ))}
-        </ul>
+        </dl>
     );
 }
 
@@ -108,13 +105,13 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     const valueFormat = property.format ?? String;
 
     if (property.render) {
-        return property.render(property.name, property.value, property.renderArgs);
+        return <>{property.render(property.name, property.value)}</>;
     }
 
     return (
-        <li className="flex gap-2 text-xs">
-            <span className="--readout-label">{property.name}:</span>
-            <span>{valueFormat(property.value)}</span>
-        </li>
+        <div className="gap-2xs text-body-xs flex justify-between">
+            <dt className="font-extrabold">{property.name}:</dt>
+            <dd className="m-0 text-right">{valueFormat(property.value)}</dd>
+        </div>
     );
 }

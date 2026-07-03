@@ -3,7 +3,7 @@ import React from "react";
 import { upperFirst } from "lodash-es";
 
 import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/newComponents/Select";
+import { Select } from "@lib/components/Select";
 
 import type {
     CustomSettingImplementation,
@@ -67,7 +67,7 @@ export class SelectStringSetting implements CustomSettingImplementation<ValueTyp
                     value={props.value ?? undefined}
                     onValueChange={handleChange}
                     showQuickSelectButtons={true}
-                    disabled={props.isOverridden}
+                    disabled={props.disabled}
                     multiple={true}
                     size={5}
                 />

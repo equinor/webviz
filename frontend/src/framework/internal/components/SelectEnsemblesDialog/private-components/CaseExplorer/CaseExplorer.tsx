@@ -8,17 +8,17 @@ import { getCasesOptions, getAssetInfosOptions, type EnsembleInfo_api } from "@a
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { tanstackDebugTimeOverride } from "@framework/utils/debug";
+import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { Combobox } from "@lib/components/Combobox";
+import { Field } from "@lib/components/Field";
+import { FieldCompositions } from "@lib/components/Field/compositions";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { useValidState } from "@lib/hooks/useValidState";
-import { Button } from "@lib/newComponents/Button";
-import { CircularProgress } from "@lib/newComponents/CircularProgress";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { Field } from "@lib/newComponents/Field";
-import { FieldCompositions } from "@lib/newComponents/Field/compositions";
-import { StatusWrapper } from "@lib/newComponents/StatusWrapper";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
-import { TimeAgo } from "@lib/newComponents/TimeAgo/timeAgo";
 
 import { readInitialStateFromLocalStorage, storeStateInLocalStorage } from "./_utils";
 import { CaseTable } from "./CaseTable";
@@ -34,7 +34,8 @@ export type CaseSelection = {
 
 export type CaseExplorerProps = {
     queriesDisabled: boolean;
-    selectedEnsembles: UserEnsembleSetting[];
+    ensembleSelection: UserEnsembleSetting[];
+    newEnsembleSelection: UserEnsembleSetting[];
     onCaseSelectionChange: (caseSelection: CaseSelection | null) => void;
 };
 export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
@@ -203,11 +204,13 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     );
 
     return (
-        <Field.Root layoutClassName="w-full gap-y-3xs flex h-full min-h-0 flex-col">
+        <div className="gap-y-3xs flex h-full min-h-0 w-full flex-col">
             <div className="gap-x-sm flex w-full items-center">
-                <Field.Label indicator={`(${numberOfCases})`} itemID="">
-                    Cases
-                </Field.Label>
+                <Field.Root>
+                    <Field.Label indicator={`(${numberOfCases})`} itemID="">
+                        Cases
+                    </Field.Label>
+                </Field.Root>
                 <span className="grow" />
                 <span className="text-body-xs text-neutral-subtle italic">
                     Last updated:{" "}
@@ -219,7 +222,7 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         "Never"
                     )}
                 </span>
-                <Tooltip title="Refresh assets and cases lists" enterDelay="medium">
+                <Tooltip content="Refresh assets and cases lists" delay="medium">
                     <Button tone="accent" onClick={handleManualRefetch} variant="ghost">
                         {isAssetsQueryRefreshing || isCasesQueryRefreshing ? (
                             <CircularProgress size={16} />
@@ -244,14 +247,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                         />
                     </StatusWrapper>
                 </FieldCompositions.Default>
-                <Tooltip title="Show only cases authored by me" enterDelay="medium">
+                <Tooltip content="Show only cases authored by me" delay="medium">
                     <SwitchCompositions.WithLabel
                         checked={showOnlyMyCases}
                         onCheckedChange={handleCasesByMeChange}
                         label="Only my cases"
                     />
                 </Tooltip>
-                <Tooltip title="Show only cases marked as official" enterDelay="medium">
+                <Tooltip content="Show only cases marked as official" delay="medium">
                     <SwitchCompositions.WithLabel
                         checked={showOnlyOfficialCases}
                         onCheckedChange={handleOfficialCasesSwitchChange}
@@ -263,21 +266,21 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     errorMessage={casesQuery.error ? "Error loading cases" : undefined}
                     className="h-full min-h-0 min-w-56 flex-1"
                 >
-                    <Tooltip title="Filter cases by selected Standard Results" enterDelay="medium">
+                    <Tooltip content="Filter cases by selected Standard Results" delay="medium">
                         <Combobox
                             value={selectedStandardResults}
-                            placeholder="Standard Results"
+                            placeholder="Filter by Standard Results..."
                             multiple
                             items={casesStandardResults.map((elm) => ({ value: elm, label: elm }))}
                             disabled={casesStandardResults.length === 0}
                             onValueChange={(value) => value && setSelectedStandardResults([...value])}
-                            clearable
+                            showClearAllButton
                         />
                     </Tooltip>
                 </StatusWrapper>
             </div>
             <StatusWrapper
-                className="min-h-0 grow"
+                className="mt-sm min-h-0 grow"
                 errorMessage={casesQuery.isError ? "Error loading cases" : undefined}
                 isPending={casesQuery.isFetching && !casesQuery.isRefetching}
             >
@@ -285,13 +288,14 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
                     caseData={caseData}
                     isPending={casesQuery.isPending}
                     selectedCase={selectedCaseUuid}
-                    selectedEnsembles={props.selectedEnsembles}
+                    ensembleSelection={props.ensembleSelection}
+                    newEnsembleSelection={props.newEnsembleSelection}
                     showOnlyMyCases={showOnlyMyCases}
                     showOnlyOfficialCases={showOnlyOfficialCases}
                     onCaseSelected={setSelectedCaseUuid}
                     onDataCollated={(data) => setNumberOfCases(data.length)}
                 />
             </StatusWrapper>
-        </Field.Root>
+        </div>
     );
 }

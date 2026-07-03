@@ -376,7 +376,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         <svg
             ref={ref}
             className={resolveClassNames(
-                "bg-backdrop/90 z-modal text-neutral-strong absolute top-0 left-0 h-full w-full",
+                "bg-backdrop/50 z-modal text-neutral-strong absolute top-0 left-0 h-full w-full",
                 {
                     invisible: !visible && !showDataChannelConnections,
                 },

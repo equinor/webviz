@@ -1,4 +1,4 @@
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
@@ -82,6 +82,7 @@ export class RadioGroupSetting implements CustomSettingImplementation<ValueType,
                         options={options ?? []}
                         layout="horizontal"
                         size="small"
+                        disabled={props.disabled}
                     />
                 </div>
             );

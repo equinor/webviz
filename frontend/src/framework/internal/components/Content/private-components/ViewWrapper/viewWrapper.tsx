@@ -172,10 +172,10 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 >
                     <div
                         className={resolveClassNames(
-                            "z-elevated pointer-events-none absolute inset-0 box-border h-full w-full border-2 border-solid bg-transparent",
+                            "z-elevated pointer-events-none absolute inset-0 box-border h-full w-full bg-transparent outline-2",
                             {
-                                "border-accent-strong": isActive,
-                                "border-transparent": !isActive,
+                                "outline-accent-strong": isActive,
+                                "outline-transparent": !isActive,
                             },
                         )}
                     />

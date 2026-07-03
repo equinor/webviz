@@ -4,13 +4,13 @@ import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Button } from "@lib/newComponents/Button";
-import { ColorTile } from "@lib/newComponents/ColorTile";
-import { Popover } from "@lib/newComponents/Popover";
-import { SortableList } from "@lib/newComponents/SortableList";
-import { Table } from "@lib/newComponents/Table";
-import { Tag } from "@lib/newComponents/Tag";
-import { Heading } from "@lib/newComponents/Typography/compositions";
+import { Button } from "@lib/components/Button";
+import { ColorTile } from "@lib/components/ColorTile";
+import { Popover } from "@lib/components/Popover";
+import { SortableList } from "@lib/components/SortableList";
+import { Table } from "@lib/components/Table";
+import { Tag } from "@lib/components/Tag";
+import { Heading } from "@lib/components/Typography/compositions";
 
 import type {
     EnsembleIdentWithCaseName,
@@ -22,7 +22,7 @@ import { DeltaEnsembleRow, type RegularEnsembleOption } from "./DeltaEnsembleRow
 import { RegularEnsembleRow } from "./RegularEnsembleRow";
 
 export type EnsembleTablesProps = {
-    nextEnsembleColor: string;
+    colorGenerator: Generator<string, never, undefined>;
     selectedRegularEnsembles: InternalRegularEnsembleSetting[];
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[];
     selectableEnsemblesForDelta: EnsembleIdentWithCaseName[];
@@ -59,7 +59,7 @@ function makeRegularEnsembleOptionsForDeltaEnsemble(
         ...selectableEnsemblesNotAmongSelected.map((ens) => ({
             ensembleIdent: ens.ensembleIdent,
             caseName: ens.caseName,
-            adornment: <History fontSize="small" />,
+            adornment: <History style={{fontSize: "1rem"}} />,
         })),
     ];
 }
@@ -98,7 +98,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     function handleCreateDeltaEnsemble() {
         props.onCreateDeltaEnsemble({
             uuid: v4(),
-            color: props.nextEnsembleColor,
+            color: props.colorGenerator.next().value,
             comparisonEnsembleIdent: null,
             referenceEnsembleIdent: null,
             comparisonEnsembleCaseName: null,

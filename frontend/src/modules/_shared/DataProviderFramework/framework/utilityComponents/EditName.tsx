@@ -2,7 +2,7 @@ import React from "react";
 
 import { Edit } from "@mui/icons-material";
 
-import { Tooltip } from "@lib/newComponents/Tooltip";
+import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";

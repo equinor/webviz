@@ -6,7 +6,7 @@ import { useAtom } from "jotai";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -50,10 +50,16 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const fieldIdentifierAnnotations = useMakePersistableFixableAtomAnnotations(fieldIdentifierAtom);
 
     return (
-        <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
-            <SettingWrapper label="Field" annotations={fieldIdentifierAnnotations}>
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier.value} />
-            </SettingWrapper>
+        <div className="gap-y-xs px-xs py-xs flex h-full w-full flex-col">
+            <Setting.Panel>
+                <Setting.Field label="Field" annotations={fieldIdentifierAnnotations}>
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        onChange={handleFieldChange}
+                        value={fieldIdentifier.value}
+                    />
+                </Setting.Field>
+            </Setting.Panel>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

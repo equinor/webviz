@@ -11,16 +11,15 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
+import { Button } from "@lib/components/Button";
+import { Combobox } from "@lib/components/Combobox";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { Setting } from "@lib/components/Setting";
+import { Slider } from "@lib/components/Slider";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 import { SortAscendingIcon, SortDescendingIcon } from "@lib/icons";
-import { Button } from "@lib/newComponents/Button";
-import { Collapsible } from "@lib/newComponents/Collapsible";
-import { Combobox } from "@lib/newComponents/Combobox";
-import { RadioCompositions } from "@lib/newComponents/Radio/compositions";
-import { SettingWrapper } from "@lib/newComponents/SettingWrapper";
-import { Slider } from "@lib/newComponents/Slider";
-import { SwitchCompositions } from "@lib/newComponents/Switch/compositions";
-import { TextInput } from "@lib/newComponents/TextInput";
-import { Tooltip } from "@lib/newComponents/Tooltip";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
@@ -85,16 +84,22 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
 
     if (!isEqual(stratigraphyColorSet, prevStratigraphyColorSet)) {
         setPrevStratigraphyColorSet(stratigraphyColorSet);
-        if (stratigraphyColorSet) {
-            setSelectedStratigraphyColorSet(stratigraphyColorSet);
-        }
     }
+
     if (!isEqual(syncedEnsembleIdents, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedEnsembleIdents);
-        if (syncedEnsembleIdents) {
+    }
+
+    React.useEffect(() => {
+        if (prevSyncedEnsembleIdents) {
             setSyncedEnsembleIdents(syncedEnsembleIdents);
         }
-    }
+    }, [prevSyncedEnsembleIdents, setSyncedEnsembleIdents, syncedEnsembleIdents]);
+    React.useEffect(() => {
+        if (prevStratigraphyColorSet) {
+            setSelectedStratigraphyColorSet(stratigraphyColorSet);
+        }
+    }, [prevStratigraphyColorSet, setSelectedStratigraphyColorSet, stratigraphyColorSet]);
 
     useMakeSettingsStatusWriterMessages(statusWriter);
 
@@ -163,18 +168,18 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
     });
 
     return (
-        <Collapsible.ScrollArea>
-            <SettingWrapper.Group>
-                <SettingWrapper.Section title="Data" defaultOpen>
-                    <SettingWrapper label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations}>
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
                             ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                            onChange={handleEnsembleSelectionChange}
+                            onValueChange={handleEnsembleSelectionChange}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Realization" stacked annotations={selectedRealizationAnnotations}>
+                    </Setting.Field>
+                    <Setting.Field label="Realization" stacked annotations={selectedRealizationAnnotations}>
                         <SwitchCompositions.WithLabel
                             label="Aggregate over all realizations"
                             checked={realizationMode === RealizationMode.AGGREGATED}
@@ -182,7 +187,7 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                 setRealizationMode(checked ? RealizationMode.AGGREGATED : RealizationMode.SINGLE)
                             }
                         />
-                        <SettingWrapper
+                        <Setting.Field
                             annotations={
                                 !isSingleRealizationMode
                                     ? [{ type: "info", message: "Only available in single realization mode." }]
@@ -193,16 +198,16 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                 items={availableRealizations.map((real) => {
                                     return { label: real.toString(), value: real };
                                 })}
-                                value={selectedRealization.value ?? undefined}
+                                value={selectedRealization.value ?? null}
                                 onValueChange={(v) => v !== null && setSelectedRealization(v)}
                                 disabled={!isSingleRealizationMode}
                                 placeholder="Select realization..."
                             />
-                        </SettingWrapper>
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-                <SettingWrapper.Section title="Plot settings" defaultOpen>
-                    <SettingWrapper label="Time Aggregation" stacked annotations={selectedEnsembleIdentAnnotations}>
+                        </Setting.Field>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Time Aggregation" stacked annotations={selectedEnsembleIdentAnnotations}>
                         <RadioCompositions.GroupWithLabels
                             value={timeAggregationMode}
                             options={Object.values(TimeAggregationMode).map((elm: TimeAggregationMode) => {
@@ -212,8 +217,8 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             size="small"
                             layout="horizontal"
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         stacked
                         label={timeStepSettingProps.settingWrapper.label}
                         annotations={timeStepSettingProps.settingWrapper.annotations}
@@ -226,6 +231,9 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                             min={0}
                             max={sortedCompletionDates?.length ? sortedCompletionDates.length - 1 : 0}
                             markers={sortedCompletionDates?.map((_, index) => index) ?? undefined}
+                            markerLabels={(v, i) =>
+                                (i === 0 || i === sortedCompletionDates!.length - 1) && createValueLabelFormat(v)
+                            }
                             valueLabelFormat={createValueLabelFormat}
                             onValueChange={(value) =>
                                 isSingleTimeStepMode
@@ -233,21 +241,21 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                     : handleDateIndexRangeSelectionChange(value)
                             }
                         />
-                    </SettingWrapper>
-                    <SettingWrapper>
+                    </Setting.Field>
+                    <Setting.Field>
                         <SwitchCompositions.WithLabel
                             label="Filter by completions"
                             checked={isZeroCompletionsHidden}
                             onCheckedChange={setIsZeroCompletionsHidden}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper label="Exclude well names">
+                    </Setting.Field>
+                    <Setting.Field label="Exclude well names">
                         <TextInput value={wellExclusionText} onValueChange={setWellExclusionText} placeholder={"..."} />
-                    </SettingWrapper>
-                    <SettingWrapper label="Search well names">
+                    </Setting.Field>
+                    <Setting.Field label="Search well names">
                         <TextInput value={wellSearchText} onValueChange={setWellSearchText} placeholder={"..."} />
-                    </SettingWrapper>
-                    <SettingWrapper label="Sort wells by">
+                    </Setting.Field>
+                    <Setting.Field label="Sort wells by">
                         <div className="gap-xs flex items-center">
                             <div className="grow">
                                 <Combobox
@@ -272,9 +280,9 @@ export const Settings = (props: ModuleSettingsProps<Interfaces>) => {
                                 </Button>
                             </Tooltip>
                         </div>
-                    </SettingWrapper>
-                </SettingWrapper.Section>
-            </SettingWrapper.Group>
-        </Collapsible.ScrollArea>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 };
