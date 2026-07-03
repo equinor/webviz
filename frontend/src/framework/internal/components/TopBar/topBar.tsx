@@ -116,7 +116,7 @@ function FmuAppsButton(): React.ReactNode {
                         <div className="gap-2xs flex flex-col items-center">
                             <FmuLogo className="h-5 w-5" />
                             <span>
-                                FMU Analysis <OpenInNew />
+                                FMU Hub <OpenInNew />
                             </span>
                         </div>
                     </Button.AsLink>
