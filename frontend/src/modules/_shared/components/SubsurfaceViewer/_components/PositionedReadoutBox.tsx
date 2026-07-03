@@ -24,7 +24,7 @@ export function PositionedReadoutBox(props: PositionedReadoutBoxProps): React.Re
     if (!visible) return null;
     return (
         <div
-            className="z-9999 absolute bg-white shadow-md border border-gray-200 rounded-sm transition-opacity px-3 py-2 select-text"
+            className="z-9999 absolute bg-white shadow-md border border-gray-200 rounded-sm transition-opacity px-3 py-2 select-text min-w-56"
             style={{
                 bottom: position.y - 2,
                 right: position.x - 2,
