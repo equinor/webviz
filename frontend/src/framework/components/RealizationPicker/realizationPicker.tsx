@@ -1,6 +1,6 @@
 import React from "react";
 
-import { inRange, isEqual, range } from "lodash";
+import { inRange, isEqual, range } from "lodash-es";
 
 import { missingNumbers } from "@framework/utils/numberUtils";
 import type { BaseComponentProps } from "@lib/components/BaseComponent";

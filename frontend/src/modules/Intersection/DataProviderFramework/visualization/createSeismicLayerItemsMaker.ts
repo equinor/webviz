@@ -1,4 +1,4 @@
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import { SeismicLayer } from "@modules/_shared/components/EsvIntersection";
 import type {
     IntersectionSeismicData,
     IntersectionSeismicSettings,
@@ -91,15 +91,13 @@ export function createSeismicLayerItemsMaker({
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 
-    // The layer has to be created inside EsvIntersection, so we need to return a LayerItem
     const intersectionSeismicLayerItemsMaker: EsvLayerItemsMaker = {
-        makeLayerItems: () => {
+        makeLayerItems: (_, order) => {
             return [
-                {
-                    id: `${id}-seismic-layer`,
-                    name: name,
-                    type: LayerType.SEISMIC,
-                    options: {
+                new SeismicLayer(
+                    `${id}-seismic-layer`,
+                    {
+                        order,
                         data: {
                             propertyName: attribute ?? "",
                             propertyUnit: "",
@@ -113,8 +111,8 @@ export function createSeismicLayerItemsMaker({
                             opacityPercent: colorOpacityPercent,
                         },
                     },
-                    hoverable: true,
-                },
+                    { name, hoverable: true },
+                ),
             ];
         },
     };

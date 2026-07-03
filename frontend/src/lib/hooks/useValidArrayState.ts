@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 export function useValidArrayState<T>(options: {
     initialState: T[] | (() => T[]);

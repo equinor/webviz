@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ChevronRight } from "@mui/icons-material";
-import { defaults } from "lodash";
+import { defaults } from "lodash-es";
 
 import type { FlowDataColors, InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

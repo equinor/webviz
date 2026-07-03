@@ -1,5 +1,5 @@
 import { hashKey } from "@tanstack/react-query";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { Options, GetStatisticalSurfaceDataHybridData_api } from "@api";
 import {

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

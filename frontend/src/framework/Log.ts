@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { formatHex } from "culori";
-import { isArray } from "lodash";
+import { isArray } from "lodash-es";
 
 import { getDebugSetting, setDebugSetting } from "@framework/utils/debug";
 

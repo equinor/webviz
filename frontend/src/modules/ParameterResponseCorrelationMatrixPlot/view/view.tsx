@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Input, Warning } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";

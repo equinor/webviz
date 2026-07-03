@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import { chain, maxBy } from "lodash";
+import { entries, groupBy, maxBy, sortBy } from "lodash-es";
 
 import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
@@ -26,13 +26,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 }
 
 function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[]): ReadoutItem[] {
-    return chain(wellLogInfo)
-        .filter(({ type }) => type !== "separator")
-        .groupBy("iTrack")
-        .entries()
-        .sortBy(0)
-        .map(([iTrack, infos]) => infoToReadoutItem(infos, Number(iTrack), templateTracks))
-        .value();
+    const nonSeparatorInfos = wellLogInfo.filter(({ type }) => type !== "separator");
+    const infosByTrack = groupBy(nonSeparatorInfos, "iTrack");
+    const sortedEntries = sortBy(entries(infosByTrack), ([iTrack]) => Number(iTrack));
+
+    return sortedEntries.map(([iTrack, infos]) => infoToReadoutItem(infos, Number(iTrack), templateTracks));
 }
 
 function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: TemplateTrack[]): ReadoutItem {

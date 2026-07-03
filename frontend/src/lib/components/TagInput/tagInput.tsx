@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Close } from "@mui/icons-material";
-import { inRange, omit } from "lodash";
+import { inRange, omit } from "lodash-es";
 import { Key } from "ts-key-enum";
 
 import { Tooltip } from "@lib/components/Tooltip";

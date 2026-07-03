@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash-es";
 
 import type { Grid3dZone_api } from "@api";
 import { Button } from "@lib/components/Button";

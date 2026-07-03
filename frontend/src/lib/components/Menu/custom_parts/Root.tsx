@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Menu as BaseMenu } from "@base-ui/react";
-import { omit } from "lodash";
+import { omit } from "lodash-es";
 
 import type { SizeName } from "@lib/utils/componentSize";
 

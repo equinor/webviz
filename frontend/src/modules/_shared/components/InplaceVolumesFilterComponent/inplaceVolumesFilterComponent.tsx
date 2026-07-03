@@ -1,6 +1,6 @@
 import React from "react";
 
-import { cloneDeep, isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";

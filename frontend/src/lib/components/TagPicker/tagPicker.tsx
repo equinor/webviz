@@ -1,6 +1,6 @@
 import React from "react";
 
-import { clamp, isEqual } from "lodash";
+import { clamp, isEqual } from "lodash-es";
 import { Key } from "ts-key-enum";
 
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";

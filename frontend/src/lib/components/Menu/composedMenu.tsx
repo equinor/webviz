@@ -2,7 +2,7 @@ import React from "react";
 
 import type { MenuPositionerProps, MenuTriggerProps } from "@base-ui/react/menu";
 import { ChevronRight } from "@mui/icons-material";
-import { defaults } from "lodash";
+import { defaults } from "lodash-es";
 
 import type { SizeName } from "@lib/utils/componentSize";
 import { getTextSizeClassName } from "@lib/utils/componentSize";

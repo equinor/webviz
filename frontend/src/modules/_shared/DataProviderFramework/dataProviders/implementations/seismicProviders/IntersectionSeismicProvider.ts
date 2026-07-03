@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
