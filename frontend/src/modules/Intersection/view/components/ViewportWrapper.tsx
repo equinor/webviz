@@ -11,7 +11,7 @@ import { fuzzyCompareArrays } from "@lib/utils/fuzzyCompare";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
-import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { Bounds, EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import { isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
@@ -30,7 +30,7 @@ export type ViewportWrapperProps = {
     color: string | null;
     intersectionSource: IntersectionSettingValue | null;
     referenceSystem?: IntersectionReferenceSystem;
-    layerItems: LayerItem[];
+    layerItems: EsvLayer[];
     layerItemIdToNameMap: Record<string, string>;
     layerItemsBounds: Bounds;
     focusBounds: Bounds | null;

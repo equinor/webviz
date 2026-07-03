@@ -3,7 +3,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 
 import type { WellboreCasing_api, WellboreHeader_api } from "@api";
 import { IntersectionType } from "@framework/types/intersection";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import {
     VisualizationItemType,
@@ -25,33 +25,18 @@ import { createWellboreLayerItems } from "./createWellboreLayerItems";
 export function makeViewProvidersVisualizationLayerItems(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, never>, GroupType>,
     intersectionReferenceSystem: IntersectionReferenceSystem,
-): LayerItem[] {
-    // Make LayerItems per provider, using maker function
-    // The children are returned in the order they are added to the view
-    const perProviderLayerItems: LayerItem[][] = [];
-    for (const item of view.children) {
-        if (item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION) {
-            perProviderLayerItems.push(item.visualization.makeLayerItems(intersectionReferenceSystem));
-        }
-    }
-
-    // Assign ESV LayerItem order, i.e. reverse
-    const numProviders = perProviderLayerItems.length;
-    for (const [index, providerLayerItems] of perProviderLayerItems.entries()) {
-        const layerItemOrder = numProviders - index;
-        for (const providerItem of providerLayerItems) {
-            if (providerItem.options) {
-                providerItem.options.order = layerItemOrder;
-            }
-        }
-    }
-
-    // Flatten the array of arrays into a single array
-    return perProviderLayerItems.flat();
+): EsvLayer[] {
+    const providerItems = view.children.filter(
+        (item) => item.itemType === VisualizationItemType.DATA_PROVIDER_VISUALIZATION,
+    );
+    const numProviders = providerItems.length;
+    return providerItems.flatMap((item, index) =>
+        item.visualization.makeLayerItems(intersectionReferenceSystem, numProviders - index),
+    );
 }
 
 /**
- * Create LayerItems for the intersection type.
+ * Create EsvLayers for the intersection type.
  *
  * This function creates reference lines, and wellbore layers if the intersection type is wellbore.
  */
@@ -61,13 +46,13 @@ export function createLayerItemsForIntersectionType(
     layerOrder: number,
     wellboreHeadersQuery: UseQueryResult<WellboreHeader_api[]>,
     wellboreCasingsQuery: UseQueryResult<WellboreCasing_api[]>,
-): LayerItem[] {
+): EsvLayer[] {
     if (intersectionType === IntersectionType.CUSTOM_POLYLINE) {
         const layerItem = createReferenceLinesLayerItem();
         return [layerItem];
     }
     if (intersectionType === IntersectionType.WELLBORE) {
-        const layerItems: LayerItem[] = [];
+        const layerItems: EsvLayer[] = [];
         if (wellboreHeadersQuery.data && wellboreHeadersQuery.data.length > 0) {
             layerItems.push(
                 createReferenceLinesLayerItem({

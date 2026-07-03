@@ -1,6 +1,6 @@
 import React from "react";
 
-import { groupBy, sortBy, uniq } from "lodash-es";
+import { entries, groupBy, map, sortBy, uniq } from "lodash-es";
 
 import type { CategoricalReadout, ReadoutProperty } from "./types";
 
@@ -15,11 +15,12 @@ export type ReadoutListProps = {
 
 export function ReadoutList(props: ReadoutListProps): React.ReactNode {
     let titleCount = 0;
-    const numGroups = uniq(props.readouts.map((r) => r.group)).length;
+    const numGroups = uniq(map(props.readouts, "group")).length;
 
     const groupEntries = React.useMemo(() => {
-        const grouped = groupBy(props.readouts, (readout) => readout.group ?? "default");
-        return sortBy(Object.entries(grouped), ([group]) => (group === "default" ? 0 : 1));
+        const readoutsByGroup = groupBy(props.readouts, (readout) => readout.group ?? "default");
+        const readoutsByGroupEntries = entries(readoutsByGroup);
+        return sortBy(readoutsByGroupEntries, ([group]) => (group === "default" ? 0 : 1)); // Default should always be first
     }, [props.readouts]);
 
     function makeTitleAdornment() {
@@ -105,7 +106,7 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     const valueFormat = property.format ?? String;
 
     if (property.render) {
-        return <>{property.render(property.name, property.value)}</>;
+        return <div className="col-span-2">{property.render(property.name, property.value, property.renderArgs)}</div>;
     }
 
     return (

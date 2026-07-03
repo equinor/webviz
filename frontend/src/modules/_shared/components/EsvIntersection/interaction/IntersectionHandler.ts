@@ -25,7 +25,7 @@ export type IntersectionHandlerOptions = {
 
 export class IntersectionHandler {
     private _controller: Controller;
-    private _options: IntersectionHandlerOptions;
+    private _options: Required<IntersectionHandlerOptions>;
     private _intersectionCalculators: Map<string, IntersectionCalculator> = new Map();
     private _subscribers: Map<IntersectionHandlerTopic, Set<(payload: any) => void>> = new Map();
     private _previousIntersections: Intersection[] = [];
@@ -33,7 +33,9 @@ export class IntersectionHandler {
 
     constructor(controller: Controller, options?: IntersectionHandlerOptions) {
         this._controller = controller;
-        this._options = options || { threshold: 10 };
+        this._options = {
+            threshold: options?.threshold ?? 0,
+        };
 
         this._overlay = this.makeOverlay();
     }
@@ -49,6 +51,10 @@ export class IntersectionHandler {
 
     removeIntersectionObject(id: string) {
         this._intersectionCalculators.delete(id);
+    }
+
+    setThreshold(threshold: number): void {
+        this._options.threshold = threshold;
     }
 
     subscribe<T extends IntersectionHandlerTopic>(

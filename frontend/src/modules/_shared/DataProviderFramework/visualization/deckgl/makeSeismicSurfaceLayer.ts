@@ -1,5 +1,4 @@
-import { MapLayer } from "@webviz/subsurface-viewer/dist/layers";
-
+import { AttributeSurfaceLayer } from "@modules/_shared/customDeckGlLayers/AttributeSurfaceLayer";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/DataProviderFramework/visualization/utils/colors";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
@@ -12,7 +11,7 @@ export function makeSeismicSurfaceLayer({
     name,
     getData,
     getSetting,
-}: TransformerArgs<SeismicSurfaceSettings, SurfaceData>): MapLayer | null {
+}: TransformerArgs<SeismicSurfaceSettings, SurfaceData>): AttributeSurfaceLayer | null {
     const data = getData();
     const colorScaleSpec = getSetting(Setting.SEISMIC_COLOR_SCALE);
 
@@ -29,7 +28,7 @@ export function makeSeismicSurfaceLayer({
         return null;
     }
 
-    return new MapLayer({
+    return new AttributeSurfaceLayer({
         id,
         name,
         meshData:

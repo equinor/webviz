@@ -84,7 +84,7 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
 function InlineFlowValueText(props: { value?: number; color: string }): React.ReactNode {
     if (props.value == null) return null;
 
-    const formattedValue = formatNumber(props.value, 1);
+    const formattedValue = formatNumber(props.value, { maxNumDecimalPlaces: 1 });
 
     return <span style={{ color: props.color }}>{formattedValue}</span>;
 }
@@ -92,7 +92,7 @@ function InlineFlowValueText(props: { value?: number; color: string }): React.Re
 function FlowValueText(props: { value?: number; name: string; color: string; unit: string }): React.ReactNode {
     if (props.value == null) return null;
 
-    const formattedValue = formatNumber(props.value, 3);
+    const formattedValue = formatNumber(props.value, { maxNumDecimalPlaces: 3 });
 
     return (
         <li className="flex items-center gap-2">
