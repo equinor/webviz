@@ -40,28 +40,21 @@ describe("formatNumber", () => {
         });
     });
 
-    describe("maxNumDecimalPlaces (numeric shorthand)", () => {
-        test("limits decimal places when passing a number", () => {
-            expect(formatNumber(1.234, 2)).toBe("1.23");
-            expect(formatNumber(1.234, 0)).toBe("1");
-            expect(formatNumber(1234, 2)).toBe("1234");
-            expect(formatNumber(1234, 0)).toBe("1234");
+    describe("maxNumDecimalPlaces option", () => {
+        test("limits decimal places", () => {
+            expect(formatNumber(1.234, { maxNumDecimalPlaces: 2 })).toBe("1.23");
+            expect(formatNumber(1.234, { maxNumDecimalPlaces: 0 })).toBe("1");
+            expect(formatNumber(1234, { maxNumDecimalPlaces: 2 })).toBe("1234");
+            expect(formatNumber(1234, { maxNumDecimalPlaces: 0 })).toBe("1234");
         });
 
-        test("strips trailing zeros from decimal places", () => {
-            expect(formatNumber(1.5, 3)).toBe("1.5");
-            expect(formatNumber(1.0, 2)).toBe("1");
+        test("strips trailing zeros", () => {
+            expect(formatNumber(1.5, { maxNumDecimalPlaces: 3 })).toBe("1.5");
+            expect(formatNumber(1.0, { maxNumDecimalPlaces: 2 })).toBe("1");
         });
 
         test("negative values", () => {
-            expect(formatNumber(-1.234, 2)).toBe("-1.23");
-        });
-    });
-
-    describe("maxNumDecimalPlaces in options object", () => {
-        test("behaves identically to the numeric shorthand", () => {
-            expect(formatNumber(1.234, { maxNumDecimalPlaces: 2 })).toBe("1.23");
-            expect(formatNumber(1234, { maxNumDecimalPlaces: 2 })).toBe("1234");
+            expect(formatNumber(-1.234, { maxNumDecimalPlaces: 2 })).toBe("-1.23");
         });
     });
 

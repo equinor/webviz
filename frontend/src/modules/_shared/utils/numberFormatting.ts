@@ -68,22 +68,16 @@ function formatAbsValue(
  *   formatNumber(1.234)       → "1.23"
  *   formatNumber(0.00234)     → "0.00234"
  *
- * Decimal-place rounding (legacy / backward-compatible form):
- *   formatNumber(1.234, 2)    → "1.23"
- *   formatNumber(1234, 0)     → "1234"
- *
  * Options form:
+ *   formatNumber(1.234, { maxNumDecimalPlaces: 2 })             → "1.23"
  *   formatNumber(1234, { unitSystem: "si", unit: "m" })         → "1.23 km"
  *   formatNumber(1234, { notation: "scientific" })              → "1.23e+3"
  *   formatNumber(1073741824, { unitSystem: "binary", unit: "B" }) → "1 GiB"
  */
-export function formatNumber(value: number, optionsOrDecimalPlaces?: NumberFormatOptions | number): string {
+export function formatNumber(value: number, options?: NumberFormatOptions): string {
     if (!isFinite(value)) return value.toString();
 
-    const rawOpts: NumberFormatOptions =
-        typeof optionsOrDecimalPlaces === "number"
-            ? { maxNumDecimalPlaces: optionsOrDecimalPlaces }
-            : (optionsOrDecimalPlaces ?? {});
+    const rawOpts: NumberFormatOptions = options ?? {};
 
     const numSigDigits = rawOpts.numSignificantDigits ?? DEFAULT_FORMAT_OPTIONS.numSignificantDigits;
     const maxDecimals = rawOpts.maxNumDecimalPlaces;

@@ -45,13 +45,13 @@ export function buildStatisticsTableData(groupedData: GroupedTableData, resultNa
             subplotValue: entry.subplotLabel,
             colorByValue: entry.colorLabel,
             colorByKey: entry.colorKey,
-            mean: formatNumber(stats.mean, 2),
-            stdDev: formatNumber(stats.stdDev, 2),
-            min: formatNumber(stats.min, 2),
-            max: formatNumber(stats.max, 2),
-            p10: formatNumber(stats.p10, 2),
-            p50: formatNumber(stats.p50, 2),
-            p90: formatNumber(stats.p90, 2),
+            mean: formatNumber(stats.mean, { maxNumDecimalPlaces: 2 }),
+            stdDev: formatNumber(stats.stdDev, { maxNumDecimalPlaces: 2 }),
+            min: formatNumber(stats.min, { maxNumDecimalPlaces: 2 }),
+            max: formatNumber(stats.max, { maxNumDecimalPlaces: 2 }),
+            p10: formatNumber(stats.p10, { maxNumDecimalPlaces: 2 }),
+            p50: formatNumber(stats.p50, { maxNumDecimalPlaces: 2 }),
+            p90: formatNumber(stats.p90, { maxNumDecimalPlaces: 2 }),
         });
     }
 
