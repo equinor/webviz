@@ -25,6 +25,8 @@ from .parameter_types import (
 
 LOGGER = logging.getLogger(__name__)
 
+ERT_DESIGN_MATRIX_DOCS_URL = "https://ert.readthedocs.io/en/latest/getting_started/howto/design_matrix.html"
+
 
 @dataclass
 class ParameterMetadata:
@@ -33,6 +35,15 @@ class ParameterMetadata:
     group_name: str | None
     min_value: float | None
     max_value: float | None
+
+
+@dataclass
+class ParametersAndSensitivities:
+    """Parameters and sensitivities for an ensemble, with an optional non-fatal warning."""
+
+    parameters: list[EnsembleParameter]
+    sensitivities: list[EnsembleSensitivity]
+    non_standard_parameters_warning: str | None = None
 
 
 class ParameterAccess:
@@ -55,13 +66,15 @@ class ParameterAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, ensemble_name=ensemble_name)
 
-    async def get_parameters_and_sensitivities_async(self) -> tuple[list[EnsembleParameter], list[EnsembleSensitivity]]:
+    async def get_parameters_and_sensitivities_async(self) -> ParametersAndSensitivities:
         """Retrieve parameters and sensitivities for an ensemble.
 
         Returns:
-            A tuple containing:
+            A ParametersAndSensitivities object containing:
             - List of ensemble parameters with metadata and values
             - List of ensemble sensitivities derived from parameters
+            - An optional non-fatal warning if realization-level parameters are missing from the
+              standard result (e.g. legacy design matrix parameters injected into parameters.txt/json)
 
         Raises:
             MultipleDataMatchesError: If multiple parameter tables are found
@@ -78,6 +91,8 @@ class ParameterAccess:
                 "This is not supported.",
                 Service.SUMO,
             )
+
+        non_standard_parameters_warning: str | None = None
         if table_count == 0:
             LOGGER.debug(
                 f"No Standard result parameter table found for case {self._case_uuid} and ensemble {self._ensemble_name}. "
@@ -86,10 +101,70 @@ class ParameterAccess:
             ensemble_parameters = await self._get_parameters_from_legacy_result_async()
         else:
             ensemble_parameters = await self._get_parameters_from_standard_result_async(parameter_context)
+            non_standard_parameters_warning = await self._detect_parameters_missing_from_standard_result_async(
+                ensemble_parameters
+            )
 
         sensitivities = _create_ensemble_sensitivities(ensemble_parameters)
 
-        return ensemble_parameters, sensitivities
+        return ParametersAndSensitivities(
+            parameters=ensemble_parameters,
+            sensitivities=sensitivities,
+            non_standard_parameters_warning=non_standard_parameters_warning,
+        )
+
+    async def _detect_parameters_missing_from_standard_result_async(
+        self, standard_result_parameters: list[EnsembleParameter]
+    ) -> str | None:
+        """Detect parameters present on realization level but missing from the standard result.
+
+        With the legacy/old design matrix setup, parameters may be injected into the per-realization
+        ``parameters.txt``/``parameters.json`` during the workflow without ERT's knowledge. These do not
+        end up in the ERT-managed standard result, and would therefore silently disappear from Webviz.
+
+        To keep this check cheap we only sample a single realization rather than aggregating all of them.
+        This is a best-effort, non-fatal check: any failure simply results in no warning.
+
+        Returns:
+            A user-facing warning message if realization-level parameters are missing from the standard
+            result, otherwise None.
+        """
+        try:
+            realization_parameter_context = self._ensemble_context.filter(
+                realization=True,
+                aggregation=False,
+            ).parameters
+            realization_count = await realization_parameter_context.length_async()
+            if realization_count == 0:
+                return None
+
+            # Per realization the parameters are stored as a Dictionary object (the parameters.json content),
+            # not as an aggregated arrow table. Parse it directly to keep the check to a single realization.
+            realization_parameter_obj = await realization_parameter_context.getitem_async(0)
+            realization_parameter_dict = await realization_parameter_obj.parse_async()
+
+            standard_result_names = {param.name for param in standard_result_parameters}
+            realization_parameter_names = _flatten_realization_parameter_names(realization_parameter_dict)
+
+            missing_parameter_names = sorted(realization_parameter_names - standard_result_names)
+        except Exception:  # pylint: disable=broad-exception-caught
+            LOGGER.exception(
+                "Failed to compare realization-level parameters against standard result, skipping warning. "
+                f"{self._case_uuid=}, {self._ensemble_name=}"
+            )
+            return None
+
+        if not missing_parameter_names:
+            return None
+
+        return (
+            f"{len(missing_parameter_names)} parameter(s) found on a sampled realization are missing from the "
+            "ERT-managed parameter set and will not appear in Webviz: "
+            f"{', '.join(missing_parameter_names)}. "
+            "This typically happens with the old design matrix setup, where parameters are injected into "
+            "parameters.txt/json during the workflow without ERT's knowledge. Move to ERT's native design "
+            f"matrix support to make all sensitivity parameters appear in Webviz: {ERT_DESIGN_MATRIX_DOCS_URL}"
+        )
 
     async def _get_parameters_from_standard_result_async(
         self, parameter_context: SearchContext
@@ -474,6 +549,38 @@ def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_n
         'GROUP:PARAM' if group exists, otherwise just 'PARAM'
     """
     return f"{group_name}:{parameter_name}" if group_name else parameter_name
+
+
+def _flatten_realization_parameter_names(realization_parameter_dict: dict) -> set[str]:
+    """Collect the bare parameter names from a per-realization parameters.json dictionary.
+
+    The parameters.json content can be nested by group (``{GROUP: {PARAM: value}}``) or flat with
+    colon-prefixed keys (``{"GROUP:PARAM": value}``) or ungrouped (``{PARAM: value}``). In all cases the
+    bare parameter name (without group prefix) is returned, matching how standard result parameters are
+    named. Parameters belonging to LOG10_ groups are skipped, mirroring the handling of the aggregated
+    legacy parameter table.
+
+    Args:
+        realization_parameter_dict: Parsed parameters.json content for a single realization
+
+    Returns:
+        Set of bare parameter names (without group prefix)
+    """
+    parameter_names: set[str] = set()
+    for key, value in realization_parameter_dict.items():
+        if isinstance(value, dict):
+            # Nested format: {GROUP: {PARAM: value}}
+            if "LOG10_" in key:
+                continue
+            parameter_names.update(value.keys())
+        else:
+            # Flat format: "GROUP:PARAM" or "PARAM"
+            name_components = key.split(":")
+            group_name = name_components[0] if len(name_components) == 2 else None
+            if group_name and "LOG10_" in group_name:
+                continue
+            parameter_names.add(name_components[-1])
+    return parameter_names
 
 
 def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: list[str]) -> dict[str | None, list[str]]:

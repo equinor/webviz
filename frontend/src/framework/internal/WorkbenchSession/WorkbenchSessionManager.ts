@@ -212,6 +212,17 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (Object.keys(this._activeSession.getEnsembleLoadingErrorInfoMap()).length > 0) {
             this._guiMessageBroker.setState(GuiState.EnsembleLoadingErrorInfoDialogOpen, true);
         }
+
+        // Pass the session loading warnings to GUI state
+        this._guiMessageBroker.setState(
+            GuiState.EnsemblesLoadingWarningInfoMap,
+            this._activeSession.getEnsembleLoadingWarningInfoMap(),
+        );
+
+        // Open warning dialog if there were non-fatal loading warnings
+        if (Object.keys(this._activeSession.getEnsembleLoadingWarningInfoMap()).length > 0) {
+            this._guiMessageBroker.setState(GuiState.EnsembleLoadingWarningInfoDialogOpen, true);
+        }
     }
 
     // ========== Session Lifecycle ==========

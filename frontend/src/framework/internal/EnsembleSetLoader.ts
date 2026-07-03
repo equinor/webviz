@@ -39,6 +39,10 @@ export type EnsembleLoadingErrorInfoMap = {
     [ensembleIdentString: string]: { errorMessage: string; displayName: string };
 };
 
+export type EnsembleLoadingWarningInfoMap = {
+    [ensembleIdentString: string]: { warningMessage: string; displayName: string };
+};
+
 export type UserEnsembleSetting = {
     ensembleIdent: RegularEnsembleIdent;
     customName: string | null;
@@ -62,6 +66,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 ): Promise<{
     ensembleSet: EnsembleSet;
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
+    ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap;
 }> {
     // Get ensemble idents to load
     const ensembleFingerprintsMap = new Map<string, string>();
@@ -104,9 +109,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     const {
         ensembleIdentStringToEnsembleApiDataMap: ensembleApiDataMap,
         ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMapFromApiDataLoad,
+        ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMapFromApiDataLoad,
     } = await loadEnsembleApiDataMapFromBackend(queryClient, ensembleIdentsToLoad, ensembleFingerprintsMap);
 
     const ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMapFromApiDataLoad;
+    const ensembleLoadingWarningInfoMap = ensembleLoadingWarningInfoMapFromApiDataLoad;
 
     // Create regular ensembles
     const outEnsembleArray: RegularEnsemble[] = [];
@@ -138,6 +145,17 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const fipRegionsMappingArray = buildFipRegionsMappingArrFromApiResponse(
             ensembleApiData.ensembleDetails.fipRegions,
         );
+
+        // Refine the display name of any warning for this ensemble now that we know the custom name
+        const existingWarningInfo = ensembleLoadingWarningInfoMap[ensembleIdentString];
+        if (existingWarningInfo) {
+            existingWarningInfo.displayName = createRegularEnsembleDisplayName(
+                ensembleSetting.ensembleIdent,
+                ensembleSetting.caseName,
+                ensembleSetting.customName ?? undefined,
+            );
+        }
+
         outEnsembleArray.push(
             new RegularEnsemble(
                 ensembleApiData.ensembleDetails.assetName,
@@ -256,6 +274,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     return {
         ensembleSet: new EnsembleSet(outEnsembleArray, outDeltaEnsembleArray),
         ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap,
+        ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMap,
     };
 }
 
@@ -266,6 +285,7 @@ async function loadEnsembleApiDataMapFromBackend(
 ): Promise<{
     ensembleIdentStringToEnsembleApiDataMap: EnsembleIdentStringToEnsembleApiDataMap;
     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
+    ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap;
 }> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
     const STALE_TIME = tanstackDebugTimeOverride(5 * 60 * 1000);
@@ -275,6 +295,7 @@ async function loadEnsembleApiDataMapFromBackend(
     const parametersAndSensitivitiesPromiseArray: Promise<EnsembleParametersAndSensitivities_api>[] = [];
 
     const ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap = {};
+    const ensembleLoadingWarningInfoMap: EnsembleLoadingWarningInfoMap = {};
 
     for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
@@ -373,6 +394,16 @@ async function loadEnsembleApiDataMapFromBackend(
             continue;
         }
 
+        // Surface a non-fatal warning if realization-level parameters are missing from the standard result
+        // (e.g. legacy design matrix parameters injected into parameters.txt/json). The ensemble still loads.
+        if (parametersAndSensitivities.nonStandardParametersWarning) {
+            console.warn(parametersAndSensitivities.nonStandardParametersWarning, ensembleIdentString);
+            ensembleLoadingWarningInfoMap[ensembleIdentString] = {
+                warningMessage: parametersAndSensitivities.nonStandardParametersWarning,
+                displayName: createRegularEnsembleDisplayName(ensembleIdents[i]),
+            };
+        }
+
         resMap[ensembleIdentString] = {
             ensembleDetails: ensembleDetails,
             parameters: parameterArray,
@@ -383,6 +414,7 @@ async function loadEnsembleApiDataMapFromBackend(
     return {
         ensembleIdentStringToEnsembleApiDataMap: resMap,
         ensembleLoadingErrorInfoMap: ensembleLoadingErrorInfoMap,
+        ensembleLoadingWarningInfoMap: ensembleLoadingWarningInfoMap,
     };
 }
 
