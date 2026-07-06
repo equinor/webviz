@@ -27,6 +27,7 @@ import { PolylineIntersectionLayer as EsvPolylineIntersectionLayer } from "./lay
 import { SeismicLayer as EsvSeismicLayer } from "./layers/SeismicLayer";
 import { SurfaceStatisticalFanchartsCanvasLayer as EsvSurfaceStatisticalFanchartsCanvasLayer } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
+import { isWellborepathLayer } from "./utils/layers";
 import { isValidBounds, isValidViewport } from "./utils/validationUtils";
 
 export type Bounds = {
@@ -78,6 +79,10 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
     // _esvLayerMap holds the live ESV layer instances that back each user layer.
     private _userLayerMap: Map<string, EsvLayer> = new Map();
     private _layers: EsvLayer[] = [];
+    // Hoverable layer IDs that need a reference system (e.g. wellbore path) but were synced
+    // before one was applied. Registered with the interaction handler once it becomes available,
+    // so callers may set layers and the reference system in either order.
+    private _layersPendingReferenceSystem: Set<string> = new Set();
     private _viewport: Viewport | null = null;
     private _bounds: Bounds | null = null;
     private _zFactor: number = 1;
@@ -415,6 +420,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                 interactionHandler.removeLayer(id);
                 this._esvLayerMap.delete(id);
                 this._userLayerMap.delete(id);
+                this._layersPendingReferenceSystem.delete(id);
             }
         }
 
@@ -432,7 +438,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                 esvController.addLayer(newEsvLayer);
                 this._esvLayerMap.set(userLayer.id, newEsvLayer);
                 if (userLayer.hoverable) {
-                    interactionHandler.addLayer(newEsvLayer);
+                    this.registerLayerForInteraction(newEsvLayer);
                 }
                 this.resizeLayerElement(newEsvLayer);
             } else if (!isEqual(prevUserLayer?.options, userLayer.options)) {
@@ -456,7 +462,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                     esvController.addLayer(newEsvLayer);
                     this._esvLayerMap.set(userLayer.id, newEsvLayer);
                     if (userLayer.hoverable) {
-                        interactionHandler.addLayer(newEsvLayer);
+                        this.registerLayerForInteraction(newEsvLayer);
                     }
                     this.resizeLayerElement(newEsvLayer);
                 } else {
@@ -465,15 +471,17 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                         existingEsvLayer.order = userLayer.options.order + 1;
                     }
                     interactionHandler.removeLayer(userLayer.id);
+                    this._layersPendingReferenceSystem.delete(userLayer.id);
                     if (userLayer.hoverable) {
-                        interactionHandler.addLayer(existingEsvLayer);
+                        this.registerLayerForInteraction(existingEsvLayer);
                     }
                 }
             } else if (prevUserLayer?.hoverable !== userLayer.hoverable) {
                 // Options unchanged but hoverable toggled - re-register independently.
                 interactionHandler.removeLayer(userLayer.id);
+                this._layersPendingReferenceSystem.delete(userLayer.id);
                 if (userLayer.hoverable) {
-                    interactionHandler.addLayer(existingEsvLayer);
+                    this.registerLayerForInteraction(existingEsvLayer);
                 }
             }
 
@@ -482,6 +490,34 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
 
         this.ensurePixiCanvasInDom();
         this.applyResize();
+    }
+
+    // Wellbore path layers need a reference system to build their intersection calculator.
+    // Callers may set layers and the reference system in either order, so defer registering such
+    // a layer with the interaction handler until the reference system has actually been applied.
+    private registerLayerForInteraction(layer: Layer<unknown>): void {
+        if (!this._interactionHandler) return;
+
+        if (isWellborepathLayer(layer) && !this._esvController?.referenceSystem) {
+            this._layersPendingReferenceSystem.add(layer.id);
+            return;
+        }
+
+        this._layersPendingReferenceSystem.delete(layer.id);
+        this._interactionHandler.addLayer(layer);
+    }
+
+    private registerPendingLayersForInteraction(): void {
+        if (!this._interactionHandler || this._layersPendingReferenceSystem.size === 0) return;
+
+        const pendingIds = [...this._layersPendingReferenceSystem];
+        this._layersPendingReferenceSystem.clear();
+        for (const id of pendingIds) {
+            const layer = this._esvLayerMap.get(id);
+            if (layer) {
+                this._interactionHandler.addLayer(layer);
+            }
+        }
     }
 
     private resizeLayerElement(layer: Layer<unknown>) {
@@ -565,6 +601,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
     private applyIntersectionReferenceSystem(): void {
         if (!this._esvController || !this._intersectionReferenceSystem) return;
         this._esvController.setReferenceSystem(this._intersectionReferenceSystem);
+        this.registerPendingLayersForInteraction();
     }
 
     private applyHighlightItems(): void {
