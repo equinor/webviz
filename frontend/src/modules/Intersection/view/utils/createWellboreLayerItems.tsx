@@ -1,8 +1,8 @@
 import type { Casing, IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
 import type { WellboreCasing_api } from "@api";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
-import { LayerType } from "@modules/_shared/components/EsvIntersection";
+import type { EsvLayer } from "@modules/_shared/components/EsvIntersection";
+import { SchematicLayer, WellborePathLayer } from "@modules/_shared/components/EsvIntersection";
 
 /**
  * Create layer item for wellbore casing data
@@ -11,7 +11,7 @@ function createCasingLayerItem(
     wellboreCasingData: WellboreCasing_api[],
     referenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
-): LayerItem {
+): EsvLayer {
     const casings: Casing[] = wellboreCasingData.map((casing, index) => ({
         id: `casing-${index}`,
         diameter: casing.diameterNumeric,
@@ -22,12 +22,9 @@ function createCasingLayerItem(
         hasShoe: false,
     }));
 
-    return {
-        id: "schematic",
-        name: "Schematic",
-        type: LayerType.SCHEMATIC,
-        hoverable: true,
-        options: {
+    return new SchematicLayer(
+        "schematic",
+        {
             data: {
                 holeSizes: [],
                 casings,
@@ -40,7 +37,8 @@ function createCasingLayerItem(
             order: layerOrder,
             referenceSystem: referenceSystem,
         },
-    };
+        { name: "Schematic", hoverable: true },
+    );
 }
 
 /**
@@ -49,19 +47,17 @@ function createCasingLayerItem(
 function createWellborePathLayerItem(
     intersectionReferenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
-): LayerItem {
-    return {
-        id: "wellbore-path",
-        name: "Wellbore path",
-        type: LayerType.WELLBORE_PATH,
-        hoverable: true,
-        options: {
+): EsvLayer {
+    return new WellborePathLayer(
+        "wellbore-path",
+        {
             stroke: "red",
             strokeWidth: "2",
             order: layerOrder,
             data: intersectionReferenceSystem.projectedPath as [number, number][],
         },
-    };
+        { name: "Wellbore path", hoverable: true },
+    );
 }
 
 /**
@@ -73,8 +69,8 @@ export function createWellboreLayerItems(
     wellboreCasingData: WellboreCasing_api[] | null,
     intersectionReferenceSystem: IntersectionReferenceSystem,
     layerOrder: number,
-): LayerItem[] {
-    const layerItems: LayerItem[] = [];
+): EsvLayer[] {
+    const layerItems: EsvLayer[] = [];
 
     let newLayerOrder = layerOrder;
     if (wellboreCasingData && intersectionReferenceSystem) {

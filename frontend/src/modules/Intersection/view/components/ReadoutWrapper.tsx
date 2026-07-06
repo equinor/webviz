@@ -7,7 +7,7 @@ import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverServ
 import type { ViewContext } from "@framework/ModuleContext";
 import { IntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
-import type { EsvIntersectionReadoutEvent, LayerItem, Bounds } from "@modules/_shared/components/EsvIntersection";
+import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
@@ -32,7 +32,7 @@ export type ReadoutWrapperProps = {
     intersectionSource: IntersectionSettingValue | null;
     showGrid: boolean;
     referenceSystem?: IntersectionReferenceSystem;
-    layers: LayerItem[];
+    layers: EsvLayer[];
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
     bounds: Bounds;
