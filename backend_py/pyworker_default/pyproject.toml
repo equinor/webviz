@@ -1,12 +1,12 @@
 [project]
-name = "pyworker-tables"
+name = "pyworker-default"
 version = "0.0.1"
 requires-python = "^3.13"
 dynamic = ["dependencies"]
 
 [tool.poetry]
 requires-poetry = ">=2.1"
-packages = [{ include = "pyworker_tables", from = "src" }]
+packages = [{ include = "pyworker_default", from = "src" }]
 
 [build-system]
 requires = ["poetry-core"]

@@ -24,8 +24,8 @@ from .utils.worker_logging import configure_logging
 _logger = logging.getLogger(__name__)
 
 
-def _setup_azure_monitor_telemetry_for_tables_worker() -> None:
-    _logger.info("Configuring Azure Monitor telemetry for pyworker-tables...")
+def _setup_azure_monitor_telemetry_for_worker(service_name: str) -> None:
+    _logger.info(f"Configuring Azure Monitor telemetry for {service_name}...")
 
     # Limit these to INFO or WARNING
     logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -37,14 +37,14 @@ def _setup_azure_monitor_telemetry_for_tables_worker() -> None:
         azmon_dest = AzureMonitorDestination.from_radix_env()
     else:
         # Picks up APPLICATIONINSIGHTS_CONNECTION_STRING env variable if it is set, and configures from that.
-        azmon_dest = AzureMonitorDestination.for_local_dev(service_name="pyworker-tables")
+        azmon_dest = AzureMonitorDestination.for_local_dev(service_name=service_name)
 
     if not azmon_dest:
-        _logger.warning("Skipping telemetry configuration for pyworker-tables, no valid AzureMonitorDestination")
+        _logger.warning(f"Skipping telemetry configuration for {service_name}, no valid AzureMonitorDestination")
         return
 
     _logger.info(
-        f"Configuring Azure Monitor telemetry for pyworker-tables, resource attributes: {azmon_dest.resource_attributes}"
+        f"Configuring Azure Monitor telemetry for {service_name}, resource attributes: {azmon_dest.resource_attributes}"
     )
 
     # !!!!!!!!!!!!!!!!!!!!!
@@ -107,7 +107,7 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
 
         async with sb_client, lock_renewer:
             sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
-                client_identifier="pyworker-tables",
+                client_identifier="pyworker-default",
                 queue_name=queue_name,
                 auto_lock_renewer=lock_renewer,
             )
@@ -143,14 +143,14 @@ async def run_app_async() -> None:
 
     configure_logging()
 
-    logging.getLogger("pyworker_tables").setLevel(logging.DEBUG)
+    logging.getLogger("pyworker_default").setLevel(logging.DEBUG)
     # Limit logging from the more noisy loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
 
-    _logger.info("=== Starting worker pyworker_tables...")
+    _logger.info("=== Starting worker pyworker-default...")
 
-    _setup_azure_monitor_telemetry_for_tables_worker()
+    _setup_azure_monitor_telemetry_for_worker("pyworker-default")
 
 
     # Read our own config from environment variables

@@ -107,10 +107,10 @@ services:
     command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--loglevel", "notice"]
 
 
-  pyworker-tables:
+  pyworker-default:
     build:
       context: .
-      dockerfile: ./backend_py/pyworker_tables/Dockerfile
+      dockerfile: ./backend_py/pyworker_default/Dockerfile
     environment:
       - AZURE_TENANT_ID
       - AZURE_CLIENT_ID
@@ -124,10 +124,10 @@ services:
       - OTEL_LOG_LEVEL=debug
       - OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED=true
     volumes:
-      - ./backend_py/pyworker_tables/src:/home/appuser/backend_py/pyworker_tables/src
+      - ./backend_py/pyworker_default/src:/home/appuser/backend_py/pyworker_default/src
       - ./backend_py/libs:/home/appuser/backend_py/libs
-    command: ["watchfiles", "python -m pyworker_tables.worker_main", "/home/appuser/backend_py/pyworker_tables/src"]
-    #command: ["python", "-m", "pyworker_tables.worker_main"]
+    command: ["watchfiles", "python -m pyworker_default.worker_main", "/home/appuser/backend_py/pyworker_default/src"]
+    #command: ["python", "-m", "pyworker_default.worker_main"]
     #restart: on-failure
     #stop_grace_period: 30s
     restart: always
