@@ -6,7 +6,6 @@ import {
     createVectorSelectorDataFromVectors,
 } from "@modules/_shared/components/VectorSelector";
 
-
 const VECTOR_NAMES = [
     "WOPR:A1",
     "WOPR:A2",

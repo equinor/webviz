@@ -3,8 +3,8 @@ import type React from "react";
 import { entries, groupBy, isEqual, sortBy } from "lodash-es";
 
 import type { WellboreLogCurveHeader_api } from "@api";
-import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem, ComboboxGroup } from "@lib/components/Combobox/types";
 import { makeSelectValueForCurveHeader } from "@modules/_shared/utils/wellLog";
 
 import type {
@@ -89,47 +89,45 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
             const logOptionGroups = valuesByLogNameEntries.map(makeLogOptionGroup);
             const sortedCurveOptions = sortBy(logOptionGroups, [sortStatLogsToTop, "label"]);
 
-            function handleChange(selectedIdent: string) {
+            function handleChange(selectedIdent: string | null) {
                 const selected = availableValues.find((v) => makeSelectValueForCurveHeader(v) === selectedIdent);
 
                 props.onValueChange(selected ?? null);
             }
 
             return (
-                <Dropdown
-                    filter
-                    options={sortedCurveOptions}
+                <ComboboxCompositions.WithBrowseButtons
+                    items={sortedCurveOptions}
                     value={selectedValue}
-                    onChange={handleChange}
-                    disabled={props.isOverridden}
+                    onValueChange={handleChange}
+                    disabled={props.disabled}
                 />
             );
         };
     }
 }
 
-function makeCurveOption(curve: WellboreLogCurveHeader_api): DropdownOption {
+function makeCurveOption(curve: WellboreLogCurveHeader_api): ComboboxItem<string> {
     return {
         value: makeSelectValueForCurveHeader(curve),
         label: curve.curveName,
     };
 }
 
-function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): DropdownOptionGroup {
+function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeader_api[]]): ComboboxGroup<string> {
     const curveOptions = logCurves.map(makeCurveOption);
     const sortedCurveOptions = sortBy(curveOptions, "label");
-
     return {
-        label: logName,
-        options: sortedCurveOptions,
+        value: logName,
+        items: sortedCurveOptions,
     };
 }
 
 // It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
-function sortStatLogsToTop(group: DropdownOptionGroup | WellboreLogCurveHeader_api) {
+function sortStatLogsToTop(group: ComboboxGroup<string> | WellboreLogCurveHeader_api) {
     let logName = "";
     if ("logName" in group) logName = group.logName;
-    if ("label" in group) logName = group.label;
+    if ("value" in group) logName = group.value;
 
     return logName.startsWith("STAT_") ? 0 : 1;
 }

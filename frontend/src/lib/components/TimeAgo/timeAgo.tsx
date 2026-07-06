@@ -3,8 +3,11 @@ import React from "react";
 import { timeAgo } from "@lib/utils/dates";
 
 export type TimeAgoProps = {
+    /** The timestamp in milliseconds to render relative to now. */
     datetimeMs: number;
+    /** How often to re-render the relative time string, in milliseconds. @default 30000 */
     updateIntervalMs?: number;
+    /** When true, uses an abbreviated format (e.g. "5m" instead of "5 minutes ago"). */
     shorten?: boolean;
 };
 

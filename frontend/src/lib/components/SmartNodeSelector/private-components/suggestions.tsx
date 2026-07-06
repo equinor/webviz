@@ -246,10 +246,10 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         for (let i = 0; i < selectedSuggestions.length; i++) {
             const el = selectedSuggestions[i];
             el.classList.remove("Suggestions__Suggestion--Selected");
-            el.classList.remove("bg-blue-100");
+            el.classList.remove("bg-accent");
         }
         newSelectedSuggestion.classList.add("Suggestions__Suggestion--Selected");
-        newSelectedSuggestion.classList.add("bg-blue-100");
+        newSelectedSuggestion.classList.add("bg-accent");
     }
 
     private scrollSuggestionsToMakeSelectedElementVisible(): void {
@@ -335,20 +335,15 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             data-use={option.nodeName}
                             data-index={i}
                             className={resolveClassNames(
-                                "Suggestions__Suggestion p-2 cursor-pointer box-border h-8 leading-6 whitespace-nowrap overflow-hidden text-ellipsis bg-no-repeat text-sm",
+                                "Suggestions__Suggestion py-selectable px-selectable gap-y-xs text-body-sm box-border flex cursor-pointer items-center overflow-hidden leading-6",
                                 {
-                                    "bg-[20px 20px] pl-8": option.metaData.icon !== undefined,
-                                    "bg-blue-100 Suggestions__Suggestion--Selected":
+                                    "Suggestions__Suggestion--Selected bg-accent":
                                         i === this._currentlySelectedSuggestionIndex - this.state.fromIndex,
                                 },
                             )}
                             style={{
                                 color: option.metaData.color !== undefined ? option.metaData.color : "inherit",
-                                backgroundImage:
-                                    option.metaData.icon !== undefined ? "url(" + option.metaData.icon + ")" : "none",
                                 height: this._rowHeight + "px",
-                                backgroundPosition: option.metaData.icon !== undefined ? "5px center" : undefined,
-                                backgroundSize: option.metaData.icon !== undefined ? "20px 20px" : undefined,
                             }}
                             onMouseDown={disableInputBlur}
                             onMouseUp={enableInputBlur}
@@ -359,10 +354,17 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             }}
                             title={`${option.nodeName} - ${option.metaData.description}`}
                         >
-                            {this.decorateOption(option, treeNodeSelection)}
+                            {option.metaData.icon !== undefined && (
+                                <span className="mr-xs flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none">
+                                    {option.metaData.icon}
+                                </span>
+                            )}
+                            <span className="truncate">{this.decorateOption(option, treeNodeSelection)}</span>
                         </div>
                     ))}
-                    {options.length === 0 && <div className="p-4 italic">No options available...</div>}
+                    {options.length === 0 && (
+                        <div className="px-selectable py-selectable italic">No options available...</div>
+                    )}
                 </>
             );
         }
@@ -412,7 +414,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         this._popupRoot.render(
             <div
                 ref={suggestionsRef}
-                className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow-sm z-50 overflow-y-auto"
+                className="bg-floating shadow-elevation-floating z-tooltip absolute top-full left-0 box-border w-full overflow-y-auto rounded"
                 onScroll={this.handleScroll}
                 style={{
                     maxHeight: maxHeight,
@@ -441,7 +443,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         return (
             <div
                 ref={this._positionRef}
-                className="w-full box-border absolute top-full left-0 border bg-white rounded-b shadow-lg z-50 overflow-y-auto invisible"
+                className="z-tooltip bg-floating shadow-elevation-floating invisible absolute top-full left-0 box-border w-full overflow-y-auto rounded border"
             ></div>
         );
     }

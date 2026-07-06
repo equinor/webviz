@@ -95,6 +95,9 @@ dist
 # vuepress build output
 .vuepress/dist
 
+# Storybook build output
+storybook-static
+
 # Serverless directories
 .serverless/
 

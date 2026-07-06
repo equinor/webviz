@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 
 import type {
     CustomSettingImplementation,
@@ -90,12 +90,12 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                 availableSensitiveCases,
             );
 
-            const sensitivityNameOptions = availableSensitivityNames.map((sensitivityName) => ({
+            const sensitivityNameItems = availableSensitivityNames.map((sensitivityName) => ({
                 value: sensitivityName,
                 label: sensitivityName,
             }));
 
-            const sensitivityCaseOptions = availableSensitiveCases.map((sensitivityCase) => ({
+            const sensitivityCaseItems = availableSensitiveCases.map((sensitivityCase) => ({
                 value: sensitivityCase,
                 label: sensitivityCase,
             }));
@@ -135,15 +135,17 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             }
             return (
                 <div className="flex">
-                    <Dropdown
-                        options={sensitivityNameOptions}
+                    <ComboboxCompositions.WithBrowseButtons
+                        items={sensitivityNameItems}
                         value={props.value?.sensitivityName ?? ""}
-                        onChange={handleSensitivityNameChange}
+                        onValueChange={handleSensitivityNameChange}
+                        disabled={props.disabled}
                     />
-                    <Dropdown
-                        options={sensitivityCaseOptions}
+                    <ComboboxCompositions.WithBrowseButtons
+                        items={sensitivityCaseItems}
                         value={currentSensitivityCase ?? ""}
-                        onChange={handleSensitivityCaseChange}
+                        onValueChange={handleSensitivityCaseChange}
+                        disabled={props.disabled}
                     />
                 </div>
             );

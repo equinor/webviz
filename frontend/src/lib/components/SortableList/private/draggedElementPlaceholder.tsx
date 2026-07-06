@@ -92,7 +92,7 @@ export function DraggedElementPlaceholder(props: DraggedElementPlaceholderProps)
         <div
             ref={placeholderRef}
             data-sl-indicator
-            className="absolute top-0 left-0 pointer-events-none bg-blue-500"
+            className="bg-accent pointer-events-none absolute top-0 left-0"
             style={{
                 transform: "translate3d(0,0,0)",
                 willChange: "transform,width,height",

@@ -15,15 +15,15 @@ export function ErrorPlaceholderComponent(props: ErrorPlaceholderComponentProps)
             key={props.placeholder.getItemDelegate().getId()}
             id={props.placeholder.getItemDelegate().getId()}
             title={
-                <div className="flex items-center gap-2 font-bold">
-                    <Warning color="error" fontSize="small" />
+                <div className="gap-xs font-bolder flex items-center">
+                    <Warning color="error" style={{ fontSize: 16 }} />
                     {props.placeholder.getItemDelegate().getName()}
                 </div>
             }
             endAdornment={<RemoveItemButton item={props.placeholder} />}
-            headerClassNames="bg-red-100! text-red-800"
+            headerClassNames="bg-danger-canvas! text-red-800"
         >
-            <div className="p-2 text-xs bg-red-50">{props.placeholder.getErrorMessage()}</div>
+            <div className="p-xs text-body-xs bg-danger">{props.placeholder.getErrorMessage()}</div>
         </SortableListItem>
     );
 }

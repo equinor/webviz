@@ -2,13 +2,12 @@ import React from "react";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import type { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { Setting } from "@lib/components/Setting";
+import { Slider } from "@lib/components/Slider";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 
 import type { Interfaces } from "../interfaces";
@@ -27,7 +26,7 @@ import {
 } from "./atoms/baseAtoms";
 import { availableParameterIdentsAtom } from "./atoms/derivedAtoms";
 
-const plotTypesOptions = [
+const plotTypeItems = [
     {
         value: PlotType.ParameterResponseMatrix,
         label: "Responses vs. parameters matrix",
@@ -83,90 +82,84 @@ export function Settings({ settingsContext }: ModuleSettingsProps<Interfaces>) {
         ],
     );
 
-    function handleParametersChanged(parameterIdents: ParameterIdent[]) {
-        setParameterIdents(parameterIdents);
-    }
-    function handleShowLabelsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setShowLabels(e.target.checked);
-    }
-    function handleUseFixedColorRangeChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setUseFixedColorRange(e.target.checked);
-    }
-    function handlePlotTypeChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setPlotType(e.target.value as PlotType);
-    }
-    function handleThresholdChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        let threshold = e.target.value ? parseFloat(e.target.value) : 0.0;
-        threshold = Math.max(0.0, Math.min(1.0, Math.abs(threshold))); // Ensure threshold is between 0 and 1
+    function handleThresholdChanged(value: number | readonly number[] | null) {
+        // Ensure threshold is between 0 and 1
+        const threshold =
+            value === null ? 0.0 : Math.max(0.0, Math.min(1.0, Math.abs(Array.isArray(value) ? value[0] : value)));
         setCorrelationThreshold(threshold);
     }
-    function handleHideIndividualCellsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setHideIndividualCells(e.target.checked);
-    }
-    function handleFilterColumnsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setFilterColumns(e.target.checked);
-    }
-    function handleFilterRowsChanged(e: React.ChangeEvent<HTMLInputElement>) {
-        setFilterRows(e.target.checked);
-    }
+
+    const correlationSliderRef = React.useRef<HTMLDivElement>(null);
+
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Plot settings" expanded>
-                <div className="flex flex-col gap-2">
-                    <Label text="Matrix type">
-                        <RadioGroup
-                            value={plotType as string}
-                            options={plotTypesOptions}
-                            onChange={handlePlotTypeChanged}
-                        />
-                    </Label>
-
-                    <Checkbox label={"Show parameter labels"} checked={showLabels} onChange={handleShowLabelsChanged} />
-
-                    <Checkbox
-                        label="Use fixed color range (-1 / 1)"
-                        checked={useFixedColorRange}
-                        onChange={handleUseFixedColorRangeChanged}
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Matrix type" stacked>
+                        <Combobox items={plotTypeItems} value={plotType} onValueChange={(v) => v && setPlotType(v)} />
+                    </Setting.Field>
+                    <Setting.Field
+                        label={`Correlation Cutoff (absolute): ${correlationThreshold}`}
+                        stacked
+                        labelFor={correlationSliderRef}
+                    >
+                        <div className="gap-y-xs flex flex-col">
+                            <Slider
+                                value={correlationThreshold}
+                                onValueChange={handleThresholdChanged}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                ref={correlationSliderRef}
+                                markerLabels
+                            />
+                            <div className="flex flex-col">
+                                <CheckboxCompositions.WithLabel
+                                    label="Blank individual cells below cutoff"
+                                    checked={hideIndividualCells}
+                                    onCheckedChange={setHideIndividualCells}
+                                    size="small"
+                                />
+                                <CheckboxCompositions.WithLabel
+                                    label="Filter columns below cutoff"
+                                    checked={filterColumns}
+                                    onCheckedChange={setFilterColumns}
+                                    size="small"
+                                />
+                                <CheckboxCompositions.WithLabel
+                                    label="Filter rows below cutoff"
+                                    checked={filterRows}
+                                    onCheckedChange={setFilterRows}
+                                    size="small"
+                                />
+                            </div>
+                        </div>
+                    </Setting.Field>
+                    <Setting.Field label="Scale and labels" stacked>
+                        <div className="gap-y-xs flex flex-col">
+                            <CheckboxCompositions.WithLabel
+                                label="Show parameter labels"
+                                checked={showLabels}
+                                onCheckedChange={setShowLabels}
+                                size="small"
+                            />
+                            <CheckboxCompositions.WithLabel
+                                label="Use fixed color range (-1 / 1)"
+                                checked={useFixedColorRange}
+                                onCheckedChange={setUseFixedColorRange}
+                                size="small"
+                            />
+                        </div>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Parameter selection" defaultOpen>
+                    <ParametersSelector
+                        allParameterIdents={availableParameterIdents}
+                        selectedParameterIdents={parameterIdents}
+                        onChange={setParameterIdents}
                     />
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Correlation settings" expanded>
-                <div className="flex flex-col gap-2">
-                    <Label text="Correlation cutoff (absolute)">
-                        <input
-                            type="number"
-                            step={0.01}
-                            min={0}
-                            max={1}
-                            value={correlationThreshold ?? ""}
-                            onChange={handleThresholdChanged}
-                            className="w-full p-1 border border-gray-300 rounded"
-                        />
-                    </Label>
-                    <Checkbox
-                        label="Blank individual cells below cutoff"
-                        checked={hideIndividualCells}
-                        onChange={handleHideIndividualCellsChanged}
-                    />
-                    <Checkbox
-                        label="Filter columns below cutoff"
-                        checked={filterColumns}
-                        onChange={handleFilterColumnsChanged}
-                    />
-                    <Checkbox
-                        label="Filter rows below cutoff"
-                        checked={filterRows}
-                        onChange={handleFilterRowsChanged}
-                    />
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Parameter selection" expanded>
-                <ParametersSelector
-                    allParameterIdents={availableParameterIdents}
-                    selectedParameterIdents={parameterIdents}
-                    onChange={handleParametersChanged}
-                />
-            </CollapsibleGroup>
-        </div>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

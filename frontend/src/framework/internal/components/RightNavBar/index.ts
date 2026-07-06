@@ -1,1 +1,0 @@
-export { RightNavBar } from "./rightNavBar";

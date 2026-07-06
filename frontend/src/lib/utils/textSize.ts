@@ -1,39 +1,28 @@
-type CharWidths = Map<string, number>;
+let _canvas: HTMLCanvasElement | null = null;
 
-const charsToMeasureWidthFor =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*' ()[]{}/?:@#$%^&*+=`|\\\"<>";
-const storedFontWidths: Map<string, CharWidths> = new Map();
-
-function calcAndStoreCharWidths(font: string): CharWidths {
-    const charWidths: CharWidths = new Map();
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (context) {
-        context.font = `1rem ${font}`;
-        for (const char of charsToMeasureWidthFor) {
-            const metrics = context.measureText(char);
-            charWidths.set(char, metrics.width);
-        }
+function getCanvas(): CanvasRenderingContext2D | null {
+    if (!_canvas) {
+        _canvas = document.createElement("canvas");
     }
-    storedFontWidths.set(font, charWidths);
-    canvas.remove();
-    return charWidths;
+    return _canvas.getContext("2d");
 }
 
 export function getTextWidthWithFont(text: string, font: string, sizeInRem: number): number {
-    let charWidths = storedFontWidths.get(font);
-    if (!charWidths) {
-        charWidths = calcAndStoreCharWidths(font);
-    }
+    const ctx = getCanvas();
+    if (!ctx) return 0;
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    ctx.font = `${sizeInRem * rootPx}px ${font}`;
+    return ctx.measureText(text).width;
+}
 
-    let width = 0;
-    for (const char of text) {
-        const charWidth = charWidths.get(char);
-        if (charWidth) {
-            width += charWidth * sizeInRem;
-        } else {
-            width += 1 * sizeInRem;
-        }
-    }
-    return width;
+/**
+ * Measure text width using the exact computed CSS font of a DOM element.
+ * This is the only way to get a pixel-accurate result when font-size, font-weight,
+ * or font-family come from CSS variables or design tokens.
+ */
+export function measureTextWidthWithElement(text: string, element: Element): number {
+    const ctx = getCanvas();
+    if (!ctx) return 0;
+    ctx.font = getComputedStyle(element).font;
+    return ctx.measureText(text).width;
 }

@@ -3,9 +3,14 @@ import React from "react";
 import { Add, History, InfoOutlined } from "@mui/icons-material";
 import { v4 } from "uuid";
 
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Button } from "@lib/components/Button";
 import { ColorTile } from "@lib/components/ColorTile";
+import { Popover } from "@lib/components/Popover";
 import { SortableList } from "@lib/components/SortableList";
+import { Table } from "@lib/components/Table";
+import { Tag } from "@lib/components/Tag";
+import { Heading } from "@lib/components/Typography/compositions";
 
 import type {
     EnsembleIdentWithCaseName,
@@ -17,14 +22,14 @@ import { DeltaEnsembleRow, type RegularEnsembleOption } from "./DeltaEnsembleRow
 import { RegularEnsembleRow } from "./RegularEnsembleRow";
 
 export type EnsembleTablesProps = {
-    nextEnsembleColor: string;
+    colorGenerator: Generator<string, never, undefined>;
     selectedRegularEnsembles: InternalRegularEnsembleSetting[];
     selectedDeltaEnsembles: InternalDeltaEnsembleSetting[];
     selectableEnsemblesForDelta: EnsembleIdentWithCaseName[];
 
     onAddRegularEnsemble: () => void;
     onUpdateRegularEnsemble: (updatedEnsemble: InternalRegularEnsembleSetting) => void;
-    onRemoveRegularEnsemble: (removedEnsemble: InternalRegularEnsembleSetting) => void;
+    onRemoveRegularEnsemble: (removedEnsemble: RegularEnsembleIdent) => void;
     onMoveRegularEnsemble: (movedEnsemble: InternalRegularEnsembleSetting, newIndex: number) => void;
 
     onCreateDeltaEnsemble: (newEnsemble: InternalDeltaEnsembleSetting) => void;
@@ -49,12 +54,12 @@ function makeRegularEnsembleOptionsForDeltaEnsemble(
             ensembleIdent: ens.ensembleIdent,
             caseName: ens.caseName,
             customName: ens.customName,
-            adornment: <ColorTile color={ens.color} />,
+            adornment: <ColorTile.Tile color={ens.color} size="small" />,
         })),
         ...selectableEnsemblesNotAmongSelected.map((ens) => ({
             ensembleIdent: ens.ensembleIdent,
             caseName: ens.caseName,
-            adornment: <History fontSize="small" />,
+            adornment: <History style={{fontSize: "1rem"}} />,
         })),
     ];
 }
@@ -93,7 +98,7 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     function handleCreateDeltaEnsemble() {
         props.onCreateDeltaEnsemble({
             uuid: v4(),
-            color: props.nextEnsembleColor,
+            color: props.colorGenerator.next().value,
             comparisonEnsembleIdent: null,
             referenceEnsembleIdent: null,
             comparisonEnsembleCaseName: null,
@@ -117,145 +122,119 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
     }
 
     return (
-        <div className="flex flex-col h-full gap-2">
-            {/* Regular ensemble table */}
-            <div className="flex flex-1 flex-col min-h-0">
-                <div className="flex justify-between items-center shrink-0 pt-1 pb-1">
-                    <div className="font-medium text-lg">Regular Ensembles</div>
-                    <Button
-                        variant="contained"
-                        onClick={handleAddRegularEnsemble}
-                        size="medium"
-                        startIcon={<Add fontSize="inherit" />}
-                    >
-                        Add Ensemble
+        <div className="gap-y-sm flex h-full min-h-0 flex-col">
+            <div className="gap-y-xs flex min-h-0 flex-1 flex-col">
+                <div className="gap-x-sm flex shrink-0 items-center">
+                    <Heading as="h6">Regular Ensembles</Heading>
+                    <Button variant="contained" size="small" onClick={handleAddRegularEnsemble}>
+                        <Add fontSize="inherit" />
+                        Add
                     </Button>
                 </div>
-                <div className="flex-1 overflow-auto relative">
+
+                {/* Regular ensemble table */}
+                <div className="relative flex-1 overflow-auto">
                     <SortableList
+                        className="flex-1"
                         isMoveAllowed={() => true}
-                        onItemMoved={(movedItemId, _originId, _destinationId, position) =>
-                            handleOnRegularEnsembleMoved(movedItemId, position)
-                        }
+                        onItemMoved={handleOnRegularEnsembleMoved}
                     >
                         <SortableList.ScrollContainer>
-                            <div className="grow overflow-auto">
-                                <table className="w-full border border-collapse table-fixed text-sm">
-                                    <SortableList.NoDropZone>
-                                        <thead className="sticky top-0 z-10">
-                                            <tr>
-                                                <th className="w-5 p-2 bg-slate-300">{/* For drag handle column */}</th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Color</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">Case</th>
-                                                <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble</th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
-                                            </tr>
-                                        </thead>
-                                    </SortableList.NoDropZone>
-                                    <SortableList.Content>
-                                        <tbody>
-                                            {props.selectedRegularEnsembles.map((item) => (
-                                                <RegularEnsembleRow
-                                                    key={`${item.ensembleIdent.toString()}`}
-                                                    ensembleSetting={item}
-                                                    onUpdate={props.onUpdateRegularEnsemble}
-                                                    onDelete={props.onRemoveRegularEnsemble}
-                                                />
-                                            ))}
-                                        </tbody>
-                                    </SortableList.Content>
-                                </table>
-                            </div>
+                            <Table.Root compact fixed size="small" width="100%">
+                                <SortableList.NoDropZone>
+                                    <Table.Head sticky>
+                                        <Table.Column layoutClassName="w-5" colKey="handle" />
+                                        <Table.Column layoutClassName="w-20">Color</Table.Column>
+                                        <Table.Column layoutClassName="min-w-1/3">Custom name</Table.Column>
+                                        <Table.Column layoutClassName="min-w-1/3">Case</Table.Column>
+                                        <Table.Column layoutClassName="min-w-1/4">Ensemble</Table.Column>
+                                        <Table.Column layoutClassName="w-20">Remove</Table.Column>
+                                    </Table.Head>
+                                </SortableList.NoDropZone>
+
+                                <SortableList.Content>
+                                    <Table.Body emptyMessage="No regular ensembles selected.">
+                                        {props.selectedRegularEnsembles.map((item) => (
+                                            <RegularEnsembleRow
+                                                key={`${item.ensembleIdent.toString()}`}
+                                                ensembleSetting={item}
+                                                onUpdate={props.onUpdateRegularEnsemble}
+                                                onDelete={props.onRemoveRegularEnsemble}
+                                            />
+                                        ))}
+                                    </Table.Body>
+                                </SortableList.Content>
+                            </Table.Root>
                         </SortableList.ScrollContainer>
                     </SortableList>
-                    {props.selectedRegularEnsembles.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                            No regular ensembles selected.
-                        </div>
-                    )}
                 </div>
             </div>
 
             {/* Delta-ensemble table */}
-            <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex justify-between items-center shrink-0 pt-1 pb-1">
-                    <div className="flex items-center">
-                        <div className="font-medium text-lg">Delta Ensembles</div>
+            <div className="gap-y-xs flex min-h-0 flex-1 flex-col">
+                <div className="gap-x-2xs flex shrink-0 items-center">
+                    <div className="gap-x-sm flex items-center">
+                        <Heading as="h6">Delta Ensembles</Heading>
                         <div className="fill-indigo-600">
-                            <InfoOutlined
-                                fontSize="medium"
-                                titleAccess={`Create delta ensemble:\n\n"Delta Ensemble" = "Comparison Ensemble" - "Reference Ensemble"`}
-                                className="text-indigo-600 cursor-help ml-2"
-                            />
+                            <Popover.Root>
+                                <Popover.Trigger variant="ghost" size="small">
+                                    <InfoOutlined style={{ fontSize: 16 }} className="cursor-help" />
+                                </Popover.Trigger>
+                                <Popover.Popup>
+                                    <Popover.Content>
+                                        <div className="gap-y-2xs flex flex-col">
+                                            Create delta ensemble:
+                                            <div className="whitespace-nowrap">
+                                                <Tag label="Delta Ensemble" /> = <Tag label="Comparison Ensemble" /> -{" "}
+                                                <Tag label="Reference Ensemble" />
+                                            </div>
+                                        </div>
+                                    </Popover.Content>
+                                </Popover.Popup>
+                            </Popover.Root>
                         </div>
                     </div>
-                    <Button
-                        variant="contained"
-                        size="medium"
-                        startIcon={<Add fontSize="inherit" />}
-                        onClick={handleCreateDeltaEnsemble}
-                    >
-                        Create Delta Ensemble
+                    <Button variant="contained" size="small" onClick={handleCreateDeltaEnsemble}>
+                        <Add fontSize="inherit" />
+                        Add
                     </Button>
                 </div>
-                <div className="flex-1 overflow-auto relative">
-                    <SortableList
-                        isMoveAllowed={() => true}
-                        onItemMoved={(movedItemId, _originId, _destinationId, position) =>
-                            handleOnDeltaEnsembleMoved(movedItemId, position)
-                        }
-                    >
+
+                <div className="relative flex-1 overflow-auto">
+                    <SortableList isMoveAllowed={() => true} onItemMoved={handleOnDeltaEnsembleMoved}>
                         <SortableList.ScrollContainer>
-                            <div className="grow overflow-auto">
-                                <table className="w-full border border-collapse table-fixed text-sm">
-                                    <SortableList.NoDropZone>
-                                        <thead className="sticky top-0 z-10">
-                                            <tr>
-                                                <th className="w-5 p-2 bg-slate-300">{/* For drag handle column */}</th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Color</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
-                                                <th className="min-w-1/3 text-left p-2 bg-slate-300">
-                                                    Comparison Ensemble
-                                                </th>
-                                                <th className="min-w-1/4 text-left p-2 bg-slate-300">
-                                                    Reference Ensemble
-                                                </th>
-                                                <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
-                                            </tr>
-                                        </thead>
-                                    </SortableList.NoDropZone>
-                                    <SortableList.Content>
-                                        <tbody className="overflow-y-auto w-full">
-                                            {props.selectedDeltaEnsembles.map((deltaItem) => {
-                                                return (
-                                                    <DeltaEnsembleRow
-                                                        key={deltaItem.uuid}
-                                                        deltaEnsembleSetting={deltaItem}
-                                                        regularEnsembleOptions={regularEnsembleOptionsForDelta}
-                                                        isDuplicate={isDuplicateDelta(deltaItem)}
-                                                        onUpdate={props.onUpdateDeltaEnsemble}
-                                                        onDelete={props.onRemoveDeltaEnsemble}
-                                                        onRequestOtherComparisonEnsemble={
-                                                            props.onRequestOtherComparisonEnsemble
-                                                        }
-                                                        onRequestOtherReferenceEnsemble={
-                                                            props.onRequestOtherReferenceEnsemble
-                                                        }
-                                                    />
-                                                );
-                                            })}
-                                        </tbody>
-                                    </SortableList.Content>
-                                </table>
-                            </div>
+                            <Table.Root compact fixed size="small" width="100%">
+                                <SortableList.NoDropZone>
+                                    <Table.Head sticky>
+                                        <Table.Column layoutClassName="w-5" colKey="handle" />
+                                        <Table.Column layoutClassName="w-20">Color</Table.Column>
+                                        <Table.Column layoutClassName="min-w-1/3">Custom name</Table.Column>
+                                        <Table.Column layoutClassName="min-w-1/3">Comparison Ensemble</Table.Column>
+                                        <Table.Column layoutClassName="min-w-1/4">Reference Ensemble</Table.Column>
+                                        <Table.Column layoutClassName="w-20">Remove</Table.Column>
+                                    </Table.Head>
+                                </SortableList.NoDropZone>
+                                <SortableList.Content>
+                                    <Table.Body emptyMessage="No delta ensembles created.">
+                                        {props.selectedDeltaEnsembles.map((deltaItem) => (
+                                            <DeltaEnsembleRow
+                                                key={deltaItem.uuid}
+                                                deltaEnsembleSetting={deltaItem}
+                                                regularEnsembleOptions={regularEnsembleOptionsForDelta}
+                                                isDuplicate={isDuplicateDelta(deltaItem)}
+                                                onUpdate={props.onUpdateDeltaEnsemble}
+                                                onDelete={props.onRemoveDeltaEnsemble}
+                                                onRequestOtherComparisonEnsemble={
+                                                    props.onRequestOtherComparisonEnsemble
+                                                }
+                                                onRequestOtherReferenceEnsemble={props.onRequestOtherReferenceEnsemble}
+                                            />
+                                        ))}
+                                    </Table.Body>
+                                </SortableList.Content>
+                            </Table.Root>
                         </SortableList.ScrollContainer>
                     </SortableList>
-                    {props.selectedDeltaEnsembles.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                            No delta ensembles created.
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

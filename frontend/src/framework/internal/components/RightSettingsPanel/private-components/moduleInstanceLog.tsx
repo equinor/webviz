@@ -2,7 +2,6 @@ import React from "react";
 
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
-import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -13,8 +12,7 @@ import {
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
@@ -29,13 +27,12 @@ export type ModuleInstanceLogProps = {
     onClose: () => void;
 };
 
-export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
+export const ModuleInstanceLog = React.memo(function ModuleInstanceLog(props: ModuleInstanceLogProps) {
     const dashboard = useActiveDashboard();
     const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
 
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const moduleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 
@@ -76,14 +73,10 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
         }
 
         return (
-            <Tooltip title="Clear all messages">
-                <DenseIconButton
-                    className="hover:text-slate-500 cursor-pointer mr-2"
-                    onClick={handleClearAll}
-                    colorScheme={DenseIconButtonColorScheme.DANGER}
-                >
+            <Tooltip content="Clear all messages">
+                <Button onClick={handleClearAll} tone="danger" variant="ghost" iconOnly size="small">
                     <ClearAll fontSize="inherit" />
-                </DenseIconButton>
+                </Button>
             </Tooltip>
         );
     }
@@ -132,18 +125,9 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     }
 
     return (
-        <div
-            ref={ref}
-            className={`w-full ${drawerContent === RightDrawerContent.ModuleInstanceLog ? "h-full" : "h-0"}`}
-        >
-            <Drawer
-                title={makeTitle()}
-                icon={<History />}
-                visible={drawerContent === RightDrawerContent.ModuleInstanceLog}
-                onClose={handleClose}
-                actions={makeActions()}
-            >
-                <div className="h-full flex flex-col p-2 gap-1 overflow-y-auto text-sm">
+        <div ref={ref} className="h-full w-full">
+            <Drawer title={makeTitle()} icon={<History />} visible={true} onClose={handleClose} actions={makeActions()}>
+                <div className="px-xs py-xs gap-y-4xs text-body-sm flex h-full flex-col overflow-y-auto">
                     {moduleInstance ? (
                         <LogList
                             moduleInstance={moduleInstance}
@@ -151,7 +135,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
                             onHideDetails={handleHideDetails}
                         />
                     ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <div className="text-neutral-subtle flex h-full w-full flex-col items-center justify-center">
                             No module selected
                         </div>
                     )}
@@ -169,7 +153,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
                 )}
         </div>
     );
-}
+});
 
 type LogListProps = {
     onShowDetails: (details: Record<string, unknown>, yPos: number) => void;
@@ -182,7 +166,9 @@ function LogList(props: LogListProps): React.ReactNode {
 
     if (log.length === 0) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">No log entries</div>
+            <div className="text-neutral-subtle flex h-full w-full flex-col items-center justify-center">
+                No log entries
+            </div>
         );
     }
 
@@ -199,7 +185,7 @@ function LogList(props: LogListProps): React.ReactNode {
                 return (
                     <React.Fragment key={entry.id}>
                         {showDatetime && (
-                            <div className="text-xs p-2 sticky text-gray-600 text-right border-b border-b-slate-200">
+                            <div className="border-b-neutral px-xs py-4xs text-neutral-subtle text-body-xs sticky border-b text-right">
                                 {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}
                             </div>
                         )}
@@ -272,23 +258,25 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
         }, 500);
     }
 
-    let icon = <CloudDownload fontSize="inherit" className="text-gray-600" />;
+    let icon = <CloudDownload fontSize="inherit" className="text-neutral-subtle" />;
     let message = "Loading...";
     let detailsString: React.ReactNode = null;
     let detailsObject: Record<string, string> | null = null;
     if (props.logEntry.type === LogEntryType.MESSAGE) {
         if (props.logEntry.message?.type === StatusMessageType.Error) {
-            icon = <Error fontSize="inherit" className="text-red-600" />;
+            icon = <Error fontSize="inherit" className="text-danger-subtle" />;
         } else if (props.logEntry.message?.type === StatusMessageType.Warning) {
-            icon = <Warning fontSize="inherit" className="text-orange-600" />;
+            icon = <Warning fontSize="inherit" className="text-warning-subtle" />;
         }
         message = props.logEntry.message?.message ?? "";
         // @ts-expect-error - query is always present
         if (props.logEntry.message.request?.query) {
             const text = `${props.logEntry.message.request.method} ${props.logEntry.message.request.url}`;
             detailsString = (
-                <div className="overflow-hidden w-full" title={text}>
-                    <span className="text-xs text-gray-500 text-ellipsis whitespace-nowrap block max-w-0">{text}</span>
+                <div className="w-full overflow-hidden" title={text}>
+                    <span className="text-neutral-subtle block max-w-0 text-xs text-ellipsis whitespace-nowrap">
+                        {text}
+                    </span>
                 </div>
             );
             detailsObject = {};
@@ -300,30 +288,29 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             }
         }
     } else if (props.logEntry.type === LogEntryType.SUCCESS) {
-        icon = <CheckCircle fontSize="inherit" className="text-green-600" />;
+        icon = <CheckCircle fontSize="inherit" className="text-green-subtle" />;
         message = "Data successfully loaded";
     } else if (props.logEntry.type === LogEntryType.LOADING_DONE) {
-        icon = <CloudDone fontSize="inherit" className="text-blue-600" />;
+        icon = <CloudDone fontSize="inherit" className="text-blue-subtle" />;
         message = "Loading done";
     }
 
     return (
         <div
-            className={resolveClassNames(
-                "text-transparent py-1 flex gap-3 items-center p-2 hover:text-gray-400 hover:bg-blue-100",
-                {
-                    "cursor-help": Boolean(detailsObject),
-                },
-            )}
+            className={resolveClassNames("py-3xs px-2xs group/log-item gap-x-2xs hover:bg-accent flex items-center", {
+                "cursor-help": Boolean(detailsObject),
+            })}
             onMouseEnter={handleShowDetails}
             onMouseLeave={handleHideDetails}
         >
             {icon}
-            <span title={message} className="grow text-black">
+            <span title={message} className="grow">
                 {message}
                 {detailsString}
             </span>
-            <span className="text-xs">{convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs, true)}</span>
+            <span className="text-body-xs group-hover/log-item:text-neutral-subtle text-transparent">
+                {convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs, true)}
+            </span>
         </div>
     );
 }
@@ -346,16 +333,16 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
 
     return (
         <div
-            className="absolute bg-white border border-gray-300 shadow-lg p-1 z-50 w-96 text-sm"
+            className="border-neutral-subtle bg-surface z-overlay p-xs text-body-sm absolute w-96 border shadow-lg"
             style={style}
             onPointerEnter={props.onPointerEnter}
             onPointerLeave={props.onPointerLeave}
         >
-            <table className="text-xs w-full border-separate border-spacing-2">
+            <table className="w-full border-separate border-spacing-2">
                 <tbody>
                     {Object.entries(props.details).map(([key, value]) => (
                         <tr key={key}>
-                            <td className="text-gray-600 font-bold">{key}</td>
+                            <td className="text-neutral-subtle font-bold">{key}</td>
                             <td>{JSON.stringify(value)}</td>
                         </tr>
                     ))}
