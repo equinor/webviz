@@ -332,12 +332,41 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return found ?? null;
     }
 
+    setActiveDashboard(dashboardId: string): void {
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (dashboardId && !dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        this._activeDashboardId = dashboard ? dashboard.getId() : null;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+    }
+
+    addDashboard(): void {
+        this.assertIsNotSnapshot();
+        const newDashboard = new Dashboard(this._atomStoreMaster);
+        this.registerDashboard(newDashboard);
+        this.setActiveDashboard(newDashboard.getId());
+    }
+
+    removeDashboard(dashboardId: string): void {
+        this.assertIsNotSnapshot();
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (!dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        this.unregisterDashboard(dashboard);
+        if (this._activeDashboardId === dashboardId) {
+            this._activeDashboardId = this._dashboards.length > 0 ? this._dashboards[0].getId() : null;
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+    }
+
     getDashboards(): Dashboard[] {
         return this._dashboards;
     }
 
     private registerDashboard(dashboard: Dashboard): void {
-        this._dashboards.push(dashboard);
+        this._dashboards = [...this._dashboards, dashboard];
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             `dashboard-${dashboard.getId()}`,
@@ -346,13 +375,16 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             ),
         );
 
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+
         this.handleStateChange();
     }
 
     private unregisterDashboard(dashboard: Dashboard): void {
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
         dashboard.beforeUnload();
-        this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
+        this._dashboards = [...this._dashboards.filter((d) => d.getId() !== dashboard.getId())];
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
 
     private clearDashboards() {
