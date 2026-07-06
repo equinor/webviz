@@ -1,4 +1,4 @@
-import { chain, inRange, range } from "lodash-es";
+import { inRange, range, sortBy, uniq } from "lodash-es";
 
 import { getNumbersAndRanges } from "@framework/utils/numberUtils";
 
@@ -62,7 +62,8 @@ export function textToRealizationSelection(pasteText: string, limits: Realizatio
     }
 
     // Sort them to keep the order, and remove possible duplicates
-    const sortedUniqueRealizationNumbers = chain(realizationNumbers).sortBy().uniq().value();
+    const sortedRealizationNumbers = sortBy(realizationNumbers);
+    const sortedUniqueRealizationNumbers = uniq(sortedRealizationNumbers);
     const numbersAndRanges = getNumbersAndRanges(sortedUniqueRealizationNumbers, skippedNumbers);
 
     const rangesAsValueStrings = numbersAndRanges.map((numberOrRange) => {
