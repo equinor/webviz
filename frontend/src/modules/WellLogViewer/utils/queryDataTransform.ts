@@ -9,7 +9,7 @@ import type {
     WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import type { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
-import { chain, clone, round, set } from "lodash-es";
+import { clone, entries, groupBy, round, set, sortBy, values } from "lodash-es";
 
 import { WellLogCurveSourceEnum_api } from "@api";
 import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
@@ -46,52 +46,49 @@ export function createWellLogSets(
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
     const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
 
-    const wellLogsSets = chain(curveData)
-        // Initial map to handle some cornercases
-        .map((curveData) => {
-            curveData = clone(curveData);
+    // Initial map to handle some cornercases
+    const curveDataWithUniqueNames = curveData.map((curveData) => {
+        curveData = clone(curveData);
 
-            // Occasionally names are duplicated between logs. The log-viewer looks up
-            // curves by name only, and picks the first one when building it's graphs,
-            // must make it so all names are unique
-            curveData.name = getUniqueCurveNameForCurveData(curveData, nonUniqueCurveNames);
+        // Occasionally names are duplicated between logs. The log-viewer looks up
+        // curves by name only, and picks the first one when building it's graphs,
+        // must make it so all names are unique
+        curveData.name = getUniqueCurveNameForCurveData(curveData, nonUniqueCurveNames);
 
-            // These curves *will* have different sampling rates (as they only have
-            // entries when the value changes). To render these correctly in the viewer,
-            // we must ensure they have different log-names
-            if (curveData.source !== WellLogCurveSourceEnum_api.SSDL_WELL_LOG) {
-                // Names *should* be unique across logs
-                curveData.logName = `${curveData.logName}::${curveData.name}`;
-            }
+        // These curves *will* have different sampling rates (as they only have
+        // entries when the value changes). To render these correctly in the viewer,
+        // we must ensure they have different log-names
+        if (curveData.source !== WellLogCurveSourceEnum_api.SSDL_WELL_LOG) {
+            // Names *should* be unique across logs
+            curveData.logName = `${curveData.logName}::${curveData.name}`;
+        }
 
-            return curveData;
-        })
-        // According to the well-log JSON format, each log should have their own object
-        .groupBy("logName")
-        .entries()
-        .map(([logName, curveSet]) => {
-            let domain: [number, number] | undefined;
+        return curveData;
+    });
+    // According to the well-log JSON format, each log should have their own object
+    const curvesByLog = groupBy(curveDataWithUniqueNames, "logName");
+    const wellLogSets = entries(curvesByLog).map<WellLogSet>(([logName, curveSet]) => {
+        let domain: [number, number] | undefined;
 
-            if (padToTrajectoryLength) {
-                domain = [wellboreTrajectory.mdArr.at(0)!, wellboreTrajectory.mdArr.at(-1)!];
-            } else if (wellPickProps?.wellpick?.data?.length) {
-                // ! If pick data exists, it implies that start and end indices are set
-                // We add a little offset to make it easier to see the the picks
-                const picksStart = wellPickProps.wellpick.header.startIndex! - 10;
-                const picksEnd = wellPickProps.wellpick.header.endIndex! + 10;
+        if (padToTrajectoryLength) {
+            domain = [wellboreTrajectory.mdArr.at(0)!, wellboreTrajectory.mdArr.at(-1)!];
+        } else if (wellPickProps?.wellpick?.data?.length) {
+            // ! If pick data exists, it implies that start and end indices are set
+            // We add a little offset to make it easier to see the the picks
+            const picksStart = wellPickProps.wellpick.header.startIndex! - 10;
+            const picksEnd = wellPickProps.wellpick.header.endIndex! + 10;
 
-                domain = [picksStart, picksEnd];
-            }
+            domain = [picksStart, picksEnd];
+        }
 
-            const { curves, data, metadata_discrete } = createLogCurvesAndData(curveSet, referenceSystem, domain);
+        const { curves, data, metadata_discrete } = createLogCurvesAndData(curveSet, referenceSystem, domain);
 
-            const header = createLogHeader(logName, data, wellboreTrajectory);
+        const header = createLogHeader(logName, data, wellboreTrajectory);
 
-            return { header, curves, data, metadata_discrete };
-        })
-        .value();
+        return { header, curves, data, metadata_discrete };
+    });
 
-    return [axisOnlyLog, ...wellLogsSets];
+    return [axisOnlyLog, ...wellLogSets];
 }
 
 type SafeWellLogDataRow = [number, ...WellLogDataRow];
@@ -176,7 +173,7 @@ function createLogCurvesAndData(
     }
 
     return {
-        data: chain(rowAcc).values().sortBy("0").value(),
+        data: sortBy(values(rowAcc), "0"),
         // data: Object.values(rowAcc),
         metadata_discrete: metadataDiscrete,
         curves,
@@ -319,7 +316,7 @@ function mergeStackedPicks(wellborePicks: WellLogDataRow[]): WellLogDataRow[] {
         else mergedPicks[md] = mergePicks(mergedPicks[md], pick);
     });
 
-    return chain(mergedPicks).values().sortBy("0").value();
+    return sortBy(values(mergedPicks), "0");
 }
 
 function mergePicks(pick1: WellLogDataRow, pick2: WellLogDataRow): WellLogDataRow {

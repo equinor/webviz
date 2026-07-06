@@ -1,6 +1,6 @@
 import React from "react";
 
-import { chain } from "lodash-es";
+import { entries, groupBy, map, sortBy, uniq } from "lodash-es";
 
 import type { CategoricalReadout, ReadoutProperty } from "./types";
 
@@ -15,14 +15,12 @@ export type ReadoutListProps = {
 
 export function ReadoutList(props: ReadoutListProps): React.ReactNode {
     let titleCount = 0;
-    const numGroups = chain(props.readouts).map("group").uniq().value().length;
+    const numGroups = uniq(map(props.readouts, "group")).length;
 
     const groupEntries = React.useMemo(() => {
-        return chain(props.readouts)
-            .groupBy((readout) => readout.group ?? "default")
-            .entries()
-            .sortBy(([group]) => (group === "default" ? 0 : 1)) // Default should always be first
-            .value();
+        const readoutsByGroup = groupBy(props.readouts, (readout) => readout.group ?? "default");
+        const readoutsByGroupEntries = entries(readoutsByGroup);
+        return sortBy(readoutsByGroupEntries, ([group]) => (group === "default" ? 0 : 1)); // Default should always be first
     }, [props.readouts]);
 
     function makeTitleAdornment() {
@@ -95,11 +93,11 @@ function ReadoutPropertyList(props: { properties?: ReadoutProperty<any>[] }): Re
     if (!props.properties?.length) return null;
 
     return (
-        <ul className="ml-1.5 border-l-4 pl-2 border-gray-200 text-gray-700  [&_.--readout-label]:font-bold">
+        <div className="ml-1.5 border-l-4 pl-2 border-gray-200 text-gray-700 [&_.--readout-label]:font-bold grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
             {props.properties.map((property, idx) => (
                 <ReadoutPropertyItem key={`${property.name}-${idx}`} property={property} />
             ))}
-        </ul>
+        </div>
     );
 }
 
@@ -108,13 +106,13 @@ function ReadoutPropertyItem<T = unknown>(props: { property: ReadoutProperty<T> 
     const valueFormat = property.format ?? String;
 
     if (property.render) {
-        return property.render(property.name, property.value, property.renderArgs);
+        return <div className="col-span-2">{property.render(property.name, property.value, property.renderArgs)}</div>;
     }
 
     return (
-        <li className="flex gap-2 text-xs">
-            <span className="--readout-label">{property.name}:</span>
-            <span>{valueFormat(property.value)}</span>
-        </li>
+        <>
+            <span className="--readout-label text-xs">{property.name}:</span>
+            <span className="text-xs text-right">{valueFormat(property.value)}</span>
+        </>
     );
 }
