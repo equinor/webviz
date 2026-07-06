@@ -29,9 +29,7 @@ export function GroupErrorBadge(props: GroupErrorBadgeProps) {
     const numDescendantErrors = React.useMemo(
         function computeNumberOfDescendantErrors() {
             let descendantErrors = 0;
-            const descendants = props.group
-                .getGroupDelegate()
-                .getDescendantItems(isErrorPlaceholderOrHasDeserializationErrors);
+            const descendants = groupDelegate.getDescendantItems(isErrorPlaceholderOrHasDeserializationErrors);
             for (const descendant of descendants) {
                 if (isErrorPlaceholder(descendant)) {
                     descendantErrors += 1;

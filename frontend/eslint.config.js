@@ -57,14 +57,14 @@ export default eslintTypescript.config(
     },
     // Custom rules ---------------------------------------------------------------------
     {
-        // generate-api will end up using this config (disregarding the src/api ignore above). The generated code uses the occasional ts-comment, so we need to relax the rule a bit for these
+        // generate-api will use the project linter config. However, the generated code occasionally uses bare-bones ts-comments, so we need to relax the rule a bit for this folder specifically
         files: ["src/api/**"],
         rules: { "@typescript-eslint/ban-ts-comment": "off" },
     },
 
     {
         rules: {
-            // TODO: These rules were introduced after deps update. It's relevant in a lot of files and might so we'll hold off while we wait for the EDS branch to be merged
+            // TODO: These rules were introduced after deps update. It's relevant in a lot of files so we'll hold off while we wait for the EDS branch to be merged.
             "react-hooks/set-state-in-effect": "off",
             "react-hooks/refs": "off",
             "react-hooks/purity": "off",
