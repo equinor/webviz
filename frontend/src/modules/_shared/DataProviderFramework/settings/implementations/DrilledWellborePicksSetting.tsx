@@ -20,9 +20,11 @@ type InternalValueType = string[] | null;
 type ExternalValueType = WellborePick_api[] | null;
 type ValueConstraintsType = WellborePick_api[];
 
-export class DrilledWellborePicksSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueConstraintsType>
-{
+export class DrilledWellborePicksSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueConstraintsType
+> {
     defaultValue: InternalValueType = null;
     valueConstraintsIntersectionReducerDefinition =
         makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>(
@@ -81,14 +83,14 @@ export class DrilledWellborePicksSetting
             }
 
             return (
-                <div className="flex flex-col gap-1 mt-1">
+                <div className="mt-1 flex flex-col gap-1">
                     <Select
                         filter
                         options={options}
                         value={props.value ?? []}
-                        onChange={handleChange}
+                        onValueChange={handleChange}
                         showQuickSelectButtons={true}
-                        disabled={props.isOverridden}
+                        disabled={props.disabled}
                         multiple={true}
                         size={5}
                     />

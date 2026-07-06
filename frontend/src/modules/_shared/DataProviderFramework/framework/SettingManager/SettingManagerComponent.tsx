@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link, Warning } from "@mui/icons-material";
 
-import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -67,8 +67,10 @@ export function SettingManagerComponent<
     if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
-                <div className="p-0.5 px-2 w-full italic flex items-center text-orange-600">Empty intersection</div>
+                <div className="py-4xs px-2xs flex w-32 items-center">{props.setting.getLabel()}</div>
+                <div className="text-warning-strong px-4xs py-4xs gap-x-2xs flex w-full items-center italic">
+                    Empty intersection
+                </div>
             </React.Fragment>
         );
     }
@@ -85,14 +87,14 @@ export function SettingManagerComponent<
 
         return (
             <React.Fragment key={props.setting.getId()}>
-                <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">
+                <div className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center">
                     <span>{props.setting.getLabel()}</span>
-                    <span className="text-base mb-1">
-                        <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
+                    <span className="mb-2xs text-base">
+                        <Link style={{ fontSize: 16 }} titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center">
-                    {isValid ? valueAsString : <i className="text-orange-600">No valid shared setting value</i>}
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
+                    {isValid ? valueAsString : <i className="text-warning-subtle">No valid shared setting value</i>}
                 </div>
             </React.Fragment>
         );
@@ -100,18 +102,18 @@ export function SettingManagerComponent<
 
     return (
         <React.Fragment key={props.setting.getId()}>
-            <div className="p-0.5 px-2 w-32 flex items-center">{props.setting.getLabel()}</div>
-            <div className="p-0.5 px-2 w-full">
-                <PendingWrapper isPending={actuallyLoading}>
-                    <div className="flex flex-col gap-1 min-w-0">
+            <div className="px-2xs py-4xs text-body-sm flex w-32 items-center">{props.setting.getLabel()}</div>
+            <div className="px-2xs py-4xs w-full min-w-0">
+                <StatusWrapper isPending={actuallyLoading}>
+                    <div className="gap-y-3xs flex min-w-0 flex-col">
                         <div
                             className={resolveClassNames("relative", {
-                                "outline outline-red-500": !isValid && !actuallyLoading,
+                                "outline-danger-strong outline": !isValid && !actuallyLoading,
                                 "pointer-events-none opacity-50": !isSettingEnabled(attributes.enabled),
                             })}
                         >
                             {isEnabledObject(attributes.enabled) && !attributes.enabled.enabled && (
-                                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/80 text-center p-2">
+                                <div className="z-overlay bg-surface/80 px-2xs py-2xs absolute inset-0 flex flex-col items-center justify-center text-center">
                                     {attributes.enabled.reason}
                                 </div>
                             )}
@@ -119,38 +121,37 @@ export function SettingManagerComponent<
                                 onValueChange={handleValueChanged}
                                 value={value}
                                 isValueValid={isValid}
-                                isOverridden={isExternallyControlled}
-                                overriddenValue={value}
                                 valueConstraints={valueConstraints}
                                 globalSettings={globalSettings}
+                                disabled={!isSettingEnabled(attributes.enabled)}
                                 workbenchSession={props.manager.getWorkbenchSession()}
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />
                         </div>
                         {isPersisted && isValidPersistedValue && !isLoading && isInitialized && !isValid && (
                             <span
-                                className="text-xs flex items-center gap-1 text-orange-600"
+                                className="gap-x-3xs text-body-xs text-warning-subtle flex items-center"
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
                             >
                                 <Warning fontSize="inherit" />
-                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value not valid.
                                 </span>
                             </span>
                         )}
                         {isPersisted && !isValidPersistedValue && (
                             <span
-                                className="text-xs flex items-center gap-1 text-red-600"
+                                className="gap-x-3xs text-body-xs text-danger-strong flex items-center"
                                 title="The persisted value for this setting has an invalid structure and could not be loaded."
                             >
                                 <Warning fontSize="inherit" />
-                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value has invalid structure.
                                 </span>
                             </span>
                         )}
                     </div>
-                </PendingWrapper>
+                </StatusWrapper>
             </div>
         </React.Fragment>
     );

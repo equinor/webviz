@@ -18,7 +18,7 @@ export function useMakeDragGhostElement(
         return null;
     }
 
-    const isTableRow = isElementTypeTr(element);
+    const isTableRow = getRenderedTagName(element, ref) === "tr";
 
     const width = Math.round(boundingClientRect.width || ref.current?.offsetWidth || 0);
     const height = Math.round(boundingClientRect.height || ref.current?.offsetHeight || 0);
@@ -55,15 +55,30 @@ export function useMakeDragGhostElement(
         style: { ...(element.props.style || {}) },
     });
 
+    const colWidths: number[] = [];
+    if (ref.current) {
+        for (const cell of ref.current.children) {
+            colWidths.push((cell as HTMLElement).getBoundingClientRect().width);
+        }
+    }
+
     return (
         <div style={baseStyle} className="bg-transparent" aria-hidden>
             <table className="table-fixed border-collapse w-[inherit]">
+                {colWidths.length > 0 && (
+                    <colgroup>
+                        {colWidths.map((w, i) => (
+                            <col key={i} style={{ width: w }} />
+                        ))}
+                    </colgroup>
+                )}
                 <tbody>{rowClone}</tbody>
             </table>
         </div>
     );
 }
 
-function isElementTypeTr(el: React.ReactElement): boolean {
-    return typeof el.type === "string" && el.type.toLowerCase() === "tr";
+function getRenderedTagName(el: React.ReactElement, ref: React.MutableRefObject<HTMLElement | null>): string {
+    if (typeof el.type === "string") return el.type.toLowerCase();
+    return ref.current?.tagName?.toLowerCase() ?? "";
 }

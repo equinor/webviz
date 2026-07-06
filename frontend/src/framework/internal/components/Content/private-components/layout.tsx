@@ -65,12 +65,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
-    const [rightDrawerContent, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent,
-    );
-
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
     const trueLayout = usePublishSubscribeTopicValue(dashboard, DashboardTopic.LAYOUT);
@@ -372,13 +366,6 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         );
     }
 
-    function openModulesList() {
-        setRightDrawerContent(RightDrawerContent.ModulesList);
-        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
-            setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
-        }
-    }
-
     const maximizedLayouts = React.useMemo(() => layout.filter((l) => l.maximized), [layout]);
     const minimizedLayouts = React.useMemo(() => layout.filter((l) => !l.maximized), [layout]);
 
@@ -446,7 +433,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     }
 
     return (
-        <div ref={mainRef} className="flex flex-col h-full w-full max-w-full">
+        <div ref={mainRef} className="flex h-full w-full max-w-full flex-col">
             <div ref={ref} className="relative grow">
                 {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
@@ -478,19 +465,43 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 })}
                 {makeTempViewWrapperPlaceholder()}
                 {moduleInstances.length === 0 && draggedModuleInstanceId === null && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-500 select-none flex flex-col items-center gap-4">
-                        <WebAsset fontSize="large" />
-                        <span className="text-center">
-                            <strong>No modules added.</strong>
-                            <br />
-                            Drag modules here from the modules list.
-                        </span>
-                        {rightDrawerContent !== RightDrawerContent.ModulesList && (
-                            <Button onClick={openModulesList}>Open Modules List</Button>
-                        )}
-                    </div>
+                    <EmptyLayout workbench={props.workbench} />
                 )}
             </div>
         </div>
     );
 };
+
+type EmptyLayoutProps = {
+    workbench: Workbench;
+};
+
+function EmptyLayout(props: EmptyLayoutProps) {
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+    const [rightDrawerContent, setRightDrawerContent] = useGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
+        guiMessageBroker,
+        GuiState.RightSettingsPanelWidthInPercent,
+    );
+
+    function openModulesList() {
+        setRightDrawerContent(RightDrawerContent.ModulesList);
+        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+            setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
+        }
+    }
+
+    return (
+        <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
+            <WebAsset fontSize="large" />
+            <span className="text-center">
+                <strong>No modules added.</strong>
+                <br />
+                Drag modules here from the modules list.
+            </span>
+            {rightDrawerContent !== RightDrawerContent.ModulesList && (
+                <Button onClick={openModulesList}>Open Modules List</Button>
+            )}
+        </div>
+    );
+}

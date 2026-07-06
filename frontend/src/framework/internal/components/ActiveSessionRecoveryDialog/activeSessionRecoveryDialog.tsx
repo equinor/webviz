@@ -1,15 +1,13 @@
 import React from "react";
 
-import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { loadWorkbenchSessionFromLocalStorage } from "@framework/internal/WorkbenchSession/utils/loaders";
 import {
     extractLayout,
     type WorkbenchSessionDataContainer,
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Dialog } from "@lib/components/Dialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
 import { timeAgo } from "@lib/utils/dates";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
@@ -26,7 +24,6 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     );
 
     const activeSession = useActiveSession();
-    const isLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
 
     const [sessionData, setSessionData] = React.useState<WorkbenchSessionDataContainer | null>(null);
 
@@ -65,43 +62,34 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
     }
 
     return (
-        <Dialog
+        <AlertDialog
             open={isOpen}
-            modal
-            showCloseCross={false}
-            title="Do you want to recover your session?"
-            actions={
-                <>
-                    <Button onClick={handleOpen} variant="text" disabled={isLoading}>
-                        {isLoading && <CircularProgress size="small" />}
-                        Recover state
-                    </Button>
-                    <Button onClick={handleDiscard} variant="text" color="danger" disabled={isLoading}>
-                        Discard
-                    </Button>
-                </>
-            }
-            width={800}
+            onOpenChange={setIsOpen}
+            title="Do you want to recover your previous session?"
+            primaryAction={{ label: "Recover session", onClick: handleOpen }}
+            secondaryActions={[{ label: "Delete session", onClick: handleDiscard, tone: "danger" }]}
         >
-            We found an unsaved version of your current session in your local storage. You can either discard or recover
-            it.
-            <div className="flex gap-4 mt-4">
-                <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-col gap-1">
-                        <strong className="text-xs text-gray-500">Title</strong>
-                        {sessionData.metadata.title}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <strong className="text-xs text-gray-500">Last modified</strong>
-                        {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <strong className="text-xs text-gray-500">Last persisted</strong>
-                        {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
+            <div className="gap-y-sm flex flex-col">
+                We found an unsaved version of your current session in your browser. You can either delete or recover
+                it.
+                <div className="gap-x-sm flex">
+                    <DashboardPreview height={150} width={150} layout={extractLayout(sessionData)} />
+                    <div className="gap-y-xs flex flex-col">
+                        <div className="gap-y-4xs flex flex-col">
+                            <strong className="text-body-xs text-neutral-subtle">Title</strong>
+                            {sessionData.metadata.title}
+                        </div>
+                        <div className="gap-y-4xs flex flex-col">
+                            <strong className="text-body-xs text-neutral-subtle">Last modified</strong>
+                            {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
+                        </div>
+                        <div className="gap-y-4xs flex flex-col">
+                            <strong className="text-body-xs text-neutral-subtle">Last persisted</strong>
+                            {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
+                        </div>
                     </div>
                 </div>
             </div>
-        </Dialog>
+        </AlertDialog>
     );
 }

@@ -1,0 +1,104 @@
+.webviz-eds-date-range-picker {
+    @apply form-element box-border rounded border-none;
+
+    /* default size */
+    @apply min-h-selectable-md px-sm py-xs;
+
+    &[data-size="small"] {
+        @apply min-h-selectable-sm pl-sm py-3xs;
+    }
+
+    &[data-size="large"] {
+        @apply min-h-selectable-lg pl-md py-sm;
+    }
+
+    /* Icon size */
+    & [class*="Icon"] {
+        @apply h-4;
+    }
+
+    &[data-size="small"] [class*="Icon"] {
+        @apply h-3;
+    }
+
+    &[data-size="large"] [class*="Icon"] {
+        @apply h-5;
+    }
+
+    /* Field wrapper */
+    & [class*="FieldWrapper__StyledInputFieldWrapper"] {
+        [role="presentation"] {
+            @apply inline!;
+        }
+        @apply gap-4xs h-full items-center rounded bg-transparent p-0 text-inherit! shadow-none!;
+    }
+
+    & [class*="FieldWrapper__StyledInputFieldWrapper"]:focus-within {
+        @apply outline-0!;
+    }
+
+    /* Segments (date input fields) */
+    & [class*="Segment"] {
+        @apply text-body-md focus-within:bg-canvas text-inherit outline-0;
+    }
+
+    /* Segments (date input fields) */
+    & [class*="Segment"] {
+        @apply text-body-md focus-within:bg-canvas inline text-inherit outline-0;
+    }
+
+    & .placeholder,
+    ::placeholder {
+        @apply text-neutral-subtle/75;
+    }
+
+    & [class*="Segment"]:has(+ .placeholder),
+    [class*="StyledTypography"]:has(+ .placeholder) {
+        @apply text-neutral-subtle/50;
+    }
+
+    &[data-disabled] {
+        @apply text-disabled;
+
+        & .placeholder,
+        ::placeholder {
+            @apply text-disabled/80;
+        }
+    }
+
+    & [class*="Typography"] {
+        @apply text-inherit;
+    }
+
+    & [data-size="small"] [class*="Typography"] {
+        @apply text-body-xs! leading-body-xs-squished! h-3!;
+    }
+
+    &[data-size="small"] [class*="Segment"] {
+        @apply text-body-xs! leading-body-xs-squished!;
+    }
+
+    &[data-size="large"] [class*="Segment"] {
+        @apply text-body-lg;
+    }
+
+    & [class*="Segment"]:focus-visible {
+        @apply focusable rounded-xs outline-none;
+    }
+
+    & [class*="Toggle__StyledButton"] {
+        @apply text-accent-subtle hover:bg-accent-hover active:bg-accent-active aspect-square rounded! align-middle;
+    }
+
+    &[data-size="small"] [class*="Toggle__StyledButton"] {
+        @apply h-4! w-4!;
+    }
+
+    & [class*="Toggle__StyledButton"]:focus-visible {
+        @apply outline-focus;
+    }
+
+    & [class*="HelperText__Container"] {
+        display: none;
+    }
+}

@@ -1,9 +1,8 @@
 import React from "react";
 
-import { debounce } from "lodash-es";
-
-import { Input } from "@lib/components/Input";
+import { NumberInput } from "@lib/components/NumberInput";
 import { Slider } from "@lib/components/Slider";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -125,70 +124,63 @@ export class SliderNumberSetting implements CustomSettingImplementation<ValueTyp
             const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueConstraints?.[1] ?? 0);
             const step = isStatic ? (staticOptions.step ?? 1) : (props.valueConstraints?.[2] ?? 1);
 
-            const [prevValue, setPrevValue] = React.useState(props.value ?? min);
-            const [localValue, setLocalValue] = React.useState(props.value ?? min);
-
-            // Update local value when props value changes
-            if (props.value !== prevValue) {
-                setPrevValue(props.value ?? min);
-                setLocalValue(props.value ?? min);
-            }
-
-            // Create debounced update function with useRef to preserve reference
-            const debouncedOnValueChange = React.useRef(
-                debounce((value: number) => {
+            const settledValue = props.value ?? min;
+            const [immediateValue, setValue] = useDebouncedOnChange<number>(
+                settledValue,
+                function handleValueSettle(value: number) {
                     onValueChange(value);
-                }, 500),
-            ).current;
-
-            // Clean up debounce on unmount
-            React.useEffect(() => {
-                return () => {
-                    debouncedOnValueChange.cancel();
-                };
-            }, [debouncedOnValueChange]);
+                },
+                500,
+            );
 
             const handleSliderChange = React.useCallback(
-                function handleSliderChange(_: any, value: number | number[]) {
-                    const newValue = Array.isArray(value) ? value[0] : value;
-                    setLocalValue(newValue);
-                    debouncedOnValueChange(newValue);
+                function handleSliderChange(value: number | readonly number[]) {
+                    setValue(Array.isArray(value) ? value[0] : value);
                 },
-                [debouncedOnValueChange],
+                [setValue],
             );
 
             const handleInputChange = React.useCallback(
-                function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-                    let value = Number(event.target.value);
+                function handleInputChange(value: number | null) {
+                    if (value === null) {
+                        setValue(min);
+                        return;
+                    }
                     const allowedValues = Array.from(
                         { length: Math.floor((max - min) / step) + 1 },
                         (_, i) => min + i * step,
                     );
-                    value = allowedValues.reduce((prev, curr) =>
+                    const closestValue = allowedValues.reduce((prev, curr) =>
                         Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
                     );
-
-                    setLocalValue(value);
-                    debouncedOnValueChange(value);
+                    setValue(closestValue);
                 },
-                [debouncedOnValueChange, min, max, step],
+                [setValue, min, max, step],
             );
-
-            const displayValue = !props.isOverridden ? localValue : (props.overriddenValue ?? min);
             return (
-                <div className="flex flex-row gap-2" ref={divRef}>
-                    <div className="flex-4">
+                <div className="gap-x-sm flex items-center" ref={divRef}>
+                    <div className="grow">
                         <Slider
                             min={min}
                             max={max}
-                            onChange={handleSliderChange}
-                            value={displayValue}
+                            onValueChange={handleSliderChange}
+                            value={immediateValue}
                             valueLabelDisplay="auto"
                             step={step}
+                            disabled={props.disabled}
                         />
                     </div>
-                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
-                        <Input type="number" value={displayValue} min={min} max={max} onChange={handleInputChange} />
+                    <div className={resolveClassNames("w-24", { hidden: !inputVisible })}>
+                        <NumberInput
+                            value={immediateValue}
+                            min={min}
+                            max={max}
+                            onValueChange={handleInputChange}
+                            scrubAdornment="%"
+                            scrubAreaPosition="end"
+                            allowWheelScrub
+                            disabled={props.disabled}
+                        />
                     </div>
                 </div>
             );

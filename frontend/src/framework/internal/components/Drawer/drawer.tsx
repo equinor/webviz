@@ -1,13 +1,14 @@
 import React from "react";
 
-import { Close, MoreVert, Search } from "@mui/icons-material";
+import { Close, FilterList, Search } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Input } from "@lib/components/Input";
-import { ComposedMenu } from "@lib/components/Menu";
+import { Button } from "@lib/components/Button";
+import { MenuCompositions } from "@lib/components/Menu/compositions";
+import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
 
 export type DrawerFilterItem<T extends string | number> = {
+    icon: React.ReactNode;
     label: React.ReactNode;
     value: T;
     initiallySelected: boolean;
@@ -63,27 +64,27 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
     const showHeader = props.icon || props.title || props.onClose || props.actions;
 
     return (
-        <div className={`flex flex-col bg-white min-h-0 h-full${props.visible ? "" : " hidden"}`}>
+        <div className={`bg-surface flex h-full min-h-0 flex-col ${props.visible ? "" : "hidden"}`}>
             {showHeader && (
-                <div className="flex justify-center items-center p-2 bg-slate-100 h-10 shadow-sm">
-                    {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
-                    <span className="font-bold grow p-0 text-sm">{props.title}</span>
+                <div className="bg-canvas py-3xs px-2xs border-neutral-subtle gap-x-xs flex items-center justify-center border-b">
+                    {props.icon && React.cloneElement(props.icon, { fontSize: "small" })}
+                    <span className="text-header-xs font-bolder grow p-0">{props.title}</span>
                     {props.actions}
                     {props.onClose && (
-                        <Tooltip title="Close">
-                            <DenseIconButton onClick={props.onClose}>
+                        <Tooltip content="Close">
+                            <Button variant="ghost" tone="neutral" iconOnly onClick={props.onClose} size="small">
                                 <Close fontSize="inherit" />
-                            </DenseIconButton>
+                            </Button>
                         </Tooltip>
                     )}
                 </div>
             )}
-            <div className="grow flex flex-col h-auto">
+            <div className="flex h-auto grow flex-col">
                 {(props.showSearch || showFilter) && (
-                    <div className="flex gap-2 bg-slate-50 p-2">
+                    <div className="bg-surface py-3xs gap-xs px-2xs flex">
                         {props.showSearch && (
                             <div className="grow">
-                                <Input
+                                <TextInput
                                     placeholder={props.searchInputPlaceholder}
                                     startAdornment={<Search fontSize="small" />}
                                     onChange={props.onSearchQueryChange}
@@ -91,7 +92,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                             </div>
                         )}
                         {showFilter && props.filterItems?.length && (
-                            <ComposedMenu
+                            <MenuCompositions.Default
                                 open={open}
                                 onOpenChange={handleOpenChange}
                                 closeOnClick={false}
@@ -100,15 +101,18 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
                                     id: String(item.value),
                                     checked: selectedFilterItems.includes(item.value),
                                     label: item.label,
+                                    icon: item.icon,
                                 }))}
                             >
-                                <MoreVert fontSize="small" />
-                            </ComposedMenu>
+                                <Button variant="ghost" iconOnly size="small">
+                                    <FilterList fontSize="small" />
+                                </Button>
+                            </MenuCompositions.Default>
                         )}
                     </div>
                 )}
-                {props.headerChildren && <div className="p-2 bg-slate-50">{props.headerChildren}</div>}
-                <div className="grow min-h-0 overflow-y-auto max-h-full h-0">{props.children}</div>
+                {props.headerChildren && <div className="bg-canvas p-xs">{props.headerChildren}</div>}
+                <div className="h-0 max-h-full min-h-0 grow overflow-y-auto">{props.children}</div>
             </div>
         </div>
     );

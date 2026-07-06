@@ -86,12 +86,12 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
 
     return (
         <Select
+            {...rest}
             options={optionsArray}
             value={selectedArray}
             optionHeight={30}
-            onChange={handleSelectionChange}
+            onValueChange={handleSelectionChange}
             multiple={multiple ?? true}
-            {...rest}
         />
     );
 }

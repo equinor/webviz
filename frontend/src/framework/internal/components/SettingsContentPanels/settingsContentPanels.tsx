@@ -4,6 +4,7 @@ import {
     ResizableSettingsPanels,
     type ResizablePanels,
     type SettingsPanelsCollapsedState,
+    type SettingsPanelsVisibleState,
     type SettingsPanelsWidth,
 } from "@framework/components/ResizableSettingsPanels";
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
@@ -70,39 +71,47 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         [setLeftSettingsPanelIsCollapsed, setRightSettingsPanelIsCollapsed],
     );
 
-    const minWidthsPx = React.useMemo<SettingsPanelsWidth>(() => {
-        if (rightDrawerContent) {
-            return {
-                leftSettingsPanel: LEFT_SETTINGS_PANEL_MIN_WIDTH_PX,
-                rightSettingsPanel: RIGHT_SETTINGS_PANEL_MIN_WIDTH_PX,
-            };
-        }
-        return { leftSettingsPanel: LEFT_SETTINGS_PANEL_MIN_WIDTH_PX };
-    }, [rightDrawerContent]);
+    // Always include both panels in props so RightSettingsPanel stays mounted at all times.
+    // Visibility is controlled via the `visible` prop to avoid expensive unmount/remount cycles.
+    const minWidthsPx = React.useMemo<SettingsPanelsWidth>(
+        () => ({
+            leftSettingsPanel: LEFT_SETTINGS_PANEL_MIN_WIDTH_PX,
+            rightSettingsPanel: RIGHT_SETTINGS_PANEL_MIN_WIDTH_PX,
+        }),
+        [],
+    );
 
-    const collapsedWidthsPx = React.useMemo<SettingsPanelsWidth>(() => {
-        if (rightDrawerContent) {
-            return { leftSettingsPanel: LEFT_SETTINGS_PANEL_COLLAPSED_WIDTH_PX, rightSettingsPanel: 0 };
-        }
-        return { leftSettingsPanel: LEFT_SETTINGS_PANEL_COLLAPSED_WIDTH_PX };
-    }, [rightDrawerContent]);
+    const collapsedWidthsPx = React.useMemo<SettingsPanelsWidth>(
+        () => ({
+            leftSettingsPanel: LEFT_SETTINGS_PANEL_COLLAPSED_WIDTH_PX,
+            rightSettingsPanel: 0,
+        }),
+        [],
+    );
 
-    const collapsedStates = React.useMemo<SettingsPanelsCollapsedState>(() => {
-        if (rightDrawerContent) {
-            return {
-                leftSettingsPanel: leftSettingsPanelIsCollapsed,
-                rightSettingsPanel: rightSettingsPanelIsCollapsed,
-            };
-        }
-        return { leftSettingsPanel: leftSettingsPanelIsCollapsed };
-    }, [leftSettingsPanelIsCollapsed, rightSettingsPanelIsCollapsed, rightDrawerContent]);
+    const collapsedStates = React.useMemo<SettingsPanelsCollapsedState>(
+        () => ({
+            leftSettingsPanel: leftSettingsPanelIsCollapsed,
+            rightSettingsPanel: rightSettingsPanelIsCollapsed,
+        }),
+        [leftSettingsPanelIsCollapsed, rightSettingsPanelIsCollapsed],
+    );
 
-    const widthsPercent = React.useMemo<SettingsPanelsWidth>(() => {
-        if (rightDrawerContent) {
-            return { leftSettingsPanel: leftSettingsPanelWidth, rightSettingsPanel: rightSettingsPanelWidth };
-        }
-        return { leftSettingsPanel: leftSettingsPanelWidth };
-    }, [leftSettingsPanelWidth, rightSettingsPanelWidth, rightDrawerContent]);
+    const widthsPercent = React.useMemo<SettingsPanelsWidth>(
+        () => ({
+            leftSettingsPanel: leftSettingsPanelWidth,
+            rightSettingsPanel: rightSettingsPanelWidth,
+        }),
+        [leftSettingsPanelWidth, rightSettingsPanelWidth],
+    );
+
+    const visible = React.useMemo<SettingsPanelsVisibleState>(
+        () => ({
+            leftSettingsPanel: true,
+            rightSettingsPanel: !!rightDrawerContent,
+        }),
+        [rightDrawerContent],
+    );
 
     const panels: ResizablePanels = {
         leftSettingsPanel: <LeftSettingsPanel workbench={props.workbench} />,
@@ -111,7 +120,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
                 <Content workbench={props.workbench} />
             </div>
         ),
-        rightSettingsPanel: rightDrawerContent ? <RightSettingsPanel workbench={props.workbench} /> : undefined,
+        rightSettingsPanel: <RightSettingsPanel workbench={props.workbench} />,
     };
 
     return (
@@ -120,6 +129,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             minWidthsPx={minWidthsPx}
             collapsedStates={collapsedStates}
             collapsedWidthsPx={collapsedWidthsPx}
+            visible={visible}
             onWidthsChange={handleResizablePanelsChange}
             onCollapsedChange={handleCollapsedPanelsChange}
         >
