@@ -21,7 +21,7 @@ export function ErrorPlaceholderComponent(props: ErrorPlaceholderComponentProps)
                 </div>
             }
             endAdornment={<RemoveItemButton item={props.placeholder} />}
-            headerClassNames="bg-danger-canvas! text-red-800"
+            headerClassNames="bg-danger-canvas! text-danger-strong!"
         >
             <div className="p-xs text-body-xs bg-danger">{props.placeholder.getErrorMessage()}</div>
         </SortableListItem>

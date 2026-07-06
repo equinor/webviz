@@ -59,7 +59,7 @@ function makeRegularEnsembleOptionsForDeltaEnsemble(
         ...selectableEnsemblesNotAmongSelected.map((ens) => ({
             ensembleIdent: ens.ensembleIdent,
             caseName: ens.caseName,
-            adornment: <History style={{fontSize: "1rem"}} />,
+            adornment: <History style={{ fontSize: "1rem" }} />,
         })),
     ];
 }
@@ -173,27 +173,23 @@ export function EnsembleTables(props: EnsembleTablesProps): React.ReactNode {
             {/* Delta-ensemble table */}
             <div className="gap-y-xs flex min-h-0 flex-1 flex-col">
                 <div className="gap-x-2xs flex shrink-0 items-center">
-                    <div className="gap-x-sm flex items-center">
-                        <Heading as="h6">Delta Ensembles</Heading>
-                        <div className="fill-indigo-600">
-                            <Popover.Root>
-                                <Popover.Trigger variant="ghost" size="small">
-                                    <InfoOutlined style={{ fontSize: 16 }} className="cursor-help" />
-                                </Popover.Trigger>
-                                <Popover.Popup>
-                                    <Popover.Content>
-                                        <div className="gap-y-2xs flex flex-col">
-                                            Create delta ensemble:
-                                            <div className="whitespace-nowrap">
-                                                <Tag label="Delta Ensemble" /> = <Tag label="Comparison Ensemble" /> -{" "}
-                                                <Tag label="Reference Ensemble" />
-                                            </div>
-                                        </div>
-                                    </Popover.Content>
-                                </Popover.Popup>
-                            </Popover.Root>
-                        </div>
-                    </div>
+                    <Heading as="h6">Delta Ensembles</Heading>
+                    <Popover.Root>
+                        <Popover.Trigger variant="ghost" size="small" iconOnly>
+                            <InfoOutlined style={{ fontSize: 16 }} className="cursor-help" />
+                        </Popover.Trigger>
+                        <Popover.Popup>
+                            <Popover.Content>
+                                <div className="gap-y-2xs flex flex-col">
+                                    Create delta ensemble:
+                                    <div className="whitespace-nowrap">
+                                        <Tag label="Delta Ensemble" /> = <Tag label="Comparison Ensemble" /> -{" "}
+                                        <Tag label="Reference Ensemble" />
+                                    </div>
+                                </div>
+                            </Popover.Content>
+                        </Popover.Popup>
+                    </Popover.Root>
                     <Button variant="contained" size="small" onClick={handleCreateDeltaEnsemble}>
                         <Add fontSize="inherit" />
                         Add

@@ -97,8 +97,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="items-left text-md flex flex-col justify-start gap-1">
-                <div className="flex items-center justify-start gap-1">
+            <div className="items-left text-md gap-4xs flex flex-col justify-start">
+                <div className="gap-4xs flex items-center justify-start">
                     <ControlsInfoPopover />
                     <Button
                         onClick={handleFitInViewClick}
@@ -110,7 +110,10 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
                     <div
-                        className={resolveClassNames("items-center justify-start gap-1", expanded ? "flex" : "hidden")}
+                        className={resolveClassNames(
+                            "gap-4xs items-center justify-start",
+                            expanded ? "flex" : "hidden",
+                        )}
                     >
                         <Button
                             onClick={handleGridToggle}

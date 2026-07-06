@@ -15,7 +15,6 @@ import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
 
 export enum FitInViewStatus {
@@ -99,17 +98,23 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             <Menu.Root>
                                 <Tooltip content="Link this view with others" side="bottom">
                                     <Menu.Trigger>
-                                        <button
-                                            className={resolveClassNames(
-                                                "selectable inline-flex items-center rounded",
-                                                isAnyLinked
-                                                    ? "text-accent-strong-on-emphasis opacity-80 transition-opacity hover:opacity-100"
-                                                    : "text-accent-strong",
-                                            )}
-                                            style={{ backgroundColor: isAnyLinked ? activeLink.color : undefined }}
+                                        <Button
+                                            size="small"
+                                            iconOnly
+                                            variant="ghost"
+                                            layoutStyle={{
+                                                backgroundColor: isAnyLinked ? activeLink.color : undefined,
+                                            }}
                                         >
-                                            <SyncAlt fontSize="inherit" />
-                                        </button>
+                                            <SyncAlt
+                                                fontSize="inherit"
+                                                className={
+                                                    isAnyLinked
+                                                        ? "text-accent-strong-on-emphasis opacity-80 transition-opacity hover:opacity-100"
+                                                        : "text-accent-strong"
+                                                }
+                                            />
+                                        </Button>
                                     </Menu.Trigger>
                                 </Tooltip>
 
@@ -117,10 +122,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                     {viewLinks.map((viewLink) => (
                                         <Menu.Item
                                             key={viewLink.id}
-                                            layoutClassName={resolveClassNames(
-                                                "flex items-center gap-2 overflow-hidden",
-                                                viewLink.containsThisView ? "bg-indigo-50" : "",
-                                            )}
+                                            layoutClassName="flex items-center gap-2 overflow-hidden"
                                             title={viewLink.views.map((v) => v.name).join(", ")}
                                             onClick={() => props.onToggleViewLink!(viewLink.views[0].id)}
                                             onMouseEnter={() =>
@@ -129,10 +131,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                             onMouseLeave={() => props.onHoverViewLink?.(null)}
                                         >
                                             <div
-                                                className="-ml-1.5 flex items-center rounded px-1.5 py-0.5"
+                                                className="-ml-2xs px-2xs py-4xs s flex items-center rounded"
                                                 style={{ backgroundColor: viewLink.color }}
                                             >
-                                                <SyncAlt fontSize="inherit" className="shrink-0 text-white" />
+                                                <SyncAlt
+                                                    fontSize="inherit"
+                                                    className="text-neutral-strong-on-emphasis shrink-0"
+                                                />
                                             </div>
                                             {viewLink.views.map((v) => (
                                                 <span
