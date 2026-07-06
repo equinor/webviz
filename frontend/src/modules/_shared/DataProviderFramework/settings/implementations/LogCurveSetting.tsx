@@ -97,7 +97,7 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
 
             return (
                 <ComboboxCompositions.WithBrowseButtons
-                    items={curveOptions}
+                    items={sortedCurveOptions}
                     value={selectedValue}
                     onValueChange={handleChange}
                     disabled={props.disabled}
@@ -118,8 +118,8 @@ function makeLogOptionGroup([logName, logCurves]: [string, WellboreLogCurveHeade
     const curveOptions = logCurves.map(makeCurveOption);
     const sortedCurveOptions = sortBy(curveOptions, "label");
     return {
-        label: logName,
-        options: sortedCurveOptions,
+        value: logName,
+        items: sortedCurveOptions,
     };
 }
 
