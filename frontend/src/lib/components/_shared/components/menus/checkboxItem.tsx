@@ -3,7 +3,6 @@ import React from "react";
 import type { ComboboxItemProps, ContextMenuCheckboxItemProps, MenuCheckboxItemProps } from "@base-ui/react";
 import { Menu as MenuBase, ContextMenu as ContextMenuBase, mergeProps, Combobox as ComboboxBase } from "@base-ui/react";
 
-import type { MenuVariant } from "../../contexts/menuVariantContext";
 import { useMenuVariant } from "../../contexts/menuVariantContext";
 import { CheckboxIcon } from "../checkboxIcon";
 
@@ -11,15 +10,28 @@ import { ItemContent, type MenuItemContentProps } from "./itemContent";
 
 export type MenuVariantItemProps = ContextMenuCheckboxItemProps | MenuCheckboxItemProps | ComboboxItemProps;
 
+const BASE_COMPONENT = {
+    contextMenu: ContextMenuBase.CheckboxItem,
+    menu: MenuBase.CheckboxItem,
+    combobox: ComboboxBase.Item,
+} as const;
+
+const BASE_INDICATOR_COMPONENT = {
+    contextMenu: ContextMenuBase.CheckboxItemIndicator,
+    menu: MenuBase.CheckboxItemIndicator,
+    combobox: ComboboxBase.ItemIndicator,
+} as const;
+
 function SharedCheckboxItemComponent<TProps extends MenuVariantItemProps>(
     props: TProps & MenuItemContentProps,
     ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactNode {
     const { text, description, icon, ...otherProps } = props;
     const menuVariant = useMenuVariant();
-    const BaseComp = getBaseComponent(menuVariant);
-    const BaseIndicatorComp = getBaseIndicatorComponent(menuVariant);
     const mergedProps = mergeProps({ className: "menu__item menu__interactable" }, otherProps);
+
+    const BaseComp = BASE_COMPONENT[menuVariant];
+    const BaseIndicatorComp = BASE_INDICATOR_COMPONENT[menuVariant];
 
     return (
         <BaseComp {...mergedProps} ref={ref}>
@@ -49,28 +61,6 @@ function SharedCheckboxItemComponent<TProps extends MenuVariantItemProps>(
             </ItemContent>
         </BaseComp>
     );
-}
-
-function getBaseIndicatorComponent(variant: MenuVariant) {
-    switch (variant) {
-        case "contextMenu":
-            return ContextMenuBase.CheckboxItemIndicator;
-        case "menu":
-            return MenuBase.CheckboxItemIndicator;
-        case "combobox":
-            return ComboboxBase.ItemIndicator;
-    }
-}
-
-function getBaseComponent(variant: MenuVariant) {
-    switch (variant) {
-        case "contextMenu":
-            return ContextMenuBase.CheckboxItem;
-        case "menu":
-            return MenuBase.CheckboxItem;
-        case "combobox":
-            return ComboboxBase.Item;
-    }
 }
 
 export const SharedCheckboxItem = React.forwardRef(SharedCheckboxItemComponent);

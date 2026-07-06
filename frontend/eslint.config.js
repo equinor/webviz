@@ -68,6 +68,8 @@ export default eslintTypescript.config(
             "react-hooks/set-state-in-effect": "off",
             "react-hooks/refs": "off",
             "react-hooks/purity": "off",
+            // This rule seems to be very inconsistent at the moment, and causes false flags in some of our code, most notably with some of our `withDefaults` usage
+            "react-hooks/preserve-manual-memoization": "off",
         },
     },
     {
