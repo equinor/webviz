@@ -47,9 +47,9 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
             typeof v.logName !== "string" ||
             typeof v.curveName !== "string" ||
             typeof v.curveUnit !== "string" ||
-            typeof v.curveDescription !== "string"
+            typeof v.source !== "string"
         ) {
-            throw new Error("Expected object with string properties: logName, curveName, curveUnit, curveDescription");
+            throw new Error("Expected object with string properties: logName, curveName, curveUnit, source");
         }
 
         return parsed as ValueType;
