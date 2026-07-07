@@ -8,7 +8,7 @@ from webviz_services.utils.authenticated_user import AuthenticatedUser
 from webviz_services.utils.statistic_function import StatisticFunction
 from webviz_services.utils.task_meta_tracker import TaskMeta, TaskMetaTracker
 
-from .._shared.long_running_operations import LroErrorInfo, LroFailureResp, LroInProgressResp
+from .._shared.long_running_operations import LroFailureResp, LroInProgressResp
 from .surface_address import StatisticalSurfaceAddress
 
 LOGGER = logging.getLogger(__name__)
@@ -70,4 +70,4 @@ def make_lro_in_progress_resp(
 
 
 def make_lro_failure_resp(err_obj_from_access: ExpectedError) -> LroFailureResp:
-    return LroFailureResp(status="failure", error=LroErrorInfo(message=err_obj_from_access.message))
+    return LroFailureResp(error_message=err_obj_from_access.message)

@@ -1,8 +1,12 @@
 from typing import Generic, TypeVar, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 ResultT = TypeVar("ResultT")
+
+
+class LroRespBaseModel(BaseModel):
+    model_config = ConfigDict(json_schema_serialization_defaults_required=True)
 
 
 # The poll_url is optional and will typically be used in a post/pull scenario where the client has posted a task
@@ -12,22 +16,26 @@ ResultT = TypeVar("ResultT")
 #
 # Possible extensions to the progress response:
 # * Should there be any information regarding when a task was originally submitted?
-class LroInProgressResp(BaseModel):
+class LroInProgressResp(LroRespBaseModel):
+    response_type: Literal["LroInProgressResp"] = "LroInProgressResp"
     status: Literal["in_progress"]
     task_id: str
     poll_url: str | None = None
     progress_message: str | None = None
 
 
-class LroErrorInfo(BaseModel):
-    message: str
+class LroFailureResp(LroRespBaseModel):
+    response_type: Literal["LroFailureResp"] = "LroFailureResp"
+    task_id: str | None = None
+    error_message: str | None = None
 
 
-class LroFailureResp(BaseModel):
-    status: Literal["failure"]
-    error: LroErrorInfo
-
-
-class LroSuccessResp(BaseModel, Generic[ResultT]):
-    status: Literal["success"]
+class LroSuccessResp(LroRespBaseModel, Generic[ResultT]):
+    response_type: Literal["LroSuccessResp"] = "LroSuccessResp"
     result: ResultT
+
+
+class LroCommandResp(LroRespBaseModel):
+    response_type: Literal["LroCommandResp"] = "LroCommandResp"
+    command_ok: bool
+    error_message: str | None = None

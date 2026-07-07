@@ -937,30 +937,31 @@ export type InplaceVolumesTableDefinition_api = {
 };
 
 /**
- * LroErrorInfo
- */
-export type LroErrorInfo_api = {
-    /**
-     * Message
-     */
-    message: string;
-};
-
-/**
  * LroFailureResp
  */
 export type LroFailureResp_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "failure";
-    error: LroErrorInfo_api;
+    response_type: "LroFailureResp";
+    /**
+     * Task Id
+     */
+    task_id: string | null;
+    /**
+     * Error Message
+     */
+    error_message: string | null;
 };
 
 /**
  * LroInProgressResp
  */
 export type LroInProgressResp_api = {
+    /**
+     * Response Type
+     */
+    response_type: "LroInProgressResp";
     /**
      * Status
      */
@@ -972,11 +973,11 @@ export type LroInProgressResp_api = {
     /**
      * Poll Url
      */
-    poll_url?: string | null;
+    poll_url: string | null;
     /**
      * Progress Message
      */
-    progress_message?: string | null;
+    progress_message: string | null;
 };
 
 /**
@@ -984,9 +985,9 @@ export type LroInProgressResp_api = {
  */
 export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "success";
+    response_type: "LroSuccessResp";
     /**
      * Result
      */

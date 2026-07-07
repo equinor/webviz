@@ -347,7 +347,7 @@ async def get_statistical_surface_data_hybrid(
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
         set_cache_time(CacheTime.NORMAL)
-        return LroSuccessResp(status="success", result=api_surf_data)
+        return LroSuccessResp(result=api_surf_data)
 
     except Exception as _exc:
         # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
