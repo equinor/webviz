@@ -1,0 +1,4 @@
+/* Temporary override for Plotly.js, to be removed once we migrate to echarts */
+[data-color-scheme="dark"] .welllog-layout {
+    filter: invert(85%) hue-rotate(180deg);
+}
