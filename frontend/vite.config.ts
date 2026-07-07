@@ -21,13 +21,14 @@ const paths = {
 export default defineConfig(({ mode, command }) => {
     const define: Record<string, any> = {
         "process.env": {},
+        global: "globalThis",
     };
 
     // In order to polyfill "global" for older packages
     // Only in dev since "@loaders.gl" is already exporting "window" and would cause a duplicate export
-    if (mode === "development" && command === "serve") {
-        define["global"] = "globalThis";
-    }
+    // if (mode === "development" && command === "serve") {
+    //     define["global"] = "globalThis";
+    // }
 
     return {
         plugins: [
