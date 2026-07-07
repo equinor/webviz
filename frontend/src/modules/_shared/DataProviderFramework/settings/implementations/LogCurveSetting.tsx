@@ -76,7 +76,11 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
-        return isValueValid<ValueType, WellboreLogCurveHeader_api>(value, valueConstraints, (v) => v);
+        return isValueValid<string, WellboreLogCurveHeader_api>(
+            `${value?.logName}::${value?.logName}`,
+            valueConstraints,
+            (v) => `${v.logName}::${v.logName}`,
+        );
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
