@@ -131,7 +131,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                             onMouseLeave={() => props.onHoverViewLink?.(null)}
                                         >
                                             <div
-                                                className="-ml-2xs px-2xs py-4xs s flex items-center rounded"
+                                                className="-ml-2xs px-2xs py-4xs flex items-center rounded"
                                                 style={{ backgroundColor: viewLink.color }}
                                             >
                                                 <SyncAlt

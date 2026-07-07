@@ -451,7 +451,7 @@ export const CustomTabRender: Story = {
                 <p className="p-2xs">Panel B.</p>
             </Tabs.Panel>
             <Tabs.Panel value="c">
-                <p className="p-2x">Panel C.</p>
+                <p className="p-2xs">Panel C.</p>
             </Tabs.Panel>
         </Tabs.Root>
     ),

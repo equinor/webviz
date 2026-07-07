@@ -97,7 +97,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="items-left text-md gap-4xs flex flex-col justify-start">
+            <div className="text-base-md gap-4xs flex flex-col items-start justify-start">
                 <div className="gap-4xs flex items-center justify-start">
                     <ControlsInfoPopover />
                     <Button

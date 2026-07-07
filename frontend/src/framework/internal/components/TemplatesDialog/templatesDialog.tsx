@@ -134,7 +134,12 @@ type TemplateDetailsProps = {
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     if (!props.template) {
         return (
-            <Paragraph size="sm" layoutClassName="flex h-full items-center justify-center">
+            <Paragraph
+                layoutClassName="flex h-full items-center justify-center"
+                tone="neutral"
+                variant="subtle"
+                size="sm"
+            >
                 Select a template to see its details
             </Paragraph>
         );
