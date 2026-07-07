@@ -3,9 +3,8 @@ import type { QueryClient } from "@tanstack/query-core";
 import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
-import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
@@ -68,7 +67,6 @@ export enum PrivateWorkbenchSessionTopic {
 
 export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
-    [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard | null;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
     [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
@@ -89,10 +87,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _dashboards: Dashboard[] = [];
     private _activeDashboardId: string | null = null;
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
-    private _realizationFilterSet = new RealizationFilterSet();
-    private _wrappedRealizationFilterSet = {
-        filterSet: this._realizationFilterSet,
-    };
     private _userCreatedItems: UserCreatedItems;
     private _metadata: WorkbenchSessionMetadata = {
         title: "New Session",
@@ -109,7 +103,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
         this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
-        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._wrappedRealizationFilterSet);
         this._isSnapshot = isSnapshot;
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -221,7 +214,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     }),
                 ),
             },
-            ensembleRealizationFilterSet: this._realizationFilterSet.serializeState(),
         };
     }
 
@@ -261,12 +253,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.setEnsembleSet(newSet);
         this._ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMap;
 
-        // This has to be done after loading the ensemble set
-        // in order to guarantee that all realization filters for the ensembles exist
-        this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
-        this.notifyAboutEnsembleRealizationFilterChange();
-
         // --- Now that the ensemble set is loaded, we can deserialize dashboards and modules ---
+        // Each dashboard's realization filter set is synchronized against this._ensembleSet
+        // inside registerDashboard() (guaranteeing a filter exists for every ensemble) before
+        // its persisted filter selections are overlaid inside deserializeState().
 
         for (const dashboard of contentState.dashboards) {
             const newDashboard = new Dashboard(this._atomStoreMaster);
@@ -279,12 +269,13 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     setEnsembleSet(set: EnsembleSet) {
-        this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
+        for (const dashboard of this._dashboards) {
+            dashboard.syncRealizationFilterSetWithEnsembleSet(set);
+        }
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
         this.handleStateChange();
     }
 
@@ -303,8 +294,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             switch (topic) {
                 case WorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
-                case WorkbenchSessionTopic.REALIZATION_FILTER_SET:
-                    return this._wrappedRealizationFilterSet;
                 case PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD:
                     return this.getActiveDashboard();
                 case PrivateWorkbenchSessionTopic.DASHBOARDS:
@@ -368,6 +357,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private registerDashboard(dashboard: Dashboard): void {
         this._dashboards = [...this._dashboards, dashboard];
 
+        // Guarantees a realization filter exists for every ensemble currently in the session
+        // before the caller proceeds to (optionally) overlay persisted filter selections via
+        // dashboard.deserializeState().
+        dashboard.syncRealizationFilterSetWithEnsembleSet(this._ensembleSet);
+
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             `dashboard-${dashboard.getId()}`,
             dashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
@@ -421,24 +415,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._ensembleSet;
     }
 
-    getRealizationFilterSet(): RealizationFilterSet {
-        return this._realizationFilterSet;
-    }
-
     getUserCreatedItems(): UserCreatedItems {
         return this._userCreatedItems;
-    }
-
-    notifyAboutEnsembleRealizationFilterChange(): void {
-        console.debug("Notifying about ensemble realization filter change");
-        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
-            filterSet: this._realizationFilterSet,
-        });
-        this._wrappedRealizationFilterSet = {
-            filterSet: this._realizationFilterSet,
-        };
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
-        this.handleStateChange();
     }
 
     private makeDefaultDashboard(): void {

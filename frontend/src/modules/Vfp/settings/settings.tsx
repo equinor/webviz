@@ -1,9 +1,10 @@
 import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItems } from "@lib/components/Combobox/types";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
@@ -34,7 +35,7 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./atoms/queryAtoms";
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, dashboard, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
@@ -117,7 +118,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent.value}
-                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(dashboard)}
                             onValueChange={setSelectedEnsembleIdent}
                         />
                     </Setting.Field>

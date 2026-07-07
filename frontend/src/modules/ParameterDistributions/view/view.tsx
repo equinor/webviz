@@ -1,8 +1,8 @@
 import React from "react";
 
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import type { Interfaces } from "../interfaces";
@@ -30,7 +30,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
         props.viewContext.useSettingsToViewInterfaceValue("showPercentilesAndMeanLines");
     const histogramMode = props.viewContext.useSettingsToViewInterfaceValue("histogramMode");
     const ensembleSet = props.workbenchSession.getEnsembleSet();
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.workbenchSession);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(props.dashboard);
     let selectedEnsembleIdents: RegularEnsembleIdent[] = [];
     if (ensembleMode === EnsembleMode.INDEPENDENT) {
         selectedEnsembleIdents = independentEnsembleIdents;

@@ -2,11 +2,12 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { xor } from "lodash";
 
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { NumberInput } from "@lib/components/NumberInput";
@@ -51,10 +52,10 @@ import {
     rftTableDefinitionQueriesAtom,
 } from "./atoms/queryAtoms";
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, dashboard, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(dashboard);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value;
     const setSelectedEnsembleIdents = useSetAtom(selectedEnsembleIdentsAtom);

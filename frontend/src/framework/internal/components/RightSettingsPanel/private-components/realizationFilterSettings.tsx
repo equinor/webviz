@@ -19,7 +19,7 @@ import type { Workbench } from "@framework/Workbench";
 import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
-import { useActiveSession } from "../../ActiveSessionBoundary";
+import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 
 export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
@@ -33,10 +33,11 @@ export const RealizationFilterSettings = React.memo(function RealizationFilterSe
         WorkbenchSessionTopic.ENSEMBLE_SET,
     );
 
-    // Actually, this should subscribe to active workbench session change as well or use the `useActiveSession` hook,
-    // but for now we assume that
-    const session = useActiveSession();
-    const realizationFilterSet = session.getRealizationFilterSet();
+    // Realization filters live on the active dashboard, not the session. This is safe to call
+    // unconditionally: this panel is rendered inside ActiveDashboardBoundary, which never mounts
+    // its children when there's no active dashboard.
+    const dashboard = useActiveDashboard();
+    const realizationFilterSet = dashboard.getRealizationFilterSet();
 
     const [numberOfUnsavedRealizationFiltersGuiState, setNumberOfUnsavedRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
@@ -198,17 +199,17 @@ export const RealizationFilterSettings = React.memo(function RealizationFilterSe
             setNumberOfEffectiveRealizationFiltersGuiState(effectiveCount);
 
             // Notify subscribers of change.
-            props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
+            dashboard.notifyAboutEnsembleRealizationFilterChange();
         },
         [
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
+            dashboard,
             setNumberOfUnsavedRealizationFilters,
             setNumberOfUnsavedRealizationFiltersGuiState,
             setNumberOfEffectiveRealizationFilters,
             setNumberOfEffectiveRealizationFiltersGuiState,
             countEffectiveFilters,
-            props.workbench,
         ],
     );
 
@@ -306,7 +307,7 @@ export const RealizationFilterSettings = React.memo(function RealizationFilterSe
         setNumberOfEffectiveRealizationFilters(countEffectiveFilters());
 
         // Notify subscribers of change.
-        props.workbench.getSessionManager().getActiveSession().notifyAboutEnsembleRealizationFilterChange();
+        dashboard.notifyAboutEnsembleRealizationFilterChange();
     }
 
     function handleDiscardClick(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {

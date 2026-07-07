@@ -6,6 +6,7 @@ import { useAtom } from "jotai";
 import { get } from "lodash-es";
 
 import { WellLogCurveTypeEnum_api } from "@api";
+import type { Dashboard } from "@framework/internal/Dashboard";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { ActionGroup } from "@modules/_shared/DataProviderFramework/Actions";
@@ -164,17 +165,19 @@ function checkManagerMove(movedItem: Item, destinationGroup: ItemGroup): boolean
 
 export type ProviderManagerComponentWrapperProps = {
     workbenchSession: WorkbenchSession;
+    dashboard: Dashboard;
     workbenchSettings: WorkbenchSettings;
 };
 
 export function ProviderManagerComponentWrapper(props: ProviderManagerComponentWrapperProps): React.ReactNode {
-    const { workbenchSession, workbenchSettings } = props;
+    const { workbenchSession, dashboard, workbenchSettings } = props;
     const queryClient = useQueryClient();
     const [dataProviderManager, setDataProviderManager] = useAtom(dataProviderManagerAtom);
     const [serializedState, setSerializedState] = useAtom(dataProviderStateAtom);
 
     usePersistedDataProviderManager({
         workbenchSession,
+        dashboard,
         workbenchSettings,
         queryClient,
         serializedState,

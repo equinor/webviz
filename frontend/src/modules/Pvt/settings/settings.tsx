@@ -3,10 +3,11 @@ import React from "react";
 import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
@@ -35,7 +36,7 @@ import {
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, dashboard, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 
@@ -120,7 +121,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <Setting.Field label="Ensembles" annotations={selectedEnsemblesAnnotations} stacked>
                         <EnsembleSelect
                             ensembles={ensembleSet.getRegularEnsembleArray()}
-                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(workbenchSession)}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(dashboard)}
                             onChange={handleEnsembleSelectionChange}
                             value={selectedEnsembleIdents.value}
                             size={3}

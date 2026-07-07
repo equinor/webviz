@@ -6,6 +6,7 @@ import type { Getter, Setter } from "jotai";
 import type { AtomStore } from "./AtomStoreMaster";
 import type { HoverService } from "./HoverService";
 import type { InitialSettings } from "./InitialSettings";
+import type { Dashboard } from "./internal/Dashboard";
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
@@ -55,6 +56,7 @@ export type ModuleSettingsProps<
 > = {
     settingsContext: SettingsContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
+    dashboard: Dashboard;
     workbenchServices: WorkbenchServices;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
@@ -68,6 +70,7 @@ export type ModuleViewProps<
 > = {
     viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
+    dashboard: Dashboard;
     workbenchServices: WorkbenchServices;
     hoverService: HoverService;
     workbenchSettings: WorkbenchSettings;

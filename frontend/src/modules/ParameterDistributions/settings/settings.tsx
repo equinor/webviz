@@ -4,10 +4,11 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent as RegularEnsembleIdentClass } from "@framework/RegularEnsembleIdent";
 import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { Hidden } from "@lib/components/Hidden";
@@ -47,9 +48,9 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { ParameterSortingInfoContent } from "./components/ParameterSortingInfoContent";
 
-export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, dashboard }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(dashboard);
 
     const [selectedEnsembleIdents, setSelectedEnsembleIdents] = useAtom(selectedEnsembleIdentsAtom);
     const [selectedParameterIdents, setSelectedParameterIdents] = useAtom(selectedParameterIdentsAtom);

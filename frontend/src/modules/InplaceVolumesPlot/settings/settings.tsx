@@ -169,6 +169,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     ensembleSet={ensembleSet}
                     settingsContext={props.settingsContext}
                     workbenchSession={props.workbenchSession}
+                    dashboard={props.dashboard}
                     workbenchServices={props.workbenchServices}
                     isPending={tableDefinitionsQueryResult.isLoading}
                     availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
