@@ -170,7 +170,7 @@ export class Figure {
         return [...this._plotData];
     }
 
-    makeLayout(): Partial<Layout> {
+    makeLayout(): Partial<Plotly.Layout> {
         const layout: Partial<Layout> = { ...this._plotLayout };
         layout.annotations = [
             ...(layout.annotations ?? []),

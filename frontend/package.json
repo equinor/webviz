@@ -65,10 +65,11 @@
         "jotai-tanstack-query": "~0.11.0",
         "lodash-es": "^4.18.1",
         "pixi.js": "^8.19.0",
+        "plotly.js": "^3.6.0",
         "rbush": "^4.0.1",
         "react": "^18.3.0",
         "react-dom": "^18.3.0",
-        "react-plotly.js": "^2.6.0",
+        "react-plotly.js": "^4.0.0",
         "simplify-js": "^1.2.4",
         "source-map-js": "^1.2.1",
         "ts-key-enum": "^2.0.13",
@@ -78,9 +79,6 @@
     "overrides": {
         "@playwright/experimental-ct-react": {
             "vite": "$vite"
-        },
-        "react-plotly.js": {
-            "plotly.js": "^3.3.1"
         },
         "@deck.gl/core": "~9.1.15",
         "@deck.gl/layers": "~9.1.15",
@@ -103,10 +101,10 @@
         "@types/geojson": "^7946.0.16",
         "@types/lodash-es": "^4.17.12",
         "@types/node": "^24.13.2",
+        "@types/plotly.js": "^3.0.10",
         "@types/rbush": "^4.0.0",
         "@types/react": "^18.3.31",
         "@types/react-dom": "^18.2.7",
-        "@types/react-plotly.js": "^2.6.0",
         "@types/uuid": "^10.0.0",
         "@vitejs/plugin-react": "^6.0.3",
         "@vitest/coverage-istanbul": "^4.1.9",
