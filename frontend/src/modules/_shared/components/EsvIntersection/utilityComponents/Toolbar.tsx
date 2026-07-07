@@ -111,7 +111,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                                 className={
                                                     isAnyLinked
                                                         ? "text-accent-strong-on-emphasis opacity-80 transition-opacity hover:opacity-100"
-                                                        : "text-accent-strong"
+                                                        : "text-accent-subtle"
                                                 }
                                             />
                                         </Button>
