@@ -1364,7 +1364,7 @@ export const getRftRealizationData = <ThrowOnError extends boolean = false>(
  */
 export const getRftObservations = <ThrowOnError extends boolean = false>(
     options: Options<GetRftObservationsData_api, ThrowOnError>,
-) =>
+): RequestResult<GetRftObservationsResponses_api, GetRftObservationsErrors_api, ThrowOnError> =>
     (options.client ?? client).get<GetRftObservationsResponses_api, GetRftObservationsErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/rft/rft_observations",
