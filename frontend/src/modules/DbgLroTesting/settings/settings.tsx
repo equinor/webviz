@@ -16,9 +16,9 @@ import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longR
 import { getCalcSomethingOnDerivedTableOptions } from "@api";
 import { getDerivedTableInfoOptions } from "@api";
 
-import { Label } from "@lib/components/Label";
+import { Setting } from "@lib/components/Setting";
 import { Select } from "@lib/components/Select";
-import { Input } from "@lib/components/Input";
+import { TextInput } from "@lib/components/TextInput";
 import { Button } from "@lib/components/Button";
 import type { SelectOption } from "@lib/components/Select";
 
@@ -229,52 +229,53 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     }
 
     return (
-        <>
-            <div className="flex flex-col gap-2">
-                <Label text="Ensemble:">
-                    <EnsembleDropdown
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        value={selectedEnsembleIdent?.value}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </Label>
+        <Setting.Panel>
+            <Setting.Field label="Ensemble:" stacked={true}>
+                <EnsembleDropdown
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
+                    value={selectedEnsembleIdent?.value}
+                    onValueChange={handleEnsembleSelectionChange}
+                />
+            </Setting.Field>
 
-                <Label text="Vectors to include:">
-                    <Select
-                        options={vectorNameOptions}
-                        size={10}
-                        multiple={true}
-                        value={selectedVectors}
-                        onChange={handleVectorSelectionChange}
-                    />
-                </Label>
+            <Setting.Field label="Vectors to include:" stacked={true}>
+                <Select
+                    options={vectorNameOptions}
+                    size={10}
+                    multiple={true}
+                    value={selectedVectors}
+                    onValueChange={handleVectorSelectionChange}
+                />
+            </Setting.Field>
 
-                <div className="mt-4" />
-                <Label text="Derived table:">
-                    {derivedTableHandle ? (
-                        <div>Handle: {derivedTableHandle}</div>
-                    ) : !derivedTableHandle && hybridProgressText ? (
-                        <div>Progress: {hybridProgressText}</div>
-                    ) : (
-                        <div>No derived table handle</div>
-                    )}
-                </Label>
+            <Setting.Field label="Derived table:" stacked={true}>
+                {derivedTableHandle ? (
+                    <div>Handle: {derivedTableHandle}</div>
+                ) : !derivedTableHandle && hybridProgressText ? (
+                    <div>Progress: {hybridProgressText}</div>
+                ) : (
+                    <div>No derived table handle</div>
+                )}
+            </Setting.Field>
 
-                <Button variant="text" onClick={handleRefetchDerivedTableHandle}>
+            <Setting.Field label="" stacked={true}>
+                <Button size="small" onClick={handleRefetchDerivedTableHandle}>
                     Refetch derived table handle
                 </Button>
-                <Button variant="text" onClick={handleRetryDerivedTableCreationTask}>
+            </Setting.Field>
+
+            <Setting.Field label="" stacked={true}>
+                <Button size="small" onClick={handleRetryDerivedTableCreationTask}>
                     Retry derived table creation task
                 </Button>
+            </Setting.Field>
 
-                <div className="mt-4" />
-                <Label text="Calculation Parameters:">
-                    <Input
-                        value={calculationParamString}
-                        onChange={(e) => setCalculationParamString((e.target.value as string) ?? "")}
-                    />
-                </Label>
-            </div>
-        </>
+            <Setting.Field label="Calculation Parameters:" stacked={true}>
+                <TextInput
+                    value={calculationParamString}
+                    onChange={(e) => setCalculationParamString((e.target.value as string) ?? "")}
+                />
+            </Setting.Field>
+        </Setting.Panel>
     );
 }

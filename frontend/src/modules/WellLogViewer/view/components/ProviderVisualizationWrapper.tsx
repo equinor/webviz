@@ -155,7 +155,7 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
 
     if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
         return (
-            <div className="absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center">
+            <div className="z-elevated absolute flex h-full w-full items-center justify-center bg-white opacity-50">
                 <CircularProgress />
             </div>
         );

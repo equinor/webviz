@@ -1,15 +1,9 @@
 import React from "react";
 
-import { Lock, LockOpen } from "@mui/icons-material";
 import { isEqual } from "lodash-es";
 
-import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
-import { ToggleButton } from "@lib/components/ToggleButton";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
     CustomSettingImplementation,
@@ -19,15 +13,17 @@ import { assertNumberOrStringTuple, isNumberOrStringTuple } from "../utils/struc
 
 type InternalValueType = [number | "min", number | "max"] | null;
 type ExternalValueType = [number, number] | null;
-type ValueRangeType = [min: number, max: number, step: number];
+type ValueConstraintsType = [min: number, max: number, step: number];
 
-export class SliderRangeSetting
-    implements CustomSettingImplementation<InternalValueType, ExternalValueType, ValueRangeType>
-{
+export class SliderRangeSetting implements CustomSettingImplementation<
+    InternalValueType,
+    ExternalValueType,
+    ValueConstraintsType
+> {
     private _staticOptions: { minMax: { min: number; max: number }; step: number } | null;
 
     valueConstraintsIntersectionReducerDefinition = {
-        reducer: (accumulator: ValueRangeType, valueConstraints: ValueRangeType) => {
+        reducer: (accumulator: ValueConstraintsType, valueConstraints: ValueConstraintsType) => {
             if (accumulator === null) {
                 return valueConstraints;
             }
@@ -36,10 +32,10 @@ export class SliderRangeSetting
             const max = Math.min(accumulator[1], valueConstraints[1]);
             const step = Math.max(accumulator[2], valueConstraints[2]);
 
-            return [min, max, step] as ValueRangeType;
+            return [min, max, step] as ValueConstraintsType;
         },
         startingValue: null,
-        isValid: (valueConstraints: ValueRangeType): boolean => {
+        isValid: (valueConstraints: ValueConstraintsType): boolean => {
             return valueConstraints[0] <= valueConstraints[1] && valueConstraints[2] > 0;
         },
     };
@@ -60,14 +56,17 @@ export class SliderRangeSetting
         this._staticOptions = staticOptions ?? null;
     }
 
-    mapInternalToExternalValue(internalValue: InternalValueType, valueRange: ValueRangeType): ExternalValueType {
-        if (internalValue === null || valueRange === null || valueRange.length !== 3) {
+    mapInternalToExternalValue(
+        internalValue: InternalValueType,
+        valueConstraints: ValueConstraintsType,
+    ): ExternalValueType {
+        if (internalValue === null || valueConstraints === null || valueConstraints.length !== 3) {
             return null;
         }
 
         const externalValue: ExternalValueType = [
-            internalValue[0] === "min" ? valueRange[0] : internalValue[0],
-            internalValue[1] === "max" ? valueRange[1] : internalValue[1],
+            internalValue[0] === "min" ? valueConstraints[0] : internalValue[0],
+            internalValue[1] === "max" ? valueConstraints[1] : internalValue[1],
         ];
         return externalValue;
     }
@@ -81,15 +80,15 @@ export class SliderRangeSetting
         return this._staticOptions !== null;
     }
 
-    isValueValid(value: InternalValueType, valueRange: ValueRangeType): boolean {
+    isValueValid(value: InternalValueType, valueConstraints: ValueConstraintsType): boolean {
         // If static limits are provided, Input- and Slider-component limits the value
         // i.e. no need to run fixupValue()
         if (this._staticOptions) {
             return true;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (
             value === null ||
@@ -104,14 +103,14 @@ export class SliderRangeSetting
         return true;
     }
 
-    fixupValue(currentValue: InternalValueType, valueRange: ValueRangeType): InternalValueType {
+    fixupValue(currentValue: InternalValueType, valueConstraints: ValueConstraintsType): InternalValueType {
         // If static options are provided, return value as Input- and Slider-component controls the value
         if (this._staticOptions) {
             return currentValue;
         }
 
-        const min = valueRange[0];
-        const max = valueRange[1];
+        const min = valueConstraints[0];
+        const max = valueConstraints[1];
 
         if (currentValue === null || currentValue.length !== 2) {
             return ["min", "max"];
@@ -142,18 +141,12 @@ export class SliderRangeSetting
         return parsed as InternalValueType;
     }
 
-    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueRangeType>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<InternalValueType, ValueConstraintsType>) => React.ReactNode {
         const staticOptions = this._staticOptions;
         const isStatic = staticOptions !== null;
 
-        return function InputRangeSetting(props: SettingComponentProps<InternalValueType, ValueRangeType>) {
+        return function InputRangeSetting(props: SettingComponentProps<InternalValueType, ValueConstraintsType>) {
             const { onValueChange } = props;
-
-            const divRef = React.useRef<HTMLDivElement>(null);
-            const divSize = useElementSize(divRef);
-
-            const MIN_DIV_WIDTH = 250;
-            const inputVisible = divSize.width >= MIN_DIV_WIDTH;
 
             const min = isStatic ? (staticOptions.minMax.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
             const max = isStatic ? (staticOptions.minMax.max ?? 0) : (props.valueConstraints?.[1] ?? 0);
@@ -161,32 +154,28 @@ export class SliderRangeSetting
 
             const [prevValue, setPrevValue] = React.useState<InternalValueType>(props.value);
             const [localValue, setLocalValue] = React.useState<NonNullable<InternalValueType>>(
-                props.value ?? [min, max],
+                props.value ?? ["min", "max"],
             );
 
             // Update local value when props value changes
             if (!isEqual(props.value, prevValue)) {
                 setPrevValue(props.value);
-                setLocalValue(props.value ?? [min, max]);
+                setLocalValue(props.value ?? ["min", "max"]);
             }
 
             const debouncedOnValueChange = useDebouncedFunction(onValueChange, 500);
 
             const handleSliderChange = React.useCallback(
-                function handleSliderChange(_: any, value: number | number[]) {
+                function handleSliderChange(value: number | readonly number[], eventDetails: { reason: string }) {
+                    if (eventDetails.reason === "range-locked") return;
                     setLocalValue((prev) => {
                         const val = Array.isArray(value) ? value : [value, value];
-                        const newValue: [number | "min", number | "max"] = [prev[0], prev[1]];
-                        if (newValue[0] === "min" && val[0] === min) {
-                            newValue[0] = "min";
-                        } else {
-                            newValue[0] = val[0];
-                        }
-                        if (newValue[1] === "max" && val[1] === max) {
-                            newValue[1] = "max";
-                        } else {
-                            newValue[1] = val[1];
-                        }
+                        const keepMin = prev[0] === "min" && (eventDetails.reason === "clamp-value" || val[0] === min);
+                        const keepMax = prev[1] === "max" && (eventDetails.reason === "clamp-value" || val[1] === max);
+                        const newValue: [number | "min", number | "max"] = [
+                            keepMin ? "min" : val[0],
+                            keepMax ? "max" : val[1],
+                        ];
                         debouncedOnValueChange(newValue);
                         return newValue;
                     });
@@ -194,105 +183,53 @@ export class SliderRangeSetting
                 [debouncedOnValueChange, min, max],
             );
 
-            const handleInputChange = React.useCallback(
-                function handleInputChange(
-                    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-                    index: number,
-                ) {
-                    let value = Number(event.target.value);
-                    const allowedValues = Array.from(
-                        { length: Math.floor((max - min) / step) + 1 },
-                        (_, i) => min + i * step,
-                    );
-                    value = allowedValues.reduce((prev, curr) =>
-                        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
-                    );
-
-                    setLocalValue((prev) => {
-                        const newValue: [number | "min", number | "max"] = [prev[0], prev[1]];
-                        newValue[index] = value;
+            function handleMinLockedChange(locked: boolean) {
+                setLocalValue((prev) => {
+                    if (locked) {
+                        const newValue: [number | "min", number | "max"] = ["min", prev[1]];
                         debouncedOnValueChange(newValue);
                         return newValue;
-                    });
-                },
-                [debouncedOnValueChange, min, max, step],
-            );
+                    }
+                    if (prev[0] !== "min") return prev;
+                    const newValue: [number | "min", number | "max"] = [min, prev[1]];
+                    debouncedOnValueChange(newValue);
+                    return newValue;
+                });
+            }
 
-            const handleLockMinToggle = React.useCallback(
-                function handleLockMinToggle() {
-                    setLocalValue((prev) => {
-                        const newValue: [number | "min", number | "max"] = [prev[0], prev[1]];
-                        if (newValue[0] === "min") {
-                            newValue[0] = min;
-                        } else {
-                            newValue[0] = "min";
-                        }
+            function handleMaxLockedChange(locked: boolean) {
+                setLocalValue((prev) => {
+                    if (locked) {
+                        const newValue: [number | "min", number | "max"] = [prev[0], "max"];
                         debouncedOnValueChange(newValue);
                         return newValue;
-                    });
-                },
-                [debouncedOnValueChange, min],
-            );
-
-            const handleLockMaxToggle = React.useCallback(
-                function handleLockMaxToggle() {
-                    setLocalValue((prev) => {
-                        const newValue: [number | "min", number | "max"] = [prev[0], prev[1]];
-                        if (newValue[1] === "max") {
-                            newValue[1] = max;
-                        } else {
-                            newValue[1] = "max";
-                        }
-                        debouncedOnValueChange(newValue);
-                        return newValue;
-                    });
-                },
-                [debouncedOnValueChange, max],
-            );
+                    }
+                    if (prev[1] !== "max") return prev;
+                    const newValue: [number | "min", number | "max"] = [prev[0], max];
+                    debouncedOnValueChange(newValue);
+                    return newValue;
+                });
+            }
 
             return (
-                <div className="flex flex-row gap-1 items-center" ref={divRef}>
-                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
-                        <Input
-                            type="number"
-                            value={localValue[0] === "min" ? min : localValue[0]}
-                            min={min}
-                            max={max}
-                            onChange={(event) => handleInputChange(event, 0)}
-                        />
-                    </div>
-                    <Tooltip title="Lock min value to the lower limit">
-                        <ToggleButton size="small" active={localValue[0] === "min"} onToggle={handleLockMinToggle}>
-                            {localValue[0] === "min" ? <Lock fontSize="inherit" /> : <LockOpen fontSize="inherit" />}
-                        </ToggleButton>
-                    </Tooltip>
-                    <div className="flex-4">
-                        <Slider
-                            min={min}
-                            max={max}
-                            onChange={handleSliderChange}
-                            value={[
-                                localValue[0] === "min" ? min : localValue[0],
-                                localValue[1] === "max" ? max : localValue[1],
-                            ]}
-                            valueLabelDisplay="auto"
-                            step={step}
-                        />
-                    </div>
-                    <Tooltip title="Lock max value to the upper limit">
-                        <ToggleButton size="small" active={localValue[1] === "max"} onToggle={handleLockMaxToggle}>
-                            {localValue[1] === "max" ? <Lock fontSize="inherit" /> : <LockOpen fontSize="inherit" />}
-                        </ToggleButton>
-                    </Tooltip>
-                    <div className={resolveClassNames("flex-1 min-w-16", { hidden: !inputVisible })}>
-                        <Input
-                            type="number"
-                            value={localValue[1] === "max" ? max : localValue[1]}
-                            min={min}
-                            max={max}
-                            onChange={(event) => handleInputChange(event, 1)}
-                        />
-                    </div>
+                <div className="gap-x-2xs">
+                    <Slider
+                        min={min}
+                        max={max}
+                        onValueChange={handleSliderChange}
+                        value={[
+                            localValue[0] === "min" ? min : localValue[0],
+                            localValue[1] === "max" ? max : localValue[1],
+                        ]}
+                        valueLabelDisplay="auto"
+                        step={step}
+                        showRangeLocks
+                        minLocked={localValue[0] === "min"}
+                        maxLocked={localValue[1] === "max"}
+                        onMinLockedChange={handleMinLockedChange}
+                        onMaxLockedChange={handleMaxLockedChange}
+                        disabled={props.disabled}
+                    />
                 </div>
             );
         };

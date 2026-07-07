@@ -1459,6 +1459,62 @@ export type RepeatedTableColumnData_api = {
 };
 
 /**
+ * RftObservation
+ */
+export type RftObservation_api = {
+    /**
+     * Value
+     */
+    value: number;
+    /**
+     * Error
+     */
+    error: number;
+    /**
+     * Property
+     */
+    property: string;
+    /**
+     * East
+     */
+    east: number;
+    /**
+     * North
+     */
+    north: number;
+    /**
+     * Tvd
+     */
+    tvd: number;
+    /**
+     * Md
+     */
+    md?: number | null;
+    /**
+     * Zone
+     */
+    zone?: string | null;
+};
+
+/**
+ * RftObservations
+ */
+export type RftObservations_api = {
+    /**
+     * Well Name
+     */
+    well_name: string;
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Observations
+     */
+    observations: Array<RftObservation_api>;
+};
+
+/**
  * RftRealizationData
  */
 export type RftRealizationData_api = {
@@ -6504,6 +6560,47 @@ export type GetRftRealizationDataResponses_api = {
 
 export type GetRftRealizationDataResponse_api =
     GetRftRealizationDataResponses_api[keyof GetRftRealizationDataResponses_api];
+
+export type GetRftObservationsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        zCacheBust?: string;
+    };
+    url: "/rft/rft_observations";
+};
+
+export type GetRftObservationsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRftObservationsError_api = GetRftObservationsErrors_api[keyof GetRftObservationsErrors_api];
+
+export type GetRftObservationsResponses_api = {
+    /**
+     * Response Get Rft Observations
+     *
+     * Successful Response
+     */
+    200: Array<RftObservations_api>;
+};
+
+export type GetRftObservationsResponse_api = GetRftObservationsResponses_api[keyof GetRftObservationsResponses_api];
 
 export type GetVfpTableNamesData_api = {
     body?: never;

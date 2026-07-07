@@ -11,13 +11,18 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertStringArrayOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arrayMultiSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arrayMultiSelect";
 
 type ValueType = string[] | null;
 type ValueConstraintsType = string[];
 
 export class SelectStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
-    valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
+    valueConstraintsIntersectionReducerDefinition =
+        makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
@@ -56,18 +61,16 @@ export class SelectStringSetting implements CustomSettingImplementation<ValueTyp
             }
 
             return (
-                <div className="flex flex-col gap-1 mt-1">
-                    <Select
-                        filter
-                        options={options}
-                        value={props.value ?? undefined}
-                        onChange={handleChange}
-                        showQuickSelectButtons={true}
-                        disabled={props.isOverridden}
-                        multiple={true}
-                        size={5}
-                    />
-                </div>
+                <Select
+                    filter
+                    options={options}
+                    value={props.value ?? undefined}
+                    onValueChange={handleChange}
+                    showQuickSelectButtons={true}
+                    disabled={props.disabled}
+                    multiple={true}
+                    size={5}
+                />
             );
         };
     }

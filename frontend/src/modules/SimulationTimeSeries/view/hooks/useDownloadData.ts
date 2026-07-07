@@ -1,9 +1,9 @@
 import React from "react";
 
 import { useAtomValue } from "jotai";
-import { toast } from "react-toastify";
 
 import type { ViewContext } from "@framework/ModuleContext";
+import { toastManager } from "@framework/toastManager";
 import { useWebWorkerProxy } from "@lib/hooks/useWebWorker";
 import { createZipFilename, downloadFilesZip } from "@lib/utils/downloadUtils";
 import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
@@ -40,10 +40,7 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
 
     const assembleCsvAndDownload = React.useCallback(
         async function assembleCsvAndDownload() {
-            const toastId = toast.loading(`Preparing Simulation Time Series Download`, {
-                autoClose: false,
-                closeButton: true,
-            });
+            const toastId = toastManager.add({ title: "Preparing Simulation Time Series Download", type: "loading", timeout: 0 });
 
             try {
                 // Map data before sending to worker, as the worker cannot receive functions (like makeEnsembleDisplayName)
@@ -65,12 +62,7 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
                 );
 
                 if (files.length === 0) {
-                    toast.update(toastId, {
-                        render: `No data available for download`,
-                        type: "info",
-                        isLoading: false,
-                        autoClose: 3000,
-                    });
+                    toastManager.update(toastId, { title: "No data available for download", type: "default", timeout: 3000 });
                     return;
                 }
 
@@ -80,15 +72,10 @@ export function useDownloadData(viewContext: ViewContext<Interfaces>): {
                     zipFilename,
                 );
 
-                toast.update(toastId, { render: zipFilename, type: "success", isLoading: false, autoClose: 3000 });
+                toastManager.update(toastId, { title: zipFilename, type: "success", timeout: 3000 });
             } catch (error) {
                 console.error("Error assembling or downloading CSV files:", error);
-                toast.update(toastId, {
-                    render: `Failed Simulation Time Series Download`,
-                    type: "error",
-                    isLoading: false,
-                    autoClose: 5000,
-                });
+                toastManager.update(toastId, { title: "Failed Simulation Time Series Download", type: "error", timeout: 5000 });
             }
         },
         [

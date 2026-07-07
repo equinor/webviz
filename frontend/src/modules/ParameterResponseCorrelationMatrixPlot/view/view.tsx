@@ -35,7 +35,7 @@ const MAX_NUM_PLOTS = 12;
 function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
+            <Warning fontSize="large" className="mb-sm" />
             Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
             .
         </ContentWarning>
@@ -128,15 +128,15 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (receiverResponses.every((response) => !response.channel)) {
                 setContent(
                     <ContentWarning>
-                        <div className="space-y-3 text-sm">
+                        <div className="text-body-sm gap-sm flex flex-col">
                             <p className="font-medium">Data channel required for use.</p>
                             <p>Add a module supporting data channels to the dashboard and connect it to this module.</p>
                             <p>
-                                Modules supporting data channels have an <Input fontSize="small" /> icon on their
-                                toolbar.
+                                Modules supporting data channels have an <Input fontSize="small" className="mx-xs" />{" "}
+                                icon on their toolbar.
                             </p>
                             <p>Drag from this icon to a response below:</p>
-                            <div className="flex gap-2 flex-wrap">
+                            <div className="gap-sm flex flex-wrap items-center justify-center">
                                 <Tag label="Response" />
                                 <Tag label="Response" />
                                 <Tag label="Response" />
@@ -149,7 +149,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (parameterIdents.length === 0) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
+                        <Warning fontSize="large" className="mb-sm" />
                         No parameters selected or available. Please select parameters in the settings pane. If no
                         parameters are available, ensure that the connected ensembles have numeric and varying
                         parameters.
@@ -160,7 +160,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (parameterIdents.length > MAX_NUMBER_OF_PARAMETERS_IN_MATRIX) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
+                        <Warning fontSize="large" className="mb-sm" />
                         {`Too many parameters selected. Please select ${MAX_NUMBER_OF_PARAMETERS_IN_MATRIX} or fewer parameters to display the correlation
                         matrix.`}
                     </ContentWarning>,
@@ -208,7 +208,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
             if (parameterIdents.length === 0) {
                 setContent(
                     <ContentWarning>
-                        <Warning fontSize="large" className="mb-2" />
+                        <Warning fontSize="large" className="mb-sm" />
                         No parameters selected or available. Please select parameters in the settings pane. If
                         parameters are selected but not available, ensure that the connected ensembles have numeric and
                         varying parameters.
@@ -265,7 +265,7 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {content}
         </div>
     );

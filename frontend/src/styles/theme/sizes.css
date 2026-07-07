@@ -1,0 +1,26 @@
+@theme inline {
+    /* Icon sizes */
+    --size-icon-xs: var(--eds-sizing-icon-xs);
+    --size-icon-sm: var(--eds-sizing-icon-sm);
+    --size-icon-md: var(--eds-sizing-icon-md);
+    --size-icon-lg: var(--eds-sizing-icon-lg);
+    --size-icon-xl: var(--eds-sizing-icon-xl);
+    --size-icon-2xl: var(--eds-sizing-icon-2xl);
+    --size-icon-3xl: var(--eds-sizing-icon-3xl);
+    --size-icon-4xl: var(--eds-sizing-icon-4xl);
+    --size-icon-5xl: var(--eds-sizing-icon-5xl);
+    --size-icon-6xl: var(--eds-sizing-icon-6xl);
+
+    /* Selectable sizes */
+    --size-selectable-xs: var(--eds-sizing-selectable-xs);
+    --size-selectable-sm: var(--eds-sizing-selectable-sm);
+    --size-selectable-md: var(--eds-sizing-selectable-md);
+    --size-selectable-lg: var(--eds-sizing-selectable-lg);
+    --size-selectable-xl: var(--eds-sizing-selectable-xl);
+    --size-selectable-2xl: var(--eds-sizing-selectable-2xl);
+
+    /* Strokes */
+    --size-stroke-thin: var(--eds-sizing-stroke-thin);
+    --size-stroke-thick: var(--eds-sizing-stroke-thick);
+    --size-stroke-none: var(--eds-sizing-stroke-none);
+}

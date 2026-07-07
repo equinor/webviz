@@ -1,19 +1,21 @@
 import { useAtomValue } from "jotai";
 
-import type { EnsembleSet } from "@framework/EnsembleSet";
-import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
 import { statisticOptionsAtom, tableTypeAtom } from "../atoms/baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "../atoms/queryAtoms";
+import type { TableColumnsConfig, TableRow } from "../types";
 import {
     createStatisticalTableHeadingsAndRowsFromTablesData,
     createTableHeadingsAndRowsFromTablesData,
 } from "../utils/tableComponentUtils";
 
-export function useTableBuilder(ensembleSet: EnsembleSet): { headings: TableHeading; tableRows: TableRow<any>[] } {
-    let headings: TableHeading = {};
-    let tableRows: TableRow<any>[] = [];
+export function useTableBuilder(): {
+    headings: TableColumnsConfig;
+    tableRows: TableRow<TableColumnsConfig>[];
+} {
+    let headings: TableColumnsConfig = {};
+    let tableRows: TableRow<TableColumnsConfig>[] = [];
 
     const tableType = useAtomValue(tableTypeAtom);
     const statisticOptions = useAtomValue(statisticOptionsAtom);
@@ -23,7 +25,6 @@ export function useTableBuilder(ensembleSet: EnsembleSet): { headings: TableHead
     if (tableType === TableType.PER_REALIZATION) {
         const tableHeadingsAndRows = createTableHeadingsAndRowsFromTablesData(
             perRealizationTableDataResults.tablesData,
-            ensembleSet,
         );
         headings = tableHeadingsAndRows.headings;
         tableRows = tableHeadingsAndRows.rows;
@@ -33,7 +34,6 @@ export function useTableBuilder(ensembleSet: EnsembleSet): { headings: TableHead
         const tableHeadingsAndRows = createStatisticalTableHeadingsAndRowsFromTablesData(
             statisticalTableDataResults.tablesData,
             statisticOptions,
-            ensembleSet,
         );
 
         headings = tableHeadingsAndRows.headings;

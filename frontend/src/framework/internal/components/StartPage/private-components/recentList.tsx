@@ -1,16 +1,18 @@
 import React from "react";
 
-import { Icon, Typography } from "@equinor/eds-core-react";
+import { Icon } from "@equinor/eds-core-react";
 import { folder_open } from "@equinor/eds-icons";
 import { Refresh } from "@mui/icons-material";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { Heading } from "@lib/components/Typography/compositions";
 
 Icon.add({ folder_open });
 
@@ -52,14 +54,14 @@ export function RecentList<TItemType, TQueryData = unknown>(
         if (isFirstTimeFetching) {
             if (itemsQuery.status === "pending") {
                 return (
-                    <span className="text-gray-500 flex gap-2">
-                        <CircularProgress size="extra-small" /> Loading recent items...
+                    <span className="gap-sm text-neutral-subtle flex items-center">
+                        <CircularProgress size={16} /> Loading recent items...
                     </span>
                 );
             }
 
             if (itemsQuery.status === "error") {
-                return <span className="text-red-800">Could not fetch recent items...</span>;
+                return <span className="text-warning-subtle">Could not fetch recent items...</span>;
             }
         }
 
@@ -67,13 +69,19 @@ export function RecentList<TItemType, TQueryData = unknown>(
             const transformedData = props.transformData(itemsQuery.data);
 
             if (transformedData.length === 0) {
-                return <span className="text-gray-400 italic h-full flex flex-col justify-center">None found.</span>;
+                return (
+                    <span className="text-neutral-subtle flex h-full flex-col justify-center italic">None found.</span>
+                );
             }
             return (
                 <>
-                    <ul>
+                    <ul className="min-w-0">
                         {transformedData.map(function renderListItem(item) {
-                            return <li key={props.makeItemKey(item)}>{props.renderItem(item)}</li>;
+                            return (
+                                <li className="min-w-0" key={props.makeItemKey(item)}>
+                                    {props.renderItem(item)}
+                                </li>
+                            );
                         })}
                     </ul>
                 </>
@@ -82,31 +90,27 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="flex gap-1 flex-col">
-            <div className="flex items-center gap-2">
-                <Typography variant="h3" className="grow">
+        <section className="gap-xs flex w-96 min-w-64 flex-col">
+            <div className="gap-xs flex items-center">
+                <Heading as="h4" layoutClassName="grow">
                     {props.title}
-                </Typography>
-                <Tooltip title="Refresh" placement="bottom" enterDelay="medium">
-                    <DenseIconButton onClick={refresh}>
-                        {isRefreshing ? (
-                            <CircularProgress size="medium-small" color="fill-indigo-800" />
-                        ) : (
-                            <Refresh fontSize="small" className="text-indigo-800" />
-                        )}
-                    </DenseIconButton>
+                </Heading>
+                <Tooltip content="Refresh" side="bottom" delay="medium">
+                    <Button size="small" variant="ghost" iconOnly onClick={refresh}>
+                        {isRefreshing ? <CircularProgress size={16} /> : <Refresh fontSize="small" />}
+                    </Button>
                 </Tooltip>
-                <Tooltip title="Show all" placement="bottom" enterDelay="medium">
-                    <DenseIconButton onClick={props.onDialogIconClick}>
-                        <Icon name="folder_open" className="text-indigo-800 h-5" />
-                    </DenseIconButton>
+                <Tooltip content="Show all" side="bottom" delay="medium">
+                    <Button size="small" variant="ghost" iconOnly onClick={props.onDialogIconClick}>
+                        <Icon name="folder_open" />
+                    </Button>
                 </Tooltip>
             </div>
-            <span className="text-gray-500 text-xs">
+            <Typography size="sm" family="body" tone="neutral" variant="subtle">
                 Last updated:{" "}
                 {lastUpdatedMs ? <TimeAgo datetimeMs={lastUpdatedMs} updateIntervalMs={10000} /> : "Never"}
-            </span>
-            <div className="flex flex-col gap-2 mt-2 min-h-16">{makeContent()}</div>
+            </Typography>
+            <div className="mt-xs gap-xs min-h-16 min-w-0">{makeContent()}</div>
         </section>
     );
 }

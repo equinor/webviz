@@ -14,6 +14,7 @@ export const MAX_CONTENT_SIZE_BYTES = 1.5 * 1024 * 1024; // 1.5MB
 
 // Maximum lengths for user input
 export const MAX_TITLE_LENGTH = 50;
+export const MIN_TITLE_LENGTH = 10;
 export const MAX_DESCRIPTION_LENGTH = 250;
 
 // Nano ID lengths for sessions and snapshots

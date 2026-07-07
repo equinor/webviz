@@ -1,7 +1,7 @@
+import { EnsemblesLoadingErrorInfo } from "@framework/components/EnsemblesLoadingErrorInfo/ensemblesLoadingErrorInfo";
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { EnsemblesLoadingErrorInfoDialog } from "@framework/internal/components/EnsemblesLoadingErrorInfoDialog";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
+import { AlertDialog } from "@lib/components/AlertDialog/alertDialog";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
@@ -29,23 +29,16 @@ export function InitialEnsemblesLoadingErrorInfoDialog(props: InitialEnsemblesLo
     );
 
     return (
-        <EnsemblesLoadingErrorInfoDialog
+        <AlertDialog
             open={isOpen}
-            onClose={() => setIsOpen(false)}
+            onOpenChange={setIsOpen}
             title="Error loading some ensembles - close to continue"
-            description={
-                <div>
-                    Errors occurred while loading and setting up some of the ensembles for this{" "}
-                    {activeSession.isSnapshot() ? "snapshot" : "session"}. They will be excluded. Review the messages
-                    below and close the dialog to continue.
-                </div>
-            }
-            ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap}
-            actions={
-                <Button onClick={() => setIsOpen(false)} color="primary">
-                    Close
-                </Button>
-            }
-        />
+            primaryAction={{ label: "Close", onClick: () => setIsOpen(false), tone: "accent" }}
+        >
+            Errors occurred while loading and setting up some of the ensembles for this{" "}
+            {activeSession.isSnapshot() ? "snapshot" : "session"}. They will be excluded. Review the messages below and
+            close the dialog to continue.
+            <EnsemblesLoadingErrorInfo ensembleLoadingErrorInfoMap={ensembleLoadingErrorInfoMap} />
+        </AlertDialog>
     );
 }

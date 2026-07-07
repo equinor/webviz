@@ -2,7 +2,7 @@ import type React from "react";
 
 import { Close } from "@mui/icons-material";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { ReadoutList } from "../../Readout/ReadoutList";
@@ -24,7 +24,7 @@ export function PositionedReadoutBox(props: PositionedReadoutBoxProps): React.Re
     if (!visible) return null;
     return (
         <div
-            className="z-9999 absolute bg-white shadow-md border border-gray-200 rounded-sm transition-opacity px-3 py-2 select-text min-w-56"
+            className="bg-surface border-neutral-subtle px-xs py-2xs absolute z-9999 rounded border shadow-md transition-opacity select-text"
             style={{
                 bottom: position.y - 2,
                 right: position.x - 2,
@@ -48,14 +48,18 @@ function TooltipContent(props: {
             })}
             readouts={props.readouts}
             firstTitleAdornment={
-                <DenseIconButton
-                    className={resolveClassNames("text-sm -mr-2 ml-auto", {
+                <Button
+                    layoutClassName={resolveClassNames("-mr-2xs text-body-sm ml-auto", {
                         invisible: !props.pinned,
                     })}
                     onClick={props.onClose}
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
+                    iconOnly
                 >
                     <Close fontSize="inherit" />
-                </DenseIconButton>
+                </Button>
             }
         />
     );

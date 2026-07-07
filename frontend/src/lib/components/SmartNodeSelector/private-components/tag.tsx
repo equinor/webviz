@@ -3,7 +3,7 @@ import React from "react";
 import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-material";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithFont } from "@lib/utils/textSize";
+import { getTextWidthWithFont, measureTextWidthWithElement } from "@lib/utils/textSize";
 
 import type { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
@@ -27,6 +27,7 @@ type TagProps = {
     updateSelectedTagsAndNodes: () => void;
     shake: boolean;
     maxNumSelectedNodes: number;
+    disabled?: boolean;
 };
 
 /**
@@ -57,21 +58,12 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private innerTagClasses(invalid = false, duplicate = false): string {
-        const { treeNodeSelection } = this.props;
         let ret = {
-            "text-sm flex flex-wrap rounded-sm justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-5 bg-no-repeat":
-                true,
+            "text-body-sm flex flex-wrap rounded justify-left items-center min-w-0 border-2 border-transparent whitespace-pre-wrap z-elevated": true,
         };
         if (this.addAdditionalClasses(invalid)) {
-            const icons = treeNodeSelection.icons();
             ret = Object.assign({}, ret, {
-                [invalid
-                    ? "bg-red-200"
-                    : duplicate
-                      ? "bg-yellow-200"
-                      : icons.length > 1
-                        ? "border-transparent bg-slate-50"
-                        : "border-transparent bg-slate-50"]: true,
+                [invalid ? "bg-danger-canvas" : duplicate ? "bg-warning-canvas" : "border-transparent"]: true,
             });
         }
         return resolveClassNames(ret);
@@ -79,18 +71,19 @@ export class Tag extends React.Component<TagProps> {
 
     private outerTagClasses(invalid: boolean, duplicate: boolean, frameless: boolean): string {
         return resolveClassNames(
-            "flex flex-wrap rounded-sm justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-5",
+            "flex flex-wrap rounded justify-left items-center min-w-0 relative whitespace-pre-wrap",
             {
-                "border-slate-400 bg-slate-50 SmartNodeSelector__Tag": this.displayAsTag() || frameless,
+                SmartNodeSelector__Tag: this.displayAsTag() || frameless,
+                "bg-neutral": this.displayAsTag(),
                 "border-transparent bg-transparent": !this.displayAsTag() && !frameless,
                 animate__animated: this.props.shake,
                 animate__headShake: this.props.shake,
                 [!this.addAdditionalClasses(invalid)
                     ? ""
                     : invalid
-                      ? "border-red-600! bg-red-200!"
+                      ? "bg-danger-canvas!"
                       : duplicate
-                        ? "border-yellow-600! bg-yellow-200!"
+                        ? "bg-warning-canvas!"
                         : ""]: true,
             },
         );
@@ -121,11 +114,11 @@ export class Tag extends React.Component<TagProps> {
                 <span
                     key={"TagMatchesCounter_" + index}
                     className={resolveClassNames(
-                        "items-center text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-5 flex outline-hidden relative text-center text-xs leading-none",
+                        "mr-2xs px-3xs text-accent-strong-on-emphasis relative flex h-5 min-w-5 items-center justify-center rounded-full text-center text-xs leading-none outline-hidden",
                         {
-                            "bg-blue-700":
+                            "bg-info-strong text-info-strong-on-emphasis":
                                 matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
-                            "bg-amber-600":
+                            "bg-warning-strong text-warning-strong-on-emphasis":
                                 matches > this.props.maxNumSelectedNodes && this.props.maxNumSelectedNodes !== -1,
                         },
                     )}
@@ -155,12 +148,15 @@ export class Tag extends React.Component<TagProps> {
                 position = 0;
             }
             return (
-                <div key={"TagBrowseButton_" + index} className="w-4 mr-1 h-full flex flex-col">
+                <div
+                    key={"TagBrowseButton_" + index}
+                    className="text-body-xs mr-3xs border-r-neutral flex h-full max-h-6 w-4 flex-col border-r"
+                >
                     <button
                         key={"TagPreviousButton_" + index}
                         className={resolveClassNames(
-                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-hidden p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
-                            { "hover:bg-cyan-500": position !== 0 },
+                            "bg-accent text-body-2xs m-0 flex h-1/2 w-full cursor-pointer appearance-none flex-col items-center justify-center p-0 outline-hidden disabled:cursor-default disabled:opacity-30",
+                            { "hover:bg-accent-hover": position !== 0 },
                         )}
                         disabled={position === 0}
                         title="Previous option"
@@ -174,13 +170,13 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ExpandLess fontSize="inherit" className="text-white" />
+                        <ExpandLess fontSize="inherit" />
                     </button>
                     <button
                         key={"TagNextButton_" + index}
                         className={resolveClassNames(
-                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-hidden p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
-                            { "hover:bg-cyan-500": position !== subgroups.length - 1 },
+                            "bg-accent text-body-2xs m-0 flex h-1/2 w-full cursor-pointer appearance-none flex-col items-center justify-center p-0 outline-hidden disabled:cursor-default disabled:opacity-30",
+                            { "hover:bg-accent-hover": position !== subgroups.length - 1 },
                         )}
                         disabled={position === subgroups.length - 1}
                         title="Next option"
@@ -194,7 +190,7 @@ export class Tag extends React.Component<TagProps> {
                             e.stopPropagation();
                         }}
                     >
-                        <ExpandMore fontSize="inherit" className="text-white" />
+                        <ExpandMore fontSize="inherit" />
                     </button>
                 </div>
             );
@@ -272,48 +268,29 @@ export class Tag extends React.Component<TagProps> {
     }
 
     private createFocusOverlay(treeNodeSelection: TreeNodeSelection): React.ReactNode | null {
-        const inputElement = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>)
-            .current as HTMLInputElement;
-        if (inputElement) {
-            const inputContainerBoundingRect = (inputElement.parentElement as HTMLElement).getBoundingClientRect();
-            const inputBoundingRect = inputElement.getBoundingClientRect();
-            let left = inputBoundingRect.left - inputContainerBoundingRect.left;
+        const value = treeNodeSelection.displayText();
+        if (!value) return null;
 
-            const value = treeNodeSelection.displayText();
+        const inputElement = (treeNodeSelection.getRef() as React.RefObject<HTMLInputElement>).current;
+        if (!inputElement) return null;
 
-            let width = this.calculateTextWidth(value, 0, 0);
-            let distanceLeft = 0;
-            const splitByDelimiter = value.split(treeNodeSelection.getDelimiter());
-            if (splitByDelimiter.length > 1) {
-                const currentText =
-                    splitByDelimiter[treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes()];
-                width = this.calculateTextWidth(currentText, 0, 0);
-                const splitByCurrentText = [
-                    ...splitByDelimiter.filter(
-                        (_, index) => index < treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes(),
-                    ),
-                    "",
-                ].join(treeNodeSelection.getDelimiter());
+        const delimiter = treeNodeSelection.getDelimiter();
+        const segments = value.split(delimiter);
+        const focusedIdx =
+            segments.length > 1 ? treeNodeSelection.getFocusedLevel() - treeNodeSelection.getNumMetaNodes() : 0;
 
-                if (splitByCurrentText[0] !== undefined) {
-                    distanceLeft = this.calculateTextWidth(splitByCurrentText, 0, 0);
-                }
-            }
+        const prefix = segments.slice(0, focusedIdx).join(delimiter);
+        const focused = segments[focusedIdx] ?? "";
 
-            left += distanceLeft;
+        const left = measureTextWidthWithElement(prefix ? prefix + delimiter : "", inputElement);
+        const width = measureTextWidthWithElement(focused, inputElement);
 
-            return (
-                <div
-                    className="border-b border-b-blue-600 border-dashed absolute h-0.5 bottom-0"
-                    style={{
-                        left: left + "px",
-                        width: width + "px",
-                    }}
-                ></div>
-            );
-        } else {
-            return null;
-        }
+        return (
+            <div
+                className="absolute bottom-0 h-0.5 border-b border-dashed border-b-blue-600"
+                style={{ left: `${left}px`, width: `${width}px` }}
+            />
+        );
     }
 
     private calculateInputWidth(): string {
@@ -334,12 +311,13 @@ export class Tag extends React.Component<TagProps> {
         const style: { [key: string]: string } = {
             borderWidth: "1px",
             borderStyle: "solid",
+            borderColor: "transparent",
         };
 
         if (colors.length >= 2) {
             style["background"] = `linear-gradient(to left, ${colors.join(", ")}) border-box`;
             style["borderColor"] = "transparent";
-        } else {
+        } else if (colors.length === 1) {
             style["borderColor"] = colors[0];
         }
 
@@ -374,6 +352,7 @@ export class Tag extends React.Component<TagProps> {
             inputSelect,
             inputBlur,
             removeTag,
+            disabled,
         } = this.props;
 
         const displayText = treeNodeSelection.displayText();
@@ -395,11 +374,11 @@ export class Tag extends React.Component<TagProps> {
                 onMouseLeave={(): void => this.setState({ hovered: false })}
                 onClick={(e): void => this.handleClickEvent(e)}
             >
-                {this.displayAsTag() && !frameless && (
+                {this.displayAsTag() && !frameless && !disabled && (
                     <button
                         type="button"
                         key={"TagRemoveButton_" + index}
-                        className="absolute -right-2 -top-2 bg-cyan-600 border border-white rounded-full cursor-pointer w-4 h-4 p-0 flex items-center justify-center hover:bg-cyan-500 z-8 text-sm"
+                        className="z-overlay bg-accent selectable text-body-xs absolute -top-2 -right-2.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full"
                         title="Remove"
                         onClick={(e): void => removeTag(e, index)}
                     >
@@ -407,35 +386,26 @@ export class Tag extends React.Component<TagProps> {
                     </button>
                 )}
                 {this.createBrowseButtons(treeNodeSelection, index)}
-                <div
-                    key={"InnerTag_" + index}
-                    className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}
-                    style={
-                        (valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1
-                            ? {
-                                  backgroundImage: "url(" + treeNodeSelection.icons()[0] + ")",
-                                  backgroundRepeat: "no-repeat",
-                                  backgroundPosition: "left center",
-                                  backgroundSize: "16px 16px",
-                                  paddingLeft: 24,
-                              }
-                            : {}
-                    }
-                >
+                <div key={"InnerTag_" + index} className={this.innerTagClasses(!valid && !currentTag, isDuplicate)}>
                     {this.addAdditionalClasses(!valid) && !valid && !currentTag && (
-                        <Error fontSize="small" className="mr-2" />
+                        <Error fontSize="small" className="mr-3xs" />
                     )}
                     {this.addAdditionalClasses(!valid) && valid && isDuplicate && (
-                        <Warning fontSize="small" className="mr-2" />
+                        <Warning fontSize="small" className="mr-3xs" />
                     )}
                     {this.addAdditionalClasses(!valid) &&
                         (valid || currentTag) &&
                         !isDuplicate &&
-                        treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-2" />}
+                        treeNodeSelection.icons().length > 1 && <Help fontSize="small" className="mr-3xs" />}
+                    {(valid || currentTag) && !isDuplicate && treeNodeSelection.icons().length === 1 && (
+                        <span className="mr-xs flex h-4 w-4 shrink-0 items-center justify-center">
+                            {treeNodeSelection.icons()[0]}
+                        </span>
+                    )}
                     {this.createMatchesCounter(treeNodeSelection, index)}
-                    <div className="flex whitespace-nowrap relative">
+                    <div className="relative flex whitespace-nowrap">
                         <input
-                            className="border-0 bg-transparent outline-hidden p-0 w-12 inline-block text-sm"
+                            className="text-body-sm inline-block w-12 border-0 bg-transparent p-0 outline-hidden"
                             spellCheck="false"
                             key={"TagInput_" + index}
                             type="text"
@@ -445,6 +415,7 @@ export class Tag extends React.Component<TagProps> {
                                 width: this.calculateInputWidth(),
                             }}
                             ref={treeNodeSelection.getRef()}
+                            disabled={disabled}
                             onInput={(e): void => this.handleInput(e)}
                             onClick={(e): void => e.stopPropagation()}
                             onChange={(e): void => inputChange(e)}
@@ -460,7 +431,7 @@ export class Tag extends React.Component<TagProps> {
                     {treeNodeSelection.isSelected() && (
                         <div
                             key={"TagSelected_" + index}
-                            className="bg-blue-500 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded-sm"
+                            className="z-elevated bg-accent-active absolute top-0 left-0 block h-full w-full rounded-sm opacity-60"
                         ></div>
                     )}
                 </div>

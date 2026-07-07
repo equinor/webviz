@@ -6,7 +6,7 @@ import { useAtom } from "jotai";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Setting } from "@lib/components/Setting";
 import { usePersistedDataProviderManager } from "@modules/_shared/DataProviderFramework/hooks/usePersistedDataProviderManager";
 
 import { dataProviderManagerAtom, dataProviderStateAtom } from "./atoms/baseAtoms";
@@ -50,10 +50,16 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     }
 
     return (
-        <div className="h-full flex flex-col gap-1">
-            <CollapsibleGroup title="Field" expanded>
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier.value} />
-            </CollapsibleGroup>
+        <div className="gap-y-xs px-xs py-xs flex h-full flex-col">
+            <Setting.Panel>
+                <Setting.Field label="Field">
+                    <FieldDropdown
+                        ensembleSet={ensembleSet}
+                        onChange={handleFieldChange}
+                        value={fieldIdentifier.value}
+                    />
+                </Setting.Field>
+            </Setting.Panel>
             {dataProviderManager && (
                 <DataProviderManagerWrapper
                     dataProviderManager={dataProviderManager}

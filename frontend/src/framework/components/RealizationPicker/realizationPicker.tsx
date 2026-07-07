@@ -1,112 +1,54 @@
 import React from "react";
 
-import { inRange, isEqual, range } from "lodash-es";
+import type { BaseUIEvent } from "@base-ui/react";
+import { Close } from "@mui/icons-material";
+import { Key } from "ts-key-enum";
 
-import { missingNumbers } from "@framework/utils/numberUtils";
-import type { BaseComponentProps } from "@lib/components/BaseComponent";
-import { BaseComponent } from "@lib/components/BaseComponent";
-import { TagInput } from "@lib/components/TagInput/tagInput";
-import { pluralize } from "@lib/utils/strings";
+import { Button } from "@lib/components/Button";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
+import { Direction, useListFocus } from "@lib/hooks/useListFocus";
+import { useOptInControlledValue } from "@lib/hooks/useOptInControlledValue";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { RealizationNumberLimits } from "./_utils";
 import { realizationSelectionToText, sanitizeRangeInput, textToRealizationSelection } from "./_utils";
+import { AutoFitInput } from "./autoFitInput";
 import { RealizationRangeTag } from "./RealizationRangeTag";
 
-function getRangeOfTag(rangeTag: string): [start: number, end: number] {
-    const [start, possibleEnd] = rangeTag.split("-");
-
-    return [parseFloat(start), parseFloat(possibleEnd ?? start)];
-}
-
-function calcNumberOfUniqueRealizations(selectedRangeTags: readonly string[], limits: RealizationNumberLimits): number {
-    const uniqueRealizations = new Set<number>();
-    for (const rangeTag of selectedRangeTags) {
-        let [start, end] = getRangeOfTag(rangeTag);
-
-        if (!inRange(start, limits.min, limits.max + 1) && !inRange(end, limits.min, limits.max)) continue;
-
-        // Clamp range computations to only worry about valid numbers
-        start = Math.max(start, limits.min);
-        end = Math.min(end, limits.max);
-
-        for (const realization of range(start, end + 1)) {
-            if (!limits.invalid.has(realization)) {
-                uniqueRealizations.add(realization);
-            }
-        }
-    }
-
-    return uniqueRealizations.size;
-}
-
 export type RealizationPickerProps = {
-    selectedRangeTags?: readonly string[];
-    initialRangeTags?: readonly string[];
-    validRealizations?: readonly number[];
+    disabled?: boolean;
+    rangeValues?: readonly string[];
+    initialRangeValues?: readonly string[];
     debounceTimeMs?: number;
-    onChange?: (selectedRangeTags: string[]) => void;
-} & BaseComponentProps;
-function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
-    const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    realizationNumberLimits: RealizationNumberLimits;
+    onValueChange?: (selectedRangeTags: readonly string[]) => void;
+};
 
+function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLInputElement>) {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    React.useImperativeHandle(ref, () => inputRef.current!);
+    const rootHasFocusRef = React.useRef(false);
+
+    const [selectedIndices, setSelectedIndices] = React.useState<number[]>([]);
     const [currentInputValue, setCurrentInputValue] = React.useState("");
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
-        props.initialRangeTags ? [...props.initialRangeTags] : [],
-    );
-    const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
-        props.selectedRangeTags ? [...props.selectedRangeTags] : [],
-    );
 
-    const realizationNumberLimits = React.useMemo<RealizationNumberLimits>(() => {
-        const validRealizations = props.validRealizations ?? [];
-        return {
-            min: Math.min(...validRealizations),
-            max: Math.max(...validRealizations),
-            invalid: missingNumbers(validRealizations),
-        };
-    }, [props.validRealizations]);
-
-    // Synchronize prop and states
-    if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
-        setPrevSelectedRangeTags([...props.selectedRangeTags]);
-        setSelectedRangeTags([...props.selectedRangeTags]);
-    }
-
-    const numSelectedRealizations = React.useMemo(
-        () => calcNumberOfUniqueRealizations(selectedRangeTags, realizationNumberLimits),
-        [selectedRangeTags, realizationNumberLimits],
+    const [settledRangeValues, setRangeValues] = useOptInControlledValue<readonly string[]>(
+        props.initialRangeValues ?? [],
+        props.rangeValues,
+        props.onValueChange,
     );
 
-    function emitOnChange(newRangeTags: string[]) {
-        if (!props.onChange) return;
+    const [rangeValues, setRangeValuesDebounced] = useDebouncedOnChange(
+        settledRangeValues,
+        setRangeValues,
+        props.debounceTimeMs,
+    );
 
-        if (debounceTimeout.current) {
-            clearTimeout(debounceTimeout.current);
-        }
-
-        debounceTimeout.current = setTimeout(() => {
-            props.onChange!(newRangeTags);
-        }, props.debounceTimeMs || 0);
-    }
-
-    function handlePaste(event: React.ClipboardEvent) {
-        event.preventDefault();
-        const pasteText = event.clipboardData.getData("text");
-        const parsedSelections = textToRealizationSelection(pasteText, realizationNumberLimits);
-
-        if (parsedSelections) {
-            const newRangeTags = [...selectedRangeTags, ...parsedSelections];
-            setSelectedRangeTags(newRangeTags);
-            emitOnChange(newRangeTags);
-        }
-    }
-
-    async function handleCopyTags(selectedRangeTags: string[]) {
-        const stringifiedSelections = realizationSelectionToText(selectedRangeTags);
-        if (stringifiedSelections) {
-            await navigator.clipboard.writeText(stringifiedSelections);
-        }
-    }
+    const listFocus = useListFocus(rangeValues.length, {
+        onFocusChange(index) {
+            if (index === -1 && rootHasFocusRef.current) inputRef.current?.focus();
+        },
+    });
 
     function handleInputChange(newValue: string) {
         const sanitizedValue = sanitizeRangeInput(newValue);
@@ -115,31 +57,200 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
         }
     }
 
-    function handleTagsChange(newRangeTags: string[]) {
-        setSelectedRangeTags(newRangeTags);
-        emitOnChange(newRangeTags);
+    function updateTags(newRangeTags: string[]) {
+        setRangeValuesDebounced(newRangeTags);
+    }
+
+    function handleInputKeyDown(evt: BaseUIEvent<React.KeyboardEvent<Element>>) {
+        if (evt.defaultPrevented) return;
+        if (!inputRef.current) return;
+
+        if (currentInputValue && [Key.Enter, Key.Tab, ","].includes(evt.key)) {
+            evt.preventDefault();
+            addNewRange(currentInputValue);
+            setCurrentInputValue("");
+        } else if (evt.key === Key.Backspace) {
+            if (selectedIndices.length) {
+                removeSelectedValues();
+            } else if (!currentInputValue && rangeValues.length) {
+                evt.preventDefault();
+
+                const newRanges = [...rangeValues];
+                const [removedRange] = newRanges.splice(-1, 1);
+
+                setCurrentInputValue(removedRange);
+                updateTags(newRanges);
+            }
+        }
+    }
+
+    function addNewRange(newRange: string) {
+        updateTags([...rangeValues, newRange]);
+    }
+
+    function changeRangeAtIndex(index: number, newValue: string) {
+        const newRanges = [...rangeValues];
+        newRanges[index] = newValue;
+        updateTags(newRanges);
+    }
+
+    function removeRangeAtIndex(index: number) {
+        const newRanges = [...rangeValues];
+        newRanges.splice(index, 1);
+        updateTags(newRanges);
+        inputRef.current?.focus();
+    }
+
+    function resetSelect() {
+        listFocus.clearFocus();
+        setSelectedIndices([]);
+    }
+
+    function removeSelectedValues() {
+        const newTags = rangeValues.filter((t, index) => !selectedIndices.includes(index));
+        updateTags(newTags);
+        resetSelect();
+    }
+
+    function onRootBlur(evt: React.FocusEvent) {
+        if (!evt.currentTarget.contains(evt.relatedTarget)) {
+            rootHasFocusRef.current = false;
+            resetSelect();
+        }
+    }
+
+    function moveFocusAndSelect(direction: Direction, isSelecting?: boolean) {
+        const currentFocusedIndex = listFocus.focusedIndex;
+        const atLastSelectable = currentFocusedIndex === rangeValues.length - 1;
+
+        // The input value is focusable, but you should not be allowed to move to it's index while selecting
+        if (!isSelecting && atLastSelectable && direction === Direction.Forwards) {
+            resetSelect();
+            return;
+        }
+
+        const nextIndex = listFocus.moveFocus(direction);
+
+        if (nextIndex === null) {
+            return;
+        }
+
+        if (isSelecting) {
+            inputRef.current?.focus();
+            // ! Input will update the focus index when focused, so we need to revert it back
+            listFocus.setFocusedIndex(nextIndex);
+
+            if (selectedIndices.includes(nextIndex) && selectedIndices.includes(currentFocusedIndex)) {
+                setSelectedIndices((prev) => prev.filter((s) => s !== currentFocusedIndex));
+            } else {
+                setSelectedIndices((prev) => [...prev, nextIndex]);
+            }
+        } else {
+            setSelectedIndices([]);
+        }
+    }
+
+    function handlePaste(event: React.ClipboardEvent) {
+        event.preventDefault();
+        const pasteText = event.clipboardData.getData("text");
+        const parsedSelections = textToRealizationSelection(pasteText, props.realizationNumberLimits);
+
+        if (parsedSelections) {
+            const newRangeTags = [...rangeValues, ...parsedSelections];
+            updateTags(newRangeTags);
+        }
+    }
+
+    async function handleCut(evt: React.ClipboardEvent) {
+        await handleCopy(evt);
+        removeSelectedValues();
+    }
+
+    async function handleCopy(evt: React.ClipboardEvent) {
+        if (!selectedIndices.length) return;
+
+        evt.stopPropagation();
+        evt.preventDefault();
+        const selectedTags = selectedIndices.map((i) => rangeValues[i]);
+
+        const stringifiedSelections = realizationSelectionToText(selectedTags);
+        if (stringifiedSelections) {
+            await navigator.clipboard.writeText(stringifiedSelections);
+        }
     }
 
     return (
-        <BaseComponent ref={ref} disabled={props.disabled}>
-            <TagInput
-                tags={selectedRangeTags}
-                onTagsChange={handleTagsChange}
-                onCopyTags={handleCopyTags}
-                inputProps={{
-                    value: currentInputValue,
-                    className: "!py-1.5",
-                    onValueChange: handleInputChange,
-                    onPaste: handlePaste,
-                }}
-                renderTag={(tagProps) => (
-                    <RealizationRangeTag realizationNumberLimits={realizationNumberLimits} {...tagProps} />
+        <div
+            className="form-element gap-x-xs px-xs py-xs flex cursor-text items-center"
+            data-disabled={props.disabled ? "" : undefined}
+        >
+            <ul
+                className={resolveClassNames(
+                    "gap-3xs flex min-w-0 grow flex-wrap items-center",
+                    // Equivalent to SELECTABLE_SIZES_CLASSNAMES["small"],
+                    "min-h-selectable-sm text-body-sm",
                 )}
-            />
-            <div className="text-sm text-gray-500 text-right mt-2">
-                {pluralize("realization", numSelectedRealizations)} selected
-            </div>
-        </BaseComponent>
+                onFocus={() => (rootHasFocusRef.current = true)}
+                onBlur={onRootBlur}
+                onKeyDown={(evt) => {
+                    const direction = {
+                        [Key.ArrowLeft]: Direction.Backwards,
+                        [Key.ArrowRight]: Direction.Forwards,
+                    }[evt.key];
+
+                    if (direction != null) {
+                        evt.preventDefault();
+                        moveFocusAndSelect(direction, evt.shiftKey);
+                    }
+                }}
+            >
+                {/* ! We place the input first, and then move it to the end with CSS. This is to allow the Field component automatically associate with it, as well as making it get focused first when tabbing into the picker. */}
+                <li className="py-4xs order-1 grow align-middle">
+                    <AutoFitInput
+                        ref={inputRef}
+                        disabled={props.disabled}
+                        value={currentInputValue}
+                        wrapperClassName="h-full"
+                        type="text"
+                        placeholder={!rangeValues.length ? "Enter a realization number or range..." : ""}
+                        minCharacterWidth={5}
+                        onFocus={() => listFocus.setFocusedIndex(-1)}
+                        onValueChange={handleInputChange}
+                        onKeyDown={handleInputKeyDown}
+                        onCut={handleCut}
+                        onCopy={handleCopy}
+                        onPaste={handlePaste}
+                    />
+                </li>
+
+                {rangeValues.map((rangeValue, index) => (
+                    <RealizationRangeTag
+                        key={`${rangeValue}__${index}`}
+                        value={rangeValue}
+                        disabled={props.disabled}
+                        selected={selectedIndices.includes(index)}
+                        focusMovementDirection={listFocus.direction}
+                        realizationNumberLimits={props.realizationNumberLimits}
+                        focused={index === listFocus.focusedIndex}
+                        onFocus={() => listFocus.focusItem(index)}
+                        onMoveFocus={(direction) => moveFocusAndSelect(direction)}
+                        onRemove={() => removeRangeAtIndex(index)}
+                        onChange={(newValue) => changeRangeAtIndex(index, newValue)}
+                    />
+                ))}
+            </ul>
+
+            <Button
+                size="small"
+                variant="ghost"
+                iconOnly
+                layoutClassName="h-min"
+                disabled={props.disabled}
+                onClick={() => setRangeValuesDebounced([])}
+            >
+                <Close />
+            </Button>
+        </div>
     );
 }
 

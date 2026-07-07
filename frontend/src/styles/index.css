@@ -1,0 +1,47 @@
+/* Fonts — must come before tailwindcss import */
+@import "@fontsource-variable/inter/wght.css";
+
+/* Importing additional animations. Imported first, so potential name conflicts prioritizes tailwind  */
+/* @import "animate.css/animate.css"; */
+
+@import "tailwindcss";
+@import "@equinor/eds-tokens/css/variables.css";
+
+/* Theme (tokens) */
+@import "./theme/foundation.css";
+@import "./theme/typography.css";
+@import "./theme/shadows.css";
+@import "./theme/sizes.css";
+@import "./theme/animations.css";
+
+/* Generated utilities */
+@import "./generated/colors.css";
+@import "./generated/spacing.css";
+@import "./generated/sizing.css";
+@import "./generated/position.css";
+
+/* Utilities */
+@import "./utilities/focusable.css";
+@import "./utilities/forms.css";
+@import "./utilities/selectable.css";
+@import "./utilities/sizes.css";
+@import "./utilities/text.css";
+@import "./utilities/z-index.css";
+
+/* Components */
+@import "./components/dialog.css";
+@import "./components/tabs.css";
+@import "./components/toast.css";
+@import "./components/arrow.css";
+@import "./components/menu.css";
+/* Temporary override for Plotly.js, to be removed once we migrate to echarts */
+@import "./components/plot.css";
+@import "./components/setting-wrapper.css";
+
+/* Base styles */
+@import "./base/app.css";
+@import "./base/scrollbar.css";
+
+/* Overrides */
+@import "./overrides/eds-date-range-picker.css";
+@import "./overrides/group-tree-plot.css";

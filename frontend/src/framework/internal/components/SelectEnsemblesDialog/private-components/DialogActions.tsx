@@ -9,29 +9,26 @@ export interface DialogActionsProps {
     isLoading: boolean;
     disableDiscard: boolean;
     disableApply: boolean;
-    hasDuplicatedDeltaEnsembles: boolean;
     onDiscard: () => void;
-    onApply: () => void;
 }
 
 export const DialogActions: React.FC<DialogActionsProps> = (props: DialogActionsProps) => {
     const makeApplyButtonStartIcon = () => {
         if (props.isLoading) {
-            return <CircularProgress size="small" />;
+            return <CircularProgress size={16} />;
         }
         return <Check fontSize="small" />;
     };
 
     return (
-        <div className="flex gap-4">
-            <Button onClick={props.onDiscard} color="danger" disabled={props.disableDiscard}>
+        <div className="gap-x-xs flex">
+            <Button onClick={props.onDiscard} tone="danger" variant="ghost" disabled={props.disableDiscard}>
                 Discard changes
             </Button>
-            <div title={props.hasDuplicatedDeltaEnsembles ? "Duplicate Delta Ensembles (marked blue)" : ""}>
-                <Button onClick={props.onApply} disabled={props.disableApply} startIcon={makeApplyButtonStartIcon()}>
-                    {props.isLoading ? "Loading ensembles..." : "Apply"}
-                </Button>
-            </div>
+            <Button type="submit" disabled={props.disableApply}>
+                {makeApplyButtonStartIcon()}
+                {props.isLoading ? "Loading ensembles..." : "Apply"}
+            </Button>
         </div>
     );
 };

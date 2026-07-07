@@ -1,0 +1,7 @@
+g.node text {
+    fill: var(--eds-color-text-neutral-strong);
+}
+
+g.node circle.grouptree__node {
+    fill: var(--eds-color-bg-surface);
+}

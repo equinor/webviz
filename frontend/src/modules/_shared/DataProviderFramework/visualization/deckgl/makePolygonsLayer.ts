@@ -7,7 +7,6 @@ import type {
 } from "../../dataProviders/implementations/RealizationPolygonsProvider";
 import { Setting } from "../../settings/settingsDefinitions";
 
-import type { PolygonVisualizationSettings } from "./polygonUtils";
 
 export function makePolygonsLayer({
     id,
@@ -22,23 +21,9 @@ export function makePolygonsLayer({
 
     const visualizationSettings = getSetting(Setting.POLYGON_VISUALIZATION);
 
-    // Convert the setting to the layer format
-    const layerVisualizationSettings: PolygonVisualizationSettings | null = visualizationSettings
-        ? {
-              color: visualizationSettings.color,
-              lineThickness: visualizationSettings.lineThickness,
-              lineOpacity: visualizationSettings.lineOpacity,
-              fill: visualizationSettings.fill,
-              fillOpacity: visualizationSettings.fillOpacity,
-              showLabels: visualizationSettings.showLabels,
-              labelPosition: visualizationSettings.labelPosition,
-              labelColor: visualizationSettings.labelColor,
-          }
-        : null;
-
     return new PolygonsLayer({
         id,
         data: polygonsData,
-        visualizationSettings: layerVisualizationSettings,
+        visualizationSettings: visualizationSettings ?? null,
     });
 }

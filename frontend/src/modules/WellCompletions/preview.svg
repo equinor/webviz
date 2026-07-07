@@ -1,14 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 235.5 74.8">
-  <path d="M-113-17h236v13h-236z" style="fill:#440154;stroke:#440154;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-113-4h236V8h-236z" style="fill:#3b528b;stroke:#3b528b;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-113 8h236v13h-236z" style="fill:#2f6c8e;stroke:#2f6c8e;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-113 20h236v13h-236z" style="fill:#44bf70;stroke:#44bf70;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-113 33h236v12h-236z" style="fill:#fde725;stroke:#fde725;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-113 45h236v13h-236z" style="fill:#fd9925;stroke:#fd9925;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-86-17v60M-47-16v72M1-16v35M47-15v46M86-15v60" style="fill:none;fill-rule:evenodd;stroke:#000;stroke-width:1;" transform="translate(113 17)"/>
-  <path d="M-91 20h10v25h-10z" style="fill:#000;stroke:none;stroke-width:1" transform="translate(113 17)"/>
-  <path d="M-52 8h10v50h-10z" style="fill:#000;stroke:none;stroke-width:1" transform="translate(113 17)"/>
-  <path d="M-4 8H6v24H-4z" style="fill:#000;stroke:none;stroke-width:1" transform="translate(113 17)"/>
-  <path d="M42 20h10v12H42z" style="fill:#000;stroke:none;stroke-width:1" transform="translate(113 17)"/>
-  <path d="M81 8h10v37H81z" style="fill:#000;stroke:none;stroke-width:1;" transform="translate(113 17)"/>
+<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Original: 6 full-width horizontal zone bars (viridis colours) +
+    5 thin vertical wellbore lines reaching different depths +
+    5 black completion rectangles (~6px wide) at different y positions / heights.
+    Coords scaled from original viewBox "0 0 235.5 74.8".
+    Wells at x ≈ 17, 42, 73, 102, 127   (original x/235.5 × 150)
+    Completion heights: 50, 100, 50, 25, 75  (proportional to original h: 25,50,24,12,37)
+  -->
+  <!-- 6 horizontal zone bars, full width, dark→light teal -->
+  <rect x="0" y="0"   width="150" height="25" fill="#114a52"/>
+  <rect x="0" y="25"  width="150" height="25" fill="#206f77"/>
+  <rect x="0" y="50"  width="150" height="25" fill="#3d8e98"/>
+  <rect x="0" y="75"  width="150" height="25" fill="#5aafba"/>
+  <rect x="0" y="100" width="150" height="25" fill="#91c8ce"/>
+  <rect x="0" y="125" width="150" height="25" fill="#cfe7e9"/>
+  <!-- Thin white zone dividers -->
+  <line x1="0" y1="25"  x2="150" y2="25"  stroke="#fff" stroke-width="0.5"/>
+  <line x1="0" y1="50"  x2="150" y2="50"  stroke="#fff" stroke-width="0.5"/>
+  <line x1="0" y1="75"  x2="150" y2="75"  stroke="#fff" stroke-width="0.5"/>
+  <line x1="0" y1="100" x2="150" y2="100" stroke="#fff" stroke-width="0.5"/>
+  <line x1="0" y1="125" x2="150" y2="125" stroke="#fff" stroke-width="0.5"/>
+  <!-- Thin wellbore lines (1px), from surface to penetration depth -->
+  <line x1="17"  y1="0" x2="17"  y2="120" stroke="#1d1d1d" stroke-width="1"/>
+  <line x1="42"  y1="0" x2="42"  y2="150" stroke="#1d1d1d" stroke-width="1"/>
+  <line x1="73"  y1="0" x2="73"  y2="72"  stroke="#1d1d1d" stroke-width="1"/>
+  <line x1="102" y1="0" x2="102" y2="96"  stroke="#1d1d1d" stroke-width="1"/>
+  <line x1="127" y1="0" x2="127" y2="124" stroke="#1d1d1d" stroke-width="1"/>
+  <!-- Completion rectangles (6px wide, centred on well x) -->
+  <!-- Well 1 (x=17): bars 4-5 → y=75..125, h=50 -->
+  <rect x="14"  y="75"  width="6" height="50"  fill="#1d1d1d"/>
+  <!-- Well 2 (x=42): bars 3-6 → y=50..150, h=100 — tallest -->
+  <rect x="39"  y="50"  width="6" height="100" fill="#1d1d1d"/>
+  <!-- Well 3 (x=73): bars 3-4 → y=50..100, h=50 -->
+  <rect x="70"  y="50"  width="6" height="50"  fill="#1d1d1d"/>
+  <!-- Well 4 (x=102): bar 4 only → y=75..100, h=25 — shortest -->
+  <rect x="99"  y="75"  width="6" height="25"  fill="#1d1d1d"/>
+  <!-- Well 5 (x=127): bars 3-5 → y=50..125, h=75 -->
+  <rect x="124" y="50"  width="6" height="75"  fill="#1d1d1d"/>
 </svg>

@@ -13,22 +13,26 @@ type DebounceCommitController = Pick<DebouncedFunc<() => void>, "cancel" | "flus
  * @param debounceTimeMs The wait time used when debouncing. If 0 or undefined, no debounce will occur.
  * @returns A tuple with the immediately updated internal value, a setter that updates the immediate value and calls onValueSettle after the debounce delay, and a utility object that can cancel and flush the debounced function
  */
-export function useDebouncedOnChange<TValue>(
+export function useDebouncedOnChange<TValue, TExtraArgs extends any[] = any[]>(
     settledValue: TValue,
-    onValueSettle?: (newValue: TValue) => void,
+    onValueSettle?: (newValue: TValue, ...args: TExtraArgs) => void,
     debounceTimeMs?: number,
-): [immediateValue: TValue, setValue: (value: TValue) => void, commitController: DebounceCommitController] {
+): [
+    immediateValue: TValue,
+    setValue: (value: TValue, ...args: any[]) => void,
+    commitController: DebounceCommitController,
+] {
     const [immediateValue, setImmediateValue] = React.useState(settledValue);
     const [previousExternalValue, setPreviousExternalValue] = React.useState(settledValue);
 
-    const debouncedCallback = useDebouncedFunction((value: TValue) => {
-        onValueSettle?.(value);
+    const debouncedCallback = useDebouncedFunction((value: TValue, ...args: TExtraArgs) => {
+        onValueSettle?.(value, ...args);
     }, debounceTimeMs ?? 0);
 
     const setValue = React.useCallback(
-        function setValue(value: TValue) {
+        function setValue(value: TValue, ...args: TExtraArgs) {
             setImmediateValue(value);
-            debouncedCallback(value);
+            debouncedCallback(value, ...args);
         },
         [debouncedCallback],
     );

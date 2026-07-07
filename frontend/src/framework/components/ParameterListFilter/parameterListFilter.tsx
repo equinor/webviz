@@ -7,10 +7,6 @@ import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/S
 import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-
-// Icons placed here due to limitation of jest for testing utils (cannot import svg)
-import checkIcon from "./private-assets/check.svg";
-import segmentIcon from "./private-assets/segment.svg";
 import {
     ParameterParentNodeNames,
     createTreeDataNodeListFromParameters,
@@ -27,6 +23,7 @@ export type ParameterListFilterProps = {
     initialFilters?: InitialParameterFilter[];
     showTitle?: boolean;
     onChange?: (filteredParameters: Parameter[]) => void;
+    disabled?: boolean;
 };
 
 export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: ParameterListFilterProps) => {
@@ -44,7 +41,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
 
     let newTreeDataNodeList: TreeDataNode[] | null = null;
     if (parameters === null || !isEqual(props.parameters, parameters)) {
-        newTreeDataNodeList = createTreeDataNodeListFromParameters(props.parameters, checkIcon, segmentIcon);
+        newTreeDataNodeList = createTreeDataNodeListFromParameters(props.parameters);
         setParameters(props.parameters);
         setPreviousTreeDataNodeList(newTreeDataNodeList);
     }
@@ -80,18 +77,20 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     }
 
     return (
-        <div className={props.showTitle ? "mb-2 mt-2" : ""}>
+        <div className={props.showTitle ? "mt-2xs mb-2xs" : ""}>
             <>
                 <SmartNodeSelector
                     id={smartNodeSelectorId}
                     delimiter={smartNodeSelectorDelimiter}
                     data={treeDataNodeList}
                     selectedTags={selectedTags}
-                    label={props.showTitle ? "Parameter filtering" : undefined}
-                    onChange={handleSmartNodeSelectorChange}
+                    onValueChange={handleSmartNodeSelectorChange}
                     placeholder="Add new filter condition..."
+                    disabled={props.disabled}
                 />
-                <div className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm")}>
+                <div
+                    className={resolveClassNames("mt-2xs text-body-sm text-neutral-subtle relative w-full text-right")}
+                >
                     Number of matches: {numberOfMatchingParameters}
                 </div>
             </>

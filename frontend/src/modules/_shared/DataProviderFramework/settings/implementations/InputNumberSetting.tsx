@@ -1,4 +1,7 @@
-import { Input } from "@lib/components/Input";
+import type React from "react";
+
+import { NumberInput } from "@lib/components/NumberInput";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
     CustomSettingImplementation,
@@ -101,18 +104,23 @@ export class InputNumberSetting implements CustomSettingImplementation<ValueType
             const min = isStatic ? staticProps?.min : props.valueConstraints?.[0];
             const max = isStatic ? staticProps?.max : props.valueConstraints?.[1];
 
-            function handleInputChange(value: string) {
-                props.onValueChange(Number(value));
-            }
+            const settledValue = props.value ?? min ?? null;
+            const [immediateValue, setValue] = useDebouncedOnChange<number | null>(
+                settledValue,
+                function handleInputChange(value: number | null) {
+                    props.onValueChange(value);
+                },
+                600,
+            );
 
             return (
-                <Input
-                    type="number"
-                    value={!props.isOverridden ? (props.value ?? min) : props.overriddenValue}
+                <NumberInput
+                    value={immediateValue}
                     min={min}
                     max={max}
-                    debounceTimeMs={200}
-                    onValueChange={handleInputChange}
+                    onValueChange={setValue}
+                    allowWheelScrub
+                    disabled={props.disabled}
                 />
             );
         };
