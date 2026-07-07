@@ -452,6 +452,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                     // setters for these, so tear down the old instance and create a fresh one.
                     esvController.removeLayer(userLayer.id);
                     interactionHandler.removeLayer(userLayer.id);
+                    this._layersPendingReferenceSystem.delete(userLayer.id);
                     this._esvLayerMap.delete(userLayer.id);
 
                     const opts = cloneDeep(userLayer.options);
