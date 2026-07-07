@@ -42,7 +42,7 @@ export default defineConfig(({ mode, command }) => {
             }),
         ],
         build: {
-            rollupOptions: {
+            rolldownOptions: {
                 input: {
                     app: paths.publicHtmlFile,
                 },
