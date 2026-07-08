@@ -1,14 +1,18 @@
+import io
 import logging
-from typing import List, Optional
+from typing import List, NamedTuple, Optional
 import asyncio
 
+import numpy as np
+import xtgeo
+from numpy.typing import NDArray
 from pydantic import BaseModel
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import CPGrid
 
 from webviz_core_utils.timestamp_utils import iso_str_to_date_str, timestamp_utc_ms_to_iso_str
-from webviz_services.service_exceptions import InvalidDataError, Service
+from webviz_services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
@@ -58,6 +62,15 @@ class Grid3dInfo(BaseModel):
     property_info_arr: List[Grid3dPropertyInfo]
 
 
+class Grid3dPropertyValues(NamedTuple):
+    """Active-cell values for a single 3D grid property, together with the Sumo object uuid of the
+    property blob the values were read from (needed to trace/cache derived results back to their
+    source objects)."""
+
+    values: NDArray[np.floating]
+    source_object_uuid: str
+
+
 class Grid3dAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, ensemble_name: str):
         self._sumo_client = sumo_client
@@ -86,6 +99,58 @@ class Grid3dAccess:
         grid_meta_arr: list[Grid3dInfo] = [task.result() for task in tasks]
 
         return grid_meta_arr
+
+    async def get_grid_property_values_async(
+        self, *, grid_name: str, property_name: str, iso_date_str: str, realization: int
+    ) -> Grid3dPropertyValues:
+        """Download a single dynamic 3D grid property and return its active-cell values.
+
+        The property roff blob is read directly with xtgeo. This deliberately avoids the heavier
+        ResInsight geometry-mapping pipeline, which is unnecessary when only the raw per-cell values
+        are needed (e.g. comparing the same property between two time steps).
+        """
+        cpgrid = await self._get_cpgrid_object_async(grid_name, realization)
+
+        time_filter = TimeFilter(TimeType.TIMESTAMP, start=iso_date_str, end=iso_date_str, exact=True)
+        property_context = cpgrid.grid_properties.filter(name=property_name, time=time_filter)
+
+        property_count = await property_context.length_async()
+        if property_count == 0:
+            raise NoDataError(
+                f"No grid property '{property_name}' at '{iso_date_str}' found for grid '{grid_name}', "
+                f"realization {realization}",
+                Service.SUMO,
+            )
+        if property_count > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple ({property_count}) grid properties found for '{property_name}' at '{iso_date_str}' "
+                f"(grid '{grid_name}', realization {realization})",
+                Service.SUMO,
+            )
+
+        sumo_property = await property_context.getitem_async(0)
+        byte_stream: io.BytesIO = await sumo_property.blob_async
+        xtg_grid_property: xtgeo.GridProperty = xtgeo.gridproperty_from_file(byte_stream, fformat="roff")
+
+        # The values array is masked (inactive cells masked out). compressed() returns the active
+        # cells in a stable order that is shared by all properties on the same grid geometry, so the
+        # arrays for two time steps line up cell-for-cell.
+        values = np.ascontiguousarray(xtg_grid_property.values.compressed(), dtype=np.float64)
+        return Grid3dPropertyValues(values=values, source_object_uuid=sumo_property.uuid)
+
+    async def _get_cpgrid_object_async(self, grid_name: str, realization: int) -> CPGrid:
+        grid_search_context = self._ensemble_context.grids.filter(realization=realization, name=grid_name)
+        grid_uuids: list[str] = await grid_search_context.uuids_async
+        if not grid_uuids:
+            raise NoDataError(f"Grid model '{grid_name}' not found for realization {realization}", Service.SUMO)
+
+        sumo_grid_object = await grid_search_context.get_object_async(grid_uuids[0])
+        if not isinstance(sumo_grid_object, CPGrid):
+            raise InvalidDataError(
+                f"Did not get expected CPGrid object type for grid '{grid_name}', realization {realization}",
+                Service.SUMO,
+            )
+        return sumo_grid_object
 
 
 async def _get_grid_model_meta_async(sumo_grid3d_search_context: SearchContext, grid_uuid: str) -> Grid3dInfo:

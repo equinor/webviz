@@ -841,6 +841,26 @@ export type GridDimensions_api = {
 };
 
 /**
+ * GridPropertyCheckValue
+ *
+ * Change of a single 3D grid property between t0 and t1 for one realization.
+ */
+export type GridPropertyCheckValue_api = {
+    /**
+     * Property Name
+     */
+    property_name: string;
+    /**
+     * Max Abs Change
+     */
+    max_abs_change: number;
+    /**
+     * Max Rel Change
+     */
+    max_rel_change: number;
+};
+
+/**
  * HTTPValidationError
  */
 export type HTTPValidationError_api = {
@@ -848,6 +868,45 @@ export type HTTPValidationError_api = {
      * Detail
      */
     detail?: Array<ValidationError_api>;
+};
+
+/**
+ * HydrostaticGridCheckRealizationResult
+ *
+ * Result of the 3D grid property part of the hydrostatic-equilibrium check for one realization.
+ *
+ * Computed one realization at a time so it can eventually be farmed out to a worker queue per
+ * realization for large ensembles; the caller issues one request per realization and aggregates the
+ * results as they arrive.
+ */
+export type HydrostaticGridCheckRealizationResult_api = {
+    time_steps: TimeStepPair_api;
+    /**
+     * Grid Name
+     */
+    grid_name: string;
+    /**
+     * Checked Property Names
+     */
+    checked_property_names: Array<string>;
+    realization_result: RealizationGridCheckResult_api;
+};
+
+/**
+ * HydrostaticVectorCheckResult
+ *
+ * Ensemble-wide result of the vector part of the hydrostatic-equilibrium check.
+ */
+export type HydrostaticVectorCheckResult_api = {
+    time_steps: TimeStepPair_api;
+    /**
+     * Checked Vector Names
+     */
+    checked_vector_names: Array<string>;
+    /**
+     * Realization Results
+     */
+    realization_results: Array<RealizationVectorCheckResult_api>;
 };
 
 /**
@@ -1024,6 +1083,28 @@ export type LroSuccessRespDerivedTableResponse_api = {
      */
     status: "success";
     result: DerivedTableResponse_api;
+};
+
+/**
+ * LroSuccessResp[HydrostaticGridCheckRealizationResult]
+ */
+export type LroSuccessRespHydrostaticGridCheckRealizationResult_api = {
+    /**
+     * Status
+     */
+    status: "success";
+    result: HydrostaticGridCheckRealizationResult_api;
+};
+
+/**
+ * LroSuccessResp[HydrostaticVectorCheckResult]
+ */
+export type LroSuccessRespHydrostaticVectorCheckResult_api = {
+    /**
+     * Status
+     */
+    status: "success";
+    result: HydrostaticVectorCheckResult_api;
 };
 
 /**
@@ -1327,6 +1408,38 @@ export type PvtData_api = {
      * Ratio Unit
      */
     ratio_unit: string;
+};
+
+/**
+ * RealizationGridCheckResult
+ *
+ * Per-realization result of the 3D grid property part of the hydrostatic-equilibrium check.
+ */
+export type RealizationGridCheckResult_api = {
+    /**
+     * Realization
+     */
+    realization: number;
+    /**
+     * Property Values
+     */
+    property_values: Array<GridPropertyCheckValue_api>;
+};
+
+/**
+ * RealizationVectorCheckResult
+ *
+ * Per-realization result of the vector part of the hydrostatic-equilibrium check.
+ */
+export type RealizationVectorCheckResult_api = {
+    /**
+     * Realization
+     */
+    realization: number;
+    /**
+     * Vector Values
+     */
+    vector_values: Array<VectorCheckValue_api>;
 };
 
 /**
@@ -2396,6 +2509,30 @@ export type TableColumnStatisticalData_api = {
 };
 
 /**
+ * TimeStepPair
+ *
+ * The two time steps (t0 and t1) used for an initial-equilibrium check.
+ */
+export type TimeStepPair_api = {
+    /**
+     * T0 Iso
+     */
+    t0_iso: string;
+    /**
+     * T1 Iso
+     */
+    t1_iso: string;
+    /**
+     * Time Gap Days
+     */
+    time_gap_days: number;
+    /**
+     * Time Gap Ok
+     */
+    time_gap_ok: boolean;
+};
+
+/**
  * UnitType
  */
 export enum UnitType_api {
@@ -2462,6 +2599,26 @@ export type ValidationError_api = {
     ctx?: {
         [key: string]: unknown;
     };
+};
+
+/**
+ * VectorCheckValue
+ *
+ * Cumulative production/injection vector value evaluated at t1.
+ */
+export type VectorCheckValue_api = {
+    /**
+     * Vector Name
+     */
+    vector_name: string;
+    /**
+     * Value At T1
+     */
+    value_at_t1?: number | null;
+    /**
+     * Is Zero
+     */
+    is_zero: boolean;
 };
 
 /**
@@ -6701,6 +6858,116 @@ export type GetVfpTableResponses_api = {
 };
 
 export type GetVfpTableResponse_api = GetVfpTableResponses_api[keyof GetVfpTableResponses_api];
+
+export type GetHydrostaticEquilibriumVectorCheckHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * T0 Iso
+         *
+         * ISO date string of the t0 (initial) time step
+         */
+        t0_iso: string;
+        /**
+         * T1 Iso
+         *
+         * ISO date string of the t1 (later) time step
+         */
+        t1_iso: string;
+        zCacheBust?: string;
+    };
+    url: "/qc/hydrostatic_equilibrium/vector_check/hybrid";
+};
+
+export type GetHydrostaticEquilibriumVectorCheckHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetHydrostaticEquilibriumVectorCheckHybridError_api =
+    GetHydrostaticEquilibriumVectorCheckHybridErrors_api[keyof GetHydrostaticEquilibriumVectorCheckHybridErrors_api];
+
+export type GetHydrostaticEquilibriumVectorCheckHybridResponses_api = {
+    /**
+     * Response Get Hydrostatic Equilibrium Vector Check Hybrid
+     *
+     * Successful Response
+     */
+    200: LroSuccessRespHydrostaticVectorCheckResult_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type GetHydrostaticEquilibriumVectorCheckHybridResponse_api =
+    GetHydrostaticEquilibriumVectorCheckHybridResponses_api[keyof GetHydrostaticEquilibriumVectorCheckHybridResponses_api];
+
+export type GetHydrostaticEquilibriumGridPropertyCheckHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Grid Name
+         *
+         * Grid name
+         */
+        grid_name: string;
+        /**
+         * Realization
+         *
+         * Realization to evaluate
+         */
+        realization: number;
+        zCacheBust?: string;
+    };
+    url: "/qc/hydrostatic_equilibrium/grid_property_check/hybrid";
+};
+
+export type GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetHydrostaticEquilibriumGridPropertyCheckHybridError_api =
+    GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api[keyof GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api];
+
+export type GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api = {
+    /**
+     * Response Get Hydrostatic Equilibrium Grid Property Check Hybrid
+     *
+     * Successful Response
+     */
+    200: LroSuccessRespHydrostaticGridCheckRealizationResult_api | LroInProgressResp_api | LroFailureResp_api;
+};
+
+export type GetHydrostaticEquilibriumGridPropertyCheckHybridResponse_api =
+    GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api[keyof GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api];
 
 export type GetSessionsMetadataData_api = {
     body?: never;

@@ -37,6 +37,8 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
+    getHydrostaticEquilibriumGridPropertyCheckHybrid,
+    getHydrostaticEquilibriumVectorCheckHybrid,
     getInjectionData,
     getInplaceTableDefinitions,
     getLogCurveData,
@@ -169,6 +171,12 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridData_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridError_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridResponse_api,
+    GetHydrostaticEquilibriumVectorCheckHybridData_api,
+    GetHydrostaticEquilibriumVectorCheckHybridError_api,
+    GetHydrostaticEquilibriumVectorCheckHybridResponse_api,
     GetInjectionDataData_api,
     GetInjectionDataError_api,
     GetInjectionDataResponse_api,
@@ -2505,6 +2513,87 @@ export const getVfpTableOptions = (options: Options<GetVfpTableData_api>) =>
             return data;
         },
         queryKey: getVfpTableQueryKey(options),
+    });
+
+export const getHydrostaticEquilibriumVectorCheckHybridQueryKey = (
+    options: Options<GetHydrostaticEquilibriumVectorCheckHybridData_api>,
+) => createQueryKey("getHydrostaticEquilibriumVectorCheckHybrid", options);
+
+/**
+ * Get Hydrostatic Equilibrium Vector Check Hybrid
+ *
+ * Check that there is no production/injection between t0 and t1 for the hydrostatic-equilibrium QC.
+ *
+ * Evaluates all realizations in the ensemble. The cumulative production/injection vectors are
+ * required to be zero at t1, and t1 must be sufficiently far from start of simulation (t0). The
+ * caller resolves `t0_iso`/`t1_iso` once (e.g. from a grid model's available property time steps)
+ * and passes them in - this endpoint never needs a grid name, grid access, or a realization of its
+ * own to determine the time steps.
+ *
+ * This endpoint is shaped as a hybrid long-running operation, matching the grid property check, so
+ * the contract is stable once a background execution mechanism lands for large ensembles. For now
+ * it always computes synchronously (fetching the checked vectors concurrently) and returns a
+ * success response.
+ */
+export const getHydrostaticEquilibriumVectorCheckHybridOptions = (
+    options: Options<GetHydrostaticEquilibriumVectorCheckHybridData_api>,
+) =>
+    queryOptions<
+        GetHydrostaticEquilibriumVectorCheckHybridResponse_api,
+        AxiosError<GetHydrostaticEquilibriumVectorCheckHybridError_api>,
+        GetHydrostaticEquilibriumVectorCheckHybridResponse_api,
+        ReturnType<typeof getHydrostaticEquilibriumVectorCheckHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getHydrostaticEquilibriumVectorCheckHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getHydrostaticEquilibriumVectorCheckHybridQueryKey(options),
+    });
+
+export const getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey = (
+    options: Options<GetHydrostaticEquilibriumGridPropertyCheckHybridData_api>,
+) => createQueryKey("getHydrostaticEquilibriumGridPropertyCheckHybrid", options);
+
+/**
+ * Get Hydrostatic Equilibrium Grid Property Check Hybrid
+ *
+ * Check that dynamic 3D grid properties are unchanged between t0 and t1, for a single realization.
+ *
+ * Computed one realization at a time - the caller (frontend) issues one request per realization and
+ * aggregates/renders the results as they arrive, matching the eventual per-realization worker-queue
+ * execution model for large ensembles.
+ *
+ * This endpoint is shaped as a hybrid long-running operation so the contract is stable once that
+ * background execution lands.
+ *
+ * Only the raw per-property change metrics are returned; the client applies its own threshold to
+ * derive the pass/fail verdict, so changing the threshold does not trigger a recompute.
+ */
+export const getHydrostaticEquilibriumGridPropertyCheckHybridOptions = (
+    options: Options<GetHydrostaticEquilibriumGridPropertyCheckHybridData_api>,
+) =>
+    queryOptions<
+        GetHydrostaticEquilibriumGridPropertyCheckHybridResponse_api,
+        AxiosError<GetHydrostaticEquilibriumGridPropertyCheckHybridError_api>,
+        GetHydrostaticEquilibriumGridPropertyCheckHybridResponse_api,
+        ReturnType<typeof getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getHydrostaticEquilibriumGridPropertyCheckHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey(options),
     });
 
 export const getSessionsMetadataQueryKey = (options?: Options<GetSessionsMetadataData_api>) =>
