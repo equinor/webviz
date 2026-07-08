@@ -9,6 +9,7 @@ import "./InplaceVolumesNew/registerModule";
 import "./InplaceVolumesPlot/registerModule";
 import "./InplaceVolumesTable/registerModule";
 import "./Intersection/registerModule";
+import "./ModelQc/registerModule";
 import "./ParameterDistributions/registerModule";
 import "./ParameterResponseCorrelationParallelCoordsPlot/registerModule";
 import "./ParameterResponseCorrelationBarPlot/registerModule";
