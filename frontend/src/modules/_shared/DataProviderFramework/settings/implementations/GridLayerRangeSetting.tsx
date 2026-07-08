@@ -435,7 +435,9 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                     <Slider
                                         min={valueConstraints.range[label][0]}
                                         max={valueConstraints.range[label][1]}
-                                        onValueChange={(value, eventDetails) => handleSliderChange(label, value as [number, number], eventDetails.reason)}
+                                        onValueChange={(value, eventDetails) =>
+                                            handleSliderChange(label, value as [number, number], eventDetails.reason)
+                                        }
                                         value={
                                             internalValue
                                                 ? [
@@ -448,9 +450,10 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                                   ]
                                                 : [valueConstraints.range[label][0], valueConstraints.range[label][1]]
                                         }
-                                        valueLabelDisplay="auto"
+                                        valueLabelDisplay="always"
+                                        valueLabelSide="bottom"
                                         step={valueConstraints.range[label][2]}
-                                        showRangeLocks
+                                        // showRangeLocks
                                         minLocked={internalValue?.[label][0] === "min"}
                                         maxLocked={internalValue?.[label][1] === "max"}
                                         onMinLockedChange={(locked) => handleLockChange(label, 0, locked)}
@@ -479,7 +482,9 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                             <Slider
                                 min={valueConstraints.range["k"][0]}
                                 max={valueConstraints.range["k"][1]}
-                                onValueChange={(value, eventDetails) => handleSliderChange("k", value as [number, number], eventDetails.reason)}
+                                onValueChange={(value, eventDetails) =>
+                                    handleSliderChange("k", value as [number, number], eventDetails.reason)
+                                }
                                 value={
                                     internalValue?.k.type === "range"
                                         ? [
@@ -492,7 +497,8 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                           ]
                                         : [valueConstraints.range["k"][0], valueConstraints.range["k"][1]]
                                 }
-                                valueLabelDisplay="auto"
+                                valueLabelDisplay="always"
+                                valueLabelSide="bottom"
                                 step={valueConstraints.range["k"][2]}
                                 showRangeLocks
                                 minLocked={internalValue?.k.type === "range" && internalValue.k.range[0] === "min"}

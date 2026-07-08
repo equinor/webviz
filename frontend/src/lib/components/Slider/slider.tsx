@@ -81,6 +81,8 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
      */
     valueLabelDisplay?: "auto" | "always" | "off";
 
+    valueLabelSide?: "top" | "bottom";
+
     /**
      * Aria label for the thumbs. Can be a single string, which will be used for both thumbs, or an array of strings to provide separate labels for each thumb (in the case of a range slider).
      */
@@ -478,6 +480,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                 max={defaultedProps.max}
                                 lockedToMin={minLocked}
                                 lockedToMax={!isDualSlider && maxLocked}
+                                labelSide={props.valueLabelSide}
                                 valueLabelFormat={defaultedProps.valueLabelFormat}
                                 getAriaLabel={getThumbAriaLabel}
                                 onSetMinLocked={setMinLocked}
@@ -497,6 +500,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                 lockedToMin={false}
                                 lockedToMax={maxLocked}
                                 valueLabelFormat={defaultedProps.valueLabelFormat}
+                                labelSide={props.valueLabelSide}
                                 getAriaLabel={getThumbAriaLabel}
                                 onSetMinLocked={setMinLocked}
                                 onSetMaxLocked={setMaxLocked}

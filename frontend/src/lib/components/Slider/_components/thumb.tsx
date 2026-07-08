@@ -12,6 +12,7 @@ export function Thumb(props: {
     size: SelectableSize;
     index: number;
     showValue: boolean;
+    labelSide?: "top" | "bottom";
     sliderValue: number | readonly number[];
     inputRefs: React.Ref<HTMLInputElement>[];
     min: number;
@@ -85,7 +86,7 @@ export function Thumb(props: {
                 }
             />
             <TooltipBase.Portal>
-                <TooltipBase.Positioner sideOffset={5}>
+                <TooltipBase.Positioner sideOffset={6} side={props.labelSide}>
                     <TooltipBase.Popup
                         data-slider-disabled={props.disabled ? "" : undefined}
                         className="bg-accent-strong data-slider-disabled:bg-disabled px-2xs py-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
