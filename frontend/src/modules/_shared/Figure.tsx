@@ -437,7 +437,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 text: title,
                 showarrow: false,
                 font: {
-                    size: 14,
+                    size: 12,
                 },
             });
 

@@ -16,7 +16,7 @@ import { ColorPalette } from "@lib/utils/ColorPalette";
  */
 export const defaultColorPalettes = [
     new ColorPalette({
-        name: "Tab10 (Matplotlib default)",
+        name: "Tab10",
         colors: [
             "#1f77b4",
             "#ff7f0e",

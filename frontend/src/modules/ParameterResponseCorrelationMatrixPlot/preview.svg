@@ -1,0 +1,50 @@
+<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- 6×6 correlation matrix, diagonal = teal (1.0), off-diagonal varies -->
+  <rect x="12" y="12" width="22" height="22" fill="#206f77"/>
+  <rect x="35" y="12" width="22" height="22" fill="#91c8ce"/>
+  <rect x="58" y="12" width="22" height="22" fill="#cfe7e9"/>
+  <rect x="81" y="12" width="22" height="22" fill="#f5f5f5"/>
+  <rect x="104" y="12" width="22" height="22" fill="#fde8cc"/>
+  <rect x="127" y="12" width="22" height="22" fill="#f5a86a"/>
+  <rect x="12" y="35" width="22" height="22" fill="#91c8ce"/>
+  <rect x="35" y="35" width="22" height="22" fill="#206f77"/>
+  <rect x="58" y="35" width="22" height="22" fill="#5a9fa7"/>
+  <rect x="81" y="35" width="22" height="22" fill="#cfe7e9"/>
+  <rect x="104" y="35" width="22" height="22" fill="#f5f5f5"/>
+  <rect x="127" y="35" width="22" height="22" fill="#fde8cc"/>
+  <rect x="12" y="58" width="22" height="22" fill="#cfe7e9"/>
+  <rect x="35" y="58" width="22" height="22" fill="#5a9fa7"/>
+  <rect x="58" y="58" width="22" height="22" fill="#206f77"/>
+  <rect x="81" y="58" width="22" height="22" fill="#91c8ce"/>
+  <rect x="104" y="58" width="22" height="22" fill="#cfe7e9"/>
+  <rect x="127" y="58" width="22" height="22" fill="#f5f5f5"/>
+  <rect x="12" y="81" width="22" height="22" fill="#f5f5f5"/>
+  <rect x="35" y="81" width="22" height="22" fill="#cfe7e9"/>
+  <rect x="58" y="81" width="22" height="22" fill="#91c8ce"/>
+  <rect x="81" y="81" width="22" height="22" fill="#206f77"/>
+  <rect x="104" y="81" width="22" height="22" fill="#5a9fa7"/>
+  <rect x="127" y="81" width="22" height="22" fill="#eaf8fa"/>
+  <rect x="12" y="104" width="22" height="22" fill="#fde8cc"/>
+  <rect x="35" y="104" width="22" height="22" fill="#f5f5f5"/>
+  <rect x="58" y="104" width="22" height="22" fill="#cfe7e9"/>
+  <rect x="81" y="104" width="22" height="22" fill="#5a9fa7"/>
+  <rect x="104" y="104" width="22" height="22" fill="#206f77"/>
+  <rect x="127" y="104" width="22" height="22" fill="#91c8ce"/>
+  <rect x="12" y="127" width="22" height="22" fill="#f5a86a"/>
+  <rect x="35" y="127" width="22" height="22" fill="#fde8cc"/>
+  <rect x="58" y="127" width="22" height="22" fill="#f5f5f5"/>
+  <rect x="81" y="127" width="22" height="22" fill="#eaf8fa"/>
+  <rect x="104" y="127" width="22" height="22" fill="#91c8ce"/>
+  <rect x="127" y="127" width="22" height="22" fill="#206f77"/>
+  <!-- White grid -->
+  <line x1="12" y1="35" x2="149" y2="35" stroke="#fff" stroke-width="1.5"/>
+  <line x1="12" y1="58" x2="149" y2="58" stroke="#fff" stroke-width="1.5"/>
+  <line x1="12" y1="81" x2="149" y2="81" stroke="#fff" stroke-width="1.5"/>
+  <line x1="12" y1="104" x2="149" y2="104" stroke="#fff" stroke-width="1.5"/>
+  <line x1="12" y1="127" x2="149" y2="127" stroke="#fff" stroke-width="1.5"/>
+  <line x1="35" y1="12" x2="35" y2="149" stroke="#fff" stroke-width="1.5"/>
+  <line x1="58" y1="12" x2="58" y2="149" stroke="#fff" stroke-width="1.5"/>
+  <line x1="81" y1="12" x2="81" y2="149" stroke="#fff" stroke-width="1.5"/>
+  <line x1="104" y1="12" x2="104" y2="149" stroke="#fff" stroke-width="1.5"/>
+  <line x1="127" y1="12" x2="127" y2="149" stroke="#fff" stroke-width="1.5"/>
+</svg>

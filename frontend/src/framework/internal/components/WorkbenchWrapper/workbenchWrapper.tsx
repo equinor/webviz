@@ -7,7 +7,6 @@ import { ActiveSessionBoundary } from "@framework/internal/components/ActiveSess
 import { LoadingOverlay } from "@framework/internal/components/LoadingOverlay";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
-import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
 import { TopBar } from "@framework/internal/components/TopBar/topBar";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { Workbench } from "@framework/Workbench";
@@ -15,14 +14,14 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
-import { LeftNavBar } from "../LeftNavBar";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
-import { RightNavBar } from "../RightNavBar";
+import { RightSideBar } from "../RightSideBar";
 import { SaveSessionDialog } from "../SaveSessionDialog";
 import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
@@ -54,7 +53,7 @@ export function WorkbenchWrapper() {
 
     let content: React.ReactNode;
     const loadingOverlayNote = `Note that the first time an ensemble is loaded in Webviz,
-                it could take a while to collect all parameter values...`;
+                it might take a while to collect all parameter values...`;
     if (isEnsembleSetLoading) {
         content = <LoadingOverlay text="Loading ensemble set..." note={loadingOverlayNote} />;
     } else if (!isInitialized) {
@@ -72,16 +71,16 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <ActiveDashboardBoundary>
+                    <ActionBar workbench={workbench} />
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
                     <SaveSessionDialog workbench={workbench} saveAsNew />
                     <CreateSnapshotDialog workbench={workbench} />
                     <ActiveSessionRecoveryDialog workbench={workbench} />
-                    <div className="grow min-h-0">
-                        <div className="w-full h-full flex flex-row">
-                            <LeftNavBar workbench={workbench} />
+                    <div className="min-h-0 grow">
+                        <div className="flex h-full w-full flex-row">
                             <SettingsContentPanels workbench={workbench} />
-                            <RightNavBar workbench={workbench} />
+                            <RightSideBar workbench={workbench} />
                         </div>
                     </div>
                 </ActiveDashboardBoundary>
@@ -90,7 +89,6 @@ export function WorkbenchWrapper() {
             <TemplatesDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
-            <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
             <SessionErrorDialog workbench={workbench} />
         </>
     );

@@ -1,0 +1,16 @@
+<svg width="220" height="170" viewBox="0 0 220 170" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Module not found">
+  <g transform="translate(110 90) rotate(-6) translate(-110 -90)">
+    <rect x="32" y="28" width="156" height="112" rx="6" fill="#FFFFFF" stroke="#243746" stroke-width="2" stroke-dasharray="6 5"/>
+    <path d="M32 48 H188" stroke="#243746" stroke-width="2" stroke-dasharray="6 5"/>
+    <circle cx="44" cy="38" r="2.5" fill="#243746"/>
+    <circle cx="54" cy="38" r="2.5" fill="#243746"/>
+    <circle cx="64" cy="38" r="2.5" fill="#243746"/>
+
+    <text x="110" y="106" text-anchor="middle" font-family="Equinor, Arial, sans-serif" font-size="56" font-weight="700" fill="#DCDCDC">?</text>
+  </g>
+
+  <g transform="translate(150 102)">
+    <circle cx="0" cy="0" r="20" fill="#FFFFFF" stroke="#FF1243" stroke-width="3"/>
+    <line x1="15" y1="15" x2="30" y2="30" stroke="#FF1243" stroke-width="5" stroke-linecap="round"/>
+  </g>
+</svg>

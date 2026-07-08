@@ -262,7 +262,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
     return createPortal(
         <div
-            className={resolveClassNames("absolute flex items-center justify-center z-50 flex-", {
+            className={resolveClassNames("z-modal flex- absolute flex items-center justify-center", {
                 invisible: !((editDataChannelConnections && visible) || visible),
             })}
             style={{

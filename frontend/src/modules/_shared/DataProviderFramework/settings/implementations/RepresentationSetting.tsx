@@ -1,7 +1,7 @@
 import type React from "react";
 
-import type { DropdownOptionOrGroup } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,
@@ -25,11 +25,11 @@ type ValueType = Representation | null;
 type ValueConstraintsType = Representation[];
 
 export class RepresentationSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
-    private _staticOptions: DropdownOptionOrGroup<ValueType>[] | null = null;
+    private _staticOptions: ComboboxItem<ValueType>[] | null = null;
     valueConstraintsIntersectionReducerDefinition =
         makeValueConstraintsIntersectionReducerDefinition<ValueConstraintsType>();
 
-    constructor(props?: { options?: ValueType[] | DropdownOptionOrGroup<ValueType>[] }) {
+    constructor(props?: { options?: ValueType[] | ComboboxItem<ValueType>[] }) {
         if (!props?.options) return;
 
         const options = props.options;
@@ -72,7 +72,7 @@ export class RepresentationSetting implements CustomSettingImplementation<ValueT
         const staticOptions = this._staticOptions;
 
         return function RepresentationSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
-            let options: DropdownOptionOrGroup<ValueType>[];
+            let options: ComboboxItem<ValueType>[];
 
             if (isStatic && staticOptions) {
                 options = staticOptions;
@@ -86,12 +86,11 @@ export class RepresentationSetting implements CustomSettingImplementation<ValueT
             }
 
             return (
-                <Dropdown
-                    options={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
-                    onChange={props.onValueChange}
-                    disabled={props.isOverridden}
-                    showArrows
+                <Combobox
+                    items={options}
+                    value={props.value}
+                    onValueChange={props.onValueChange}
+                    disabled={props.disabled}
                 />
             );
         };

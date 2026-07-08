@@ -1,4 +1,3 @@
-import type { ChangeEvent } from "react";
 import type React from "react";
 
 import { Switch } from "@lib/components/Switch";
@@ -36,11 +35,11 @@ export class BooleanSetting implements CustomSettingImplementation<ValueType, Va
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         return function BooleanSwitch(props: SettingComponentProps<ValueType>) {
-            function handleChange(e: ChangeEvent<HTMLInputElement>) {
-                props.onValueChange(e.target.checked);
+            function handleChange(checked: boolean) {
+                props.onValueChange(checked);
             }
 
-            return <Switch checked={props.value} onChange={handleChange} />;
+            return <Switch disabled={props.disabled} checked={props.value} onCheckedChange={handleChange} />;
         };
     }
 }

@@ -54,6 +54,7 @@ import {
     getRelpermRealizationData,
     getRelpermTableDefinition,
     getRelpermTableNames,
+    getRftObservations,
     getRftRealizationData,
     getRftTableDefinition,
     getSeismicCubeMetaList,
@@ -219,6 +220,9 @@ import type {
     GetRelpermTableNamesData_api,
     GetRelpermTableNamesError_api,
     GetRelpermTableNamesResponse_api,
+    GetRftObservationsData_api,
+    GetRftObservationsError_api,
+    GetRftObservationsResponse_api,
     GetRftRealizationDataData_api,
     GetRftRealizationDataError_api,
     GetRftRealizationDataResponse_api,
@@ -2421,6 +2425,33 @@ export const getRftRealizationDataOptions = (options: Options<GetRftRealizationD
             return data;
         },
         queryKey: getRftRealizationDataQueryKey(options),
+    });
+
+export const getRftObservationsQueryKey = (options: Options<GetRftObservationsData_api>) =>
+    createQueryKey("getRftObservations", options);
+
+/**
+ * Get Rft Observations
+ *
+ * Get RFT observations per well and date for a given ensemble.
+ */
+export const getRftObservationsOptions = (options: Options<GetRftObservationsData_api>) =>
+    queryOptions<
+        GetRftObservationsResponse_api,
+        AxiosError<GetRftObservationsError_api>,
+        GetRftObservationsResponse_api,
+        ReturnType<typeof getRftObservationsQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getRftObservations({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getRftObservationsQueryKey(options),
     });
 
 export const getVfpTableNamesQueryKey = (options: Options<GetVfpTableNamesData_api>) =>

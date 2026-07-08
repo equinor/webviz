@@ -476,11 +476,11 @@ export class ModuleInstance<
     }
 
     setFatalError(err: Error, errInfo: ErrorInfo): void {
-        this.setModuleInstanceState(ModuleInstanceLifeCycleState.ERROR);
         this._fatalError = {
             err,
             errInfo,
         };
+        this.setModuleInstanceState(ModuleInstanceLifeCycleState.ERROR);
     }
 
     getFatalError(): {

@@ -1,0 +1,43 @@
+@layer components {
+    /* The menu styles are reused for both menu, context-menu and combobox */
+    .menu__popup {
+        @apply bg-floating shadow-elevation-overlay py-xs min-w-20 rounded-sm outline-0 transition-all;
+        @apply max-h-[min(var(--available-height),24rem)] scroll-p-px overflow-y-auto overscroll-contain;
+
+        &[data-ending-style] {
+            opacity: 0;
+        }
+    }
+
+    .menu__separator {
+        /* my-xs */
+        @apply bg-neutral my-xs h-px first:hidden [:where(&+&)]:hidden;
+    }
+
+    .menu__item {
+        @apply gap-x-xs px-md py-xs text-neutral-subtle flex items-center;
+    }
+
+    .menu__label {
+        @apply bg-floating z-elevated text-neutral-strong font-bolder! sticky;
+        /* This should match the popup's vertical padding */
+        @apply -top-xs;
+    }
+
+    .menu__interactable {
+        &[data-disabled] {
+            @apply text-disabled! cursor-not-allowed bg-transparent opacity-75;
+        }
+
+        @apply cursor-pointer outline-none;
+        @apply not-data-disabled:data-highlighted:bg-accent-hover;
+        @apply data-popup-open:bg-accent-hover;
+    }
+    .menu__submenu_trigger {
+        @apply pr-xs gap-x-2xs flex;
+    }
+
+    .menu__toggle_indicator {
+        @apply -ml-3xs text-accent-subtle data-disabled:text-fill-disabled flex items-center;
+    }
+}

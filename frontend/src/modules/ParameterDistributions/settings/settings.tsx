@@ -1,17 +1,17 @@
-import type React from "react";
+import React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
-import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { EnsembleColorTile } from "@framework/components/EnsembleColorTile/ensembleColorTile";
+import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { ModuleSettingsProps } from "@framework/Module";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { RegularEnsembleIdent as RegularEnsembleIdentClass } from "@framework/RegularEnsembleIdent";
+import { isEnsembleRealizationFilterEffective } from "@framework/utils/realizationFilterUtils";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ContextHelp } from "@lib/components/ContextHelp";
-import { Dropdown } from "@lib/components/Dropdown";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { Hidden } from "@lib/components/Hidden";
+import { Setting } from "@lib/components/Setting";
 import { ParametersSelector } from "@modules/_shared/components/ParameterSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
@@ -74,28 +74,31 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
         selectedPosteriorEnsembleIdentAtom,
     );
     const intersectedParameterIdents = useAtomValue(intersectedParameterIdentsAtom);
-    function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
-        setSelectedEnsembleIdents(ensembleIdents);
+
+    const regularEnsembleArray = ensembleSet.getRegularEnsembleArray();
+
+    function renderEnsembleAdornment(identStr: string) {
+        const ensemble = regularEnsembleArray.find((ens) => ens.getIdent().toString() === identStr) ?? null;
+        if (!ensemble) {
+            return null;
+        }
+        return (
+            <EnsembleColorTile
+                ensemble={ensemble}
+                isRealizationFilterEffective={isEnsembleRealizationFilterEffective(
+                    ensemble,
+                    filterEnsembleRealizationsFunc,
+                )}
+            />
+        );
     }
 
-    function handleShowConstantParametersChange() {
-        setShowConstantParameters((prev) => !prev);
-    }
-    function handleShowLogParametersChange() {
-        setShowLogParameters((prev) => !prev);
-    }
-    function handleShowNumericDiscreteParametersChange() {
-        setShowNumericDiscreteParameters((prev) => !prev);
-    }
+    const hasMultipleRegularEnsembles = regularEnsembleArray.length > 1;
 
-    function handleShowIndividualRealizationValuesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
-        setShowIndividualRealizationValues(checked);
-    }
-    function handleShowPercentilesAndMeanLinesChange(_: React.ChangeEvent<HTMLInputElement>, checked: boolean) {
-        setShowPercentilesAndMeanLines(checked);
-    }
-
-    const hasMultipleRegularEnsembles = ensembleSet.getRegularEnsembleArray().length > 1;
+    const ensembleComboItems = regularEnsembleArray.map((ens) => ({
+        value: ens.getIdent().toString(),
+        label: ens.getDisplayName(),
+    }));
 
     const selectedParameterSortingMethodAnnotation = useMakePersistableFixableAtomAnnotations(
         selectedParameterSortingMethodAtom,
@@ -109,23 +112,68 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const selectedParameterIdentsAnnotation = useMakePersistableFixableAtomAnnotations(selectedParameterIdentsAtom);
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Ensembles" expanded>
-                <div className="flex flex-col gap-2">
-                    <SettingWrapper label="Analysis mode">
-                        <Dropdown
-                            options={Object.values(EnsembleMode).map((type: EnsembleMode) => {
-                                return {
-                                    value: type,
-                                    label: EnsembleModeEnumToStringMapping[type],
-                                    disabled: !hasMultipleRegularEnsembles && type === EnsembleMode.PRIOR_POSTERIOR,
-                                };
-                            })}
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Analysis mode">
+                        <Combobox
+                            items={Object.values(EnsembleMode).map((type: EnsembleMode) => ({
+                                value: type,
+                                label: EnsembleModeEnumToStringMapping[type],
+                                disabled: !hasMultipleRegularEnsembles && type === EnsembleMode.PRIOR_POSTERIOR,
+                            }))}
                             value={selectedEnsembleMode}
-                            onChange={setSelectedEnsembleMode}
+                            onValueChange={(v) => v && setSelectedEnsembleMode(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Hidden hidden={selectedEnsembleMode !== EnsembleMode.INDEPENDENT}>
+                        <Setting.Field
+                            label="Selected ensembles"
+                            annotations={selectedEnsembleIdentsAnnotation}
+                            stacked
+                        >
+                            <EnsemblePicker
+                                ensembles={regularEnsembleArray}
+                                ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
+                                value={selectedEnsembleIdents.value ?? []}
+                                onValueChange={setSelectedEnsembleIdents}
+                            />
+                        </Setting.Field>
+                    </Hidden>
+                    <Hidden hidden={selectedEnsembleMode !== EnsembleMode.PRIOR_POSTERIOR}>
+                        <Setting.Field label="Prior ensemble" annotations={selectedPriorEnsembleIdentAnnotation}>
+                            <Combobox
+                                items={ensembleComboItems}
+                                value={selectedPriorEnsembleIdent.value?.toString() ?? null}
+                                placeholder="Select prior ensemble"
+                                renderItemAdornment={renderEnsembleAdornment}
+                                onValueChange={(identStr) =>
+                                    setSelectedPriorEnsembleIdent(
+                                        identStr ? RegularEnsembleIdentClass.fromString(identStr) : null,
+                                    )
+                                }
+                            />
+                        </Setting.Field>
+                    </Hidden>
+                    <Hidden hidden={selectedEnsembleMode !== EnsembleMode.PRIOR_POSTERIOR}>
+                        <Setting.Field
+                            label="Posterior ensemble"
+                            annotations={selectedPosteriorEnsembleIdentAnnotation}
+                        >
+                            <Combobox
+                                items={ensembleComboItems}
+                                value={selectedPosteriorEnsembleIdent.value?.toString() ?? null}
+                                placeholder="Select posterior ensemble"
+                                renderItemAdornment={renderEnsembleAdornment}
+                                onValueChange={(identStr) =>
+                                    setSelectedPosteriorEnsembleIdent(
+                                        identStr ? RegularEnsembleIdentClass.fromString(identStr) : null,
+                                    )
+                                }
+                            />
+                        </Setting.Field>
+                    </Hidden>
+                    <Setting.Field
                         label="Parameter sort method"
                         annotations={selectedParameterSortingMethodAnnotation}
                         help={{
@@ -133,127 +181,26 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                             content: <ParameterSortingInfoContent />,
                         }}
                     >
-                        <Dropdown
-                            options={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => {
-                                return {
-                                    value: type,
-                                    label: ParameterDistributionSortingMethodEnumToStringMapping[type],
-                                    disabled:
-                                        selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
-                                        type !== ParameterSortMethod.ALPHABETICAL,
-                                };
-                            })}
+                        <Combobox
+                            items={Object.values(ParameterSortMethod).map((type: ParameterSortMethod) => ({
+                                value: type,
+                                label: ParameterDistributionSortingMethodEnumToStringMapping[type],
+                                disabled:
+                                    selectedEnsembleMode === EnsembleMode.INDEPENDENT &&
+                                    type !== ParameterSortMethod.ALPHABETICAL,
+                            }))}
                             value={selectedParameterSortingMethod.value}
-                            onChange={setSelectedParameterSortingMethod}
+                            onValueChange={(v) => v && setSelectedParameterSortingMethod(v)}
                         />
-                    </SettingWrapper>
-                    {selectedEnsembleMode === EnsembleMode.INDEPENDENT && (
-                        <SettingWrapper label="Selected ensembles" annotations={selectedEnsembleIdentsAnnotation}>
-                            <EnsembleSelect
-                                ensembles={ensembleSet.getRegularEnsembleArray()}
-                                ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                                value={selectedEnsembleIdents.value}
-                                size={5}
-                                multiple={true}
-                                onChange={handleEnsembleSelectionChange}
-                            />
-                        </SettingWrapper>
-                    )}
-                    {selectedEnsembleMode === EnsembleMode.PRIOR_POSTERIOR && (
-                        <>
-                            <SettingWrapper
-                                label="Select prior ensemble"
-                                annotations={selectedPriorEnsembleIdentAnnotation}
-                            >
-                                <EnsembleDropdown
-                                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                                    value={selectedPriorEnsembleIdent.value}
-                                    placeholder="Select prior ensemble"
-                                    onChange={setSelectedPriorEnsembleIdent}
-                                />
-                            </SettingWrapper>
-                            <SettingWrapper
-                                label="Select posterior ensemble"
-                                annotations={selectedPosteriorEnsembleIdentAnnotation}
-                            >
-                                <EnsembleDropdown
-                                    ensembles={ensembleSet.getRegularEnsembleArray()}
-                                    ensembleRealizationFilterFunction={filterEnsembleRealizationsFunc}
-                                    value={selectedPosteriorEnsembleIdent.value}
-                                    placeholder="Select posterior ensemble"
-                                    onChange={setSelectedPosteriorEnsembleIdent}
-                                />
-                            </SettingWrapper>
-                        </>
-                    )}
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Visualization" expanded>
-                <div className="flex flex-col gap-2">
-                    <SettingWrapper label="Plot type">
-                        <Dropdown
-                            options={Object.values(ParameterDistributionPlotType).map(
-                                (type: ParameterDistributionPlotType) => {
-                                    return {
-                                        value: type,
-                                        label: ParameterDistributionPlotTypeEnumToStringMapping[type],
-                                    };
-                                },
-                            )}
-                            value={selectedVisualizationType}
-                            onChange={setSelectedVisualizationType}
-                        />
-                    </SettingWrapper>
-                    <SettingWrapper label="Histogram mode:">
-                        <Dropdown
-                            options={Object.values(HistogramMode).map((mode: HistogramMode) => {
-                                return {
-                                    value: mode,
-                                    label: HistogramModeEnumToStringMapping[mode],
-                                };
-                            })}
-                            value={histogramMode}
-                            onChange={setHistogramMode}
-                            disabled={selectedVisualizationType !== ParameterDistributionPlotType.HISTOGRAM}
-                        />
-                    </SettingWrapper>
-                    <div className="mt-2">
-                        <Checkbox
-                            label="Show individual realization values"
-                            disabled={selectedVisualizationType === ParameterDistributionPlotType.HISTOGRAM}
-                            checked={showIndividualRealizationValues}
-                            onChange={handleShowIndividualRealizationValuesChange}
-                        />
-                        <Checkbox
-                            label="Show markers for P10, Mean, P90"
-                            checked={showPercentilesAndMeanLines}
-                            onChange={handleShowPercentilesAndMeanLinesChange}
-                        />
-                    </div>
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Parameter selection" expanded>
-                <div className="flex flex-col gap-2">
-                    <Checkbox
-                        label="Show nonvarying parameters"
-                        checked={showConstantParameters}
-                        onChange={handleShowConstantParametersChange}
-                    />
-                    <Checkbox
-                        label="Show LOG parameters"
-                        checked={showLogParameters}
-                        onChange={handleShowLogParametersChange}
-                    />
-                    <div className="flex flex-row gap-2">
-                        <Checkbox
-                            label="Show discrete parameters"
-                            checked={showNumericDiscreteParameters}
-                            onChange={handleShowNumericDiscreteParametersChange}
-                        />
-                        <ContextHelp
-                            title="Show discrete parameters"
-                            content={
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Selections" defaultOpen>
+                    <Setting.Field
+                        label="Parameter options"
+                        stacked
+                        help={{
+                            title: "Show discrete parameters",
+                            content: (
                                 <>
                                     Includes parameters tagged as discrete in the available parameter list.
                                     <br />A parameter is tagged as discrete when it comes from a non-continuous ERT
@@ -273,18 +220,82 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                     In this plot, only numeric discrete parameters are included. String-based discrete
                                     parameters are still excluded.
                                 </>
-                            }
-                        />
-                    </div>
-                    <SettingWrapper annotations={selectedParameterIdentsAnnotation}>
+                            ),
+                        }}
+                    >
+                        <React.Fragment>
+                            <CheckboxCompositions.WithLabel
+                                label="Show nonvarying parameters"
+                                checked={showConstantParameters}
+                                onCheckedChange={setShowConstantParameters}
+                                size="small"
+                            />
+
+                            <CheckboxCompositions.WithLabel
+                                label="Show LOG parameters"
+                                checked={showLogParameters}
+                                onCheckedChange={setShowLogParameters}
+                                size="small"
+                            />
+
+                            <CheckboxCompositions.WithLabel
+                                label="Show discrete parameters"
+                                checked={showNumericDiscreteParameters}
+                                onCheckedChange={setShowNumericDiscreteParameters}
+                                size="small"
+                            />
+                        </React.Fragment>
+                    </Setting.Field>
+
+                    <Setting.Field annotations={selectedParameterIdentsAnnotation} stacked>
                         <ParametersSelector
                             allParameterIdents={intersectedParameterIdents}
                             selectedParameterIdents={selectedParameterIdents.value ?? []}
                             onChange={setSelectedParameterIdents}
                         />
-                    </SettingWrapper>
-                </div>
-            </CollapsibleGroup>
-        </div>
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Plot" defaultOpen>
+                    <Setting.Field label="Plot type">
+                        <Combobox
+                            items={Object.values(ParameterDistributionPlotType).map(
+                                (type: ParameterDistributionPlotType) => ({
+                                    value: type,
+                                    label: ParameterDistributionPlotTypeEnumToStringMapping[type],
+                                }),
+                            )}
+                            value={selectedVisualizationType}
+                            onValueChange={(v) => v && setSelectedVisualizationType(v)}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Histogram mode">
+                        <Combobox
+                            items={Object.values(HistogramMode).map((mode: HistogramMode) => ({
+                                value: mode,
+                                label: HistogramModeEnumToStringMapping[mode],
+                            }))}
+                            value={histogramMode}
+                            disabled={selectedVisualizationType !== ParameterDistributionPlotType.HISTOGRAM}
+                            onValueChange={(v) => v && setHistogramMode(v)}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Additional markers" stacked>
+                        <CheckboxCompositions.WithLabel
+                            label="Show individual realization values"
+                            disabled={selectedVisualizationType === ParameterDistributionPlotType.HISTOGRAM}
+                            checked={showIndividualRealizationValues}
+                            onCheckedChange={setShowIndividualRealizationValues}
+                            size="small"
+                        />
+                        <CheckboxCompositions.WithLabel
+                            label="Show markers for P10, Mean, P90"
+                            checked={showPercentilesAndMeanLines}
+                            onCheckedChange={setShowPercentilesAndMeanLines}
+                            size="small"
+                        />
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

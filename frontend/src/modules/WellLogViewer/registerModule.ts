@@ -4,6 +4,7 @@
  * @since 08.14.2024
  */
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
+import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
@@ -14,8 +15,7 @@ import { preview } from "./preview";
 
 export const MODULE_NAME = "WellLogViewer";
 const MODULE_TITLE = "Well log Viewer";
-// TODO: Better description
-const MODULE_DESCRIPTION = "Well log Viewer";
+const MODULE_DESCRIPTION = "Visualize data logs along well trajectories.";
 
 ModuleRegistry.registerModule<InterfaceTypes, SerializedState>({
     moduleName: MODULE_NAME,
@@ -26,4 +26,5 @@ ModuleRegistry.registerModule<InterfaceTypes, SerializedState>({
     devState: ModuleDevState.PROD,
     syncableSettingKeys: [SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
     serializedStateSchema: STATE_SCHEMA,
+    dataTagIds: [ModuleDataTagId.DRILLED_WELLS],
 });

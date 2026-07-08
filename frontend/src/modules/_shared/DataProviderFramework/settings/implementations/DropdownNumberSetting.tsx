@@ -1,7 +1,7 @@
 import type React from "react";
 
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
 
 import type {
     CustomSettingImplementation,
@@ -9,7 +9,11 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 import { assertNumberOrNull } from "../utils/structureValidation";
 
-import { fixupValue, isValueValid, makeValueConstraintsIntersectionReducerDefinition } from "./_shared/arraySingleSelect";
+import {
+    fixupValue,
+    isValueValid,
+    makeValueConstraintsIntersectionReducerDefinition,
+} from "./_shared/arraySingleSelect";
 
 type ValueType = number | null;
 type ValueConstraintsType = number[];
@@ -43,7 +47,7 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
         return function DropdownNumberSetting(props: SettingComponentProps<ValueType, ValueConstraintsType>) {
             const availableValues = props.valueConstraints ?? [];
 
-            const options: DropdownOption<number>[] = availableValues.map((value) => {
+            const options: ComboboxItem<number>[] = availableValues.map((value) => {
                 return {
                     value: value,
                     label: value === null ? "None" : value.toString(),
@@ -51,12 +55,11 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
             });
 
             return (
-                <Dropdown
-                    options={options}
-                    value={!props.isOverridden ? props.value : props.overriddenValue}
-                    onChange={props.onValueChange}
-                    disabled={props.isOverridden}
-                    showArrows
+                <ComboboxCompositions.WithBrowseButtons
+                    items={options}
+                    value={props.value}
+                    onValueChange={props.onValueChange}
+                    disabled={props.disabled}
                 />
             );
         };

@@ -26,7 +26,7 @@ const MAX_NUM_PLOTS = 12;
 function MaxNumberPlotsExceededMessage() {
     return (
         <ContentWarning>
-            <Warning fontSize="large" className="mb-2" />
+            <Warning fontSize="large" className="mb-sm" />
             Too many plots to display. Due to performance limitations, the number of plots is limited to {MAX_NUM_PLOTS}
             .
         </ContentWarning>
@@ -188,7 +188,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             {content}
         </div>
     );
