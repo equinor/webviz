@@ -1,5 +1,6 @@
 from typing import Annotated, TypeVar
 from annotated_types import Len
+from enum import StrEnum
 
 from pydantic import BaseModel
 from pydantic import StringConstraints
@@ -9,6 +10,11 @@ T = TypeVar("T")
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 NonEmptyBytes = Annotated[bytes, Len(min_length=1)]
 NonEmptyList = Annotated[list[T], Len(min_length=1)]
+
+
+class MessageType(StrEnum):
+    DUMMY = "dummy"
+    CREATE_DERIVED_SMRY_TABLE = "create-derived-smry-table"
 
 
 class UserTaskMsgHeader(BaseModel):

@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from azure.servicebus.aio import ServiceBusReceiver
 from azure.servicebus import ServiceBusReceivedMessage
@@ -6,13 +7,14 @@ from opentelemetry.propagate import extract
 from opentelemetry.context import Context
 from opentelemetry import trace
 
-from .handle_create_derived_smry_table import create_derived_smry_table_task_async
-from .handle_dummy_message import dummy_task_async
+from webviz_server_schemas.pyworker.messages import MessageType
+
+from .utils.worker_logging import LogScope
 from .message_exceptions import MessagePermanentError, MessageRetryableError
 from .task_runner import run_tracked_user_task_async
-from .utils.worker_logging import LogScope
+from .tasks.handle_dummy_message import dummy_task_async
+from .tasks.handle_create_derived_smry_table import create_derived_smry_table_task_async
 
-import traceback
 
 _logger = logging.getLogger(__name__)
 _tracer = trace.get_tracer(__name__)
@@ -46,10 +48,10 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
 
             try:
                 match message_type:
-                    case "dummy":
+                    case MessageType.DUMMY:
                         await dummy_task_async(msg)
 
-                    case "create-derived-smry-table":
+                    case MessageType.CREATE_DERIVED_SMRY_TABLE:
                         await run_tracked_user_task_async(msg, create_derived_smry_table_task_async)
 
                     case _:

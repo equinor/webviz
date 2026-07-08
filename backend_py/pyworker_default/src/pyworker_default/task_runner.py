@@ -72,7 +72,7 @@ async def run_tracked_user_task_async(sb_msg: ServiceBusReceivedMessage, work_fn
 
         except TaskFailedError as exc:
             # Business failure: record FAILED, then COMPLETE the message (return, do not re-raise)
-            _logger.error(f"Task failed: {exc.status_message}")
+            _logger.exception(f"Task failed: {exc.status_message=} {exc.internal_error_message=}")
             await task_tracker.fail_task_async(header.task_id, status_message=exc.status_message, internal_error_message=exc.internal_error_message)
             return
 
