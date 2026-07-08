@@ -20,7 +20,7 @@ class LogScope:
         *,
         queue_name: str | None = None,
         message_id: str | None = None,
-        message_type: str | None = None,
+        worker_op: str | None = None,
         task_id: str | None = None,
         **custom_properties: object,
     ) -> None:
@@ -30,7 +30,7 @@ class LogScope:
         known_props = {
             "queue_name": queue_name,
             "message_id": message_id,
-            "message_type": message_type,
+            "worker_op": worker_op,
             "task_id": task_id,
         }
         for key, value in known_props.items():
@@ -95,10 +95,13 @@ class WorkerConsoleFormatter(logging.Formatter):
         )
 
     def format(self, record: logging.LogRecord) -> str:
+        worker_op = getattr(record, "worker_op", None)
         message_id = getattr(record, "message_id", None)
         task_id = getattr(record, "task_id", None)
 
         suffix_parts = []
+        if worker_op is not None:
+            suffix_parts.append(f"worker_op={worker_op}")
         if task_id is not None:
             suffix_parts.append(f"task_id={task_id}")
         if message_id is not None:

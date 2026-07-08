@@ -687,7 +687,7 @@ from primary.utils.message_bus import MessageBus, MessageBusSingleton
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_core_utils.background_tasks import run_in_background_task
 
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, MessageType
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
 
 
 
@@ -799,7 +799,7 @@ async def get_derived_vector_table_hybrid(
 
         message_bus: MessageBus = MessageBusSingleton.get_instance()
         sender = message_bus.get_sender(queue_name="test-queue")
-        sb_msg = ServiceBusMessage(subject=MessageType.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
+        sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
         await sender.send_messages(sb_msg)
         
         new_task_was_submitted = True

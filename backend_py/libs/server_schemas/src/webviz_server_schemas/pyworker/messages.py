@@ -12,7 +12,7 @@ NonEmptyBytes = Annotated[bytes, Len(min_length=1)]
 NonEmptyList = Annotated[list[T], Len(min_length=1)]
 
 
-class MessageType(StrEnum):
+class WorkerOperation(StrEnum):
     DUMMY = "dummy"
     CREATE_DERIVED_SMRY_TABLE = "create-derived-smry-table"
 
