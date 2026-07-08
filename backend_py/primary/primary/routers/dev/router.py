@@ -337,7 +337,7 @@ from primary import config
 from cryptography.fernet import Fernet
 
 from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, MessageType
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
 
 from opentelemetry import trace
 tracer = trace.get_tracer(__name__)
@@ -367,7 +367,7 @@ async def get_send_sb_msg(
 
     # for i in range(count):
     #     with tracer.start_as_current_span(f"SigSubmittingMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
-    #         msg = ServiceBusMessage(subject="dummy", body=msg_text)
+    #         msg = ServiceBusMessage(subject=WorkerOperation.DUMMY, body=msg_text)
     #         await sender.send_messages(msg)
     #         LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
     #     if i == 0:
@@ -399,7 +399,7 @@ async def get_send_sb_msg(
             encrypted_access_token=encrypted_access_token,
         )
         
-        sb_msg = ServiceBusMessage(subject=MessageType.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
+        sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
         await sender.send_messages(sb_msg)
         perf_metrics.record_lap("send-first-msg")
         # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")

@@ -7,7 +7,7 @@ from opentelemetry.propagate import extract
 from opentelemetry.context import Context
 from opentelemetry import trace
 
-from webviz_server_schemas.pyworker.messages import MessageType
+from webviz_server_schemas.pyworker.messages import WorkerOperation
 
 from .utils.worker_logging import LogScope
 from .message_exceptions import MessagePermanentError, MessageRetryableError
@@ -22,8 +22,8 @@ _tracer = trace.get_tracer(__name__)
 
 async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusReceivedMessage) -> None:
     """
-    Processes a single Service Bus message, dispatching to the appropriate handler based on the message type
-    which is determined by the 'subject' property of the message.
+    Processes a single Service Bus message, dispatching to the appropriate handler based on the
+    worker operation, which is determined by the 'subject' property of the message.
 
     """
     _logger.debug(f"process_message_async(): {msg.message_id=}, {msg.sequence_number=}, {msg.delivery_count=}, {msg.subject=}")
@@ -33,33 +33,33 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
     parent_otel_ctx: Context = _extract_trace_context_from_message(msg)
 
     queue_name = receiver.entity_path
-    message_type = msg.subject or "UNKNOWN"
+    worker_op = msg.subject or "UNKNOWN"
     message_id = msg.message_id or "UNKNOWN"
 
-    with LogScope(queue_name=queue_name, message_id=message_id, message_type=message_type):
+    with LogScope(queue_name=queue_name, message_id=message_id, worker_op=worker_op):
 
-        with _tracer.start_as_current_span(f"process_message: {message_type}", context=parent_otel_ctx, kind=trace.SpanKind.CONSUMER) as span:
+        with _tracer.start_as_current_span(f"process_message: {worker_op}", context=parent_otel_ctx, kind=trace.SpanKind.CONSUMER) as span:
 
-            _logger.info(f"Processing message: {message_id=}, {message_type=}, {msg.sequence_number=}, {msg.delivery_count=}")
+            _logger.info(f"Processing message: {message_id=}, {worker_op=}, {msg.sequence_number=}, {msg.delivery_count=}")
 
             span.set_attribute("app.message_queue_name", queue_name)
             span.set_attribute("app.message_id", message_id)
-            span.set_attribute("app.message_type", message_type)
+            span.set_attribute("app.worker_op", worker_op)
 
             try:
-                match message_type:
-                    case MessageType.DUMMY:
+                match worker_op:
+                    case WorkerOperation.DUMMY:
                         await dummy_task_async(msg)
 
-                    case MessageType.CREATE_DERIVED_SMRY_TABLE:
+                    case WorkerOperation.CREATE_DERIVED_SMRY_TABLE:
                         await run_tracked_user_task_async(msg, create_derived_smry_table_task_async)
 
                     case _:
-                        description = f"Unknown message type: {message_type}"
+                        description = f"Unknown worker operation: {worker_op}"
                         span.record_exception(ValueError(description))
                         span.set_status(trace.StatusCode.ERROR)
-                        _logger.error("Unknown Service Bus message type")
-                        await receiver.dead_letter_message(msg, reason="UnknownMessageType", error_description=description)
+                        _logger.error("Unknown Service Bus worker operation")
+                        await receiver.dead_letter_message(msg, reason="UnknownWorkerOperation", error_description=description)
                         return
 
                 span.set_status(trace.StatusCode.OK)
