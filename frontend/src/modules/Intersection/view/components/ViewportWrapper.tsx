@@ -122,14 +122,14 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     return (
         <div
             ref={mainDivRef}
-            className={resolveClassNames("relative w-full h-full flex flex-col", {
-                "outline-2 rounded": isHoverHighlighted,
-                "outline-gray-400": isHoverHighlighted && !highlightColor,
+            className={resolveClassNames("relative flex h-full w-full flex-col", {
+                "rounded-md outline-2 -outline-offset-2": isHoverHighlighted,
+                "outline-neutral": isHoverHighlighted && !highlightColor,
             })}
             style={isHoverHighlighted && highlightColor ? { outlineColor: highlightColor } : undefined}
         >
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pointer-events-none pt-1">
+                <div className="pt-4xs z-elevated pointer-events-none absolute top-0 right-0 left-0 flex justify-center">
                     <ViewportLabel name={props.name} color={props.color} />
                 </div>
                 <ReadoutWrapper

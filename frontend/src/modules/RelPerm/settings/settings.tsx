@@ -81,7 +81,7 @@ const GROUP_BY_LABELS: Record<GroupBy, string> = {
 const SATURATION_AXIS_HELP = {
     title: "Saturation axes",
     content: (
-        <div className="flex flex-col gap-2">
+        <div className="gap-3xs flex flex-col">
             <p>
                 Each selected SATNUM is plotted on its own shared saturation axis. When realization curves have
                 different saturation samples, they are interpolated onto the common saturation interval for that SATNUM.
