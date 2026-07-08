@@ -90,7 +90,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
 
         if (displayComponentType === DisplayComponentType.SENSITIVITY_TABLE) {
             return (
-                <div className="text-sm">
+                <div className="text-body-sm">
                     <SensitivityTable
                         sensitivityResponseDataset={computedSensitivityResponseDataset}
                         sensitivityDataScaler={sensitivityDataScaler}
@@ -103,7 +103,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             {makeViewContent()}
         </div>
     );

@@ -11,7 +11,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { TextInput } from "@lib/components/TextInput";
-import { Heading } from "@lib/components/Typography/compositions";
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
@@ -134,9 +134,14 @@ type TemplateDetailsProps = {
 function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
     if (!props.template) {
         return (
-            <div className="text-neutral-subtle text-body-sm flex h-full items-center justify-center">
+            <Paragraph
+                layoutClassName="flex h-full items-center justify-center"
+                tone="neutral"
+                variant="subtle"
+                size="sm"
+            >
                 Select a template to see its details
-            </div>
+            </Paragraph>
         );
     }
 
@@ -144,10 +149,10 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
         <div className="gap-y-sm px-sm py-xs flex flex-col">
             <Heading as="h6">{props.template.name}</Heading>
             <DashboardPreview layout={templateToLayoutElements(props.template)} width={180} height={150} />
-            <div className="text-neutral-subtle text-sm">{props.template.description}</div>
+            <div className="text-neutral-subtle text-body-sm">{props.template.description}</div>
             <div>
                 <strong>Modules:</strong>
-                <ul className="pl-md list-disc text-sm">
+                <ul className="pl-md text-body-sm list-disc">
                     {props.template.moduleInstances.map((instance, idx) => {
                         const module = ModuleRegistry.getModule(instance.moduleName);
                         if (!module) {
@@ -184,7 +189,7 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
         <>
             <div
                 className={resolveClassNames(
-                    "group selectable hpx-2xs py-2xs gap-x-xs box-border flex w-full cursor-pointer items-center text-sm select-none",
+                    "group selectable hpx-2xs py-2xs gap-x-xs text-body-sm box-border flex w-full cursor-pointer items-center select-none",
                     {
                         "bg-accent-strong text-neutral-strong-on-emphasis hover:bg-accent-strong-hover active:bg-accent-strong-active":
                             props.selected,
@@ -203,7 +208,9 @@ const TemplatesListItem: React.FC<TemplatesListItemProps> = (props) => {
                     <div className="text-body-xs line-clamp-1" title={props.template?.description}>
                         {props.template?.description}
                     </div>
-                    <div className="text-bolder mt-xs gap-x-2xs flex flex-wrap text-xs">{makeDataTags(dataTagIds)}</div>
+                    <div className="text-bolder mt-xs gap-x-2xs text-body-xs flex flex-wrap">
+                        {makeDataTags(dataTagIds)}
+                    </div>
                 </div>
             </div>
         </>

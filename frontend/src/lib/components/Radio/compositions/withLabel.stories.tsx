@@ -34,7 +34,7 @@ export const InGroup: Story = {
     },
     render: (args) => (
         <RadioGroup defaultValue="card">
-            <div className="flex flex-col gap-1">
+            <div className="gap-4xs flex flex-col">
                 <RadioCompositions.WithLabel {...args} value="card" label="Credit / debit card" />
                 <RadioCompositions.WithLabel {...args} value="paypal" label="PayPal" />
                 <RadioCompositions.WithLabel {...args} value="bank" label="Bank transfer" disabled />

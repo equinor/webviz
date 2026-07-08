@@ -113,7 +113,7 @@ export const DifferentTypes: Story = {
         return (
             <>
                 <Toast toastManager={manager} />
-                <div className="flex gap-2">
+                <div className="gap-3xs flex">
                     <Button
                         variant="contained"
                         tone="accent"

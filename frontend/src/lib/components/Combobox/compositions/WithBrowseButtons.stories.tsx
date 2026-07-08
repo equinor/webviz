@@ -93,7 +93,7 @@ export const Controlled: Story = {
     render: function ControlledComp() {
         const [value, setValue] = React.useState<string | null>("spring");
         return (
-            <div className="flex flex-col gap-3">
+            <div className="gap-2xs flex flex-col">
                 <WithBrowseButtons
                     items={SEASONS}
                     value={value}
@@ -156,7 +156,7 @@ export const Sizes: Story = {
         },
     },
     render: () => (
-        <div className="flex flex-col gap-4">
+        <div className="gap-2xs flex flex-col">
             <WithBrowseButtons items={SEASONS} defaultValue="spring" size="small" placeholder="Small" />
             <WithBrowseButtons items={SEASONS} defaultValue="summer" size="default" placeholder="Default" />
             <WithBrowseButtons items={SEASONS} defaultValue="autumn" size="large" placeholder="Large" />

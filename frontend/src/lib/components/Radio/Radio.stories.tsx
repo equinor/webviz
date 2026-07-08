@@ -73,7 +73,7 @@ function GroupControlledRender() {
                 <Radio value="monthly" aria-label="Monthly" />
                 <Radio value="yearly" aria-label="Yearly" />
             </RadioGroup>
-            <p className="text-sm text-neutral-500">Selected: {value}</p>
+            <p className="text-neutral-strong text-body-sm">Selected: {value}</p>
         </div>
     );
 }

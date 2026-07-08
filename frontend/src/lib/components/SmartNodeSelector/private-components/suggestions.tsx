@@ -355,7 +355,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                             title={`${option.nodeName} - ${option.metaData.description}`}
                         >
                             {option.metaData.icon !== undefined && (
-                                <span className="mr-xs flex h-5 w-5 shrink-0 items-center justify-center text-base leading-none">
+                                <span className="mr-xs text-body-base flex h-5 w-5 shrink-0 items-center justify-center leading-none">
                                     {option.metaData.icon}
                                 </span>
                             )}

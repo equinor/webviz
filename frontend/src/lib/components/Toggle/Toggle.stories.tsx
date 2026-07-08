@@ -115,9 +115,7 @@ export const WithRenderFunction: Story = {
         },
     },
     render: () => (
-        <Toggle.Button aria-label="Mute toggle">
-            {(_props, { pressed }) => (pressed ? "Unmute" : "Mute")}
-        </Toggle.Button>
+        <Toggle.Button aria-label="Mute toggle">{(_props, { pressed }) => (pressed ? "Unmute" : "Mute")}</Toggle.Button>
     ),
 };
 
@@ -168,8 +166,7 @@ export const GroupControlled: Story = {
     parameters: {
         docs: {
             description: {
-                story:
-                    "Controlled group — pass `value` and `onValueChange` to own the active state externally.",
+                story: "Controlled group — pass `value` and `onValueChange` to own the active state externally.",
             },
         },
     },
@@ -185,7 +182,7 @@ export const GroupControlled: Story = {
                         </Toggle.Button>
                     ))}
                 </Toggle.Group>
-                <p className="text-sm text-neutral-500">Active: {value}</p>
+                <p className="text-neutral-strong text-body-sm">Active: {value}</p>
             </div>
         );
     },
@@ -195,12 +192,11 @@ export const GroupMultiple: Story = {
     parameters: {
         docs: {
             description: {
-                story:
-                    "Multiple-selection group via `toggleMultiple`. Any number of buttons can be active at once.",
+                story: "Multiple-selection group via `toggleMultiple`. Any number of buttons can be active at once.",
             },
         },
     },
-    render: function GroupMultiple () {
+    render: function GroupMultiple() {
         const [value, setValue] = React.useState<string[]>(["bold", "italic"]);
         return (
             <div className="flex flex-col items-center gap-3">
@@ -215,7 +211,7 @@ export const GroupMultiple: Story = {
                         <span className="underline">U</span>
                     </Toggle.Button>
                 </Toggle.Group>
-                <p className="text-sm text-neutral-500">Active: {value.join(", ") || "none"}</p>
+                <p className="text-neutral-strong text-body-sm">Active: {value.join(", ") || "none"}</p>
             </div>
         );
     },

@@ -168,7 +168,7 @@ function WithQuickSelectButtonsRender() {
     return (
         <div className="flex flex-col gap-2">
             <Select options={FRUITS} value={value} onValueChange={setValue} multiple showQuickSelectButtons size={6} />
-            <p className="text-sm text-neutral-500">Selected: {value.join(", ") || "none"}</p>
+            <p className="text-neutral-strong text-body-sm">Selected: {value.join(", ") || "none"}</p>
         </div>
     );
 }
@@ -193,7 +193,7 @@ function ControlledRender() {
     return (
         <div className="flex flex-col gap-2">
             <Select options={FRUITS} value={value} onValueChange={setValue} size={5} />
-            <p className="text-sm text-neutral-500">Selected: {value[0] ?? "none"}</p>
+            <p className="text-neutral-strong text-body-sm">Selected: {value[0] ?? "none"}</p>
         </div>
     );
 }
@@ -224,11 +224,11 @@ export const WithAdornments: Story = {
     args: {
         size: 5,
         options: [
-            { value: "error", label: "Error", adornment: <span className="text-red-500">●</span> },
-            { value: "warning", label: "Warning", adornment: <span className="text-yellow-500">●</span> },
-            { value: "info", label: "Info", adornment: <span className="text-blue-500">●</span> },
-            { value: "success", label: "Success", adornment: <span className="text-green-500">●</span> },
-            { value: "unknown", label: "Unknown", adornment: <span className="text-gray-400">●</span> },
+            { value: "error", label: "Error", adornment: <span className="text-danger-subtle">●</span> },
+            { value: "warning", label: "Warning", adornment: <span className="text-warning-subtle">●</span> },
+            { value: "info", label: "Info", adornment: <span className="text-info-subtle">●</span> },
+            { value: "success", label: "Success", adornment: <span className="text-success-subtle">●</span> },
+            { value: "unknown", label: "Unknown", adornment: <span className="text-neutral-subtle">●</span> },
         ],
     },
 };

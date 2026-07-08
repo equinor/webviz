@@ -15,16 +15,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Validate that all configured variables exist in eds-tokens ────────────────
 
-const EDS_VARIABLES_CSS = resolve(
-    __dirname,
-    "../node_modules/@equinor/eds-tokens/build/css/variables.css"
-);
+const EDS_VARIABLES_CSS = resolve(__dirname, "../node_modules/@equinor/eds-tokens/build/css/variables.css");
 
 const edsVariables = new Set(
     readFileSync(EDS_VARIABLES_CSS, "utf8")
         .split("\n")
         .map((line) => line.match(/^\s+(--eds-[^:]+):/)?.[1]?.trim())
-        .filter(Boolean)
+        .filter(Boolean),
 );
 
 const allConfigEntries = [
@@ -45,7 +42,7 @@ for (const [configName, map] of allConfigEntries) {
 
 if (missing.length > 0) {
     console.error(
-        `\nError: The following variables in color-tokens.config.js are not defined in @equinor/eds-tokens (${EDS_VARIABLES_CSS}):\n`
+        `\nError: The following variables in color-tokens.config.js are not defined in @equinor/eds-tokens (${EDS_VARIABLES_CSS}):\n`,
     );
     for (const entry of missing) console.error(entry);
     console.error("\nUpdate the config to use variables that exist in the installed eds-tokens version.\n");
@@ -75,8 +72,7 @@ function colorUtilityLines(name, property, variable) {
     return [
         utilityLine(name, property, variable),
         ...OPACITY_SCALE.map(
-            (n) =>
-                `@utility ${name}/${n} { ${property}: color-mix(in oklab, var(${variable}) ${n}%, transparent); }`,
+            (n) => `@utility ${name}/${n} { ${property}: color-mix(in oklab, var(${variable}) ${n}%, transparent); }`,
         ),
     ];
 }
@@ -216,7 +212,9 @@ function serializeGroups(groups, prefix) {
         lines.push(`        group: ${JSON.stringify(group.charAt(0).toUpperCase() + group.slice(1))},`);
         lines.push(`        entries: [`);
         for (const { name, variable } of entries) {
-            lines.push(`            { name: ${JSON.stringify(`${prefix}${name}`)}, variable: ${JSON.stringify(variable)} },`);
+            lines.push(
+                `            { name: ${JSON.stringify(`${prefix}${name}`)}, variable: ${JSON.stringify(variable)} },`,
+            );
         }
         lines.push(`        ],`);
         lines.push(`    },`);
@@ -236,7 +234,8 @@ const storyLines = [
     ` * It is generated from color-tokens.config.js by the generate:color-utilities`,
     ` * script. Run \`npm run generate:color-utilities\` to regenerate. */`,
     ``,
-    `import React from "react";`,
+    `import type React from "react";`,
+    ``,
     `import type { Meta } from "@storybook/react";`,
     ``,
     `type ColorEntry = { name: string; variable: string };`,
@@ -281,7 +280,7 @@ const storyLines = [
     `        <div className="flex items-center rounded hover:bg-neutral" style={{ gap: "1rem", padding: "0.375rem 0.5rem" }}>`,
     `            {preview}`,
     `            <div className="flex flex-col" style={{ gap: "0.25rem" }}>`,
-    `                <div className="font-mono text-sm text-neutral-strong">{name}</div>`,
+    `                <div className="font-mono text-body-sm text-neutral-strong">{name}</div>`,
     `                <div className="font-mono text-neutral-subtle" style={{ fontSize: "0.65rem" }}>{variable}</div>`,
     `            </div>`,
     `        </div>`,
@@ -291,12 +290,12 @@ const storyLines = [
     `function Section({ title, groups, type }: { title: string; groups: ColorGroup[]; type: "fill" | "stroke" | "border" | "outline" | "text" }) {`,
     `    return (`,
     `        <section style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>`,
-    `            <h2 className="text-sm font-semibold text-neutral-strong uppercase tracking-wide pb-2 border-b border-neutral">`,
+    `            <h2 className="text-body-sm font-semibold text-neutral-strong uppercase tracking-wide pb-3xs border-b border-neutral">`,
     `                {title}`,
     `            </h2>`,
     `            {groups.map(({ group, entries }) => (`,
     `                <div key={group} style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>`,
-    `                    <h3 className="text-xs font-semibold text-neutral-subtle uppercase tracking-wide" style={{ marginBottom: "0.25rem" }}>{group}</h3>`,
+    `                    <h3 className="text-body-xs font-semibold text-neutral-subtle uppercase tracking-wide" style={{ marginBottom: "0.25rem" }}>{group}</h3>`,
     `                    <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">`,
     `                        {entries.map(({ name, variable }) => (`,
     `                            <Swatch key={name} name={name} variable={variable} type={type} />`,
@@ -310,7 +309,7 @@ const storyLines = [
     ``,
     `function ColorPalette() {`,
     `    return (`,
-    `        <div className="p-6 bg-canvas" style={{ height: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "3rem" }}>`,
+    `        <div className="p-sm bg-canvas" style={{ height: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "3rem" }}>`,
     `            <Section title="Background / Fill" groups={FILLS} type="fill" />`,
     `            <Section title="Stroke" groups={STROKES} type="stroke" />`,
     `            <Section title="Border" groups={BORDERS} type="border" />`,
