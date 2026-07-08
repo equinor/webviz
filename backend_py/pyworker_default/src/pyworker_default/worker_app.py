@@ -18,6 +18,7 @@ from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
 from .process_message import process_message_async
 from .worker_config import WorkerConfig, load_worker_config_from_env
 from .utils import message_decryption
+from .utils.abort_signal import AbortSignal
 from .utils.worker_logging import configure_logging
 
 
@@ -115,6 +116,9 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
             async with sb_receiver:
                 _logger.info("=== WORKER READY: waiting to receive messages")
 
+                # Cooperative abort signal passed to tasks so they can abort promptly when a shutdown is requested
+                abort_signal = AbortSignal(shutdown_event)
+
                 while not shutdown_event.is_set():
                     # We poll for messages with a short timeout, so we can check for shutdown events frequently.
                     # Currently we only grab and process one message at a time, but this could be changed to
@@ -130,11 +134,11 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
                         break
 
                     if len(messages) > 0:
-                        _logger.debug(f"Worker received {len(messages)} messages from Service Bus")
+                        _logger.debug(f"Worker received {len(messages)} message(s) from Service Bus")
 
                     # There should only be one message in the list, since we set max_message_count=1, but we still iterate over it to be safe.
                     for msg in messages:
-                        await process_message_async(sb_receiver, msg)
+                        await process_message_async(sb_receiver, msg, abort_signal)
 
                 _logger.info("Worker shutdown requested; exiting worker loop")
 
