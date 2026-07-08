@@ -6,6 +6,6 @@ import type { Interfaces } from "./interfaces";
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: "DbgLroTesting",
     defaultTitle: "Dbg LRO Testing",
-    category: ModuleCategory.MAIN,
+    category: ModuleCategory.DEBUG,
     devState: ModuleDevState.DEV,
 });

@@ -274,7 +274,7 @@ export type DerivedTableInfo_api = {
     /**
      * Byte Size
      */
-    byte_size: number;
+    byte_size: number | null;
     /**
      * Dbg Info
      */
