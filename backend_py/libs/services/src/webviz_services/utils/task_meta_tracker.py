@@ -238,13 +238,27 @@ class TaskMetaTracker:
 
         return True
 
-    async def delete_task_async(self, task_id: str) -> None:
+    async def delete_task_async(self, task_id: str) -> bool:
+        """
+        Deletes task with the specified task id.
+        Returns True if a task was actually deleted, otherwise False
+        """
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
-        await self._redis_client.delete(redis_hash_name)
+        num_deleted = await self._redis_client.delete(redis_hash_name)
+        return num_deleted == 1
 
-    async def delete_fingerprint_to_task_mapping_async(self, fingerprint: str) -> None:
+    async def delete_task_by_fingerprint_async(self, fingerprint: str) -> bool:
+        task_id = await self._find_task_id_for_fingerprint_async(fingerprint)
+        if task_id is None:
+            return False
+
+        await self.delete_fingerprint_to_task_mapping_async(fingerprint)
+        return await self.delete_task_async(task_id)
+
+    async def delete_fingerprint_to_task_mapping_async(self, fingerprint: str) -> bool:
         fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
-        await self._redis_client.delete(fingerprint_redis_key)
+        num_deleted = await self._redis_client.delete(fingerprint_redis_key)
+        return num_deleted == 1
 
     async def get_task_id_by_fingerprint_async(self, fingerprint: str) -> str | None:
         task_id = await self._find_task_id_for_fingerprint_async(fingerprint)
