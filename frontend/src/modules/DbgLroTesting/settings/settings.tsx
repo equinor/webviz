@@ -41,7 +41,6 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
 
     const [calculationParamString, setCalculationParamString] = useState<string>("");
 
-    const [retryCreationTask, setRetryCreationTask] = useState(false);
     const [hybridProgressText, setHybridProgressText] = React.useState<string | null>(null);
 
     const setViewInputData = useSetAtom(viewInputDataAtom);
@@ -53,7 +52,6 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
             case_uuid: selectedEnsembleIdent.value?.getCaseUuid() ?? "DUMMY_CASE",
             ensemble_name: selectedEnsembleIdent.value?.getEnsembleName() ?? "DUMMY_ENSEMBLE",
             vector_names: selectedVectors,
-            retry_creation_task: retryCreationTask ? true : undefined,
         },
     };
     const hybrid_derivedTableQueryKey = getDerivedVectorTableHybridQueryKey(hybrid_apiFunctionArgs);
@@ -82,13 +80,6 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
     if (!isFetchingDerivedTableHandle && hybridProgressText) {
         setHybridProgressText(null);
     }
-
-    // Clear the retryCreationTask once the query has sent the request with it
-    useEffect(() => {
-        if (retryCreationTask && !isFetchingDerivedTableHandle) {
-            setRetryCreationTask(false);
-        }
-    }, [retryCreationTask, isFetchingDerivedTableHandle]);
 
     //const derivedTableHandle = hybrid_derivedTableQuery.isFetching ? null : (hybrid_derivedTableQuery.data?.table_handle ?? null);
     const derivedTableHandle = hybrid_derivedTableQuery.data?.table_handle ?? null;
@@ -222,9 +213,9 @@ export function DbgLroTestingSettings(props: ModuleSettingsProps<Interfaces>) {
         queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
     }
 
-    function handleRetryDerivedTableCreationTask() {
+    async function handleRetryDerivedTableCreationTask() {
         console.debug(`handleRetryDerivedTableCreationTask`);
-        setRetryCreationTask(true);
+        await getDerivedVectorTableHybrid({ query: { ... hybrid_apiFunctionArgs.query, retry_creation_task: true } });
         queryClient.resetQueries({ queryKey: hybrid_derivedTableQueryOptions.queryKey, exact: true, fetchStatus: "idle" });
     }
 

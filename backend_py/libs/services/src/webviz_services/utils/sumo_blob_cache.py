@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import logging
 import uuid
@@ -70,6 +71,11 @@ class SumoBlobCache:
         try:
             resp = await self._sumo_client.get_async(f"/cache/webviz/{cache_key}/blob/authuri")
             sas_url_for_blob_read = resp.text
+
+            if await self._FAKE_CHECK_is_resolved_blob_stale_async(sas_url_for_blob_read):
+                LOGGER.warning("resolve_cache_entry_async() -- FAKE_CHECK says that the blob is stale")
+                return None
+
             return sas_url_for_blob_read
         except httpx.RequestError as exc:
             # Should we raise a service exception or just log an error here?
@@ -107,6 +113,10 @@ class SumoBlobCache:
         if not blob_sas_url:
             raise ValueError("Cannot download cache blob, empty SAS URL provided")
 
+        if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
+            LOGGER.warning("download_resolved_blob_async() -- FAKE_CHECK says that the blob is stale")
+            return None
+
         async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
             stream_downloader: StorageStreamDownloader[bytes] = await blob_client.download_blob()
             payload: bytes = await stream_downloader.readall()
@@ -116,6 +126,10 @@ class SumoBlobCache:
     async def is_resolved_blob_accessible_async(self, blob_sas_url: str) -> bool:
         if not blob_sas_url:
             raise ValueError("Cannot check cache blob, empty SAS URL provided")
+
+        if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
+            LOGGER.warning("is_resolved_blob_accessible_async() -- FAKE_CHECK says that the blob is stale")
+            return False
 
         async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
             try:
@@ -139,3 +153,32 @@ class SumoBlobCache:
 
         payload = await self.download_resolved_blob_async(blob_sas_url)
         return payload
+
+    # !!!!!!!!!!!!!!!!!!!!!
+    # Temporary hack to allow us to simulate the removal of cache entries
+    async def _FAKE_CHECK_is_resolved_blob_stale_async(self, blob_sas_url: str) -> bool:
+
+        # !!!!!!
+        return False
+
+        # LOGGER.debug("FAKE_CHECK_is_resolved_blob_stale_async() STARTING")
+        # if not blob_sas_url:
+        #     raise ValueError("_FAKE_CHECK_is_resolved_blob_stale_async() - Cannot check cache blob, empty SAS URL provided")
+
+        # async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
+        #     try:
+        #         blob_properties = await blob_client.get_blob_properties()
+        #         LOGGER.debug("FAKE_CHECK_is_resolved_blob_stale_async() GOT BLOB PROPERTIES:")
+        #         LOGGER.debug(f"  creation_time:    {blob_properties.creation_time}")
+        #         LOGGER.debug(f"  last_modified:    {blob_properties.last_modified}")
+        #         LOGGER.debug(f"  last_accessed_on: {blob_properties.last_accessed_on}")
+        #         LOGGER.debug(f"  {blob_properties.metadata=}")
+
+        #         time_diff = datetime.datetime.now(tz=datetime.timezone.utc) - blob_properties.last_modified
+        #         time_diff_seconds = time_diff.total_seconds()
+        #         if time_diff_seconds > 20:
+        #             LOGGER.warning(f"Cache blob has not been accessed for {time_diff_seconds:.2f} seconds, FAKING STALE")
+        #             return True
+        #         return False
+        #     except ResourceNotFoundError:
+        #         return True

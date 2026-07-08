@@ -698,7 +698,6 @@ class DerivedTableResponse(BaseModel):
 @router.get("/derived_vector_table_hybrid")
 async def get_derived_vector_table_hybrid(
     # fmt:off
-    request: Request,
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
@@ -716,8 +715,20 @@ async def get_derived_vector_table_hybrid(
     LOGGER.debug(f"{dbg_prefix}Table handle will be: {table_handle=}")
 
     user_id = authenticated_user.get_user_id()
-    sumo_access_token = authenticated_user.get_sumo_access_token()
 
+    task_tracker = get_task_meta_tracker_for_user_id(user_id)
+    task_fp = f"taskFP__{table_handle}"
+
+    if retry_creation_task:
+        LOGGER.info(f"{dbg_prefix}Retry creation task flag is set to true, trying to delete existing task with {task_fp=}")
+        if await task_tracker.delete_task_by_fingerprint_async(task_fp):
+            LOGGER.info(f"{dbg_prefix}Existing task was deleted {task_fp=}")
+        else:
+            LOGGER.info(f"{dbg_prefix}Tried to delete existing task, but no existing task found with {task_fp=}")
+
+        return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle="FAKE", dbg_info="retry_creation_task"))
+
+    sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
     blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
     cache_key = blob_cache.compute_cache_key(table_handle)
@@ -731,21 +742,15 @@ async def get_derived_vector_table_hybrid(
     has_cache_entry = await blob_cache.has_cache_entry_async(cache_key)
     perf_metrics.record_lap("check-cache")
     if has_cache_entry:
+        # Since the table is already in cache, we can delete any existing task mapping, since it is no longer needed.
+        # If at some point in the future the table is pruned from the cache, we would like to create a new task anyway.
+        await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
+
         LOGGER.info(f"{dbg_prefix}Returning handle to derived table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]")
         return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
 
-    task_tracker = get_task_meta_tracker_for_user_id(user_id)
-    task_fp = f"taskFP__{table_handle}"
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     perf_metrics.record_lap("task-meta")
-
-    if retry_creation_task:
-        if task_meta:
-            LOGGER.info(f"{dbg_prefix}Retry creation task flag is set to true, deleting any existing task with {task_fp=}, {task_meta.task_id=}")
-            await task_tracker.delete_task_async(task_meta.task_id)
-            task_meta = None
-        else:
-            LOGGER.info(f"{dbg_prefix}Retry creation task flag is set to true, but no existing task found with {task_fp=}")
 
     new_task_was_submitted = False
     if not task_meta:
@@ -819,11 +824,6 @@ async def get_derived_vector_table_hybrid(
 
     LOGGER.info(f"{dbg_prefix}Returning in-progress for table handle, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
 
-    # We manually create a poll URL where we strip the retry_creation_task query parameter, so that the client
-    # can poll for the status of the new task without triggering more retries
-    url_without_retry = request.url.remove_query_params(["retry_creation_task"])
-    poll_url = url_without_retry.path + f"?{url_without_retry.query}"
-
     if new_task_was_submitted:
         prog_msg = f"New task submitted: {task_meta.state}"
     else:
@@ -835,7 +835,7 @@ async def get_derived_vector_table_hybrid(
 
     LOGGER.info(f"{dbg_prefix}Actual returning: {new_task_was_submitted=}, {retry_creation_task=}, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
 
-    return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, poll_url=poll_url, progress_message=prog_msg)
+    return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, progress_message=prog_msg)
 
 
 
