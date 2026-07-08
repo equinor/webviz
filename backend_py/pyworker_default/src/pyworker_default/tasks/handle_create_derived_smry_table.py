@@ -12,8 +12,8 @@ from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_services.utils.task_meta_tracker import TaskMetaTracker
 from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg
 
-from .message_exceptions import MessagePermanentError
-from .utils import message_decryption
+from ..message_exceptions import MessagePermanentError
+from ..utils import message_decryption
 
 
 _logger = logging.getLogger(__name__)

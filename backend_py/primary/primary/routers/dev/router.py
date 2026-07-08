@@ -337,7 +337,7 @@ from primary import config
 from cryptography.fernet import Fernet
 
 from webviz_services.utils.task_meta_tracker import TaskState, get_task_meta_tracker_for_user_id
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, MessageType
 
 from opentelemetry import trace
 tracer = trace.get_tracer(__name__)
@@ -399,7 +399,7 @@ async def get_send_sb_msg(
             encrypted_access_token=encrypted_access_token,
         )
         
-        sb_msg = ServiceBusMessage(subject="create-derived-smry-table", body=msg.model_dump_json())
+        sb_msg = ServiceBusMessage(subject=MessageType.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
         await sender.send_messages(sb_msg)
         perf_metrics.record_lap("send-first-msg")
         # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")
