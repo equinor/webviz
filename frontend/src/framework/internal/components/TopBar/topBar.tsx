@@ -182,7 +182,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
             ) : (
                 <>
                     <EditSessionButton workbench={props.workbench} />
-                    <EnsembleSettingsButton workbench={props.workbench} />
                     <Separator orientation="vertical" />
                     <RefreshSessionButton workbench={props.workbench} />
                     <SessionSaveButton workbench={props.workbench} />
@@ -195,53 +194,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
                 </TopBarButton>
             </Tooltip>
         </>
-    );
-}
-
-type EnsembleSettingsButtonProps = {
-    workbench: Workbench;
-};
-
-function EnsembleSettingsButton(props: EnsembleSettingsButtonProps): React.ReactNode {
-    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
-    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
-
-    const isEnsembleSetLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
-    const setEnsembleDialogOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
-
-    function handleEnsembleDialogOpenClick() {
-        setEnsembleDialogOpen(true);
-    }
-
-    return (
-        <Tooltip
-            content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
-            side="bottom"
-        >
-            {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-            <Button
-                disabled={isSnapshot}
-                iconOnly
-                onClick={handleEnsembleDialogOpenClick}
-                tone="accent"
-                variant="ghost"
-            >
-                <Badge
-                    invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
-                    tone="accent"
-                    badgeContent={
-                        isEnsembleSetLoading ? (
-                            <CircularProgress size={16} tone="on-emphasis" />
-                        ) : (
-                            ensembleSet.getEnsembleArray().length
-                        )
-                    }
-                >
-                    <List />
-                </Badge>
-            </Button>
-        </Tooltip>
     );
 }
 

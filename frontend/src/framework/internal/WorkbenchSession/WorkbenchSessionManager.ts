@@ -797,31 +797,37 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     async applyTemplate(template: Template): Promise<boolean> {
         if (!this.hasActiveSession()) {
             await this.startNewSession();
-        } else {
-            const activeSession = this.getActiveSession();
-            const activeDashboard = activeSession.getActiveDashboard();
-            const confirmationRequired = activeDashboard && activeDashboard.getModuleInstances().length > 0;
-
-            if (confirmationRequired) {
-                const result = await ConfirmationService.confirm({
-                    title: "Replace current dashboard with template?",
-                    message:
-                        "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
-                    actions: [
-                        { id: "cancel", label: "No, cancel" },
-                        { id: "delete", label: "Yes, proceed", color: "danger" },
-                    ],
-                });
-
-                if (result === "cancel") {
-                    return false;
-                }
-            }
         }
 
         const activeSession = this.getActiveSession();
+        const activeDashboard = activeSession.getActiveDashboard();
+        const confirmationRequired = activeDashboard && activeDashboard.getModuleInstances().length > 0;
+
+        if (confirmationRequired) {
+            const result = await ConfirmationService.confirm({
+                title: "Replace current dashboard with template?",
+                message:
+                    "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
+                actions: [
+                    { id: "cancel", label: "No, cancel" },
+                    { id: "delete", label: "Yes, proceed", color: "danger" },
+                ],
+            });
+
+            if (result === "cancel") {
+                return false;
+            }
+        }
+
         const dashboard = await Dashboard.fromTemplate(template, activeSession.getAtomStoreMaster());
-        activeSession.setDashboards([dashboard]);
+        if (activeDashboard) {
+            // Applying a template only replaces the dashboard's layout/content; the dashboard's
+            // own name and description should be kept as-is.
+            dashboard.updateMetadata(activeDashboard.getMetadata());
+            activeSession.replaceDashboard(activeDashboard.getId(), dashboard);
+        } else {
+            activeSession.setDashboards([dashboard]);
+        }
         return true;
     }
 

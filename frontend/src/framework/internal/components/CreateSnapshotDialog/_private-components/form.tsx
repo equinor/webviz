@@ -13,7 +13,7 @@ import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
-import { DashboardPreview } from "../../DashboardPreview/dashboardPreview";
+import { DashboardPreviewCarousel } from "../../DashboardPreview/dashboardPreviewCarousel";
 
 export type FormProps = {
     id: string;
@@ -45,7 +45,15 @@ export function Form(props: FormProps): React.ReactNode {
         HTMLInputElement | HTMLTextAreaElement | null
     >(props.titleInputRef, () => inputRef.current);
 
-    const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
+    const dashboards = props.workbench
+        .getSessionManager()
+        .getActiveSession()
+        .getDashboards()
+        .map((dashboard) => ({
+            id: dashboard.getId(),
+            name: dashboard.getMetadata().name,
+            layout: dashboard.getLayout(),
+        }));
 
     React.useEffect(function focusInput() {
         if (inputRef.current) {
@@ -69,7 +77,7 @@ export function Form(props: FormProps): React.ReactNode {
                 </Banner>
             )}
             <form id={props.id} className="gap-x-sm flex items-center" onSubmit={props.onSubmit}>
-                <DashboardPreview height={220} width={150} layout={layout} />
+                <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
                 <div className="gap-y-sm flex min-w-0 grow flex-col">
                     <FieldCompositions.Default
                         label="Title"

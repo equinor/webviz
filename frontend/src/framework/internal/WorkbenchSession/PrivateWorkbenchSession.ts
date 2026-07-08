@@ -25,6 +25,7 @@ import {
     WorkbenchSessionSource,
     type WorkbenchSessionDataContainer,
 } from "./utils/WorkbenchSessionDataContainer";
+import { makeUniqueName } from "@lib/utils/uniqueName";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -326,13 +327,18 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         if (dashboardId && !dashboard) {
             throw new Error("Dashboard not registered in this session");
         }
+        if (this._activeDashboardId === (dashboard ? dashboard.getId() : null)) {
+            return;
+        }
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
     }
 
     addDashboard(): void {
         this.assertIsNotSnapshot();
-        const newDashboard = new Dashboard(this._atomStoreMaster);
+        const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), "Dashboard");
+        const newDashboard = new Dashboard(this._atomStoreMaster, name);
         this.registerDashboard(newDashboard);
         this.setActiveDashboard(newDashboard.getId());
     }
@@ -404,6 +410,41 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    /**
+     * Replaces a single dashboard in place, preserving its position and the rest of the session's
+     * dashboards. Used when applying a template so that only the targeted dashboard is affected.
+     */
+    replaceDashboard(dashboardId: string, newDashboard: Dashboard): void {
+        this.assertIsNotSnapshot();
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        if (index === -1) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        const oldDashboard = this._dashboards[index];
+        const wasActive = this._activeDashboardId === dashboardId;
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
+        oldDashboard.beforeUnload();
+
+        newDashboard.syncRealizationFilterSetWithEnsembleSet(this._ensembleSet);
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${newDashboard.getId()}`,
+            newDashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this._dashboards = [...this._dashboards.slice(0, index), newDashboard, ...this._dashboards.slice(index + 1)];
+
+        if (wasActive) {
+            this._activeDashboardId = newDashboard.getId();
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this.handleStateChange();
     }
 

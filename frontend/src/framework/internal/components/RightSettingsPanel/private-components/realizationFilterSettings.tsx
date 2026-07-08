@@ -39,6 +39,12 @@ export const RealizationFilterSettings = React.memo(function RealizationFilterSe
     const dashboard = useActiveDashboard();
     const realizationFilterSet = dashboard.getRealizationFilterSet();
 
+    // Tracked in state (not a ref) so the derived-state check below stays correct under
+    // React.StrictMode's double-invoked render: mutating a ref directly during render would flip
+    // it on the first invocation, making the second (committed) invocation see a stale "unchanged"
+    // result and silently skip the rebuild.
+    const [previousDashboardId, setPreviousDashboardId] = React.useState<string | null>(null);
+
     const [numberOfUnsavedRealizationFiltersGuiState, setNumberOfUnsavedRealizationFiltersGuiState] = useGuiState(
         guiMessageBroker,
         GuiState.NumberOfUnsavedRealizationFilters,
@@ -112,11 +118,22 @@ export const RealizationFilterSettings = React.memo(function RealizationFilterSe
         [ensembleSet, realizationFilterSet],
     );
 
-    // Create new maps if ensembles are added or removed
+    // Create new maps if ensembles are added or removed, or if the active dashboard changed (each
+    // dashboard has its own realization filter set, so the maps must be rebuilt from the new
+    // dashboard's filters even when the set of ensembles is unchanged).
+    const dashboardId = dashboard.getId();
+    const dashboardChanged = previousDashboardId !== dashboardId;
     const ensembleIdentStrings = ensembleSet.getEnsembleArray().map((ensemble) => ensemble.getIdent().toString());
     if (
+        dashboardChanged ||
         !areUnsortedArraysEqual(ensembleIdentStrings, Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap))
     ) {
+        setPreviousDashboardId(dashboardId);
+
+        if (dashboardChanged && activeFilterEnsembleIdent !== null) {
+            setActiveFilterEnsembleIdent(null);
+        }
+
         // Create new maps with the new ensemble ident strings
         const updatedHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {
             ...ensembleIdentStringHasUnsavedChangesMap,
@@ -134,8 +151,8 @@ export const RealizationFilterSettings = React.memo(function RealizationFilterSe
         }
 
         for (const ensembleIdentString of ensembleIdentStrings) {
-            if (ensembleIdentString in updatedSelectionsMap) {
-                // Skip if already exists
+            if (!dashboardChanged && ensembleIdentString in updatedSelectionsMap) {
+                // Skip if already exists and the dashboard (and thus its filter set) is unchanged
                 continue;
             }
 

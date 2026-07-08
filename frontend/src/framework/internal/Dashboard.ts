@@ -30,6 +30,7 @@ export type LayoutElement = {
 };
 
 export enum DashboardTopic {
+    METADATA = "Metadata",
     LAYOUT = "Layout",
     MODULE_INSTANCES = "ModuleInstances",
     ACTIVE_MODULE_INSTANCE_ID = "ActiveModuleInstanceId",
@@ -37,7 +38,13 @@ export enum DashboardTopic {
     SERIALIZED_STATE = "SerializedState",
 }
 
+export type DashboardMetadata = {
+    name: string;
+    description?: string;
+};
+
 export type DashboardTopicPayloads = {
+    [DashboardTopic.METADATA]: DashboardMetadata;
     [DashboardTopic.LAYOUT]: LayoutElement[];
     [DashboardTopic.MODULE_INSTANCES]: ModuleInstance<any, any>[];
     [DashboardTopic.ACTIVE_MODULE_INSTANCE_ID]: string | null;
@@ -50,8 +57,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
     private _id: string;
-    private _name: string;
-    private _description?: string;
+    private _metadata: DashboardMetadata;
     private _layout: LayoutElement[] = [];
     private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
@@ -67,9 +73,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     // Caching and re-applying makes the two calls commute regardless of which runs first.
     private _pendingSerializedRealizationFilterSet: SerializedRealizationFilterSetState | null = null;
 
-    constructor(atomStoreMaster: AtomStoreMaster) {
+    constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = v4();
-        this._name = "New Dashboard";
+        this._metadata = { name: name ?? "New Dashboard" };
+
         this._atomStoreMaster = atomStoreMaster;
     }
 
@@ -94,6 +101,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (topic === DashboardTopic.SERIALIZED_STATE) {
                 return;
             }
+            if (topic === DashboardTopic.METADATA) {
+                return this._metadata;
+            }
 
             throw new Error(`No snapshot getter for topic ${topic}`);
         };
@@ -105,8 +115,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._id;
     }
 
-    getName(): string {
-        return this._name;
+    getMetadata(): DashboardMetadata {
+        return this._metadata;
+    }
+
+    updateMetadata(metadata: Partial<DashboardMetadata>): void {
+        this._metadata = { ...this._metadata, ...metadata };
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.METADATA);
+        this.handleStateChange();
     }
 
     getLayout(): LayoutElement[] {
@@ -195,8 +211,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         return {
             id: this._id,
-            name: this._name,
-            description: this._description,
+            name: this._metadata.name,
+            description: this._metadata.description,
             activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
             realizationFilterSet: this._realizationFilterSet.serializeState(),
@@ -205,8 +221,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     deserializeState(serializedDashboard: SerializedDashboardState): void {
         this._id = serializedDashboard.id;
-        this._name = serializedDashboard.name;
-        this._description = serializedDashboard.description;
+        this._metadata = {
+            name: serializedDashboard.name,
+            description: serializedDashboard.description,
+        };
 
         // Overlay persisted per-ensemble filter selections onto the filter set. Normally
         // PrivateWorkbenchSession.registerDashboard() has already synchronized the filter set
@@ -354,8 +372,11 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     ): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = serializedDashboard.id;
-        dashboard._name = serializedDashboard.name;
-        dashboard._description = serializedDashboard.description;
+        dashboard._metadata = {
+            name: serializedDashboard.name,
+            description: serializedDashboard.description,
+        };
+
         dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
 
         // See the doc comment on _pendingSerializedRealizationFilterSet / Dashboard.deserializeState()
@@ -408,14 +429,17 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     // Note: the dashboard created here starts with a fresh, empty RealizationFilterSet (not yet
     // synced against any ensembles), so module instances created below transiently get an empty
     // wrapped filter set pushed into their atom stores at creation time. This is corrected
-    // synchronously afterwards by PrivateWorkbenchSession.registerDashboard() (called from
-    // setDashboards() in WorkbenchSessionManager.applyTemplate()), which re-syncs and re-pushes
-    // the now-correct filter set into every one of this dashboard's module instances before
-    // anything renders. Do not "fix" this method in a way that breaks that ordering.
+    // synchronously afterwards by PrivateWorkbenchSession.replaceDashboard()/setDashboards()
+    // (called from WorkbenchSessionManager.applyTemplate()), which re-syncs and re-pushes the
+    // now-correct filter set into every one of this dashboard's module instances before anything
+    // renders. Do not "fix" this method in a way that breaks that ordering.
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = v4();
-        dashboard._description = template.description;
+        dashboard._metadata = {
+            name: template.name,
+            description: template.description,
+        };
 
         const layout: LayoutElement[] = [];
         const moduleInstances: ModuleInstance<any, any>[] = [];
@@ -512,7 +536,9 @@ export function useEnsembleRealizationFilterFunc(dashboard: Dashboard): Ensemble
     React.useEffect(
         function subscribeToEnsembleRealizationFilterSetChanges() {
             function handleEnsembleRealizationFilterSetChanged() {
-                setStoredEnsembleRealizationFilterFunc(() => createEnsembleRealizationFilterFuncForDashboard(dashboard));
+                setStoredEnsembleRealizationFilterFunc(() =>
+                    createEnsembleRealizationFilterFuncForDashboard(dashboard),
+                );
             }
 
             return dashboard

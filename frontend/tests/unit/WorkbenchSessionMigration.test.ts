@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import { migrateLegacyRealizationFilterSetLocation } from "@framework/internal/WorkbenchSession/utils/deserialization";
 import { WORKBENCH_SESSION_CONTENT_STATE_SCHEMA } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession.schema";
 import { IncludeExcludeFilter, RealizationFilterType } from "@framework/types/realizationFilterTypes";
+import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 
 const ajv = new Ajv();
 const validateContent = ajv.compile(WORKBENCH_SESSION_CONTENT_STATE_SCHEMA);
@@ -23,8 +24,15 @@ function makeBaseContent(dashboards: unknown[]) {
         dashboards,
         ensembleSet: { regularEnsembles: [], deltaEnsembles: [] },
         settings: {
-            selectedColorPalettes: { Categorical: "", ContinuousDiverging: "", ContinuousSequential: "" },
-            discreteColorScaleSteps: { Sequential: 0, Diverging: 0 },
+            selectedColorPalettes: {
+                [ColorPaletteType.Categorical]: "",
+                [ColorPaletteType.ContinuousDiverging]: "",
+                [ColorPaletteType.ContinuousSequential]: "",
+            },
+            discreteColorScaleSteps: {
+                [ColorScaleDiscreteSteps.Sequential]: 0,
+                [ColorScaleDiscreteSteps.Diverging]: 0,
+            },
         },
         userCreatedItems: { intersectionPolylines: { intersectionPolylines: [] } },
     };
