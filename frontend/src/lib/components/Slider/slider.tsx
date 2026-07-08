@@ -447,6 +447,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                 ref={minGutterDotRef}
                                 locked={minLocked}
                                 size={componentSize}
+                                hovered={isHovered}
                                 placement="start"
                                 inverse={isDualSlider !== !props.inverted}
                                 sliderState={state}
@@ -519,6 +520,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                         {showMaxLock && (
                             <SliderLockGutter
                                 ref={maxGutterDotRef}
+                                hovered={isHovered}
                                 inverse={!!props.inverted}
                                 size={componentSize}
                                 locked={maxLocked}

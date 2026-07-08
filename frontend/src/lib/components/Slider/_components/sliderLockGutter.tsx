@@ -10,6 +10,7 @@ import { TRACK_HEIGHT_CLASS_NAMES } from "../_constants";
 type SliderLockGutterProps = {
     placement: "start" | "end";
     inverse: boolean;
+    hovered: boolean;
     locked: boolean;
     size: SelectableSize;
     sliderState: SliderRootState;
@@ -19,7 +20,7 @@ type SliderLockGutterProps = {
 export const SliderLockGutter = React.forwardRef<HTMLDivElement, SliderLockGutterProps>(
     function SliderLockGutter(props, ref) {
         const isFilled = props.inverse !== props.locked;
-        const isDragging = props.sliderState.dragging;
+        const isDragging = props.sliderState.dragging || props.hovered;
         const isDisabled = props.sliderState.disabled;
 
         function getGutterColorVariable(disabled: boolean, isFilled: boolean, dragging: boolean) {
