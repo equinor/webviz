@@ -90,7 +90,9 @@ function WithCancelConfirmationRender() {
                             tone: "neutral",
                         },
                     ]}
-                >You have unsaved changes. Leaving now will permanently discard them.</AlertDialog>
+                >
+                    You have unsaved changes. Leaving now will permanently discard them.
+                </AlertDialog>
                 <Dialog.Header>
                     <Dialog.Title>Edit profile</Dialog.Title>
                 </Dialog.Header>
@@ -99,7 +101,7 @@ function WithCancelConfirmationRender() {
                         Make changes to your profile here. Click Save when you are done.
                     </Dialog.Description>
                     <textarea
-                        className="w-full rounded-md border border-neutral-300 p-2"
+                        className="border-neutral-subtle p-4xs w-full rounded-md border"
                         rows={4}
                         defaultValue="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec suscipit auctor dui, at dignissim velit."
                     />

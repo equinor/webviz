@@ -57,7 +57,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
         >
             <div
                 className={resolveClassNames(
-                    "border-neutral-subtle grid grid-cols-[auto_1fr] items-center border text-xs",
+                    "border-neutral-subtle text-body-xs grid grid-cols-[auto_1fr] items-center border",
                     {
                         hidden: !isExpanded,
                     },

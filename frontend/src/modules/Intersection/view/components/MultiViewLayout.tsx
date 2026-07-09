@@ -13,7 +13,7 @@ export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
     const { viewCount, preferredViewLayout, children } = props;
 
     if (viewCount === 0) {
-        return <div className="w-full h-full">{children}</div>;
+        return <div className="h-full w-full">{children}</div>;
     }
 
     const isSingleView = viewCount === 1;
@@ -28,9 +28,9 @@ export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
         : undefined;
 
     const containerClasses = {
-        "flex flex-row gap-4": showHorizontal,
-        "flex flex-col gap-4": showVertical,
-        "grid gap-4": showGrid,
+        "flex flex-row gap-3xs": showHorizontal,
+        "flex flex-col gap-3xs": showVertical,
+        "grid gap-3xs": showGrid,
     };
     const childClasses = {
         "flex-1 shrink-0 min-w-0": showHorizontal,
@@ -39,7 +39,7 @@ export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
     };
 
     return (
-        <div className={resolveClassNames("w-full h-full", containerClasses)} style={gridStyle}>
+        <div className={resolveClassNames("h-full w-full", containerClasses)} style={gridStyle}>
             {React.Children.map(children, (child) => (
                 <div className={resolveClassNames("overflow-hidden p-0.5", childClasses)}>{child}</div>
             ))}

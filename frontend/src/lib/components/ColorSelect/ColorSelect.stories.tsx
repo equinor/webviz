@@ -74,9 +74,9 @@ export const Disabled: Story = {
 function ControlledRender() {
     const [color, setColor] = React.useState("#3b82f6");
     return (
-        <div className="flex flex-col items-center gap-3">
+        <div className="gap-2xs flex flex-col items-center">
             <ColorSelect value={color} onValueChange={setColor} />
-            <p className="font-mono text-sm">{color}</p>
+            <p className="text-body-sm font-mono">{color}</p>
         </div>
     );
 }
@@ -98,13 +98,13 @@ function MultipleSwatchesRender() {
     return (
         <div className="flex flex-col gap-2">
             {colors.map((color, i) => (
-                <div key={labels[i]} className="flex items-center gap-3">
-                    <span className="w-24 text-sm">{labels[i]}</span>
+                <div key={labels[i]} className="gap-2xs flex items-center">
+                    <span className="text-body-sm w-24">{labels[i]}</span>
                     <ColorSelect
                         value={color}
                         onValueChange={(v) => setColors((prev) => prev.map((c, j) => (j === i ? v : c)))}
                     />
-                    <span className="font-mono text-sm">{color}</span>
+                    <span className="text-body-sm font-mono">{color}</span>
                 </div>
             ))}
         </div>

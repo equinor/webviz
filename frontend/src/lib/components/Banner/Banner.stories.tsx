@@ -98,7 +98,7 @@ function DismissableRender(args: React.ComponentProps<typeof Banner>) {
             {args.children}
         </Banner>
     ) : (
-        <button className="text-sm underline" onClick={() => setVisible(true)}>
+        <button className="text-body-sm underline" onClick={() => setVisible(true)}>
             Show banner again
         </button>
     );

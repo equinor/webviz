@@ -20,7 +20,6 @@ import { interpolateValueAtDepth } from "../../utils/curveUtils";
 // A neutral gray makes such traces visually distinct instead of reusing the first ensemble's color.
 export const MISSING_ENSEMBLE_COLOR = "#808080";
 
-
 type EnsembleStatisticGroup = {
     ensembleIdent: RegularEnsembleIdent;
     entries: RftRealizationCurve[];
@@ -278,11 +277,11 @@ export class RftPlotBuilder {
             hovermode: "closest",
             showlegend: true,
             xaxis: {
-                title: responseName,
+                title: { text: responseName },
                 range: valueRange ?? undefined,
             },
             yaxis: {
-                title: "Depth (TVD)",
+                title: { text: "Depth (TVD)" },
                 autorange: "reversed",
             },
         };
@@ -310,7 +309,9 @@ export class RftPlotBuilder {
             (candidate) => candidate.getIdent().toString() === ensembleIdent.toString(),
         );
         if (!ensemble) {
-            console.error(`Could not resolve color for ensemble ${ensembleIdent.toString()}: not among selected ensembles.`);
+            console.error(
+                `Could not resolve color for ensemble ${ensembleIdent.toString()}: not among selected ensembles.`,
+            );
             return MISSING_ENSEMBLE_COLOR;
         }
         return ensemble.getColor();

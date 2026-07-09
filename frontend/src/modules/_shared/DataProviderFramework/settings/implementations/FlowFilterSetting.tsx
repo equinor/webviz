@@ -320,7 +320,7 @@ export class FlowFilterSetting implements CustomSettingImplementation<
                         disabled={props.disabled}
                     />
                     <div
-                        className={resolveClassNames("mt-2 font-semibold", {
+                        className={resolveClassNames("mt-3xs font-semibold", {
                             "col-span-4": inputVisible,
                             "col-span-3": !inputVisible,
                         })}
