@@ -318,7 +318,7 @@ async def get_statistical_surface_data_hybrid(
         task_was_deleted = await task_tracker.delete_task_by_fingerprint_async(task_fp)
         if not task_was_deleted:
             LOGGER.warning(f"No task found to delete for address: {surf_addr_str}")
-            return LroCommandResp(command_ok=True, message="No task found to delete")
+            return LroCommandResp(command_ok=False, message="No task found to delete")
 
         LOGGER.info(f"Deleted statistical surface calculation task for address: {surf_addr_str}")
         return LroCommandResp(command_ok=True, message="Task deleted")
