@@ -2,11 +2,16 @@ import datetime
 import hashlib
 import logging
 import uuid
+
 import httpx
+from typing import TypeVar, Literal
 
 from fmu.sumo.explorer.explorer import SumoClient
 from azure.storage.blob.aio import BlobClient, StorageStreamDownloader
 from azure.core.exceptions import ResourceNotFoundError
+from pydantic import BaseModel
+
+PydanticModelType = TypeVar("PydanticModelType", bound=BaseModel)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -77,6 +82,7 @@ class SumoBlobCache:
                 return None
 
             return sas_url_for_blob_read
+
         except httpx.RequestError as exc:
             # Should we raise a service exception or just log an error here?
             # Assuming that caching is a best effort optimization we should probably just log the error and return None
@@ -101,7 +107,7 @@ class SumoBlobCache:
 
     async def upload_reserved_blob_async(self, blob_sas_url: str, blob_payload: bytes) -> None:
         if not blob_sas_url:
-            raise ValueError("Cannot upload cache blob, empty SAS URL provided")
+            raise ValueError("Cannot upload blob to cache, empty SAS URL provided")
 
         blob_size = len(blob_payload)
         async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
@@ -109,23 +115,28 @@ class SumoBlobCache:
                 data=blob_payload, blob_type="BlockBlob", length=blob_size, overwrite=True
             )
 
-    async def download_resolved_blob_async(self, blob_sas_url: str) -> bytes:
+    async def download_resolved_blob_async(self, blob_sas_url: str) -> bytes | None:
         if not blob_sas_url:
-            raise ValueError("Cannot download cache blob, empty SAS URL provided")
+            raise ValueError("Cannot download blob from cache, empty SAS URL provided")
 
         if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
             LOGGER.warning("download_resolved_blob_async() -- FAKE_CHECK says that the blob is stale")
             return None
 
         async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
-            stream_downloader: StorageStreamDownloader[bytes] = await blob_client.download_blob()
-            payload: bytes = await stream_downloader.readall()
+            try:
+                stream_downloader: StorageStreamDownloader[bytes] = await blob_client.download_blob()
+                payload: bytes = await stream_downloader.readall()
+            except ResourceNotFoundError:
+                # The cache entry resolved to a SAS URL, but the underlying blob is not there
+                LOGGER.debug("Could not download resolved blob: blob not found, treating as cache miss")
+                return None
 
         return payload
 
     async def is_resolved_blob_accessible_async(self, blob_sas_url: str) -> bool:
         if not blob_sas_url:
-            raise ValueError("Cannot check cache blob, empty SAS URL provided")
+            raise ValueError("Cannot check blob access, empty SAS URL provided")
 
         if await self._FAKE_CHECK_is_resolved_blob_stale_async(blob_sas_url):
             LOGGER.warning("is_resolved_blob_accessible_async() -- FAKE_CHECK says that the blob is stale")
@@ -138,7 +149,7 @@ class SumoBlobCache:
             except ResourceNotFoundError:
                 return False
         
-    async def put_cache_blob_async(self, cache_key: str, source_obj_uuids: list[str], blob_payload: bytes) -> None:
+    async def put_bytes_async(self, cache_key: str, source_obj_uuids: list[str], blob_payload: bytes) -> None:
         blob_size = len(blob_payload)
         blob_sas_url = await self.reserve_cache_entry_async(cache_key, source_obj_uuids, blob_size)
         if blob_sas_url is None:
@@ -146,14 +157,37 @@ class SumoBlobCache:
 
         await self.upload_reserved_blob_async(blob_sas_url, blob_payload)
 
-    async def get_cache_blob_async(self, cache_key: str) -> bytes | None:
+    async def get_bytes_async(self, cache_key: str) -> bytes | None:
         blob_sas_url = await self.resolve_cache_entry_async(cache_key)
         if blob_sas_url is None:
             return None
 
         payload = await self.download_resolved_blob_async(blob_sas_url)
         return payload
+    
+    async def put_pydantic_model_async(self, cache_key: str, source_obj_uuids: list[str], model: BaseModel) -> None:
+        blob_bytes = model.model_dump_json().encode()
+        blob_size = len(blob_bytes)
+        blob_sas_url = await self.reserve_cache_entry_async(cache_key, source_obj_uuids, blob_size)
+        if blob_sas_url is None:
+            raise ValueError("Failed to reserve cache entry, cannot proceed with blob upload")
 
+        await self.upload_reserved_blob_async(blob_sas_url, blob_bytes)
+
+    async def get_pydantic_model_async(self, cache_key: str, model_class: type[PydanticModelType]) -> PydanticModelType | None:
+        blob_sas_url = await self.resolve_cache_entry_async(cache_key)
+        if blob_sas_url is None:
+            return None
+
+        blob_bytes = await self.download_resolved_blob_async(blob_sas_url)
+        if blob_bytes is None:
+            return None
+
+        model = model_class.model_validate_json(blob_bytes.decode("utf-8"))
+        return model
+
+
+    # !!!!!!!!!!!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!
     # Temporary hack to allow us to simulate the removal of cache entries
     async def _FAKE_CHECK_is_resolved_blob_stale_async(self, blob_sas_url: str) -> bool:
