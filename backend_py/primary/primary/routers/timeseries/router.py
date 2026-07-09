@@ -798,10 +798,9 @@ async def get_derived_vector_table_hybrid(
         # run_in_background_task(job_coro)
 
         message_bus: MessageBus = MessageBusSingleton.get_instance()
-        sender = message_bus.get_sender(queue_name="test-queue")
         sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
-        await sender.send_messages(sb_msg)
-        
+        await message_bus.send_to_queue_async(queue_name="test-queue", message=sb_msg)
+
         new_task_was_submitted = True
         LOGGER.info(f"{dbg_prefix}Submitted new task to create derived table [{table_handle=}, {task_meta.task_id=}]")
         perf_metrics.record_lap("start-task")
