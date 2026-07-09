@@ -89,7 +89,7 @@ export function SettingManagerComponent<
             <React.Fragment key={props.setting.getId()}>
                 <div className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center">
                     <span>{props.setting.getLabel()}</span>
-                    <span className="mb-2xs text-base">
+                    <span className="mb-2xs text-body-base">
                         <Link style={{ fontSize: 16 }} titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>

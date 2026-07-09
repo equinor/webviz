@@ -95,7 +95,7 @@ function GroupWithParentRender() {
         <CheckboxGroup value={value} onValueChange={setValue} allValues={[...fruits]}>
             <div className="flex flex-col gap-1">
                 <Checkbox parent nativeButton aria-label="All fruits" />
-                <div className="ml-6 flex flex-col gap-1">
+                <div className="ml-sm gap-4xs flex flex-col">
                     {fruits.map((fruit) => (
                         <Checkbox key={fruit} value={fruit} nativeButton aria-label={fruit} />
                     ))}

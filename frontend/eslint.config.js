@@ -13,6 +13,7 @@ export default eslintTypescript.config(
     reactPlugin.configs.flat.recommended,
     reactPlugin.configs.flat["jsx-runtime"],
     importPlugin.flatConfigs.recommended,
+    reactHooksPlugin.configs.flat.recommended,
     // Configure typescript resolver
     // ! Make sure "eslint-import-resolver-typescript" is installed
     {
@@ -24,13 +25,6 @@ export default eslintTypescript.config(
         },
     },
 
-    // ! Currently unable to directly import recommended hooks-plugin config. Need to manually set them up for now
-    // ! See: https://github.com/facebook/react/issues/32431
-    // Once resolved, replace with this: reactHooksPlugin.configs["recommended-latest"],
-    {
-        plugins: { "react-hooks": reactHooksPlugin },
-        rules: { ...reactHooksPlugin.configs.recommended.rules },
-    },
     // Specify react version (stops a warning when running lint)
     { settings: { react: { version: "detect" } } },
     // Make import plugin work with typescript files
@@ -42,7 +36,7 @@ export default eslintTypescript.config(
     // ! Make sure prettier is *after* other plugins, so it can override
     configPrettier,
 
-    { ignores: ["scripts/", "playwright/", "coverage/", "dist/", "src/api/"] },
+    { ignores: ["scripts/", "playwright/", "coverage/", "dist/"] },
 
     // Other configs  -------------------------------------------------------------------
     {
@@ -54,6 +48,22 @@ export default eslintTypescript.config(
         },
     },
     // Custom rules ---------------------------------------------------------------------
+    {
+        // generate-api will use the project linter config. However, the generated code occasionally uses bare-bones ts-comments, so we need to relax the rule a bit for this folder specifically
+        files: ["src/api/**"],
+        rules: { "@typescript-eslint/ban-ts-comment": "off" },
+    },
+
+    {
+        rules: {
+            // TODO: These rules were introduced after deps update. It's relevant in a lot of files so we'll hold off while we wait for the EDS branch to be merged.
+            "react-hooks/set-state-in-effect": "off",
+            "react-hooks/refs": "off",
+            "react-hooks/purity": "off",
+            // This rule seems to be very inconsistent at the moment, and causes false flags in some of our code, most notably with some of our `withDefaults` usage
+            "react-hooks/preserve-manual-memoization": "off",
+        },
+    },
     {
         // Lodash-es exposes the "chain" utility in its typing, but the function will fail due to tree-shaking in production. This rule config should flag any use of chain as an error
         rules: {

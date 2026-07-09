@@ -44,7 +44,7 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
     const colorConf = defaults({}, props.colors, COLORS[props.phase]);
 
     return (
-        <div className="-ml-2xs text-xs">
+        <div className="-ml-2xs text-body-xs">
             <button
                 className={resolveClassNames(
                     "pl-2xs pr-3xs gap-2xs hover:bg-neutral-hover flex w-full items-center rounded-r-sm",
@@ -71,7 +71,7 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
             </button>
 
             {!collapsed && (
-                <ul className="bg-gray-200 px-2 w-full space-y-1">
+                <ul className="bg-neutral-surface w-full space-y-1 px-2">
                     <FlowValueText value={props.oil} name="Oil" color={colorConf.oil} unit="Sm³" />
                     <FlowValueText value={props.gas} name="Gas" color={colorConf.gas} unit="Sm³" />
                     <FlowValueText value={props.water} name="Water" color={colorConf.water} unit="m³" />

@@ -16,10 +16,10 @@ export function PersistableAtomWarningWrapper<T>(props: PersistableAtomWarningWr
     const warningMessage = useMakePersistableAtomWarningMessage(props.atom);
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="gap-3xs flex flex-col">
             {props.children}
             {!isValidInContext && (
-                <div className="text-red-500 flex gap-2 items-center">
+                <div className="text-danger-subtle gap-3xs flex items-center">
                     <Warning fontSize="inherit" />
                     {warningMessage}
                 </div>

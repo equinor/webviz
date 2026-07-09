@@ -59,7 +59,7 @@ type Story = StoryObj;
 
 function RightClickZone({ label = "Right-click here" }: { label?: string }) {
     return (
-        <div className="flex h-40 w-80 items-center justify-center rounded border-2 border-dashed border-neutral-400 text-sm text-neutral-500 select-none">
+        <div className="border-neutral-subtle text-neutral-subtle text-body-sm flex h-40 w-80 items-center justify-center rounded border-2 border-dashed select-none">
             {label}
         </div>
     );
@@ -279,15 +279,15 @@ export const DynamicItems: Story = {
             <ContextMenu.Root>
                 <ContextMenu.Trigger
                     render={
-                        <div className="relative h-48 w-80 rounded border border-neutral-300 select-none">
+                        <div className="border-neutral-subtle relative h-48 w-80 rounded border select-none">
                             {nodes.map((node, i) => (
                                 <button
                                     key={node}
                                     className={[
-                                        "absolute rounded border px-3 py-1 text-sm",
+                                        "px-2xs py-4xs text-body-sm absolute rounded border",
                                         selectedNode === node
-                                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                                            : "border-neutral-300 bg-white text-neutral-700",
+                                            ? "border-accent bg-accent text-accent-subtle"
+                                            : "border-neutral-subtle text-neutral-strong bg-white",
                                     ].join(" ")}
                                     style={{ top: 16 + i * 44, left: 16 + i * 48 }}
                                     onMouseDown={() => setSelectedNode(node)}
@@ -296,7 +296,7 @@ export const DynamicItems: Story = {
                                     {node}
                                 </button>
                             ))}
-                            <span className="absolute right-3 bottom-2 text-xs text-neutral-400">
+                            <span className="text-neutral-strong text-body-xs absolute right-3 bottom-2">
                                 {selectedNode ? `Selected: ${selectedNode}` : "Right-click a node or the canvas"}
                             </span>
                         </div>

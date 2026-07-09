@@ -2591,8 +2591,8 @@ export const getSessionsMetadataInfiniteQueryKey = (
  *
  * The response includes a continuation token for fetching the next page of results.
  */
-export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessionsMetadataData_api>) =>
-    infiniteQueryOptions<
+export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessionsMetadataData_api>) => {
+    const opts = infiniteQueryOptions<
         GetSessionsMetadataResponse_api,
         AxiosError<GetSessionsMetadataError_api>,
         InfiniteData<GetSessionsMetadataResponse_api>,
@@ -2626,6 +2626,8 @@ export const getSessionsMetadataInfiniteOptions = (options?: Options<GetSessions
             queryKey: getSessionsMetadataInfiniteQueryKey(options),
         },
     );
+    return opts as Omit<typeof opts, "initialData">;
+};
 
 export const createSessionQueryKey = (options: Options<CreateSessionData_api>) =>
     createQueryKey("createSession", options);
@@ -2923,8 +2925,8 @@ export const getSnapshotAccessLogsInfiniteQueryKey = (
  * - Creation date range
  * - Last visited date range
  */
-export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapshotAccessLogsData_api>) =>
-    infiniteQueryOptions<
+export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapshotAccessLogsData_api>) => {
+    const opts = infiniteQueryOptions<
         GetSnapshotAccessLogsResponse_api,
         AxiosError<GetSnapshotAccessLogsError_api>,
         InfiniteData<GetSnapshotAccessLogsResponse_api>,
@@ -2958,6 +2960,8 @@ export const getSnapshotAccessLogsInfiniteOptions = (options?: Options<GetSnapsh
             queryKey: getSnapshotAccessLogsInfiniteQueryKey(options),
         },
     );
+    return opts as Omit<typeof opts, "initialData">;
+};
 
 export const getSnapshotsMetadataQueryKey = (options?: Options<GetSnapshotsMetadataData_api>) =>
     createQueryKey("getSnapshotsMetadata", options);
@@ -3015,8 +3019,8 @@ export const getSnapshotsMetadataInfiniteQueryKey = (
  *
  * Note: Consider using `/persistence/snapshot_access_logs` to see both your snapshots and ones shared with you.
  */
-export const getSnapshotsMetadataInfiniteOptions = (options?: Options<GetSnapshotsMetadataData_api>) =>
-    infiniteQueryOptions<
+export const getSnapshotsMetadataInfiniteOptions = (options?: Options<GetSnapshotsMetadataData_api>) => {
+    const opts = infiniteQueryOptions<
         GetSnapshotsMetadataResponse_api,
         AxiosError<GetSnapshotsMetadataError_api>,
         InfiniteData<GetSnapshotsMetadataResponse_api>,
@@ -3050,6 +3054,8 @@ export const getSnapshotsMetadataInfiniteOptions = (options?: Options<GetSnapsho
             queryKey: getSnapshotsMetadataInfiniteQueryKey(options),
         },
     );
+    return opts as Omit<typeof opts, "initialData">;
+};
 
 export const createSnapshotQueryKey = (options: Options<CreateSnapshotData_api>) =>
     createQueryKey("createSnapshot", options);

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import type { SurfaceDef_api, GetStatisticalSurfaceDataHybridData_api, Options } from "@api";
@@ -8,6 +8,7 @@ import { getStatisticalSurfaceDataHybrid, getStatisticalSurfaceDataHybridQueryKe
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useLroProgress, wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
+import { Button } from "@lib/components/Button";
 import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
@@ -21,6 +22,8 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import type { Interfaces } from "./interfaces";
 
 export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
+    const queryClient = useQueryClient();
+
     const surfaceAddress = props.viewContext.useSettingsToViewInterfaceValue("surfaceAddress");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
@@ -84,8 +87,19 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
         surfData = transformSurfaceData(hybrid_dataQuery.data) as SurfaceDataFloat_trans;
     }
 
+    async function handleDeleteLroTask() {
+        console.debug(`handleDeleteLroTask`);
+        await getStatisticalSurfaceDataHybrid({ query: { ...hybrid_apiFunctionArgs.query, delete_task: true } });
+        queryClient.resetQueries({ queryKey: hybrid_queryOptions.queryKey, exact: true, fetchStatus: "idle" });
+    }
+
     return (
-        <div className="relative w-full h-full flex flex-col">
+        <div className="relative flex h-full w-full flex-col">
+            <div className="z-elevated absolute right-0 bottom-0">
+                <Button onClick={handleDeleteLroTask} disabled={activeQueryType !== "hybrid"}>
+                    Delete LRO Task
+                </Button>
+            </div>
             {hasError ? (
                 <ContentError>Error loading surface data</ContentError>
             ) : isLoading ? (
