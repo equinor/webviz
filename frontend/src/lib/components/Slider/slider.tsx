@@ -81,6 +81,9 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
     valueLabelDisplay?: "auto" | "off";
     // TODO: Reintroduce "always" options -- original approach had notable positioning issues
 
+    /**
+     * Decides which side of the thumbs the value label should be positioned
+     */
     valueLabelSide?: "top" | "bottom";
 
     /**
@@ -168,6 +171,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
         "valueLabelDisplay",
         "thumbAriaLabel",
         "valueLabelFormat",
+        "valueLabelSide",
         "inverted",
         "noIndicator",
         "size",

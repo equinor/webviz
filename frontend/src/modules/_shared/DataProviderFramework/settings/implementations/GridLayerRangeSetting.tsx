@@ -291,7 +291,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             };
 
             const divRef = React.useRef<HTMLDivElement>(null);
-            const [internalValue, setInternalValue] = React.useState<InternalValueType | null>(cloneDeep(props.value));
+            const [internalValue, setInternalValue] = React.useState<InternalValueType>(cloneDeep(props.value));
             const [prevValue, setPrevValue] = React.useState<InternalValueType>(cloneDeep(props.value));
 
             const divSize = useElementSize(divRef);
@@ -575,10 +575,10 @@ function getRangeValueForLabel(
         if (labelValue.type === "zone") {
             return null;
         } else {
-            rangeValue = labelValue.range;
+            rangeValue = [...labelValue.range];
         }
     } else if (labelValue) {
-        rangeValue = labelValue;
+        rangeValue = [...labelValue];
     } else {
         rangeValue = ["min", "max"];
     }
