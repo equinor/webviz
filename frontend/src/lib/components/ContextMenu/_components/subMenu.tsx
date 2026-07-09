@@ -19,7 +19,15 @@ export type SubmenuProps = Omit<ContextMenuSubmenuRootProps, "className" | "styl
 };
 
 export function Submenu(props: SubmenuProps) {
-    const baseProps = omit(props, "triggerContent", "children");
+    const baseProps = omit(
+        props,
+        "triggerContent",
+        "triggerTone",
+        "triggerIcon",
+        "triggerText",
+        "triggerDescription",
+        "children",
+    );
 
     return (
         <ContextMenuBase.SubmenuRoot {...baseProps}>

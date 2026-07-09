@@ -22,6 +22,7 @@ export type SubmenuItemProps = ComponentWrapperProps<SubmenuRootBaseProps> & {
 export const SubmenuItem = React.forwardRef<HTMLDivElement, SubmenuItemProps>(function SubmenuItem(props, ref) {
     const baseProps = resolveWrapperProps(
         props,
+        "triggerTone",
         "triggerContent",
         "triggerIcon",
         "triggerText",

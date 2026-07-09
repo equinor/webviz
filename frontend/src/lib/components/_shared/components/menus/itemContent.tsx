@@ -8,7 +8,7 @@ import { Typography } from "@lib/components/Typography";
 
 export type MenuItemContentProps = {
     /**
-     * The items color tone
+     * The item's color tone
      * @default "neutral"
      */
     tone?: "neutral" | "danger" | "warning";
