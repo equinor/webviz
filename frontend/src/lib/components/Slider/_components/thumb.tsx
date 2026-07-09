@@ -1,14 +1,16 @@
-import type React from "react";
+import React from "react";
 
 import { Slider as SliderBase, Tooltip as TooltipBase, type BaseUIEvent } from "@base-ui/react";
 import { Key } from "ts-key-enum";
 
 import { getNextTextSize, getTextSizeForSelectableSize, type SelectableSize } from "@lib/components/_shared/utils/size";
 import { Typography } from "@lib/components/Typography";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isDualSliderValue } from "../_utils";
 
 export function Thumb(props: {
+    labelBoundaryRef: React.RefObject<HTMLDivElement>;
     size: SelectableSize;
     index: number;
     showValue: boolean;
@@ -33,6 +35,8 @@ export function Thumb(props: {
 
     const thumbHidden = !isDualSliderValue(props.sliderValue) && props.index === 1;
     const thumbValue = isDualSliderValue(props.sliderValue) ? props.sliderValue[props.index] : props.sliderValue;
+
+    const anchorRef = React.useRef<HTMLDivElement>(null);
 
     let positionStyle: React.CSSProperties | undefined = undefined;
 
@@ -68,40 +72,67 @@ export function Thumb(props: {
     }
 
     return (
-        <TooltipBase.Root open={props.showValue && !thumbHidden}>
-            <TooltipBase.Trigger
-                render={
-                    <SliderBase.Thumb
-                        // Hiding via style to keep refs stable
-                        hidden={thumbHidden}
-                        disabled={thumbHidden}
-                        // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
-                        className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
-                        index={props.index}
-                        inputRef={props.inputRefs[props.index]}
-                        getAriaLabel={props.getAriaLabel}
-                        style={positionStyle}
-                        onKeyDownCapture={onThumbInputKeyDown}
-                    />
-                }
+        <>
+            <SliderBase.Thumb
+                // Hiding via style to keep refs stable
+                hidden={thumbHidden}
+                disabled={thumbHidden}
+                // Note that z-index is forced to 2. Internal slider logic will attempt to set it to 1, so we force it to avoid layering issues with Dots
+                className="border-accent-strong data-disabled:border-disabled bg-surface not-data-disabled:hover:outline-focus focus-within:outline-focus z-2! box-content size-(--thumb-size) rounded-full border-2 outline-2 outline-offset-2 outline-transparent"
+                index={props.index}
+                inputRef={props.inputRefs[props.index]}
+                getAriaLabel={props.getAriaLabel}
+                onKeyDownCapture={onThumbInputKeyDown}
+                render={(p) => {
+                    return (
+                        <>
+                            {/* We create a duplicate, invisible thumb for the the thumb tooltip to follow; this element won't move out into the gutters when locked, so the tooltip stays aligned with the track */}
+                            <div
+                                ref={anchorRef}
+                                className={resolveClassNames(p.className, "pointer-events-none invisible")}
+                                style={p.style}
+                            />
+                            <div
+                                {...p}
+                                style={{
+                                    ...p.style,
+                                    ...positionStyle,
+                                }}
+                            />
+                        </>
+                    );
+                }}
             />
-            <TooltipBase.Portal>
-                <TooltipBase.Positioner sideOffset={6} side={props.labelSide}>
-                    <TooltipBase.Popup
-                        data-slider-disabled={props.disabled ? "" : undefined}
-                        className="bg-accent-strong data-slider-disabled:bg-disabled px-2xs py-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
-                        render={
-                            <Typography
-                                as="div"
-                                variant="subtle"
-                                size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
-                            >
-                                {props.valueLabelFormat ? props.valueLabelFormat(thumbValue, props.index) : thumbValue}
-                            </Typography>
-                        }
-                    ></TooltipBase.Popup>
-                </TooltipBase.Positioner>
-            </TooltipBase.Portal>
-        </TooltipBase.Root>
+            <TooltipBase.Root open={props.showValue && !thumbHidden}>
+                <TooltipBase.Portal className="pointer-events-none">
+                    <TooltipBase.Positioner
+                        sideOffset={4}
+                        anchor={anchorRef.current}
+                        side={props.labelSide}
+                        collisionBoundary={props.labelBoundaryRef.current ?? "clipping-ancestors"}
+                        collisionPadding={-8}
+                        collisionAvoidance={{
+                            side: "none",
+                        }}
+                    >
+                        <TooltipBase.Popup
+                            data-slider-disabled={props.disabled ? "" : undefined}
+                            className="bg-accent-strong data-slider-disabled:bg-disabled px-2xs py-4xs text-info-strong-on-emphasis! pointer-events-none rounded"
+                            render={
+                                <Typography
+                                    as="div"
+                                    variant="subtle"
+                                    size={getNextTextSize(getTextSizeForSelectableSize(props.size), -1)}
+                                >
+                                    {props.valueLabelFormat
+                                        ? props.valueLabelFormat(thumbValue, props.index)
+                                        : thumbValue}
+                                </Typography>
+                            }
+                        />
+                    </TooltipBase.Positioner>
+                </TooltipBase.Portal>
+            </TooltipBase.Root>
+        </>
     );
 }

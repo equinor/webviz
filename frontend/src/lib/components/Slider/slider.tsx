@@ -194,6 +194,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     const minGutterDotRef = React.useRef<HTMLDivElement | null>(null);
     const maxGutterDotRef = React.useRef<HTMLDivElement | null>(null);
     const controllerRef = React.useRef<HTMLDivElement | null>(null);
+    const trackRef = React.useRef<HTMLDivElement | null>(null);
 
     React.useImperativeHandle(ref, () => controllerRef.current as HTMLDivElement);
 
@@ -456,6 +457,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                         )}
 
                         <SliderBase.Track
+                            ref={trackRef}
                             className={resolveClassNames("w-full rounded-lg", TRACK_HEIGHT_CLASS_NAMES[componentSize], {
                                 [INDICATOR_CLASS_NAME]: props.inverted,
                                 [TRACK_CLASS_NAME]: !props.inverted,
@@ -471,6 +473,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                             )}
 
                             <Thumb
+                                labelBoundaryRef={trackRef}
                                 index={0}
                                 size={componentSize}
                                 showValue={showThumbValueLabels}
@@ -489,6 +492,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                             />
 
                             <Thumb
+                                labelBoundaryRef={trackRef}
                                 index={1}
                                 size={componentSize}
                                 showValue={showThumbValueLabels}
