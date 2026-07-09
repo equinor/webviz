@@ -748,7 +748,6 @@ async def get_derived_vector_table_hybrid(
     new_task_was_submitted = False
     if not task_meta:
         task_meta = await task_tracker.register_task_with_fingerprint_async(
-            task_system="background_task",
             task_id=nanoid.generate(size=12),
             fingerprint=task_fp,
             ttl_s=5 * 60,

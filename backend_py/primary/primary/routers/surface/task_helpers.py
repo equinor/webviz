@@ -46,7 +46,6 @@ async def submit_and_track_stat_surf_task_async(
     # According to Sumo team, the tasks and task results will be purged after 24 hours, so we set our TTL slightly shorter at 23 hours
     task_ttl_s = 23 * 60 * 60
     task_meta = await task_tracker.register_task_with_fingerprint_async(
-        task_system="sumo_task",
         task_id=sumo_task_id,
         fingerprint=task_fingerprint,
         ttl_s=task_ttl_s,
