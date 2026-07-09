@@ -4549,6 +4549,12 @@ export type GetStatisticalSurfaceDataHybridData_api = {
          */
         data_format?: "float" | "png";
         /**
+         * Delete Task
+         *
+         * If true, the task and result will be deleted
+         */
+        delete_task?: boolean;
+        /**
          * Resample To Def Str
          *
          * Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
@@ -4556,7 +4562,7 @@ export type GetStatisticalSurfaceDataHybridData_api = {
         resample_to_def_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/statistical_surface_data/hybrid";
+    url: "/surface/statistical_surface_data_hybrid";
 };
 
 export type GetStatisticalSurfaceDataHybridErrors_api = {

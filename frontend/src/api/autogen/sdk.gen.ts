@@ -525,7 +525,7 @@ export const getStatisticalVectorDataPerSensitivity = <ThrowOnError extends bool
  */
 export const getDerivedVectorTableHybrid = <ThrowOnError extends boolean = false>(
     options: Options<GetDerivedVectorTableHybridData_api, ThrowOnError>,
-) =>
+): RequestResult<GetDerivedVectorTableHybridResponses_api, GetDerivedVectorTableHybridErrors_api, ThrowOnError> =>
     (options.client ?? client).get<
         GetDerivedVectorTableHybridResponses_api,
         GetDerivedVectorTableHybridErrors_api,
@@ -541,7 +541,7 @@ export const getDerivedVectorTableHybrid = <ThrowOnError extends boolean = false
  */
 export const getDerivedTableInfo = <ThrowOnError extends boolean = false>(
     options: Options<GetDerivedTableInfoData_api, ThrowOnError>,
-) =>
+): RequestResult<GetDerivedTableInfoResponses_api, GetDerivedTableInfoErrors_api, ThrowOnError> =>
     (options.client ?? client).get<GetDerivedTableInfoResponses_api, GetDerivedTableInfoErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/timeseries/derived_table_info",
@@ -553,7 +553,7 @@ export const getDerivedTableInfo = <ThrowOnError extends boolean = false>(
  */
 export const getCalcSomethingOnDerivedTable = <ThrowOnError extends boolean = false>(
     options: Options<GetCalcSomethingOnDerivedTableData_api, ThrowOnError>,
-) =>
+): RequestResult<GetCalcSomethingOnDerivedTableResponses_api, GetCalcSomethingOnDerivedTableErrors_api, ThrowOnError> =>
     (options.client ?? client).get<
         GetCalcSomethingOnDerivedTableResponses_api,
         GetCalcSomethingOnDerivedTableErrors_api,
@@ -764,7 +764,7 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
         ThrowOnError
     >({
         responseType: "json",
-        url: "/surface/statistical_surface_data/hybrid",
+        url: "/surface/statistical_surface_data_hybrid",
         ...options,
     });
 
