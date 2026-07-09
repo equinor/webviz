@@ -22,10 +22,5 @@ export function TimeAgo(props: TimeAgoProps): React.ReactNode {
         [props.updateIntervalMs],
     );
 
-    const timeString = React.useMemo(
-        () => timeAgo(time - props.datetimeMs, props.shorten),
-        [props.datetimeMs, props.shorten, time],
-    );
-
-    return <> {timeString} </>;
+    return timeAgo(time - props.datetimeMs, props.shorten);
 }

@@ -25,14 +25,6 @@ export default eslintTypescript.config(
         },
     },
 
-    // ! Currently unable to directly import recommended hooks-plugin config. Need to manually set them up for now
-    // ! See: https://github.com/facebook/react/issues/32431
-    // Once resolved, replace with this: reactHooksPlugin.configs["recommended-latest"],
-    // {
-    //     plugins: { "react-hooks": reactHooksPlugin },
-    //     rules: { ...reactHooksPlugin.configs.recommended.rules },
-    // },
-
     // Specify react version (stops a warning when running lint)
     { settings: { react: { version: "detect" } } },
     // Make import plugin work with typescript files
