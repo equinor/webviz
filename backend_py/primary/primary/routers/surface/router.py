@@ -292,7 +292,12 @@ async def get_statistical_surface_data_hybrid(
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
     delete_task: Annotated[bool, Query(description="If true, the task and result will be deleted")] = False,
     # fmt:on
-) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp | LroCommandResp:
+) -> (
+    LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng]
+    | LroInProgressResp
+    | LroFailureResp
+    | LroCommandResp
+):
 
     perf_metrics = ResponsePerfMetrics(response)
 
