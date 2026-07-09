@@ -73,7 +73,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
                 backgroundColor: color ?? undefined,
             }}
             startAdornment={
-                <div className="flex items-center gap-2">
+                <div className="gap-3xs flex items-center">
                     <VisibilityToggle item={props.deltaSurface} />
                 </div>
             }

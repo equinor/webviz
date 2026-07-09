@@ -274,7 +274,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             const text = `${props.logEntry.message.request.method} ${props.logEntry.message.request.url}`;
             detailsString = (
                 <div className="w-full overflow-hidden" title={text}>
-                    <span className="text-neutral-subtle block max-w-0 text-xs text-ellipsis whitespace-nowrap">
+                    <span className="text-neutral-subtle text-body-xs block max-w-0 text-ellipsis whitespace-nowrap">
                         {text}
                     </span>
                 </div>

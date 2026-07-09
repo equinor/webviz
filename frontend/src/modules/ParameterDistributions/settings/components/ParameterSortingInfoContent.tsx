@@ -1,34 +1,38 @@
 import type React from "react";
 
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
+
 export function ParameterSortingInfoContent(): React.ReactElement {
     return (
         <>
-            <div className="p-4 space-y-4">
+            <div className="space-y-2xs p-2xs">
                 <div>
-                    <h4 className="font-semibold text-gray-800 mb-1">Alphabetical</h4>
-                    <p className="text-sm text-gray-600">Sorts parameters by name in alphabetical order (A-Z).</p>
+                    <Heading as="h4">Alphabetical</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
+                        Sorts parameters by name in alphabetical order (A-Z).
+                    </Paragraph>
                 </div>
 
                 <div>
-                    <h4 className="font-semibold text-gray-800 mb-1">Entropy Reduction</h4>
-                    <p className="text-sm text-gray-600">
+                    <Heading as="h4">Entropy Reduction</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
                         Shows parameters where uncertainty decreased the most from prior to posterior. High percentage =
                         distribution became more predictable.
-                    </p>
+                    </Paragraph>
                 </div>
 
                 <div>
-                    <h4 className="font-semibold text-gray-800 mb-1">KL Divergence</h4>
-                    <p className="text-sm text-gray-600">
+                    <Heading as="h4">KL Divergence</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
                         Shows parameters where the distribution changed the most (spread, location, or shape). High
                         value = parameter distribution shape and/or location changed significantly.
-                    </p>
+                    </Paragraph>
                 </div>
 
-                <div className="bg-blue-50 p-3 rounded">
-                    <p className="text-xs text-blue-700">
+                <div className="bg-info-canvas p-4xs rounded">
+                    <Paragraph size="sm" tone="info">
                         <strong>Note:</strong> For independent ensemble mode, only alphabetical sorting is available.
-                    </p>
+                    </Paragraph>
                 </div>
             </div>
         </>

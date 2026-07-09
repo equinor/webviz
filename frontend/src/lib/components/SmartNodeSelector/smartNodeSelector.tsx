@@ -607,9 +607,9 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             const blinkTimer = setInterval(() => {
                 numBlinks++;
                 if (numBlinks % 2 === 0) {
-                    numberOfTagsDiv.classList.add("text-orange-500!");
+                    numberOfTagsDiv.classList.add("text-warning-subtle!");
                 } else {
-                    numberOfTagsDiv.classList.remove("text-orange-500!");
+                    numberOfTagsDiv.classList.remove("text-warning-subtle!");
                 }
                 if (numBlinks === 7) {
                     clearInterval(blinkTimer);
@@ -1768,7 +1768,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     </ul>
                     <div className="flex flex-col items-center justify-center">
                         <button
-                            className="selectable text-body-sm flex cursor-pointer appearance-none items-center justify-center rounded text-white hover:bg-cyan-500 disabled:hidden"
+                            className="selectable text-body-sm flex cursor-pointer appearance-none items-center justify-center rounded text-white disabled:hidden"
                             type="button"
                             title="Clear all"
                             onClick={this.clearAllTags}
