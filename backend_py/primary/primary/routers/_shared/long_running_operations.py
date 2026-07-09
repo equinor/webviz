@@ -18,9 +18,9 @@ class LroRespBaseModel(BaseModel):
 # * Should there be any information regarding when a task was originally submitted?
 class LroInProgressResp(LroRespBaseModel):
     response_type: Literal["LroInProgressResp"] = "LroInProgressResp"
-    status: Literal["in_progress"]
     task_id: str
     poll_url: str | None = None
+    status_str: Literal["pending", "running"] | str
     progress_message: str | None = None
 
 
@@ -35,7 +35,10 @@ class LroSuccessResp(LroRespBaseModel, Generic[ResultT]):
     result: ResultT
 
 
+# This response is NOT part of the standard LRO response types and flow, but is used for certain one-shot command-like
+# operations that may be issued to the server outside of the standard LRO flow. For example, a command to delete a
+# task may be issued and the server may respond with a LroCommandResp
 class LroCommandResp(LroRespBaseModel):
     response_type: Literal["LroCommandResp"] = "LroCommandResp"
     command_ok: bool
-    error_message: str | None = None
+    message: str | None = None

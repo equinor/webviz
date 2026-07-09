@@ -677,7 +677,7 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
         ThrowOnError
     >({
         responseType: "json",
-        url: "/surface/statistical_surface_data/hybrid",
+        url: "/surface/statistical_surface_data_hybrid",
         ...options,
     });
 

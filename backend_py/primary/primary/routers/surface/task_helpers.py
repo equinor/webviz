@@ -66,7 +66,7 @@ def make_lro_in_progress_resp(
     else:
         prog_msg = f"Sumo task status: {prog_obj_from_access.progress_message} ({elapsed_time_s:.1f}s elapsed)"
 
-    return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, progress_message=prog_msg)
+    return LroInProgressResp(status_str="running", task_id=task_meta.task_id, progress_message=prog_msg)
 
 
 def make_lro_failure_resp(err_obj_from_access: ExpectedError) -> LroFailureResp:
