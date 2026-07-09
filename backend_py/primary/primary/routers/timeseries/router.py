@@ -723,7 +723,7 @@ async def get_derived_vector_table_hybrid(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
 
     perf_metrics.record_lap("init")
@@ -820,7 +820,7 @@ async def get_derived_table_info(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
@@ -882,11 +882,11 @@ async def get_calc_something_on_derived_table(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
-    table_blob = await blob_cache.get_cache_blob_async(cache_key)
+    table_blob = await blob_cache.get_bytes_async(cache_key)
     perf_metrics.record_lap("get-from-cache")
     if not table_blob:
         raise HTTPException(status_code=410, detail="Derived table not found in cache")
