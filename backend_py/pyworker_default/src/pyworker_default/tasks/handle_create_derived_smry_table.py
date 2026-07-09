@@ -87,7 +87,7 @@ async def create_derived_smry_table_task_async(
     pq.write_table(derived_table_pa, byte_stream, compression="zstd")
     byte_stream.seek(0)
 
-    blob_cache = SumoBlobCache(sumo_client, "derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     blob_size = byte_stream.getbuffer().nbytes
     blob_sas_url = await blob_cache.reserve_cache_entry_async(cache_key, source_obj_uuids=derived_table_info.source_obj_uuids, blob_size=blob_size)
     if not blob_sas_url:

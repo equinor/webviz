@@ -4,6 +4,7 @@ import logging
 import uuid
 
 import httpx
+from enum import StrEnum
 from typing import TypeVar, Literal
 
 from fmu.sumo.explorer.explorer import SumoClient
@@ -17,17 +18,22 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SumoBlobCache:
-    def __init__(self, sumo_client: SumoClient, op_name: str) -> None:
+    class Namespace(StrEnum):
+        # Well-known cache namespaces used to partition the SumoBlobCache key space.
+        GENERAL = "general_v1"
+        DERIVED_VEC_TABLE = "derivedVecTable_v1"
+
+    def __init__(self, sumo_client: SumoClient, namespace: Namespace) -> None:
         self._sumo_client = sumo_client
-        self._op_name = op_name
+        self._namespace = namespace
 
     def compute_cache_key(self, cache_key_data: str) -> str:
         """
         Creates a cache key by hashing the provided data using shake128 to produce a UUID string.
-        The operation name is also embedded in the cache key data to ensure uniqueness across different operations.
+        The namespace is also embedded in the cache key data to ensure uniqueness across different namespaces.
         """
-        # We also embed the operation name in the cache key data, to ensure that cache keys are unique across different operations, even if the input data is the same
-        hash_data = f"{self._op_name}@{cache_key_data}"
+        # We also embed the namespace in the cache key data, to ensure that cache keys are unique across different namespaces, even if the input data is the same
+        hash_data = f"{self._namespace}@{cache_key_data}"
 
         digest: bytes = hashlib.shake_128(hash_data.encode()).digest(16)
         hash_uuid = uuid.UUID(bytes=digest)
@@ -37,7 +43,7 @@ class SumoBlobCache:
         sas_url = await self.resolve_cache_entry_async(cache_key)
         if not sas_url:
             return False
-        
+
         return await self.is_resolved_blob_accessible_async(sas_url)
 
     async def reserve_cache_entry_async(self, cache_key: str, source_obj_uuids: list[str], blob_size: int) -> str | None:
@@ -45,7 +51,7 @@ class SumoBlobCache:
         Reserves a cache entry in Sumo and returns a SAS URL for writing the actual data to Azure blob storage.
         """
         cache_metadata = {
-            "operation": self._op_name,
+            "operation": self._namespace,
             "inputids": source_obj_uuids,
             "objectsize": blob_size,
         }
@@ -58,14 +64,14 @@ class SumoBlobCache:
             return sas_url_for_blob_write
         except httpx.RequestError as exc:
             LOGGER.error(
-                f"Failed to reserve cache entry with request error. (op_name={self._op_name}, POST url={exc.request.url})",
+                f"Failed to reserve cache entry with request error. (namespace={self._namespace}, POST url={exc.request.url})",
                 exc_info=exc,
             )
             return None
         except httpx.HTTPStatusError as exc:
             status = exc.response.status_code
             LOGGER.error(
-                f"Failed to reserve cache entry, HTTP status: {status} (op_name={self._op_name}, POST url={exc.request.url})"
+                f"Failed to reserve cache entry, HTTP status: {status} (namespace={self._namespace}, POST url={exc.request.url})"
             )
             return None
 
@@ -88,7 +94,7 @@ class SumoBlobCache:
             # Assuming that caching is a best effort optimization we should probably just log the error and return None
             # which will lead to a cache miss and normal processing of the request.
             LOGGER.error(
-                f"Failed to resolve cache entry with request error. (op_name={self._op_name}, GET url={exc.request.url})",
+                f"Failed to resolve cache entry with request error. (namespace={self._namespace}, GET url={exc.request.url})",
                 exc_info=exc,
             )
             return None
@@ -98,10 +104,10 @@ class SumoBlobCache:
             # but log a warning if it's an unexpected status code
             status = exc.response.status_code
             if status == 404:
-                LOGGER.debug(f"Cache miss for: {cache_key=} (op_name={self._op_name}, {status=}, GET url={exc.request.url})")
+                LOGGER.debug(f"Cache miss for: {cache_key=} (namespace={self._namespace}, {status=}, GET url={exc.request.url})")
             else:
                 LOGGER.warning(
-                    f"Failed to resolve cache entry, unexpected status: {status} (op_name={self._op_name}, GET url={exc.request.url})"
+                    f"Failed to resolve cache entry, unexpected status: {status} (namespace={self._namespace}, GET url={exc.request.url})"
                 )
             return None
 
@@ -148,7 +154,7 @@ class SumoBlobCache:
                 return True
             except ResourceNotFoundError:
                 return False
-        
+
     async def put_bytes_async(self, cache_key: str, source_obj_uuids: list[str], blob_payload: bytes) -> None:
         blob_size = len(blob_payload)
         blob_sas_url = await self.reserve_cache_entry_async(cache_key, source_obj_uuids, blob_size)
@@ -164,7 +170,7 @@ class SumoBlobCache:
 
         payload = await self.download_resolved_blob_async(blob_sas_url)
         return payload
-    
+
     async def put_pydantic_model_async(self, cache_key: str, source_obj_uuids: list[str], model: BaseModel) -> None:
         blob_bytes = model.model_dump_json().encode()
         blob_size = len(blob_bytes)
