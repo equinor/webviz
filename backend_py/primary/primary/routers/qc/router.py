@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/hydrostatic_equilibrium/vector_check/hybrid")
+@router.get("/hydrostatic_equilibrium_vector_check_hybrid")
 async def get_hydrostatic_equilibrium_vector_check_hybrid(
     # fmt: off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
@@ -67,7 +67,7 @@ async def get_hydrostatic_equilibrium_vector_check_hybrid(
     return LroSuccessResp(status="success", result=converters.to_api_vector_check_result(result))
 
 
-@router.get("/hydrostatic_equilibrium/grid_property_check/hybrid")
+@router.get("/hydrostatic_equilibrium_grid_property_check_hybrid")
 async def get_hydrostatic_equilibrium_grid_property_check_hybrid(
     # fmt: off
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],

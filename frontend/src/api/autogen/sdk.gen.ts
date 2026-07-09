@@ -1441,7 +1441,7 @@ export const getHydrostaticEquilibriumVectorCheckHybrid = <ThrowOnError extends 
         ThrowOnError
     >({
         responseType: "json",
-        url: "/qc/hydrostatic_equilibrium/vector_check/hybrid",
+        url: "/qc/hydrostatic_equilibrium_vector_check_hybrid",
         ...options,
     });
 
@@ -1469,7 +1469,7 @@ export const getHydrostaticEquilibriumGridPropertyCheckHybrid = <ThrowOnError ex
         ThrowOnError
     >({
         responseType: "json",
-        url: "/qc/hydrostatic_equilibrium/grid_property_check/hybrid",
+        url: "/qc/hydrostatic_equilibrium_grid_property_check_hybrid",
         ...options,
     });
 

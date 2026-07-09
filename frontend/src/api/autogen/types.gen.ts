@@ -6889,7 +6889,7 @@ export type GetHydrostaticEquilibriumVectorCheckHybridData_api = {
         t1_iso: string;
         zCacheBust?: string;
     };
-    url: "/qc/hydrostatic_equilibrium/vector_check/hybrid";
+    url: "/qc/hydrostatic_equilibrium_vector_check_hybrid";
 };
 
 export type GetHydrostaticEquilibriumVectorCheckHybridErrors_api = {
@@ -6944,7 +6944,7 @@ export type GetHydrostaticEquilibriumGridPropertyCheckHybridData_api = {
         realization: number;
         zCacheBust?: string;
     };
-    url: "/qc/hydrostatic_equilibrium/grid_property_check/hybrid";
+    url: "/qc/hydrostatic_equilibrium_grid_property_check_hybrid";
 };
 
 export type GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api = {
