@@ -38,7 +38,7 @@ export const InGroup: Story = {
     },
     render: (args) => (
         <CheckboxGroup defaultValue={["read"]}>
-            <div className="flex flex-col gap-1">
+            <div className="gap-4xs flex flex-col">
                 <CheckboxCompositions.WithLabel {...args} value="read" label="Read" />
                 <CheckboxCompositions.WithLabel {...args} value="write" label="Write" />
                 <CheckboxCompositions.WithLabel {...args} value="admin" label="Admin" disabled />

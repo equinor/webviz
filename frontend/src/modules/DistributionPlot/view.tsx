@@ -406,7 +406,7 @@ function renderScatterPlot(options: ScatterPlotOptions): React.ReactElement {
                     colorscale: dataColor ? colorScale : undefined,
                     colorbar:
                         dataColor && cellIndex === 1
-                            ? { title: makeTitleFromChannelContent(dataColor), titleside: "right" }
+                            ? { title: { text: makeTitleFromChannelContent(dataColor), side: "right" } }
                             : undefined,
                 },
                 showlegend: false,

@@ -17,9 +17,11 @@ export class VfpPlotBuilder {
 
     makeLayout(size: Size2D, pressureOption: PressureOption): Partial<Layout> {
         return {
-            title: `VFP type: ${this._vfpDataAccessor.getVfpType()}, table number: ${this._vfpDataAccessor.getTableNumber()}`,
-            xaxis: { title: this._vfpDataAccessor.getFlowRateLabel() },
-            yaxis: { title: `${pressureOption} (${this._vfpDataAccessor.getBhpUnit()})` },
+            title: {
+                text: `VFP type: ${this._vfpDataAccessor.getVfpType()}, table number: ${this._vfpDataAccessor.getTableNumber()}`,
+            },
+            xaxis: { title: { text: this._vfpDataAccessor.getFlowRateLabel() } },
+            yaxis: { title: { text: `${pressureOption} (${this._vfpDataAccessor.getBhpUnit()})` } },
             width: size.width,
             height: size.height,
         };
@@ -93,8 +95,7 @@ export class VfpPlotBuilder {
         const colorScaleMarker: Partial<PlotMarker> = {
             ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
             colorbar: {
-                title: this._vfpDataAccessor.getVfpParamLabel(colorBy, true),
-                titleside: "right",
+                title: { text: this._vfpDataAccessor.getVfpParamLabel(colorBy, true), side: "right" },
                 ticks: "outside",
                 len: 0.75,
             },
@@ -138,8 +139,7 @@ export class VfpPlotBuilder {
         const colorScaleMarker: Partial<PlotMarker> = {
             ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
             colorbar: {
-                title: this._vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true),
-                titleside: "right",
+                title: { text: this._vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true), side: "right" },
                 ticks: "outside",
                 len: 0.75,
             },
