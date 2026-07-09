@@ -4551,7 +4551,7 @@ export type GetStatisticalSurfaceDataHybridData_api = {
         /**
          * Delete Task
          *
-         * If true, the task and result will be deleted
+         * If true, deletes the server-side task metadata for this surface address
          */
         delete_task?: boolean;
         /**
