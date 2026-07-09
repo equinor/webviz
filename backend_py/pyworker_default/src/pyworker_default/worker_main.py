@@ -8,7 +8,8 @@ _logger = logging.getLogger()
 
 def main() -> int:
     try:
-        return asyncio.run(run_app_async())
+        asyncio.run(run_app_async())
+        return 0
     except KeyboardInterrupt:
         return 130
     except Exception:
