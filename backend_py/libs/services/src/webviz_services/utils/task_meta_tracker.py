@@ -166,7 +166,7 @@ class TaskMetaTracker:
         return num_deleted == 1
 
     async def delete_task_by_fingerprint_async(self, fingerprint: str) -> bool:
-        task_id = await self._find_task_id_for_fingerprint_async(fingerprint)
+        task_id = await self.get_task_id_by_fingerprint_async(fingerprint)
         if task_id is None:
             return False
 
@@ -189,13 +189,6 @@ class TaskMetaTracker:
         pattern = f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:*"
         async for key in self._redis_client.scan_iter(match=pattern):
             await self._redis_client.pexpire(key, 1)
-
-    async def _find_task_id_for_fingerprint_async(self, fingerprint: str) -> str | None:
-        fingerprint_redis_key = self._make_full_redis_key_for_fingerprint(fingerprint)
-
-        # Redis return None if the key does not exist, so we can directly return the result
-        task_id = await self._redis_client.get(fingerprint_redis_key)
-        return task_id
 
     def _make_full_redis_key_for_task(self, task_id: str) -> str:
         return f"{_REDIS_KEY_PREFIX}:user:{self._user_id}:task:{task_id}"
