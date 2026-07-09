@@ -21,7 +21,6 @@ from .utils import message_decryption
 from .utils.abort_signal import AbortSignal
 from .utils.worker_logging import configure_logging
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -59,7 +58,7 @@ def _setup_azure_monitor_telemetry_for_worker(service_name: str) -> None:
         connection_string=azmon_dest.insights_connection_string,
         resource=Resource.create(attributes=azmon_dest.resource_attributes),
         sampling_ratio=1.0,
-        #logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
+        # logging_formatter=logging.Formatter("[%(name)s]: %(message)s"),
     )
 
 
@@ -125,12 +124,14 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
                     # We poll for messages with a short timeout, so we can check for shutdown events frequently.
                     # Currently we only grab and process one message at a time, but this could be changed to
                     # process multiple messages concurrently if needed.
-                    messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(max_message_count=1, max_wait_time=2)
+                    messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
+                        max_message_count=1, max_wait_time=2
+                    )
 
                     # Make sure we don't start any new processing if a shutdown has been requested
                     # Abandon any messages we received so they can be retried later (by another worker).
                     if shutdown_event.is_set():
-                        _logger.info("Worker shutdown requested; abandoning any received messages before exiting worker loop")
+                        _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
                         for msg in messages:
                             await sb_receiver.abandon_message(msg)
                         break
@@ -150,6 +151,7 @@ async def run_app_async() -> None:
     configure_logging()
 
     logging.getLogger("pyworker_default").setLevel(logging.DEBUG)
+
     # Limit logging from the more noisy loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("azure.servicebus").setLevel(logging.WARNING)
@@ -157,7 +159,6 @@ async def run_app_async() -> None:
     _logger.info("=== Starting worker pyworker-default...")
 
     _setup_azure_monitor_telemetry_for_worker("pyworker-default")
-
 
     # Read our own config from environment variables
     worker_config: WorkerConfig = load_worker_config_from_env()
@@ -172,7 +173,6 @@ async def run_app_async() -> None:
         redis_cache_url=worker_config.redis_cache_url,
     )
     init_services_config(services_config)
-
 
     TaskMetaTrackerFactory.initialize(redis_url=worker_config.redis_cache_url)
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
