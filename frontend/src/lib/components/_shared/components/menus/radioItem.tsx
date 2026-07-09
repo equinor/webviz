@@ -22,26 +22,26 @@ function SharedRadioItemComponent<TProps extends MenuVariantItemProps>(
     const mergedProps = mergeProps({ className: "menu__item menu__interactable" }, otherProps);
 
     return (
-        <BaseComp {...mergedProps} value={value} ref={ref}>
-            <ItemContent
-                text={text}
-                description={description}
-                icon={
-                    <BaseIndicatorComp
-                        className="menu__toggle_indicator"
-                        keepMounted
-                        render={(p, s) => (
-                            <span {...p}>
-                                <RadioButtonIcon {...s} />
-                            </span>
-                        )}
-                    />
-                }
-            >
-                {props.children}
-                {icon}
-            </ItemContent>
-        </BaseComp>
+        <ItemContent
+            {...mergedProps}
+            render={<BaseComp value={value} ref={ref} />}
+            text={text}
+            description={description}
+            icon={
+                <BaseIndicatorComp
+                    className="menu__toggle_indicator"
+                    keepMounted
+                    render={(p, s) => (
+                        <span {...p}>
+                            <RadioButtonIcon {...s} />
+                        </span>
+                    )}
+                />
+            }
+        >
+            {props.children}
+            {icon}
+        </ItemContent>
     );
 }
 

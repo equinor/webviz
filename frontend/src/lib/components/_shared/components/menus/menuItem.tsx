@@ -20,11 +20,15 @@ function SharedMenuItemComponent<TProps extends MenuVariantItemProps>(
     const mergedProps = mergeProps({ className: "menu__item menu__interactable" }, props);
 
     return (
-        <BaseComp {...mergedProps} ref={ref}>
-            <ItemContent icon={props.icon} description={props.description} text={props.text}>
-                {props.children}
-            </ItemContent>
-        </BaseComp>
+        <ItemContent
+            {...mergedProps}
+            render={<BaseComp ref={ref} />}
+            icon={props.icon}
+            description={props.description}
+            text={props.text}
+        >
+            {props.children}
+        </ItemContent>
     );
 }
 

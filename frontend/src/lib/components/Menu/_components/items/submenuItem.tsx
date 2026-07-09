@@ -12,6 +12,7 @@ import { Popup } from "../popup";
 
 export type SubmenuItemProps = ComponentWrapperProps<SubmenuRootBaseProps> & {
     triggerContent: React.ReactNode;
+    triggerTone?: MenuItemContentProps["tone"];
     triggerIcon?: MenuItemContentProps["icon"];
     triggerText?: MenuItemContentProps["text"];
     triggerDescription?: MenuItemContentProps["description"];
@@ -32,6 +33,7 @@ export const SubmenuItem = React.forwardRef<HTMLDivElement, SubmenuItemProps>(fu
         <MenuBase.SubmenuRoot {...baseProps}>
             <SubMenuTriggerItem
                 ref={ref}
+                tone={props.triggerTone}
                 icon={props.triggerIcon}
                 text={props.triggerText}
                 description={props.triggerDescription}

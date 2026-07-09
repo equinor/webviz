@@ -21,12 +21,20 @@ function SubMenuTriggerItemComponent<TProps extends MenuVariantItemProps>(
     const mergedProps = mergeProps({ className: "menu__item menu__interactable menu__submenu_trigger" }, props);
 
     return (
-        <BaseComp ref={ref} {...mergedProps}>
-            <ItemContent icon={props.icon} description={props.description} text={props.text}>
-                {props.children}
-            </ItemContent>
-            <ChevronRight fontSize="inherit" className="ml-auto" />
-        </BaseComp>
+        <ItemContent
+            {...mergedProps}
+            icon={props.icon}
+            description={props.description}
+            text={props.text}
+            render={(p) => (
+                <BaseComp {...p} ref={ref}>
+                    {p.children}
+                    <ChevronRight fontSize="inherit" className="ml-auto" />
+                </BaseComp>
+            )}
+        >
+            {props.children}
+        </ItemContent>
     );
 }
 
