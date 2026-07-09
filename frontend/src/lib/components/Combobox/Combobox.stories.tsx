@@ -195,7 +195,7 @@ export const Controlled: Story = {
     render: function ControlledComp(args: ComboboxProps<any, any>) {
         const [value, setValue] = React.useState<string | null>(null);
         return (
-            <div className="flex w-64 flex-col gap-3">
+            <div className="gap-2xs flex w-64 flex-col">
                 <Combobox<string> {...args} value={value} onValueChange={setValue} />
                 <p className="text-body-sm text-neutral-subtle">
                     Selected: {value ? (COUNTRIES.find((c) => c.value === value)?.label ?? value) : "none"}
@@ -502,14 +502,14 @@ export const AsyncFetchError: Story = {
         }
 
         return (
-            <div className="flex w-64 flex-col gap-3">
+            <div className="gap-2xs flex w-64 flex-col">
                 <Combobox
                     {...args}
                     items={items}
                     loading={loading}
                     errorText={
                         errorText ? (
-                            <span className="flex items-center gap-2">
+                            <span className="gap-3xs flex items-center">
                                 {errorText}
                                 <button
                                     className="text-accent-strong underline"

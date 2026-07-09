@@ -187,7 +187,7 @@ export function generateLayoutForParameter({
         },
         barmode: barmode as any,
         xaxis: {
-            title: title,
+            title: { text: title },
             mirror: true,
             showline: true,
             zeroline: false,

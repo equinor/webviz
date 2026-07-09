@@ -714,7 +714,7 @@ export {
     type LoginRouteError_api,
     type LoginRouteErrors_api,
     type LoginRouteResponses_api,
-    type LroErrorInfo_api,
+    type LroCommandResp_api,
     type LroFailureResp_api,
     type LroInProgressResp_api,
     type LroSuccessRespDerivedTableResponse_api,

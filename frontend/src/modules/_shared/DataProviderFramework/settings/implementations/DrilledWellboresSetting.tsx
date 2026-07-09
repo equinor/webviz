@@ -86,7 +86,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<
             }
 
             return (
-                <div className="mt-1 flex flex-col gap-1">
+                <div className="mt-4xs flex flex-col gap-1">
                     <Select
                         filter
                         options={options}
