@@ -1,3 +1,4 @@
+import asyncio
 import io
 import logging
 
@@ -17,6 +18,10 @@ LOGGER = logging.getLogger(__name__)
 async def bgjob_create_and_store_derived_table_async(user_id: str, task_id: str, sumo_access_token: str, case_uuid: str, ensemble_name: str, vector_names: list[str]) -> bool:
     perf_metrics = PerfMetrics()
     log_prefix = f"##BGJOB-{task_id}: "
+
+    # !!!!!!!!!!!!!!
+    # Simulate a task pending delay
+    await asyncio.sleep(5)
 
     LOGGER.info(f"{log_prefix}Starting background job for creating derived summary table")
 

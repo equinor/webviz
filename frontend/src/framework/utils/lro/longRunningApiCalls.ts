@@ -6,7 +6,7 @@ import { hashKey } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
 import { client } from "@api";
-import type { LroFailureResp_api, LroInProgressResp_api, HTTPValidationError_api } from "@api";
+import type { LroFailureResp_api, LroInProgressResp_api, HTTPValidationError_api, LroCommandResp_api } from "@api";
 import type { RequestResult } from "@api/client";
 import { lroProgressBus } from "@framework/LroProgressBus";
 
@@ -71,7 +71,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
 
                 const data = response.data;
 
-                if (data.status === "success") {
+                if (data.response_type === "LroSuccessResp") {
                     lroProgressBus.remove(busKey);
                     if (data?.result === undefined) {
                         throw new LroError("Missing result in successful response", data);
@@ -79,12 +79,22 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                     return data.result;
                 }
 
-                if (data.status === "failure") {
+                if (data.response_type === "LroFailureResp") {
                     lroProgressBus.remove(busKey);
-                    throw new LroError(data.error?.message || "Unknown LRO error", data, (data as any)?.error?.code);
+                    throw new LroError(data.error_message || "Unknown LRO error", data, (data as any)?.error?.code);
                 }
 
-                if (data.status === "in_progress" && data.task_id) {
+                // In theory, it is possible to get a command response from a hybrid endpoint. Commands should, however, not
+                // be handled by this function, so this is a programming error and we throw.
+                if (data.response_type === "LroCommandResp") {
+                    lroProgressBus.remove(busKey);
+                    throw new LroError(
+                        "Unexpected command response from long-running operation - endpoints accepting commands must not be handled by this function",
+                        data,
+                    );
+                }
+
+                if (data.response_type === "LroInProgressResp" && data.task_id) {
                     lroProgressBus.publish(busKey, data.progress_message ?? null);
 
                     return pollUntilDone<TData>({
@@ -157,17 +167,18 @@ export function useLroProgress(
 type LongRunningApiResponse<TData> =
     | LroInProgressResp_api
     | LroFailureResp_api
+    | LroCommandResp_api
     | {
-          status: "success";
+          response_type: "LroSuccessResp";
           result: TData;
       };
 
-type LongRunningRequestResultByStatus<TData> = { [status: string]: LongRunningApiResponse<TData> };
-type LongRunningRequestErrorByStatus = { [status: string]: LroFailureResp_api | HTTPValidationError_api };
+type LongRunningRequestResultByType<TData> = { [response_type: string]: LongRunningApiResponse<TData> };
+type LongRunningRequestErrorByType = { [response_type: string]: LroFailureResp_api | HTTPValidationError_api };
 
 type LongRunningRequestResult<TData> = RequestResult<
-    LongRunningRequestResultByStatus<TData>,
-    LongRunningRequestErrorByStatus,
+    LongRunningRequestResultByType<TData>,
+    LongRunningRequestErrorByType,
     false
 >;
 
@@ -258,11 +269,7 @@ async function pollUntilDone<T>(options: {
 
             if (pollResource.resourceType === "url" && currentPollUrl) {
                 // If pollResource is a URL, use it directly
-                response = await client.get<
-                    LongRunningRequestResultByStatus<T>,
-                    LongRunningRequestErrorByStatus,
-                    false
-                >({
+                response = await client.get<LongRunningRequestResultByType<T>, LongRunningRequestErrorByType, false>({
                     url: currentPollUrl,
                     signal,
                 });
@@ -292,15 +299,15 @@ async function pollUntilDone<T>(options: {
                 throw new LroError("Polling request failed", undefined, response.code, { cause: axiosError });
             }
 
-            if (data.status === "success") {
+            if (data.response_type === "LroSuccessResp") {
                 return data.result as T;
             }
 
-            if (data.status === "failure") {
-                throw new LroError(data.error?.message || "Unknown LRO error", data, (data as any).error?.code);
+            if (data.response_type === "LroFailureResp") {
+                throw new LroError(data.error_message || "Unknown LRO error", data, (data as any).error?.code);
             }
 
-            if (data.status === "in_progress") {
+            if (data.response_type === "LroInProgressResp") {
                 const progress = data.progress_message ?? null;
                 const progressChanged = progress !== lastProgressMessage;
 

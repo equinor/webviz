@@ -30,7 +30,7 @@ from primary.middleware.cache_control_middleware import cache_time, set_cache_ti
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
-from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
+from .._shared.long_running_operations import LroCommandResp, LroInProgressResp, LroFailureResp, LroSuccessResp
 
 from . import converters
 from . import schemas
@@ -291,7 +291,7 @@ async def get_statistical_surface_data_hybrid(
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
     # fmt:on
-) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp:
+) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp | LroCommandResp:
 
     perf_metrics = ResponsePerfMetrics(response)
 
@@ -347,7 +347,7 @@ async def get_statistical_surface_data_hybrid(
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
         set_cache_time(CacheTime.NORMAL)
-        return LroSuccessResp(status="success", result=api_surf_data)
+        return LroSuccessResp(result=api_surf_data)
 
     except Exception as _exc:
         # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.

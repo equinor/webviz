@@ -675,7 +675,7 @@ from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinte
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
 
-from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroErrorInfo
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroCommandResp
 
 #from primary.utils.user_cache import UserCache, get_user_cache_for_user
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
@@ -698,7 +698,7 @@ async def get_derived_vector_table_hybrid(
     vector_names: Annotated[list[str], Query(description="List of vector names to include in the derived table")],
     retry_creation_task: Annotated[bool | None, Query(description="Can be used to retry the derived table creation task")] = None,
     # fmt:on
-) -> LroSuccessResp[DerivedTableResponse] | LroInProgressResp | LroFailureResp:
+) -> LroSuccessResp[DerivedTableResponse] | LroInProgressResp | LroFailureResp | LroCommandResp:
     perf_metrics = ResponsePerfMetrics(response)
     dbg_prefix = "!!!!!!!!!! "
     LOGGER.debug(f"{dbg_prefix}Received request for derived vector table with: {case_uuid=} {ensemble_name=} {retry_creation_task=} {vector_names=}")
@@ -719,7 +719,7 @@ async def get_derived_vector_table_hybrid(
         else:
             LOGGER.info(f"{dbg_prefix}Tried to delete existing task, but no existing task found with {task_fp=}")
 
-        return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle="FAKE", dbg_info="retry_creation_task"))
+        return LroCommandResp(command_ok=True)
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
@@ -740,7 +740,7 @@ async def get_derived_vector_table_hybrid(
         await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
 
         LOGGER.info(f"{dbg_prefix}Returning handle to derived table found in cache, timing: {perf_metrics.to_string()} [{table_handle=}, {cache_key=}]")
-        return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
+        return LroSuccessResp(result=DerivedTableResponse(table_handle=table_handle, dbg_info="Got from cache"))
 
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     perf_metrics.record_lap("task-meta")
@@ -773,15 +773,15 @@ async def get_derived_vector_table_hybrid(
             await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
             LOGGER.error(f"{dbg_prefix}Table creation task succeeded but could not find result in cache [{table_handle=}, {task_meta.task_id=}, {cache_key=}]")
             response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-            return LroFailureResp(status="failure", error=LroErrorInfo(message="Task succeeded but could not find result in cache"))
+            return LroFailureResp(error_message="Task succeeded but could not find result in cache")
 
         LOGGER.info(f"{dbg_prefix}Table creation task succeeded, timing {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
-        return LroSuccessResp(status="success", result=DerivedTableResponse(table_handle=table_handle, dbg_info="Task succeeded"))
+        return LroSuccessResp(result=DerivedTableResponse(table_handle=table_handle, dbg_info="Task succeeded"))
 
     if task_meta.state in [TaskState.FAILED, TaskState.CANCELLED]:
         LOGGER.error(f"{dbg_prefix}Table creation task failed, msg: {task_meta.status_message} [{table_handle=}, {task_meta.task_id=}]")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return LroFailureResp(status="failure", error=LroErrorInfo(message=f"Task {task_meta.state}, msg: {task_meta.status_message}"))
+        return LroFailureResp(error_message=f"Task {task_meta.state}, msg: {task_meta.status_message}")
 
     LOGGER.info(f"{dbg_prefix}Returning in-progress for table handle, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
 
@@ -796,7 +796,7 @@ async def get_derived_vector_table_hybrid(
 
     LOGGER.info(f"{dbg_prefix}Actual returning: {new_task_was_submitted=}, {retry_creation_task=}, timing: {perf_metrics.to_string()} [{table_handle=}, {task_meta.task_id=}]")
 
-    return LroInProgressResp(status="in_progress", task_id=task_meta.task_id, progress_message=prog_msg)
+    return LroInProgressResp(status_str=task_meta.state, task_id=task_meta.task_id, progress_message=prog_msg)
 
 
 
