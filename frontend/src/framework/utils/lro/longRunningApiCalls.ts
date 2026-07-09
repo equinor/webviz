@@ -15,12 +15,10 @@ import { FixedBackoffStrategy } from "./backoffStrategies/FixedBackoffStrategy";
 
 export class LroError extends Error {
     payload: unknown | undefined;
-    code: string | number | undefined;
 
-    constructor(message: string, payload?: unknown, code?: string | number, options?: { cause?: unknown }) {
+    constructor(message: string, payload?: unknown, options?: { cause?: unknown }) {
         super(message, options as any);
         this.payload = payload;
-        this.code = code;
         this.name = "LroError";
         Object.setPrototypeOf(this, new.target.prototype);
     }
@@ -66,7 +64,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
                         response.request,
                         response.response,
                     );
-                    throw new LroError("Initial request failed", undefined, response.code, { cause: axiosError });
+                    throw new LroError("Initial request failed", undefined, { cause: axiosError });
                 }
 
                 const data = response.data;
@@ -81,7 +79,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
 
                 if (data.response_type === "LroFailureResp") {
                     lroProgressBus.remove(busKey);
-                    throw new LroError(data.error_message || "Unknown LRO error", data, (data as any)?.error?.code);
+                    throw new LroError(data.error_message || "Unknown LRO error", data);
                 }
 
                 // In theory, it is possible to get a command response from a hybrid endpoint. Commands should, however, not
@@ -296,7 +294,7 @@ async function pollUntilDone<T>(options: {
                     response.request,
                     response.response,
                 );
-                throw new LroError("Polling request failed", undefined, response.code, { cause: axiosError });
+                throw new LroError("Polling request failed", undefined, { cause: axiosError });
             }
 
             if (data.response_type === "LroSuccessResp") {
@@ -304,7 +302,7 @@ async function pollUntilDone<T>(options: {
             }
 
             if (data.response_type === "LroFailureResp") {
-                throw new LroError(data.error_message || "Unknown LRO error", data, (data as any).error?.code);
+                throw new LroError(data.error_message || "Unknown LRO error", data);
             }
 
             if (data.response_type === "LroInProgressResp") {
@@ -320,7 +318,7 @@ async function pollUntilDone<T>(options: {
 
                 if (pollResource.resourceType === "url") {
                     if (!data.poll_url) {
-                        throw new LroError("Expecting poll url to be present", data, (data as any).error?.code);
+                        throw new LroError("Expecting poll url to be present", data);
                     }
                     currentPollUrl = data.poll_url;
                 }
