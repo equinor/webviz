@@ -218,7 +218,7 @@ class TaskMetaTracker:
             internal_error_message=internal_error_message
             )
 
-    async def set_status_message_async(self, task_id: str, status_message: str) -> None:
+    async def set_status_message_async(self, task_id: str, status_message: str) -> bool:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
 
         if not await self._redis_client.exists(redis_hash_name):

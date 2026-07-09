@@ -362,13 +362,11 @@ async def get_send_sb_msg(
     LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
 
     message_bus: MessageBus = MessageBusSingleton.get_instance()
-    sender = message_bus.get_sender(queue_name=queue_name)
-    perf_metrics.record_lap("get-sender")
 
     # for i in range(count):
     #     with tracer.start_as_current_span(f"SigSubmittingMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
     #         msg = ServiceBusMessage(subject=WorkerOperation.DUMMY, body=msg_text)
-    #         await sender.send_messages(msg)
+    #         await message_bus.send_to_queue_async(queue_name=queue_name, message=msg)
     #         LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
     #     if i == 0:
     #         perf_metrics.record_lap("send-first-msg")
@@ -378,6 +376,7 @@ async def get_send_sb_msg(
 
     # LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
     # return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
+
 
     my_dummy_access_token = f"MyToken__{msg_text}"
 
@@ -400,7 +399,7 @@ async def get_send_sb_msg(
         )
         
         sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
-        await sender.send_messages(sb_msg)
+        await message_bus.send_to_queue_async(queue_name=queue_name, message=sb_msg)
         perf_metrics.record_lap("send-first-msg")
         # LOGGER.info(f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=}")
         # return f"Sent message CreateDerivedSmryTableMsg on service bus {sb_msg.message_id=} in {perf_metrics.to_string()}"

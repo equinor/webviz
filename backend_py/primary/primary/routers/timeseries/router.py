@@ -730,7 +730,7 @@ async def get_derived_vector_table_hybrid(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
 
     perf_metrics.record_lap("init")
@@ -798,10 +798,9 @@ async def get_derived_vector_table_hybrid(
         # run_in_background_task(job_coro)
 
         message_bus: MessageBus = MessageBusSingleton.get_instance()
-        sender = message_bus.get_sender(queue_name="test-queue")
         sb_msg = ServiceBusMessage(subject=WorkerOperation.CREATE_DERIVED_SMRY_TABLE, body=msg.model_dump_json())
-        await sender.send_messages(sb_msg)
-        
+        await message_bus.send_to_queue_async(queue_name="test-queue", message=sb_msg)
+
         new_task_was_submitted = True
         LOGGER.info(f"{dbg_prefix}Submitted new task to create derived table [{table_handle=}, {task_meta.task_id=}]")
         perf_metrics.record_lap("start-task")
@@ -859,7 +858,7 @@ async def get_derived_table_info(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
@@ -921,11 +920,11 @@ async def get_calc_something_on_derived_table(
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
     sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, op_name="derivedVecTable")
+    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
-    table_blob = await blob_cache.get_cache_blob_async(cache_key)
+    table_blob = await blob_cache.get_bytes_async(cache_key)
     perf_metrics.record_lap("get-from-cache")
     if not table_blob:
         raise HTTPException(status_code=410, detail="Derived table not found in cache")
