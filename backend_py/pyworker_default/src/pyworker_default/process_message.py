@@ -13,8 +13,8 @@ from .utils.worker_logging import LogScope
 from .utils.abort_signal import AbortSignal
 from .task_exceptions import TaskFailedError, TaskRetryError, TaskAbortedError, TaskInternalError
 from .task_runner import run_tracked_user_task_async
-from .tasks.handle_dummy_message import dummy_task_async
-from .tasks.handle_create_derived_smry_table import create_derived_smry_table_task_async
+from .tasks.dummy_task import dummy_task_async
+from .tasks.create_derived_smry_table_task import create_derived_smry_table_task_async
 
 
 _logger = logging.getLogger(__name__)
