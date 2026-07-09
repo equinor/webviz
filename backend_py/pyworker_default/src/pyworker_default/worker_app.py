@@ -107,10 +107,12 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
         lock_renewer = AutoLockRenewer(max_lock_renewal_duration=15 * 60)
 
         async with sb_client, lock_renewer:
+            # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
+            # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
             sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
                 client_identifier="pyworker-default",
                 queue_name=queue_name,
-                auto_lock_renewer=lock_renewer,
+                auto_lock_renewer=lock_renewer,  # type: ignore[arg-type]
             )
 
             async with sb_receiver:
