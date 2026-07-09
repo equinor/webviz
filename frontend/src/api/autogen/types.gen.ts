@@ -937,6 +937,24 @@ export type InplaceVolumesTableDefinition_api = {
 };
 
 /**
+ * LroCommandResp
+ */
+export type LroCommandResp_api = {
+    /**
+     * Response Type
+     */
+    response_type: "LroCommandResp";
+    /**
+     * Command Ok
+     */
+    command_ok: boolean;
+    /**
+     * Error Message
+     */
+    error_message: string | null;
+};
+
+/**
  * LroFailureResp
  */
 export type LroFailureResp_api = {
@@ -4379,7 +4397,11 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
      *
      * Successful Response
      */
-    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api;
+    200:
+        | LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api
+        | LroInProgressResp_api
+        | LroFailureResp_api
+        | LroCommandResp_api;
 };
 
 export type GetStatisticalSurfaceDataHybridResponse_api =
