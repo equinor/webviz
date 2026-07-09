@@ -172,16 +172,16 @@ function LogList(props: LogListProps): React.ReactNode {
         );
     }
 
-    let lastDatetimeMs = 0;
-
     return (
         <>
-            {log.map((entry) => {
+            {log.map((entry, index) => {
+                const prevDateTime = log[index - 1]?.datetimeMs ?? 0;
                 let showDatetime = false;
-                if (new Date(entry.datetimeMs).getMinutes() !== new Date(lastDatetimeMs).getMinutes()) {
+
+                if (new Date(entry.datetimeMs).getMinutes() !== new Date(prevDateTime).getMinutes()) {
                     showDatetime = true;
                 }
-                lastDatetimeMs = entry.datetimeMs;
+
                 return (
                     <React.Fragment key={entry.id}>
                         {showDatetime && (

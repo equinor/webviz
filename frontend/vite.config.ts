@@ -1,5 +1,6 @@
 import path from "path";
 
+import babel from "@rolldown/plugin-babel";
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import jotaiDebugLabel from "jotai-babel/plugin-debug-label";
@@ -17,33 +18,26 @@ const paths = {
 };
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode, command }) => {
-    const define = {
+export default defineConfig(() => {
+    const define: Record<string, any> = {
         "process.env": {},
+        // Subsurface viewer expects this to be polyfilled
+        global: "globalThis",
     };
-
-    // In order to polyfill "global" for older packages
-    // Only in dev since "@loaders.gl" is already exporting "window" and would cause a duplicate export
-    if (mode === "development" && command === "serve") {
-        define["global"] = "globalThis";
-    }
 
     return {
         plugins: [
             tailwindPlugin(),
-            react({
-                babel: {
-                    plugins: [jotaiDebugLabel, jotaiReactRefresh],
-                },
-            }),
+            react(),
             vitePluginChecker({ typescript: true }),
+            babel({ plugins: [jotaiDebugLabel, jotaiReactRefresh] }),
             glsl({
                 include: "**/*.glsl",
                 defaultExtension: "glsl",
             }),
         ],
         build: {
-            rollupOptions: {
+            rolldownOptions: {
                 input: {
                     app: paths.publicHtmlFile,
                 },

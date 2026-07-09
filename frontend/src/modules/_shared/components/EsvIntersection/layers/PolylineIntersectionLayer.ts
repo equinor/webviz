@@ -99,12 +99,11 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
             }
 
             if (showGridlines) {
-                graphics.lineStyle(0.2, "#000", 1);
+                graphics.stroke({ width: 0.2, color: "#000", alpha: 1 });
             } else {
-                graphics.lineStyle(0);
+                graphics.stroke({ width: 0 });
             }
 
-            graphics.beginFill(color, alpha);
             const polySize = section.verticesPerPolyArr[polygonIndex];
             const polyVertices: number[] = [];
             for (let i = 0; i < polySize; i++) {
@@ -114,8 +113,8 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
                 polyVertices.push(offsetU + verticeU, verticeZ);
             }
 
-            graphics.drawPolygon(polyVertices);
-            graphics.endFill();
+            graphics.poly(polyVertices);
+            graphics.fill({ color, alpha });
 
             indicesIndex += polySize;
         }
