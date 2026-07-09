@@ -74,12 +74,12 @@ export type SliderProps<TValue extends number | readonly number[] = number | rea
     /**
      * Displays a label over the thumbs showing their current value
      * - `"auto"` - show the label on hover or when the thumb is focused
-     * - `"always"` - always show the label
      * - `"off"` - disable the labels entirely
      *
      * @default "auto"`
      */
-    valueLabelDisplay?: "auto" | "always" | "off";
+    valueLabelDisplay?: "auto" | "off";
+    // TODO: Reintroduce "always" options -- original approach had notable positioning issues
 
     valueLabelSide?: "top" | "bottom";
 
@@ -334,9 +334,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
         }
     }
 
-    const showThumbValueLabels =
-        defaultedProps.valueLabelDisplay === "always" ||
-        (defaultedProps.valueLabelDisplay === "auto" && (isHovered || isFocused));
+    const showThumbValueLabels = defaultedProps.valueLabelDisplay === "auto" && (isHovered || isFocused);
 
     const [valueToClamp, setValueToClamp] = React.useState<null | number | number[]>(null);
     let clampedValue = isDualSlider ? clone(internalValue as number[]) : ([internalValue, internalValue] as number[]);
