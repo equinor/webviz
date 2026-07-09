@@ -25,7 +25,7 @@ function SubMenuTriggerItemComponent<TProps extends MenuVariantItemProps>(
             <ItemContent icon={props.icon} description={props.description} text={props.text}>
                 {props.children}
             </ItemContent>
-            <ChevronRight fontSize="inherit" className="ml-2xs" />
+            <ChevronRight fontSize="inherit" className="ml-auto" />
         </BaseComp>
     );
 }

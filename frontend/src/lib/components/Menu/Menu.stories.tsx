@@ -156,6 +156,12 @@ export const SubMenu: Story = {
                     <Menu.Item>Option 4</Menu.Item>
                     <Menu.Item>Option 5</Menu.Item>
                 </Menu.SubmenuItem>
+
+                <Menu.SubmenuItem triggerContent={"A second sub menu"} triggerIcon={<Circle />}>
+                    <Menu.Item>Option 6</Menu.Item>
+                    <Menu.Item>Option 7</Menu.Item>
+                    <Menu.Item>Option 8</Menu.Item>
+                </Menu.SubmenuItem>
             </Menu.Popup>
         </Menu.Root>
     ),
