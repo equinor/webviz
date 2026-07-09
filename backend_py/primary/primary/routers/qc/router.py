@@ -12,12 +12,7 @@ from webviz_services.sumo_access.summary_access import SummaryAccess
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary.auth.auth_helper import AuthHelper
-from primary.routers._shared.long_running_operations import (
-    LroErrorInfo,
-    LroFailureResp,
-    LroInProgressResp,
-    LroSuccessResp,
-)
+from primary.routers._shared.long_running_operations import LroFailureResp, LroInProgressResp, LroSuccessResp
 
 from . import converters
 from . import schemas
@@ -62,9 +57,9 @@ async def get_hydrostatic_equilibrium_vector_check_hybrid(
         result = await check.compute_vector_check_async(t0_iso=t0_iso, t1_iso=t1_iso)
     except ServiceLayerException as exc:
         LOGGER.exception("Vector check failed")
-        return LroFailureResp(status="failure", error=LroErrorInfo(message=exc.message))
+        return LroFailureResp(error_message=exc.message)
 
-    return LroSuccessResp(status="success", result=converters.to_api_vector_check_result(result))
+    return LroSuccessResp(result=converters.to_api_vector_check_result(result))
 
 
 @router.get("/hydrostatic_equilibrium_grid_property_check_hybrid")
@@ -100,6 +95,6 @@ async def get_hydrostatic_equilibrium_grid_property_check_hybrid(
         result = await check.compute_grid_property_check_async(grid_name=grid_name, realization=realization)
     except ServiceLayerException as exc:
         LOGGER.exception("Grid property check failed")
-        return LroFailureResp(status="failure", error=LroErrorInfo(message=exc.message))
-    
-    return LroSuccessResp(status="success", result=converters.to_api_grid_check_result(result))
+        return LroFailureResp(error_message=exc.message)
+
+    return LroSuccessResp(result=converters.to_api_grid_check_result(result))

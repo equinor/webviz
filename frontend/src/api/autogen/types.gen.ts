@@ -1109,9 +1109,9 @@ export type LroSuccessRespDerivedTableResponse_api = {
  */
 export type LroSuccessRespHydrostaticGridCheckRealizationResult_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "success";
+    response_type: "LroSuccessResp";
     result: HydrostaticGridCheckRealizationResult_api;
 };
 
@@ -1120,9 +1120,9 @@ export type LroSuccessRespHydrostaticGridCheckRealizationResult_api = {
  */
 export type LroSuccessRespHydrostaticVectorCheckResult_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "success";
+    response_type: "LroSuccessResp";
     result: HydrostaticVectorCheckResult_api;
 };
 

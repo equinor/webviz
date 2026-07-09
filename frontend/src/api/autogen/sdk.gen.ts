@@ -1476,7 +1476,11 @@ export const getVfpTable = <ThrowOnError extends boolean = false>(
  */
 export const getHydrostaticEquilibriumVectorCheckHybrid = <ThrowOnError extends boolean = false>(
     options: Options<GetHydrostaticEquilibriumVectorCheckHybridData_api, ThrowOnError>,
-) =>
+): RequestResult<
+    GetHydrostaticEquilibriumVectorCheckHybridResponses_api,
+    GetHydrostaticEquilibriumVectorCheckHybridErrors_api,
+    ThrowOnError
+> =>
     (options.client ?? client).get<
         GetHydrostaticEquilibriumVectorCheckHybridResponses_api,
         GetHydrostaticEquilibriumVectorCheckHybridErrors_api,
@@ -1504,7 +1508,11 @@ export const getHydrostaticEquilibriumVectorCheckHybrid = <ThrowOnError extends 
  */
 export const getHydrostaticEquilibriumGridPropertyCheckHybrid = <ThrowOnError extends boolean = false>(
     options: Options<GetHydrostaticEquilibriumGridPropertyCheckHybridData_api, ThrowOnError>,
-) =>
+): RequestResult<
+    GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api,
+    GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api,
+    ThrowOnError
+> =>
     (options.client ?? client).get<
         GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api,
         GetHydrostaticEquilibriumGridPropertyCheckHybridErrors_api,
