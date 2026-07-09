@@ -25,7 +25,7 @@ export default defineConfig({
     input: "http://localhost:5000/openapi.json",
     output: {
         postProcess: ["eslint", "prettier"],
-        path: "./src/api/autogen/",
+        path: "src/api/autogen/",
         // (Revert v0.67) Don't append js to relative paths
         tsConfigPath: null,
     },
