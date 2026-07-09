@@ -30,7 +30,7 @@ from primary.middleware.cache_control_middleware import cache_time, set_cache_ti
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.utils.drogon import is_drogon_identifier
 
-from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroCommandResp
 
 from . import converters
 from . import schemas
@@ -282,7 +282,7 @@ async def post_get_well_trajectories_formation_segments(
     return per_well_trajectory_formation_segments
 
 
-@router.get("/statistical_surface_data/hybrid")
+@router.get("/statistical_surface_data_hybrid")
 async def get_statistical_surface_data_hybrid(
     # fmt:off
     response: Response,
@@ -290,8 +290,14 @@ async def get_statistical_surface_data_hybrid(
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    delete_task: Annotated[bool, Query(description="If true, deletes the server-side task metadata for this surface address")] = False,
     # fmt:on
-) -> LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng] | LroInProgressResp | LroFailureResp:
+) -> (
+    LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng]
+    | LroInProgressResp
+    | LroFailureResp
+    | LroCommandResp
+):
 
     perf_metrics = ResponsePerfMetrics(response)
 
@@ -312,6 +318,15 @@ async def get_statistical_surface_data_hybrid(
     # One way of achieving this may be to have a separate endpoint to clear the task tracker cache for the user.
     task_fp = await task_helpers.determine_surf_task_fingerprint_async(authenticated_user, addr)
     perf_metrics.record_lap("fingerprint")
+
+    if delete_task:
+        task_was_deleted = await task_tracker.delete_task_by_fingerprint_async(task_fp)
+        if not task_was_deleted:
+            LOGGER.warning(f"No task found to delete for address: {surf_addr_str}")
+            return LroCommandResp(command_ok=False, message="No task found to delete")
+
+        LOGGER.info(f"Deleted statistical surface calculation task for address: {surf_addr_str}")
+        return LroCommandResp(command_ok=True, message="Task deleted")
 
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     perf_metrics.record_lap("task-meta")
@@ -347,7 +362,7 @@ async def get_statistical_surface_data_hybrid(
         LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
 
         set_cache_time(CacheTime.NORMAL)
-        return LroSuccessResp(status="success", result=api_surf_data)
+        return LroSuccessResp(result=api_surf_data)
 
     except Exception as _exc:
         # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
