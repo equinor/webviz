@@ -46,6 +46,7 @@ export function wrapLongRunningQuery<TArgs, TData, TQueryKey extends readonly un
 }: WrapLongRunningQueryArgs<TArgs, TData> & { queryKey: TQueryKey }): UseQueryOptions<TData, Error, TData, TQueryKey> {
     const busKey = hashKey(queryKey);
 
+    // eslint-disable-next-line @tanstack/query/exhaustive-deps -- No good way to enforce this; we'll assume the generated open-api key is being used, which means it should include all necessary keys
     return {
         queryKey,
         meta: {
