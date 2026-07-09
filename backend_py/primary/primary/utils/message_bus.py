@@ -1,7 +1,7 @@
 import logging
 
 from azure.core.exceptions import ClientAuthenticationError
-from azure.identity.aio import DefaultAzureCredential
+from azure.core.credentials_async import AsyncTokenCredential
 from azure.servicebus.aio import ServiceBusClient
 from azure.servicebus.aio import ServiceBusSender
 from azure.servicebus import ServiceBusMessage
@@ -34,7 +34,7 @@ class MessageBusSingleton:
 
     @classmethod
     async def initialize_with_credential_async(
-        cls, fully_qualified_sb_namespace: str, credential: DefaultAzureCredential
+        cls, fully_qualified_sb_namespace: str, credential: AsyncTokenCredential
     ) -> None:
         if cls._message_bus_instance is not None:
             raise RuntimeError("MessageBusSingleton is already initialized")
