@@ -765,6 +765,7 @@ async def get_derived_vector_table_hybrid(
             encrypted_access_token = b"ILLEGAL VALUE FOR FGIR"
 
         task_id = nanoid.generate(size=12)
+
         msg = CreateDerivedSmryTableMsg(
             user_id=user_id,
             task_id=task_id,
@@ -774,14 +775,7 @@ async def get_derived_vector_table_hybrid(
             encrypted_access_token=encrypted_access_token,
         )
 
-        # !!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!
-        # Introduce error for testing purposes
-        #msg.case_uuid = ""
-
         task_meta = await task_tracker.register_task_with_fingerprint_async(
-            task_system="background_task",
             task_id=task_id,
             fingerprint=task_fp,
             ttl_s=5 * 60,

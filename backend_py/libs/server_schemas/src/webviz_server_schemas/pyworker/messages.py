@@ -1,9 +1,9 @@
 from typing import Annotated, TypeVar
-from annotated_types import Len
 from enum import StrEnum
 
 from pydantic import BaseModel
 from pydantic import StringConstraints
+from annotated_types import Len
 
 T = TypeVar("T")
 

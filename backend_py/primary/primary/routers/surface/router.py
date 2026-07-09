@@ -290,7 +290,7 @@ async def get_statistical_surface_data_hybrid(
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address type is *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
-    delete_task: Annotated[bool, Query(description="If true, the task and result will be deleted")] = False,
+    delete_task: Annotated[bool, Query(description="If true, deletes the server-side task metadata for this surface address")] = False,
     # fmt:on
 ) -> (
     LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng]

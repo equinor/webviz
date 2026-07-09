@@ -386,7 +386,7 @@ async def get_send_sb_msg(
     user_id = authenticated_user.get_user_id()
     task_tracker = get_task_meta_tracker_for_user_id(user_id)
     task_id = nanoid.generate(size=12)
-    _task_meta = await task_tracker.register_task_async(task_system="sig_test", task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
+    _task_meta = await task_tracker.register_task_async(task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
 
     with tracer.start_as_current_span("SubmitCreateDerivedSmryTableMsg", kind=trace.SpanKind.PRODUCER):
         msg = CreateDerivedSmryTableMsg(
