@@ -735,8 +735,10 @@ export class PlotBuilder {
             const colorScaleMarker: Partial<PlotMarker> = {
                 ...this._ensemblesParameterColoring.getColorScale().getAsPlotlyColorScaleMarkerObject(),
                 colorbar: {
-                    title: "Range: " + this._ensemblesParameterColoring.getParameterDisplayName(),
-                    titleside: "right",
+                    title: {
+                        text: "Range: " + this._ensemblesParameterColoring.getParameterDisplayName(),
+                        side: "right",
+                    },
                     ticks: "outside",
                     len: 0.75, // Note: If too many legends are added, this len might have to be reduced?
                 },
