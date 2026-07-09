@@ -54,7 +54,7 @@ export const Sizes: TileStory = {
         docs: { description: { story: "All three size variants side by side." } },
     },
     render: () => (
-        <div className="flex items-center gap-3">
+        <div className="gap-2xs flex items-center">
             <Tile color="#3b82f6" size="small" />
             <Tile color="#3b82f6" size="default" />
             <Tile color="#3b82f6" size="large" />
