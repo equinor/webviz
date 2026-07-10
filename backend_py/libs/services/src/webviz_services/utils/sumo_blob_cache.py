@@ -2,16 +2,17 @@ import datetime
 import hashlib
 import logging
 import uuid
+from enum import StrEnum
+from typing import TypeVar
 
 import httpx
-from enum import StrEnum
-from typing import TypeVar, Literal
 
 from fmu.sumo.explorer.explorer import SumoClient
 from azure.storage.blob.aio import BlobClient, StorageStreamDownloader
 from azure.core.exceptions import ResourceNotFoundError
 from pydantic import BaseModel
 
+# pylint: disable-next=invalid-name
 PydanticModelType = TypeVar("PydanticModelType", bound=BaseModel)
 
 LOGGER = logging.getLogger(__name__)

@@ -659,16 +659,15 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
 #################################################################################################################
 #################################################################################################################
 
+# pylint: disable=wrong-import-position, wrong-import-order, ungrouped-imports, unused-import
+
 import hashlib
 import time
 
-from fastapi import Request, status
 import fsspec
-import nanoid
-import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import BaseModel
-
+from fastapi import Request, status
 from azure.servicebus import ServiceBusMessage
 from cryptography.fernet import Fernet
 
@@ -677,17 +676,18 @@ from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
-
-from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroCommandResp
+#from primary.utils.user_cache import UserCache, get_user_cache_for_user
+from webviz_services.utils.sumo_blob_cache import SumoBlobCache
+from webviz_core_utils.background_tasks import run_in_background_task
+from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
 
 from primary import config
 from primary.utils.message_bus import MessageBus, MessageBusSingleton
-#from primary.utils.user_cache import UserCache, get_user_cache_for_user
 
-from webviz_services.utils.sumo_blob_cache import SumoBlobCache
-from webviz_core_utils.background_tasks import run_in_background_task
+from .._shared.long_running_operations import LroInProgressResp, LroFailureResp, LroSuccessResp, LroCommandResp
 
-from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
+# pylint: enable=wrong-import-position, wrong-import-order, ungrouped-imports, unused-import
+
 
 
 
@@ -737,7 +737,7 @@ async def get_derived_vector_table_hybrid(
 
     # Note that we always check in the cache first!
     # This means that once a table is created and is in cache, we will always return it and not trigger any
-    # more tasks, even if the client keeps retrying with the retry_creation_task flag set to true. 
+    # more tasks, even if the client keeps retrying with the retry_creation_task flag set to true.
     # The retry_creation_task flag is really only for retrying when there is no cache entry yet.
     has_cache_entry = await blob_cache.has_cache_entry_async(cache_key)
     perf_metrics.record_lap("check-cache")
@@ -764,7 +764,8 @@ async def get_derived_vector_table_hybrid(
         if "FGIR" in vector_names:
             encrypted_access_token = b"ILLEGAL VALUE FOR FGIR"
 
-        task_id = nanoid.generate(size=12)
+        task_id = task_tracker.generate_task_id("dvt")
+
         msg = CreateDerivedSmryTableMsg(
             user_id=user_id,
             task_id=task_id,
@@ -774,14 +775,7 @@ async def get_derived_vector_table_hybrid(
             encrypted_access_token=encrypted_access_token,
         )
 
-        # !!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!
-        # Introduce error for testing purposes
-        #msg.case_uuid = ""
-
         task_meta = await task_tracker.register_task_with_fingerprint_async(
-            task_system="background_task",
             task_id=task_id,
             fingerprint=task_fp,
             ttl_s=5 * 60,
@@ -789,7 +783,7 @@ async def get_derived_vector_table_hybrid(
 
         # job_coro = bgjob_create_and_store_derived_table_async(
         #     user_id=user_id,
-        #     task_id=task_meta.task_id,
+        #     task_id=task_id,
         #     sumo_access_token=sumo_access_token,
         #     case_uuid=case_uuid,
         #     ensemble_name=ensemble_name,
@@ -890,7 +884,7 @@ async def get_derived_table_info(
     perf_metrics.record_lap("download-blob")
     if not table_blob_bytes:
         raise HTTPException(status_code=410, detail="Could not download derived table from blob storage")
-    
+
     pq_table = pq.read_table(pa.BufferReader(table_blob_bytes))
     # LOGGER.debug(f"{dbg_prefix}Read table from blob cache, got schema:\n{pq_table.schema}")
     perf_metrics.record_lap("read-table")
@@ -947,6 +941,3 @@ async def _compute_table_handle_async(authenticated_user: AuthenticatedUser, cas
     # 8 bytes = 16 hex chars = 64 bits should be enough to avoid collisions for our use case
     task_fp = hashlib.shake_128((ensemble_fp + task_params_as_str).encode()).hexdigest(8)
     return f"TH__{task_fp}"
-
-
-

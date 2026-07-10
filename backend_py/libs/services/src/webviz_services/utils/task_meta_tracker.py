@@ -1,5 +1,6 @@
 import time
 import logging
+import secrets
 from enum import StrEnum
 from dataclasses import dataclass
 
@@ -49,7 +50,6 @@ class TaskState(StrEnum):
 
 @dataclass(frozen=True, kw_only=True)
 class TaskMeta:
-    task_system: str
     task_id: str
     state: TaskState
     status_message: str | None          # Human-readable description of the current or final task status, should be suitable for end-user consumption
@@ -71,23 +71,30 @@ class TaskMetaTracker:
         self._user_id = user_id
         self._redis_client: redis.Redis = redis_client
 
+    @classmethod
+    def generate_task_id(cls, prefix: str | None = None) -> str:
+        # Convenience function to generate a task id for use with the tracker, including a custom prefix.
+        # 6 random bytes -> 48 bits of entropy, encoded as an 8-character URL-safe string.
+        #
+        # 8 chars should be enough since task ids are per user and are only ever looked up within that user's
+        # namespace, never used as a standalone cross-user access token.
+        #
+        # May want to bump to secrets.token_urlsafe(9) (72 bits, 12 chars) if a task id ever becomes a security
+        # boundary (knowing the id grants access/cancellation across users), or if the number of coexisting task
+        # IDs grows into the many-millions range.
+        task_id = secrets.token_urlsafe(6)
+        if prefix:
+            task_id = f"{prefix}_{task_id}"
+        return task_id
+
     async def register_task_async(
         self,
-        task_system: str,
         task_id: str,
         ttl_s: int,
         actual_start_time_utc_s: float | None,
         expected_store_key: str | None,
     ) -> TaskMeta:
         redis_hash_name = self._make_full_redis_key_for_task(task_id)
-
-        # Use hsetnx to provoke an error if an entry for this task id already exists
-        res = await self._redis_client.hsetnx(name=redis_hash_name, key="taskSystem", value=task_system)
-        if res == 0:
-            raise ValueError(f"Task with id {task_id} already exists in the tracker")
-
-        # Set TTL for the hash
-        await self._redis_client.expire(redis_hash_name, ttl_s)
 
         time_now_utc_s = time.time()
 
@@ -100,21 +107,27 @@ class TaskMetaTracker:
             state = TaskState.RUNNING
             started_at_utc_s = actual_start_time_utc_s
 
+        # Use hsetnx to provoke an error if an entry for this task id already exists
+        res = await self._redis_client.hsetnx(name=redis_hash_name, key="state", value=state)
+        if res == 0:
+            raise ValueError(f"Task with id {task_id} already exists in the tracker")
+
+        # Set TTL for the hash
+        await self._redis_client.expire(redis_hash_name, ttl_s)
+
         update_dict: dict[str, str | float] = {
-            "state": state,
             "expectedStoreKey": expected_store_key if expected_store_key else "",
             "registeredAtUtcS": registered_at_utc_s,
             "updatedAtUtcS": updated_at_utc_s,
         }
 
         if started_at_utc_s is not None:
-            update_dict["startTimeUtcS"] = started_at_utc_s
+            update_dict["startedAtUtcS"] = started_at_utc_s
 
         # Now set the remaining keys/fields in the hash
         await self._redis_client.hset(name=redis_hash_name, mapping=update_dict)# type: ignore[arg-type]
 
         return TaskMeta(
-            task_system=task_system,
             task_id=task_id,
             state=state,
             status_message=None,
@@ -128,7 +141,6 @@ class TaskMetaTracker:
 
     async def register_task_with_fingerprint_async(
         self,
-        task_system: str,
         task_id: str,
         fingerprint: str,
         ttl_s: int,
@@ -137,7 +149,6 @@ class TaskMetaTracker:
     ) -> TaskMeta:
         # Register the task itself in the usual way
         task_meta = await self.register_task_async(
-            task_system=task_system,
             task_id=task_id,
             ttl_s=ttl_s,
             actual_start_time_utc_s=actual_start_time_utc_s,
@@ -158,8 +169,6 @@ class TaskMetaTracker:
         if not value_dict:
             return None
 
-        task_system: str = value_dict.get("taskSystem", "UNKNOWN")
-
         try:
             task_state = TaskState(value_dict.get("state", ""))
         except ValueError:
@@ -179,11 +188,10 @@ class TaskMetaTracker:
 
         registered_at_utc_s: float = _to_float_safe(value_dict.get("registeredAtUtcS"), 0.0)
         updated_at_utc_s: float = _to_float_safe(value_dict.get("updatedAtUtcS"), 0.0)
-        started_at_utc_s: float | None = _to_float_or_none(value_dict.get("startTimeUtcS"))
+        started_at_utc_s: float | None = _to_float_or_none(value_dict.get("startedAtUtcS"))
         completed_at_utc_s: float | None = _to_float_or_none(value_dict.get("completedAtUtcS"))
 
         return TaskMeta(
-            task_system=task_system,
             task_id=task_id,
             state=task_state,
             status_message=status_message,
@@ -204,9 +212,9 @@ class TaskMetaTracker:
 
     async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
         return await self._do_set_state_async(
-            task_id=task_id, 
-            new_state=new_state, 
-            status_message=status_message, 
+            task_id=task_id,
+            new_state=new_state,
+            status_message=status_message,
             internal_error_message=None
             )
 

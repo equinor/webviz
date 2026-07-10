@@ -15,6 +15,7 @@ _REDIS_KEY_PREFIX = "user_cache"
 
 LOGGER = logging.getLogger(__name__)
 
+# pylint: disable-next=invalid-name
 PydanticModelType = TypeVar("PydanticModelType", bound=BaseModel)
 
 
@@ -111,17 +112,17 @@ class UserCache:
         return payload
 
     async def put_pydantic_model_async(
-        self, key: str, model: BaseModel, format: Literal["msgpack", "json"], ttl_s: int
+        self, key: str, model: BaseModel, ser_fmt: Literal["msgpack", "json"], ttl_s: int
     ) -> bool:
         perf_metrics = PerfMetrics()
 
         payload: bytes
-        if format == "msgpack":
+        if ser_fmt == "msgpack":
             payload = _pydantic_to_msgpack(model)
-        elif format == "json":
+        elif ser_fmt == "json":
             payload = model.model_dump_json().encode("utf-8")
         else:
-            raise ValueError(f"Unsupported serialization format: {format}")
+            raise ValueError(f"Unsupported serialization format: {ser_fmt}")
 
         perf_metrics.record_lap("serialize")
 
@@ -134,7 +135,7 @@ class UserCache:
         return ret_val
 
     async def get_pydantic_model_async(
-        self, key: str, model_class: type[PydanticModelType], format: Literal["msgpack", "json"]
+        self, key: str, model_class: type[PydanticModelType], ser_fmt: Literal["msgpack", "json"]
     ) -> PydanticModelType | None:
         perf_metrics = PerfMetrics()
 
@@ -145,14 +146,14 @@ class UserCache:
             return None
 
         try:
-            if format == "msgpack":
+            if ser_fmt == "msgpack":
                 model = _msgpack_to_pydantic(model_class, payload)
-            elif format == "json":
+            elif ser_fmt == "json":
                 model = model_class.model_validate_json(payload.decode("utf-8"))
             else:
-                raise ValueError(f"Unsupported serialization format: {format}")
+                raise ValueError(f"Unsupported serialization format: {ser_fmt}")
         except Exception as e:
-            raise ValueError(f"Failed to deserialize model {key=}, {format=}: {e}") from e
+            raise ValueError(f"Failed to deserialize model {key=}, {ser_fmt=}: {e}") from e
 
         perf_metrics.record_lap("deserialize")
 
