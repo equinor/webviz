@@ -11,7 +11,10 @@ import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/i
 import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
-import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
+import {
+    createSeismicFencePolylineFromPolylineXy,
+    makeSeismicFenceSourceId,
+} from "@modules/_shared/Intersection/seismicIntersectionUtils";
 
 import type {
     CustomDataProviderImplementation,
@@ -52,7 +55,7 @@ export type IntersectionSeismicStoredData = {
     seismicFencePolylineWithSectionLengths: PolylineWithSectionLengths;
 };
 
-export type IntersectionSeismicData = SeismicFenceData_trans;
+export type IntersectionSeismicData = SeismicFenceData_trans & { source: { id: string; name: string } };
 
 export class IntersectionSeismicProvider implements CustomDataProviderImplementation<
     IntersectionSeismicSettings,
@@ -141,7 +144,6 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
-
         setting(Setting.REALIZATION).bindAttributes({
             read(read) {
                 return {
@@ -386,6 +388,8 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         IntersectionSeismicData,
         IntersectionSeismicStoredData
     >): Promise<IntersectionSeismicData> {
+        const sourceIntersection = assertNonNull(getSetting(Setting.INTERSECTION), "No intersection selected");
+
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
@@ -399,6 +403,11 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         if (seismicFencePolylineUtmXy.length < 4) {
             throw new Error("Invalid seismic fence polyline in stored data. Must contain at least two (x,y)-points");
         }
+
+        const source = {
+            id: makeSeismicFenceSourceId(sourceIntersection),
+            name: sourceIntersection.name,
+        };
 
         const apiSeismicFencePolyline = createSeismicFencePolylineFromPolylineXy(seismicFencePolylineUtmXy);
         const queryOptions = postGetSeismicFenceOptions({
@@ -415,7 +424,10 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
             },
         });
 
-        const seismicFenceDataPromise = fetchQuery(queryOptions).then(transformSeismicFenceData);
+        const seismicFenceDataPromise = fetchQuery(queryOptions).then((data) => ({
+            ...transformSeismicFenceData(data),
+            source,
+        }));
 
         return seismicFenceDataPromise;
     }

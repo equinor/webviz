@@ -16,6 +16,7 @@ export enum HoverTopic {
     FACIES = "hover.facies",
     WORLD_POS_UTM = "hover.world_pos_utm",
     POLYLINE_LENGTH_ALONG = "hover.polyline_length_along",
+    SEISMIC_FENCE = "hover.seismic_fence",
 }
 
 export type HoverData = {
@@ -28,6 +29,7 @@ export type HoverData = {
     [HoverTopic.FACIES]: string | null;
     [HoverTopic.WORLD_POS_UTM]: { x?: number; y?: number; z?: number } | null;
     [HoverTopic.POLYLINE_LENGTH_ALONG]: { polylineId: string; lengthAlong: number } | null;
+    [HoverTopic.SEISMIC_FENCE]: { sourceId: string; lengthAlong: number; depth: number } | null;
 };
 
 type ThrottledPublishFunc = _.DebouncedFunc<<T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void>;
@@ -172,6 +174,8 @@ export function usePublishHoverValue<T extends keyof HoverData>(
 ): (v: HoverData[T]) => void {
     return React.useCallback(
         function updateHoverValue(newValue: HoverData[T]) {
+            console.debug(`[HoverService] ${moduleInstanceId} published to ${topic}`, newValue);
+
             hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
         },
         [hoverService, moduleInstanceId, topic],

@@ -11,12 +11,13 @@ import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_sh
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
-import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
+import { isSeismicLayer, isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
 import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
 import { PositionReadout, type PositionCoordinates } from "@modules/_shared/components/PositionReadout";
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import { makeSeismicFenceSourceId } from "@modules/_shared/Intersection/seismicIntersectionUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 const AXES_LABELS = { xLabel: "Length along", yLabel: "Depth" };
@@ -52,9 +53,16 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // Hover synchronization
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
+
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
     const [polylineHoverData, setPolylineHoverData] = useHover(
         HoverTopic.POLYLINE_LENGTH_ALONG,
+        props.hoverService,
+        moduleInstanceId,
+    );
+
+    const [hoveredSeismicFence, setHoveredSeismicFence] = useHover(
+        HoverTopic.SEISMIC_FENCE,
         props.hoverService,
         moduleInstanceId,
     );
@@ -64,6 +72,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.intersectionSource?.type === IntersectionType.WELLBORE ? props.intersectionSource.uuid : null;
     const polylineId =
         props.intersectionSource?.type === IntersectionType.CUSTOM_POLYLINE ? props.intersectionSource.uuid : null;
+
+    const fenceSourceId = props.intersectionSource ? makeSeismicFenceSourceId(props.intersectionSource) : "";
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -131,13 +141,26 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const handleReadoutItemsChange = React.useCallback(
         function handleReadoutItemsChange(event: EsvIntersectionReadoutEvent): void {
             const items = event.readoutItems;
+
             const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
+            const seismicReadoutItem = items.find((item) => isSeismicLayer(item.layer));
+
+            if (seismicReadoutItem && fenceSourceId) {
+                const [lengthAlong, depth] = seismicReadoutItem.point;
+                setHoveredSeismicFence({
+                    depth,
+                    lengthAlong,
+                    sourceId: fenceSourceId,
+                });
+            } else {
+                setHoveredSeismicFence(null);
+            }
 
             publishWellboreHoverEvent(wellboreReadoutItem?.md ?? null);
 
             setReadoutItems(items.map(formatEsvLayout));
         },
-        [formatEsvLayout, publishWellboreHoverEvent],
+        [fenceSourceId, formatEsvLayout, publishWellboreHoverEvent, setHoveredSeismicFence],
     );
 
     const highlightItems: HighlightItem[] = [];
