@@ -17,7 +17,8 @@ sumo-wrapper-python = "^1.6.0"
 pottery = "^3.0.0"
 requests-toolbelt = "^1.0.0"
 xtgeo = "^4.18.0"
-azure-storage-blob = "^12.29.0"
+azure-storage-blob = "^12.30.0"
+msgpack = "^1.1.2"
 
 webviz-core-utils = { path = "../core_utils", develop = true }
 webviz-server-schemas = { path = "../server_schemas", develop = true }
