@@ -673,7 +673,6 @@ from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_us
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
-#from primary.utils.user_cache import UserCache, get_user_cache_for_user
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_core_utils.background_tasks import run_in_background_task
 
