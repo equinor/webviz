@@ -15,6 +15,8 @@ from .task_exceptions import TaskFailedError, TaskRetryError, TaskAbortedError, 
 from .task_runner import run_tracked_user_task_async
 from .tasks.dummy_task import dummy_task_async
 from .tasks.create_derived_smry_table_task import create_derived_smry_table_task_async
+from .tasks.qc_check_hydrostatic_equil_vectors_task import qc_check_hydrostatic_equil_vectors_task_async
+from .tasks.qc_check_hydrostatic_equil_grid_properties_task import qc_check_hydrostatic_equil_grid_properties_task_async
 
 
 _logger = logging.getLogger(__name__)
@@ -54,6 +56,12 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
                     case WorkerOperation.CREATE_DERIVED_SMRY_TABLE:
                         await run_tracked_user_task_async(msg, create_derived_smry_table_task_async, abort_signal)
 
+                    case WorkerOperation.QC_CHECK_HYDROSTATIC_EQUIL_VECTORS:
+                        await run_tracked_user_task_async(msg, qc_check_hydrostatic_equil_vectors_task_async, abort_signal)
+
+                    case WorkerOperation.QC_CHECK_HYDROSTATIC_EQUIL_GRID_PROPERTIES:
+                        await run_tracked_user_task_async(msg, qc_check_hydrostatic_equil_grid_properties_task_async, abort_signal)
+
                     case _:
                         err_msg = f"Unknown worker operation: {worker_op}"
                         span.record_exception(ValueError(err_msg))
@@ -69,7 +77,7 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
             # We record exceptions on the telemetry span, but avoid doing logger.exception().
             # It looks like Azure Monitor's telemetry instrumentation will pick up the exception from logger.exception()
             # and export that log record as exception telemetry which results in duplicate exception telemetry.
-            # We also don't re-raise the exception because we want to fully handle the settlement of messages 
+            # We also don't re-raise the exception because we want to fully handle the settlement of messages
             # here (complete/abandon/dead-letter) and not let the exception propagate further.
 
             except TaskFailedError as exc:
@@ -81,7 +89,7 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
                 await receiver.complete_message(msg)
 
             except TaskAbortedError as exc:
-                # Cooperative shutdown/cancellation, not an error. 
+                # Cooperative shutdown/cancellation, not an error.
                 # Return the message to the queue so it is retried (by another worker or this one after restart).
                 # For now log this as warning and don't set a status on the span
                 _logger.warning(f"Task aborted due to shutdown, abandoning message for retry: {repr(exc)}")
@@ -119,6 +127,3 @@ def _extract_trace_context_from_message(message: ServiceBusReceivedMessage) -> C
         props[key] = value
 
     return extract(props)
-
-
-
