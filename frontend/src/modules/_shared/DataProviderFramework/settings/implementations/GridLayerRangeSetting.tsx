@@ -448,6 +448,23 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                             const rangeValue = getRangeValueForLabel(internalValue, label, valueConstraints);
                             const zoneValue = getZoneValueForLabel(internalValue, label);
 
+                            function handleNumberInputChange(
+                                value: number | null,
+                                reason: string,
+                                thumbIndex: number,
+                                commit: boolean,
+                            ) {
+                                // Only use null-value if the value is being committed
+                                if (value === null && !commit) return;
+
+                                // Event is only used on sliders, so rangeValue is always non-null here
+                                const newSliderValue = [...rangeValue!];
+
+                                newSliderValue[thumbIndex] = value ?? valueConstraints.range[label][thumbIndex];
+
+                                handleSliderChange(label, newSliderValue, reason);
+                            }
+
                             return (
                                 <React.Fragment key={`setting-${label}`}>
                                     <div
@@ -484,14 +501,12 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                                     layoutClassName="w-16 shrink-0"
                                                     min={valueConstraints.range[label][0]}
                                                     max={rangeValue[1]}
-                                                    onValueChange={(v, eventDetails) => {
-                                                        const val = v ?? valueConstraints.range[label][0];
-                                                        handleSliderChange(
-                                                            label,
-                                                            [val, rangeValue[1]],
-                                                            eventDetails.reason,
-                                                        );
-                                                    }}
+                                                    onValueCommitted={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 0, true)
+                                                    }
+                                                    onValueChange={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 0, false)
+                                                    }
                                                 />
                                             )}
                                             <Slider
@@ -514,14 +529,12 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                                     value={rangeValue[1]}
                                                     min={rangeValue[0]}
                                                     max={valueConstraints.range[label][1]}
-                                                    onValueChange={(v, eventDetails) => {
-                                                        const val = v ?? valueConstraints.range[label][1];
-                                                        handleSliderChange(
-                                                            label,
-                                                            [rangeValue[0], val],
-                                                            eventDetails.reason,
-                                                        );
-                                                    }}
+                                                    onValueCommitted={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 1, true)
+                                                    }
+                                                    onValueChange={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 1, false)
+                                                    }
                                                 />
                                             )}
                                         </div>
