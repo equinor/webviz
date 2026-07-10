@@ -14,6 +14,7 @@ from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+from webviz_services.utils.user_cache import UserCacheFactory
 
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
@@ -50,7 +51,6 @@ from primary.utils.exception_handlers import configure_service_level_exception_h
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 from primary.utils.message_bus import MessageBusSingleton
-from primary.utils.user_cache import UserCacheFactory
 
 from . import config
 

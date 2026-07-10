@@ -6,27 +6,38 @@ from enum import StrEnum
 from typing import TypeVar
 
 import httpx
-
-from fmu.sumo.explorer.explorer import SumoClient
+from pydantic import BaseModel
 from azure.storage.blob.aio import BlobClient, StorageStreamDownloader
 from azure.core.exceptions import ResourceNotFoundError
-from pydantic import BaseModel
+from fmu.sumo.explorer.explorer import SumoClient
+
+from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 
 # pylint: disable-next=invalid-name
-PydanticModelType = TypeVar("PydanticModelType", bound=BaseModel)
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 LOGGER = logging.getLogger(__name__)
 
 
 class SumoBlobCache:
+    # Well-known cache namespaces used to partition the SumoBlobCache key space.
     class Namespace(StrEnum):
-        # Well-known cache namespaces used to partition the SumoBlobCache key space.
         GENERAL = "general_v1"
         DERIVED_VEC_TABLE = "derivedVecTable_v1"
+        QC_CHECKS = "qcChecks_v1"
 
     def __init__(self, sumo_client: SumoClient, namespace: Namespace) -> None:
         self._sumo_client = sumo_client
         self._namespace = namespace
+
+    @classmethod
+    def from_access_token(cls, sumo_access_token: str, namespace: Namespace) -> "SumoBlobCache":
+        sumo_client = create_sumo_client(sumo_access_token)
+        return cls(sumo_client=sumo_client, namespace=namespace)
+
+    @classmethod
+    def from_sumo_client(cls, sumo_client: SumoClient, namespace: Namespace) -> "SumoBlobCache":
+        return cls(sumo_client=sumo_client, namespace=namespace)
 
     def compute_cache_key(self, cache_key_data: str) -> str:
         """
@@ -47,7 +58,9 @@ class SumoBlobCache:
 
         return await self.is_resolved_blob_accessible_async(sas_url)
 
-    async def reserve_cache_entry_async(self, cache_key: str, source_obj_uuids: list[str], blob_size: int) -> str | None:
+    async def reserve_cache_entry_async(
+        self, cache_key: str, source_obj_uuids: list[str], blob_size: int
+    ) -> str | None:
         """
         Reserves a cache entry in Sumo and returns a SAS URL for writing the actual data to Azure blob storage.
         """
@@ -105,7 +118,9 @@ class SumoBlobCache:
             # but log a warning if it's an unexpected status code
             status = exc.response.status_code
             if status == 404:
-                LOGGER.debug(f"Cache miss for: {cache_key=} (namespace={self._namespace}, {status=}, GET url={exc.request.url})")
+                LOGGER.debug(
+                    f"Cache miss for: {cache_key=} (namespace={self._namespace}, {status=}, GET url={exc.request.url})"
+                )
             else:
                 LOGGER.warning(
                     f"Failed to resolve cache entry, unexpected status: {status} (namespace={self._namespace}, GET url={exc.request.url})"
@@ -118,9 +133,7 @@ class SumoBlobCache:
 
         blob_size = len(blob_payload)
         async with BlobClient.from_blob_url(blob_sas_url) as blob_client:
-            await blob_client.upload_blob(
-                data=blob_payload, blob_type="BlockBlob", length=blob_size, overwrite=True
-            )
+            await blob_client.upload_blob(data=blob_payload, blob_type="BlockBlob", length=blob_size, overwrite=True)
 
     async def download_resolved_blob_async(self, blob_sas_url: str) -> bytes | None:
         if not blob_sas_url:
@@ -181,7 +194,7 @@ class SumoBlobCache:
 
         await self.upload_reserved_blob_async(blob_sas_url, blob_bytes)
 
-    async def get_pydantic_model_async(self, cache_key: str, model_class: type[PydanticModelType]) -> PydanticModelType | None:
+    async def get_pydantic_model_async(self, cache_key: str, model_class: type[ModelT]) -> ModelT | None:
         blob_sas_url = await self.resolve_cache_entry_async(cache_key)
         if blob_sas_url is None:
             return None
