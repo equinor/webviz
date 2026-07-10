@@ -563,6 +563,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                     value={v}
                                     index={i}
+                                    size={componentSize}
                                     numMarkers={allMarkers.length}
                                     disabled={props.disabled}
                                     labelFormat={markerLabelFormatFunc}

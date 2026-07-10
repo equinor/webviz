@@ -1,9 +1,10 @@
-import { useComponentSize } from "@lib/components/_shared/contexts/componentSizeContext";
+import type { SelectableSize } from "@lib/components/_shared/utils/size";
 import { getNextTextSize, getTextSizeForSelectableSize } from "@lib/components/_shared/utils/size";
 import { Typography } from "@lib/components/Typography";
 
 export type MarkerLabelProps = {
     leftPosPercent: number;
+    size: SelectableSize;
     value: number;
     index: number;
     numMarkers: number;
@@ -13,8 +14,7 @@ export type MarkerLabelProps = {
 };
 
 export function MarkerLabel(props: MarkerLabelProps): React.ReactNode {
-    const componentSize = useComponentSize();
-    const textSize = getTextSizeForSelectableSize(componentSize);
+    const textSize = getTextSizeForSelectableSize(props.size);
 
     let formattedValue;
 
