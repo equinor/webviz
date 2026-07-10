@@ -114,7 +114,7 @@ async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: st
         LOGGER.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         LOGGER.error("!!!!!!!!!!Injecting dummy error for vector to test error handling in derived table creation")
         LOGGER.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        raise InvalidDataError(f"DUMMY ERROR", Service.SUMO)
+        raise InvalidDataError("DUMMY ERROR", Service.SUMO)
 
 
     # Now we can merge the tables by appending the "value" columns
@@ -130,4 +130,3 @@ async def create_derived_smry_table_async(sumo_client: SumoClient, case_uuid: st
     )
 
     return merged_table, info
-

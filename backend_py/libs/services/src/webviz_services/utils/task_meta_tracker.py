@@ -1,5 +1,6 @@
 import time
 import logging
+import secrets
 from enum import StrEnum
 from dataclasses import dataclass
 
@@ -69,6 +70,22 @@ class TaskMetaTracker:
 
         self._user_id = user_id
         self._redis_client: redis.Redis = redis_client
+
+    @classmethod
+    def generate_task_id(cls, prefix: str | None = None) -> str:
+        # Convenience function to generate a task id for use with the tracker, including a custom prefix.
+        # 6 random bytes -> 48 bits of entropy, encoded as an 8-character URL-safe string.
+        #
+        # 8 chars should be enough since task ids are per user and are only ever looked up within that user's
+        # namespace, never used as a standalone cross-user access token.
+        #
+        # May want to bump to secrets.token_urlsafe(9) (72 bits, 12 chars) if a task id ever becomes a security
+        # boundary (knowing the id grants access/cancellation across users), or if the number of coexisting task
+        # IDs grows into the many-millions range.
+        task_id = secrets.token_urlsafe(6)
+        if prefix:
+            task_id = f"{prefix}_{task_id}"
+        return task_id
 
     async def register_task_async(
         self,
@@ -195,9 +212,9 @@ class TaskMetaTracker:
 
     async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
         return await self._do_set_state_async(
-            task_id=task_id, 
-            new_state=new_state, 
-            status_message=status_message, 
+            task_id=task_id,
+            new_state=new_state,
+            status_message=status_message,
             internal_error_message=None
             )
 

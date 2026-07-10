@@ -74,7 +74,7 @@ async def _find_columns_needing_aggregation_async(sumo_client: SumoClient, case_
     async with asyncio.TaskGroup() as tg:
         for col_name in unique_column_names:
             if col_name in raw_agg_cols_in_sumo:
-                validation_tasks[col_name] = tg.create_task(_is_column_agg_valid(col_name, sc_base))
+                validation_tasks[col_name] = tg.create_task(_is_column_agg_valid_async(col_name, sc_base))
 
     cols_with_valid_agg: set[str] = set()
     for col_name, task in validation_tasks.items():
@@ -93,7 +93,7 @@ async def _find_columns_needing_aggregation_async(sumo_client: SumoClient, case_
     return cols_needing_agg
 
 
-async def _is_column_agg_valid(column_name: str, sc_base: SearchContext) -> bool:
+async def _is_column_agg_valid_async(column_name: str, sc_base: SearchContext) -> bool:
     sc_agg_table = sc_base.filter(column=column_name, aggregation="collection", realization=False)
 
     num_agg_tables = await sc_agg_table.length_async()
@@ -149,7 +149,7 @@ async def _batch_aggregate_vectors_async(sumo_client: SumoClient, case_uuid: str
         raise ServiceRequestError("Error starting Sumo aggregation task", Service.SUMO) from exc
 
     perf_metrics.record_lap("submit-task")
-    LOGGER.debug(f"_batch_aggregate_vectors_async() - Task submitted to Sumo aggregation service")
+    LOGGER.debug("_batch_aggregate_vectors_async() - Task submitted to Sumo aggregation service")
 
     # When we call aggregate_async() with no_wait=True, we expect the raw httpx.Response object
     # from the underlying POST request to be returned.
@@ -213,5 +213,3 @@ def _should_treat_httpx_exception_as_timeout(httpx_exception: httpx.HTTPError) -
         return httpx_exception.response.status_code == 504
 
     return False
-
-
