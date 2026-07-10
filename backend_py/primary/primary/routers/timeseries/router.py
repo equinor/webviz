@@ -664,7 +664,6 @@ import time
 
 from fastapi import Request, status
 import fsspec
-import nanoid
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pydantic import BaseModel
@@ -747,15 +746,16 @@ async def get_derived_vector_table_hybrid(
 
     new_task_was_submitted = False
     if not task_meta:
+        task_id = task_tracker.generate_task_id("dvt")
         task_meta = await task_tracker.register_task_with_fingerprint_async(
-            task_id=nanoid.generate(size=12),
+            task_id=task_id,
             fingerprint=task_fp,
             ttl_s=5 * 60,
             expected_store_key=cache_key)
 
         job_coro = bgjob_create_and_store_derived_table_async(
             user_id=user_id, 
-            task_id=task_meta.task_id,
+            task_id=task_id,
             sumo_access_token=sumo_access_token,
             case_uuid=case_uuid,
             ensemble_name=ensemble_name,
