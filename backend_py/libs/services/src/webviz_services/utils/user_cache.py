@@ -16,7 +16,7 @@ _REDIS_KEY_PREFIX = "user_cache"
 LOGGER = logging.getLogger(__name__)
 
 # pylint: disable-next=invalid-name
-PydanticModelType = TypeVar("PydanticModelType", bound=BaseModel)
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
 class UserCacheFactory:
@@ -135,8 +135,8 @@ class UserCache:
         return ret_val
 
     async def get_pydantic_model_async(
-        self, key: str, model_class: type[PydanticModelType], ser_fmt: Literal["msgpack", "json"]
-    ) -> PydanticModelType | None:
+        self, key: str, model_class: type[ModelT], ser_fmt: Literal["msgpack", "json"]
+    ) -> ModelT | None:
         perf_metrics = PerfMetrics()
 
         payload = await self.get_bytes_async(key)
@@ -181,7 +181,7 @@ def _pydantic_to_msgpack(model: BaseModel) -> bytes:
     return msgpack.packb(model.model_dump(), use_bin_type=True)
 
 
-def _msgpack_to_pydantic(model_class: type[PydanticModelType], data: bytes) -> PydanticModelType:
+def _msgpack_to_pydantic(model_class: type[ModelT], data: bytes) -> ModelT:
     return model_class(**msgpack.unpackb(data, raw=False))
 
 

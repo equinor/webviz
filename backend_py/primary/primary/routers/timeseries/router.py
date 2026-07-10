@@ -674,9 +674,7 @@ from cryptography.fernet import Fernet
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user_id
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
-from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.derived_smry_table.create_and_store_job import bgjob_create_and_store_derived_table_async
-#from primary.utils.user_cache import UserCache, get_user_cache_for_user
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_core_utils.background_tasks import run_in_background_task
 from webviz_server_schemas.pyworker.messages import CreateDerivedSmryTableMsg, WorkerOperation
@@ -729,8 +727,7 @@ async def get_derived_vector_table_hybrid(
         return LroCommandResp(command_ok=True)
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
-    sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
+    blob_cache = SumoBlobCache.from_access_token(sumo_access_token, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
 
     perf_metrics.record_lap("init")
@@ -851,8 +848,7 @@ async def get_derived_table_info(
     LOGGER.debug(f"{dbg_prefix}Received request for derived table info: {table_handle=}")
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
-    sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
+    blob_cache = SumoBlobCache.from_access_token(sumo_access_token, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
@@ -913,8 +909,7 @@ async def get_calc_something_on_derived_table(
     perf_metrics = ResponsePerfMetrics(response)
 
     sumo_access_token = authenticated_user.get_sumo_access_token()
-    sumo_client = create_sumo_client(sumo_access_token)
-    blob_cache = SumoBlobCache(sumo_client, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
+    blob_cache = SumoBlobCache.from_access_token(sumo_access_token, SumoBlobCache.Namespace.DERIVED_VEC_TABLE)
     cache_key = blob_cache.compute_cache_key(table_handle)
     perf_metrics.record_lap("init")
 
