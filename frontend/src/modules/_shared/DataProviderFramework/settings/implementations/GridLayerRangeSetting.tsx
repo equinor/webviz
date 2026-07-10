@@ -5,8 +5,10 @@ import { cloneDeep, isEqual } from "lodash-es";
 import type { Grid3dZone_api } from "@api";
 import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
+import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Slider } from "@lib/components/Slider";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type {
@@ -14,6 +16,10 @@ import type {
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
+const MIN_INPUT_DISPLAY_WIDTH = 300;
+const MIN_HORIZONTAL_RADIO_WIDTH = 200;
+
+// ! We've hidden the min/max locks for now, as the UI needs to be re-evaluated. Keeping the surrounding logic, in-case we reintroduce it later
 type InternalValueType = {
     i: [number | "min", number | "max"];
     j: [number | "min", number | "max"];
@@ -285,8 +291,14 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                 zones: [],
             };
 
-            const [internalValue, setInternalValue] = React.useState<InternalValueType | null>(cloneDeep(props.value));
+            const divRef = React.useRef<HTMLDivElement>(null);
+            const [internalValue, setInternalValue] = React.useState<InternalValueType>(cloneDeep(props.value));
             const [prevValue, setPrevValue] = React.useState<InternalValueType>(cloneDeep(props.value));
+
+            const divSize = useElementSize(divRef);
+
+            const sliderInputVisible = divSize.width >= MIN_INPUT_DISPLAY_WIDTH;
+            const kTypeRadioLayout = divSize.width >= MIN_HORIZONTAL_RADIO_WIDTH ? "horizontal" : "vertical";
 
             if (!isEqual(props.value, prevValue)) {
                 setInternalValue(cloneDeep(props.value));
@@ -299,7 +311,11 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                 k: { type: "range", range: ["min", "max"] },
             };
 
-            function handleSliderChange(key: keyof NonNullable<InternalValueType>, val: number[], reason: string) {
+            function handleSliderChange(
+                key: keyof NonNullable<InternalValueType>,
+                val: readonly number[],
+                reason: string,
+            ) {
                 // Lock callbacks handle sentinel updates when locking; skip to avoid overwriting them
                 if (reason === "range-locked") return;
 
@@ -338,40 +354,41 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                 }
             }
 
-            function handleLockChange(key: "i" | "j" | "k", index: 0 | 1, locked: boolean) {
-                const base = internalValue ?? defaultBase;
+            // TODO: Reintroduce or remove when we land on a design for locks
+            // function handleLockChange(key: "i" | "j" | "k", index: 0 | 1, locked: boolean) {
+            //     const base = internalValue ?? defaultBase;
 
-                if (key === "k") {
-                    if (base.k.type !== "range") return;
-                    const range: [number | "min", number | "max"] = [...base.k.range];
-                    if (index === 0) {
-                        if (locked) range[0] = "min";
-                        else if (range[0] === "min") range[0] = valueConstraints.range.k[0];
-                        else return; // already a number — a drag already updated the value, skip
-                    } else {
-                        if (locked) range[1] = "max";
-                        else if (range[1] === "max") range[1] = valueConstraints.range.k[1];
-                        else return;
-                    }
-                    setInternalValue({ ...base, k: { type: "range", range } });
-                    return;
-                }
+            //     if (key === "k") {
+            //         if (base.k.type !== "range") return;
+            //         const range: [number | "min", number | "max"] = [...base.k.range];
+            //         if (index === 0) {
+            //             if (locked) range[0] = "min";
+            //             else if (range[0] === "min") range[0] = valueConstraints.range.k[0];
+            //             else return; // already a number — a drag already updated the value, skip
+            //         } else {
+            //             if (locked) range[1] = "max";
+            //             else if (range[1] === "max") range[1] = valueConstraints.range.k[1];
+            //             else return;
+            //         }
+            //         setInternalValue({ ...base, k: { type: "range", range } });
+            //         return;
+            //     }
 
-                const range: [number | "min", number | "max"] = [...base[key]];
-                if (index === 0) {
-                    if (locked) range[0] = "min";
-                    else if (range[0] === "min") range[0] = valueConstraints.range[key][0];
-                    else return;
-                } else {
-                    if (locked) range[1] = "max";
-                    else if (range[1] === "max") range[1] = valueConstraints.range[key][1];
-                    else return;
-                }
-                if (key === "i") setInternalValue({ ...base, i: range });
-                else setInternalValue({ ...base, j: range });
-            }
+            //     const range: [number | "min", number | "max"] = [...base[key]];
+            //     if (index === 0) {
+            //         if (locked) range[0] = "min";
+            //         else if (range[0] === "min") range[0] = valueConstraints.range[key][0];
+            //         else return;
+            //     } else {
+            //         if (locked) range[1] = "max";
+            //         else if (range[1] === "max") range[1] = valueConstraints.range[key][1];
+            //         else return;
+            //     }
+            //     if (key === "i") setInternalValue({ ...base, i: range });
+            //     else setInternalValue({ ...base, j: range });
+            // }
 
-            const labels: (keyof Omit<NonNullable<InternalValueType>, "k">)[] = ["i", "j"];
+            const labels: (keyof NonNullable<InternalValueType>)[] = ["i", "j", "k"];
             const hasChanges = !isEqual(internalValue, props.value);
 
             function handleApplyChanges() {
@@ -421,98 +438,123 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             return (
                 <>
                     <div
+                        ref={divRef}
                         className={resolveClassNames(
-                            "gap-x-3xs gap-y-2xs p-4xs grid grid-cols-[auto_1fr] items-center",
+                            "gap-x-sm gap-y-2xs p-4xs grid grid-cols-[auto_1fr] items-center",
                             {
                                 "outline-accent-strong rounded outline-2": hasChanges,
                             },
                         )}
                     >
-                        {labels.map((label) => (
-                            <React.Fragment key={`setting-${label}`}>
-                                <div className="pl-3xs w-8">{label.toUpperCase()}</div>
-                                <div className="gap-x-3xs">
-                                    <Slider
-                                        min={valueConstraints.range[label][0]}
-                                        max={valueConstraints.range[label][1]}
-                                        onValueChange={(value, eventDetails) => handleSliderChange(label, value as [number, number], eventDetails.reason)}
-                                        value={
-                                            internalValue
-                                                ? [
-                                                      internalValue[label][0] === "min"
-                                                          ? valueConstraints.range[label][0]
-                                                          : internalValue[label][0],
-                                                      internalValue[label][1] === "max"
-                                                          ? valueConstraints.range[label][1]
-                                                          : internalValue[label][1],
-                                                  ]
-                                                : [valueConstraints.range[label][0], valueConstraints.range[label][1]]
-                                        }
-                                        valueLabelDisplay="auto"
-                                        step={valueConstraints.range[label][2]}
-                                        showRangeLocks
-                                        minLocked={internalValue?.[label][0] === "min"}
-                                        maxLocked={internalValue?.[label][1] === "max"}
-                                        onMinLockedChange={(locked) => handleLockChange(label, 0, locked)}
-                                        onMaxLockedChange={(locked) => handleLockChange(label, 1, locked)}
-                                        disabled={props.disabled}
-                                        markerLabels
-                                    />
-                                </div>
-                            </React.Fragment>
-                        ))}
-                        <div className="pl-3xs row-span-2 w-8 self-center">K</div>
-                        <div>
-                            <RadioCompositions.GroupWithLabels
-                                value={internalValue?.["k"].type ?? "range"}
-                                options={[
-                                    { label: "Range", value: "range" },
-                                    { label: "Zone", value: "zone", disabled: valueConstraints.zones.length === 0 },
-                                ]}
-                                onValueChange={handleRadioChange}
-                                layout="horizontal"
-                                size="small"
-                                disabled={props.disabled}
-                            />
-                        </div>
-                        {internalValue?.k.type !== "zone" ? (
-                            <Slider
-                                min={valueConstraints.range["k"][0]}
-                                max={valueConstraints.range["k"][1]}
-                                onValueChange={(value, eventDetails) => handleSliderChange("k", value as [number, number], eventDetails.reason)}
-                                value={
-                                    internalValue?.k.type === "range"
-                                        ? [
-                                              internalValue.k.range[0] === "min"
-                                                  ? valueConstraints.range.k[0]
-                                                  : internalValue.k.range[0],
-                                              internalValue.k.range[1] === "max"
-                                                  ? valueConstraints.range.k[1]
-                                                  : internalValue.k.range[1],
-                                          ]
-                                        : [valueConstraints.range["k"][0], valueConstraints.range["k"][1]]
-                                }
-                                valueLabelDisplay="auto"
-                                step={valueConstraints.range["k"][2]}
-                                showRangeLocks
-                                minLocked={internalValue?.k.type === "range" && internalValue.k.range[0] === "min"}
-                                maxLocked={internalValue?.k.type === "range" && internalValue.k.range[1] === "max"}
-                                onMinLockedChange={(locked) => handleLockChange("k", 0, locked)}
-                                onMaxLockedChange={(locked) => handleLockChange("k", 1, locked)}
-                                disabled={props.disabled}
-                                markerLabels
-                            />
-                        ) : (
-                            <Combobox
-                                items={valueConstraints.zones.map((zone) => ({
-                                    label: zone.name,
-                                    value: zone.name,
-                                }))}
-                                disabled={props.disabled}
-                                value={internalValue?.["k"].type === "zone" ? internalValue.k.name : undefined}
-                                onValueChange={handleZoneChange}
-                            />
-                        )}
+                        {labels.map((label) => {
+                            const rangeValue = getRangeValueForLabel(internalValue, label, valueConstraints);
+                            const zoneValue = getZoneValueForLabel(internalValue, label);
+
+                            function handleNumberInputChange(
+                                value: number | null,
+                                reason: string,
+                                thumbIndex: number,
+                                commit: boolean,
+                            ) {
+                                // Only use null-value if the value is being committed
+                                if (value === null && !commit) return;
+
+                                // Event is only used on sliders, so rangeValue is always non-null here
+                                const newSliderValue = [...rangeValue!];
+
+                                newSliderValue[thumbIndex] = value ?? valueConstraints.range[label][thumbIndex];
+
+                                handleSliderChange(label, newSliderValue, reason);
+                            }
+
+                            return (
+                                <React.Fragment key={`setting-${label}`}>
+                                    <div
+                                        className={resolveClassNames("pl-3xs", {
+                                            "row-span-2": label === "k",
+                                        })}
+                                    >
+                                        {label.toUpperCase()}
+                                    </div>
+
+                                    {label === "k" && (
+                                        <RadioCompositions.GroupWithLabels
+                                            value={internalValue?.["k"].type ?? "range"}
+                                            options={[
+                                                { label: "Range", value: "range" },
+                                                {
+                                                    label: "Zone",
+                                                    value: "zone",
+                                                    disabled: valueConstraints.zones.length === 0,
+                                                },
+                                            ]}
+                                            onValueChange={handleRadioChange}
+                                            layout={kTypeRadioLayout}
+                                            size="small"
+                                            disabled={props.disabled}
+                                        />
+                                    )}
+
+                                    {rangeValue && (
+                                        <div className="gap-x-3xs flex items-center">
+                                            {sliderInputVisible && (
+                                                <NumberInput
+                                                    value={rangeValue[0]}
+                                                    layoutClassName="w-16 shrink-0"
+                                                    min={valueConstraints.range[label][0]}
+                                                    max={rangeValue[1]}
+                                                    onValueCommitted={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 0, true)
+                                                    }
+                                                    onValueChange={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 0, false)
+                                                    }
+                                                />
+                                            )}
+                                            <Slider
+                                                layoutClassName="w-full"
+                                                value={rangeValue}
+                                                disabled={props.disabled}
+                                                min={valueConstraints.range[label][0]}
+                                                max={valueConstraints.range[label][1]}
+                                                valueLabelDisplay="auto"
+                                                valueLabelSide="bottom"
+                                                step={valueConstraints.range[label][2]}
+                                                markerLabels
+                                                onValueChange={(value, eventDetails) =>
+                                                    handleSliderChange(label, value, eventDetails.reason)
+                                                }
+                                            />
+                                            {sliderInputVisible && (
+                                                <NumberInput
+                                                    layoutClassName="w-16 shrink-0"
+                                                    value={rangeValue[1]}
+                                                    min={rangeValue[0]}
+                                                    max={valueConstraints.range[label][1]}
+                                                    onValueCommitted={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 1, true)
+                                                    }
+                                                    onValueChange={(v, eventDetails) =>
+                                                        handleNumberInputChange(v, eventDetails.reason, 1, false)
+                                                    }
+                                                />
+                                            )}
+                                        </div>
+                                    )}
+                                    {zoneValue && (
+                                        <Combobox
+                                            items={valueConstraints.zones.map((zone) => ({
+                                                label: zone.name,
+                                                value: zone.name,
+                                            }))}
+                                            value={zoneValue.name}
+                                            disabled={props.disabled}
+                                            onValueChange={handleZoneChange}
+                                        />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
                     <div className="mt-2xs flex justify-end">
                         <Button variant="contained" onClick={handleApplyChanges} disabled={!hasChanges} size="small">
@@ -523,4 +565,45 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             );
         };
     }
+}
+
+function getZoneValueForLabel(internalValue: InternalValueType, label: "i" | "j" | "k") {
+    const labelValue = internalValue?.[label];
+    if (labelValue && "type" in labelValue && labelValue.type === "zone") {
+        return labelValue;
+    }
+
+    return null;
+}
+
+function getRangeValueForLabel(
+    internalValue: InternalValueType,
+    label: "i" | "j" | "k",
+    valueConstraints: NonNullable<ValueConstraintsType>,
+): readonly number[] | null {
+    const labelValue = internalValue?.[label];
+    const [constraintMin, constraintMax] = valueConstraints.range[label];
+
+    let rangeValue: [number | "min", number | "max"];
+
+    if (labelValue && "type" in labelValue) {
+        if (labelValue.type === "zone") {
+            return null;
+        } else {
+            rangeValue = [...labelValue.range];
+        }
+    } else if (labelValue) {
+        rangeValue = [...labelValue];
+    } else {
+        rangeValue = ["min", "max"];
+    }
+
+    if (rangeValue[0] === "min") {
+        rangeValue[0] = constraintMin;
+    }
+    if (rangeValue[1] === "max") {
+        rangeValue[1] = constraintMax;
+    }
+
+    return rangeValue as number[];
 }
