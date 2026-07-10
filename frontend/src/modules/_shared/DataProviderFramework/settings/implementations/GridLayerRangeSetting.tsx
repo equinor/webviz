@@ -17,6 +17,7 @@ import type {
 } from "../../interfacesAndTypes/customSettingImplementation";
 
 const MIN_INPUT_DISPLAY_WIDTH = 300;
+const MIN_HORIZONTAL_RADIO_WIDTH = 200;
 
 // ! We've hidden the min/max locks for now, as the UI needs to be re-evaluated. Keeping the surrounding logic, in-case we reintroduce it later
 type InternalValueType = {
@@ -297,6 +298,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
             const divSize = useElementSize(divRef);
 
             const sliderInputVisible = divSize.width >= MIN_INPUT_DISPLAY_WIDTH;
+            const kTypeRadioLayout = divSize.width >= MIN_HORIZONTAL_RADIO_WIDTH ? "horizontal" : "vertical";
 
             if (!isEqual(props.value, prevValue)) {
                 setInternalValue(cloneDeep(props.value));
@@ -487,7 +489,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<
                                                 },
                                             ]}
                                             onValueChange={handleRadioChange}
-                                            layout="horizontal"
+                                            layout={kTypeRadioLayout}
                                             size="small"
                                             disabled={props.disabled}
                                         />
