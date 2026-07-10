@@ -22,22 +22,24 @@ from . import schemas
 # pylint: disable=wrong-import-position, wrong-import-order, ungrouped-imports, unused-import
 
 import hashlib
+import time
+from dataclasses import dataclass, fields
 from azure.servicebus import ServiceBusMessage
 from cryptography.fernet import Fernet
+from fastapi import Response, status
 from webviz_services.sumo_access.sumo_fingerprinter import get_sumo_fingerprinter_for_user
 from webviz_services.utils.task_meta_tracker import TaskMeta, get_task_meta_tracker_for_user_id
 from webviz_services.utils.task_meta_tracker import TaskState
 from webviz_services.utils.user_cache import get_user_cache_for_user_id
-from primary import config
-from primary.utils.message_bus import MessageBus, MessageBusSingleton
-from primary.utils.response_perf_metrics import ResponsePerfMetrics
-from webviz_server_schemas.pyworker.messages import WorkerOperation
-from webviz_server_schemas.pyworker.messages import QcCheckHydrostaticEquilVectorsMsg, QcHydrostaticEquilGridPropertiesMsg
 from webviz_services.utils.sumo_blob_cache import SumoBlobCache
 from webviz_services.qc_service.hydrostatic_equilibrium.hydrostatic_equilibrium_types import HydrostaticGridCheckRealizationResult
 from webviz_services.qc_service.hydrostatic_equilibrium.hydrostatic_equilibrium_types import HydrostaticVectorCheckResult
-from fastapi import Response, status
-import time
+from webviz_server_schemas.pyworker.messages import WorkerOperation
+from webviz_server_schemas.pyworker.messages import QcCheckHydrostaticEquilVectorsMsg, QcHydrostaticEquilGridPropertiesMsg
+from primary import config
+from primary.utils.message_bus import MessageBus, MessageBusSingleton
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
+from primary.routers._shared.long_running_operations import LroCommandResp
 
 # pylint: enable=wrong-import-position, wrong-import-order, ungrouped-imports, unused-import
 
@@ -98,7 +100,9 @@ async def get_hydrostatic_equilibrium_vector_check_hybrid(
 
     task_tracker = get_task_meta_tracker_for_user_id(user_id)
     user_cache = get_user_cache_for_user_id(user_id)
-    task_fp = await _compute_grid_property_check_task_fp_async(authenticated_user, case_uuid, ensemble_name, t0_iso, t1_iso)
+
+    fp_params = VectorsCheckParams(case_uuid=case_uuid, ensemble_name=ensemble_name, t0_iso=t0_iso, t1_iso=t1_iso)
+    task_fp = await _compute_task_fp_async("qcVecCheck", authenticated_user, fp_params)
 
     # Cannot use SumoBlobCache for this task because we don't have any source object uuids to use for the cache key
     # Resort to UserCache for testing
@@ -162,8 +166,9 @@ async def get_hydrostatic_equilibrium_grid_property_check_hybrid(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     grid_name: Annotated[str, Query(description="Grid name")],
     realization: Annotated[int, Query(description="Realization to evaluate")],
+    delete_task: Annotated[bool, Query(description="If true, deletes the server-side task metadata for this check")] = False,
     # fmt: on
-) -> LroSuccessResp[schemas.HydrostaticGridCheckRealizationResult] | LroInProgressResp | LroFailureResp:
+) -> LroSuccessResp[schemas.HydrostaticGridCheckRealizationResult] | LroInProgressResp | LroFailureResp | LroCommandResp:
     """Check that dynamic 3D grid properties are unchanged between t0 and t1, for a single realization.
 
     Computed one realization at a time - the caller (frontend) issues one request per realization and
@@ -203,9 +208,19 @@ async def get_hydrostatic_equilibrium_grid_property_check_hybrid(
     task_tracker = get_task_meta_tracker_for_user_id(user_id)
     blob_cache = SumoBlobCache.from_access_token(sumo_access_token, SumoBlobCache.Namespace.QC_CHECKS)
 
-    task_fp = await _compute_grid_property_check_task_fp_async(authenticated_user, case_uuid, ensemble_name, grid_name, realization)
+    fp_params = GridPropertyCheckParams(case_uuid=case_uuid, ensemble_name=ensemble_name, grid_name=grid_name, realization=realization)
+    task_fp = await _compute_task_fp_async("qcGridPropCheck", authenticated_user, fp_params)
     cache_key = blob_cache.compute_cache_key(task_fp)
     perf_metrics.record_lap("init")
+
+    if delete_task:
+        was_deleted = await task_tracker.delete_task_by_fingerprint_async(task_fp)
+        if was_deleted:
+            LOGGER.info(f"Deleted QC task metadata for grid property check [{task_fp=}]")
+            return LroCommandResp(command_ok=True, message="Task metadata deleted")
+        else:
+            LOGGER.warning(f"No QC task metadata found to delete for grid property check [{task_fp=}]")
+            return LroCommandResp(command_ok=False, message="No task metadata found to delete")
 
     task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
     if not task_meta:
@@ -255,26 +270,38 @@ async def get_hydrostatic_equilibrium_grid_property_check_hybrid(
 
 
 
-async def _compute_vectors_check_task_fp_async(authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, t0_iso: str, t1_iso: str) -> str:
-    task_params_as_str = f"{case_uuid}:{ensemble_name}:{t0_iso}:{t1_iso}"
+@dataclass(frozen=True)
+class BaseParams:
+    case_uuid: str
+    ensemble_name: str
 
+
+@dataclass(frozen=True)
+class VectorsCheckParams(BaseParams):
+    t0_iso: str
+    t1_iso: str
+
+
+@dataclass(frozen=True)
+class GridPropertyCheckParams(BaseParams):
+    grid_name: str
+    realization: int
+
+
+async def _compute_task_fp_async(namespace: str, authenticated_user: AuthenticatedUser, params: BaseParams) -> str:
     sumo_fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=2 * 60)
-    ensemble_fp = await sumo_fingerprinter.get_or_calc_ensemble_fp_async(case_uuid, ensemble_name)
+    ensemble_fp = await sumo_fingerprinter.get_or_calc_ensemble_fp_async(params.case_uuid, params.ensemble_name)
+
+    # Loop over all the dataclass fields and build a list of string like "field_name=field_value"
+    field_parts = []
+    for field in fields(params):
+        field_parts.append(f"{field.name}={getattr(params, field.name)}")
+
+    task_params_as_str = ":".join(field_parts)
 
     # 8 bytes = 16 hex chars = 64 bits should be enough to avoid collisions for our use case
     task_fp = hashlib.shake_128((ensemble_fp + task_params_as_str).encode()).hexdigest(8)
-    return f"TaskFP__{task_fp}"
-
-
-async def _compute_grid_property_check_task_fp_async(authenticated_user: AuthenticatedUser, case_uuid: str, ensemble_name: str, grid_name: str, realization: int) -> str:
-    task_params_as_str = f"{case_uuid}:{ensemble_name}:{grid_name}:{realization}"
-
-    sumo_fingerprinter = get_sumo_fingerprinter_for_user(authenticated_user=authenticated_user, cache_ttl_s=2 * 60)
-    ensemble_fp = await sumo_fingerprinter.get_or_calc_ensemble_fp_async(case_uuid, ensemble_name)
-
-    # 8 bytes = 16 hex chars = 64 bits should be enough to avoid collisions for our use case
-    task_fp = hashlib.shake_128((ensemble_fp + task_params_as_str).encode()).hexdigest(8)
-    return f"TaskFP__{task_fp}"
+    return f"taskFP_{namespace}__{task_fp}"
 
 
 def _encrypt_access_token(access_token: str) -> bytes:

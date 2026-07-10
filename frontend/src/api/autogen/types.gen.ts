@@ -6971,6 +6971,12 @@ export type GetHydrostaticEquilibriumGridPropertyCheckHybridData_api = {
          * Realization to evaluate
          */
         realization: number;
+        /**
+         * Delete Task
+         *
+         * If true, deletes the server-side task metadata for this check
+         */
+        delete_task?: boolean;
         zCacheBust?: string;
     };
     url: "/qc/hydrostatic_equilibrium_grid_property_check_hybrid";
@@ -6992,7 +6998,11 @@ export type GetHydrostaticEquilibriumGridPropertyCheckHybridResponses_api = {
      *
      * Successful Response
      */
-    200: LroSuccessRespHydrostaticGridCheckRealizationResult_api | LroInProgressResp_api | LroFailureResp_api;
+    200:
+        | LroSuccessRespHydrostaticGridCheckRealizationResult_api
+        | LroInProgressResp_api
+        | LroFailureResp_api
+        | LroCommandResp_api;
 };
 
 export type GetHydrostaticEquilibriumGridPropertyCheckHybridResponse_api =
