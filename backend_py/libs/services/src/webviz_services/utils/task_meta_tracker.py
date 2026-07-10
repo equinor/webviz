@@ -212,9 +212,9 @@ class TaskMetaTracker:
 
     async def set_state_async(self, task_id: str, new_state: TaskState, status_message: str | None = None) -> bool:
         return await self._do_set_state_async(
-            task_id=task_id, 
-            new_state=new_state, 
-            status_message=status_message, 
+            task_id=task_id,
+            new_state=new_state,
+            status_message=status_message,
             internal_error_message=None
             )
 
