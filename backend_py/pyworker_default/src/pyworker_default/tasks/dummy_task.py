@@ -21,6 +21,3 @@ async def dummy_task_async(sb_msg: ServiceBusReceivedMessage) -> None:
         raise RuntimeError("Intentional crash triggered by 'crash' message")
 
     _logger.info("Fake processing done")
-
-
-
