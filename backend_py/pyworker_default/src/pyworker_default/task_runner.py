@@ -75,5 +75,3 @@ def _peek_user_task_header(sb_msg: ServiceBusReceivedMessage) -> UserTaskMsgHead
         return UserTaskMsgHeader.model_validate_json(body_bytes)
     except Exception as exc:
         raise MalformedMessageError(f"Failed to extract user/task header from message: {repr(exc)}") from exc
-
-
