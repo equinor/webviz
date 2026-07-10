@@ -14,6 +14,7 @@ from webviz_core_utils.azure_monitor_destination import AzureMonitorDestination
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from webviz_services.utils.task_meta_tracker import TaskMetaTrackerFactory
+from webviz_services.utils.user_cache import UserCacheFactory
 
 from .process_message import process_message_async
 from .worker_config import WorkerConfig, load_worker_config_from_env
@@ -82,7 +83,7 @@ def _create_shutdown_event() -> asyncio.Event:
     return shutdown_event
 
 
-async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
+async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
     fully_qualified_sb_namespace = worker_config.sb_fq_namespace
     queue_name = worker_config.sb_queue_name
     _logger.info(f"{fully_qualified_sb_namespace=}")
@@ -175,12 +176,13 @@ async def run_app_async() -> None:
     init_services_config(services_config)
 
     TaskMetaTrackerFactory.initialize(redis_url=worker_config.redis_cache_url)
+    UserCacheFactory.initialize(use_shared_client=True, redis_url=worker_config.redis_cache_url)
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
     message_decryption.initialize(worker_config.sb_payload_fernet_key)
 
     shutdown_event = _create_shutdown_event()
 
     try:
-        await _run_worker_loop(worker_config, shutdown_event)
+        await _run_worker_loop_async(worker_config, shutdown_event)
     finally:
         await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
