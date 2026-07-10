@@ -328,8 +328,6 @@ async def get_ri_isect(
 #     }
 
 
-import nanoid
-
 from azure.servicebus import ServiceBusMessage
 from primary.utils.message_bus import MessageBusSingleton, MessageBus
 from primary import config
@@ -385,7 +383,7 @@ async def get_send_sb_msg(
 
     user_id = authenticated_user.get_user_id()
     task_tracker = get_task_meta_tracker_for_user_id(user_id)
-    task_id = nanoid.generate(size=12)
+    task_id = task_tracker.generate_task_id("tst")
     _task_meta = await task_tracker.register_task_async(task_id=task_id, ttl_s=60, actual_start_time_utc_s=None, expected_store_key=None)
 
     with tracer.start_as_current_span("SubmitCreateDerivedSmryTableMsg", kind=trace.SpanKind.PRODUCER):
@@ -415,5 +413,9 @@ async def get_send_sb_msg(
 
     LOGGER.info(f"Task {task_id} completed with state: {task_meta.state}")
     return f"Task {task_id} completed with state: {task_meta.state} in {perf_metrics.to_string()}"
+
+
+
+
 
 
