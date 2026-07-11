@@ -191,6 +191,10 @@ spec:
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
               - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
                 envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
+              # !!!!
+              # For now, we need this one for scaling, see below
+              - name: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
+                envVar: SERVICEBUS_MANAGE_CONNECTION_STRING
       variables:
         WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: webviz-test.servicebus.windows.net
         WEBVIZ_SERVICE_BUS_QUEUE_NAME: test-queue
@@ -198,10 +202,22 @@ spec:
         - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       resources:
         requests:
-          memory: 200Mi
-          cpu: 100m
+          memory: 500Mi
+          cpu: 500m
         limits:
-          memory: 200Mi
+          memory: 500Mi
+
+      horizontalScaling:
+        minReplicas: 0
+        maxReplicas: 10
+        triggers:
+          - name: my-azure-sb-trigger
+            azureServiceBus:
+              namespace: webviz-test
+              queueName: test-queue
+              messageCount: 1
+              activationMessageCount: 0
+              connectionFromEnv: SERVICEBUS_MANAGE_CONNECTION_STRING
 
 
     - name: redis-auth-store
