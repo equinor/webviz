@@ -37,6 +37,7 @@ services:
       - WEBVIZ_SERVICE_BUS_FQ_NAMESPACE
       - WEBVIZ_SERVICE_BUS_QUEUE_NAME
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
+      - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       - CODESPACE_NAME # Automatically set env. variable by GitHub codespace
     volumes:
@@ -121,6 +122,7 @@ services:
       - WEBVIZ_SERVICE_BUS_FQ_NAMESPACE
       - WEBVIZ_SERVICE_BUS_QUEUE_NAME
       - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
+      - WEBVIZ_SERVICE_BUS_EMULATOR_CONNECTION_STRING # For local development only
       - APPLICATIONINSIGHTS_CONNECTION_STRING
       # For debugging instrumentation
       - OTEL_LOG_LEVEL=debug
@@ -133,8 +135,28 @@ services:
     #restart: on-failure
     #stop_grace_period: 30s
     restart: always
-    # depends_on:
-    #   - sb-emulator
+    depends_on:
+      - sb-emulator
+
+
+  sb-emulator:
+    image: mcr.microsoft.com/azure-messaging/servicebus-emulator:latest
+    environment:
+      ACCEPT_EULA: Y
+      SQL_SERVER: mssql
+      MSSQL_SA_PASSWORD: MySecretPassw0rd
+    volumes:
+      - ./docker/sb-emulator/SbEmulatorConfig.json:/ServiceBus_Emulator/ConfigFiles/Config.json
+    ports:
+      - "5672:5672"
+    depends_on:
+      - mssql
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: MySecretPassw0rd
 
 
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,

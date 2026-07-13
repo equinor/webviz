@@ -2,6 +2,8 @@ import os
 import asyncio
 import logging
 import signal
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusReceiver, AutoLockRenewer
@@ -82,68 +84,85 @@ def _create_shutdown_event() -> asyncio.Event:
     return shutdown_event
 
 
-async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
-    fully_qualified_sb_namespace = worker_config.sb_fq_namespace
-    queue_name = worker_config.sb_queue_name
-    _logger.info(f"{fully_qualified_sb_namespace=}")
-    _logger.info(f"{queue_name=}")
+@asynccontextmanager
+async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[ServiceBusClient]:
+    """
+    Async context manager yielding a ServiceBusClient (auth chosen from config).
+    """
+    is_on_radix_platform = is_running_on_radix_platform()
+    _logger.info(f"Creating Service Bus client ({is_on_radix_platform=})...")
 
-    # Relies on AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET being set in environment
+    if not is_on_radix_platform and config.sb_emulator_connection_string:
+        _logger.info("Using Service Bus emulator connection string for local development")
+        _logger.info(f"{config.sb_emulator_connection_string=}")
+        async with ServiceBusClient.from_connection_string(conn_str=config.sb_emulator_connection_string) as sb_client:
+            yield sb_client
+        return
+
+    # For now, we will use DefaultAzureCredential for both local dev and in Radix.
+    # For Radix, this relies on then environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_FEDERATED_TOKEN_FILE being set by Radix.
+    # For local dev, this relies on the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET being set.
     _logger.info("Using DefaultAzureCredential for authentication")
     _logger.info(f"AZURE_TENANT_ID: {os.getenv('AZURE_TENANT_ID')}")
     _logger.info(f"AZURE_CLIENT_ID: {os.getenv('AZURE_CLIENT_ID')}")
-    credential = DefaultAzureCredential()
-    _logger.info(f"{type(credential)=}")
+    _logger.info(f"AZURE_FEDERATED_TOKEN_FILE present: {"AZURE_FEDERATED_TOKEN_FILE" in os.environ}")
+    _logger.info(f"AZURE_CLIENT_SECRET present: {"AZURE_CLIENT_SECRET" in os.environ}")
 
-    async with credential:
-        sb_client = ServiceBusClient(
-            fully_qualified_namespace=fully_qualified_sb_namespace,
-            credential=credential,
+    _logger.info(f"Using Service Bus with DefaultAzureCredential, sb namespace: {config.sb_fq_namespace}")
+
+    async with DefaultAzureCredential() as credential:
+        _logger.info(f"{type(credential)=}")
+        async with ServiceBusClient(fully_qualified_namespace=config.sb_fq_namespace, credential=credential) as client:
+            yield client
+
+
+async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
+    _logger.info(f"Worker will receive messages from queue: {worker_config.sb_queue_name}")
+
+    # Use AutoLockRenewer to automatically renew the lock on messages while they are being processed.
+    # Without this, if processing takes longer than the configured lock duration (default 1 min),
+    # the message will be unlocked and may be received by another worker, leading to duplicate processing.
+    lock_renewer = AutoLockRenewer(max_lock_renewal_duration=15 * 60)
+
+    async with _authenticated_sb_client(worker_config) as sb_client, lock_renewer:
+        # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
+        # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
+        sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
+            client_identifier="pyworker-default",
+            queue_name=worker_config.sb_queue_name,
+            auto_lock_renewer=lock_renewer,  # type: ignore[arg-type]
         )
-        # Use AutoLockRenewer to automatically renew the lock on messages while they are being processed.
-        # Without this, if processing takes longer than the configured lock duration (default 1 min),
-        # the message will be unlocked and may be received by another worker, leading to duplicate processing.
-        lock_renewer = AutoLockRenewer(max_lock_renewal_duration=15 * 60)
 
-        async with sb_client, lock_renewer:
-            # The reason for the type ignore below is that the async get_queue_receiver is mis-annotated in the SDK to
-            # expect the sync AutoLockRenewer, but at runtime it requires the async one (from azure.servicebus.aio)
-            sb_receiver: ServiceBusReceiver = sb_client.get_queue_receiver(
-                client_identifier="pyworker-default",
-                queue_name=queue_name,
-                auto_lock_renewer=lock_renewer,  # type: ignore[arg-type]
-            )
+        async with sb_receiver:
+            _logger.info("=== WORKER READY: waiting to receive messages")
 
-            async with sb_receiver:
-                _logger.info("=== WORKER READY: waiting to receive messages")
+            # Cooperative abort signal passed to tasks so they can abort promptly when a shutdown is requested
+            abort_signal = AbortSignal(shutdown_event)
 
-                # Cooperative abort signal passed to tasks so they can abort promptly when a shutdown is requested
-                abort_signal = AbortSignal(shutdown_event)
+            while not shutdown_event.is_set():
+                # We poll for messages with a short timeout, so we can check for shutdown events frequently.
+                # Currently we only grab and process one message at a time, but this could be changed to
+                # process multiple messages concurrently if needed.
+                messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
+                    max_message_count=1, max_wait_time=2
+                )
 
-                while not shutdown_event.is_set():
-                    # We poll for messages with a short timeout, so we can check for shutdown events frequently.
-                    # Currently we only grab and process one message at a time, but this could be changed to
-                    # process multiple messages concurrently if needed.
-                    messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
-                        max_message_count=1, max_wait_time=2
-                    )
-
-                    # Make sure we don't start any new processing if a shutdown has been requested
-                    # Abandon any messages we received so they can be retried later (by another worker).
-                    if shutdown_event.is_set():
-                        _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
-                        for msg in messages:
-                            await sb_receiver.abandon_message(msg)
-                        break
-
-                    if len(messages) > 0:
-                        _logger.debug(f"Worker received {len(messages)} message(s) from Service Bus")
-
-                    # There should only be one message in the list, since we set max_message_count=1, but we still iterate over it to be safe.
+                # Make sure we don't start any new processing if a shutdown has been requested
+                # Abandon any messages we received so they can be retried later (by another worker).
+                if shutdown_event.is_set():
+                    _logger.info("Worker shutdown requested; abandoning received messages before exiting worker")
                     for msg in messages:
-                        await process_message_async(sb_receiver, msg, abort_signal)
+                        await sb_receiver.abandon_message(msg)
+                    break
 
-                _logger.info("Worker shutdown requested; exiting worker loop")
+                if len(messages) > 0:
+                    _logger.debug(f"Worker received {len(messages)} message(s) from Service Bus")
+
+                # There should only be one message in the list, since we set max_message_count=1, but we still iterate over it to be safe.
+                for msg in messages:
+                    await process_message_async(sb_receiver, msg, abort_signal)
+
+            _logger.info("Worker shutdown requested; exiting worker loop")
 
 
 async def run_app_async() -> None:

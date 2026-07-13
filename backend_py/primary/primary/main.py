@@ -113,12 +113,12 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     )
     await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_services_credential)
 
-    LOGGER.info(
-        f"Using credential for azure services to initialize MessageBusSingleton with: {config.SERVICE_BUS_FQ_NAMESPACE=}"
-    )
-    await MessageBusSingleton.initialize_with_credential_async(
-        config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential
-    )
+    if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING is not None:
+        LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
+        MessageBusSingleton.initialize_with_connection_string(config.SERVICE_BUS_EMULATOR_CONNECTION_STRING)
+    else:
+        LOGGER.info(f"Initializing MessageBusSingleton using credential for azure services, {config.SERVICE_BUS_FQ_NAMESPACE=}")
+        await MessageBusSingleton.initialize_with_credential_async(config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential)
 
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
