@@ -135,7 +135,7 @@ async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[Servic
             yield client
 
 
-async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
+async def _run_worker_loop_async(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
     max_concurrency = max(1, worker_config.max_concurrent_tasks)
 
     _logger.info(f"Worker will receive messages from queue: {worker_config.sb_queue_name}")
@@ -239,6 +239,6 @@ async def run_app_async() -> None:
     shutdown_event = _create_shutdown_event()
 
     try:
-        await _run_worker_loop(worker_config, shutdown_event)
+        await _run_worker_loop_async(worker_config, shutdown_event)
     finally:
         await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
