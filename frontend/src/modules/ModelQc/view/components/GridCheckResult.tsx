@@ -1,6 +1,7 @@
 import React from "react";
 
 import type { RealizationGridCheckResult_api } from "@api";
+import { Button } from "@lib/components/Button";
 import { Table } from "@lib/components/Table";
 
 import { QcCheckStatus } from "../../typesAndEnums";
@@ -17,6 +18,14 @@ export type GridCheckResultProps = {
     // as a "not evaluated" cell until its result arrives.
     realizations: ReadonlyArray<number>;
     results: ReadonlyArray<RealizationGridCheckResult_api>;
+    // Realizations whose individual request failed; rendered as errored cells instead of pending.
+    erroredRealizations?: ReadonlyArray<number>;
+    // Explains why a selected realization has no result yet (still running, or the error message).
+    getUnavailableReason?: (realization: number) => string | null;
+    // Deletes the server-side task for the realization so its check is rescheduled/recomputed.
+    onRescheduleRealization?: (realization: number) => void | Promise<void>;
+    // Deletes the server-side tasks for several realizations at once (used by the bulk actions).
+    onRescheduleRealizations?: (realizations: number[]) => void | Promise<void>;
     threshold: number;
 };
 
@@ -67,8 +76,100 @@ function SelectedGridDetail(props: {
     );
 }
 
+// Shown when the user selects a realization that has no result yet - either because its check is
+// still running or because it failed. Explains the situation and offers a button to delete the
+// server-side task so the check is rescheduled.
+function UnavailableRealizationDetail(props: {
+    realization: number;
+    status: QcCheckStatus;
+    reason: string | null;
+    onReschedule?: (realization: number) => void | Promise<void>;
+}): React.ReactNode {
+    const { realization, status, reason, onReschedule } = props;
+    const [isRescheduling, setIsRescheduling] = React.useState(false);
+
+    const isErrored = status === QcCheckStatus.NOT_EVALUATED_ERRORED;
+
+    async function handleReschedule() {
+        if (!onReschedule) {
+            return;
+        }
+        setIsRescheduling(true);
+        try {
+            await onReschedule(realization);
+        } finally {
+            setIsRescheduling(false);
+        }
+    }
+
+    return (
+        <div className="flex flex-col gap-y-sm rounded-md border border-gray-200 bg-gray-50 p-md">
+            <div className="flex items-center gap-x-sm">
+                <span className="text-sm font-semibold">Realization {realization}</span>
+                <StatusBadge status={status} />
+            </div>
+            <p className="text-sm text-gray-600">
+                {reason ??
+                    (isErrored
+                        ? "The check failed for this realization."
+                        : "The check for this realization has not completed yet.")}
+            </p>
+            {onReschedule ? (
+                <div className="flex flex-col gap-y-xs">
+                    <div>
+                        <Button size="small" onClick={handleReschedule} disabled={isRescheduling}>
+                            {isRescheduling ? "Rescheduling…" : "Reschedule check"}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                        Deletes the server-side task so the check for this realization is recomputed.
+                    </p>
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+// A button that reschedules a set of realizations (deleting their server-side tasks), showing the
+// affected count and a busy state while the request is in flight. Disabled when there is nothing to
+// reschedule.
+function RescheduleButton(props: {
+    label: string;
+    realizations: ReadonlyArray<number>;
+    onReschedule: (realizations: number[]) => void | Promise<void>;
+}): React.ReactNode {
+    const { label, realizations, onReschedule } = props;
+    const [isRescheduling, setIsRescheduling] = React.useState(false);
+
+    async function handleClick() {
+        if (realizations.length === 0) {
+            return;
+        }
+        setIsRescheduling(true);
+        try {
+            await onReschedule([...realizations]);
+        } finally {
+            setIsRescheduling(false);
+        }
+    }
+
+    return (
+        <Button size="small" onClick={handleClick} disabled={isRescheduling || realizations.length === 0}>
+            {isRescheduling ? "Rescheduling…" : `${label} (${realizations.length})`}
+        </Button>
+    );
+}
+
 export function GridCheckResult(props: GridCheckResultProps): React.ReactNode {
-    const { realizations, results, threshold } = props;
+    const {
+        realizations,
+        results,
+        erroredRealizations,
+        getUnavailableReason,
+        onRescheduleRealization,
+        onRescheduleRealizations,
+        threshold,
+    } = props;
     const [selectedRealization, setSelectedRealization] = React.useState<number | null>(null);
 
     const resultByRealization = React.useMemo(() => {
@@ -79,12 +180,24 @@ export function GridCheckResult(props: GridCheckResultProps): React.ReactNode {
         return map;
     }, [results]);
 
+    const erroredRealizationSet = React.useMemo(
+        () => new Set(erroredRealizations ?? []),
+        [erroredRealizations],
+    );
+
     const cells: RealizationCell[] = React.useMemo(
         () =>
             realizations.map((realization) => {
                 const realizationResult = resultByRealization.get(realization);
                 if (!realizationResult) {
-                    return { realization, status: QcCheckStatus.NOT_EVALUATED, hoverLines: ["Pending…"] };
+                    if (erroredRealizationSet.has(realization)) {
+                        return {
+                            realization,
+                            status: QcCheckStatus.NOT_EVALUATED_ERRORED,
+                            hoverLines: ["Errored"],
+                        };
+                    }
+                    return { realization, status: QcCheckStatus.NOT_EVALUATED_PENDING, hoverLines: ["Pending…"] };
                 }
                 return {
                     realization,
@@ -92,10 +205,16 @@ export function GridCheckResult(props: GridCheckResultProps): React.ReactNode {
                     hoverLines: makeHoverLines(realizationResult, threshold),
                 };
             }),
-        [realizations, resultByRealization, threshold],
+        [realizations, resultByRealization, erroredRealizationSet, threshold],
     );
 
     const selectedResult = selectedRealization === null ? null : (resultByRealization.get(selectedRealization) ?? null);
+
+    // Realizations without a successful result yet, i.e. everything that is still pending or errored.
+    const unresolvedRealizations = React.useMemo(
+        () => realizations.filter((realization) => !resultByRealization.has(realization)),
+        [realizations, resultByRealization],
+    );
 
     return (
         <div className="flex flex-col gap-y-sm">
@@ -107,12 +226,33 @@ export function GridCheckResult(props: GridCheckResultProps): React.ReactNode {
             {selectedResult ? (
                 <SelectedGridDetail realizationResult={selectedResult} threshold={threshold} />
             ) : selectedRealization !== null ? (
-                <div className="text-xs text-gray-400 italic">
-                    Realization {selectedRealization} result not available yet.
-                </div>
+                <UnavailableRealizationDetail
+                    realization={selectedRealization}
+                    status={
+                        erroredRealizationSet.has(selectedRealization)
+                            ? QcCheckStatus.NOT_EVALUATED_ERRORED
+                            : QcCheckStatus.NOT_EVALUATED_PENDING
+                    }
+                    reason={getUnavailableReason?.(selectedRealization) ?? null}
+                    onReschedule={onRescheduleRealization}
+                />
             ) : (
                 <div className="text-xs text-gray-400 italic">Click a cell to inspect a realization.</div>
             )}
+            {onRescheduleRealizations ? (
+                <div className="flex flex-wrap items-center gap-sm border-t border-gray-200 pt-sm">
+                    <RescheduleButton
+                        label="Reschedule errored & pending"
+                        realizations={unresolvedRealizations}
+                        onReschedule={onRescheduleRealizations}
+                    />
+                    <RescheduleButton
+                        label="Reschedule all"
+                        realizations={realizations}
+                        onReschedule={onRescheduleRealizations}
+                    />
+                </div>
+            ) : null}
         </div>
     );
 }

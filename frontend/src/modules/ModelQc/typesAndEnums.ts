@@ -7,19 +7,22 @@
 export enum QcCheckStatus {
     PASSED = "passed",
     FAILED = "failed",
-    NOT_EVALUATED = "not_evaluated",
+    NOT_EVALUATED_PENDING = "not_evaluated_pending",
+    NOT_EVALUATED_ERRORED = "not_evaluated_errored",
 }
 
 // Human-readable labels for the QC check status verdicts.
 export const QcCheckStatusToStringMapping: Record<QcCheckStatus, string> = {
     [QcCheckStatus.PASSED]: "Passed",
     [QcCheckStatus.FAILED]: "Failed",
-    [QcCheckStatus.NOT_EVALUATED]: "Not evaluated",
+    [QcCheckStatus.NOT_EVALUATED_PENDING]: "Not evaluated (pending)",
+    [QcCheckStatus.NOT_EVALUATED_ERRORED]: "Not evaluated (errored)",
 };
 
 // Tailwind background color classes used to render a status badge.
 export const QcCheckStatusToColorClassMapping: Record<QcCheckStatus, string> = {
     [QcCheckStatus.PASSED]: "bg-green-500",
     [QcCheckStatus.FAILED]: "bg-red-500",
-    [QcCheckStatus.NOT_EVALUATED]: "bg-gray-400",
+    [QcCheckStatus.NOT_EVALUATED_PENDING]: "bg-gray-400",
+    [QcCheckStatus.NOT_EVALUATED_ERRORED]: "bg-fuchsia-500",
 };

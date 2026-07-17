@@ -60,6 +60,17 @@ async def qc_check_hydrostatic_equil_grid_properties_task_async(
 
     perf_metrics.record_lap("init")
 
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # INTENTIONAL FAILURE
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if msg.realization % 5 == 0:
+        _logger.error(f"INTENTIONAL FAILURE for testing: QC task to check hydrostatic equilibrium for grid properties failed for realization {msg.realization}")
+        raise TaskFailedError(status_message=f"INTENTIONAL FAILURE for testing")
+
     try:
         result: HydrostaticGridCheckRealizationResult = await check.compute_grid_property_check_async(grid_name=msg.grid_name, realization=msg.realization)
     except ServiceLayerException as exc:

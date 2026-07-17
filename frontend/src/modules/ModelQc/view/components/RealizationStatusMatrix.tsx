@@ -7,21 +7,25 @@ import { Plot } from "@modules/_shared/components/Plot";
 
 import { QcCheckStatus, QcCheckStatusToStringMapping } from "../../typesAndEnums";
 
-// Status -> numeric code driving the discrete heatmap colorscale (0=gray, 1=green, 2=red).
+// Status -> numeric code driving the discrete heatmap colorscale (0=gray, 1=green, 2=red,
+// 3=magenta).
 const STATUS_TO_CODE: Record<QcCheckStatus, number> = {
-    [QcCheckStatus.NOT_EVALUATED]: 0,
+    [QcCheckStatus.NOT_EVALUATED_PENDING]: 0,
     [QcCheckStatus.PASSED]: 1,
     [QcCheckStatus.FAILED]: 2,
+    [QcCheckStatus.NOT_EVALUATED_ERRORED]: 3,
 };
 
-// Discrete three-band colorscale (boundaries at z = 0, 1, 2 with zmin=0, zmax=2).
+// Discrete four-band colorscale (boundaries at z = 0, 1, 2, 3 with zmin=0, zmax=3).
 const DISCRETE_COLORSCALE: Array<[number, string]> = [
     [0.0, "#9ca3af"],
-    [1 / 3, "#9ca3af"],
-    [1 / 3, "#22c55e"],
-    [2 / 3, "#22c55e"],
-    [2 / 3, "#ef4444"],
-    [1.0, "#ef4444"],
+    [1 / 4, "#9ca3af"],
+    [1 / 4, "#22c55e"],
+    [2 / 4, "#22c55e"],
+    [2 / 4, "#ef4444"],
+    [3 / 4, "#ef4444"],
+    [3 / 4, "#d946ef"],
+    [1.0, "#d946ef"],
 ];
 
 const TARGET_CELL_PX = 34;
@@ -102,7 +106,7 @@ export function RealizationStatusMatrix(props: RealizationStatusMatrixProps): Re
             xgap: 3,
             ygap: 3,
             zmin: 0,
-            zmax: 2,
+            zmax: 3,
             colorscale: DISCRETE_COLORSCALE,
             showscale: false,
             hoverongaps: false,

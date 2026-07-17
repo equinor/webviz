@@ -1,5 +1,7 @@
 import type React from "react";
 
+import { isAxiosError } from "axios";
+
 import type { RealizationGridCheckResult_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
@@ -59,7 +61,11 @@ export function HydrostaticEquilibriumCheck(props: HydrostaticEquilibriumCheckPr
     });
     // One request per realization, so results can be populated in the client as each realization's
     // check completes rather than waiting for the whole ensemble.
-    const gridCheckQueries = useGridPropertyCheckQueries({
+    const {
+        queries: gridCheckQueries,
+        rescheduleRealization: rescheduleGridRealization,
+        rescheduleRealizations: rescheduleGridRealizations,
+    } = useGridPropertyCheckQueries({
         ensembleIdent,
         caseUuid,
         ensembleName,
@@ -91,18 +97,55 @@ export function HydrostaticEquilibriumCheck(props: HydrostaticEquilibriumCheckPr
             })),
         )
         : null;
-    // Every requested realization gets a slot in the counts, defaulting to NOT_EVALUATED until its
-    // individual request resolves, so the header tallies update progressively as results arrive.
+    // Every requested realization gets a slot in the counts, defaulting to NOT_EVALUATED_PENDING
+    // until its individual request resolves (or NOT_EVALUATED_ERRORED if that request failed), so
+    // the header tallies update progressively as results arrive.
     const gridCounts = computeStatusCounts(
         gridCheckRealizations.map((realization, index) => {
-            const realizationResult = gridCheckQueries[index]?.data?.realization_result;
-            return {
-                status: realizationResult
-                    ? computeGridRealizationStatus(realizationResult, gridCheckThreshold)
-                    : QcCheckStatus.NOT_EVALUATED,
-            };
+            const query = gridCheckQueries[index];
+            const realizationResult = query?.data?.realization_result;
+            let status: QcCheckStatus;
+            if (realizationResult) {
+                status = computeGridRealizationStatus(realizationResult, gridCheckThreshold);
+            } else if (query?.isError) {
+                status = QcCheckStatus.NOT_EVALUATED_ERRORED;
+            } else {
+                status = QcCheckStatus.NOT_EVALUATED_PENDING;
+            }
+            return { status };
         }),
     );
+
+    // Realizations whose individual request failed, aligned by realization number, so the matrix can
+    // render them as errored (magenta) cells instead of pending ones.
+    const gridCheckErroredRealizations = gridCheckRealizations.filter(
+        (_, index) => gridCheckQueries[index]?.isError,
+    );
+
+    // Explain why a not-yet-available realization has no result: either its individual request is
+    // still running, or it failed (in which case we surface the error message / HTTP status).
+    function getGridRealizationUnavailableReason(realization: number): string | null {
+        const index = gridCheckRealizations.indexOf(realization);
+        const query = gridCheckQueries[index];
+        if (!query) {
+            return null;
+        }
+        if (query.isError) {
+            const error = query.error;
+            if (error instanceof Error) {
+                const cause = (error as { cause?: unknown }).cause;
+                if (isAxiosError(cause) && cause.response?.status) {
+                    return `${error.message} (HTTP ${cause.response.status})`;
+                }
+                return error.message;
+            }
+            return "The check failed for an unknown reason.";
+        }
+        if (query.isFetching) {
+            return "The check is still running for this realization.";
+        }
+        return null;
+    }
 
     const vectorTone = computeSectionTone(vectorCheckQuery, vectorCounts);
     const gridTone: Tone = gridCheckHasError ? "danger" : toneFromCounts(gridCounts);
@@ -173,7 +216,7 @@ export function HydrostaticEquilibriumCheck(props: HydrostaticEquilibriumCheckPr
                     adornment={<StatusCountSummary counts={gridCounts} />}
                 >
                     <div className="flex flex-col gap-y-xs p-md">
-                        {gridCheckResults.length > 0 ? (
+                        {gridCheckResults.length > 0 || gridCheckErroredRealizations.length > 0 ? (
                             <>
                                 {gridCheckIsFetching && (
                                     <div className="flex items-center gap-x-sm text-xs text-gray-500">
@@ -184,6 +227,10 @@ export function HydrostaticEquilibriumCheck(props: HydrostaticEquilibriumCheckPr
                                 <GridCheckResult
                                     realizations={gridCheckRealizations}
                                     results={gridCheckResults}
+                                    erroredRealizations={gridCheckErroredRealizations}
+                                    getUnavailableReason={getGridRealizationUnavailableReason}
+                                    onRescheduleRealization={rescheduleGridRealization}
+                                    onRescheduleRealizations={rescheduleGridRealizations}
                                     threshold={gridCheckThreshold}
                                 />
                             </>

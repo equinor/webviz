@@ -1,4 +1,4 @@
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 
 import type { GetHydrostaticEquilibriumGridPropertyCheckHybridData_api, Options } from "@api";
 import {
@@ -31,18 +31,26 @@ export type UseGridPropertyCheckQueriesArgs = {
 export function useGridPropertyCheckQueries(args: UseGridPropertyCheckQueriesArgs) {
     const { ensembleIdent, caseUuid, ensembleName, gridName, gridCheckRealizations, enabled } = args;
 
-    return useQueries({
-        queries: gridCheckRealizations.map((realization) => {
-            const apiArgs: Options<GetHydrostaticEquilibriumGridPropertyCheckHybridData_api, false> = {
-                query: {
-                    case_uuid: caseUuid ?? "",
-                    ensemble_name: ensembleName ?? "",
-                    grid_name: gridName ?? "",
-                    realization,
-                    ...makeCacheBustingQueryParam(ensembleIdent),
-                },
-            };
-            const queryKey = getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey(apiArgs);
+    const queryClient = useQueryClient();
+
+    // Computed once per realization so the same apiArgs/queryKey can drive both the query itself and
+    // the reschedule action below. Aligned by index with `gridCheckRealizations`.
+    const perRealization = gridCheckRealizations.map((realization) => {
+        const apiArgs: Options<GetHydrostaticEquilibriumGridPropertyCheckHybridData_api, false> = {
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+                grid_name: gridName ?? "",
+                realization,
+                ...makeCacheBustingQueryParam(ensembleIdent),
+            },
+        };
+        const queryKey = getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey(apiArgs);
+        return { realization, apiArgs, queryKey };
+    });
+
+    const queries = useQueries({
+        queries: perRealization.map(({ apiArgs, queryKey }) => {
             const queryOptions = wrapLongRunningQuery({
                 queryFn: getHydrostaticEquilibriumGridPropertyCheckHybrid,
                 queryFnArgs: apiArgs,
@@ -54,5 +62,39 @@ export function useGridPropertyCheckQueries(args: UseGridPropertyCheckQueriesArg
             return { ...queryOptions, enabled };
         }),
     });
+
+    // Reschedule a single realization's check: delete the server-side task metadata (via the
+    // `delete_task` query param) and then reset the query so a fresh check is kicked off.
+    async function rescheduleItem(item: (typeof perRealization)[number]): Promise<void> {
+        try {
+            await getHydrostaticEquilibriumGridPropertyCheckHybrid({
+                query: { ...item.apiArgs.query, delete_task: true },
+            });
+        } catch (error) {
+            console.error(
+                `Failed to delete server-side grid check task for realization ${item.realization}`,
+                error,
+            );
+        }
+        queryClient.resetQueries({ queryKey: item.queryKey, exact: true, fetchStatus: "idle" });
+    }
+
+    async function rescheduleRealization(realization: number): Promise<void> {
+        const item = perRealization.find((entry) => entry.realization === realization);
+        if (!item) {
+            return;
+        }
+        await rescheduleItem(item);
+    }
+
+    // Reschedule several realizations at once (used by the bulk actions below). Runs the individual
+    // delete-and-reset in parallel; a failure for one realization does not block the others.
+    async function rescheduleRealizations(realizations: readonly number[]): Promise<void> {
+        const wanted = new Set(realizations);
+        const items = perRealization.filter((entry) => wanted.has(entry.realization));
+        await Promise.all(items.map((item) => rescheduleItem(item)));
+    }
+
+    return { queries, rescheduleRealization, rescheduleRealizations };
 }
 

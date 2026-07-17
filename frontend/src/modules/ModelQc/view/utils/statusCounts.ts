@@ -39,7 +39,7 @@ export function computeGridRealizationStatus(
     threshold: number,
 ): QcCheckStatus {
     if (realizationResult.property_values.length === 0) {
-        return QcCheckStatus.NOT_EVALUATED;
+        return QcCheckStatus.NOT_EVALUATED_PENDING;
     }
     const allWithin = realizationResult.property_values.every((propertyValue) =>
         isGridPropertyWithinThreshold(propertyValue, threshold),
@@ -55,7 +55,7 @@ export function computeVectorRealizationStatus(
     timeGapOk: boolean,
 ): QcCheckStatus {
     if (realizationResult.vector_values.some((v) => v.value_at_t1 === null || v.value_at_t1 === undefined)) {
-        return QcCheckStatus.NOT_EVALUATED;
+        return QcCheckStatus.NOT_EVALUATED_PENDING;
     }
     if (timeGapOk && realizationResult.vector_values.every((v) => v.is_zero)) {
         return QcCheckStatus.PASSED;
