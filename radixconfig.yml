@@ -70,6 +70,10 @@ spec:
       variables:
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
+        WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: webviz-test.servicebus.windows.net
+        WEBVIZ_SERVICE_BUS_QUEUE_NAME: test-queue
+      secrets:
+        - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       environmentConfig:
         - environment: prod
           resources:
@@ -163,6 +167,58 @@ spec:
         - name: memory
           memory:
             value: 20
+
+
+    - name: pyworker-default
+      dockerFileName: ./backend_py/pyworker_default/Dockerfile
+      identity:
+        azure:
+          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+      secretRefs:
+        azureKeyVaults:
+          - name: webviz
+            useAzureIdentity: true
+            items:
+              - name: WEBVIZ-REDIS-CACHE-PASSWORD
+                envVar: WEBVIZ_REDIS_CACHE_PASSWORD
+              # Inject all app insights connection strings as env vars.
+              # Our azure monitor setup code will pick the right one based on the radix environment
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PREPROD
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
+              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
+                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
+              # !!!!
+              # For now, we need this one for scaling, see below
+              - name: WEBVIZ-SERVICEBUS-NAMESPACE-MANAGE-CONN-STRING
+                envVar: SERVICEBUS_MANAGE_CONNECTION_STRING
+      variables:
+        WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: webviz-test.servicebus.windows.net
+        WEBVIZ_SERVICE_BUS_QUEUE_NAME: test-queue
+        WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: 3
+      secrets:
+        - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
+      resources:
+        requests:
+          memory: 500Mi
+          cpu: 500m
+        limits:
+          memory: 500Mi
+
+      horizontalScaling:
+        minReplicas: 0
+        maxReplicas: 10
+        triggers:
+          - name: my-azure-sb-trigger
+            azureServiceBus:
+              namespace: webviz-test
+              queueName: test-queue
+              messageCount: 1
+              activationMessageCount: 0
+              connectionFromEnv: SERVICEBUS_MANAGE_CONNECTION_STRING
 
 
     - name: redis-auth-store

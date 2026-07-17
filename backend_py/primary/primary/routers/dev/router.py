@@ -356,7 +356,7 @@ async def get_send_sb_msg(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    queue_name = "test-queue"
+    queue_name = config.SERVICE_BUS_QUEUE_NAME
     LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
 
     message_bus: MessageBus = MessageBusSingleton.get_instance()
