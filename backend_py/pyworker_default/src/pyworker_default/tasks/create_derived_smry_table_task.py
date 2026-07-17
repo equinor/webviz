@@ -69,7 +69,7 @@ async def create_derived_smry_table_task_async(
         await ensure_vectors_aggregated_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)
     except ServiceLayerException as exc:
         raise TaskFailedError(f"Error aggregating vectors: {str(exc)}", internal_error_message=repr(exc)) from exc
-    
+
     perf_metrics.record_lap("ensure-aggregated")
     abort_signal.raise_if_aborted()
 
@@ -77,7 +77,7 @@ async def create_derived_smry_table_task_async(
         derived_table_pa, derived_table_info = await create_derived_smry_table_async(sumo_client, msg.case_uuid, msg.ensemble_name, None, msg.vector_names, progress_cb=_update_status_msg_async)
     except ServiceLayerException as exc:
         raise TaskFailedError(f"Failed to create derived table: {str(exc)}", internal_error_message=repr(exc)) from exc
-    
+
     perf_metrics.record_lap("create-table")
     abort_signal.raise_if_aborted()
 
@@ -98,7 +98,3 @@ async def create_derived_smry_table_task_async(
 
     _logger.info(f"Finished creating and storing derived summary table in cache with key {cache_key}. Perf metrics: {perf_metrics.to_string()}")
     return TaskSuccess("Derived summary table ready")
-
-
-
-
