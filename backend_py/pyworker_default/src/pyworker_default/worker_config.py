@@ -10,6 +10,7 @@ class WorkerConfig:
     sb_queue_name: str
     sb_payload_fernet_key: str
     sb_emulator_connection_string: str | None
+    max_concurrent_tasks: int
     redis_cache_url: str
     sumo_env: str
 
@@ -28,4 +29,5 @@ def load_worker_config_from_env() -> WorkerConfig:
         sb_emulator_connection_string=sb_emulator_connection_string,
         redis_cache_url=f"redis://:{redis_password}@redis-cache:6379",
         sumo_env=os.getenv("WEBVIZ_SUMO_ENV", "prod"),
+        max_concurrent_tasks=int(os.getenv("WEBVIZ_WORKER_MAX_CONCURRENT_TASKS", "1")),
     )

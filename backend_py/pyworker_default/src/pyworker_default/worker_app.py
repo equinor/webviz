@@ -136,7 +136,10 @@ async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[Servic
 
 
 async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.Event) -> None:
+    max_concurrency = max(1, worker_config.max_concurrent_tasks)
+
     _logger.info(f"Worker will receive messages from queue: {worker_config.sb_queue_name}")
+    _logger.info(f"Max concurrent tasks: {max_concurrency}")
 
     # Use AutoLockRenewer to automatically renew the lock on messages while they are being processed.
     # Without this, if processing takes longer than the configured lock duration (default 1 min),
@@ -158,13 +161,23 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
             # Cooperative abort signal passed to tasks so they can abort promptly when a shutdown is requested
             abort_signal = AbortSignal(shutdown_event)
 
+            in_flight_tasks: set[asyncio.Task[None]] = set()
+
             while not shutdown_event.is_set():
+                # If we're at capacity, wait for at least one task to finish before retrying the loop.
+                # The continuation of the loop will then check for shutdown events before trying to receive more messages.
+                if len(in_flight_tasks) >= max_concurrency:
+                    await asyncio.wait(in_flight_tasks, return_when=asyncio.FIRST_COMPLETED)
+                    continue
+
                 # We poll for messages with a short timeout, so we can check for shutdown events frequently.
-                # Currently we only grab and process one message at a time, but this could be changed to
-                # process multiple messages concurrently if needed.
+                num_free_slots = max_concurrency - len(in_flight_tasks)
                 messages: list[ServiceBusReceivedMessage] = await sb_receiver.receive_messages(
-                    max_message_count=1, max_wait_time=2
+                    max_message_count=num_free_slots, max_wait_time=2
                 )
+
+                if len(messages) > 0:
+                    _logger.debug(f"Worker got {len(messages)} new message(s), ({len(in_flight_tasks)} in flight)")
 
                 # Make sure we don't start any new processing if a shutdown has been requested
                 # Abandon any messages we received so they can be retried later (by another worker).
@@ -174,12 +187,19 @@ async def _run_worker_loop(worker_config: WorkerConfig, shutdown_event: asyncio.
                         await sb_receiver.abandon_message(msg)
                     break
 
-                if len(messages) > 0:
-                    _logger.debug(f"Worker received {len(messages)} message(s) from Service Bus")
-
-                # There should only be one message in the list, since we set max_message_count=1, but we still iterate over it to be safe.
+                # Spawn each message as its own task so they are processed concurrently.
                 for msg in messages:
-                    await process_message_async(sb_receiver, msg, abort_signal)
+                    task = asyncio.create_task(process_message_async(sb_receiver, msg, abort_signal))
+                    in_flight_tasks.add(task)
+
+                    # The discard callback is used to remove the task from the in_flight_tasks set when it is done
+                    task.add_done_callback(in_flight_tasks.discard)
+
+            # Drain any tasks that are still running.
+            # The abort_signal has already been tripped so cooperative tasks should wind down promptly.
+            _logger.info("Worker shutdown requested; waiting for in-flight messages to finish")
+            if in_flight_tasks:
+                await asyncio.gather(*in_flight_tasks, return_exceptions=True)
 
             _logger.info("Worker shutdown requested; exiting worker loop")
 
