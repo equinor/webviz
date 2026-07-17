@@ -198,6 +198,7 @@ spec:
       variables:
         WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: webviz-test.servicebus.windows.net
         WEBVIZ_SERVICE_BUS_QUEUE_NAME: test-queue
+        WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: 3
       secrets:
         - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       resources:
