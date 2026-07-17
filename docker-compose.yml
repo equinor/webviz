@@ -135,8 +135,8 @@ services:
     #restart: on-failure
     #stop_grace_period: 30s
     restart: always
-    depends_on:
-      - sb-emulator
+    # depends_on:
+    #   - sb-emulator
 
 
   sb-emulator:

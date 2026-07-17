@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from azure.identity.aio import DefaultAzureCredential
 from azure.servicebus.aio import ServiceBusClient, ServiceBusReceiver, AutoLockRenewer
 from azure.servicebus import ServiceBusReceivedMessage
+from azure.servicebus.exceptions import ServiceBusError
 from azure.monitor.opentelemetry import configure_azure_monitor
 from opentelemetry.sdk.resources import Resource
 
@@ -64,6 +65,22 @@ def _setup_azure_monitor_telemetry_for_worker(service_name: str) -> None:
     )
 
 
+async def _wait_for_emulator_ready_async(sb_client: ServiceBusClient, queue_name: str) -> None:
+    max_attempts = 60
+    delay_seconds = 2.0
+    for attempt in range(1, max_attempts + 1):
+        try:
+            async with sb_client.get_queue_receiver(queue_name=queue_name) as receiver:
+                await receiver.peek_messages(max_message_count=1)
+            _logger.info("Service Bus emulator is ready")
+            return
+        except ServiceBusError as exc:
+            _logger.info(f"Waiting for Service Bus emulator to become ready (attempt {attempt}/{max_attempts}): {exc}")
+            await asyncio.sleep(delay_seconds)
+
+    raise RuntimeError("Service Bus emulator did not become ready in time")
+
+
 def _create_shutdown_event() -> asyncio.Event:
     shutdown_event = asyncio.Event()
 
@@ -96,6 +113,8 @@ async def _authenticated_sb_client(config: WorkerConfig) -> AsyncIterator[Servic
         _logger.info("Using Service Bus emulator connection string for local development")
         _logger.info(f"{config.sb_emulator_connection_string=}")
         async with ServiceBusClient.from_connection_string(conn_str=config.sb_emulator_connection_string) as sb_client:
+            # The emulator may not be ready when the worker starts, so wait for it before yielding the client.
+            await _wait_for_emulator_ready_async(sb_client, config.sb_queue_name)
             yield sb_client
         return
 
