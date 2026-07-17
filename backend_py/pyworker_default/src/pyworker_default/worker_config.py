@@ -27,7 +27,7 @@ def load_worker_config_from_env() -> WorkerConfig:
         sb_queue_name=os.environ["WEBVIZ_SERVICE_BUS_QUEUE_NAME"],
         sb_payload_fernet_key=os.environ["WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY"],
         sb_emulator_connection_string=sb_emulator_connection_string,
+        max_concurrent_tasks=int(os.getenv("WEBVIZ_WORKER_MAX_CONCURRENT_TASKS", "1")),
         redis_cache_url=f"redis://:{redis_password}@redis-cache:6379",
         sumo_env=os.getenv("WEBVIZ_SUMO_ENV", "prod"),
-        max_concurrent_tasks=int(os.getenv("WEBVIZ_WORKER_MAX_CONCURRENT_TASKS", "1")),
     )

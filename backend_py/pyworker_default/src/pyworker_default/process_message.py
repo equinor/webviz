@@ -69,7 +69,7 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
             # We record exceptions on the telemetry span, but avoid doing logger.exception().
             # It looks like Azure Monitor's telemetry instrumentation will pick up the exception from logger.exception()
             # and export that log record as exception telemetry which results in duplicate exception telemetry.
-            # We also don't re-raise the exception because we want to fully handle the settlement of messages 
+            # We also don't re-raise the exception because we want to fully handle the settlement of messages
             # here (complete/abandon/dead-letter) and not let the exception propagate further.
 
             except TaskFailedError as exc:
@@ -81,7 +81,7 @@ async def process_message_async(receiver: ServiceBusReceiver, msg: ServiceBusRec
                 await receiver.complete_message(msg)
 
             except TaskAbortedError as exc:
-                # Cooperative shutdown/cancellation, not an error. 
+                # Cooperative shutdown/cancellation, not an error.
                 # Return the message to the queue so it is retried (by another worker or this one after restart).
                 # For now log this as warning and don't set a status on the span
                 _logger.warning(f"Task aborted due to shutdown, abandoning message for retry: {repr(exc)}")
@@ -119,6 +119,3 @@ def _extract_trace_context_from_message(message: ServiceBusReceivedMessage) -> C
         props[key] = value
 
     return extract(props)
-
-
-
