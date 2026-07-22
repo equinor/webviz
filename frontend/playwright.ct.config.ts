@@ -6,7 +6,7 @@ import tailwindcssPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import vitePluginChecker from "vite-plugin-checker";
 
-import aliases from "./aliases.json" assert { type: "json" };
+import aliases from "./aliases.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,7 +45,9 @@ export default defineConfig({
                         ...prev,
                         [current.replace("/*", "")]: path.resolve(
                             __dirname,
-                            aliases.compilerOptions.paths[current][0].replace("/*", ""),
+                            aliases.compilerOptions.paths[
+                                current as keyof typeof aliases.compilerOptions.paths
+                            ][0].replace("/*", ""),
                         ),
                     }),
                     {},

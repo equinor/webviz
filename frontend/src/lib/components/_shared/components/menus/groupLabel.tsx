@@ -9,9 +9,15 @@ import { resolveWrapperProps, type ComponentWrapperProps } from "@lib/components
 import { Typography } from "@lib/components/Typography";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useMenuVariant, type MenuVariant } from "../../contexts/menuVariantContext";
+import { useMenuVariant } from "../../contexts/menuVariantContext";
 
 export type SharedGroupLabelProps = ComponentWrapperProps<MenuGroupLabelBaseProps>;
+
+const BASE_COMPONENT = {
+    contextMenu: ContextMenuBase.GroupLabel,
+    menu: MenuBase.GroupLabel,
+    combobox: ComboboxBase.GroupLabel,
+} as const;
 
 function SharedGroupLabelComponent(
     props: SharedGroupLabelProps,
@@ -21,7 +27,8 @@ function SharedGroupLabelComponent(
     const menuItemSize = useComponentSize();
     const labelTextSize = getNextTextSize(getTextSizeForSelectableSize(menuItemSize), -1);
     const menuVariant = useMenuVariant();
-    const BaseComp = getBaseComponent(menuVariant);
+
+    const BaseComp = BASE_COMPONENT[menuVariant];
 
     return (
         <BaseComp
@@ -31,17 +38,6 @@ function SharedGroupLabelComponent(
             render={<Typography ref={ref} as="div" size={labelTextSize} weight="bolder" />}
         />
     );
-}
-
-function getBaseComponent(variant: MenuVariant) {
-    switch (variant) {
-        case "contextMenu":
-            return ContextMenuBase.GroupLabel;
-        case "menu":
-            return MenuBase.GroupLabel;
-        case "combobox":
-            return ComboboxBase.GroupLabel;
-    }
 }
 
 export const SharedGroupLabel = React.forwardRef(SharedGroupLabelComponent);

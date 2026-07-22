@@ -65,7 +65,7 @@ export class PvtPlotBuilder {
                 const xUnit = this._pvtDataAccessor.getPressureUnit();
                 const yUnit = this._pvtDataAccessor.getDependentVariableUnit(dependentVariable);
                 let patch: Partial<Layout> = {
-                    title,
+                    title: { text: title },
                     [`yaxis${axisIndex}`]: { title: `[${yUnit}]` },
                 };
 
