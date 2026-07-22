@@ -1,0 +1,28 @@
+# Docker Compose override file for running with the Cosmos DB Emulator
+# Usage: docker-compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
+
+services:
+  backend-primary:
+    depends_on:
+      cosmos-db-emulator:
+        condition: service_healthy
+    environment:
+      - WEBVIZ_COSMOS_DB_EMULATOR_HOST=http://cosmos-db-emulator:8081
+
+  cosmos-db-emulator:
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-latest
+    platform: linux/amd64
+    tty: true
+    ports:
+      - 8081:8081
+    healthcheck:
+      test: curl -fsS http://127.0.0.1:8080/ready -o /dev/null || exit 1
+      interval: 10s
+      retries: 18 # 3 minutes
+      start_period: 20s
+      timeout: 5s
+    volumes:
+      - cosmosdrive:/data
+
+volumes:
+  cosmosdrive:

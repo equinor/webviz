@@ -17,10 +17,20 @@ You can then access
 - backend API documentation at `http://localhost:8080/api/docs`
 
 Before you start however you need to create a file `.env` at the root of the project
-with the following variable:
+with the following variables:
 
 ```
 WEBVIZ_CLIENT_SECRET=...
+WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0
+WEBVIZ_REDIS_AUTH_STORE_PASSWORD=0
+WEBVIZ_REDIS_CACHE_PASSWORD=0
+WEBVIZ_SESSION_STORE_FERNET_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+```
+
+If you want to test persistence features locally with Cosmos DB Emulator, use:
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
 ```
 
 ### Hot reload
