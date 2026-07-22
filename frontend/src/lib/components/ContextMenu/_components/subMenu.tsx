@@ -11,6 +11,7 @@ import { Menu } from "./menu";
 
 export type SubmenuProps = Omit<ContextMenuSubmenuRootProps, "className" | "style"> & {
     triggerContent: React.ReactNode;
+    triggerTone?: MenuItemContentProps["tone"];
     triggerIcon?: MenuItemContentProps["icon"];
     triggerText?: MenuItemContentProps["text"];
     triggerDescription?: MenuItemContentProps["description"];
@@ -18,11 +19,20 @@ export type SubmenuProps = Omit<ContextMenuSubmenuRootProps, "className" | "styl
 };
 
 export function Submenu(props: SubmenuProps) {
-    const baseProps = omit(props, "triggerContent", "children");
+    const baseProps = omit(
+        props,
+        "triggerContent",
+        "triggerTone",
+        "triggerIcon",
+        "triggerText",
+        "triggerDescription",
+        "children",
+    );
 
     return (
         <ContextMenuBase.SubmenuRoot {...baseProps}>
             <SubMenuTriggerItem
+                tone={props.triggerTone}
                 icon={props.triggerIcon}
                 text={props.triggerText}
                 description={props.triggerDescription}

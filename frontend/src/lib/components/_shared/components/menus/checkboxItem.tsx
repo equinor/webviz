@@ -34,32 +34,32 @@ function SharedCheckboxItemComponent<TProps extends MenuVariantItemProps>(
     const BaseIndicatorComp = BASE_INDICATOR_COMPONENT[menuVariant];
 
     return (
-        <BaseComp {...mergedProps} ref={ref}>
-            <ItemContent
-                text={text}
-                description={description}
-                icon={
-                    <>
-                        <BaseIndicatorComp
-                            className="menu__toggle_indicator"
-                            keepMounted
-                            render={(p: any, s: any) => (
-                                <span {...p}>
-                                    <CheckboxIcon
-                                        {...s}
-                                        // Combobox items are "selected", not "checked"
-                                        checked={s.checked ?? s.selected}
-                                    />
-                                </span>
-                            )}
-                        />
-                        {icon}
-                    </>
-                }
-            >
-                {props.children}
-            </ItemContent>
-        </BaseComp>
+        <ItemContent
+            {...mergedProps}
+            render={<BaseComp ref={ref} />}
+            text={text}
+            description={description}
+            icon={
+                <>
+                    <BaseIndicatorComp
+                        className="menu__toggle_indicator"
+                        keepMounted
+                        render={(p: any, s: any) => (
+                            <span {...p}>
+                                <CheckboxIcon
+                                    {...s}
+                                    // Combobox items are "selected", not "checked"
+                                    checked={s.checked ?? s.selected}
+                                />
+                            </span>
+                        )}
+                    />
+                    {icon}
+                </>
+            }
+        >
+            {props.children}
+        </ItemContent>
     );
 }
 
