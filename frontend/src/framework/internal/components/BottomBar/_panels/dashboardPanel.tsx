@@ -1,28 +1,28 @@
-import { Add, ChevronLeft, ChevronRight, Close, Edit, GridView, More, MoreVert } from "@mui/icons-material";
+import React from "react";
 
+import { Add, ChevronLeft, ChevronRight, Close, Edit, MoreVert } from "@mui/icons-material";
+
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import type { Dashboard } from "@framework/internal/Dashboard";
+import { DashboardTopic } from "@framework/internal/Dashboard";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
-import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
-import { Badge } from "@lib/components/Badge";
+import { AlertDialog } from "@lib/components/AlertDialog";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Separator } from "@lib/components/Separator";
-import { Tooltip } from "@lib/components/Tooltip";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
-import { Tabs } from "@lib/components/Tabs";
-import React from "react";
-import { useActiveSession } from "../../ActiveSessionBoundary";
 import { Dialog } from "@lib/components/Dialog";
-import { Form } from "@lib/components/Form";
 import { FieldCompositions } from "@lib/components/Field/compositions";
-import { TextInput } from "@lib/components/TextInput";
-import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
-import { Typography } from "@lib/components/Typography";
-import { TextArea } from "@lib/components/TextArea";
+import { Form } from "@lib/components/Form";
 import { Menu } from "@lib/components/Menu";
-import { AlertDialog } from "@lib/components/AlertDialog";
+import { Tabs } from "@lib/components/Tabs";
+import { TextArea } from "@lib/components/TextArea";
+import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+
+import { useActiveSession } from "../../ActiveSessionBoundary";
 
 export type DashboardPanelProps = {
     workbench: Workbench;
@@ -131,7 +131,7 @@ export function DashboardPanel(props: DashboardPanelProps) {
 
     return (
         <div className="gap-xs -mt-[2px] flex w-full items-center">
-            <div className="gap-3xs flex min-w-0 flex-1 items-center">
+            <div className="gap-3xs flex min-w-0 items-center">
                 <Button
                     iconOnly
                     variant="ghost"
@@ -145,7 +145,7 @@ export function DashboardPanel(props: DashboardPanelProps) {
                 </Button>
                 <div
                     ref={tabsScrollContainerRef}
-                    className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    className="min-w-0 snap-x snap-mandatory scrollbar-none overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
                     <Tabs.Root
                         onValueChange={handleActiveDashboardChange}
@@ -235,7 +235,7 @@ function DashboardTab(props: DashboardTabProps) {
     return (
         <>
             <Tooltip content={props.dashboard.getMetadata().name} side="bottom">
-                <Tabs.Tab value={props.dashboard.getId()} layoutClassName="flex items-center gap-x-xs">
+                <Tabs.Tab value={props.dashboard.getId()} layoutClassName="flex items-center gap-x-xs snap-start">
                     <span className="truncate">{metadata.name}</span>
                     <Menu.Root>
                         <Menu.Trigger>
