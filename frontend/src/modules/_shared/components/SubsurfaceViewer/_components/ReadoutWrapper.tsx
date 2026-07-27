@@ -173,6 +173,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
+            // A plugin (e.g. polyline editing) has requested that no readout be shown at all
+            if (props.deckGlManager.isReadoutSuppressed()) {
+                clearReadout();
+                return;
+            }
+
             // No picks - clear readout
             if (!event.infos.length || event.infos[0].index === -1) {
                 clearReadout();
@@ -234,11 +240,18 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 );
             }
         },
-        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
+        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode, props.deckGlManager],
     );
 
     const processClickEvent = React.useCallback(
         function processClickEvent(event: MapMouseEvent): void {
+            // A plugin (e.g. polyline editing) has requested that no readout be shown at all
+            if (props.deckGlManager.isReadoutSuppressed()) {
+                setReadoutMode("hover");
+                clearReadout();
+                return;
+            }
+
             setReadoutMode("click");
 
             // Deep picking on click - cancel any pending debounced picking
@@ -288,6 +301,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             onViewportHover,
             onPickingInfoChange,
             userPickingDepth,
+            props.deckGlManager,
         ],
     );
 

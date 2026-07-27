@@ -72,6 +72,7 @@ export class DeckGlPlugin {
     getCursor?(pickingInfo: PickingInfo): string | null;
     getLayers?(): Layer<any>[];
     getContextMenuItems?(pickingInfo: PickingInfo): ContextMenuItem[];
+    isReadoutSuppressed?(): boolean;
 }
 
 export enum DeckGlInstanceManagerTopic {
@@ -142,6 +143,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
     addPlugin(plugin: DeckGlPlugin) {
         this._plugins.push(plugin);
+    }
+
+    isReadoutSuppressed(): boolean {
+        return this._plugins.some((plugin) => plugin.isReadoutSuppressed?.());
     }
 
     redraw() {
