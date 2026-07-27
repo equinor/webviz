@@ -349,9 +349,19 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         if (!dashboard) {
             throw new Error("Dashboard not registered in this session");
         }
+        // Capture the index before removal, since the dashboard is no longer findable in the array afterwards
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
         this.unregisterDashboard(dashboard);
+
+        // If the removed dashboard was the active one, set the active dashboard to the previous one in the list, or null if there are no dashboards left
         if (this._activeDashboardId === dashboardId) {
-            this._activeDashboardId = this._dashboards.length > 0 ? this._dashboards[0].getId() : null;
+            if (index > 0) {
+                this._activeDashboardId = this._dashboards[index - 1].getId();
+            } else if (this._dashboards.length > 0) {
+                this._activeDashboardId = this._dashboards[0].getId();
+            } else {
+                this._activeDashboardId = null;
+            }
             this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
         }
     }

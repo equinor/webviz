@@ -75,7 +75,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = v4();
-        this._metadata = { name: name ?? "New Dashboard" };
+        this._metadata = { name: name ?? "Dashboard" };
 
         this._atomStoreMaster = atomStoreMaster;
     }

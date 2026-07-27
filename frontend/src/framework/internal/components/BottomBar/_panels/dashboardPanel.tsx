@@ -39,28 +39,39 @@ export function DashboardPanel(props: DashboardPanelProps) {
     const [editingDashboard, setEditingDashboard] = React.useState<Dashboard | null>(null);
 
     const tabsScrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const tabsContentRef = React.useRef<HTMLDivElement>(null);
     const [canScrollToPreviousDashboard, setCanScrollToPreviousDashboard] = React.useState<boolean>(false);
     const [canScrollToNextDashboard, setCanScrollToNextDashboard] = React.useState<boolean>(false);
 
     const updateTabsScrollButtonsState = React.useCallback(function updateTabsScrollButtonsState() {
         const el = tabsScrollContainerRef.current;
-        if (!el) {
+        const contentEl = tabsContentRef.current;
+        if (!el || !contentEl) {
             return;
         }
+
+        const containerWidth = el.getBoundingClientRect().width;
+        const contentWidth = contentEl.getBoundingClientRect().width;
+        const maxScrollLeft = Math.max(0, contentWidth - containerWidth);
+
         setCanScrollToPreviousDashboard(el.scrollLeft > 1);
-        setCanScrollToNextDashboard(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+        setCanScrollToNextDashboard(maxScrollLeft > 1 && el.scrollLeft < maxScrollLeft - 1);
     }, []);
 
     React.useEffect(
         function observeTabsScrollContainer() {
             const el = tabsScrollContainerRef.current;
-            if (!el) {
+            const contentEl = tabsContentRef.current;
+            if (!el || !contentEl) {
                 return;
             }
-            updateTabsScrollButtonsState();
 
+            // Observe both the scroll container (its allotted width can change, e.g. on window
+            // resize) and the tab content itself (its natural width changes whenever a dashboard
+            // is added or removed), since either one can change whether the content overflows.
             const resizeObserver = new ResizeObserver(updateTabsScrollButtonsState);
             resizeObserver.observe(el);
+            resizeObserver.observe(contentEl);
             el.addEventListener("scroll", updateTabsScrollButtonsState);
 
             return () => {
@@ -68,7 +79,7 @@ export function DashboardPanel(props: DashboardPanelProps) {
                 el.removeEventListener("scroll", updateTabsScrollButtonsState);
             };
         },
-        [updateTabsScrollButtonsState, dashboards],
+        [updateTabsScrollButtonsState],
     );
 
     function getDashboardTabElements(): HTMLElement[] {
@@ -145,9 +156,10 @@ export function DashboardPanel(props: DashboardPanelProps) {
                 </Button>
                 <div
                     ref={tabsScrollContainerRef}
-                    className="min-w-0 snap-x snap-mandatory scrollbar-none overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    className="scrollbar-none min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
                     <Tabs.Root
+                        ref={tabsContentRef}
                         onValueChange={handleActiveDashboardChange}
                         value={activeDashboard?.getId() || ""}
                         layoutClassName="w-max"
@@ -157,6 +169,7 @@ export function DashboardPanel(props: DashboardPanelProps) {
                                 <DashboardTab
                                     key={dashboard.getId()}
                                     dashboard={dashboard}
+                                    isOnlyDashboard={dashboards.length === 1}
                                     onDelete={() => {
                                         handleRemoveDashboardClick(dashboard.getId());
                                     }}
@@ -208,20 +221,34 @@ export function DashboardPanel(props: DashboardPanelProps) {
 
 type DashboardTabProps = {
     dashboard: Dashboard;
+    isOnlyDashboard: boolean;
     onDelete: () => void;
     onEdit: () => void;
 };
 
 function DashboardTab(props: DashboardTabProps) {
+    const { onDelete, isOnlyDashboard } = props;
     const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
+    const moduleInstances = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.MODULE_INSTANCES);
+    const numModuleInstances = moduleInstances.length;
+
     const [showConfirmationDialog, setShowConfirmationDialog] = React.useState<boolean>(false);
+    const [showCannotRemoveDialog, setShowCannotRemoveDialog] = React.useState<boolean>(false);
 
     const handleDeleteClick = React.useCallback(
         function handleDeleteClick(event: React.MouseEvent) {
             event.stopPropagation();
+            if (isOnlyDashboard) {
+                setShowCannotRemoveDialog(true);
+                return;
+            }
+            if (numModuleInstances === 0) {
+                onDelete();
+                return;
+            }
             setShowConfirmationDialog(true);
         },
-        [setShowConfirmationDialog],
+        [setShowConfirmationDialog, onDelete, numModuleInstances, isOnlyDashboard],
     );
 
     const handleEditClick = React.useCallback(
@@ -276,6 +303,21 @@ function DashboardTab(props: DashboardTabProps) {
                 >
                     Deleting this dashboard will remove it and all the modules it contains from your session. This
                     action cannot be undone.
+                </AlertDialog>
+            )}
+            {showCannotRemoveDialog && (
+                <AlertDialog
+                    open={showCannotRemoveDialog}
+                    onOpenChange={setShowCannotRemoveDialog}
+                    title="Cannot remove last dashboard"
+                    primaryAction={{
+                        label: "OK",
+                        onClick: () => setShowCannotRemoveDialog(false),
+                        tone: "neutral",
+                        closesDialog: true,
+                    }}
+                >
+                    A session must contain at least one dashboard. Add another dashboard before removing this one.
                 </AlertDialog>
             )}
         </>
