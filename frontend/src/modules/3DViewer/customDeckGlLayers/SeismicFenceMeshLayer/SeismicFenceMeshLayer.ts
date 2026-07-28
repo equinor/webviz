@@ -11,7 +11,7 @@ import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
 import { transfer, wrap } from "comlink";
-import { isEqual } from "lodash-es";
+import { isEqual, isNaN } from "lodash-es";
 
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
@@ -293,6 +293,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         let minProperty = Number.MAX_VALUE;
         let maxProperty = -Number.MAX_VALUE;
         for (let i = 0; i < data.properties.length; i++) {
+            if (Number.isNaN(data.properties[i])) continue;
+
             minProperty = Math.min(minProperty, data.properties[i]);
             maxProperty = Math.max(maxProperty, data.properties[i]);
         }
@@ -305,7 +307,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         let colorIndex = 0;
         for (let i = 0; i < data.properties.length; i++) {
-            const property = data.properties[i];
+            const property = isNaN(data.properties[i]) ? 0 : data.properties[i];
+
             const [r, g, b, a] = colorMapFunction(property);
             colorsArray[colorIndex * 4 + 0] = r / 255;
             colorsArray[colorIndex * 4 + 1] = g / 255;
