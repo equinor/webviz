@@ -82,9 +82,9 @@ export const SubItem: Story = {
                 <RightClickZone />
             </ContextMenu.Trigger>
             <ContextMenu.Menu>
-                <ContextMenu.Item>Cut</ContextMenu.Item>
-                <ContextMenu.Item>Copy</ContextMenu.Item>
-                <ContextMenu.Item>Paste</ContextMenu.Item>
+                <ContextMenu.Item tone="neutral">Cut</ContextMenu.Item>
+                <ContextMenu.Item tone="warning">Copy</ContextMenu.Item>
+                <ContextMenu.Item tone="danger">Paste</ContextMenu.Item>
             </ContextMenu.Menu>
         </ContextMenu.Root>
     ),
