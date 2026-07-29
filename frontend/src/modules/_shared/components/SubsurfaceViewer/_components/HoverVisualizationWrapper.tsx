@@ -7,14 +7,15 @@ import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurf
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { inRange } from "lodash-es";
 
-import type { HoverService } from "@framework/HoverService";
+import type { HoverData, HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { PickingRayLayer } from "@modules/_shared/customDeckGlLayers/PickingRayLayer";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
 import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
-import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
+import { getPolylineIdFromFenceId, makeFenceSourceIdForPolyLine } from "@modules/_shared/utils/fence";
+import { lengthAlongAtXyPosition, positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 import type { PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
@@ -50,11 +51,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     );
     const publishHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
     const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
-    const publishHoveredPolylineLengthAlong = usePublishHoverValue(
-        HoverTopic.POLYLINE_LENGTH_ALONG,
-        ctx.hoverService,
-        ctx.moduleInstanceId,
-    );
+    const publishHoveredFence = usePublishHoverValue(HoverTopic.FENCE, ctx.hoverService, ctx.moduleInstanceId);
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
     const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
@@ -70,15 +67,37 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         ctx.moduleInstanceId,
     );
 
-    const publishHoveredPolylineLengthAlongRef = React.useRef(publishHoveredPolylineLengthAlong);
-    publishHoveredPolylineLengthAlongRef.current = publishHoveredPolylineLengthAlong;
+    const publishHoveredFenceRef = React.useRef(publishHoveredFence);
+    publishHoveredFenceRef.current = publishHoveredFence;
 
     React.useEffect(
         function subscribeToPolylineHover() {
             return props.polylinesPlugin
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
-                publishHoveredPolylineLengthAlongRef.current(props.polylinesPlugin.getPolylineHoverData());
+                const polylineData = props.polylinesPlugin.getPolylineHoverData();
+
+                let payload: HoverData[HoverTopic.FENCE] = null;
+
+                if (polylineData) {
+                    const fenceLengthAlong = convertPolylineLengthAlongToFenceLengthAlong(
+                        polylineData.path,
+                        polylineData.lengthAlong,
+                    );
+
+                    if (fenceLengthAlong) {
+                        // Also grab the polyline's 3D position as the depth
+                        const polylinePosition = positionAtLengthAlong(polylineData.path, polylineData.lengthAlong);
+                        const polylineDepth = -polylinePosition![2];
+
+                        payload = {
+                            fenceId: makeFenceSourceIdForPolyLine(polylineData.polylineId),
+                            lengthAlong: fenceLengthAlong,
+                            depth: polylineDepth,
+                        };
+                    }
+                }
+                publishHoveredFenceRef.current(payload, "polyline-plugin");
             });
         },
         [props.polylinesPlugin],
@@ -128,13 +147,15 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
                 HoverTopic.WELLBORE_MD,
                 HoverTopic.WELLBORE,
                 HoverTopic.WORLD_POS_UTM,
+                HoverTopic.FENCE,
             );
 
             publishHoveredWorldPos(hoverData[HoverTopic.WORLD_POS_UTM]);
             publishHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
             publishHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
+            publishHoveredFence(hoverData[HoverTopic.FENCE], "provider-layers");
         },
-        [publishHoveredMd, publishHoveredWellbore, publishHoveredWorldPos],
+        [publishHoveredMd, publishHoveredFence, publishHoveredWellbore, publishHoveredWorldPos],
     );
 
     const handleViewportHover = React.useCallback(function handleViewportHover(viewport: ViewportType | null) {
@@ -198,14 +219,27 @@ function usePolylineHoverMarkerLayer(
     hoverService: HoverService,
     instanceId: string,
 ): ScatterplotLayer {
-    const hovered = useHoverValue(HoverTopic.POLYLINE_LENGTH_ALONG, hoverService, instanceId);
+    const hovered = useHoverValue(HoverTopic.FENCE, hoverService, instanceId);
     const polylineEditingMode = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
     const availablePolylines = usePublishSubscribeTopicValue(polylinesPlugin, PolylinesPluginTopic.POLYLINES);
 
     let position: [number, number, number] | null = null;
+
     if (polylineEditingMode !== PolylineEditingMode.DISABLED && hovered) {
-        const polyline = availablePolylines.find((p) => p.id === hovered.polylineId);
-        position = polyline ? positionAtLengthAlong(polyline.path, hovered.lengthAlong) : null;
+        const hoveredPolylineId = getPolylineIdFromFenceId(hovered.fenceId);
+
+        const polyline = availablePolylines.find((p) => p.id === hoveredPolylineId);
+
+        if (polyline) {
+            // The fence payload will be the length along a XY line following the polyline. The polyline
+            // might have 3D positions, so we need to convert to a length in 3D space.
+            const polylineLengthAlong = convertFenceLengthAlongToPolylineLengthAlong(
+                polyline.path,
+                hovered.lengthAlong,
+            );
+
+            position = polylineLengthAlong ? positionAtLengthAlong(polyline.path, polylineLengthAlong) : null;
+        }
     }
 
     return new ScatterplotLayer({
@@ -246,4 +280,40 @@ function usePickingRayLayers(
     }
 
     return pickingRayLayers;
+}
+
+function convertPolylineLengthAlongToFenceLengthAlong(
+    polylinePath: number[][],
+    polylineLengthAlong: number,
+): number | null {
+    // This is arguably a sub-optimal approach, but polyline paths are expected to only be a few segments,
+    // so this should be fine for now...
+    // Get the position for this point along the 3D-space poly-line
+    const polylinePos = positionAtLengthAlong(polylinePath, polylineLengthAlong);
+
+    if (!polylinePos) return null;
+
+    // The fence only cares about XY positions, but otherwise matches the polyline.
+    const fenceLengthAlongConverted = lengthAlongAtXyPosition(
+        polylinePath.map((v) => [v[0], v[1]]),
+        polylinePos[0],
+        polylinePos[1],
+    );
+
+    return fenceLengthAlongConverted;
+}
+
+function convertFenceLengthAlongToPolylineLengthAlong(polylinePath: number[][], lengthAlong: number): number | null {
+    // Get the position for this length-along in the XY-plane
+    const fencePos = positionAtLengthAlong(
+        polylinePath.map((v) => [v[0], v[1]]),
+        lengthAlong,
+    );
+
+    if (!fencePos) {
+        return null;
+    }
+
+    const polylineLengthAlong = lengthAlongAtXyPosition(polylinePath, fencePos[0], fencePos[1]);
+    return polylineLengthAlong;
 }

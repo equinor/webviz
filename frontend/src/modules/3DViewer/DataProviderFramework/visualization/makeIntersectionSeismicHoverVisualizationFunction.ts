@@ -16,7 +16,7 @@ import type {
     TransformerArgs,
     VisualizationTarget,
 } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
-import { makeSeismicFenceSourceId } from "@modules/_shared/Intersection/seismicIntersectionUtils";
+import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 
 const HIGHLIGHT_COLOR = [255, 0, 0, 180] as Color;
@@ -42,13 +42,13 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
     const sourcePolylineWithSectionLengths = getStoredData("sourcePolylineWithSectionLengths");
 
     return {
-        [HoverTopic.SEISMIC_FENCE]: (hoverInfo) => {
+        [HoverTopic.FENCE]: (hoverInfo) => {
             if (!seismicIntersection) return [];
             if (!fenceData) return [];
             if (!hoverInfo) return [];
             if (!intersectionSetting) return [];
             if (!sourcePolylineWithSectionLengths) return [];
-            if (hoverInfo.sourceId !== makeSeismicFenceSourceId(intersectionSetting)) return [];
+            if (hoverInfo.fenceId !== makeFenceSourceId(intersectionSetting)) return [];
 
             const data = [];
 
@@ -58,13 +58,15 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
                 lengthAlong += intersectionSetting.extensionLength;
             }
 
+            const fenceDepthPos = hoverInfo.depth ?? 0;
             const hoverPos = positionAtLengthAlong(
                 chunk(sourcePolylineWithSectionLengths.polylineUtmXy, 2),
                 lengthAlong,
             );
+
             if (!hoverPos) throw new Error("Expected valid path position for hover length along polyline");
 
-            data.push(hoverPos.toSpliced(-1, 1, -hoverInfo.depth));
+            data.push(hoverPos.toSpliced(-1, 1, -fenceDepthPos));
 
             return [
                 new ColumnLayer({
@@ -74,6 +76,7 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
                     radius: 46,
                     getPosition: (d) => d,
                     getElevation: 1,
+                    visible: hoverInfo.depth !== null,
                 }),
 
                 new ColumnLayer({

@@ -11,13 +11,13 @@ import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_sh
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
-import { isSeismicLayer, isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
+import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
 import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
 import { PositionReadout, type PositionCoordinates } from "@modules/_shared/components/PositionReadout";
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
-import { makeSeismicFenceSourceId } from "@modules/_shared/Intersection/seismicIntersectionUtils";
+import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 const AXES_LABELS = { xLabel: "Length along", yLabel: "Depth" };
@@ -53,27 +53,15 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // Hover synchronization
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
+    const [hoveredFence, setHoveredFence] = useHover(HoverTopic.FENCE, props.hoverService, moduleInstanceId);
 
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
-    const [polylineHoverData, setPolylineHoverData] = useHover(
-        HoverTopic.POLYLINE_LENGTH_ALONG,
-        props.hoverService,
-        moduleInstanceId,
-    );
 
-    const [hoveredSeismicFence, setHoveredSeismicFence] = useHover(
-        HoverTopic.SEISMIC_FENCE,
-        props.hoverService,
-        moduleInstanceId,
-    );
-
-    // Extract wellbore and polyline id
+    // Extract wellbore and fence id
     const wellboreUuid =
         props.intersectionSource?.type === IntersectionType.WELLBORE ? props.intersectionSource.uuid : null;
-    const polylineId =
-        props.intersectionSource?.type === IntersectionType.CUSTOM_POLYLINE ? props.intersectionSource.uuid : null;
 
-    const fenceSourceId = props.intersectionSource ? makeSeismicFenceSourceId(props.intersectionSource) : "";
+    const fenceSourceId = props.intersectionSource ? makeFenceSourceId(props.intersectionSource) : null;
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -113,9 +101,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 position.y >= props.bounds.y[0] - depthThreshold &&
                 position.y <= props.bounds.y[1] + depthThreshold;
 
-            if (polylineId) {
-                const polylineHoverData = isValidCursorPosition ? { polylineId, lengthAlong: position.x } : null;
-                setPolylineHoverData(polylineHoverData);
+            if (fenceSourceId) {
+                const fenceHoverData = isValidCursorPosition
+                    ? { fenceId: fenceSourceId, lengthAlong: position.x, depth: position.y }
+                    : null;
+                setHoveredFence(fenceHoverData);
             }
 
             if (!isValidCursorPosition || !props.referenceSystem || !position) {
@@ -128,13 +118,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
         },
         [
-            polylineId,
-            props.bounds,
-            props.verticalScale,
             props.viewport,
+            props.verticalScale,
+            props.bounds.y,
+            props.bounds.x,
             props.referenceSystem,
-            setPolylineHoverData,
-            setMouseCursorUtmCoordinate,
+            fenceSourceId,
+            setHoveredFence,
         ],
     );
 
@@ -143,24 +133,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const items = event.readoutItems;
 
             const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
-            const seismicReadoutItem = items.find((item) => isSeismicLayer(item.layer));
-
-            if (seismicReadoutItem && fenceSourceId) {
-                const [lengthAlong, depth] = seismicReadoutItem.point;
-                setHoveredSeismicFence({
-                    depth,
-                    lengthAlong,
-                    sourceId: fenceSourceId,
-                });
-            } else {
-                setHoveredSeismicFence(null);
-            }
 
             publishWellboreHoverEvent(wellboreReadoutItem?.md ?? null);
 
             setReadoutItems(items.map(formatEsvLayout));
         },
-        [fenceSourceId, formatEsvLayout, publishWellboreHoverEvent, setHoveredSeismicFence],
+        [formatEsvLayout, publishWellboreHoverEvent],
     );
 
     const highlightItems: HighlightItem[] = [];
@@ -182,15 +160,15 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         });
     }
 
-    // External hover on polyline
+    // External hover on fence
     // - vertical red line at the length-along position
-    if (polylineId && !isLocallyHoveringRef.current && polylineHoverData?.polylineId === polylineId) {
+    if (fenceSourceId && !isLocallyHoveringRef.current && hoveredFence?.fenceId === fenceSourceId) {
         const yExtension = Math.abs(props.bounds.y[1] - props.bounds.y[0]) * 0.1;
         highlightItems.push({
             shape: HighlightItemShape.LINE,
             line: [
-                [polylineHoverData.lengthAlong, props.bounds.y[0] - yExtension],
-                [polylineHoverData.lengthAlong, props.bounds.y[1] + yExtension],
+                [hoveredFence.lengthAlong, props.bounds.y[0] - yExtension],
+                [hoveredFence.lengthAlong, props.bounds.y[1] + yExtension],
             ],
             color: "red",
             paintOrder: 5,

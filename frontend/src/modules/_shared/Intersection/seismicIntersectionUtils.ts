@@ -1,10 +1,4 @@
 import type { SeismicFencePolyline_api } from "@api";
-import { IntersectionType } from "@framework/types/intersection";
-
-import type {
-    PolylineIntersectionSettingValue,
-    WellboreIntersectionSettingValue,
-} from "../DataProviderFramework/settings/implementations/IntersectionSetting";
 
 /**
  * Create seismic fence polyline object from polyline XY coordinates.
@@ -77,16 +71,4 @@ export function createSeismicSliceImageYAxisValuesArrayForFence(
         yAxisValues.push(minFenceDepth + ((maxFenceDepth - minFenceDepth) / numSamplesPerTrace) * i);
     }
     return yAxisValues;
-}
-
-export function makeSeismicFenceSourceId(
-    sourceSetting: PolylineIntersectionSettingValue | WellboreIntersectionSettingValue,
-): string {
-    switch (sourceSetting.type) {
-        case IntersectionType.WELLBORE:
-            // ! Extension-length is included, since positionAlong would be dependent on length
-            return `wellbore::${sourceSetting.uuid}::${sourceSetting.extensionLength}`;
-        case IntersectionType.CUSTOM_POLYLINE:
-            return `polyline::${sourceSetting.uuid}`;
-    }
 }

@@ -15,8 +15,7 @@ export enum HoverTopic {
     REGION = "hover.region",
     FACIES = "hover.facies",
     WORLD_POS_UTM = "hover.world_pos_utm",
-    POLYLINE_LENGTH_ALONG = "hover.polyline_length_along",
-    SEISMIC_FENCE = "hover.seismic_fence",
+    FENCE = "hover.fence",
 }
 
 export type HoverData = {
@@ -28,8 +27,7 @@ export type HoverData = {
     [HoverTopic.REGION]: string | null;
     [HoverTopic.FACIES]: string | null;
     [HoverTopic.WORLD_POS_UTM]: { x?: number; y?: number; z?: number } | null;
-    [HoverTopic.POLYLINE_LENGTH_ALONG]: { polylineId: string; lengthAlong: number } | null;
-    [HoverTopic.SEISMIC_FENCE]: { sourceId: string; lengthAlong: number; depth: number } | null;
+    [HoverTopic.FENCE]: { fenceId: string; lengthAlong: number; depth: number | null } | null;
 };
 
 type ThrottledPublishFunc = _.DebouncedFunc<<T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void>;
@@ -171,12 +169,26 @@ export function usePublishHoverValue<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,
     moduleInstanceId: string,
-): (v: HoverData[T]) => void {
+): (v: HoverData[T], caller?: string) => void {
+    // In some cases, a publisher can have separate system that wants to emit hover data. This can
+    // sometimes cause conflicts when one system emits an object while the other does not. To
+    // we only want to emit "null" when none of our potential systems see a hover value.
+    const callerPayloadsRef = React.useRef<Record<string, HoverData[T]>>({});
+
     return React.useCallback(
-        function updateHoverValue(newValue: HoverData[T]) {
+        function updateHoverValue(newValue: HoverData[T], caller = "generic") {
             console.debug(`[HoverService] ${moduleInstanceId} published to ${topic}`, newValue);
 
-            hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
+            callerPayloadsRef.current[caller] = newValue;
+
+            if (newValue === null) {
+                // Only emit a null value if all sources are null
+                if (Object.values(callerPayloadsRef.current).every((v) => v === null)) {
+                    hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
+                }
+            } else {
+                hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
+            }
         },
         [hoverService, moduleInstanceId, topic],
     );

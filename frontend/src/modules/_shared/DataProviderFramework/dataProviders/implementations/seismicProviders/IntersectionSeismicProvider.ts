@@ -11,10 +11,8 @@ import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/i
 import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
-import {
-    createSeismicFencePolylineFromPolylineXy,
-    makeSeismicFenceSourceId,
-} from "@modules/_shared/Intersection/seismicIntersectionUtils";
+import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
+import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 
 import type {
     CustomDataProviderImplementation,
@@ -405,7 +403,7 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         }
 
         const source = {
-            id: makeSeismicFenceSourceId(sourceIntersection),
+            id: makeFenceSourceId(sourceIntersection),
             name: sourceIntersection.name,
         };
 
