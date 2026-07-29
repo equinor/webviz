@@ -145,6 +145,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     setEditingMode(mode: PolylineEditingMode): void {
         this._editingMode = mode;
+        this.setReadoutSuppressed(mode !== PolylineEditingMode.DISABLED);
         this._hoverPoint = null;
         if (this._polylineHoverData !== null) {
             this._polylineHoverData = null;
@@ -163,10 +164,6 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     getEditingMode(): PolylineEditingMode {
         return this._editingMode;
-    }
-
-    isReadoutSuppressed(): boolean {
-        return this._editingMode !== PolylineEditingMode.DISABLED;
     }
 
     getPolylineHoverData(): { polylineId: string; lengthAlong: number } | null {

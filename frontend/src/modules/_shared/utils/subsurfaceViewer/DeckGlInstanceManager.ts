@@ -1,7 +1,7 @@
 /*
 This manager is responsible for managing plugins for DeckGL, forwarding events to them, and adding/adjusting layers based on the plugins' responses.
 */
-import type { Layer, PickingInfo, View } from "@deck.gl/core";
+import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { v4 } from "uuid";
@@ -53,6 +53,10 @@ export class DeckGlPlugin {
         this._manager.setDragEnd();
     }
 
+    protected setReadoutSuppressed(suppressed: boolean) {
+        this._manager.setReadoutSuppressed(this, suppressed);
+    }
+
     protected makeLayerId(layerId: string): string {
         return `${this._id}-${layerId}`;
     }
@@ -72,17 +76,18 @@ export class DeckGlPlugin {
     getCursor?(pickingInfo: PickingInfo): string | null;
     getLayers?(): Layer<any>[];
     getContextMenuItems?(pickingInfo: PickingInfo): ContextMenuItem[];
-    isReadoutSuppressed?(): boolean;
 }
 
 export enum DeckGlInstanceManagerTopic {
     REDRAW = "REDRAW",
     CONTEXT_MENU = "CONTEXT_MENU",
+    IS_READOUT_SUPPRESSED = "IS_READOUT_SUPPRESSED",
 }
 
 export type DeckGlInstanceManagerPayloads = {
     [DeckGlInstanceManagerTopic.REDRAW]: number;
     [DeckGlInstanceManagerTopic.CONTEXT_MENU]: ContextMenu | null;
+    [DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED]: boolean;
 };
 
 type KeyboardEventListener = (event: KeyboardEvent) => void;
@@ -99,10 +104,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _eventListeners: KeyboardEventListener[] = [];
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
-
-    private _hiddenViews: View[] = []; // plugin registered
-    private _hiddenViewStatePatch: Record<string, any> = {};
-    private _layerFilterWrappers: ((prev?: any) => any)[] = [];
+    private _suppressingReadoutPlugins = new Set<DeckGlPlugin>();
 
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
@@ -146,7 +148,21 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     isReadoutSuppressed(): boolean {
-        return this._plugins.some((plugin) => plugin.isReadoutSuppressed?.());
+        return this._suppressingReadoutPlugins.size > 0;
+    }
+
+    setReadoutSuppressed(plugin: DeckGlPlugin, suppressed: boolean): void {
+        const wasSuppressed = this.isReadoutSuppressed();
+
+        if (suppressed) {
+            this._suppressingReadoutPlugins.add(plugin);
+        } else {
+            this._suppressingReadoutPlugins.delete(plugin);
+        }
+
+        if (wasSuppressed !== this.isReadoutSuppressed()) {
+            this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED);
+        }
     }
 
     redraw() {
@@ -217,6 +233,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             }
             if (topic === DeckGlInstanceManagerTopic.CONTEXT_MENU) {
                 return this._contextMenu;
+            }
+            if (topic === DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED) {
+                return this.isReadoutSuppressed();
             }
 
             throw new Error(`Unknown topic ${topic}`);
