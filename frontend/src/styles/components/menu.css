@@ -17,16 +17,14 @@
     .menu__item {
         &[data-tone="warning"] {
             .menu__toggle_indicator {
-                @apply data-disabled:text-fill-disabled;
-                @apply text-warning-subtle;
+                @apply not-data-disabled:text-warning-subtle;
             }
             @apply text-warning-subtle;
         }
 
         &[data-tone="danger"] {
             .menu__toggle_indicator {
-                @apply data-disabled:text-fill-disabled;
-                @apply text-danger-subtle;
+                @apply not-data-disabled:text-danger-subtle;
             }
             @apply text-danger-subtle;
         }
