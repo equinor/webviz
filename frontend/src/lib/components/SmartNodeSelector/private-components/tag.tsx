@@ -114,7 +114,7 @@ export class Tag extends React.Component<TagProps> {
                 <span
                     key={"TagMatchesCounter_" + index}
                     className={resolveClassNames(
-                        "mr-2xs px-3xs text-accent-strong-on-emphasis relative flex h-5 min-w-5 items-center justify-center rounded-full text-center text-xs leading-none outline-hidden",
+                        "mr-2xs px-3xs text-accent-strong-on-emphasis text-body-xs relative flex h-5 min-w-5 items-center justify-center rounded-full text-center leading-none outline-hidden",
                         {
                             "bg-info-strong text-info-strong-on-emphasis":
                                 matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
@@ -287,7 +287,7 @@ export class Tag extends React.Component<TagProps> {
 
         return (
             <div
-                className="absolute bottom-0 h-0.5 border-b border-dashed border-b-blue-600"
+                className="border-b-info-strong absolute bottom-0 h-0.5 border-b border-dashed"
                 style={{ left: `${left}px`, width: `${width}px` }}
             />
         );

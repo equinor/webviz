@@ -100,6 +100,7 @@ export function Field(props: SettingFieldProps) {
     React.useLayoutEffect(() => {
         const el = props.labelFor?.current;
         if (el && !el.id) {
+            // eslint-disable-next-line react-hooks/immutability -- Current version of eslint doesn't properly recognize ref objects as mutable
             el.id = generatedInputId;
         }
     }, [props.labelFor, generatedInputId]);
@@ -176,7 +177,9 @@ export function Field(props: SettingFieldProps) {
             <div className="setting-row in-data-in-section:px-xs in-data-in-section:py-2xs in-data-in-group:px-xs in-data-in-group:py-2xs in-data-in-group:col-span-3 in-data-in-group:grid in-data-in-group:grid-cols-subgrid in-data-in-section:col-span-3 in-data-in-section:grid in-data-in-section:grid-cols-subgrid">
                 <FieldPrimitive.Root layoutClassName="w-full col-span-3" invalid={isInvalid} warning={isWarning}>
                     <div className="gap-x-2xs flex w-full items-center justify-between">
-                        {props.label && <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>}
+                        {props.label && (
+                            <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>
+                        )}
                         {props.help && (
                             <FieldPrimitive.Info side="right">
                                 <Heading as="h6">{props.help.title}</Heading>
@@ -207,7 +210,9 @@ export function Field(props: SettingFieldProps) {
             <FieldPrimitive.Root inline invalid={isInvalid} warning={isWarning}>
                 <div className="gap-y-4xs flex flex-col justify-center">
                     <div className="gap-x-2xs flex items-center">
-                        {props.label && <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>}
+                        {props.label && (
+                            <FieldPrimitive.Label {...(htmlFor && { htmlFor })}>{props.label}</FieldPrimitive.Label>
+                        )}
                     </div>
                     {props.description && <FieldPrimitive.Description>{props.description}</FieldPrimitive.Description>}
                 </div>

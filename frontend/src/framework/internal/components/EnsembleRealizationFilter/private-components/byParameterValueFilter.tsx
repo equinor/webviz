@@ -334,7 +334,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         return (
             <div key={parameterIdentString} className="px-2xs py-2xs border-neutral-subtle grow rounded-md border">
                 <div className="gap-y-3xs flex flex-col">
-                    <div className="flex flex-row items-center gap-2">
+                    <div className="gap-3xs flex flex-row items-center">
                         <Typography
                             variant="strong"
                             as="span"
@@ -390,7 +390,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             <div className="flex flex-col">
                 <Field.Root invalid={reportIconText !== null}>
                     <Field.Label>Select parameters to add</Field.Label>
-                    <div className="gap-x-xs flex w-full items-center p-1">
+                    <div className="gap-x-xs p-4xs flex w-full items-center">
                         <div className="grow">
                             <SmartNodeSelector
                                 data={smartNodeSelectorTreeDataNodes ?? []}

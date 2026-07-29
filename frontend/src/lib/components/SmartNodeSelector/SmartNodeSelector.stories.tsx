@@ -151,7 +151,7 @@ function WithChangeCallbackRender(args: React.ComponentProps<typeof SmartNodeSel
     return (
         <div className="flex flex-col gap-4">
             <SmartNodeSelector {...args} onValueChange={setSelection} />
-            <div className="rounded border p-3 text-sm text-slate-600">
+            <div className="text-neutral-strong text-body-sm p-2xs rounded border">
                 <div>
                     <strong>Selected nodes:</strong>{" "}
                     {selection.selectedNodes.length > 0 ? selection.selectedNodes.join(", ") : "none"}

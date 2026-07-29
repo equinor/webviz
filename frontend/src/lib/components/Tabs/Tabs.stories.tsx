@@ -7,7 +7,13 @@ import { Tabs } from "./index";
 const meta: Meta<typeof Tabs.Root> = {
     title: "Components/Tabs",
     component: Tabs.Root,
-    decorators: [(Story) => <div className="w-full max-w-[600px]"><Story /></div>],
+    decorators: [
+        (Story) => (
+            <div className="w-full max-w-[600px]">
+                <Story />
+            </div>
+        ),
+    ],
     parameters: {
         layout: "padded",
         docs: {
@@ -101,7 +107,9 @@ export const SubTab: Story = {
             <Tabs.List>
                 <Tabs.Tab value="a">Active</Tabs.Tab>
                 <Tabs.Tab value="b">Normal</Tabs.Tab>
-                <Tabs.Tab value="c" disabled>Disabled</Tabs.Tab>
+                <Tabs.Tab value="c" disabled>
+                    Disabled
+                </Tabs.Tab>
             </Tabs.List>
         </Tabs.Root>
     ),
@@ -123,9 +131,15 @@ export const SubPanel: Story = {
                 <Tabs.Tab value="b">Tab B</Tabs.Tab>
                 <Tabs.Tab value="c">Tab C</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Content for Tab A.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Content for Tab B.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Content for Tab C.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Content for Tab A.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Content for Tab B.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Content for Tab C.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -148,9 +162,15 @@ export const IndicatorEnd: Story = {
                 <Tabs.Tab value="b">Details</Tabs.Tab>
                 <Tabs.Tab value="c">Settings</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Overview content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Details content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Settings content.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -160,7 +180,7 @@ export const IndicatorStart: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Set `indicatorPosition=\"start\"` to move the indicator to the top of horizontal tabs.",
+                story: 'Set `indicatorPosition="start"` to move the indicator to the top of horizontal tabs.',
             },
         },
     },
@@ -171,9 +191,15 @@ export const IndicatorStart: Story = {
                 <Tabs.Tab value="b">Details</Tabs.Tab>
                 <Tabs.Tab value="c">Settings</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Overview content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Details content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Settings content.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -185,7 +211,7 @@ export const SizeSmall: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Pass `size=\"small\"` to `Tabs.List` for compact tabs.",
+                story: 'Pass `size="small"` to `Tabs.List` for compact tabs.',
             },
         },
     },
@@ -196,9 +222,15 @@ export const SizeSmall: Story = {
                 <Tabs.Tab value="b">Details</Tabs.Tab>
                 <Tabs.Tab value="c">Settings</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Overview content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Details content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Settings content.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -219,9 +251,15 @@ export const SizeDefault: Story = {
                 <Tabs.Tab value="b">Details</Tabs.Tab>
                 <Tabs.Tab value="c">Settings</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Overview content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Details content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Settings content.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -231,7 +269,7 @@ export const SizeLarge: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Pass `size=\"large\"` to `Tabs.List` for larger, more prominent tabs.",
+                story: 'Pass `size="large"` to `Tabs.List` for larger, more prominent tabs.',
             },
         },
     },
@@ -242,9 +280,15 @@ export const SizeLarge: Story = {
                 <Tabs.Tab value="b">Details</Tabs.Tab>
                 <Tabs.Tab value="c">Settings</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Overview content.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Details content.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Settings content.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Overview content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Details content.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Settings content.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -267,9 +311,15 @@ export const Horizontal: Story = {
                 <Tabs.Tab value="b">Tab B</Tabs.Tab>
                 <Tabs.Tab value="c">Tab C</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Content for Tab A.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Content for Tab B.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Content for Tab C.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Content for Tab A.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Content for Tab B.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Content for Tab C.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -279,21 +329,27 @@ export const Vertical: Story = {
     parameters: {
         docs: {
             description: {
-                story: "Set `orientation=\"vertical\"` on `Tabs.Root` to arrange tabs in a column. The indicator tracks along the vertical axis.",
+                story: 'Set `orientation="vertical"` on `Tabs.Root` to arrange tabs in a column. The indicator tracks along the vertical axis.',
             },
         },
     },
     render: () => (
-        <Tabs.Root defaultValue="a" orientation="vertical" layoutClassName="flex gap-4">
+        <Tabs.Root defaultValue="a" orientation="vertical" layoutClassName="flex gap-2xs">
             <Tabs.List>
                 <Tabs.Tab value="a">Tab A</Tabs.Tab>
                 <Tabs.Tab value="b">Tab B</Tabs.Tab>
                 <Tabs.Tab value="c">Tab C</Tabs.Tab>
             </Tabs.List>
             <div className="flex-1">
-                <Tabs.Panel value="a"><p className="p-4">Content for Tab A.</p></Tabs.Panel>
-                <Tabs.Panel value="b"><p className="p-4">Content for Tab B.</p></Tabs.Panel>
-                <Tabs.Panel value="c"><p className="p-4">Content for Tab C.</p></Tabs.Panel>
+                <Tabs.Panel value="a">
+                    <p className="p-2xs">Content for Tab A.</p>
+                </Tabs.Panel>
+                <Tabs.Panel value="b">
+                    <p className="p-2xs">Content for Tab B.</p>
+                </Tabs.Panel>
+                <Tabs.Panel value="c">
+                    <p className="p-2xs">Content for Tab C.</p>
+                </Tabs.Panel>
             </div>
         </Tabs.Root>
     ),
@@ -313,7 +369,7 @@ export const WithoutPanels: Story = {
     render: function WithoutPanelsStory() {
         const [active, setActive] = React.useState("map");
         return (
-            <div className="flex flex-col gap-4">
+            <div className="gap-2xs flex flex-col">
                 <Tabs.Root value={active} onValueChange={setActive}>
                     <Tabs.List>
                         <Tabs.Tab value="map">Map</Tabs.Tab>
@@ -321,7 +377,7 @@ export const WithoutPanels: Story = {
                         <Tabs.Tab value="chart">Chart</Tabs.Tab>
                     </Tabs.List>
                 </Tabs.Root>
-                <p className="text-sm text-neutral-subtle px-1">
+                <p className="text-body-sm text-neutral-subtle px-4xs">
                     Active view: <strong>{active}</strong>
                 </p>
             </div>
@@ -349,9 +405,15 @@ export const Controlled: Story = {
                     <Tabs.Tab value="b">Beta</Tabs.Tab>
                     <Tabs.Tab value="c">Gamma</Tabs.Tab>
                 </Tabs.List>
-                <Tabs.Panel value="a"><p className="p-4">Alpha panel content.</p></Tabs.Panel>
-                <Tabs.Panel value="b"><p className="p-4">Beta panel content.</p></Tabs.Panel>
-                <Tabs.Panel value="c"><p className="p-4">Gamma panel content.</p></Tabs.Panel>
+                <Tabs.Panel value="a">
+                    <p className="p-2xs">Alpha panel content.</p>
+                </Tabs.Panel>
+                <Tabs.Panel value="b">
+                    <p className="p-2xs">Beta panel content.</p>
+                </Tabs.Panel>
+                <Tabs.Panel value="c">
+                    <p className="p-2xs">Gamma panel content.</p>
+                </Tabs.Panel>
             </Tabs.Root>
         );
     },
@@ -376,15 +438,21 @@ export const CustomTabRender: Story = {
                         {({ isActive }) => (
                             <span className={isActive ? "font-bold" : undefined}>
                                 Tab {value.toUpperCase()}
-                                {isActive && <span className="ml-1 text-xs">●</span>}
+                                {isActive && <span className="text-body-xs ml-4xs">●</span>}
                             </span>
                         )}
                     </Tabs.Tab>
                 ))}
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">Panel A.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">Panel B.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Panel C.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">Panel A.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">Panel B.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Panel C.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };
@@ -404,12 +472,20 @@ export const WithDisabledTab: Story = {
         <Tabs.Root defaultValue="a">
             <Tabs.List>
                 <Tabs.Tab value="a">Available</Tabs.Tab>
-                <Tabs.Tab value="b" disabled>Unavailable</Tabs.Tab>
+                <Tabs.Tab value="b" disabled>
+                    Unavailable
+                </Tabs.Tab>
                 <Tabs.Tab value="c">Available</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="a"><p className="p-4">First panel.</p></Tabs.Panel>
-            <Tabs.Panel value="b"><p className="p-4">This panel is unreachable via the disabled tab.</p></Tabs.Panel>
-            <Tabs.Panel value="c"><p className="p-4">Third panel.</p></Tabs.Panel>
+            <Tabs.Panel value="a">
+                <p className="p-2xs">First panel.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="b">
+                <p className="p-2xs">This panel is unreachable via the disabled tab.</p>
+            </Tabs.Panel>
+            <Tabs.Panel value="c">
+                <p className="p-2xs">Third panel.</p>
+            </Tabs.Panel>
         </Tabs.Root>
     ),
 };

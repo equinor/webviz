@@ -51,13 +51,13 @@ export const Determinate: Story = {
 export const OnEmphasis: Story = {
     decorators: [
         (Story) => (
-            <div className="bg-accent-strong w-80 rounded p-4">
+            <div className="bg-accent-strong p-2xs w-80 rounded">
                 <Story />
             </div>
         ),
     ],
     render: () => (
-        <div className="flex flex-col gap-3">
+        <div className="gap-2xs flex flex-col">
             <LinearProgress tone="on-emphasis" />
             <LinearProgress tone="on-emphasis" variant="determinate" value={60} />
         </div>
@@ -66,7 +66,7 @@ export const OnEmphasis: Story = {
 
 export const DeterminateSteps: Story = {
     render: () => (
-        <div className="flex w-80 flex-col gap-3">
+        <div className="gap-2xs flex w-80 flex-col">
             <LinearProgress variant="determinate" value={0} />
             <LinearProgress variant="determinate" value={25} />
             <LinearProgress variant="determinate" value={50} />

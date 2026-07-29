@@ -151,7 +151,7 @@ export const AllTones: Story = {
             <div className="flex flex-col gap-4">
                 {variants.map((variant) => (
                     <div key={variant} className="flex items-center gap-3">
-                        <span className="w-24 text-right text-sm capitalize opacity-50">{variant}</span>
+                        <span className="text-body-sm w-24 text-right capitalize opacity-50">{variant}</span>
                         {tones.map((tone) => (
                             <Button key={tone} variant={variant} tone={tone}>
                                 {labels[tone]}
@@ -356,7 +356,7 @@ export const GroupSplit: Story = {
             <div className="flex flex-col items-center gap-6">
                 {/* Accent / contained */}
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs opacity-40">contained · accent</span>
+                    <span className="text-body-xs opacity-40">contained · accent</span>
                     <Button.Group split>
                         <Button variant="contained" tone="accent" onClick={() => setSaved((v) => !v)}>
                             <Save fontSize="inherit" />
@@ -370,7 +370,7 @@ export const GroupSplit: Story = {
 
                 {/* Outlined / neutral */}
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs opacity-40">outlined · neutral</span>
+                    <span className="text-body-xs opacity-40">outlined · neutral</span>
                     <Button.Group split>
                         <Button variant="outlined" tone="neutral">
                             <Share fontSize="inherit" />
@@ -384,7 +384,7 @@ export const GroupSplit: Story = {
 
                 {/* Small size */}
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs opacity-40">contained · accent · small</span>
+                    <span className="text-body-xs opacity-40">contained · accent · small</span>
                     <Button.Group split>
                         <Button variant="contained" tone="accent" size="small">
                             Save

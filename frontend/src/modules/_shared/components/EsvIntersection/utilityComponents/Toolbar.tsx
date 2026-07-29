@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Dropdown } from "@mui/base";
 import {
     Add,
     FilterCenterFocus,
@@ -15,7 +14,6 @@ import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
 
 export enum FitInViewStatus {
@@ -89,84 +87,80 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                         </Button>
                     </Tooltip>
                     {showLinkButton && (
-                        <Dropdown
-                            onOpenChange={(_event, open) => {
+                        <Menu.Root
+                            onOpenChange={(open) => {
                                 if (!open) {
                                     props.onHoverViewLink?.(null);
                                 }
                             }}
                         >
-                            <Menu.Root>
-                                <Tooltip content="Link this view with others" side="bottom">
-                                    <Menu.Trigger>
-                                        <button
-                                            className={resolveClassNames(
-                                                "selectable inline-flex items-center rounded",
+                            <Tooltip content="Link this view with others" side="bottom">
+                                <Menu.Trigger>
+                                    <Button
+                                        size="small"
+                                        iconOnly
+                                        variant="ghost"
+                                        layoutStyle={{
+                                            backgroundColor: isAnyLinked ? activeLink.color : undefined,
+                                        }}
+                                    >
+                                        <SyncAlt
+                                            fontSize="inherit"
+                                            className={
                                                 isAnyLinked
                                                     ? "text-accent-strong-on-emphasis opacity-80 transition-opacity hover:opacity-100"
-                                                    : "text-accent-strong",
-                                            )}
-                                            style={{ backgroundColor: isAnyLinked ? activeLink.color : undefined }}
-                                        >
-                                            <SyncAlt fontSize="inherit" />
-                                        </button>
-                                    </Menu.Trigger>
-                                </Tooltip>
-
-                                <Menu.Popup itemSize="small" align="start" side="bottom">
-                                    {viewLinks.map((viewLink) => (
-                                        <Menu.Item
-                                            key={viewLink.id}
-                                            layoutClassName={resolveClassNames(
-                                                "flex items-center gap-2 overflow-hidden",
-                                                viewLink.containsThisView ? "bg-indigo-50" : "",
-                                            )}
-                                            title={viewLink.views.map((v) => v.name).join(", ")}
-                                            onClick={() => props.onToggleViewLink!(viewLink.views[0].id)}
-                                            onMouseEnter={() =>
-                                                props.onHoverViewLink?.(viewLink.views.map((v) => v.id))
+                                                    : "text-accent-subtle"
                                             }
-                                            onMouseLeave={() => props.onHoverViewLink?.(null)}
+                                        />
+                                    </Button>
+                                </Menu.Trigger>
+                            </Tooltip>
+                            <Menu.Popup itemSize="small" align="start" side="bottom">
+                                {viewLinks.map((viewLink) => (
+                                    <Menu.Item
+                                        key={viewLink.id}
+                                        layoutClassName="flex items-center gap-3xs overflow-hidden"
+                                        title={viewLink.views.map((v) => v.name).join(", ")}
+                                        onClick={() => props.onToggleViewLink!(viewLink.views[0].id)}
+                                        onMouseEnter={() => props.onHoverViewLink?.(viewLink.views.map((v) => v.id))}
+                                        onMouseLeave={() => props.onHoverViewLink?.(null)}
+                                    >
+                                        <div
+                                            className="-ml-2xs px-2xs py-4xs flex items-center rounded"
+                                            style={{ backgroundColor: viewLink.color }}
                                         >
-                                            <div
-                                                className="-ml-1.5 flex items-center rounded px-1.5 py-0.5"
-                                                style={{ backgroundColor: viewLink.color }}
-                                            >
-                                                <SyncAlt fontSize="inherit" className="shrink-0 text-white" />
-                                            </div>
-                                            {viewLink.views.map((v) => (
-                                                <span
-                                                    key={v.id}
-                                                    className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                                                    style={{ backgroundColor: v.color ?? "#888" }}
-                                                />
-                                            ))}
-                                            <span className="min-w-0 truncate">
-                                                {viewLink.views.map((v) => v.name).join(", ")}
-                                            </span>
-                                        </Menu.Item>
-                                    ))}
-
-                                    {viewLinks.length > 0 && unlinkedViews.length > 0 && <Menu.Separator />}
-
-                                    {unlinkedViews.map((view) => (
-                                        <Menu.Item
-                                            key={view.id}
-                                            layoutClassName="flex items-center gap-2"
-                                            onClick={() => props.onToggleViewLink!(view.id)}
-                                            onMouseEnter={() => props.onHoverViewLink?.([view.id])}
-                                            onMouseLeave={() => props.onHoverViewLink?.(null)}
-                                        >
+                                            <SyncAlt className="text-neutral-strong-on-emphasis shrink-0" />
+                                        </div>
+                                        {viewLink.views.map((v) => (
                                             <span
-                                                className="inline-block h-3 w-3 shrink-0 rounded-full"
-                                                style={{ backgroundColor: view.color ?? "#888" }}
+                                                key={v.id}
+                                                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                                                style={{ backgroundColor: v.color ?? "#888" }}
                                             />
-                                            <span>{view.name}</span>
-                                        </Menu.Item>
-                                    ))}
-                                </Menu.Popup>
-                            </Menu.Root>
-                        </Dropdown>
+                                        ))}
+                                        <span className="min-w-0 truncate">
+                                            {viewLink.views.map((v) => v.name).join(", ")}
+                                        </span>
+                                    </Menu.Item>
+                                ))}
+                                {viewLinks.length > 0 && unlinkedViews.length > 0 && <Menu.Separator />}
+                                {unlinkedViews.map((view) => (
+                                    <Menu.Item
+                                        key={view.id}
+                                        layoutClassName="flex items-center gap-3xs"
+                                        onClick={() => props.onToggleViewLink!(view.id)}
+                                        onMouseEnter={() => props.onHoverViewLink?.([view.id])}
+                                        onMouseLeave={() => props.onHoverViewLink?.(null)}
+                                    >
+                                        <span
+                                            className="inline-block h-3 w-3 shrink-0 rounded-full"
+                                            style={{ backgroundColor: view.color ?? "#888" }}
+                                        />
+                                        <span>{view.name}</span>
+                                    </Menu.Item>
+                                ))}
+                            </Menu.Popup>
+                        </Menu.Root>
                     )}
                     {expanded && (
                         <>

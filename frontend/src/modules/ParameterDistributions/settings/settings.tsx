@@ -211,7 +211,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
                                         href="https://ert.readthedocs.io/en/latest/reference/configuration/data_types.html"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-indigo-600 underline"
+                                        className="text-info-strong underline"
                                     >
                                         the ERT data types documentation
                                     </a>

@@ -14,7 +14,11 @@ export type PlotProps = {
      * When provided, a download icon is added to the Plotly modebar.
      */
     onDownloadClick?: () => void;
-} & PlotParams;
+
+    layout?: Partial<Plotly.Layout>;
+    data?: Partial<Plotly.Data>[];
+    config?: Partial<Plotly.Config>;
+} & Omit<PlotParams, "data" | "layout" | "config">;
 
 const DOWNLOAD_ICON: Plotly.Icon = {
     width: 24,
@@ -68,15 +72,15 @@ export function Plot(props: PlotProps): React.ReactNode {
     const shouldApplyPlotUpdate = plotUpdateReady ?? true;
 
     // Store previous prop to avoid unnecessary rerenders
-    const [prevLayout, setPrevLayout] = React.useState<PlotParams["layout"]>(layout);
-    const [prevData, setPrevData] = React.useState<PlotParams["data"]>(data);
-    const [prevConfig, setPrevConfig] = React.useState<PlotParams["config"]>(config);
+    const [prevLayout, setPrevLayout] = React.useState<PlotProps["layout"]>(layout);
+    const [prevData, setPrevData] = React.useState<PlotProps["data"]>(data);
+    const [prevConfig, setPrevConfig] = React.useState<PlotProps["config"]>(config);
 
     // ! Plotly seems to mutate objects given to it as props, so we need to clone them
     // ! For example, it changed the data's xAxis from "x1" to "x"
-    const [stableLayout, setStableLayout] = React.useState<PlotParams["layout"]>(layout);
-    const [stableData, setStableData] = React.useState<PlotParams["data"]>(data);
-    const [stableConfig, setStableConfig] = React.useState<PlotParams["config"]>(config);
+    const [stableLayout, setStableLayout] = React.useState<PlotProps["layout"]>(layout);
+    const [stableData, setStableData] = React.useState<PlotProps["data"]>(data);
+    const [stableConfig, setStableConfig] = React.useState<PlotProps["config"]>(config);
 
     const [stableOtherProps, setStableOtherProps] = React.useState<typeof otherProps>(otherProps);
 

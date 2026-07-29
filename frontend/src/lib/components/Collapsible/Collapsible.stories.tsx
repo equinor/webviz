@@ -69,7 +69,7 @@ export const SubGroup: Story = {
     },
     args: {
         title: "Section Title",
-        children: <p className="p-4">This is the collapsible content.</p>,
+        children: <p className="p-2xs">This is the collapsible content.</p>,
     },
 };
 
@@ -91,7 +91,7 @@ export const SubGroupWithAdornment: Story = {
                 </Button>
             }
         >
-            <p className="p-4">Content with an adornment button in the header.</p>
+            <p className="p-2xs">Content with an adornment button in the header.</p>
         </Collapsible.Group>
     ),
 };
@@ -102,7 +102,7 @@ export const ToneDefault: Story = {
     name: "Tone: Default",
     args: {
         title: "Default",
-        children: <p className="p-4">Default tone content.</p>,
+        children: <p className="p-2xs">Default tone content.</p>,
     },
 };
 
@@ -111,7 +111,7 @@ export const ToneWarning: Story = {
     args: {
         title: "Warning",
         tone: "warning",
-        children: <p className="p-4">Warning tone content.</p>,
+        children: <p className="p-2xs">Warning tone content.</p>,
     },
 };
 
@@ -120,7 +120,7 @@ export const ToneDanger: Story = {
     args: {
         title: "Danger",
         tone: "danger",
-        children: <p className="p-4">Danger tone content.</p>,
+        children: <p className="p-2xs">Danger tone content.</p>,
     },
 };
 
@@ -129,7 +129,7 @@ export const ToneSuccess: Story = {
     args: {
         title: "Success",
         tone: "success",
-        children: <p className="p-4">Success tone content.</p>,
+        children: <p className="p-2xs">Success tone content.</p>,
     },
 };
 
@@ -138,7 +138,7 @@ export const ToneInfo: Story = {
     args: {
         title: "Info",
         tone: "info",
-        children: <p className="p-4">Info tone content.</p>,
+        children: <p className="p-2xs">Info tone content.</p>,
     },
 };
 
@@ -155,13 +155,13 @@ export const MultipleGroups: Story = {
     render: () => (
         <>
             <Collapsible.Group title="Section A">
-                <p className="p-4">Content for section A.</p>
+                <p className="p-2xs">Content for section A.</p>
             </Collapsible.Group>
             <Collapsible.Group title="Section B">
-                <p className="p-4">Content for section B.</p>
+                <p className="p-2xs">Content for section B.</p>
             </Collapsible.Group>
             <Collapsible.Group title="Section C">
-                <p className="p-4">Content for section C.</p>
+                <p className="p-2xs">Content for section C.</p>
             </Collapsible.Group>
         </>
     ),
@@ -179,21 +179,21 @@ export const WithScrollArea: Story = {
         <div className="w-80" style={{ height: 300 }}>
             <Collapsible.ScrollArea>
                 <Collapsible.Group title="Section A">
-                    <ul className="space-y-2 p-4">
+                    <ul className="p-2xs space-y-2">
                         {Array.from({ length: 6 }, (_, i) => (
                             <li key={i}>Item A{i + 1}</li>
                         ))}
                     </ul>
                 </Collapsible.Group>
                 <Collapsible.Group title="Section B">
-                    <ul className="space-y-2 p-4">
+                    <ul className="p-2xs space-y-2">
                         {Array.from({ length: 6 }, (_, i) => (
                             <li key={i}>Item B{i + 1}</li>
                         ))}
                     </ul>
                 </Collapsible.Group>
                 <Collapsible.Group title="Section C">
-                    <ul className="space-y-2 p-4">
+                    <ul className="p-2xs space-y-2">
                         {Array.from({ length: 6 }, (_, i) => (
                             <li key={i}>Item C{i + 1}</li>
                         ))}
@@ -215,13 +215,13 @@ export const MixedTones: Story = {
     render: () => (
         <div className="w-80">
             <Collapsible.Group title="All good" tone="success">
-                <p className="p-4">Everything looks healthy.</p>
+                <p className="p-2xs">Everything looks healthy.</p>
             </Collapsible.Group>
             <Collapsible.Group title="Needs attention" tone="warning">
-                <p className="p-4">Some items may need review.</p>
+                <p className="p-2xs">Some items may need review.</p>
             </Collapsible.Group>
             <Collapsible.Group title="Errors found" tone="danger">
-                <p className="p-4">Critical issues require immediate action.</p>
+                <p className="p-2xs">Critical issues require immediate action.</p>
             </Collapsible.Group>
         </div>
     ),

@@ -405,7 +405,7 @@ function Swatch({ name, variable, type }: { name: string; variable: string; type
         <div className="flex items-center rounded hover:bg-neutral" style={{ gap: "1rem", padding: "0.375rem 0.5rem" }}>
             {preview}
             <div className="flex flex-col" style={{ gap: "0.25rem" }}>
-                <div className="font-mono text-sm text-neutral-strong">{name}</div>
+                <div className="font-mono text-body-sm text-neutral-strong">{name}</div>
                 <div className="font-mono text-neutral-subtle" style={{ fontSize: "0.65rem" }}>{variable}</div>
             </div>
         </div>
@@ -415,12 +415,12 @@ function Swatch({ name, variable, type }: { name: string; variable: string; type
 function Section({ title, groups, type }: { title: string; groups: ColorGroup[]; type: "fill" | "stroke" | "border" | "outline" | "text" }) {
     return (
         <section style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-            <h2 className="text-sm font-semibold text-neutral-strong uppercase tracking-wide pb-2 border-b border-neutral">
+            <h2 className="text-body-sm font-semibold text-neutral-strong uppercase tracking-wide pb-3xs border-b border-neutral">
                 {title}
             </h2>
             {groups.map(({ group, entries }) => (
                 <div key={group} style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                    <h3 className="text-xs font-semibold text-neutral-subtle uppercase tracking-wide" style={{ marginBottom: "0.25rem" }}>{group}</h3>
+                    <h3 className="text-body-xs font-semibold text-neutral-subtle uppercase tracking-wide" style={{ marginBottom: "0.25rem" }}>{group}</h3>
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
                         {entries.map(({ name, variable }) => (
                             <Swatch key={name} name={name} variable={variable} type={type} />
@@ -434,7 +434,7 @@ function Section({ title, groups, type }: { title: string; groups: ColorGroup[];
 
 function ColorPalette() {
     return (
-        <div className="p-6 bg-canvas" style={{ height: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "3rem" }}>
+        <div className="p-sm bg-canvas" style={{ height: "100vh", overflowY: "auto", display: "flex", flexDirection: "column", gap: "3rem" }}>
             <Section title="Background / Fill" groups={FILLS} type="fill" />
             <Section title="Stroke" groups={STROKES} type="stroke" />
             <Section title="Border" groups={BORDERS} type="border" />

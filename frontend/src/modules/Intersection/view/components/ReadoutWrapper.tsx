@@ -200,7 +200,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             <PositionReadout
                 coordinates={mouseCursorUtmCoordinate}
                 labels={{ z: "Depth" }}
-                className="absolute bottom-10 right-12 bg-white/50 p-2 backdrop-blur-sm rounded-sm flex gap-2 z-10 text-sm font-mono"
+                className="text-body-sm z-elevated gap-3xs p-3xs bg-surface/50 absolute right-12 bottom-10 flex rounded-sm font-mono backdrop-blur-sm"
                 visible={!!mouseCursorUtmCoordinate}
             />
         </>

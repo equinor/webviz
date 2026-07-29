@@ -36,7 +36,7 @@ export const Default: Story = {};
 
 export const Sizes: Story = {
     render: () => (
-        <div className="flex items-center gap-4">
+        <div className="gap-2xs flex items-center">
             <CircularProgress size={16} />
             <CircularProgress size={24} />
             <CircularProgress size={32} />
@@ -48,7 +48,7 @@ export const Sizes: Story = {
 
 export const OnEmphasis: Story = {
     render: () => (
-        <div className="bg-accent-strong flex items-center gap-4 rounded p-4">
+        <div className="bg-accent-strong p-2xs flex items-center gap-4 rounded">
             <CircularProgress tone="on-emphasis" size={16} />
             <CircularProgress tone="on-emphasis" size={24} />
             <CircularProgress tone="on-emphasis" size={32} />

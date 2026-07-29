@@ -59,6 +59,7 @@ export function Virtualization(props: VirtualizationProps) {
             const scrollSide = defaultedProps.direction === "horizontal" ? "scrollLeft" : "scrollTop";
 
             // ! This will trigger the onScroll event handler
+            // eslint-disable-next-line react-hooks/immutability -- Current version of eslint doesn't properly recognize ref objects as mutable
             defaultedProps.containerRef.current[scrollSide] = Math.max(
                 0,
                 defaultedProps.startIndex * defaultedProps.itemSize,

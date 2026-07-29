@@ -70,7 +70,7 @@ export function CopyCellValue(props: CopyCellValueProps): React.ReactNode {
         <div className="relative h-full w-full" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
             <div
                 className={resolveClassNames(
-                    "absolute top-1/2 right-1 z-10 -translate-y-1/2 transform rounded-full bg-gray-100 text-black transition-transform duration-200",
+                    "z-elevated absolute top-1/2 right-1 -translate-y-1/2 transform rounded-full transition-transform duration-200",
                     {
                         "scale-100": isHovered || status !== "idle",
                         "not-focus-within:scale-0": !isHovered && status === "idle",
