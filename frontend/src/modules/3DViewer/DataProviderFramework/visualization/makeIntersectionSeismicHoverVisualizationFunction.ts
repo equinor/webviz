@@ -68,6 +68,10 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
 
             data.push(hoverPos.toSpliced(-1, 1, -fenceDepthPos));
 
+            const depthMarkerVisible =
+                hoverInfo.depth !== null &&
+                inBounds(hoverInfo.depth, fenceData.min_fence_depth, fenceData.max_fence_depth);
+
             return [
                 new ColumnLayer({
                     ...FENCE_HIGHLIGHT_LAYER_PROPS,
@@ -76,7 +80,7 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
                     radius: 46,
                     getPosition: (d) => d,
                     getElevation: 1,
-                    visible: hoverInfo.depth !== null,
+                    visible: depthMarkerVisible,
                 }),
 
                 new ColumnLayer({
@@ -111,4 +115,9 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
             ];
         },
     };
+}
+
+/** Similar to lodash's inRange, but with inclusive max  */
+function inBounds(n: number, min: number, max: number) {
+    return n >= min && n <= max;
 }
