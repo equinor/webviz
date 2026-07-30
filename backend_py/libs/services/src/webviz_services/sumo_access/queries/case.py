@@ -10,7 +10,7 @@ async def get_stratigraphic_column_identifier_async(sumo_client: SumoClient, cas
         "query": {
             "bool": {
                 "must": [
-                    {"match": {"fmu.case.uuid.keyword": case_id}},
+                    {"term": {"fmu.case.uuid.keyword": case_id}},
                 ]
             }
         },
@@ -28,7 +28,7 @@ async def get_field_identifiers_async(sumo_client: SumoClient, case_id: str) -> 
         "query": {
             "bool": {
                 "must": [
-                    {"match": {"fmu.case.uuid.keyword": case_id}},
+                    {"term": {"fmu.case.uuid.keyword": case_id}},
                 ]
             }
         },

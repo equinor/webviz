@@ -47,11 +47,11 @@ async def get_grid_geometry_blob_id_async(
         "query": {
             "bool": {
                 "must": [
-                    {"match": {"fmu.case.uuid.keyword": case_uuid}},
-                    {"match": {"class": "cpgrid"}},
-                    {"match": {"fmu.ensemble.name": ensemble_name}},
-                    {"match": {"fmu.realization.id": realization}},
-                    {"match": {"data.name.keyword": grid_name}},
+                    {"term": {"fmu.case.uuid.keyword": case_uuid}},
+                    {"term": {"class.keyword": "cpgrid"}},
+                    {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
+                    {"term": {"fmu.realization.id": realization}},
+                    {"term": {"data.name.keyword": grid_name}},
                 ]
             }
         },
@@ -60,7 +60,6 @@ async def get_grid_geometry_blob_id_async(
     response = await sumo_client.post_async("/search", json=payload)
 
     result = response.json()
-    print(result)
     hits = result["hits"]["hits"]
     if len(hits) != 1:
         raise MultipleDataMatchesError(f"Expected 1 hit, got {len(hits)}", Service.SUMO)
