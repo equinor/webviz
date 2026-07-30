@@ -55,7 +55,7 @@ export const selectedVfpTableNameAtom = persistableFixableAtom<string | null>({
             return "loading";
         }
 
-        return !vfpTableNamesQuery.data ? "error" : "loaded";
+        return "loaded";
     },
     isValidFunction: ({ get, value }) => {
         const availableVfpTableNames = get(availableVfpTableNamesAtom);

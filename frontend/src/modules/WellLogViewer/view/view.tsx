@@ -24,7 +24,14 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
     const propagatedErrorMessage = usePropagateQueryErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
 
-    statusWriter.setLoading(isLoadingWellboreHeaders || wellboreTrajectoryDataQuery.isFetching);
+    // Only treat the trajectory query's pending state as "loading" once a wellbore is actually
+    // selected; while nothing is selected the query is intentionally disabled and stays pending forever.
+    const isLoading =
+        !providerManager ||
+        isLoadingWellboreHeaders ||
+        (Boolean(selectedWellboreHeader) && wellboreTrajectoryDataQuery.isPending);
+
+    statusWriter.setLoading(isLoading);
 
     React.useEffect(
         function setModuleName() {
@@ -40,13 +47,6 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
         },
         [props.viewContext, selectedWellboreHeader?.uniqueWellboreIdentifier],
     );
-
-    // Only treat the trajectory query's pending state as "loading" once a wellbore is actually
-    // selected; while nothing is selected the query is intentionally disabled and stays pending forever.
-    const isLoading =
-        !providerManager ||
-        isLoadingWellboreHeaders ||
-        (Boolean(selectedWellboreHeader) && wellboreTrajectoryDataQuery.isPending);
 
     let infoMessage: string | undefined;
     let errorMessage: string | undefined;
