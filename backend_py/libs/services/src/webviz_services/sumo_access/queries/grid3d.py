@@ -47,11 +47,11 @@ async def get_grid_geometry_blob_id_async(
         "query": {
             "bool": {
                 "must": [
-                    {"match": {"_sumo.parent_object.keyword": case_uuid}},
-                    {"match": {"class": "cpgrid"}},
-                    {"match": {"fmu.ensemble.name": ensemble_name}},
-                    {"match": {"fmu.realization.id": realization}},
-                    {"match": {"data.name.keyword": grid_name}},
+                    {"term": {"fmu.case.uuid.keyword": case_uuid}},
+                    {"term": {"class.keyword": "cpgrid"}},
+                    {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
+                    {"term": {"fmu.realization.id": realization}},
+                    {"term": {"data.name.keyword": grid_name}},
                 ]
             }
         },
@@ -82,7 +82,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
                 {
                     "bool": {
                         "must": [
-                            {"term": {"_sumo.parent_object.keyword": case_uuid}},
+                            {"term": {"fmu.case.uuid.keyword": case_uuid}},
                             {"term": {"class.keyword": "cpgrid"}},
                             {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
                             {"term": {"fmu.realization.id": realization}},
@@ -93,7 +93,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
                 {
                     "bool": {
                         "must": [
-                            {"term": {"_sumo.parent_object.keyword": case_uuid}},
+                            {"term": {"fmu.case.uuid.keyword": case_uuid}},
                             {"term": {"class.keyword": "cpgrid_property"}},
                             {"term": {"fmu.ensemble.name.keyword": ensemble_name}},
                             {"term": {"fmu.realization.id": realization}},
