@@ -68,8 +68,8 @@ export function convertFromPersistableViewState(persistableViewState: Persistabl
         zoom: persistableViewState.zoom,
 
         // ! Legacy workaround – awaiting versioning system
-        // These properties no longer exists in a 2D view-state
-        rotationOrbit: persistableViewState.rotationOrbit ?? -1,
-        rotationX: persistableViewState.rotationX ?? -1,
+        // These properties no longer exist in a 2D view-state
+        rotationOrbit: persistableViewState.rotationOrbit ?? 0,
+        rotationX: persistableViewState.rotationX ?? 0,
     };
 }
