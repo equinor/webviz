@@ -210,5 +210,5 @@ function computeVfpTableQueryDependenciesState({ get }: { get: (atom: any) => an
     if (vfpTableQuery.isFetching) {
         return "loading";
     }
-    return !vfpTableQuery.data ? "error" : "loaded";
+    return "loaded";
 }
