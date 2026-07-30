@@ -8,8 +8,8 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import { viewStateAtom } from "./atoms/baseAtoms";
 
 type PersistableViewState = {
-    rotationOrbit: number;
-    rotationX: number;
+    rotationOrbit?: number;
+    rotationX?: number;
     target?: Vec2;
     zoom?: number;
 };
@@ -21,13 +21,14 @@ export type SerializedView = {
 const schemaBuilder = new SchemaBuilder<SerializedView>(({ inject }) => ({
     properties: {
         viewState: {
-            properties: {
-                rotationOrbit: { type: "float64" },
-                rotationX: { type: "float64" },
-            },
             optionalProperties: {
                 target: inject("Vec2"),
                 zoom: { type: "float64" },
+
+                // ! Legacy workaround – awaiting versioning system
+                // These have stopped being part of the 2D view-state; outdated persisted states might still have these fields
+                rotationOrbit: { type: "float64" },
+                rotationX: { type: "float64" },
             },
             nullable: true,
         },
@@ -49,8 +50,6 @@ export const deserializeView: DeserializeStateFunction<SerializedView> = (raw, s
 
 function convertToPersistableViewState(viewState: ViewStateType): PersistableViewState {
     return {
-        rotationOrbit: viewState.rotationOrbit,
-        rotationX: viewState.rotationX,
         target: viewState.target
             ? {
                   x: viewState.target[0],
@@ -63,11 +62,14 @@ function convertToPersistableViewState(viewState: ViewStateType): PersistableVie
 
 export function convertFromPersistableViewState(persistableViewState: PersistableViewState): ViewStateType {
     return {
-        rotationOrbit: persistableViewState.rotationOrbit,
-        rotationX: persistableViewState.rotationX,
         target: persistableViewState.target
             ? [persistableViewState.target.x, persistableViewState.target.y]
             : undefined,
         zoom: persistableViewState.zoom,
+
+        // ! Legacy workaround – awaiting versioning system
+        // These properties no longer exists in a 2D view-state
+        rotationOrbit: persistableViewState.rotationOrbit ?? -1,
+        rotationX: persistableViewState.rotationX ?? -1,
     };
 }
