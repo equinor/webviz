@@ -47,10 +47,10 @@
         "@tanstack/query-core": "^5.101.0",
         "@tanstack/react-query": "^5.101.0",
         "@tanstack/react-query-devtools": "^5.101.0",
-        "@webviz/group-tree-plot": "^1.6.19",
-        "@webviz/subsurface-viewer": "^1.16.0",
-        "@webviz/well-completions-plot": "^1.8.9",
-        "@webviz/well-log-viewer": "^2.6.10",
+        "@webviz/group-tree-plot": "^1.7.10",
+        "@webviz/subsurface-viewer": "^1.18.4",
+        "@webviz/well-completions-plot": "^1.9.10",
+        "@webviz/well-log-viewer": "^2.9.0",
         "animate.css": "^4.1.1",
         "axios": "^1.18.0",
         "buffer": "^6.0.3",
@@ -79,15 +79,7 @@
     "overrides": {
         "@playwright/experimental-ct-react": {
             "vite": "$vite"
-        },
-        "@deck.gl/core": "~9.1.15",
-        "@deck.gl/layers": "~9.1.15",
-        "@deck.gl/aggregation-layers": "~9.1.15",
-        "@deck.gl/extensions": "~9.1.15",
-        "@deck.gl/geo-layers": "~9.1.15",
-        "@deck.gl/json": "~9.1.15",
-        "@deck.gl/mesh-layers": "~9.1.15",
-        "@deck.gl/react": "~9.1.15"
+        }
     },
     "devDependencies": {
         "@hey-api/openapi-ts": "~0.99.0",
