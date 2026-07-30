@@ -299,6 +299,17 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             maxProperty = Math.max(maxProperty, data.properties[i]);
         }
 
+        if (minProperty === Number.MAX_VALUE && maxProperty === -Number.MAX_VALUE) {
+            minProperty = -1;
+            maxProperty = 1;
+        }
+
+        if (minProperty === maxProperty) {
+            // Avoid division by zero in encodePropertyToColor
+            minProperty -= 1;
+            maxProperty += 1;
+        }
+
         this.setState({
             ...this.state,
             minProperty,
