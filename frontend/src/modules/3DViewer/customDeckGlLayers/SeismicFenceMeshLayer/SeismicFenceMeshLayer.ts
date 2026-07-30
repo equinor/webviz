@@ -47,9 +47,11 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
 }
 
 function encodePropertyToColor(property: number, min: number, max: number): [number, number, number] {
+    if (isNaN(property)) return [1, 0, 0]; // Allow NaN values to be explicitly picked
+
     const normalized = (property - min) / (max - min);
     const safeNormalized = Math.max(1 / 16777215, normalized); // avoid zero
-    const colorIndex = Math.floor(safeNormalized * 16777215);
+    const colorIndex = Math.floor(safeNormalized * 16777215) + 1; // Add 1 to separate from
     const r = (colorIndex >> 16) & 255;
     const g = (colorIndex >> 8) & 255;
     const b = colorIndex & 255;
@@ -57,7 +59,9 @@ function encodePropertyToColor(property: number, min: number, max: number): [num
 }
 
 function decodeColorToProperty(r: number, g: number, b: number, min: number, max: number): number {
-    const colorIndex = r * 256 * 256 + g * 256 + b;
+    if (isEqual([r, g, b], [1, 0, 0])) return NaN;
+
+    const colorIndex = r * 256 * 256 + g * 256 + b - 1;
     const normalized = colorIndex / 16777215;
     return normalized * (max - min) + min;
 }
@@ -318,7 +322,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         let colorIndex = 0;
         for (let i = 0; i < data.properties.length; i++) {
-            const property = isNaN(data.properties[i]) ? 0 : data.properties[i];
+            const trueProperty = data.properties[i];
+            const property = isNaN(trueProperty) ? 0 : trueProperty;
 
             const [r, g, b, a] = colorMapFunction(property);
             colorsArray[colorIndex * 4 + 0] = r / 255;
@@ -326,7 +331,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             colorsArray[colorIndex * 4 + 2] = b / 255;
             colorsArray[colorIndex * 4 + 3] = a / 255;
 
-            const [r2, g2, b2] = encodePropertyToColor(property, minProperty, maxProperty);
+            const [r2, g2, b2] = encodePropertyToColor(trueProperty, minProperty, maxProperty);
             pickingColorsArray[i * 3 + 0] = r2;
             pickingColorsArray[i * 3 + 1] = g2;
             pickingColorsArray[i * 3 + 2] = b2;
