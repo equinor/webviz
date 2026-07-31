@@ -99,6 +99,8 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
 
+    private _panEnabled: boolean = true;
+
     private _hiddenViews: View[] = []; // plugin registered
     private _hiddenViewStatePatch: Record<string, any> = {};
     private _layerFilterWrappers: ((prev?: any) => any)[] = [];
@@ -150,29 +152,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     disablePanning() {
-        if (!this._ref) {
-            return;
-        }
-
-        this._ref.deck?.setProps({
-            controller: {
-                dragPan: false,
-                dragRotate: false,
-            },
-        });
+        this._panEnabled = false;
+        this.redraw();
     }
 
     enablePanning() {
-        if (!this._ref) {
-            return;
-        }
-
-        this._ref.deck?.setProps({
-            controller: {
-                dragRotate: true,
-                dragPan: true,
-            },
-        });
+        this._panEnabled = true;
+        this.redraw();
     }
 
     getDeck() {
@@ -383,6 +369,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 viewports: (props.views?.viewports ?? []).map((viewport) => ({
                     ...viewport,
                     layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
+                    controller: {
+                        dragRotate: this._panEnabled,
+                        dragPan: this._panEnabled,
+                    },
                 })),
                 layout: props.views?.layout ?? [1, 1],
             },
