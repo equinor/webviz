@@ -124,16 +124,18 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
                 const editingId = polylinesPlugin.getCurrentEditingPolylineId();
-                // Only update intersection polylines when not editing a polyline
-                if (editingId === null) {
-                    // We haven't changed all polylines, only the ones related to this field
-                    intersectionPolylines.updatePolylines(
-                        convertPolylinesToIntersectionPolylines(polylinesPlugin.getPolylines(), props.fieldId),
-                    );
-                } else {
-                    const current = polylinesPlugin.getPolylines().find((p) => p.id === editingId);
-                    setActivePolylineName(current?.name);
+                if (editingId !== null) {
+                    setActivePolylineName(polylinesPlugin.getActivePolyline()?.name);
                 }
+            });
+
+            const unsubscribeFromPolylinesCommitted = polylinesPlugin
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PolylinesPluginTopic.POLYLINES_COMMITTED)(() => {
+                // We haven't changed all polylines, only the ones related to this field
+                intersectionPolylines.updatePolylines(
+                    convertPolylinesToIntersectionPolylines(polylinesPlugin.getPolylines(), props.fieldId),
+                );
             });
 
             const unsubscribeFromIntersectionPolylines = intersectionPolylines.subscribe(
@@ -150,6 +152,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             return function cleanupDeckGlManager() {
                 manager.beforeDestroy();
                 unsubscribeFromPolylinesPlugin();
+                unsubscribeFromPolylinesCommitted();
                 unsubscribeFromIntersectionPolylines();
             };
         },
@@ -167,18 +170,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     function handleVerticalScaleChange(value: number) {
         setVerticalScale(value);
     }
-
-    const handlePolylineNameChange = React.useCallback((name: string) => {
-        const plugin = polylinesPluginRef.current;
-        const editingId = plugin?.getCurrentEditingPolylineId();
-        if (!plugin || !editingId) return;
-
-        const updated = plugin
-            .getPolylines()
-            .map((polyline) => (polyline.id === editingId ? { ...polyline, name } : polyline));
-        plugin.setPolylines(updated);
-        setActivePolylineName(name);
-    }, []);
 
     let adjustedLayers: DeckGlLayer[] = [...props.layers];
     let adjustedViewports = [...props.views.viewports];
@@ -208,7 +199,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
                 hasActivePolyline={Boolean(polylinesPluginRef.current.getCurrentEditingPolylineId())}
-                onPolylineNameChange={handlePolylineNameChange}
                 activePolylineName={activePolylineName}
             />
             <ContextMenu deckGlManager={deckGlManagerRef.current} />
