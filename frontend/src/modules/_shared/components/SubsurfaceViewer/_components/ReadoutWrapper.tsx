@@ -344,9 +344,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             viewports: props.views.viewports,
             layout: props.views?.layout ?? [1, 1],
         },
-        lights: {
-            ...(ctx.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
-        },
+        lights: { ...LIGHTS },
         verticalScale: props.verticalScale,
         scale: {
             visible: true,
@@ -464,32 +462,23 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 }
 
-const LIGHTS_2D: LightsType = {
-    pointLights: [
-        {
-            position: [0, 0, 1],
-            intensity: 0.0,
-        },
-    ],
-    headLight: {
-        intensity: 0.0,
-        color: [255, 255, 255],
-    },
-    ambientLight: { intensity: 2.9, color: [255, 255, 255] },
-} as const;
-
-const LIGHTS_3D: LightsType = {
-    pointLights: [
-        {
-            position: [0, 0, 1],
-            intensity: 0.0,
-        },
-    ],
-    headLight: {
-        intensity: 1.0,
-        color: [255, 255, 255],
-    },
+const LIGHTS: LightsType = {
     ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+    directionalLights: [
+        {
+            direction: [0, -1, -1],
+            intensity: 0.3,
+        },
+        {
+            direction: [0, 1, -1],
+            intensity: 0.3,
+        },
+
+        {
+            direction: [1, 0, -1],
+            intensity: 0.3,
+        },
+    ],
 } as const;
 
 /**
