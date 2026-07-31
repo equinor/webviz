@@ -344,7 +344,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             viewports: props.views.viewports,
             layout: props.views?.layout ?? [1, 1],
         },
-        lights: { ...LIGHTS },
+        lights: LIGHTS,
         verticalScale: props.verticalScale,
         scale: {
             visible: true,
