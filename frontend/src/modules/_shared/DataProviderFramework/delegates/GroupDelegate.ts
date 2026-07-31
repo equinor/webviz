@@ -2,7 +2,12 @@ import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
-import { DataProvider } from "../framework/DataProvider/DataProvider";
+import {
+    DataProvider,
+    DataProviderStatus,
+    DataProviderTopic,
+    isDataProvider,
+} from "../framework/DataProvider/DataProvider";
 import { DeserializationAssistant } from "../framework/utils/DeserializationAssistant";
 import { instanceofItemGroup, type Item } from "../interfacesAndTypes/entities";
 import type { SerializedItem } from "../interfacesAndTypes/serialization";
@@ -271,6 +276,38 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
         this.incrementTreeRevisionNumber();
+    }
+
+    waitUntilAllDescendantDataProvidersAreReady(callback: () => void): void {
+        const providers = this.getDescendantItems(isDataProvider) as DataProvider<any, any>[];
+        const pending = new Set(
+            providers.filter(
+                (p) => p.getStatus() === DataProviderStatus.IDLE || p.getStatus() === DataProviderStatus.LOADING,
+            ),
+        );
+
+        if (pending.size === 0) {
+            callback();
+            return;
+        }
+
+        for (const provider of pending) {
+            const key = `readiness:${provider.getItemDelegate().getId()}`;
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                key,
+                provider.getPublishSubscribeDelegate().makeSubscriberFunction(DataProviderTopic.STATUS)(() => {
+                    const status = provider.getStatus();
+                    if (status === DataProviderStatus.IDLE || status === DataProviderStatus.LOADING) {
+                        return;
+                    }
+                    this._unsubscribeFunctionsManagerDelegate.unsubscribe(key);
+                    pending.delete(provider);
+                    if (pending.size === 0) {
+                        callback();
+                    }
+                }),
+            );
+        }
     }
 
     private publishTopic(topic: GroupDelegateTopic) {

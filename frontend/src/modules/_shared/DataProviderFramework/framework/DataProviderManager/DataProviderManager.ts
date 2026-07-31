@@ -99,7 +99,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._groupDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER_ABOUT_TO_CHANGE)(() => {
-                this.publishTopic(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
+                this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS_ABOUT_TO_CHANGE);
             }),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -107,8 +107,8 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
             this._groupDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
-                this.publishTopic(DataProviderManagerTopic.DATA_REVISION);
-                this.publishTopic(DataProviderManagerTopic.ITEMS);
+                this.increaseDataRevisionNumber();
+                this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS);
             }),
         );
 
@@ -141,16 +141,25 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         return this._globalSettings[key] ?? null;
     }
 
-    publishTopic(topic: DataProviderManagerTopic): void {
+    private publishTopic(topic: DataProviderManagerTopic): void {
+        this._publishSubscribeDelegate.notifySubscribers(topic);
+    }
+
+    publishTopicIfSerialized(topic: DataProviderManagerTopic): void {
         if (this._deserializing) {
             return;
         }
 
-        if (topic === DataProviderManagerTopic.DATA_REVISION) {
-            this._dataRevision++;
+        this.publishTopic(topic);
+    }
+
+    increaseDataRevisionNumber(): void {
+        if (this._deserializing) {
+            return;
         }
 
-        this._publishSubscribeDelegate.notifySubscribers(topic);
+        this._dataRevision++;
+        this.publishTopic(DataProviderManagerTopic.DATA_REVISION);
     }
 
     getWorkbenchSession(): WorkbenchSession {
@@ -210,9 +219,13 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         this._deserializing = true;
         this._itemDelegate.deserializeState(serializedState);
         this._groupDelegate.deserializeChildren(serializedState.children);
-        this._deserializing = false;
 
-        this.publishTopic(DataProviderManagerTopic.ITEMS);
+        // Waiting for all descendants to be ready before updating the deserializing flag and notifying subscribers about the items.
+        this._groupDelegate.waitUntilAllDescendantDataProvidersAreReady(() => {
+            this._deserializing = false;
+            this.increaseDataRevisionNumber();
+            this.publishTopicIfSerialized(DataProviderManagerTopic.ITEMS);
+        });
     }
 
     makeGroupColor(): string {
