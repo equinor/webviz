@@ -580,7 +580,14 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 label: "Delete",
                 onClick: () => {
                     this._polylines = this._polylines.filter((polyline) => polyline.id !== pickingInfo.polylineId);
-                    this.setCurrentEditingPolylineId(null, true);
+                    // Deleting a polyline other than the one currently being edited must not
+                    // touch the active editing session/draft. This should only be able to match
+                    // the active id defensively, since the active polyline is excluded from the
+                    // pickable layer this context menu is opened from.
+                    if (pickingInfo.polylineId === this._currentEditingPolylineId) {
+                        this.discardActivePolyline();
+                    }
+                    this.requireRedraw();
                     this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
                     this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES_COMMITTED);
                 },

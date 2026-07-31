@@ -50,8 +50,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     if (editingPolylineId !== prevEditingPolylineId) {
         setPrevEditingPolylineId(editingPolylineId);
-        if (activePolyline) {
-            setPolylineName(activePolyline.name);
+        // Read straight from the plugin rather than the ACTIVE_POLYLINE hook value above: the
+        // plugin always mutates its draft before notifying either topic, so this is guaranteed
+        // current, whereas ACTIVE_POLYLINE and EDITING_POLYLINE_ID are notified separately and
+        // aren't guaranteed to land in the same render.
+        const currentActivePolyline = props.polylinesPlugin.getActivePolyline();
+        if (currentActivePolyline) {
+            setPolylineName(currentActivePolyline.name);
         }
     }
 
