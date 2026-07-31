@@ -89,7 +89,7 @@ def _build_realization_surfs_query_dict(case_uuid: str, ensemble_name: str, time
     must_not_arr: list[dict] = []
 
     must_arr.append({"term": {"class.keyword": "surface"}})
-    must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
+    must_arr.append({"term": {"fmu.case.uuid.keyword": case_uuid}})
     must_arr.append({"term": {"fmu.ensemble.name.keyword": ensemble_name}})
     must_arr.append({"term": {"data.is_observation": False}})
     must_arr.append({"term": {"data.format": "irap_binary"}})
@@ -128,7 +128,7 @@ def _build_observed_surfs_query_dict(case_uuid: str, time_type: SurfTimeType) ->
     must_not_arr: list[dict] = []
 
     must_arr.append({"term": {"class.keyword": "surface"}})
-    must_arr.append({"term": {"_sumo.parent_object.keyword": case_uuid}})
+    must_arr.append({"term": {"fmu.case.uuid.keyword": case_uuid}})
     must_arr.append({"term": {"fmu.context.stage.keyword": "case"}})
     must_arr.append({"term": {"data.is_observation": True}})
     must_arr.append({"term": {"data.format": "irap_binary"}})

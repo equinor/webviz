@@ -116,6 +116,11 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
             .filter((value) => !Number.isNaN(value))
             .reduce((acc, value) => Math.max(acc, value), -Infinity);
 
+        // Discard infinite scales
+        if (minValue === Infinity || maxValue === -Infinity) {
+            return null;
+        }
+
         return [minValue, maxValue];
     }
 
