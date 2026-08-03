@@ -68,7 +68,7 @@ export function createSeismicLayerItemsMaker({
 
     const seismicFenceSectionLengths = getStoredData("seismicFencePolylineWithSectionLengths")?.actualSectionLengths;
 
-    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading || !valueRange) {
+    if (!fenceData || !seismicFenceSectionLengths || !colorScale || isLoading) {
         return null;
     }
 
@@ -87,7 +87,7 @@ export function createSeismicLayerItemsMaker({
 
     const adjustedColorScale = colorScale.clone();
     if (!useCustomColorScaleBoundaries) {
-        const { min, max, mid } = createSeismicColorScaleValues(valueRange);
+        const { min, max, mid } = createSeismicColorScaleValues(valueRange ?? [-1, 1]);
         adjustedColorScale.setRangeAndMidPoint(min, max, mid);
     }
 

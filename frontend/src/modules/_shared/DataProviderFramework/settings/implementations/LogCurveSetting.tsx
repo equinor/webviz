@@ -47,9 +47,9 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
             typeof v.logName !== "string" ||
             typeof v.curveName !== "string" ||
             typeof v.curveUnit !== "string" ||
-            typeof v.curveDescription !== "string"
+            typeof v.source !== "string"
         ) {
-            throw new Error("Expected object with string properties: logName, curveName, curveUnit, curveDescription");
+            throw new Error("Expected object with string properties: logName, curveName, curveUnit, source");
         }
 
         return parsed as ValueType;
@@ -76,7 +76,11 @@ export class LogCurveSetting implements CustomSettingImplementation<ValueType, V
     }
 
     isValueValid(value: ValueType, valueConstraints: ValueConstraintsType): boolean {
-        return isValueValid<ValueType, WellboreLogCurveHeader_api>(value, valueConstraints, (v) => v);
+        return isValueValid<string, WellboreLogCurveHeader_api>(
+            `${value?.logName}::${value?.logName}`,
+            valueConstraints,
+            (v) => `${v.logName}::${v.logName}`,
+        );
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
