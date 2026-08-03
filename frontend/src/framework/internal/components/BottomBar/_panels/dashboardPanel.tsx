@@ -331,6 +331,7 @@ type EditDashboardMetadataDialogProps = {
 };
 
 function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
+    const { onClose } = props;
     const workbenchSession = useActiveSession();
 
     const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
@@ -358,7 +359,7 @@ function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
                     .saveSession()
                     .then((result) => {
                         if (result) {
-                            props.onClose?.();
+                            onClose?.();
                         }
                     })
                     .catch((error) => {
@@ -367,7 +368,7 @@ function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
                 return;
             }
         },
-        [name, props],
+        [name, description, props.dashboard, props.workbench, onClose],
     );
 
     function handleCancel() {
@@ -429,7 +430,7 @@ function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
                                 rows={3}
                                 bottomAdornment={
                                     <Tooltip
-                                        content={`Your descriptions is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
+                                        content={`Your description is currently using ${description.length} out of the maximum ${MAX_DESCRIPTION_LENGTH} characters.`}
                                     >
                                         <Typography
                                             size="sm"

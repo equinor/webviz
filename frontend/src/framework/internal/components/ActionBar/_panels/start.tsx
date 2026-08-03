@@ -58,7 +58,6 @@ function EnsembleSettingsButton(props: EnsembleSettingsButtonProps): React.React
             content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
             side="bottom"
         >
-            {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
             <Button
                 disabled={isSnapshot}
                 iconOnly

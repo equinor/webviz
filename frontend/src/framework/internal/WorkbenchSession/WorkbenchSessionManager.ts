@@ -807,7 +807,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             const result = await ConfirmationService.confirm({
                 title: "Replace current dashboard with template?",
                 message:
-                    "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
+                    "By applying this template, your current dashboard will be replaced and lose its state. Do you want to proceed?",
                 actions: [
                     { id: "cancel", label: "No, cancel" },
                     { id: "delete", label: "Yes, proceed", color: "danger" },

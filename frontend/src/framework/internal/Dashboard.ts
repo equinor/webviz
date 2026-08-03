@@ -535,6 +535,10 @@ export function useEnsembleRealizationFilterFunc(dashboard: Dashboard): Ensemble
 
     React.useEffect(
         function subscribeToEnsembleRealizationFilterSetChanges() {
+            // Ensure the returned function always matches the current dashboard, even if the
+            // dashboard changes without any filter-set change events.
+            setStoredEnsembleRealizationFilterFunc(() => createEnsembleRealizationFilterFuncForDashboard(dashboard));
+
             function handleEnsembleRealizationFilterSetChanged() {
                 setStoredEnsembleRealizationFilterFunc(() =>
                     createEnsembleRealizationFilterFuncForDashboard(dashboard),
