@@ -23,7 +23,6 @@ const HIGHLIGHT_COLOR = [255, 0, 0, 180] as Color;
 const FENCE_HIGHLIGHT_LAYER_PROPS: Partial<ColumnLayerProps> = {
     diskResolution: 20,
     radiusUnits: "pixels",
-
     flatShading: true,
     elevationScale: 1,
     extruded: true,
@@ -64,7 +63,10 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
                 lengthAlong,
             );
 
-            if (!hoverPos) throw new Error("Expected valid path position for hover length along polyline");
+            // This case should never fire, as a valid hover payload implies the position exists
+            if (!hoverPos) {
+                throw new Error("Expected valid path position for hover length along polyline");
+            }
 
             data.push(hoverPos.toSpliced(-1, 1, -fenceDepthPos));
 

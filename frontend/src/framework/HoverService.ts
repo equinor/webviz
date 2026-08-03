@@ -177,7 +177,9 @@ export function usePublishHoverValue<T extends keyof HoverData>(
 
     return React.useCallback(
         function updateHoverValue(newValue: HoverData[T], caller = "generic") {
-            console.debug(`[HoverService] ${moduleInstanceId} published to ${topic}`, newValue);
+            if (import.meta.env.DEV) {
+                console.debug(`[HoverService] ${moduleInstanceId} published to ${topic}`, newValue);
+            }
 
             callerPayloadsRef.current[caller] = newValue;
 

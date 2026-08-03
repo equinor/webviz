@@ -385,6 +385,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         }
 
         return {
+            // Note that we return the original info without the normal space transform, later
+            // layer picks should always assume non-translated data
             ...info,
             ...extraInfo,
             properties,

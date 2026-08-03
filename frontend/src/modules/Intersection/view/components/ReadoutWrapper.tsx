@@ -20,6 +20,8 @@ import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFram
 import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
+import { inBounds } from "../utils/boundsUtils";
+
 const AXES_LABELS = { xLabel: "Length along", yLabel: "Depth" };
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements.
@@ -37,6 +39,7 @@ export type ReadoutWrapperProps = {
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
     bounds: Bounds;
+    focusBounds: Bounds | null;
     verticalScale: number;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
@@ -163,16 +166,28 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     // External hover on fence
     // - vertical red line at the length-along position
     if (fenceSourceId && !isLocallyHoveringRef.current && hoveredFence?.fenceId === fenceSourceId) {
-        const yExtension = Math.abs(props.bounds.y[1] - props.bounds.y[0]) * 0.1;
+        const bounds = props.focusBounds ?? props.bounds;
+
+        const yExtension = Math.abs(bounds.y[1] - bounds.y[0]) * 0.01;
+
         highlightItems.push({
             shape: HighlightItemShape.LINE,
             line: [
-                [hoveredFence.lengthAlong, props.bounds.y[0] - yExtension],
-                [hoveredFence.lengthAlong, props.bounds.y[1] + yExtension],
+                [hoveredFence.lengthAlong, bounds.y[0] - yExtension],
+                [hoveredFence.lengthAlong, bounds.y[1] + yExtension],
             ],
             color: "red",
             paintOrder: 5,
         });
+
+        if (hoveredFence.depth && inBounds([hoveredFence.lengthAlong, hoveredFence.depth], bounds)) {
+            highlightItems.push({
+                shape: HighlightItemShape.CROSS,
+                center: [hoveredFence.lengthAlong, hoveredFence.depth],
+                color: "red",
+                paintOrder: 5,
+            });
+        }
     }
 
     return (

@@ -40,6 +40,7 @@ export type ViewportState = {
     viewport: Viewport | null;
     verticalScale: number;
     effectiveLayerItemsBounds: Bounds;
+    effectiveFocusBounds: Bounds | null;
     updateViewport: (newViewport: Viewport) => void;
     updateVerticalScale: (newScale: number) => void;
     handleFitInView: () => void;
@@ -285,6 +286,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
         viewport,
         verticalScale,
         effectiveLayerItemsBounds,
+        effectiveFocusBounds,
         updateViewport,
         updateVerticalScale,
         handleFitInView,

@@ -17,7 +17,11 @@ import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { getPolylineIdFromFenceId, makeFenceSourceIdForPolyLine } from "@modules/_shared/utils/fence";
 import { lengthAlongAtXyPosition, positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
-import type { PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
+import type {
+    Polyline,
+    PolylineHoverData,
+    PolylinesPlugin,
+} from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
@@ -76,27 +80,8 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(PolylinesPluginTopic.POLYLINE_HOVER)(() => {
                 const polylineData = props.polylinesPlugin.getPolylineHoverData();
+                const payload = makeFenceHoverPayloadFromPolylineHoverData(polylineData);
 
-                let payload: HoverData[HoverTopic.FENCE] = null;
-
-                if (polylineData) {
-                    const fenceLengthAlong = convertPolylineLengthAlongToFenceLengthAlong(
-                        polylineData.path,
-                        polylineData.lengthAlong,
-                    );
-
-                    if (fenceLengthAlong) {
-                        // Also grab the polyline's 3D position as the depth
-                        const polylinePosition = positionAtLengthAlong(polylineData.path, polylineData.lengthAlong);
-                        const polylineDepth = -polylinePosition![2];
-
-                        payload = {
-                            fenceId: makeFenceSourceIdForPolyLine(polylineData.polylineId),
-                            lengthAlong: fenceLengthAlong,
-                            depth: polylineDepth,
-                        };
-                    }
-                }
                 publishHoveredFenceRef.current(payload, "polyline-plugin");
             });
         },
@@ -226,20 +211,7 @@ function usePolylineHoverMarkerLayer(
     let position: [number, number, number] | null = null;
 
     if (polylineEditingMode !== PolylineEditingMode.DISABLED && hovered) {
-        const hoveredPolylineId = getPolylineIdFromFenceId(hovered.fenceId);
-
-        const polyline = availablePolylines.find((p) => p.id === hoveredPolylineId);
-
-        if (polyline) {
-            // The fence payload will be the length along a XY line following the polyline. The polyline
-            // might have 3D positions, so we need to convert to a length in 3D space.
-            const polylineLengthAlong = convertFenceLengthAlongToPolylineLengthAlong(
-                polyline.path,
-                hovered.lengthAlong,
-            );
-
-            position = polylineLengthAlong ? positionAtLengthAlong(polyline.path, polylineLengthAlong) : null;
-        }
+        position = getPolylinePositionFromFenceLenghtAlong(hovered, availablePolylines);
     }
 
     return new ScatterplotLayer({
@@ -282,12 +254,16 @@ function usePickingRayLayers(
     return pickingRayLayers;
 }
 
-function convertPolylineLengthAlongToFenceLengthAlong(
-    polylinePath: number[][],
-    polylineLengthAlong: number,
-): number | null {
-    // This is arguably a sub-optimal approach, but polyline paths are expected to only be a few segments,
-    // so this should be fine for now...
+function makeFenceHoverPayloadFromPolylineHoverData(
+    polylineHoverData: PolylineHoverData | null,
+): HoverData[HoverTopic.FENCE] | null {
+    if (!polylineHoverData) return null;
+    // Iterating the path multiple-times is arguably a sub-optimal approach, but polyline
+    // paths are expected to only be a few segments, so this should be fine for now...
+    const polylineFenceId = makeFenceSourceIdForPolyLine(polylineHoverData.polylineId);
+    const polylinePath = polylineHoverData.path;
+    const polylineLengthAlong = polylineHoverData.lengthAlong;
+
     // Get the position for this point along the 3D-space poly-line
     const polylinePos = positionAtLengthAlong(polylinePath, polylineLengthAlong);
 
@@ -300,20 +276,41 @@ function convertPolylineLengthAlongToFenceLengthAlong(
         polylinePos[1],
     );
 
-    return fenceLengthAlongConverted;
+    return {
+        fenceId: polylineFenceId,
+        lengthAlong: fenceLengthAlongConverted,
+        // The hovered position's z-coordinate is a
+        depth: -polylinePos[2],
+    };
 }
 
-function convertFenceLengthAlongToPolylineLengthAlong(polylinePath: number[][], lengthAlong: number): number | null {
-    // Get the position for this length-along in the XY-plane
-    const fencePos = positionAtLengthAlong(
-        polylinePath.map((v) => [v[0], v[1]]),
-        lengthAlong,
-    );
+function getPolylinePositionFromFenceLenghtAlong(
+    fenceHoverData: HoverData[HoverTopic.FENCE],
+    availablePolylines: Polyline[],
+) {
+    if (!fenceHoverData) return null;
 
-    if (!fencePos) {
+    const hoveredFenceId = getPolylineIdFromFenceId(fenceHoverData.fenceId);
+    const hoveredPolyline = availablePolylines.find((p) => p.id === hoveredFenceId);
+
+    if (!hoveredPolyline) {
         return null;
     }
 
-    const polylineLengthAlong = lengthAlongAtXyPosition(polylinePath, fencePos[0], fencePos[1]);
-    return polylineLengthAlong;
+    // Get the position for this length-along in the XY-plane
+    const fencePos = positionAtLengthAlong(
+        hoveredPolyline.path.map((v) => [v[0], v[1]]),
+        fenceHoverData.lengthAlong,
+    )!;
+
+    if (!fencePos) {
+        // This case should technically never occur, since hover triggering implies a valid fence pos
+        console.warn("Unable to find position on polyline");
+        return null;
+    }
+
+    const [hoverX, hoverY] = fencePos;
+    const polylineLengthAlong = lengthAlongAtXyPosition(hoveredPolyline.path, hoverX, hoverY);
+
+    return positionAtLengthAlong(hoveredPolyline.path, polylineLengthAlong);
 }
