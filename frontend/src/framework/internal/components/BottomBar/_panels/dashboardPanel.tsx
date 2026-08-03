@@ -274,7 +274,7 @@ function DashboardTab(props: DashboardTabProps) {
                             <Menu.Item onClick={handleEditClick} icon={<Edit />}>
                                 Edit
                             </Menu.Item>
-                            <Menu.Item onClick={handleDeleteClick} icon={<Close />}>
+                            <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
                                 Delete
                             </Menu.Item>
                         </Menu.Popup>
