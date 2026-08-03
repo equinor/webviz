@@ -368,7 +368,7 @@ function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
                 return;
             }
         },
-        [name, description, props.dashboard, props.workbench, onClose],
+        [name, description, props.dashboard, props.workbench, workbenchSession, onClose],
     );
 
     function handleCancel() {

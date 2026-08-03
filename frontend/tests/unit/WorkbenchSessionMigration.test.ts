@@ -1,8 +1,8 @@
 import { Ajv } from "ajv/dist/jtd";
 import { describe, expect, test } from "vitest";
 
-import { migrateLegacyRealizationFilterSetLocation } from "@framework/internal/WorkbenchSession/utils/deserialization";
 import { WORKBENCH_SESSION_CONTENT_STATE_SCHEMA } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession.schema";
+import { migrateLegacyRealizationFilterSetLocation } from "@framework/internal/WorkbenchSession/utils/deserialization";
 import { IncludeExcludeFilter, RealizationFilterType } from "@framework/types/realizationFilterTypes";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 
@@ -64,7 +64,7 @@ describe("migrateLegacyRealizationFilterSetLocation", () => {
         expect((migrated.dashboards[0] as any).realizationFilterSet).toEqual(legacyFilterSet);
         const isValid = validateContent(migrated);
         if (!isValid) {
-            console.log(JSON.stringify(validateContent.errors, null, 2));
+            console.debug(JSON.stringify(validateContent.errors, null, 2));
         }
         expect(isValid).toBe(true);
     });
