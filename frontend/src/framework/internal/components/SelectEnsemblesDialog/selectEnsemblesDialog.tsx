@@ -147,6 +147,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         [handleApplyEnsembleSelection],
     );
 
+    const handleFormKeyDown = React.useCallback(function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
+        if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) {
+            e.preventDefault();
+        }
+    }, []);
+
     const colorGenerator = React.useMemo(() => {
         const usedColors = [...selectedRegularEnsembles, ...selectedDeltaEnsembles].map((ens) => ens.color);
         return makeColorGenerator(colorSet.getColorArray(), usedColors);
@@ -173,7 +179,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 height={`${dialogSizePercent.height}%`}
                 modal
             >
-                <Form layoutClassName="flex h-full flex-col" onSubmit={handleFormSubmit}>
+                <Form layoutClassName="flex h-full flex-col" onSubmit={handleFormSubmit} onKeyDown={handleFormKeyDown}>
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Ensembles used in this session</Dialog.Title>
                     </Dialog.Header>
