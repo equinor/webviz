@@ -336,3 +336,15 @@ export function getGeoWellFeaturePath(wellFeature: BaseWellFeature): GeoJSON.Pos
 
     return wellFeature.geometry.geometries.find((g) => g.type === "LineString")?.coordinates ?? [];
 }
+
+export function getScaledCoordinate(coordinate: number[], verticalScale: number): number[] {
+    if (coordinate.length !== 3) return coordinate;
+
+    return [coordinate[0], coordinate[1], coordinate[2] * verticalScale];
+}
+
+export function getUnScaledCoordinate(coordinate: number[], verticalScale: number): number[] {
+    if (coordinate.length !== 3) return coordinate;
+
+    return [coordinate[0], coordinate[1], coordinate[2] / verticalScale];
+}

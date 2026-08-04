@@ -141,21 +141,18 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         setCurrentlyHoveredViewport(viewport?.id ?? null);
     }, []);
 
-    const handlePickingInfoChange = React.useCallback(
-        function handlePickingInfoChange(newPickingInfoPerView: Record<string, PickingInfo[]>) {
-            // Convert to unscaled coordinates at the time of picking
-            // This ensures coordinates stay correct when verticalScale changes later
-            const unscaled: Record<string, [number, number, number][]> = {};
-            for (const [viewId, picks] of Object.entries(newPickingInfoPerView)) {
-                unscaled[viewId] = picks
-                    .map((pick) => pick.coordinate)
-                    .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3)
-                    .map((coord): [number, number, number] => [coord[0], coord[1], coord[2] / props.verticalScale]);
-            }
-            setUnscaledCoordinatesPerView(unscaled);
-        },
-        [props.verticalScale],
-    );
+    const handlePickingInfoChange = React.useCallback(function handlePickingInfoChange(
+        newPickingInfoPerView: Record<string, PickingInfo[]>,
+    ) {
+        const coordPerView: Record<string, [number, number, number][]> = {};
+        for (const [viewId, picks] of Object.entries(newPickingInfoPerView)) {
+            coordPerView[viewId] = picks
+                .map((pick) => pick.coordinate)
+                .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3)
+                .map((coord): [number, number, number] => [coord[0], coord[1], coord[2]]);
+        }
+        setUnscaledCoordinatesPerView(coordPerView);
+    }, []);
 
     return (
         <ReadoutWrapper

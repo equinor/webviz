@@ -20,7 +20,11 @@ import {
     type DeckGlInstanceManager,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 import type { ExtendedWellFeature, LayerPickInfoWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
-import { isPickWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import {
+    getScaledCoordinate,
+    getUnScaledCoordinate,
+    isPickWithReadout,
+} from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
@@ -96,19 +100,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             maxPickingDepth: number,
             initialPickingInfo: PickingInfoPerView,
         ): PickingInfoPerView {
-            const [x, y, z] = worldCoordinates;
-
             if (!deckGlRef.current?.deck?.isInitialized) return {};
 
             const deck = deckGlRef.current?.deck;
             const viewports = deck?.getViewports();
+            const [x, y] = worldCoordinates;
 
             if (!deck || !viewports?.length || x === undefined || y === undefined) return {};
 
             const pickingInfo: PickingInfoPerView = { ...initialPickingInfo };
 
-            // Prepare coordinate for picking by applying vertical scale if z is defined
-            const coord = z !== undefined ? [x, y, z * props.verticalScale] : [x, y];
+            // The SubsurfaceViewer will normally manage vertical-scale transformations for us,
+            // but here we're picking directly with deck.gl, so we need to transform the
+            // coordinate to the scaled number
+            const coord = getScaledCoordinate(worldCoordinates, props.verticalScale);
 
             for (const viewport of viewports) {
                 // If we already have picks for this viewport (e.g. from initial hover), skip it if
@@ -125,6 +130,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     depth: maxPickingDepth,
                     unproject3D: true,
                 });
+
+                // Transform picked coordinates back to normal space
+                for (const pick of picks) {
+                    if (pick.coordinate) {
+                        pick.coordinate = getUnScaledCoordinate(pick.coordinate, props.verticalScale);
+                    }
+                }
 
                 // WellsLayer has multiple pick-able sub layers, and each pick shows up a distinct info object.
                 const mergedPicks = consolidateWellsLayerReadouts(picks);
