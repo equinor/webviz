@@ -138,10 +138,9 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             const hoverData = allPickingInfo.reduce<Partial<HoverData>>((acc, info) => {
                 if (!info.layer) return acc;
 
-                const layerCtor = info.layer.constructor as new () => DeckGlLayer;
                 const transformationFunc = findFirstMatchingTransformation(
                     ctx.hoverDataTransformationLookup,
-                    layerCtor,
+                    Object.getPrototypeOf(info.layer).constructor,
                 );
 
                 if (!transformationFunc) {

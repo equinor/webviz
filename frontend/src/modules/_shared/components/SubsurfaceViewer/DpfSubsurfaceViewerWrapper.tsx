@@ -92,7 +92,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     );
 
     const hoverDataTransformationsLookup = React.useMemo<LayerTransformationLookupMap>(() => {
-        const customTransforms = props.customHoverDataTransformations ?? [];
+        const customTransforms = props.customHoverDataTransformations ?? new Map();
 
         return new Map([...HOVER_TRANSFORMATIONS, ...customTransforms]);
     }, [props.customHoverDataTransformations]);

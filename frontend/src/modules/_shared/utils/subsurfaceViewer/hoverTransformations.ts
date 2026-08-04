@@ -10,12 +10,13 @@ import {
 } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 export type HoverDataTransformation = <TInfo extends PickingInfo>(layerInfo: TInfo) => Partial<HoverData>;
-export type LayerCtor = abstract new () => Layer<any>;
+export type LayerCtor = typeof Layer<any>;
 export type HoverTransformTuple = [LayerCtor, HoverDataTransformation];
 
 /**
  * A mapping to transform deck.gl PickingInfo into hover data on a per-layer basis.
  */
+export type LayerTransformationLookupMap = ReadonlyMap<LayerCtor, HoverDataTransformation>;
 
 /** Utility to create a read-only look-up for one or more picking transformations */
 export function makeHoverTransformationLookup(
@@ -32,7 +33,7 @@ export function getWellboreData(wellInfo: LayerPickInfoWithReadout<ExtendedWellF
     const wellboreUuid = wellFeature?.properties.uuid;
     const mdReadout = sanitizeMdReadout(mdProperty?.value);
 
-    if (!wellboreUuid || !mdReadout) return {};
+    if (!wellboreUuid || mdReadout == null) return {};
 
     return {
         [HoverTopic.WELLBORE]: wellboreUuid,
