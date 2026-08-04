@@ -147,6 +147,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         [handleApplyEnsembleSelection],
     );
 
+    const handleFormKeyDown = React.useCallback(function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
+        if (e.key === "Enter" && !(e.target instanceof HTMLTextAreaElement)) {
+            e.preventDefault();
+        }
+    }, []);
+
     const colorGenerator = React.useMemo(() => {
         const usedColors = [...selectedRegularEnsembles, ...selectedDeltaEnsembles].map((ens) => ens.color);
         return makeColorGenerator(colorSet.getColorArray(), usedColors);
@@ -173,46 +179,37 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 height={`${dialogSizePercent.height}%`}
                 modal
             >
-                <div className="flex h-full flex-col">
+                <Form layoutClassName="flex h-full flex-col" onSubmit={handleFormSubmit} onKeyDown={handleFormKeyDown}>
                     <Dialog.Header closeIconVisible>
                         <Dialog.Title>Ensembles used in this session</Dialog.Title>
                     </Dialog.Header>
-                    <Dialog.Body layoutClassName="grow min-h-0">
-                        <Form
-                            layoutClassName="relative flex h-full min-h-0 w-full flex-col"
-                            onSubmit={handleFormSubmit}
-                        >
-                            <EnsembleTables
-                                colorGenerator={colorGenerator}
-                                selectedRegularEnsembles={selectedRegularEnsembles}
-                                selectedDeltaEnsembles={selectedDeltaEnsembles}
-                                selectableEnsemblesForDelta={selectableEnsemblesForDelta}
-                                onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
-                                onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
-                                onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsembles}
-                                onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
-                                onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
-                                onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}
-                                onRemoveDeltaEnsemble={selectionHandlers.handleRemoveDeltaEnsemble}
-                                onMoveDeltaEnsemble={selectionHandlers.handleMoveDeltaEnsemble}
-                                onRequestOtherComparisonEnsemble={
-                                    selectionHandlers.handleOnRequestOtherComparisonEnsemble
-                                }
-                                onRequestOtherReferenceEnsemble={
-                                    selectionHandlers.handleOnRequestOtherReferenceEnsemble
-                                }
-                            />
-                            <Dialog.Actions>
-                                <DialogActions
-                                    isLoading={isEnsembleSetLoading}
-                                    disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
-                                    disableApply={isEnsembleSetLoading || !hasUnappliedChanges}
-                                    onDiscard={handleClose}
-                                />
-                            </Dialog.Actions>
-                        </Form>
+                    <Dialog.Body layoutClassName="relative grow min-h-0 w-full flex flex-col">
+                        <EnsembleTables
+                            colorGenerator={colorGenerator}
+                            selectedRegularEnsembles={selectedRegularEnsembles}
+                            selectedDeltaEnsembles={selectedDeltaEnsembles}
+                            selectableEnsemblesForDelta={selectableEnsemblesForDelta}
+                            onAddRegularEnsemble={selectionHandlers.handleExploreRegularEnsemble}
+                            onUpdateRegularEnsemble={selectionHandlers.handleUpdateRegularEnsemble}
+                            onRemoveRegularEnsemble={selectionHandlers.handleRemoveRegularEnsembles}
+                            onMoveRegularEnsemble={selectionHandlers.handleMoveRegularEnsemble}
+                            onCreateDeltaEnsemble={selectionHandlers.handleAddDeltaEnsemble}
+                            onUpdateDeltaEnsemble={selectionHandlers.handleUpdateDeltaEnsemble}
+                            onRemoveDeltaEnsemble={selectionHandlers.handleRemoveDeltaEnsemble}
+                            onMoveDeltaEnsemble={selectionHandlers.handleMoveDeltaEnsemble}
+                            onRequestOtherComparisonEnsemble={selectionHandlers.handleOnRequestOtherComparisonEnsemble}
+                            onRequestOtherReferenceEnsemble={selectionHandlers.handleOnRequestOtherReferenceEnsemble}
+                        />
                     </Dialog.Body>
-                </div>
+                    <Dialog.Actions>
+                        <DialogActions
+                            isLoading={isEnsembleSetLoading}
+                            disableDiscard={isEnsembleSetLoading || !hasUnappliedChanges}
+                            disableApply={isEnsembleSetLoading || !hasUnappliedChanges}
+                            onDiscard={handleClose}
+                        />
+                    </Dialog.Actions>
+                </Form>
                 <Dialog.Popup
                     open={showEnsembleExplorer}
                     onOpenChange={(open: boolean) => {
