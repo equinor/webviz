@@ -14,9 +14,8 @@ export type LayerCtor = abstract new () => Layer<any>;
 export type HoverTransformTuple = [LayerCtor, HoverDataTransformation];
 
 /**
- * A mapping to transform deck.gl PickingInfo into Hoverdata on a per-layer bases.
+ * A mapping to transform deck.gl PickingInfo into hover data on a per-layer basis.
  */
-export type LayerTransformationLookupMap = ReadonlyMap<LayerCtor, HoverDataTransformation>;
 
 /** Utility to create a read-only look-up for one or more picking transformations */
 export function makeHoverTransformationLookup(
