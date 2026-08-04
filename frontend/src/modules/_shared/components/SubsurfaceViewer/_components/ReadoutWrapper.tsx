@@ -217,6 +217,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             setPickingInfoPerView(function updatePickingInfoPerView(prev) {
                 const newPickingInfoPerView: Record<string, PickingInfoWithStaleInfo[]> = {};
+
                 for (const [viewId, picks] of Object.entries(prev)) {
                     if (viewId === hoveredViewPort.id) {
                         // Update current viewport picks - this happens anyways when returning from setState
@@ -229,11 +230,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                         }));
                     }
                 }
+
                 return { ...newPickingInfoPerView, ...updatedPickingInfoPerView };
             });
 
             onViewerHover?.(event);
             onViewportHover?.(hoveredViewPort);
+            onPickingInfoChange?.(updatedPickingInfoPerView);
 
             // Now, initiate debounce for picking across all viewports
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
@@ -246,7 +249,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 );
             }
         },
-        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
+        [readoutMode, debouncedMultiViewPicking, onViewerHover, onViewportHover, clearReadout, onPickingInfoChange],
     );
 
     const processClickEvent = React.useCallback(
