@@ -34,11 +34,11 @@ export class DeckGlPlugin {
     }
 
     protected requestDisablePanning() {
-        this._manager.disablePanning();
+        this._manager.disableDragInteraction();
     }
 
     protected requestEnablePanning() {
-        this._manager.enablePanning();
+        this._manager.enableDragInteraction();
     }
 
     protected getFirstLayerUnderCursorInfo(x: number, y: number): PickingInfo | undefined {
@@ -99,7 +99,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
 
-    private _panEnabled: boolean = true;
+    private _dragInteractionEnabled: boolean = true;
 
     private _hiddenViews: View[] = []; // plugin registered
     private _hiddenViewStatePatch: Record<string, any> = {};
@@ -151,13 +151,17 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
     }
 
-    disablePanning() {
-        this._panEnabled = false;
+    disableDragInteraction() {
+        if (!this._dragInteractionEnabled) return;
+
+        this._dragInteractionEnabled = false;
         this.redraw();
     }
 
-    enablePanning() {
-        this._panEnabled = true;
+    enableDragInteraction() {
+        if (this._dragInteractionEnabled) return;
+
+        this._dragInteractionEnabled = true;
         this.redraw();
     }
 
@@ -370,8 +374,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                     ...viewport,
                     layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
                     controller: {
-                        dragRotate: this._panEnabled,
-                        dragPan: this._panEnabled,
+                        ...viewport.controller,
+                        dragRotate: this._dragInteractionEnabled,
+                        dragPan: this._dragInteractionEnabled,
                     },
                 })),
                 layout: props.views?.layout ?? [1, 1],
@@ -380,7 +385,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     beforeDestroy() {
-        this.enablePanning();
+        this.enableDragInteraction();
         this.maybeRemoveKeyboardEventListeners();
     }
 }
