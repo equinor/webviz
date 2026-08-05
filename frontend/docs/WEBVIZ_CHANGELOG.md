@@ -1,13 +1,11 @@
----
-title: Webviz Changelog
-layout: post
----
+% version: 2.1.2
+% date: 05.08.2026
 
 # Changelog
 
 ## Webviz 2.1.2 - 05.08.2026
 
-![alt text](/docs/images/changelog_system.png)
+![alt text](./images/changelog_system.png)
 
 - Added changelog system
     - _Visible via modal on start page_

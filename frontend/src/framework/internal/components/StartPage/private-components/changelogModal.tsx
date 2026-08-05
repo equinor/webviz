@@ -4,6 +4,7 @@ import { Icon } from "@equinor/eds-core-react";
 import { file_description } from "@equinor/eds-icons";
 import Markdown from "react-markdown";
 
+// import testimg from "@docs/images/changelog_system.png";
 import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
@@ -14,6 +15,29 @@ Icon.add({ file_description });
 
 export function ChangelogDialog(): React.ReactNode {
     const [open, setOpen] = React.useState(true);
+
+    // const metadataLines: string[] = [];
+    let markdownContent = ChangelogMd;
+
+    const metadata = new Map();
+
+    if (ChangelogMd.startsWith("%")) {
+        const lines = ChangelogMd.split("\n");
+
+        let i = 0;
+
+        while (i < lines.length && lines[i].startsWith("%")) {
+            // metadataLines.push(lines[i]);
+            const line = lines[i].substring(1).trim(); // Remove the leading '%' and trim whitespace
+            const [key, value] = line.split(/\s*:\s*/);
+
+            metadata.set(key, value);
+
+            i++;
+        }
+
+        markdownContent = lines.slice(i).join("\n");
+    }
 
     return (
         <>
@@ -42,10 +66,16 @@ export function ChangelogDialog(): React.ReactNode {
                                 ),
                                 li: (props) => <Typography as="li" size="md" {...props} />,
                                 p: (props) => <Paragraph size="md" {...props} />,
-                                img: (props) => <img className="my-2xs rounded-md" {...props} />,
+                                img: (props) => (
+                                    <img
+                                        {...props}
+                                        className="my-2xs rounded-md"
+                                        src={props.src?.replace("./", "/docs/")}
+                                    />
+                                ),
                             }}
                         >
-                            {ChangelogMd}
+                            {markdownContent}
                         </Markdown>
                     </Dialog.Body>
                 </div>
