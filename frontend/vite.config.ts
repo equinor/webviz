@@ -31,6 +31,7 @@ export default defineConfig(() => {
             react(),
             vitePluginChecker({ typescript: true }),
             babel({ plugins: [jotaiDebugLabel, jotaiReactRefresh] }),
+            rawMdPlugin(),
             glsl({
                 include: "**/*.glsl",
                 defaultExtension: "glsl",
@@ -70,3 +71,19 @@ export default defineConfig(() => {
         },
     };
 });
+
+// Custom plugin to load .md files as raw strings
+function rawMdPlugin() {
+    return {
+        name: "raw-md-loader",
+        transform(code: string, id: string) {
+            if (id.endsWith(".md")) {
+                // Return the file content as a default export string
+                return {
+                    code: `export default ${JSON.stringify(code)}`,
+                    map: null,
+                };
+            }
+        },
+    };
+}
