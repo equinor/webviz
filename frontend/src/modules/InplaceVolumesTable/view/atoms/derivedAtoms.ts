@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
@@ -24,11 +26,14 @@ export const areSelectedTablesComparableAtom = atom((get) => {
 
 export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const filter = get(filterAtom);
-    const ensemblIdents = filter?.ensembleIdents ?? [];
+    const ensembleIdents = filter?.ensembleIdents ?? [];
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
+    // Delta ensembles are not yet supported for volume data in this module.
+    const regularEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent);
+
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
-    for (const ensembleIdent of ensemblIdents) {
+    for (const ensembleIdent of regularEnsembleIdents) {
         ensembleIdentsWithRealizations.push({
             ensembleIdent,
             realizations: [...validEnsembleRealizationsFunction(ensembleIdent)],
