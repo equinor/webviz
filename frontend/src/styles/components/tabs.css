@@ -1,0 +1,75 @@
+@layer components {
+    .tabs__tab {
+        /* Hard-coded height to ensure consistency with EDS v1 - we should revisit this when the module has been migrated to v2 of EDS */
+        @apply focusable text-header-md font-bolder font-heading px-md hover:bg-accent active:bg-accent-active data-active:text-accent-subtle py-selectable flex h-12 cursor-pointer items-center justify-center outline-0;
+        min-height: var(--size-selectable-md);
+
+        &[data-disabled] {
+            @apply text-disabled cursor-not-allowed bg-transparent;
+        }
+
+        [data-size="small"] & {
+            @apply py-3xs px-xs text-header-sm h-8;
+        }
+
+        [data-size="large"] & {
+            @apply p-sm text-header-lg min-h-[var(--size-selectable-lg)];
+        }
+    }
+
+    .tabs__list {
+        @apply relative flex;
+
+        &[data-orientation="horizontal"] {
+            &[data-position="start"] {
+                border-top: 2px solid var(--eds-color-border-neutral-subtle);
+            }
+            &[data-position="end"] {
+                border-bottom: 2px solid var(--eds-color-border-neutral-subtle);
+            }
+        }
+
+        &[data-orientation="vertical"] {
+            flex-flow: column;
+
+            &[data-position="start"] {
+                border-left: 2px solid var(--eds-color-border-neutral-subtle);
+            }
+            &[data-position="end"] {
+                border-right: 2px solid var(--eds-color-border-neutral-subtle);
+            }
+        }
+    }
+    .tabs__indicator {
+        @apply bg-accent-strong absolute top-0 left-0 rounded transition-all duration-150;
+        transition-property: translate, width, height;
+        transition-duration: 200ms;
+        transition-timing-function: ease-in-out;
+
+        &[data-hidden] {
+            display: none;
+        }
+
+        &[data-orientation="horizontal"] {
+            width: var(--active-tab-width);
+            height: 2px;
+            [data-position="start"] & {
+                translate: var(--active-tab-left) -2px;
+            }
+            [data-position="end"] & {
+                translate: var(--active-tab-left) calc(var(--active-tab-height));
+            }
+        }
+
+        &[data-orientation="vertical"] {
+            height: var(--active-tab-height);
+            width: 2px;
+            [data-position="start"] & {
+                translate: -2px var(--active-tab-top);
+            }
+            [data-position="end"] & {
+                translate: calc(var(--active-tab-width)) var(--active-tab-top);
+            }
+        }
+    }
+}

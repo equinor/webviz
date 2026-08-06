@@ -3,9 +3,9 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { setIfDefined } from "@framework/utils/atomUtils";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { ColorBy, PhaseType, PressureDependentVariable } from "../typesAndEnums";
+import { GroupBy, PhaseType, PressureDependentVariable } from "../typesAndEnums";
 
-import { selectedColorByAtom, selectedDependentVariablesAtom, selectedPhaseAtom } from "./atoms/baseAtoms";
+import { selectedGroupByAtom, selectedDependentVariablesAtom, selectedPhaseAtom } from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedPvtNumsAtom,
@@ -17,7 +17,7 @@ export type SerializedSettings = {
     selectedRealizationNumbers: number[];
     selectedPvtNums: number[];
     selectedPhase: PhaseType;
-    selectedColorBy: ColorBy;
+    selectedGroupBy: GroupBy;
     selectedDependentVariables: PressureDependentVariable[];
 };
 
@@ -27,7 +27,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         selectedRealizationNumbers: { elements: { type: "int16" } },
         selectedPvtNums: { elements: { type: "int16" } },
         selectedPhase: { enum: Object.values(PhaseType) },
-        selectedColorBy: { enum: Object.values(ColorBy) },
+        selectedGroupBy: { enum: Object.values(GroupBy) },
         selectedDependentVariables: { elements: { enum: Object.values(PressureDependentVariable) } },
     },
 }));
@@ -42,7 +42,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedRealizationNumbers: get(selectedRealizationNumbersAtom).value,
         selectedPvtNums: get(selectedPvtNumsAtom).value,
         selectedPhase: get(selectedPhaseAtom),
-        selectedColorBy: get(selectedColorByAtom),
+        selectedGroupBy: get(selectedGroupByAtom),
         selectedDependentVariables: get(selectedDependentVariablesAtom),
     };
 };
@@ -54,6 +54,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedRealizationNumbersAtom, raw.selectedRealizationNumbers);
     setIfDefined(set, selectedPvtNumsAtom, raw.selectedPvtNums);
     setIfDefined(set, selectedPhaseAtom, raw.selectedPhase);
-    setIfDefined(set, selectedColorByAtom, raw.selectedColorBy);
+    setIfDefined(set, selectedGroupByAtom, raw.selectedGroupBy);
     setIfDefined(set, selectedDependentVariablesAtom, raw.selectedDependentVariables);
 };

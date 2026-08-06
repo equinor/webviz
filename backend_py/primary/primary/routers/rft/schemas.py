@@ -17,3 +17,20 @@ class RftRealizationData(BaseModel):
     timestamp_utc_ms: int
     depth_arr: list[float]
     value_arr: list[float]
+
+
+class RftObservation(BaseModel):
+    value: float
+    error: float
+    property: str
+    east: float
+    north: float
+    tvd: float
+    md: float | None = None
+    zone: str | None = None
+
+
+class RftObservations(BaseModel):
+    well_name: str
+    date: str
+    observations: list[RftObservation]

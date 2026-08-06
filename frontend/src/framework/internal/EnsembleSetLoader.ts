@@ -311,6 +311,7 @@ async function loadEnsembleApiDataMapFromBackend(
                     case_uuid: caseUuid,
                     ensemble_name: ensembleName,
                 },
+                throwOnError: false, // We will handle errors manually to be able to continue loading other ensembles even if one fails
             }),
             gcTime: CACHE_TIME,
             staleTime: STALE_TIME,
@@ -324,6 +325,7 @@ async function loadEnsembleApiDataMapFromBackend(
                     ensemble_name: ensembleName,
                     zCacheBust: fingerprintHash,
                 },
+                throwOnError: false, // We will handle errors manually to be able to continue loading other ensembles even if one fails
             }),
             gcTime: CACHE_TIME,
             staleTime: STALE_TIME,

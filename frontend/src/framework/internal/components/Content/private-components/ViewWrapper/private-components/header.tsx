@@ -1,16 +1,20 @@
 import React from "react";
 
-import type { PopoverRootActions } from "@base-ui/react";
-import { Close, CloseFullscreen, Error, History, Input, OpenInFull, Output, Warning } from "@mui/icons-material";
-
+import type { BaseUIEvent, PopoverRootActions } from "@base-ui/react";
 import {
-    GuiEvent,
-    GuiState,
-    RightDrawerContent,
-    useGuiState,
-    useGuiValue,
-    useSetGuiState,
-} from "@framework/GuiMessageBroker";
+    Close,
+    CloseFullscreen,
+    Error,
+    History,
+    Input,
+    Link,
+    MoreVert,
+    OpenInFull,
+    Output,
+    Warning,
+} from "@mui/icons-material";
+
+import { GuiEvent, GuiState, RightDrawerContent, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
@@ -25,11 +29,15 @@ import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
+import { LinearProgress } from "@lib/components/LinearProgress";
+import { Menu } from "@lib/components/Menu";
 import { Popover } from "@lib/components/Popover";
+import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { useElementSize } from "@lib/hooks/useElementSize";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -41,6 +49,8 @@ export type HeaderProps = {
     isDragged: boolean;
     onPointerDown?: (event: React.PointerEvent<HTMLDivElement>) => void;
 };
+
+const COMPACT_WIDTH_THRESHOLD_PX = 320;
 
 export const Header: React.FC<HeaderProps> = (props) => {
     const dashboard = useActiveDashboard();
@@ -67,30 +77,56 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     const invalidPersistedState = persistedSettingsInvalid || persistedViewInvalid;
 
-    const handleMaximizeClick = React.useCallback(
-        function handleMaximizeClick(e: React.PointerEvent<HTMLButtonElement>) {
-            const currentLayout = dashboard.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({
-                ...l,
-                maximized: l.moduleInstanceId === moduleInstanceId,
-            }));
-            dashboard.setLayout(tweakedLayout);
-            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+    const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
 
-            e.preventDefault();
-            e.stopPropagation();
+    const channelManager = props.moduleInstance.getChannelManager();
+    const receivers = usePublishSubscribeTopicValue(channelManager, ChannelManagerNotificationTopic.RECEIVERS_CHANGE);
+
+    const editConnections = React.useCallback(
+        function editConnections() {
+            guiMessageBroker.setState(GuiState.EditDataChannelConnections, true);
+            guiMessageBroker.publishEvent(GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest, {
+                moduleInstanceId,
+            });
+        },
+        [guiMessageBroker, moduleInstanceId],
+    );
+
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
+    const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
+
+    const showLog = React.useCallback(
+        function showLog() {
+            if (
+                guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+                SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+            ) {
+                setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
+            }
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
+            setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
+        },
+        [guiMessageBroker, setRightSettingsPanelWidth, dashboard, moduleInstanceId, setRightDrawerContent],
+    );
+
+    const headerRef = React.useRef<HTMLDivElement>(null);
+    const { width: headerWidth } = useElementSize(headerRef);
+    const isCompact = headerWidth < COMPACT_WIDTH_THRESHOLD_PX;
+
+    const maximize = React.useCallback(
+        function maximize() {
+            const currentLayout = dashboard.getLayout();
+            dashboard.setLayout(
+                currentLayout.map((l) => ({ ...l, maximized: l.moduleInstanceId === moduleInstanceId })),
+            );
+            dashboard.setActiveModuleInstanceId(moduleInstanceId);
         },
         [moduleInstanceId, dashboard],
     );
 
-    const handleRestoreClick = React.useCallback(
-        function handleRestoreClick(e: React.PointerEvent<HTMLButtonElement>) {
-            const currentLayout = dashboard.getLayout();
-            const tweakedLayout = currentLayout.map((l) => ({ ...l, maximized: false }));
-            dashboard.setLayout(tweakedLayout);
-
-            e.preventDefault();
-            e.stopPropagation();
+    const restore = React.useCallback(
+        function restore() {
+            dashboard.setLayout(dashboard.getLayout().map((l) => ({ ...l, maximized: false })));
         },
         [dashboard],
     );
@@ -118,15 +154,37 @@ export const Header: React.FC<HeaderProps> = (props) => {
     }
 
     const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
+    const numErrors = hotStatusMessages.filter((m) => m.type === StatusMessageType.Error).length;
+    const numWarnings = hotStatusMessages.filter((m) => m.type === StatusMessageType.Warning).length;
+
+    const sharedActionProps: HeaderActionsProps = {
+        workbench: props.workbench,
+        moduleInstance: props.moduleInstance,
+        isMaximized: props.isMaximized,
+        isMinimized: props.isMinimized,
+        isSnapshotMode: isSnapshot,
+        onMaximize: maximize,
+        onRestore: restore,
+    };
+
+    const compactActionProps: CompactHeaderActionsProps = {
+        ...sharedActionProps,
+        isLoading,
+        numErrors,
+        numWarnings,
+        hasDataReceiver: receivers.length > 0,
+        onShowLog: showLog,
+        onEditConnections: editConnections,
+    };
 
     return (
         <div
+            ref={headerRef}
             className={resolveClassNames(
-                "flex items-center gap-0.5 px-1 select-none shadow-sm relative touch-none text-lg",
+                "px-xs gap-4xs bg-neutral shadow-elevation-raised py-4xs text-body-lg border-neutral-subtle relative flex touch-none items-center border select-none",
                 {
-                    "bg-red-100": hasErrors || invalidPersistedState,
-                    "bg-slate-300": !hasErrors && props.isMinimized && !invalidPersistedState,
-                    "bg-slate-100": !hasErrors && !props.isMinimized && !invalidPersistedState,
+                    "bg-danger-canvas!": hasErrors || invalidPersistedState,
+                    "bg-neutral-subtle!": !hasErrors && !invalidPersistedState && props.isMinimized,
                 },
             )}
             onDoubleClick={handleDoubleClick}
@@ -141,54 +199,263 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 onPointerDown={props.onPointerDown}
             />
 
+            {!isCompact ? (
+                <DefaultHeaderActions {...sharedActionProps} />
+            ) : (
+                <CompactHeaderActions {...compactActionProps} />
+            )}
+
+            <div className="gap-4xs flex shrink-0 items-center">
+                <Separator orientation="vertical" />
+                <Tooltip content={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}>
+                    <Button
+                        onPointerDown={handleRemoveClick}
+                        onPointerUp={handlePointerUp}
+                        disabled={isSnapshot}
+                        tone="danger"
+                        variant="ghost"
+                        size="small"
+                        iconOnly
+                    >
+                        <Close fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+            </div>
+        </div>
+    );
+};
+
+type HeaderActionsProps = {
+    workbench: Workbench;
+    moduleInstance: ModuleInstance<any, any>;
+    isMaximized?: boolean;
+    isMinimized?: boolean;
+    isSnapshotMode?: boolean;
+    onMaximize: () => void;
+    onRestore: () => void;
+};
+
+function DefaultHeaderActions(props: HeaderActionsProps): React.ReactNode {
+    function handlePointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+        e.stopPropagation();
+    }
+
+    function handleMaximizePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        props.onMaximize();
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function handleRestorePointerDown(e: React.PointerEvent<HTMLButtonElement>) {
+        props.onRestore();
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    return (
+        <>
             <SyncedSettingsIndicator moduleInstance={props.moduleInstance} />
-
-            <HeaderSeparator />
-
+            <Separator orientation="vertical" />
             <StatusIndicator
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
             />
-
-            <HeaderSeparator />
-
+            <Separator orientation="vertical" />
             <DataChannelButtons
                 workbench={props.workbench}
                 moduleInstance={props.moduleInstance}
                 isMinimized={props.isMinimized}
                 isMaximized={props.isMaximized}
-                isSnapshotMode={isSnapshot}
+                isSnapshotMode={props.isSnapshotMode}
             />
-
-            <HeaderSeparator />
-
+            <Separator orientation="vertical" />
             {props.isMaximized ? (
-                <DenseIconButton onPointerDown={handleRestoreClick} onPointerUp={handlePointerUp} title="Restore">
-                    <CloseFullscreen fontSize="inherit" />
-                </DenseIconButton>
+                <Tooltip content="Restore">
+                    <Button
+                        onPointerDown={handleRestorePointerDown}
+                        onPointerUp={handlePointerUp}
+                        variant="ghost"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <CloseFullscreen fontSize="inherit" />
+                    </Button>
+                </Tooltip>
             ) : (
-                <DenseIconButton onPointerDown={handleMaximizeClick} onPointerUp={handlePointerUp} title="Maximize">
-                    <OpenInFull fontSize="inherit" />
-                </DenseIconButton>
+                <Tooltip content="Maximize">
+                    <Button
+                        onPointerDown={handleMaximizePointerDown}
+                        onPointerUp={handlePointerUp}
+                        variant="ghost"
+                        tone="neutral"
+                        size="small"
+                        iconOnly
+                    >
+                        <OpenInFull fontSize="inherit" />
+                    </Button>
+                </Tooltip>
             )}
-
-            <DenseIconButton
-                onPointerDown={handleRemoveClick}
-                onPointerUp={handlePointerUp}
-                disabled={isSnapshot}
-                title={isSnapshot ? "Cannot remove modules in snapshot mode" : "Remove this module"}
-                colorScheme={DenseIconButtonColorScheme.DANGER}
-            >
-                <Close fontSize="inherit" />
-            </DenseIconButton>
-        </div>
+        </>
     );
+}
+
+type MenuBadgeProps = {
+    numErrors: number;
+    numWarnings: number;
+    numSyncedSettings: number;
+    children: React.ReactNode;
 };
 
-function HeaderSeparator(): React.ReactNode {
-    // The funky-looking class selector hides all separators that directly follows another separator
-    return <div className="[:where(&+&)]:hidden bg-slate-300 w-px h-1/2 mx-1" />;
+function MenuBadge(props: MenuBadgeProps): React.ReactNode {
+    const hasErrors = props.numErrors > 0;
+    const hasWarnings = props.numWarnings > 0;
+    const hasSyncedSettings = props.numSyncedSettings > 0;
+
+    if (hasErrors) {
+        return (
+            <Badge badgeContent={props.numErrors} tone="danger">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    if (hasWarnings) {
+        return (
+            <Badge badgeContent={props.numWarnings} tone="warning">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    if (hasSyncedSettings) {
+        return (
+            <Badge badgeContent={props.numSyncedSettings} tone="info">
+                {props.children}
+            </Badge>
+        );
+    }
+
+    return props.children;
+}
+
+type CompactHeaderActionsProps = HeaderActionsProps & {
+    isLoading: boolean;
+    numErrors: number;
+    numWarnings: number;
+    hasDataReceiver: boolean;
+    onShowLog: () => void;
+    onEditConnections: () => void;
+};
+
+function CompactHeaderActions(props: CompactHeaderActionsProps): React.ReactNode {
+    const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
+
+    return (
+        <div className="gap-4xs flex shrink-0 items-center">
+            <DataChannelButtons
+                workbench={props.workbench}
+                moduleInstance={props.moduleInstance}
+                isMinimized={false}
+                isMaximized={props.isMaximized}
+                isSnapshotMode={props.isSnapshotMode}
+                showChannelsOnly
+            />
+            <Separator orientation="vertical" />
+            <Menu.Root>
+                <Menu.Trigger>
+                    <Button variant="ghost" size="small" tone="neutral" iconOnly title="More options">
+                        <MenuBadge
+                            numErrors={props.numErrors}
+                            numWarnings={props.numWarnings}
+                            numSyncedSettings={syncedSettings.length}
+                        >
+                            <MoreVert fontSize="inherit" />
+                        </MenuBadge>
+                    </Button>
+                </Menu.Trigger>
+                <Menu.Popup>
+                    {syncedSettings.length > 0 && (
+                        <Menu.SubmenuItem
+                            triggerIcon={
+                                <Badge badgeContent={syncedSettings.length} corner="top-left" tone="info">
+                                    <Link fontSize="inherit" />
+                                </Badge>
+                            }
+                            triggerContent="Synced settings"
+                        >
+                            {syncedSettings.map((setting) => (
+                                <Menu.Item
+                                    key={setting}
+                                    icon={<Link fontSize="inherit" />}
+                                    text={`Syncs "${SyncSettingsMeta[setting].name}" across the dashboard`}
+                                />
+                            ))}
+                        </Menu.SubmenuItem>
+                    )}
+                    {props.numErrors > 0 || props.numWarnings > 0 ? (
+                        <Menu.Item
+                            icon={
+                                <span className="relative flex size-[1em] items-center justify-center">
+                                    {props.numErrors > 0 ? (
+                                        <>
+                                            <Error fontSize="inherit" color="error" />
+                                            {props.numWarnings > 0 && (
+                                                <Warning
+                                                    fontSize="inherit"
+                                                    color="warning"
+                                                    className="absolute -right-1 -bottom-1 text-[0.65em]!"
+                                                />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Warning fontSize="inherit" color="warning" />
+                                    )}
+                                </span>
+                            }
+                            text={[
+                                props.numErrors > 0 ? `${props.numErrors} error${props.numErrors > 1 ? "s" : ""}` : "",
+                                props.numWarnings > 0
+                                    ? `${props.numWarnings} warning${props.numWarnings > 1 ? "s" : ""}`
+                                    : "",
+                            ]
+                                .filter(Boolean)
+                                .join(", ")}
+                            onClick={props.onShowLog}
+                        />
+                    ) : (
+                        <Menu.Item
+                            icon={<History fontSize="inherit" />}
+                            text="Show module log"
+                            onClick={props.onShowLog}
+                        />
+                    )}
+                    {props.hasDataReceiver && !props.isSnapshotMode && (
+                        <Menu.Item
+                            icon={<Input fontSize="inherit" />}
+                            text="Edit data connections"
+                            onClick={props.onEditConnections}
+                        />
+                    )}
+                    <Menu.Separator />
+                    {props.isMaximized ? (
+                        <Menu.Item
+                            icon={<CloseFullscreen fontSize="inherit" />}
+                            text="Restore"
+                            onClick={props.onRestore}
+                        />
+                    ) : (
+                        <Menu.Item
+                            icon={<OpenInFull fontSize="inherit" />}
+                            text="Maximize"
+                            onClick={props.onMaximize}
+                        />
+                    )}
+                </Menu.Popup>
+            </Menu.Root>
+        </div>
+    );
 }
 
 type ModuleLoadingBarProps = {
@@ -200,11 +467,11 @@ function ModuleLoadingBar(props: ModuleLoadingBarProps) {
 
     return (
         <div
-            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full overflow-hidden", {
+            className={resolveClassNames("absolute -bottom-0.5 left-0 w-full", {
                 hidden: !isLoading,
             })}
         >
-            <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
+            <LinearProgress variant="indeterminate" size="small" />
         </div>
     );
 }
@@ -229,19 +496,19 @@ function ModuleTitle(props: ModuleTitleProps) {
 
     return (
         <div
-            className={resolveClassNames("grow flex items-center text-sm font-bold min-w-0 p-1.5", {
+            className={resolveClassNames("py-3xs text-body-sm font-bolder gap-x-sm flex min-w-0 grow items-center", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged && !props.isSnapshotMode,
             })}
             onPointerDown={handlePointerDown}
         >
-            <span className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0" title={title}>
+            <span className="min-w-0 grow overflow-hidden text-ellipsis whitespace-nowrap" title={title}>
                 {title}
             </span>
             {devToolsVisible && (
                 <span
                     title={props.moduleInstance.getId()}
-                    className="font-light text-xs ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
+                    className="text-body-xs min-w-0 overflow-hidden font-light text-ellipsis whitespace-nowrap"
                 >
                     {props.moduleInstance.getId()}
                 </span>
@@ -258,18 +525,18 @@ function SyncedSettingsIndicator(props: SyncedSettingsIndicatorProps) {
     const syncedSettings = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.SYNCED_SETTINGS);
 
     return (
-        <>
+        <div className="gap-x-2xs flex items-center">
             {syncedSettings.map((setting) => (
                 <Tooltip
-                    title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
+                    content={`This module syncs its "${SyncSettingsMeta[setting].name}" setting in the current dashboard.`}
                     key={setting}
                 >
-                    <span className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help font-bold">
+                    <span className="bg-info-strong px-3xs py-3xs text-body-xs text-info-strong-on-emphasis font-bolder flex cursor-help items-center justify-center rounded-sm leading-none">
                         {SyncSettingsMeta[setting].abbreviation}
                     </span>
                 </Tooltip>
             ))}
-        </>
+        </div>
     );
 }
 
@@ -279,6 +546,7 @@ type DataChannelButtonsProps = {
     isMinimized?: boolean;
     isMaximized?: boolean;
     isSnapshotMode?: boolean;
+    showChannelsOnly?: boolean;
 };
 
 function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
@@ -358,29 +626,37 @@ function DataChannelButtons(props: DataChannelButtonsProps): React.ReactNode {
     return (
         <>
             {hasDataChannel && (
-                <DenseIconButton
+                <Button
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="cursor-grab touch-none"
+                    layoutClassName="cursor-grab! touch-none"
                     title={makeChannelOutButtonTitle()}
                     disabled={props.isSnapshotMode}
                     onPointerDown={handleDataChannelOriginPointerDown}
+                    iconOnly
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
                 >
-                    <Badge badgeContent={numOutgoingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                    <Badge badgeContent={numOutgoingConnections} invisible={props.isMinimized}>
                         <Output fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
-            {hasDataReceiver && (
-                <DenseIconButton
+            {hasDataReceiver && !props.showChannelsOnly && (
+                <Button
                     title={makeChannelInButtonTitle()}
                     onPointerDown={handleReceiverPointerDown}
                     onPointerUp={handleReceiversPointerUp}
+                    iconOnly
+                    variant="ghost"
+                    size="small"
+                    tone="neutral"
                 >
-                    <Badge badgeContent={numIncomingConnections} className="flex p-0.5" invisible={props.isMinimized}>
+                    <Badge badgeContent={numIncomingConnections} invisible={props.isMinimized}>
                         <Input fontSize="inherit" />
                     </Badge>
-                </DenseIconButton>
+                </Button>
             )}
         </>
     );
@@ -405,16 +681,16 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const setRightDrawerContent = useSetGuiState(guiMessageBroker, GuiState.RightDrawerContent);
-    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
-        guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent,
-    );
+    const setRightSettingsPanelWidth = useSetGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
 
-    function handleShowLogClick(e: React.PointerEvent<HTMLButtonElement>) {
+    function handleShowLogClick(e: BaseUIEvent<React.MouseEvent<HTMLButtonElement, MouseEvent>>) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (rightSettingsPanelWidth <= SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT) {
+        if (
+            guiMessageBroker.getState(GuiState.RightSettingsPanelWidthInPercent) <=
+            SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT
+        ) {
             setRightSettingsPanelWidth(SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT);
         }
 
@@ -425,17 +701,20 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     function makeHotStatusMessages(): React.ReactNode {
         return (
-            <ul className="flex flex-col p-2 gap-2">
+            <ul className="gap-y-2xs p-2xs flex flex-col">
                 {hotStatusMessages.map((entry, i) => (
-                    <li key={`${entry.message}-${i}`} className="text-xs text-gray-500 tracking-wider px-3 py-1">
-                        {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
-                        {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
-                        <span
-                            className="ml-2 overflow-hidden text-ellipsis min-w-0 whitespace-nowrap"
+                    <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
+                        <Typography
+                            as="span"
+                            size="xs"
                             title={entry.message}
+                            tone="neutral"
+                            layoutClassName="gap-x-2xs flex items-center"
                         >
+                            {entry.type === StatusMessageType.Error && <Error fontSize="inherit" color="error" />}
+                            {entry.type === StatusMessageType.Warning && <Warning fontSize="inherit" color="warning" />}
                             {entry.message}
-                        </span>
+                        </Typography>
                     </li>
                 ))}
             </ul>
@@ -446,9 +725,9 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (isLoading) {
         stateIndicators.push(
-            <Tooltip key="header-loading" title="This module is currently loading new content.">
-                <div className="flex items-center justify-center px-1 cursor-help">
-                    <CircularProgress size="small" />
+            <Tooltip key="header-loading" content="This module is currently loading new content.">
+                <div className="px-3xs flex cursor-help items-center justify-center">
+                    <CircularProgress size={16} />
                 </div>
             </Tooltip>,
         );
@@ -467,59 +746,60 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
 
     if (numErrors > 0 || numWarnings > 0) {
         stateIndicators.push(
-            <Popover
-                actionsRef={popoverActionRef}
-                triggerTitle="Show status messages"
-                content={
-                    <>
+            <Popover.Root key="state-indicator-warning" actionsRef={popoverActionRef}>
+                <Popover.Trigger variant="ghost" size="small" iconOnly tone="neutral">
+                    <Tooltip content={badgeTitle} side="bottom">
+                        <Badge badgeContent={numErrors + numWarnings} invisible={props.isMinimized}>
+                            <div className="gap-x-4xs flex items-center whitespace-nowrap">
+                                <Error
+                                    fontSize="inherit"
+                                    color="error"
+                                    style={{ display: numErrors === 0 ? "none" : "block" }}
+                                />
+                                <div className="overflow-hidden">
+                                    <Warning
+                                        fontSize="inherit"
+                                        color="warning"
+                                        style={{ display: numWarnings === 0 ? "none" : "block" }}
+                                        className={resolveClassNames({
+                                            "-ml-xs": numErrors > 0,
+                                        })}
+                                    />
+                                </div>
+                            </div>
+                        </Badge>
+                    </Tooltip>
+                </Popover.Trigger>
+                <Popover.Popup side="bottom">
+                    <Popover.Content>
                         {makeHotStatusMessages()}
                         {log.length > 0 && (
                             <>
-                                <div className="bg-gray-300 h-0.5 w-full my-1" />
-                                <li>
-                                    <button
-                                        className="text-sm w-full text-left hover:bg-blue-100 cursor-pointer flex items-center gap-2 py-2 px-4"
-                                        onClick={handleShowLogClick}
-                                    >
-                                        <History fontSize="inherit" /> Show complete log
-                                    </button>
-                                </li>
+                                <Separator orientation="horizontal" />
+                                <Button
+                                    variant="ghost"
+                                    tone="neutral"
+                                    size="small"
+                                    onClick={handleShowLogClick}
+                                    layoutClassName="w-full"
+                                >
+                                    <History fontSize="inherit" /> Show complete log
+                                </Button>
                             </>
                         )}
-                    </>
-                }
-            >
-                <Badge
-                    badgeContent={numErrors + numWarnings}
-                    className="flex p-0.5"
-                    invisible={props.isMinimized}
-                    title={badgeTitle}
-                >
-                    <Error fontSize="inherit" color="error" style={{ display: numErrors === 0 ? "none" : "block" }} />
-                    <div className="overflow-hidden">
-                        <Warning
-                            fontSize="inherit"
-                            color="warning"
-                            style={{ display: numWarnings === 0 ? "none" : "block" }}
-                            className={resolveClassNames({
-                                "-ml-3": numErrors > 0,
-                            })}
-                        />
-                    </div>
-                </Badge>
-            </Popover>,
+                    </Popover.Content>
+                </Popover.Popup>
+            </Popover.Root>,
         );
     }
 
     if (stateIndicators.length === 0) {
         stateIndicators.push(
-            <DenseIconButton
-                key="header-module-log"
-                onPointerDown={handleShowLogClick}
-                title="Show complete log for this module"
-            >
-                <History fontSize="inherit" />
-            </DenseIconButton>,
+            <Tooltip content="Show complete log for this module" key="header-module-log">
+                <Button onPointerDown={handleShowLogClick} variant="ghost" tone="neutral" size="small" iconOnly>
+                    <History fontSize="inherit" />
+                </Button>
+            </Tooltip>,
         );
     }
 

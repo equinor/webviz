@@ -74,7 +74,7 @@ class SumoInspector:
             "query": {
                 "bool": {
                     "must": [
-                        {"match": {"access.asset.name.keyword": asset_name}},
+                        {"term": {"access.asset.name.keyword": asset_name}},
                     ],
                     "must_not": [{"exists": {"field": "fmu.aggregation"}}],
                 },

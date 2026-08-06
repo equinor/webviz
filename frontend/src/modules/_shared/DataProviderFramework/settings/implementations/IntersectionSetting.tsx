@@ -1,10 +1,11 @@
 import React from "react";
 
 import { IntersectionType } from "@framework/types/intersection";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Input } from "@lib/components/Input";
-import { RadioGroup } from "@lib/components/RadioGroup";
+import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { NumberInput } from "@lib/components/NumberInput";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
     CustomSettingImplementation,
@@ -18,6 +19,7 @@ import {
     isValueValid,
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
+
 
 export type IntersectionSettingOption = {
     type: IntersectionType;
@@ -172,7 +174,28 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 [type],
             );
 
-            function handleSelectionChange(selectedValue: string) {
+            const enableExtensionLength = extensionLengthConfig !== null && type === IntersectionType.WELLBORE;
+            const settledExtensionLength = createValidExtensionLength(props.value, defaultExtensionLength);
+
+            const [immediateExtensionLength, setExtensionLength, extensionLengthController] = useDebouncedOnChange<
+                number | null
+            >(
+                settledExtensionLength,
+                function handleExtensionLengthSettle(numValue: number | null) {
+                    if (numValue === null) {
+                        return;
+                    }
+                    if (props.value && props.value.type === IntersectionType.WELLBORE) {
+                        const newValue = { ...props.value, extensionLength: numValue };
+                        setCachedValueForIntersectionType(type, newValue);
+                        props.onValueChange(newValue);
+                    }
+                },
+                600,
+            );
+
+            function handleSelectionChange(selectedValue: string | null) {
+                extensionLengthController.cancel();
                 const selected = availableValues.find((v) => v.uuid === selectedValue) ?? null;
                 if (!selected) {
                     setCachedValueForIntersectionType(type, null);
@@ -196,7 +219,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(newValue);
             }
 
-            function handleCategoryChange(_: any, value: IntersectionSettingValue["type"]) {
+            function handleCategoryChange(value: IntersectionSettingValue["type"]) {
+                extensionLengthController.cancel();
                 setType(value);
 
                 // Use cached value if still valid for current constraints, otherwise pick first available
@@ -231,16 +255,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(null);
             }
 
-            function handleExtensionLengthChange(stringValue: string) {
-                const numValue = Number(stringValue);
-                if (props.value && props.value.type === IntersectionType.WELLBORE) {
-                    const newValue = { ...props.value, extensionLength: numValue };
-                    setCachedValueForIntersectionType(type, newValue);
-                    props.onValueChange(newValue);
-                }
-            }
-
-            const options: DropdownOption<string>[] = availableValues
+            const options: ComboboxItem<string>[] = availableValues
                 .filter((value) => value.type === type)
                 .map((value) => {
                     return {
@@ -249,62 +264,46 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                     };
                 });
 
-            const enableExtensionLength = extensionLengthConfig !== null && type === IntersectionType.WELLBORE;
-            const validExtensionLength = !props.isOverridden
-                ? createValidExtensionLength(props.value, defaultExtensionLength)
-                : createValidExtensionLength(props.overriddenValue, defaultExtensionLength);
-
             return (
-                <div className="flex flex-col gap-2 my-1">
-                    <div className="flex items-center gap-2">
-                        <span className="w-12 flex flex-col items-start">Type</span>
-                        <RadioGroup
-                            direction="horizontal"
-                            options={[
-                                {
-                                    label: "Wellbore",
-                                    value: IntersectionType.WELLBORE,
-                                },
-                                {
-                                    label: "Polyline",
-                                    value: IntersectionType.CUSTOM_POLYLINE,
-                                },
-                            ]}
-                            value={type}
-                            onChange={handleCategoryChange}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-12 flex flex-col items-start shrink-0">Source</span>
-                        <div className="grow min-w-0">
-                            <Dropdown<string>
-                                options={options}
-                                placeholder={
-                                    type === IntersectionType.CUSTOM_POLYLINE
-                                        ? "Select polyline..."
-                                        : "Select wellbore..."
-                                }
-                                value={!props.isOverridden ? props.value?.uuid : props.overriddenValue?.uuid}
-                                onChange={handleSelectionChange}
-                                disabled={props.isOverridden}
-                                showArrows
-                            />
-                        </div>
-                    </div>
-                    {enableExtensionLength && (
-                        <div className="flex items-center gap-2">
-                            <span className="w-12 flex flex-col items-start">Extension</span>
-                            <Input
-                                disabled={!enableExtensionLength || props.isOverridden}
-                                type="number"
-                                value={validExtensionLength}
-                                min={extensionLengthConfig?.min}
-                                max={extensionLengthConfig?.max}
-                                debounceTimeMs={200}
-                                onValueChange={handleExtensionLengthChange}
-                            />
-                        </div>
-                    )}
+                <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
+                    <span>Type</span>
+                    <RadioCompositions.GroupWithLabels
+                        layout="horizontal"
+                        options={[
+                            {
+                                label: "Wellbore",
+                                value: IntersectionType.WELLBORE,
+                            },
+                            {
+                                label: "Polyline",
+                                value: IntersectionType.CUSTOM_POLYLINE,
+                            },
+                        ]}
+                        value={type}
+                        onValueChange={handleCategoryChange}
+                        size="small"
+                    />
+                    <span>Source</span>
+                    <ComboboxCompositions.WithBrowseButtons
+                        items={options}
+                        placeholder={
+                            type === IntersectionType.CUSTOM_POLYLINE ? "Select polyline..." : "Select wellbore..."
+                        }
+                        value={props.value?.uuid}
+                        onValueChange={handleSelectionChange}
+                        disabled={props.disabled}
+                    />
+                    <span>Extension</span>
+                    <NumberInput
+                        disabled={props.disabled || !enableExtensionLength}
+                        value={immediateExtensionLength}
+                        min={extensionLengthConfig?.min}
+                        max={extensionLengthConfig?.max}
+                        onValueChange={setExtensionLength}
+                        scrubAdornment="m"
+                        scrubAreaPosition="end"
+                        allowWheelScrub
+                    />
                 </div>
             );
         };

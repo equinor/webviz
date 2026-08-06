@@ -59,7 +59,8 @@ export class ColorSetSetting implements CustomSettingImplementation<ValueType, V
                     selectedColorPaletteId={props.value?.getColorPalette().getId() ?? ""}
                     colorPalettes={defaultColorPalettes}
                     type={ColorPaletteSelectorType.Categorical}
-                    onChange={handleColorPaletteChange}
+                    onValueChange={handleColorPaletteChange}
+                    disabled={props.disabled}
                 />
             );
         };

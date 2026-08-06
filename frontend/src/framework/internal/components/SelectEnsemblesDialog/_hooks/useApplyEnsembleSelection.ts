@@ -110,7 +110,11 @@ export function useApplyEnsembleSelection({
             // Set loading state
             setIsEnsembleSetLoading(true);
 
-            loadMetadataFromBackendAndCreateEnsembleSet(queryClient, regularEnsembleSettings, deltaEnsembleSettings).then(
+            loadMetadataFromBackendAndCreateEnsembleSet(
+                queryClient,
+                regularEnsembleSettings,
+                deltaEnsembleSettings,
+            ).then(
                 (value: {
                     ensembleSet: EnsembleSet;
                     ensembleLoadingErrorInfoMap: EnsembleLoadingErrorInfoMap;
@@ -120,7 +124,10 @@ export function useApplyEnsembleSelection({
                     setIsEnsembleSetLoading(false);
 
                     // Handle confirm of error messages if any - call handleApplyEnsembleSelectionWithLoadingError to set ensemble set with errors
-                    if (value.ensembleLoadingErrorInfoMap && Object.keys(value.ensembleLoadingErrorInfoMap).length > 0) {
+                    if (
+                        value.ensembleLoadingErrorInfoMap &&
+                        Object.keys(value.ensembleLoadingErrorInfoMap).length > 0
+                    ) {
                         setNewEnsembleSetToApply(value.ensembleSet);
                         setEnsembleLoadingErrorInfoMap(value.ensembleLoadingErrorInfoMap);
                         onLoadingErrorsDetected();

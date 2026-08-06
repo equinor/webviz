@@ -1,7 +1,7 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { InternalAxiosRequestConfig } from "axios";
 import { AxiosError } from "axios";
-import { isObject } from "lodash";
+import { isObject } from "lodash-es";
 
 import { Origin } from "@framework/ModuleInstanceStatusController";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";

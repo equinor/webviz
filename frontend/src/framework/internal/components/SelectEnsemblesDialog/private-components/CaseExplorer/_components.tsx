@@ -1,7 +1,8 @@
 import type React from "react";
 
-import { UserAvatar } from "@framework/internal/components/UserAvatar";
-import { CopyCellValue } from "@lib/components/Table/column-components/CopyCellValue";
+import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
+import { Avatar } from "@lib/components/Avatar";
+import { TableCompositions } from "@lib/components/Table/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 /**
@@ -18,22 +19,23 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
     }
 
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested}>
+        <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
             <div
-                className="h-full group relative flex items-center min-w-0"
+                className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
             >
-                <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                <div className="gap-x-2xs flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
                     {props.caseName}
                     <span
-                        className={resolveClassNames("text-xs text-slate-500", { "text-white": props.cellRowSelected })}
+                        className={resolveClassNames("text-body-xs text-neutral-subtle", {
+                            "text-neutral-subtle-on-emphasis": props.cellRowSelected,
+                        })}
                     >
-                        {" "}
-                        - {props.caseId}
+                        - <span className="inline-block">{props.caseId}</span>
                     </span>
                 </div>
             </div>
-        </CopyCellValue>
+        </TableCompositions.CopyCellValue>
     );
 }
 
@@ -49,11 +51,11 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
     }
 
     return (
-        <CopyCellValue onCopyRequested={handleCopyRequested}>
-            <div className="flex h-full items-center min-w-0" title={props.description}>
+        <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
+            <div className="flex h-full min-w-0 items-center" title={props.description}>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{props.description}</span>
             </div>
-        </CopyCellValue>
+        </TableCompositions.CopyCellValue>
     );
 }
 
@@ -64,10 +66,12 @@ type AuthorCellProps = {
     author: string;
 };
 export function AuthorCell(props: AuthorCellProps): React.ReactNode {
+    const avatarSrc = useUserAvatar(`${props.author}@equinor.com`, props.author);
+
     return (
-        <div className="flex justify-center gap-1">
-            <UserAvatar userIdOrEmail={`${props.author}@equinor.com`} />
-            <span className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap w-full block" title={props.author}>
+        <div className="gap-x-xs flex items-center">
+            <Avatar key={props.author} size={24} userData={avatarSrc} />
+            <span className="block w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={props.author}>
                 {props.author}
             </span>
         </div>

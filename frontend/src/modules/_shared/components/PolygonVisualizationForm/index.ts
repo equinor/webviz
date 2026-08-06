@@ -1,4 +1,4 @@
-export { PolygonVisualizationForm } from "./polygonVisualizationForm";
+export { PolygonVisualizationForm, PolylinePreview } from "./polygonVisualizationForm";
 export type {
     PolygonVisualizationSpec,
     PolygonVisualizationFormProps,

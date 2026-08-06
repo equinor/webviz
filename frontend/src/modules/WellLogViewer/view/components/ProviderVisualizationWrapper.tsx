@@ -109,8 +109,8 @@ function createWellLogJsonFromProduct(
     if (!factoryProduct) return [];
 
     const accData = factoryProduct.accumulatedData;
-    const curveData = accData[DATA_ACC_KEY];
-    const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY];
+    const curveData = accData[DATA_ACC_KEY] ?? [];
+    const duplicatedCurveNames = accData[DUPLICATE_NAMES_ACC_KEY] ?? new Set();
 
     return createWellLogSets(curveData, wellboreTrajectory, wellPickProps, duplicatedCurveNames, !limitDomainToData);
 }
@@ -155,7 +155,7 @@ export function ProviderVisualizationWrapper(props: ProviderVisualizationWrapper
 
     if (!factoryProduct || factoryProduct.numLoadingDataProviders > 0) {
         return (
-            <div className="absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center">
+            <div className="z-elevated absolute flex h-full w-full items-center justify-center bg-white opacity-50">
                 <CircularProgress />
             </div>
         );

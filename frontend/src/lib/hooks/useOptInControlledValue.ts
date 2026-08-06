@@ -21,7 +21,7 @@ export function useOptInControlledValue<TValue>(
 
     const setValue = React.useCallback(
         function setValue(newValue: TValue) {
-            if (isControlled) setLocalValue(newValue);
+            if (!isControlled) setLocalValue(newValue);
             onValueChange?.(newValue);
         },
         [isControlled, onValueChange],

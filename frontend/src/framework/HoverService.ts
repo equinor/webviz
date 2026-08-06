@@ -1,6 +1,6 @@
 import React from "react";
 
-import { throttle } from "lodash";
+import { throttle } from "lodash-es";
 
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 

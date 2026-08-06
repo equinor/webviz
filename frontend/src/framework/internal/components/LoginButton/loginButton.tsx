@@ -1,27 +1,15 @@
 import React from "react";
 
-import { AccountCircle, Login, Logout } from "@mui/icons-material";
+import { Login, Logout } from "@mui/icons-material";
 
 import { postLogout } from "@api";
 import { AuthState, useAuthProvider } from "@framework/internal/providers/AuthProvider";
+import { Avatar } from "@lib/components/Avatar";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { ComposedMenu } from "@lib/components/Menu";
+import { Popover } from "@lib/components/Popover";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-
-import { TopBarButton } from "../TopBar/topBar";
-
-function makeInitials(name: string): string | null {
-    const regExp = new RegExp(/([^()]+)(\([\w ]+\))/);
-    const match = regExp.exec(name);
-
-    if (match) {
-        const names = match[1].trim().split(" ");
-        if (names.length > 1) {
-            return names[0].charAt(0) + names[names.length - 1].charAt(0);
-        }
-    }
-    return null;
-}
+import { makeInitials } from "@lib/utils/userNames";
 
 export type LoginButtonProps = {
     className?: string;
@@ -43,30 +31,21 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
 
     function makeIcon() {
         if (authState === AuthState.LoggedIn) {
-            if (userInfo?.avatar_b64str) {
-                return (
-                    <img
-                        src={`data:image/png;base64,${userInfo.avatar_b64str}`}
-                        alt="Avatar"
-                        className="w-5 h-5 rounded-full"
-                    />
-                );
-            }
-            if (userInfo?.display_name) {
-                const initials = makeInitials(userInfo.display_name);
-                if (initials) {
-                    return (
-                        <div className="w-5 h-5 rounded-full bg-slate-300 text-[0.5em] flex items-center justify-center">
-                            {initials}
-                        </div>
-                    );
-                }
-            }
-            return <AccountCircle className="w-5 h-5" />;
+            return (
+                <Avatar
+                    size={24}
+                    userData={{
+                        imageSrc: `data:image/png;base64,${userInfo?.avatar_b64str}`,
+                        initials: userInfo?.display_name
+                            ? (makeInitials(userInfo?.display_name ?? "") ?? undefined)
+                            : undefined,
+                    }}
+                />
+            );
         } else if (authState === AuthState.NotLoggedIn) {
             return <Login fontSize="small" />;
         } else {
-            return <CircularProgress size="medium-small" />;
+            return <CircularProgress size={16} />;
         }
     }
 
@@ -95,16 +74,21 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
     }
 
     return (
-        <ComposedMenu
-            onActionClicked={(id) => id === "logout" && handleLogout()}
-            renderTrigger={<TopBarButton title={text} />}
-            items={[
-                { type: "text", text: text, size: "extra-small" },
-                { type: "divider" },
-                { id: "logout", label: "Sign out", icon: <Logout fontSize="small" /> },
-            ]}
-        >
-            {makeIcon()}
-        </ComposedMenu>
+        <Popover.Root>
+            <Popover.Trigger variant="ghost" tone="neutral" iconOnly>
+                {makeIcon()}
+            </Popover.Trigger>
+            <Popover.Popup>
+                <div className="flex flex-col">
+                    <Popover.Title fontSize="sm" hideCloseButton>
+                        {text}
+                    </Popover.Title>
+                    <Button variant="ghost" tone="neutral" onClick={handleLogout}>
+                        <Logout fontSize="inherit" />
+                        Sign out
+                    </Button>
+                </div>
+            </Popover.Popup>
+        </Popover.Root>
     );
 };

@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { SurfaceIntersectionData_api } from "@api";
 import {

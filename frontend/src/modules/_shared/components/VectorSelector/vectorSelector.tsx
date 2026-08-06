@@ -1,4 +1,4 @@
-import type React from "react";
+import React from "react";
 
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { vectorDefinitions } from "@assets/vectorDefinitions";
@@ -6,19 +6,21 @@ import { vectorDefinitions } from "@assets/vectorDefinitions";
 import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/components/SmartNodeSelector";
 
-import aquifer from "./private-assets/aquifer.svg";
-import block from "./private-assets/block.svg";
-import calculated from "./private-assets/calculated.svg";
-import field from "./private-assets/field.svg";
-import group from "./private-assets/group.svg";
-import misc from "./private-assets/misc.svg";
-import network from "./private-assets/network.svg";
-import others from "./private-assets/others.svg";
-import region_region from "./private-assets/region-region.svg";
-import region from "./private-assets/region.svg";
-import segment from "./private-assets/segment.svg";
-import well_completion from "./private-assets/well-completion.svg";
-import well from "./private-assets/well.svg";
+import {
+    AquiferIcon,
+    BlockIcon,
+    CalculatedIcon,
+    FieldIcon,
+    GroupIcon,
+    MiscIcon,
+    NetworkIcon,
+    OthersIcon,
+    RegionIcon,
+    RegionRegionIcon,
+    SegmentIcon,
+    WellCompletionIcon,
+    WellIcon,
+} from "./private-assets/icons";
 import { VectorSelection } from "./private-utils/VectorSelection";
 
 export type VectorSelectorProps = SmartNodeSelectorProps & {
@@ -167,20 +169,21 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
         numMetaNodes: number,
         vectorDefinitions: VectorDefinitionsType,
     ): TreeDataNode[] {
-        const typeIcons: Record<string, string> = {
-            aquifer: aquifer,
-            block: block,
-            calculated: calculated,
-            field: field,
-            group: group,
-            misc: misc,
-            network: network,
-            others: others,
-            region: region,
-            "region-region": region_region,
-            segment: segment,
-            well: well,
-            "well-completion": well_completion,
+        const iconStyle = { fontSize: "1.25em" } as const;
+        const typeIcons: Record<string, JSX.Element> = {
+            aquifer: <AquiferIcon style={iconStyle} />,
+            block: <BlockIcon style={iconStyle} />,
+            calculated: <CalculatedIcon style={iconStyle} />,
+            field: <FieldIcon style={iconStyle} />,
+            group: <GroupIcon style={iconStyle} />,
+            misc: <MiscIcon style={iconStyle} />,
+            network: <NetworkIcon style={iconStyle} />,
+            others: <OthersIcon style={iconStyle} />,
+            region: <RegionIcon style={iconStyle} />,
+            "region-region": <RegionRegionIcon style={iconStyle} />,
+            segment: <SegmentIcon style={iconStyle} />,
+            well: <WellIcon style={iconStyle} />,
+            "well-completion": <WellCompletionIcon style={iconStyle} />,
         };
         const populateData = (data: TreeDataNode[] | undefined, level: number) => {
             const newData: TreeDataNode[] = [];
@@ -264,31 +267,35 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
     }
 }
 
-export const VectorSelector: React.FC<VectorSelectorProps> = (props) => {
-    const adjustedProps: VectorSelectorComponentProps = {
-        id: props.id ?? "",
-        data: props.data,
-        customVectorDefinitions: props.customVectorDefinitions ?? {},
-        onChange:
-            props.onChange ??
-            (() => {
-                return;
-            }),
-        label: props.label ?? "",
-        maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
-        delimiter: props.delimiter ?? ":",
-        numMetaNodes: props.numMetaNodes ?? 0,
-        showSuggestions: props.showSuggestions ?? true,
-        selectedTags: props.selectedTags ?? [],
-        placeholder: props.placeholder ?? "Add new tag...",
-        numSecondsUntilSuggestionsAreShown: props.numSecondsUntilSuggestionsAreShown ?? 0.5,
-        lineBreakAfterTag: props.lineBreakAfterTag ?? false,
-        caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
-        useBetaFeatures: props.useBetaFeatures ?? false,
-    };
+export const VectorSelector = React.forwardRef<HTMLInputElement, VectorSelectorProps>(
+    function VectorSelector(props, ref) {
+        const adjustedProps: VectorSelectorComponentProps = {
+            id: props.id ?? "",
+            data: props.data,
+            customVectorDefinitions: props.customVectorDefinitions ?? {},
+            onValueChange:
+                props.onValueChange ??
+                (() => {
+                    return;
+                }),
+            maxNumSelectedNodes: props.maxNumSelectedNodes ?? -1,
+            delimiter: props.delimiter ?? ":",
+            numMetaNodes: props.numMetaNodes ?? 0,
+            showSuggestions: props.showSuggestions ?? true,
+            selectedTags: props.selectedTags ?? [],
+            placeholder: props.placeholder ?? "Add new tag...",
+            numSecondsUntilSuggestionsAreShown: props.numSecondsUntilSuggestionsAreShown ?? 0.5,
+            lineBreakAfterTag: props.lineBreakAfterTag ?? false,
+            caseInsensitiveMatching: props.caseInsensitiveMatching ?? false,
+            useBetaFeatures: props.useBetaFeatures ?? false,
+            inputRef: props.inputRef ?? ref,
+            disabled: props.disabled ?? false,
+            fieldStateDataAttributes: props.fieldStateDataAttributes ?? {},
+        };
 
-    return <VectorSelectorComponent {...adjustedProps} />;
-};
+        return <VectorSelectorComponent {...adjustedProps} />;
+    },
+);
 
 /**
  * Add vector to existing vector selector data tree node list.

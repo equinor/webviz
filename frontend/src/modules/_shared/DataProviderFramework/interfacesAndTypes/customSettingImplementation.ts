@@ -11,14 +11,20 @@ export type OverriddenValueRepresentationArgs<TValue> = {
 
 // Base component props shared by both static and dynamic settings
 type SettingComponentPropsBase<TInternalValue> = {
+    /** Callback to update the setting's value. Accepts either a new value directly or an updater function receiving the previous value. */
     onValueChange: (newValue: TInternalValue | ((prevValue: TInternalValue) => TInternalValue)) => void;
+    /** The current internal value of the setting. */
     value: TInternalValue;
+    /** Whether the current value passes validation. Use to show error states in the component. */
     isValueValid: boolean;
-    overriddenValue: TInternalValue | null;
-    isOverridden: boolean;
+    /** The active workbench session, providing access to ensemble data and related session state. */
     workbenchSession: WorkbenchSession;
+    /** The active workbench settings, providing access to user-level configuration such as color themes. */
     workbenchSettings: WorkbenchSettings;
+    /** Global settings shared across all data providers in the manager. */
     globalSettings: GlobalSettings;
+    /** When true, the setting component should be rendered in a non-interactive state. */
+    disabled: boolean;
 };
 
 // Component props for static settings (no valueConstraints)

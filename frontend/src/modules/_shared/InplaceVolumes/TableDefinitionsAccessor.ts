@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";

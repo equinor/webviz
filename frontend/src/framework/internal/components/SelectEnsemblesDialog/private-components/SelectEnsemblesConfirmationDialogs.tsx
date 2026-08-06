@@ -1,10 +1,9 @@
 import type React from "react";
 
+import { EnsemblesLoadingErrorInfo } from "@framework/components/EnsemblesLoadingErrorInfo/ensemblesLoadingErrorInfo";
 import type { EnsembleLoadingErrorInfoMap } from "@framework/internal/EnsembleSetLoader";
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
+import { AlertDialog } from "@lib/components/AlertDialog";
 
-import { EnsemblesLoadingErrorInfoDialog } from "../../EnsemblesLoadingErrorInfoDialog";
 import type { StateTuple } from "../_hooks";
 
 export type SelectEnsemblesConfirmationDialogsProps = {
@@ -26,44 +25,42 @@ export const SelectEnsemblesConfirmationDialogs: React.FC<SelectEnsemblesConfirm
 
     return (
         <>
-            <Dialog
+            <AlertDialog
                 open={showCancelDialog}
-                onClose={() => setShowCancelDialog(false)}
-                title="Unsaved changes"
-                modal
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => setShowCancelDialog(false)}>No, don&apos;t cancel</Button>
-                        <Button onClick={props.onConfirmCancel} color="danger">
-                            Yes, cancel
-                        </Button>
-                    </div>
-                }
+                onOpenChange={(open) => setShowCancelDialog(open)}
+                title="Close without saving changes?"
+                primaryAction={{
+                    label: "Cancel",
+                    onClick: () => setShowCancelDialog(false),
+                    tone: "neutral",
+                }}
+                secondaryActions={[
+                    {
+                        label: "Yes, close without saving",
+                        onClick: props.onConfirmCancel,
+                        tone: "danger",
+                    },
+                ]}
             >
-                You have unsaved changes which will be lost. Are you sure you want to cancel?
-            </Dialog>
-            <EnsemblesLoadingErrorInfoDialog
+                You have unsaved changes which will be lost. Are you sure you want to close without saving?
+            </AlertDialog>
+            <AlertDialog
                 open={showEnsemblesLoadingErrorDialog}
-                onClose={() => setShowLoadingErrorsDialog(false)}
-                title={"Errors loading some ensembles — continue without them?"}
-                description={
-                    <div>
-                        Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
-                        continue without them?
-                    </div>
-                }
-                ensembleLoadingErrorInfoMap={props.ensembleLoadingErrorInfoMap}
-                actions={
-                    <div className="flex gap-4">
-                        <Button onClick={() => setShowLoadingErrorsDialog(false)} color="secondary">
-                            No, don&apos;t continue
-                        </Button>
-                        <Button onClick={props.onConfirmContinue} color="primary">
-                            Yes, continue
-                        </Button>
-                    </div>
-                }
-            />
+                onOpenChange={() => setShowLoadingErrorsDialog(false)}
+                title="Error loading some ensembles - continue without them?"
+                primaryAction={{
+                    label: "No, don't continue",
+                    onClick: () => setShowLoadingErrorsDialog(false),
+                    tone: "accent",
+                }}
+                secondaryActions={[{ label: "Yes, continue", onClick: props.onConfirmContinue, tone: "danger" }]}
+            >
+                <div className="gap-y-sm flex flex-col">
+                    Some ensembles encountered errors during loading and setup and will be excluded. Do you want to
+                    continue without them?
+                    <EnsemblesLoadingErrorInfo ensembleLoadingErrorInfoMap={props.ensembleLoadingErrorInfoMap} />
+                </div>
+            </AlertDialog>
         </>
     );
 };

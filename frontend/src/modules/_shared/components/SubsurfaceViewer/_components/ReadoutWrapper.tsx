@@ -5,7 +5,7 @@ import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { Key } from "ts-key-enum";
 
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
@@ -344,9 +344,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             viewports: props.views.viewports,
             layout: props.views?.layout ?? [1, 1],
         },
-        lights: {
-            ...(ctx.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
-        },
+        lights: LIGHTS,
         verticalScale: props.verticalScale,
         scale: {
             visible: true,
@@ -401,7 +399,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     return (
         <div
             ref={mainDivRef}
-            className="h-full w-full relative"
+            className="relative h-full w-full"
             onMouseEnter={handleMainDivEnter}
             onMouseLeave={handleMainDivLeave}
             onKeyDown={handleKeyDown}
@@ -456,7 +454,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 ))}
             </SubsurfaceViewerWithCameraState>
             {props.views.viewports.length === 0 && (
-                <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
+                <div className="-mt-sm absolute top-1/2 left-1/2 h-10 -translate-1/2 transform text-center">
                     Please add views and layers in the settings panel.
                 </div>
             )}
@@ -464,32 +462,23 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 }
 
-const LIGHTS_2D: LightsType = {
-    pointLights: [
-        {
-            position: [0, 0, 1],
-            intensity: 0.0,
-        },
-    ],
-    headLight: {
-        intensity: 0.0,
-        color: [255, 255, 255],
-    },
-    ambientLight: { intensity: 2.9, color: [255, 255, 255] },
-} as const;
-
-const LIGHTS_3D: LightsType = {
-    pointLights: [
-        {
-            position: [0, 0, 1],
-            intensity: 0.0,
-        },
-    ],
-    headLight: {
-        intensity: 1.0,
-        color: [255, 255, 255],
-    },
+const LIGHTS: LightsType = {
     ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+    directionalLights: [
+        {
+            direction: [0, -1, -1],
+            intensity: 0.3,
+        },
+        {
+            direction: [0, 1, -1],
+            intensity: 0.3,
+        },
+
+        {
+            direction: [1, 0, -1],
+            intensity: 0.3,
+        },
+    ],
 } as const;
 
 /**

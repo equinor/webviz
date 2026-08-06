@@ -2,7 +2,7 @@ import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { WellboreHeader_api } from "@api";
 import type { HoverService } from "@framework/HoverService";
@@ -13,7 +13,7 @@ import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
 import { isColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
-import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { Bounds, EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import { isValidBounds } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
@@ -80,7 +80,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     //   underlying query results are already cached. This causes layers list to temporarily omit layers,
     //   resulting EsvIntersection to remove and re-add as new instances. Re-adding triggers expensive init
     //   that blocks the UI.
-    const cachedVisualizationLayerItemsRef = React.useRef<LayerItem[]>([]);
+    const cachedVisualizationLayerItemsRef = React.useRef<EsvLayer[]>([]);
 
     // Invalidate the cache when the intersection source changes so we don't keep showing
     // layers computed for the previous source while new data is loading.
@@ -92,9 +92,8 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     }
 
     // Make layer items for the view providers using intersection reference system
-    const newVisualizationLayerItems: LayerItem[] = [];
+    const newVisualizationLayerItems: EsvLayer[] = [];
     if (view && intersectionReferenceSystem) {
-        // LayerItem elements for the view providers
         newVisualizationLayerItems.push(
             ...makeViewProvidersVisualizationLayerItems(view as ViewGroup, intersectionReferenceSystem),
         );
@@ -107,7 +106,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
     }
 
     // Use cached items when providers are loading, fresh items otherwise
-    const visualizationLayerItems: LayerItem[] = hasLoadingProviders
+    const visualizationLayerItems: EsvLayer[] = hasLoadingProviders
         ? [...cachedVisualizationLayerItemsRef.current]
         : [...newVisualizationLayerItems];
 

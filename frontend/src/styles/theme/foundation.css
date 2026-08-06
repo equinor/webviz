@@ -1,0 +1,45 @@
+/* Dark mode selector */
+@custom-variant dark (&:where([data-color-scheme=dark], [data-color-scheme=dark] *));
+
+/* Densitiy selector */
+@custom-variant comfortable (&:where([data-density=comfortable], [data-density=comfortable] *));
+
+/* Root-level defaults */
+:root {
+    --background: var(--color-canvas);
+    --foreground: var(--color-text);
+}
+
+/* Remove default Tailwind spacing scale so only project-defined utilities are used. */
+@theme {
+    --spacing: initial;
+}
+
+@layer base {
+    :focus,
+    :focus-within {
+        outline-color: var(--eds-color-border-focus);
+    }
+
+    :focus-visible {
+        outline-style: solid; /* Some UAs only let you overwrite default if you specify a style */
+        outline-color: var(--eds-color-border-focus);
+    }
+}
+
+/* Global semantic tokens */
+@theme inline {
+    --radius-rounded: var(--eds-spacing-border-radius-rounded);
+}
+
+@theme inline {
+    --z-base: 0; /* Default stacking context, used for most elements */
+    --z-elevated: 10; /* Elevated elements like cards */
+    --z-overlay: 20; /* Overlays like dropdowns and popovers */
+    --z-sticky: 30; /* Sticky elements like headers and navbars */
+    --z-scrim: 50; /* Scrims and backdrops */
+    --z-modal: 100; /* Modals and dialogs */
+    --z-alert: 150; /* Alerts and critical notifications that should appear above modals */
+    --z-toast: 200; /* Toasts and notifications */
+    --z-tooltip: 250; /* Tooltips and popovers that should appear above modals */
+}

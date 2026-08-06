@@ -1,22 +1,40 @@
 import React from "react";
 
-import { Tooltip as EdsTooltip, type TooltipProps as EdsTooltipProps } from "@equinor/eds-core-react";
+import { pick } from "lodash";
 
-const DELAY_MS_MAP: Record<NonNullable<TooltipProps["enterDelay"]>, number> = {
-    short: 500,
-    medium: 800,
-    long: 1500,
-};
+import type { PopupProps } from "./_components/popup";
+import { Popup } from "./_components/popup";
+import type { RootProps } from "./_components/root";
+import { Root } from "./_components/root";
+import type { TriggerProps } from "./_components/trigger";
+import { Trigger } from "./_components/trigger";
 
-export type TooltipProps = Omit<EdsTooltipProps, "enterDelay"> & {
-    /** Delay before showing the tooltip, undefined results in default of eds Tooltip */
-    enterDelay?: "short" | "medium" | "long";
-};
+const ROOT_PROPS = ["actionsRef", "open", "onOpenChange", "disabled"] as (keyof RootProps)[];
+const TRIGGER_PROPS = ["delay"] as (keyof TriggerProps)[];
+const POPUP_PROPS = ["align", "side"] as (keyof PopupProps)[];
 
-export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(function DelayedTooltip(
-    { enterDelay, ...rest },
-    ref,
-) {
-    const enterDelayMs = enterDelay ? DELAY_MS_MAP[enterDelay] : undefined;
-    return <EdsTooltip ref={ref} {...rest} enterDelay={enterDelayMs} />;
+export type DefaultTooltipProps = {
+    /** The tooltip text to display. When `undefined` or empty, the tooltip is automatically disabled. */
+    content: string | undefined;
+    /** The element that triggers the tooltip on hover. */
+    children: React.ReactNode;
+} & Pick<RootProps, (typeof ROOT_PROPS)[number]> &
+    Pick<TriggerProps, (typeof TRIGGER_PROPS)[number]> &
+    Pick<PopupProps, (typeof POPUP_PROPS)[number]>;
+
+export const Tooltip = React.forwardRef<HTMLDivElement, DefaultTooltipProps>(function Tooltip(props, ref): React.ReactNode {
+    const rootProps = pick(props, ...ROOT_PROPS);
+    const triggerProps = pick(props, ...TRIGGER_PROPS);
+    const popupProps = pick(props, ...POPUP_PROPS);
+
+    const disabled = props.disabled ?? !props.content;
+
+    return (
+        <Root {...rootProps} disabled={disabled}>
+            <Trigger {...triggerProps}>{props.children}</Trigger>
+            <Popup {...popupProps} ref={ref}>
+                {props.content}
+            </Popup>
+        </Root>
+    );
 });

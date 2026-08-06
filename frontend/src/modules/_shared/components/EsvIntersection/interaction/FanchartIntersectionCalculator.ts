@@ -16,12 +16,12 @@ export class FanchartIntersectionCalculator implements IntersectionCalculator {
     private _lines: number[][][];
     private _hull: number[][];
 
-    constructor(lines: number[][][], hull: number[][], margin: number = 0) {
+    constructor(lines: number[][][], hull: number[][], getMargin: () => number = () => 0) {
         this._lines = lines;
         this._hull = hull;
         const lineIntersectionCalculators: LineIntersectionCalculator[] = [];
         for (const line of lines) {
-            lineIntersectionCalculators.push(new LineIntersectionCalculator(line, margin));
+            lineIntersectionCalculators.push(new LineIntersectionCalculator(line, getMargin));
         }
         this._lineIntersectionCalculators = lineIntersectionCalculators;
     }

@@ -15,15 +15,18 @@ export type TextLabelData = {
     name: string;
 };
 
-export type PolygonVisualizationSettings = {
-    color?: string;
-    lineThickness?: number;
-    lineOpacity?: number;
-    fill?: boolean;
-    fillOpacity?: number;
-    showLabels?: boolean;
-    labelPosition?: LabelPositionType;
-    labelColor?: string;
+export type PolygonVisualizationSpec = {
+    hasStroke: boolean;
+    strokeColor: string;
+    strokeWeight: number;
+    strokeOpacity: number;
+    hasFill: boolean;
+    fillColor: string;
+    fillOpacity: number;
+    showLabels: boolean;
+    labelPosition: LabelPositionType;
+    labelColor: string;
+    colorsLinked: boolean;
 };
 export type PolygonFeatureProperties = {
     name: string;

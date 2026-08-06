@@ -1,0 +1,11 @@
+@utility min-h-selectable-sm {
+    min-height: var(--size-selectable-sm);
+}
+
+@utility min-h-selectable-md {
+    min-height: var(--size-selectable-md);
+}
+
+@utility min-h-selectable-lg {
+    min-height: var(--size-selectable-lg);
+}

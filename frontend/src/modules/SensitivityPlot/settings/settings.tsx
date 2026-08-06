@@ -5,11 +5,9 @@ import { useAtom, useSetAtom } from "jotai";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { KeyKind } from "@framework/types/dataChannnel";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { ContextHelp } from "@lib/components/ContextHelp";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
+import { Combobox } from "@lib/components/Combobox";
+import { Setting } from "@lib/components/Setting";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import { SensitivitySortBy } from "@modules/_shared/SensitivityProcessing";
 
@@ -96,38 +94,25 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         }
     }
 
-    function handleHideZeroYChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setHideZeroY(event.target.checked);
-    }
-
-    function handleShowLabelsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowLabels(event.target.checked);
-    }
-
-    function handleShowSensitivityMeanPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowSensitivityMeanPoints(event.target.checked);
-    }
-
-    function handleShowRealizationPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setShowRealizationPoints(event.target.checked);
-    }
+    const isChartSettingsDisabled = displayComponentType !== DisplayComponentType.SENSITIVITY_CHART;
+    const chartSettingsInfoAnnotation = isChartSettingsDisabled
+        ? "Only available when the plot type is sensitivity chart."
+        : undefined;
 
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Reference sensitivity" expanded>
-                <Dropdown
-                    value={referenceSensitivityName ?? ""}
-                    options={sensitivityNames.map((s) => ({ label: s, value: s }))}
-                    onChange={setReferenceSensitivityName}
-                />
-            </CollapsibleGroup>
-
-            <CollapsibleGroup title="Plot settings" expanded>
-                <div className="flex flex-col gap-4">
-                    <Label text="Plot type">
-                        <Dropdown
-                            value={displayComponentType}
-                            options={[
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Reference sensitivity">
+                        <Combobox<string>
+                            items={sensitivityNames.map((s) => ({ label: s, value: s }))}
+                            value={referenceSensitivityName}
+                            onValueChange={setReferenceSensitivityName}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Plot type">
+                        <Combobox<DisplayComponentType>
+                            items={[
                                 {
                                     label: "Sensitivity chart (Tornado)",
                                     value: DisplayComponentType.SENSITIVITY_CHART,
@@ -137,13 +122,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                     value: DisplayComponentType.SENSITIVITY_TABLE,
                                 },
                             ]}
-                            onChange={setDisplayComponentType}
+                            value={displayComponentType}
+                            onValueChange={(value) => value && setDisplayComponentType(value)}
                         />
-                    </Label>
-                    <Label text="Scaling">
-                        <Dropdown
-                            value={sensitivityScaling}
-                            options={[
+                    </Setting.Field>
+                    <Setting.Field label="Scaling">
+                        <Combobox<SensitivityScaling>
+                            items={[
                                 {
                                     label: "Relative",
                                     value: SensitivityScaling.RELATIVE,
@@ -157,13 +142,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                     value: SensitivityScaling.ABSOLUTE,
                                 },
                             ]}
-                            onChange={setSensitivityScaling}
+                            value={sensitivityScaling}
+                            onValueChange={(value) => value && setSensitivityScaling(value)}
                         />
-                    </Label>
-                    <Label text="Sensitivity sort order">
-                        <Dropdown
-                            value={sensitivitySortBy}
-                            options={[
+                    </Setting.Field>
+                    <Setting.Field label="Sensitivity sort order">
+                        <Combobox<SensitivitySortBy>
+                            items={[
                                 {
                                     label: "Impact",
                                     value: SensitivitySortBy.IMPACT,
@@ -173,61 +158,76 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                                     value: SensitivitySortBy.ALPHABETICAL,
                                 },
                             ]}
-                            onChange={setSensitivitySortBy}
+                            value={sensitivitySortBy}
+                            onValueChange={(value) => value && setSensitivitySortBy(value)}
                         />
-                    </Label>
-
-                    <Checkbox
-                        checked={hideZeroY}
-                        onChange={handleHideZeroYChange}
-                        label="Hide sensitivities without impact"
-                    />
-                    {displayComponentType === DisplayComponentType.SENSITIVITY_CHART && (
-                        <>
-                            <Checkbox
-                                checked={showRealizationPoints}
-                                onChange={handleShowRealizationPointsChange}
+                    </Setting.Field>
+                    <Setting.Field label="Data filtering">
+                        <CheckboxCompositions.WithLabel
+                            label="Hide sensitivities without impact"
+                            checked={hideZeroY}
+                            onCheckedChange={setHideZeroY}
+                            size="small"
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Color by" infoAnnotation={chartSettingsInfoAnnotation}>
+                        <Combobox<ColorBy>
+                            disabled={isChartSettingsDisabled}
+                            items={[
+                                {
+                                    label: "Sensitivity",
+                                    value: ColorBy.SENSITIVITY,
+                                },
+                                {
+                                    label: "Low/High",
+                                    value: ColorBy.LOW_HIGH,
+                                },
+                            ]}
+                            value={colorBy}
+                            onValueChange={(value) => value && setColorBy(value)}
+                        />
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Chart options"
+                        stacked
+                        infoAnnotation={chartSettingsInfoAnnotation}
+                        help={{
+                            title: "Show mean points",
+                            content: (
+                                <>
+                                    Shows one marker per Monte Carlo sensitivity at the mean response value across all
+                                    realizations in the sensitivity. Scenario sensitivities do not get mean points
+                                    because their low and high case averages are shown separately.
+                                </>
+                            ),
+                        }}
+                    >
+                        <div className="gap-y-xs flex flex-col">
+                            <CheckboxCompositions.WithLabel
+                                disabled={isChartSettingsDisabled}
                                 label="Show realization points"
+                                checked={showRealizationPoints}
+                                onCheckedChange={setShowRealizationPoints}
+                                size="small"
                             />
-                            <Checkbox checked={showLabels} onChange={handleShowLabelsChange} label="Show labels" />
-                            <div className="flex flex-row gap-2">
-                                <Checkbox
-                                    checked={showSensitivityMeanPoints}
-                                    onChange={handleShowSensitivityMeanPointsChange}
-                                    label="Show mean points"
-                                />
-                                <ContextHelp
-                                    title="Show mean points"
-                                    content={
-                                        <>
-                                            Shows one marker per Monte Carlo sensitivity at the mean response value
-                                            across all realizations in the sensitivity. Scenario sensitivities do not
-                                            get mean points because their low and high case averages are shown
-                                            separately.
-                                        </>
-                                    }
-                                />
-                            </div>
-                            <Label text="Color by">
-                                <Dropdown
-                                    value={colorBy}
-                                    options={[
-                                        {
-                                            label: "Sensitivity",
-                                            value: ColorBy.SENSITIVITY,
-                                        },
-                                        {
-                                            label: "Low/High",
-                                            value: ColorBy.LOW_HIGH,
-                                        },
-                                    ]}
-                                    onChange={setColorBy}
-                                />
-                            </Label>
-                        </>
-                    )}
-                </div>
-            </CollapsibleGroup>
-        </div>
+                            <CheckboxCompositions.WithLabel
+                                disabled={isChartSettingsDisabled}
+                                label="Show labels"
+                                checked={showLabels}
+                                onCheckedChange={setShowLabels}
+                                size="small"
+                            />
+                            <CheckboxCompositions.WithLabel
+                                disabled={isChartSettingsDisabled}
+                                label="Show mean points"
+                                checked={showSensitivityMeanPoints}
+                                onCheckedChange={setShowSensitivityMeanPoints}
+                                size="small"
+                            />
+                        </div>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

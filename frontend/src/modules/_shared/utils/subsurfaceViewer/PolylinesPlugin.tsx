@@ -1,6 +1,6 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import { Edit, Remove } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
 import addPathIcon from "@assets/add_path.cur?url";

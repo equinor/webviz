@@ -8,7 +8,7 @@ import { RealizationMode, TimeAggregationMode } from "@modules/WellCompletions/t
 export const syncedEnsembleIdentsAtom = atom<RegularEnsembleIdent[] | null>(null);
 export const selectedStratigraphyColorSetAtom = atom<ColorSet | null>(null);
 
-export const realizationModeAtom = atom<RealizationMode>(RealizationMode.AGGREGATED);
+export const realizationModeAtom = atom<RealizationMode>(RealizationMode.SINGLE);
 export const timeAggregationModeAtom = atom<TimeAggregationMode>(TimeAggregationMode.NONE);
 export const isZeroCompletionsHiddenAtom = atom<boolean>(false);
 export const wellExclusionTextAtom = atom<string>("");

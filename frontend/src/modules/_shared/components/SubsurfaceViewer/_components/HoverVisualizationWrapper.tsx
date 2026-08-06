@@ -5,7 +5,7 @@ import { ScatterplotLayer } from "@deck.gl/layers";
 import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
-import { inRange } from "lodash";
+import { inRange } from "lodash-es";
 
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";

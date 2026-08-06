@@ -1,5 +1,5 @@
 export type ConfirmationVariant = "error" | "info";
-export type ConfirmActionColor = "primary" | "danger" | "success" | "secondary";
+export type ConfirmActionColor = "primary" | "danger" | "secondary";
 
 export type ConfirmAction<T = string> = {
     id: T;

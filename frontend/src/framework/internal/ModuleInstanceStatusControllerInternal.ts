@@ -2,7 +2,7 @@ import React from "react";
 
 
 import type { InternalAxiosRequestConfig } from "axios";
-import { cloneDeep, filter, isEqual, keys } from "lodash";
+import { cloneDeep, filter, isEqual, keys } from "lodash-es";
 import { v4 } from "uuid";
 
 import { StatusSource } from "@framework/ModuleInstanceStatusController";

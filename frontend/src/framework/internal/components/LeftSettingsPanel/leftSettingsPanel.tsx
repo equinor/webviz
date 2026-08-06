@@ -53,10 +53,7 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
     }
 
     return (
-        <div
-            className={resolveClassNames("h-full", isCollapsed ? "bg-slate-100" : "bg-white")}
-            style={{ boxShadow: "4px 0px 4px 1px rgba(0, 0, 0, 0.05)" }}
-        >
+        <div className="bg-surface flex h-full flex-col overflow-hidden">
             <ModuleSettingsHeader
                 activeTab={drawerContent}
                 availableTabs={{
@@ -83,7 +80,7 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
                 <div
                     className={resolveClassNames(
                         !isCollapsed && drawerContent === DrawerContent.ModuleSettings ? "flex flex-col" : "hidden",
-                        "h-full",
+                        "min-h-0 flex-1",
                         "w-full",
                     )}
                 >

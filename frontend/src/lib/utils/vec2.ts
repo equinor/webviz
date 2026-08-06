@@ -11,7 +11,7 @@ export function vec2ToArray(vector: Vec2): [number, number] {
     return [vector.x, vector.y];
 }
 
-export function vec2FromPointerEvent(event: PointerEvent): Vec2 {
+export function vec2FromPointerEvent(event: PointerEvent | MouseEvent): Vec2 {
     return { x: event.pageX, y: event.pageY };
 }
 

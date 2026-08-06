@@ -1,4 +1,4 @@
-import { sortBy } from "lodash";
+import { sortBy } from "lodash-es";
 import type { Dash, PlotData } from "plotly.js";
 
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";

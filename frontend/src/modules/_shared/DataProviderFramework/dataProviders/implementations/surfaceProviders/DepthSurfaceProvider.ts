@@ -1,5 +1,5 @@
 import { hashKey } from "@tanstack/query-core";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import {
     SurfaceAttributeType_api,

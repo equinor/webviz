@@ -1,15 +1,17 @@
 import type React from "react";
 
+import { Heading, Paragraph } from "@lib/components/Typography/compositions";
+
 export function HistogramTypeInfoContent(): React.ReactElement {
     return (
-        <div className="space-y-8 max-w-md">
-            <div className="flex gap-4">
-                <div className="shrink-0 w-16 h-16 bg-gray-50 rounded border border-gray-200 p-1">
+        <div className="space-y-2xs max-w-md">
+            <div className="gap-2xs flex">
+                <div className="bg-surface border-neutral-subtle p-4xs h-16 w-16 shrink-0 rounded border">
                     <svg
                         viewBox="0 0 100 100"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-full h-full text-gray-300"
+                        className="text-neutral-subtle h-full w-full"
                     >
                         <path d="M10 10 V90 H90" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 
@@ -19,21 +21,21 @@ export function HistogramTypeInfoContent(): React.ReactElement {
                     </svg>
                 </div>
                 <div>
-                    <h3 className="font-bold text-sm  tracking-wider text-gray-900">Stacked</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <Heading as="h3">Stacked</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
                         Bars are placed on top of each other. The total height shows the cumulative sum of all
                         categories in the bin.
-                    </p>
+                    </Paragraph>
                 </div>
             </div>
 
-            <div className="flex gap-4">
-                <div className="shrink-0 w-16 h-16 bg-gray-50 rounded border border-gray-200 p-1">
+            <div className="gap-2xs flex">
+                <div className="border-neutral-subtle bg-surface p-4xs h-16 w-16 shrink-0 rounded border">
                     <svg
                         viewBox="0 0 100 100"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-full h-full text-gray-300"
+                        className="text-neutral-subtle h-full w-full"
                     >
                         <path d="M10 10 V90 H90" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 
@@ -43,21 +45,21 @@ export function HistogramTypeInfoContent(): React.ReactElement {
                     </svg>
                 </div>
                 <div>
-                    <h3 className="font-bold text-sm  tracking-wider text-gray-900">Grouped</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <Heading as="h3">Grouped</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
                         Bars are placed side-by-side. Best for comparing the exact magnitudes of different categories
                         within the same bin.
-                    </p>
+                    </Paragraph>
                 </div>
             </div>
 
-            <div className="flex gap-4">
-                <div className="shrink-0 w-16 h-16 bg-gray-50 rounded border border-gray-200 p-1">
+            <div className="gap-2xs flex">
+                <div className="border-neutral-subtle bg-surface p-4xs h-16 w-16 shrink-0 rounded border">
                     <svg
                         viewBox="0 0 100 100"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-full h-full text-gray-300"
+                        className="text-neutral-subtle h-full w-full"
                     >
                         <path d="M10 10 V90 H90" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
 
@@ -75,20 +77,20 @@ export function HistogramTypeInfoContent(): React.ReactElement {
                     </svg>
                 </div>
                 <div>
-                    <h3 className="font-bold text-sm  tracking-wider text-gray-900">Overlayed</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <Heading as="h3">Overlayed</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
                         Bars occupy the same space starting from the baseline. Requires transparency to see overlaps.
-                    </p>
+                    </Paragraph>
                 </div>
             </div>
 
-            <div className="flex gap-4">
-                <div className="shrink-0 w-16 h-16 bg-gray-50 rounded border border-gray-200 p-1">
+            <div className="gap-2xs flex">
+                <div className="border-neutral-subtle bg-surface p-4xs h-16 w-16 shrink-0 rounded border">
                     <svg
                         viewBox="0 0 100 100"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-full h-full text-gray-300"
+                        className="text-neutral-subtle h-full w-full"
                     >
                         <path
                             d="M10 10 V90 H90 M10 50 H90"
@@ -103,11 +105,11 @@ export function HistogramTypeInfoContent(): React.ReactElement {
                     </svg>
                 </div>
                 <div>
-                    <h3 className="font-bold text-sm  tracking-wider text-gray-900">Relative</h3>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <Heading as="h3">Relative</Heading>
+                    <Paragraph size="sm" layoutClassName="mt-4xs">
                         Stacked bars where positive values grow upward and negative values grow downward from the zero
                         line.
-                    </p>
+                    </Paragraph>
                 </div>
             </div>
         </div>

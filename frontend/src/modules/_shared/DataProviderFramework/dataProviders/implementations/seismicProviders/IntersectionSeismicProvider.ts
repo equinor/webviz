@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
@@ -115,6 +115,11 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
             .filter((value) => !Number.isNaN(value))
             .reduce((acc, value) => Math.max(acc, value), -Infinity);
 
+        // Discard infinite scales
+        if (minValue === Infinity || maxValue === -Infinity) {
+            return null;
+        }
+
         return [minValue, maxValue];
     }
 
@@ -141,7 +146,6 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionSeismicSettings, IntersectionSeismicStoredData>): void {
-
         setting(Setting.REALIZATION).bindAttributes({
             read(read) {
                 return {

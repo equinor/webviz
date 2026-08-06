@@ -1,6 +1,6 @@
 import React from "react";
 
-import _ from "lodash";
+import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
@@ -14,7 +14,11 @@ export type PlotProps = {
      * When provided, a download icon is added to the Plotly modebar.
      */
     onDownloadClick?: () => void;
-} & PlotParams;
+
+    layout?: Partial<Plotly.Layout>;
+    data?: Partial<Plotly.Data>[];
+    config?: Partial<Plotly.Config>;
+} & Omit<PlotParams, "data" | "layout" | "config">;
 
 const DOWNLOAD_ICON: Plotly.Icon = {
     width: 24,
@@ -68,15 +72,15 @@ export function Plot(props: PlotProps): React.ReactNode {
     const shouldApplyPlotUpdate = plotUpdateReady ?? true;
 
     // Store previous prop to avoid unnecessary rerenders
-    const [prevLayout, setPrevLayout] = React.useState<PlotParams["layout"]>(layout);
-    const [prevData, setPrevData] = React.useState<PlotParams["data"]>(data);
-    const [prevConfig, setPrevConfig] = React.useState<PlotParams["config"]>(config);
+    const [prevLayout, setPrevLayout] = React.useState<PlotProps["layout"]>(layout);
+    const [prevData, setPrevData] = React.useState<PlotProps["data"]>(data);
+    const [prevConfig, setPrevConfig] = React.useState<PlotProps["config"]>(config);
 
     // ! Plotly seems to mutate objects given to it as props, so we need to clone them
     // ! For example, it changed the data's xAxis from "x1" to "x"
-    const [stableLayout, setStableLayout] = React.useState<PlotParams["layout"]>(layout);
-    const [stableData, setStableData] = React.useState<PlotParams["data"]>(data);
-    const [stableConfig, setStableConfig] = React.useState<PlotParams["config"]>(config);
+    const [stableLayout, setStableLayout] = React.useState<PlotProps["layout"]>(layout);
+    const [stableData, setStableData] = React.useState<PlotProps["data"]>(data);
+    const [stableConfig, setStableConfig] = React.useState<PlotProps["config"]>(config);
 
     const [stableOtherProps, setStableOtherProps] = React.useState<typeof otherProps>(otherProps);
 
@@ -84,27 +88,27 @@ export function Plot(props: PlotProps): React.ReactNode {
     const onDownloadClickRef = React.useRef(onDownloadClick);
     onDownloadClickRef.current = onDownloadClick;
 
-    if (shouldApplyPlotUpdate && !_.isEqual(prevLayout, layout)) {
+    if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
-        setStableLayout(_.cloneDeep(layout));
+        setStableLayout(cloneDeep(layout));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(prevData, data)) {
+    if (shouldApplyPlotUpdate && !isEqual(prevData, data)) {
         setPrevData(data);
-        setStableData(_.cloneDeep(data));
+        setStableData(cloneDeep(data));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(prevConfig, config)) {
+    if (shouldApplyPlotUpdate && !isEqual(prevConfig, config)) {
         setPrevConfig(config);
-        setStableConfig(_.cloneDeep(config));
+        setStableConfig(cloneDeep(config));
     }
 
-    if (shouldApplyPlotUpdate && !_.isEqual(stableOtherProps, otherProps)) {
+    if (shouldApplyPlotUpdate && !isEqual(stableOtherProps, otherProps)) {
         setStableOtherProps(otherProps);
     }
 
     return React.useMemo(() => {
-        const layoutWithDefaults = _.merge({}, DEFAULT_LAYOUT, stableLayout);
+        const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
 
         const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
         if (onDownloadClickRef.current) {
@@ -115,7 +119,7 @@ export function Plot(props: PlotProps): React.ReactNode {
                 click: () => onDownloadClickRef.current?.(),
             });
         }
-        const configWithDefaults = { ..._.merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
+        const configWithDefaults = { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
 
         return (
             <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />

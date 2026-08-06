@@ -1,8 +1,8 @@
-import type { ChangeEvent } from "react";
 import type React from "react";
 
-import { Input } from "@lib/components/Input";
+import { NumberInput } from "@lib/components/NumberInput";
 import { Switch } from "@lib/components/Switch";
+import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
     CustomSettingImplementation,
@@ -168,26 +168,30 @@ export class BooleanNumberSetting implements CustomSettingImplementation<ValueTy
             const min = isStatic ? (staticProps?.min ?? 0) : (props.valueConstraints?.[0] ?? 0);
             const max = isStatic ? (staticProps?.max ?? 100) : (props.valueConstraints?.[1] ?? 100);
 
-            function handleBooleanChange(e: ChangeEvent<HTMLInputElement>) {
-                props.onValueChange({ enabled: e.target.checked, value });
-            }
+            const [immediateValue, setNumberValue, numberController] = useDebouncedOnChange<number | null>(
+                value,
+                function handleNumberSettle(numValue: number | null) {
+                    props.onValueChange({ enabled, value: numValue ?? min });
+                },
+                600,
+            );
 
-            function handleNumberChange(value: string) {
-                const numValue = Number(value);
-                props.onValueChange({ enabled, value: numValue });
+            function handleBooleanChange(checked: boolean) {
+                numberController.cancel();
+                props.onValueChange({ enabled: checked, value: immediateValue ?? min });
             }
 
             return (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Switch checked={enabled} onChange={handleBooleanChange} />
-                    <Input
-                        type="number"
-                        value={value}
+                <div className="gap-x-2xs flex items-center">
+                    <Switch disabled={props.disabled} checked={enabled} onCheckedChange={handleBooleanChange} />
+                    <NumberInput
+                        value={immediateValue}
                         min={min}
                         max={max}
-                        disabled={!enabled}
-                        debounceTimeMs={200}
-                        onValueChange={handleNumberChange}
+                        disabled={props.disabled || !enabled}
+                        onValueChange={setNumberValue}
+                        layoutClassName="grow"
+                        allowWheelScrub
                     />
                 </div>
             );

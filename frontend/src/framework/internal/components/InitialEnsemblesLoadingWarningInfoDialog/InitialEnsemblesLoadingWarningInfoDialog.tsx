@@ -38,7 +38,7 @@ export function InitialEnsemblesLoadingWarningInfoDialog(props: InitialEnsembles
             }
             ensembleLoadingWarningInfoMap={ensembleLoadingWarningInfoMap}
             actions={
-                <Button onClick={() => setIsOpen(false)} color="primary">
+                <Button onClick={() => setIsOpen(false)} variant="contained" tone="accent">
                     Close
                 </Button>
             }

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { ChevronRight } from "@mui/icons-material";
-import { defaults } from "lodash";
+import { defaults } from "lodash-es";
 
 import type { FlowDataColors, InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -44,11 +44,11 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
     const colorConf = defaults({}, props.colors, COLORS[props.phase]);
 
     return (
-        <div className="-ml-2 text-xs">
+        <div className="-ml-2xs text-body-xs">
             <button
                 className={resolveClassNames(
-                    "pl-2 pr-1 rounded-r-sm flex items-center gap-2 hover:bg-gray-300 w-full",
-                    { "bg-gray-300": !collapsed },
+                    "pl-2xs pr-3xs gap-2xs hover:bg-neutral-hover flex w-full items-center rounded-r-sm",
+                    { "bg-neutral-subtle": !collapsed },
                 )}
                 onClick={() => setCollapsed(!collapsed)}
             >
@@ -71,7 +71,7 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
             </button>
 
             {!collapsed && (
-                <ul className="bg-gray-200 px-2 w-full space-y-1">
+                <ul className="bg-neutral-surface w-full space-y-1 px-2">
                     <FlowValueText value={props.oil} name="Oil" color={colorConf.oil} unit="Sm³" />
                     <FlowValueText value={props.gas} name="Gas" color={colorConf.gas} unit="Sm³" />
                     <FlowValueText value={props.water} name="Water" color={colorConf.water} unit="m³" />
@@ -84,7 +84,7 @@ export function FlowDataReadout(props: FlowDataReadoutProps): React.ReactNode {
 function InlineFlowValueText(props: { value?: number; color: string }): React.ReactNode {
     if (props.value == null) return null;
 
-    const formattedValue = formatNumber(props.value, 1);
+    const formattedValue = formatNumber(props.value, { maxNumDecimalPlaces: 1 });
 
     return <span style={{ color: props.color }}>{formattedValue}</span>;
 }
@@ -92,7 +92,7 @@ function InlineFlowValueText(props: { value?: number; color: string }): React.Re
 function FlowValueText(props: { value?: number; name: string; color: string; unit: string }): React.ReactNode {
     if (props.value == null) return null;
 
-    const formattedValue = formatNumber(props.value, 3);
+    const formattedValue = formatNumber(props.value, { maxNumDecimalPlaces: 3 });
 
     return (
         <li className="flex items-center gap-2">

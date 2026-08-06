@@ -10,7 +10,7 @@ packages = [{ include = "webviz_services", from = "src" }]
 
 [tool.poetry.dependencies]
 redis = "7.1.1"
-pyarrow = "^23.0.1"
+pyarrow = "^24.0.0"
 numpy = "^2.2.0"
 httpx = "^0.28.1"
 sumo-wrapper-python = "^1.6.0"

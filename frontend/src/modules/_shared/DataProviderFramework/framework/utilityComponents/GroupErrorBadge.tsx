@@ -14,6 +14,8 @@ export type GroupErrorBadgeProps = {
 };
 
 export function GroupErrorBadge(props: GroupErrorBadgeProps) {
+    const groupDelegate = props.group.getGroupDelegate();
+
     const revisionNumber = usePublishSubscribeTopicValue(
         props.group.getItemDelegate().getDataProviderManager(),
         DataProviderManagerTopic.DATA_REVISION,
@@ -27,9 +29,7 @@ export function GroupErrorBadge(props: GroupErrorBadgeProps) {
     const numDescendantErrors = React.useMemo(
         function computeNumberOfDescendantErrors() {
             let descendantErrors = 0;
-            const descendants = props.group
-                .getGroupDelegate()
-                .getDescendantItems(isErrorPlaceholderOrHasDeserializationErrors);
+            const descendants = groupDelegate.getDescendantItems(isErrorPlaceholderOrHasDeserializationErrors);
             for (const descendant of descendants) {
                 if (isErrorPlaceholder(descendant)) {
                     descendantErrors += 1;
@@ -40,7 +40,7 @@ export function GroupErrorBadge(props: GroupErrorBadgeProps) {
             return descendantErrors;
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [props.group.getGroupDelegate(), revisionNumber],
+        [groupDelegate, revisionNumber],
     );
 
     const numTotalErrors = deserializationErrors.length + numDescendantErrors;

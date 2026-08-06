@@ -1,5 +1,5 @@
 import type { Layer } from "@equinor/esv-intersection";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 
 import type { IntersectionItem, LayerDataItem } from "../types/types";

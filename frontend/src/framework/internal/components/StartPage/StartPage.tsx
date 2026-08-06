@@ -1,15 +1,16 @@
-import { Icon, Typography } from "@equinor/eds-core-react";
-import { category, dashboard, folder_open, github, external_link } from "@equinor/eds-icons";
+import { Icon } from "@equinor/eds-core-react";
+import { category, dashboard, folder_open, github, external_link, add } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
+import { Heading } from "@lib/components/Typography/compositions";
 
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
 
-Icon.add({ dashboard, category, folder_open, github, external_link });
+Icon.add({ dashboard, category, folder_open, github, external_link, add });
 
 export type StartPageProps = {
     workbench: Workbench;
@@ -45,50 +46,52 @@ export function StartPage(props: StartPageProps) {
 
     return (
         <>
-            <div className="h-full w-full flex items-center justify-center min-h-0">
-                <div className="grid grid-cols-2 gap-x-4 gap-y-8">
-                    <section className="flex flex-col gap-2">
-                        <Typography variant="h3">Start</Typography>
+            <div className="flex h-full min-h-0 w-full items-center justify-center">
+                <div className="px-selectable-horizontal gap-x-3xl gap-y-3xl grid grid-cols-2">
+                    <section className="gap-y-xs flex flex-col">
+                        <Heading as="h3">Start</Heading>
                         <Tooltip
-                            placement="right"
-                            title="Create a new free session and save it later on demand."
-                            enterDelay="medium"
+                            side="right"
+                            content="Create a new free session and save it later on demand."
+                            delay="medium"
                         >
-                            <Button variant="text" onClick={handleNewSession}>
-                                <Icon name="category" />
+                            <Button variant="ghost" onClick={handleNewSession}>
+                                <Icon name="category" fontSize="inherit" />
                                 New session
                             </Button>
                         </Tooltip>
-                        <Tooltip placement="right" title="Open an existing session." enterDelay="medium">
-                            <Button variant="text" onClick={openOverviewDialogOnSessions}>
-                                <Icon name="folder_open" />
+                        <Tooltip side="right" content="Open an existing session." delay="medium">
+                            <Button variant="ghost" onClick={openOverviewDialogOnSessions}>
+                                <Icon name="folder_open" fontSize="inherit" />
                                 Open session or snapshot...
                             </Button>
                         </Tooltip>
                         <Tooltip
-                            placement="right"
-                            title="Start from a template to quickly set up a session with predefined settings and data."
-                            enterDelay="medium"
+                            side="right"
+                            content="Start from a template to quickly set up a session with predefined settings and data."
+                            delay="medium"
                         >
-                            <Button variant="text" onClick={handleOpenTemplatesDialog}>
-                                <Icon name="dashboard" />
+                            <Button variant="ghost" onClick={handleOpenTemplatesDialog}>
+                                <Icon name="dashboard" fontSize="inherit" />
                                 Start from template...
                             </Button>
                         </Tooltip>
                     </section>
                     <RecentSessions workbench={props.workbench} />
-                    <section className="flex flex-col gap-4">
-                        <Typography variant="h3">Resources</Typography>
-                        <a
+                    <section className="gap-y-sm flex flex-col">
+                        <Heading as="h3">Resources</Heading>
+
+                        <Button.AsLink
                             href="https://github.com/equinor/webviz"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-indigo-600 hover:bg-indigo-100 rounded px-4 py-2 font-medium w-max"
+                            variant="ghost"
+                            tone="accent"
+                            external
                         >
-                            <Icon name="github" />
+                            <Icon name="github" fontSize="inherit" />
                             Webviz on GitHub
-                            <Icon name="external_link" className="h-4" />
-                        </a>
+                        </Button.AsLink>
                     </section>
                     <RecentSnapshots workbench={props.workbench} />
                 </div>

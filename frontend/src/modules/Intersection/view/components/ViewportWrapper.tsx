@@ -11,7 +11,7 @@ import { fuzzyCompareArrays } from "@lib/utils/fuzzyCompare";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
-import type { Bounds, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { Bounds, EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 import { isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import { ViewportLabel } from "@modules/_shared/components/ViewportLabel";
@@ -30,7 +30,7 @@ export type ViewportWrapperProps = {
     color: string | null;
     intersectionSource: IntersectionSettingValue | null;
     referenceSystem?: IntersectionReferenceSystem;
-    layerItems: LayerItem[];
+    layerItems: EsvLayer[];
     layerItemIdToNameMap: Record<string, string>;
     layerItemsBounds: Bounds;
     focusBounds: Bounds | null;
@@ -122,14 +122,14 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     return (
         <div
             ref={mainDivRef}
-            className={resolveClassNames("relative w-full h-full flex flex-col", {
-                "outline-2 rounded": isHoverHighlighted,
-                "outline-gray-400": isHoverHighlighted && !highlightColor,
+            className={resolveClassNames("relative flex h-full w-full flex-col", {
+                "rounded-md outline-2 -outline-offset-2": isHoverHighlighted,
+                "outline-neutral": isHoverHighlighted && !highlightColor,
             })}
             style={isHoverHighlighted && highlightColor ? { outlineColor: highlightColor } : undefined}
         >
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                <div className="absolute top-0 left-0 right-0 z-10 flex justify-center pointer-events-none pt-1">
+                <div className="pt-4xs z-elevated pointer-events-none absolute top-0 right-0 left-0 flex justify-center">
                     <ViewportLabel name={props.name} color={props.color} />
                 </div>
                 <ReadoutWrapper
