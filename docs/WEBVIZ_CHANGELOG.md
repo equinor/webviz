@@ -5,9 +5,19 @@
 
 ## Webviz 2.1.2 - 05.08.2026
 
+### avif
+
+![Demo video webm](./videos/output-30.avif)
+
+### png
+
 ![Changelog image](./images/changelog_system.png)
 
+### mp4
+
 ![Demo video](./videos/changelog_demo.mp4)
+
+### webm
 
 ![Demo video webm](./videos/changelog_demo.webm)
 
