@@ -5,10 +5,14 @@
 
 ## Webviz 2.1.2 - 05.08.2026
 
-![alt text](./images/changelog_system.png)
+![Changelog image](./images/changelog_system.png)
+
+![Demo video](./videos/changelog_demo.mp4)
+
+![Demo video webm](./videos/changelog_demo.webm)
 
 - Added changelog system
-    - _Visible via modal on start page_
+  - _Visible via modal on start page_
 - Increased coffee consumption
 - Flexed time
 
@@ -48,8 +52,8 @@
 
 ```javascript
 const config = {
-    version: "2.1.0",
-    features: ["export", "collaborate"],
+  version: "2.1.0",
+  features: ["export", "collaborate"],
 };
 ```
 
