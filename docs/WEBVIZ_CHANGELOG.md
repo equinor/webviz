@@ -23,6 +23,8 @@
 
 ### hosted
 
+https://webviz.blob.core.windows.net/tutorial-videos/authed-simulationTimeSerie-f6538-imulation-Time-Series-chart-authenticated-chromium/video.webm
+
 ![Demo video hosted](https://webviz.blob.core.windows.net/tutorial-videos/authed-simulationTimeSerie-f6538-imulation-Time-Series-chart-authenticated-chromium/video.webm)
 
 <video width="1280" height="720" autoplay loop muted>
