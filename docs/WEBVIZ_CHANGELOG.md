@@ -21,6 +21,14 @@
 
 ![Demo video webm](./videos/changelog_demo.webm)
 
+### hosted
+
+![Demo video hosted](https://webviz.blob.core.windows.net/tutorial-videos/authed-simulationTimeSerie-f6538-imulation-Time-Series-chart-authenticated-chromium/video.webm)
+
+<video width="1280" height="720" autoplay loop muted>
+  <source src="https://webviz.blob.core.windows.net/tutorial-videos/authed-simulationTimeSerie-f6538-imulation-Time-Series-chart-authenticated-chromium/video.webm" type="video/webm" />
+</video>
+
 - Added changelog system
   - _Visible via modal on start page_
 - Increased coffee consumption
