@@ -38,11 +38,6 @@ jobs:
         run: |
           npm ci --include=dev
 
-      - name: Copy docs folder to frontend
-        working-directory: ./
-        run: |
-          cp -r ./docs ./frontend/docs
-
       - name: ℹ️ Installed npm packages (depth = 0)
         working-directory: ./frontend
         run: npm list --depth=0
