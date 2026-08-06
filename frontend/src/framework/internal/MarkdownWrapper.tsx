@@ -3,21 +3,14 @@ import React from "react";
 import type { Options } from "react-markdown";
 import Markdown from "react-markdown";
 
-import { useComponentSize } from "@lib/components/_shared/contexts/componentSizeContext";
-import { getTextSizeForSelectableSize, type SelectableSize } from "@lib/components/_shared/utils/size";
 import { Banner } from "@lib/components/Banner";
 import { Separator } from "@lib/components/Separator";
 import { Typography } from "@lib/components/Typography";
 import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 
-export type MarkdownWrapperProps = {
-    size?: SelectableSize;
-} & Options;
+export type MarkdownWrapperProps = Options;
 
 export function MarkdownWrapper(props: MarkdownWrapperProps): React.ReactNode {
-    const size = useComponentSize(props);
-    const textSize = getTextSizeForSelectableSize(size);
-
     const components = React.useMemo<Options["components"]>(
         () => ({
             h1: (props) => <Heading layoutClassName="not-first:mt-2xl" as="h1" {...props} />,
@@ -29,7 +22,7 @@ export function MarkdownWrapper(props: MarkdownWrapperProps): React.ReactNode {
             ul: (props) => <Typography layoutClassName="list-disc list ml-md" as="ul" size="md" {...props} />,
             ol: (props) => <Typography layoutClassName="list-decimal ml-md" as="ul" size="md" {...props} />,
             li: (props) => <li {...props} />,
-            p: (props) => <Paragraph size={textSize} {...props} />,
+            p: (props) => <Paragraph size="md" {...props} />,
             hr: () => <Separator layoutClassName="my-lg!" />,
             a: (props) => <a {...props} className="text-accent-subtle hover:underline" />,
             img: (props) => <img {...props} className="my-2xs mr-md max-w-xl rounded-md" />,
@@ -47,7 +40,7 @@ export function MarkdownWrapper(props: MarkdownWrapperProps): React.ReactNode {
             ),
             ...props.components,
         }),
-        [props.components, textSize],
+        [props.components],
     );
 
     return (
