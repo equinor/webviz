@@ -1,16 +1,20 @@
-class QcCheckRegistry {
-    private _checks: Map<string, any> = new Map<string, any>();
+import type { QcCheckDefinition } from "./QcCheck";
 
-    getChecks(): Map<string, any> {
-        return this._checks;
+export class QcCheckRegistry {
+    private static _registeredChecks: Map<string, QcCheckDefinition> = new Map<string, QcCheckDefinition>();
+
+    static getRegisteredCheck(id: string): QcCheckDefinition | undefined {
+        return this._registeredChecks.get(id);
     }
 
-    registerCheck(name: string, check: any): void {
-        if (this._checks.has(name)) {
-            throw new Error(`Check with name ${name} is already registered.`);
+    static getRegisteredChecks(): Map<string, QcCheckDefinition> {
+        return this._registeredChecks;
+    }
+
+    static registerCheck(id: string, check: QcCheckDefinition): void {
+        if (this._registeredChecks.has(id)) {
+            throw new Error(`Check with id ${id} is already registered.`);
         }
-        this._checks.set(name, check);
+        this._registeredChecks.set(id, check);
     }
 }
-
-export const qcCheckRegistry = new QcCheckRegistry();

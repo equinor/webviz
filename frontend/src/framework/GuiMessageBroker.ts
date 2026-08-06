@@ -10,9 +10,9 @@ import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum RightDrawerContent {
     RealizationFilterSettings = "RealizationFilterSettings",
+    QCChecks = "QCChecks",
     ModuleInstanceLog = "ModuleInstanceLog",
     ModulesList = "ModulesList",
-    TemplatesList = "TemplatesList",
     ColorPaletteSettings = "ColorPaletteSettings",
 }
 

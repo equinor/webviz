@@ -7,6 +7,8 @@ import {
     HistoryOutlined,
     Palette,
     PaletteOutlined,
+    Verified,
+    VerifiedOutlined,
     WebAsset,
     WebAssetOutlined,
 } from "@mui/icons-material";
@@ -113,6 +115,13 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                         disabled={isSnapshot}
                         disabledTooltip="Realization filters cannot be changed in snapshot mode"
                         onClick={() => handleSelectPanelContent(RightDrawerContent.RealizationFilterSettings)}
+                    />
+                    <Tab
+                        value={RightDrawerContent.QCChecks}
+                        icon={<VerifiedOutlined fontSize="small" />}
+                        activeIcon={<Verified fontSize="small" />}
+                        tooltip="Open QC checks panel"
+                        onClick={() => handleSelectPanelContent(RightDrawerContent.QCChecks)}
                     />
                     <Tab
                         value={RightDrawerContent.ModuleInstanceLog}

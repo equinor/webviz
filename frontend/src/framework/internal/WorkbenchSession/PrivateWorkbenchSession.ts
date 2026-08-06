@@ -19,6 +19,7 @@ import {
     type EnsembleLoadingErrorInfoMap,
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
+import type { EnsembleQc } from "../QC/EnsembleQc";
 
 import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
 import {
@@ -68,6 +69,7 @@ export enum PrivateWorkbenchSessionTopic {
 
 export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
+    [WorkbenchSessionTopic.ENSEMBLE_QC_SET]: EnsembleQc[];
     [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard | null;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
@@ -89,6 +91,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _dashboards: Dashboard[] = [];
     private _activeDashboardId: string | null = null;
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
+    private _ensembleQcSet: EnsembleQc[] = [];
     private _realizationFilterSet = new RealizationFilterSet();
     private _wrappedRealizationFilterSet = {
         filterSet: this._realizationFilterSet,
@@ -303,6 +306,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             switch (topic) {
                 case WorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
+                case WorkbenchSessionTopic.ENSEMBLE_QC_SET:
+                    return this._ensembleQcSet;
                 case WorkbenchSessionTopic.REALIZATION_FILTER_SET:
                     return this._wrappedRealizationFilterSet;
                 case PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD:
@@ -387,6 +392,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     getEnsembleSet(): EnsembleSet {
         return this._ensembleSet;
+    }
+
+    getEnsembleQcSet(): EnsembleQc[] {
+        return this._ensembleQcSet;
     }
 
     getRealizationFilterSet(): RealizationFilterSet {

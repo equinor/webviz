@@ -1,183 +1,186 @@
-# Framework-level QC (Quality Control) registry — implementation plan
+# Framework-level QC registry + cross-module Selection service — design
 
 ## Context
 
-The `ModelQc` module (`frontend/src/modules/ModelQc/`) currently has one fully-implemented check (Hydrostatic Equilibrium, split presentationally into a "vector check" and a "grid check") hardcoded directly into its view, plus three stubbed placeholders ("Observation coverage", "Well log qc", "Facies distribution") that were never implemented. Adding a new check today means writing a bespoke query hook, a bespoke status-derivation function, and bespoke JSX inside the module.
+Two related pieces of framework infrastructure, agreed through direct design discussion (not just exploration):
 
-The goal is to turn QC into a first-class framework capability: for each ensemble there is a `EnsembleQc` object instance; checks implement a common interface and register themselves at a top-level `QcCheckRegistry`; every `EnsembleQc` instance automatically knows about all registered checks; and the user can run any check independently of the others. This replaces `ModelQc`'s ad-hoc approach — the module becomes a thin, generic consumer of the new framework infrastructure rather than owning check logic itself. The existing `frontend/src/framework/internal/QC/qc` file is an empty stray placeholder (confirmed via `git status`, untracked, 0 bytes) and will be deleted as part of this work — it is not real code to build on.
+1. **QC registry**: `ModelQc` currently has one fully-implemented check (Hydrostatic Equilibrium, split presentationally into a "vector check" and a "grid check") hardcoded directly into its view, plus three stubbed placeholders never implemented. The goal: for each ensemble there is an `EnsembleQc` object instance; checks implement a common interface and register themselves at a top-level `QcCheckRegistry`; every `EnsembleQc` instance automatically knows about all registered checks; the user can run any check independently. This replaces `ModelQc`'s ad-hoc approach — the module becomes a thin, generic consumer of the framework infrastructure. The stray empty file `frontend/src/framework/internal/QC/qc` is dead and will be deleted.
 
-Backend endpoints (`backend_py/primary/primary/routers/qc/router.py`, the two hybrid-LRO hydrostatic equilibrium endpoints) are unchanged; this is a frontend architecture change only.
+2. **Selection service**: clicking a realization in a QC view (e.g. the status matrix) should select it globally, and other modules with their own "selected realization" concept (FlowNetwork, Vfp, WellCompletions today all have private, non-propagating local state for this) should automatically react — but only as a *revertible override*: the module's own original selection must be restorable, and the user needs a global overview of all active overrides as removable chips. No such cross-module override/revert mechanism exists today; the closest sibling is `HoverService` (ephemeral, not persistent, no revert semantics needed there since un-hovering naturally clears it).
 
-## Key architectural finding
+Backend endpoints for QC (`backend_py/primary/primary/routers/qc/router.py`) are unchanged — this is a frontend architecture change only. Selection service is purely new frontend infrastructure.
 
-`wrapLongRunningQuery()` (`frontend/src/framework/utils/lro/longRunningApiCalls.ts:38`) does **not** return a React hook — it returns a plain `UseQueryOptions` object whose `queryFn` is an ordinary `async` function (submit → detect `LroInProgressResp` → poll → resolve/throw). `useQuery()` is just react-query's hook-based *consumer* of that options object elsewhere in the codebase. The imperative, Promise-returning way to drive the same logic outside of React (from a plain class method) is:
+---
 
-```ts
-await queryClient.fetchQuery({ ...wrapLongRunningQuery({ queryFn, queryFnArgs, queryKey, ... }), signal });
-```
+## Part 1 — QC registry
 
-`fetchQuery` is a plain `QueryClient` method — no new polling machinery needs to be built. Progress reporting is similarly hook-free underneath: `useLroProgress` is a thin wrapper around `lroProgressBus` (`frontend/src/framework/LroProgressBus.ts`), whose `subscribe`/`getLast`/`publish` are plain callback-based methods a check's `run()` can call directly.
+### Key architectural finding
 
-## Design
+`wrapLongRunningQuery()` (`frontend/src/framework/utils/lro/longRunningApiCalls.ts:38`) returns a plain `UseQueryOptions` object with an ordinary `async` `queryFn` — not a hook. The codebase already has a ready-made, non-React way to drive TanStack Query imperatively from a plain class: **`ScopedQueryController`** (`frontend/src/lib/utils/ScopedQueryController.ts`), which wraps `QueryObserver` directly (no `useQuery`/`useQueries`), supports per-key cancellation, and is already used by `DataProvider` (`frontend/src/modules/_shared/DataProviderFramework/framework/DataProvider/DataProvider.ts`) — the closest existing sibling to what we're building: a per-instance object that fetches via TanStack imperatively and stores+publishes the resolved value itself (`this._data`, `DataProviderTopic.DATA`), which consumers read as props rather than by querying TanStack themselves. `EnsembleQc` follows the same pattern.
 
-### 1. `CustomQcCheckImplementation` interface
+### 1. `QcCheck` interface
 
-New: `frontend/src/framework/internal/QC/interfacesAndTypes/customQcCheckImplementation.ts`
+`frontend/src/framework/internal/QC/QcCheck.ts`:
 
 ```ts
-export type QcRealizationOutcome<TMetrics> =
+export type QcCheckRealizationOutcome<TMetrics> =
     | { kind: "success"; metrics: TMetrics }
     | { kind: "error"; errorMessage: string };
 
 export type QcCheckRunContext<TMetrics, TParams> = {
     ensemble: RegularEnsemble;
-    realizations: readonly number[];   // caller-supplied, not re-derived by the check (see EnsembleQc.runCheck)
+    realizations: readonly number[];
     params: TParams;
-    queryClient: QueryClient;
-    signal: AbortSignal;
+    fetchQuery: ScopedQueryController["fetchQuery"];
     setProgressMessage: (message: string | null) => void;
-    reportRealizationResult: (realization: number, outcome: QcRealizationOutcome<TMetrics>) => void;
+    reportRealizationResult: (realization: number, outcome: QcCheckRealizationOutcome<TMetrics>) => void;
 };
 
-export interface CustomQcCheckImplementation<TMetrics = unknown, TParams = void> {
-    run(context: QcCheckRunContext<TMetrics, TParams>): Promise<void>;
-
-    // Pure, no network. Called after each realization's metrics arrive, and again whenever params
-    // change (e.g. threshold edits) — recomputes verdicts instantly without a re-fetch.
-    deriveStatus(metrics: TMetrics, params: TParams): QcCheckStatus;
-
+export interface QcCheck<TMetrics = unknown, TParams = void> {
     defaultParams: TParams;
-
-    rescheduleRealizations?(context: QcCheckRunContext<TMetrics, TParams>): Promise<void>;
-
-    // Optional check-specific drill-down UI. The common contract (below) must already be sufficient
-    // for the generic matrix/summary on its own — this is additive, not required.
+    run(context: QcCheckRunContext<TMetrics, TParams>): Promise<void>;
+    deriveStatus(metrics: TMetrics, params: TParams): QcCheckStatus;
     renderDetails?(props: QcCheckDetailsRenderProps<TMetrics, TParams>): React.ReactNode;
 }
 ```
 
-### 2. Shared structured result contract
+Each check decides its own fetch granularity via `fetchQuery` (which is bound to that check's own `ScopedQueryController`, see §4): the grid check calls it once per realization (matches today's per-realization API shape); the vector check calls it once for a batch of realizations (matches today's single combined-response API shape, `HydrostaticVectorCheckResult.realization_results`) and then loops `reportRealizationResult` over the batch. `deriveStatus` is a pure function — ported directly from today's `computeGridRealizationStatus`/`computeVectorRealizationStatus`/`isGridPropertyWithinThreshold` in `frontend/src/modules/ModelQc/view/utils/statusCounts.ts`.
 
-New: `frontend/src/framework/internal/QC/interfacesAndTypes/qcCheckResult.ts`
+### 2. Shared result contract
 
-- `QcCheckStatus` enum + `QcCheckStatusToStringMapping` / `QcCheckStatusToColorClassMapping` — ported verbatim from `frontend/src/modules/ModelQc/typesAndEnums.ts`.
-- `QcRealizationResult<TMetrics>`: `{ realization, status, metrics: TMetrics | null, errorMessage: string | null }`.
-- `QcCheckResult<TMetrics>`: `{ checkId, realizationResults: ReadonlyMap<number, QcRealizationResult<TMetrics>>, counts: StatusCounts, tone: Tone, isRunning, progressMessage, lastRunError, lastRunStartedAt, lastRunFinishedAt }`.
-- `StatusCounts`: `{ passed, failed, notEvaluated, total }`.
+`frontend/src/framework/internal/QC/interfacesAndTypes/qcCheckResult.ts`:
 
-New: `frontend/src/framework/internal/QC/utils/qcStatusCounts.ts` — the generic half of the existing `frontend/src/modules/ModelQc/view/utils/statusCounts.ts` (`computeStatusCounts`, `mergeCounts`, `toneFromCounts`, `computeSectionTone`), relocated unchanged in logic. The check-specific half (`isGridPropertyWithinThreshold`, `computeGridRealizationStatus`, `computeVectorRealizationStatus`) becomes internal helpers inside each check implementation's `deriveStatus`, since only the check knows its metric shape.
+- `QcCheckStatus` enum + string/color mappings — ported verbatim from `frontend/src/modules/ModelQc/typesAndEnums.ts`.
+- `QcRealizationResult<TMetrics> = { realization, status, metrics: TMetrics | null, errorMessage: string | null }`.
+- `QcCheckRunState<TMetrics> = { isRunning, lastRunSelection: { realizations, params } | null, realizationResults: ReadonlyMap<number, QcRealizationResult<TMetrics>>, progressMessage: string | null }`.
+
+`EnsembleQc` holds `metrics` alongside `status` in `realizationResults` (not discarded after deriving status) — this is what lets `setCheckParams()` (§4) do a genuine local recompute with zero network activity, and what lets a check's optional `renderDetails()` receive real data as a normal prop instead of needing its own `useQuery` subscription.
+
+`frontend/src/framework/internal/QC/utils/qcStatusCounts.ts` — generic aggregation helpers ported unchanged from `frontend/src/modules/ModelQc/view/utils/statusCounts.ts`: `computeStatusCounts`, `mergeCounts`, `toneFromCounts`, `computeSectionTone`.
 
 ### 3. `QcCheckRegistry`
 
-Mirrors `DataProviderRegistry` (`frontend/src/modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry/_DataProviderRegistry.ts`) exactly: private-static class, `Map` storage of `{ descriptor, implementationClass, ctorParams? }`, `registerCheck()` throws on duplicate id, `makeCheckImplementation()` instantiates on demand, `getRegisteredChecks()` returns descriptors for discovery.
+Static class, mirrors `DataProviderRegistry` (`frontend/src/modules/_shared/DataProviderFramework/dataProviders/DataProviderRegistry/_DataProviderRegistry.ts`) exactly: private-static `Map` storage of `{ descriptor, implementationClass, ctorParams? }`, `registerCheck()` throws on duplicate id, `makeCheckImplementation()` instantiates on demand, `getRegisteredChecks()` returns descriptors for discovery.
 
-- `frontend/src/framework/internal/QC/QcCheckRegistry/_QcCheckRegistry.ts` — the class. `QcCheckDescriptor = { checkId, label, groupId?, groupLabel?, description? }` (the optional `groupId`/`groupLabel` let presentationally-related checks like the two hydrostatic-equilibrium checks roll up under one section header without coupling the checks themselves).
-- `frontend/src/framework/internal/QC/QcCheckRegistry/index.ts` — re-exports the class and does `import "./_registerAllQcChecks"` for its side effects (matches `DataProviderRegistry/index.ts`'s convention).
-- `frontend/src/framework/internal/QC/QcCheckRegistry/_registerAllQcChecks.ts` — one `QcCheckRegistry.registerCheck(...)` call per implementation.
-- `frontend/src/framework/internal/QC/qcCheckTypes.ts` — `QcCheckType` string enum of check ids (mirrors `DataProviderType`).
+- `frontend/src/framework/internal/QC/QcCheckRegistry/_QcCheckRegistry.ts` — the class. `QcCheckDescriptor = { checkId, label, groupId?, groupLabel?, description? }` (optional `groupId`/`groupLabel` let related checks like the two hydrostatic-equilibrium checks roll up under one section header without coupling the check implementations).
+- `frontend/src/framework/internal/QC/QcCheckRegistry/index.ts` — re-exports the class, does `import "./_registerAllQcChecks"` for side effects (matches `DataProviderRegistry/index.ts`).
+- `frontend/src/framework/internal/QC/QcCheckRegistry/_registerAllQcChecks.ts` — one `registerCheck()` call per implementation.
+- `frontend/src/framework/internal/QC/qcCheckTypes.ts` — `QcCheckType` string enum of check ids.
 
 ### 4. `EnsembleQc` — one instance per ensemble
 
-New: `frontend/src/framework/internal/QC/EnsembleQc.ts`. Implements `PublishSubscribe<EnsembleQcTopicPayloads>` (same `PublishSubscribeDelegate` from `@lib/utils/PublishSubscribeDelegate` used by `DataProviderManager` and `PrivateWorkbenchSession`), with a single topic `EnsembleQcTopic.RESULTS` that fires whenever any check's status/progress/counts change.
+`frontend/src/framework/internal/QC/EnsembleQc.ts`. Implements `PublishSubscribe<EnsembleQcTopicPayloads>` (same `PublishSubscribeDelegate` used by `DataProvider`/`PrivateWorkbenchSession`), topic `EnsembleQcTopic.RESULTS`.
 
-Holds `_resultsByCheckId: Map<string, QcCheckResult>`, `_paramsByCheckId`, `_abortControllersByCheckId`. Public API:
-- `getAvailableChecks(): QcCheckDescriptor[]` — delegates to `QcCheckRegistry.getRegisteredChecks()`, so every instance automatically knows about all registered checks with zero per-ensemble wiring.
-- `getCheckResult(checkId)` / `getAllCheckResults()`.
-- `async runCheck(checkId, { realizations, params? })` — cancels any in-flight run for that check id, instantiates the implementation via `QcCheckRegistry.makeCheckImplementation(checkId)`, marks requested realizations `NOT_EVALUATED_PENDING`, calls `impl.run(context)` with `reportRealizationResult`/`setProgressMessage` callbacks that update internal state and notify `RESULTS` incrementally as results stream in. This directly satisfies "run checks independently" — each check id runs and is cancelled independently of every other.
-- `async runAllChecks(realizations)` — `Promise.allSettled` over `runCheck` for every registered check.
-- `setCheckParams(checkId, params)` — pure re-derivation of statuses over already-fetched metrics via `impl.deriveStatus`, no network call (this is what makes a threshold edit instant).
-- `cancelCheck(checkId)`.
+Holds **one `ScopedQueryController` per check id**, created lazily on first run — this means cancelling one check's in-flight fetches (`cancelCheck`) never touches another check's, satisfying "run checks independently" for both execution and cancellation.
 
-**Scope decision — regular ensembles only.** `EnsembleQc` takes a `RegularEnsemble`. `DeltaEnsembleIdent` has no `caseUuid`/`ensembleName`, and every current/near-future check needs a Sumo case+ensemble to query; delta-ensemble QC is out of scope and `EnsembleQcSet` (below) simply never creates an entry for delta ensembles.
+```ts
+class EnsembleQc implements PublishSubscribe<EnsembleQcTopicPayloads> {
+    getAvailableChecks(): QcCheckDescriptor[];                 // delegates to QcCheckRegistry — automatic discovery
+    getCheckRunState(checkId: string): QcCheckRunState | null;
+    getAllCheckRunStates(): ReadonlyMap<string, QcCheckRunState>;
 
-**Scope decision — realizations passed in, not self-derived.** `runCheck()` takes `realizations` as a caller argument rather than reading `RealizationFilterSet` itself, keeping `EnsembleQc` decoupled/testable. The view computes it the same way `ModelQc` already does today via `useEnsembleRealizationFilterFunc(workbenchSession)`.
+    async runCheck(checkId: string, realizations: readonly number[], params?: unknown): Promise<void>;
+    setCheckParams(checkId: string, params: unknown): void;    // pure local recompute over already-held metrics, no fetch
+    cancelCheck(checkId: string): void;
 
-### 5. `PrivateWorkbenchSession` integration (ownership/lifecycle)
+    dispose(): void;   // cancels every check's controller — called by EnsembleQcSet on ensemble removal
+}
+```
 
-New: `frontend/src/framework/internal/QC/EnsembleQcSet.ts` — mirrors `RealizationFilterSet.synchronizeWithEnsembleSet()` (`frontend/src/framework/RealizationFilterSet.ts:17-44`) exactly: removes `EnsembleQc` entries for idents no longer in the `EnsembleSet` (disposing/aborting their in-flight runs first), adds new entries for new regular ensembles, and **leaves existing entries untouched** so accumulated results survive an unrelated `setEnsembleSet()` call (e.g. adding a second ensemble doesn't wipe out QC results already computed for the first).
+`runCheck` marks requested realizations pending, calls `impl.run(context)` with the check's `ScopedQueryController.fetchQuery` bound in, and inside `reportRealizationResult` computes `deriveStatus` and stores `{status, metrics}` together, notifying `RESULTS` incrementally as results stream in. Re-running with the same realizations but changed params is the same call — `fetchQuery` serves from the TanStack cache when nothing changed on the network side.
+
+**Scope decision — regular ensembles only.** `EnsembleQc` takes a `RegularEnsemble`; `DeltaEnsembleIdent` has no case/ensemble to query, and every current/near-future check needs one. `EnsembleQcSet` simply never creates an entry for delta ensembles.
+
+### 5. `PrivateWorkbenchSession` integration
+
+`frontend/src/framework/internal/QC/EnsembleQcSet.ts` — mirrors `RealizationFilterSet.synchronizeWithEnsembleSet()` (`frontend/src/framework/RealizationFilterSet.ts:17-44`): removes `EnsembleQc` entries for idents no longer in the `EnsembleSet` (disposing them first), adds entries for new regular ensembles, leaves existing entries untouched so results survive an unrelated `setEnsembleSet()` call.
 
 Touch points in `frontend/src/framework/internal/WorkbenchSession/PrivateWorkbenchSession.ts`:
 - Constructor: `this._ensembleQcSet = new EnsembleQcSet();`
-- `setEnsembleSet()` (line 281): after `this._ensembleSet = set;`, add `this._ensembleQcSet.synchronizeWithEnsembleSet(set, this._queryClient);` and notify a new `WorkbenchSessionTopic.ENSEMBLE_QC_SET`, alongside the existing `REALIZATION_FILTER_SET` notify on lines 286-287 (same pattern).
+- `setEnsembleSet()` (line 281): after `this._ensembleSet = set;`, add `this._ensembleQcSet.synchronizeWithEnsembleSet(set, this._queryClient);` and notify a new `WorkbenchSessionTopic.ENSEMBLE_QC_SET`, alongside the existing `REALIZATION_FILTER_SET` notify (lines 286-287).
 - `clear()` (line 419): add `this._ensembleQcSet.clear()`.
-- `deserializeContentState()` (line 228): no new call needed — it already calls `this.setEnsembleSet(newSet)` (line 261), which transitively synchronizes QC, preserving the existing "ensembles must be loaded before dashboards/modules deserialize" ordering (comment at lines 234-236).
-- New getter `getEnsembleQcSet(): EnsembleQcSet`.
-- `makeSnapshotGetter()` (line 299): add the `ENSEMBLE_QC_SET` case.
-- `WorkbenchSessionTopicPayloads` (line 69, in this same file): add `[WorkbenchSessionTopic.ENSEMBLE_QC_SET]: EnsembleQcSet;`.
+- `deserializeContentState()` (line 228): no new call needed — already calls `setEnsembleSet(newSet)` (line 261), which transitively synchronizes QC.
+- New getter `getEnsembleQcSet(): EnsembleQcSet`; `makeSnapshotGetter()` (line 299) gets a new case; `WorkbenchSessionTopicPayloads` (line 69, same file) gets `[WorkbenchSessionTopic.ENSEMBLE_QC_SET]: EnsembleQcSet`.
 
-**No serialization needed** — QC results are ephemeral/re-runnable (same as react-query cache data), so `serializeContentState()`/`SerializedWorkbenchSessionContentState` are untouched.
+**No serialization needed** — QC results are ephemeral/re-runnable; `serializeContentState()` is untouched.
 
-`frontend/src/framework/WorkbenchSession.ts` changes:
-- `WorkbenchSessionTopic` enum (line 12): add `ENSEMBLE_QC_SET = "EnsembleQcSet"`.
-- `WorkbenchSession` interface (line 17): add `getEnsembleQcSet: () => EnsembleQcSet;`.
-- New hooks mirroring `useEnsembleSet` (line 24):
-  ```ts
-  export function useEnsembleQcSet(workbenchSession: WorkbenchSession): EnsembleQcSet { ... }
-  export function useEnsembleQc(workbenchSession: WorkbenchSession, ensembleIdent: RegularEnsembleIdent | null): EnsembleQc | null { ... }
-  ```
-  A component that needs to re-render as results stream in additionally subscribes to the instance's own topic: `usePublishSubscribeTopicValue(ensembleQc, EnsembleQcTopic.RESULTS)`.
+`frontend/src/framework/WorkbenchSession.ts`: add `WorkbenchSessionTopic.ENSEMBLE_QC_SET`, `WorkbenchSession.getEnsembleQcSet()`, and hooks `useEnsembleQcSet()`/`useEnsembleQc()` mirroring `useEnsembleSet` (line 24). A component also subscribes to the instance's own topic for streaming updates: `usePublishSubscribeTopicValue(ensembleQc, EnsembleQcTopic.RESULTS)`.
 
 ### 6. Hydrostatic equilibrium migration
 
-Split into **two separately-registered checks** — `QcCheckType.HYDROSTATIC_EQUILIBRIUM_VECTOR` and `QcCheckType.HYDROSTATIC_EQUILIBRIUM_GRID_PROPERTY` — grouped presentationally via `groupId: "hydrostatic-equilibrium"`. Evidence: in the current code (`frontend/src/modules/ModelQc/view/checks/HydrostaticEquilibriumCheck.tsx`, `useVectorCheckQuery.ts`, `useGridPropertyCheckQueries.ts`) they already have fully independent query objects, loading/error states, progress text, and reschedule actions — the only coupling today is presentational (one shared collapsible header), which the registry's `groupId`/`groupLabel` reproduces without coupling the check implementations themselves.
+Split into **two separately-registered checks** — `HYDROSTATIC_EQUILIBRIUM_VECTOR` and `HYDROSTATIC_EQUILIBRIUM_GRID_PROPERTY` — grouped presentationally via `groupId: "hydrostatic-equilibrium"`. They already have fully independent query objects, loading/error states, and reschedule actions today (`useVectorCheckQuery.ts` vs `useGridPropertyCheckQueries.ts`); the only coupling is presentational (one shared collapsible header), reproduced via `groupId`/`groupLabel` without coupling the implementations.
 
-New: `frontend/src/framework/internal/QC/implementations/hydrostaticEquilibrium/`
-- `types.ts` — `VectorMetrics`, `GridMetrics`, `VectorCheckParams`, `GridCheckParams`.
-- `HydrostaticEquilibriumVectorCheck.ts` — `run()` replaces `useVectorCheckQuery.ts`: builds `apiArgs`/`queryKey`, subscribes to `lroProgressBus` for progress, calls `queryClient.fetchQuery(wrapLongRunningQuery(...))`, reports each realization's outcome via `reportRealizationResult`. `deriveStatus()` ports `computeVectorRealizationStatus` from the current `statusCounts.ts`.
-- `HydrostaticEquilibriumGridPropertyCheck.ts` — `run()` replaces `useGridPropertyCheckQueries.ts`: fires one `fetchQuery` per realization in parallel (`Promise.allSettled`), reporting each as it resolves — the imperative equivalent of the current `useQueries` streaming behavior. `deriveStatus()` ports `computeGridRealizationStatus`/`isGridPropertyWithinThreshold`. `rescheduleRealizations()` ports the existing reschedule logic (delete-task request + `queryClient.resetQueries`).
-- `renderDetails()` on each takes over the presentational role of the current `GridCheckResult.tsx`/`VectorCheckResult.tsx` (moved from `modules/ModelQc/view/components/` into this folder, adapted to read from `QcCheckResult<TMetrics>` instead of raw API types).
+New: `frontend/src/framework/internal/QC/implementations/hydrostaticEquilibrium/{types.ts, HydrostaticEquilibriumVectorCheck.ts, HydrostaticEquilibriumGridPropertyCheck.ts}`. `renderDetails()` on each takes over the presentational role of today's `GridCheckResult.tsx`/`VectorCheckResult.tsx` (moved into this folder), now reading `metrics` directly from the `QcRealizationResult` prop instead of subscribing to anything themselves. Backend is untouched.
 
-Backend is untouched — same two endpoints, same params, same response shapes.
+### 7. `ModelQc` becomes a generic consumer
 
-### 7. `ModelQc` module becomes a generic consumer
+Keep the registered module name `"ModelQc"` (renaming risks breaking persisted dashboards referencing it by string). `view/view.tsx` becomes generic: `useEnsembleQc(workbenchSession, ensembleIdent)`, subscribe to `EnsembleQcTopic.RESULTS`, group `getAvailableChecks()` by `groupId`, render one new `QcCheckSection.tsx` per group (generic collapsible: tone from `mergeCounts`+`toneFromCounts`, status-count summary, "Run" button calling `ensembleQc.runCheck(...)`, status matrix fed from `realizationResults`, `renderDetails()` if present). `RealizationStatusMatrix.tsx`/`StatusCountSummary.tsx`/`StatusBadge.tsx`/`PassFailIndicator.tsx` stay in place, only import paths change.
 
-Keep the registered module name `"ModelQc"` (renaming risks breaking persisted dashboards that reference it by string) — only its internals change:
+**Delete**: `modules/ModelQc/typesAndEnums.ts`, `modules/ModelQc/view/utils/statusCounts.ts`, `modules/ModelQc/view/checks/` (entire folder), `modules/ModelQc/view/components/{GridCheckResult,VectorCheckResult}.tsx` (ported into `renderDetails()`), the stray `frontend/src/framework/internal/QC/qc` file. The three previously-stubbed checks (Observation coverage, Well log qc, Facies distribution) are not implemented now — dropping their hardcoded placeholders is itself the proof the new architecture makes adding a check trivial later (implement `QcCheck`, register it, no view changes needed).
 
-- `interfaces.ts` — trims to just `ensembleIdent`; check-specific config (grid name, threshold, time steps) stays module-owned in `settings/atoms/` but is assembled into each check's `params` at the call site when the user clicks "Run", not threaded through the settings→view interface.
-- `view/view.tsx` — becomes generic: `useEnsembleQc(workbenchSession, ensembleIdent)`, subscribe to `EnsembleQcTopic.RESULTS`, group `ensembleQc.getAvailableChecks()` by `groupId`, render one `QcCheckSection` per group.
-- New `view/components/QcCheckSection.tsx` — generic collapsible section: header with tone from `mergeCounts`+`toneFromCounts`, a `StatusCountSummary`, a "Run" button calling `ensembleQc.runCheck(checkId, { realizations, params })`, the generalized `RealizationStatusMatrix` fed from `QcCheckResult.realizationResults`, and the check's `renderDetails()` if present.
-- `RealizationStatusMatrix.tsx`, `StatusCountSummary.tsx`, `StatusBadge.tsx`, `PassFailIndicator.tsx` stay in `modules/ModelQc/view/components/` (only their `QcCheckStatus` import path changes) — no forced relocation, since `ModelQc` remains the sole consumer for now.
-- `settings/settings.tsx` — unchanged in spirit (ensemble picker, grid-name combobox, threshold input); only type imports move.
+### QC implementation order
 
-**Delete** (superseded by the framework version): `modules/ModelQc/typesAndEnums.ts`, `modules/ModelQc/view/utils/statusCounts.ts`, `modules/ModelQc/view/checks/` (entire folder: `HydrostaticEquilibriumCheck.tsx`, `useVectorCheckQuery.ts`, `useGridPropertyCheckQueries.ts`), `modules/ModelQc/view/components/GridCheckResult.tsx` + `VectorCheckResult.tsx` (logic ported into `renderDetails()`), and the stray `frontend/src/framework/internal/QC/qc` placeholder file.
+1. Framework core with zero real checks registered (§1-§5); unit-test `qcStatusCounts.ts` and `EnsembleQc` against a fake `QcCheck`.
+2. Wire `PrivateWorkbenchSession`/`WorkbenchSession.ts` — app should build/behave identically, `ModelQc` still on old code (safe checkpoint).
+3. Port the two hydrostatic-equilibrium checks and register them; unit-test `deriveStatus` for both.
+4. Rebuild `ModelQc`'s view as a generic consumer; delete obsolete files.
 
-The three previously-stubbed checks (Observation coverage, Well log qc, Facies distribution) are **not implemented now** — dropping their hardcoded JSX placeholders and leaving them for a future `registerCheck()` call is itself the concrete proof the new architecture makes adding a check trivial (implement `CustomQcCheckImplementation`, register it — no view/settings changes required).
+---
 
-## Files
+## Part 2 — Cross-module Selection service
 
-**Create**
-- `frontend/src/framework/internal/QC/interfacesAndTypes/qcCheckResult.ts`
-- `frontend/src/framework/internal/QC/interfacesAndTypes/customQcCheckImplementation.ts`
-- `frontend/src/framework/internal/QC/qcCheckTypes.ts`
-- `frontend/src/framework/internal/QC/utils/qcStatusCounts.ts`
-- `frontend/src/framework/internal/QC/QcCheckRegistry/{_QcCheckRegistry.ts, _registerAllQcChecks.ts, index.ts}`
-- `frontend/src/framework/internal/QC/EnsembleQc.ts`
-- `frontend/src/framework/internal/QC/EnsembleQcSet.ts`
-- `frontend/src/framework/internal/QC/implementations/hydrostaticEquilibrium/{types.ts, HydrostaticEquilibriumVectorCheck.ts, HydrostaticEquilibriumGridPropertyCheck.ts}`
-- `frontend/src/modules/ModelQc/view/components/QcCheckSection.tsx`
-- Unit tests under `frontend/tests/unit/` (repo convention — confirmed via existing `frontend/tests/unit/EnsembleSet.test.ts`, not colocated): `qcStatusCounts.test.ts`, `EnsembleQc.test.ts`, `hydrostaticEquilibriumChecks.test.ts`
+### Why, and the gap it fills
 
-**Modify**
-- `frontend/src/framework/internal/WorkbenchSession/PrivateWorkbenchSession.ts` (§5)
-- `frontend/src/framework/WorkbenchSession.ts` (§5)
-- `frontend/src/modules/ModelQc/interfaces.ts`, `view/view.tsx`, `settings/settings.tsx`
-- `frontend/src/modules/ModelQc/view/components/{RealizationStatusMatrix,StatusCountSummary,StatusBadge,PassFailIndicator}.tsx` (import path updates only)
+No cross-module "selected realization" (or similar) concept exists today — `FlowNetwork`, `Vfp`, and `WellCompletions` each keep their own private `selectedRealization*` jotai atom; `ModelQc`'s `RealizationStatusMatrix` keeps a plain local `useState`. Clicking a realization in one module currently affects nothing else. No override/revert mechanism exists anywhere in the codebase to build on — `persistableFixableAtom` (`frontend/src/framework/utils/atomUtils.ts`) was considered and ruled out: it's a strictly-forward self-healing-default pattern (recomputes a valid value when the current one becomes invalid), not an externally-imposed-value-with-revert pattern; its mechanics don't transfer.
 
-**Delete**
-- `frontend/src/framework/internal/QC/qc`
-- `frontend/src/modules/ModelQc/typesAndEnums.ts`
-- `frontend/src/modules/ModelQc/view/utils/statusCounts.ts`
-- `frontend/src/modules/ModelQc/view/checks/` (entire folder)
-- `frontend/src/modules/ModelQc/view/components/{GridCheckResult,VectorCheckResult}.tsx`
+`HoverService` (`frontend/src/framework/HoverService.ts`) is the structural template — singleton in `Workbench`, per-topic values via `PublishSubscribeDelegate` + `useSyncExternalStore` — but hover is ephemeral (unhovering naturally clears it) and needs no revert semantics, so only the plumbing carries over, not the value lifecycle.
 
-## Implementation order
+### Design
 
-1. Framework core with zero real checks registered: types (§2), interface (§1), `QcCheckRegistry` (§3, empty registration file), `EnsembleQc`/`EnsembleQcSet` (§4/§5). Unit-test `qcStatusCounts.ts` and `EnsembleQc` against a hand-written fake `CustomQcCheckImplementation` (pending→success/error transitions, `setCheckParams` re-deriving without re-running, `cancelCheck` aborting).
-2. Wire `PrivateWorkbenchSession`/`WorkbenchSession.ts` (§5). App should build and behave identically — `ModelQc` still uses its old code at this point — a safe, independently-verifiable checkpoint.
-3. Port the two hydrostatic-equilibrium checks (§6) and register them; unit-test `deriveStatus` for both.
-4. Rebuild `ModelQc`'s view/settings as a generic consumer (§7); delete obsolete files.
+**Revert is decentralized.** `SelectionService` cannot know each module's original value before an override — it doesn't know FlowNetwork's realization was `3` and Vfp's was `7`. So "remember original, restore on clear" lives in each *consuming* module's own hook instance, via a new framework-provided hook, not centrally in the service.
+
+`frontend/src/framework/SelectionService.ts`:
+
+```ts
+export enum SelectionTopic {
+    REALIZATION = "selection.realization",
+    // extended later the same way HoverTopic grows
+}
+export type SelectionTopicPayloads = { [SelectionTopic.REALIZATION]: number | null };
+
+class SelectionService implements PublishSubscribe<SelectionTopicPayloads> {
+    setSelection<T extends SelectionTopic>(topic: T, value: SelectionTopicPayloads[T], sourceModuleInstanceId: string): void;
+    clearSelection(topic: SelectionTopic): void;                 // triggers revert in every subscriber
+    getSelection<T extends SelectionTopic>(topic: T): SelectionTopicPayloads[T];
+    getActiveSelections(): { topic: SelectionTopic; value: unknown; sourceModuleInstanceId: string }[];  // feeds the chip overview
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SelectionTopicPayloads>;
+}
+```
+
+Instantiated once in `Workbench.ts` alongside `_hoverService`, exposed via `getSelectionService()`. Unlike `hoverService` (view-only today), `selectionService` is added to **both** `ModuleViewProps` and `ModuleSettingsProps` (`frontend/src/framework/Module.tsx`), since consuming atoms like `selectedRealizationAtom` live in each module's `settings/atoms/`.
+
+**Hooks** (`frontend/src/framework/SelectionService.ts`, mirroring `useHoverValue`/`usePublishHoverValue`/`useHover`):
+- `useSelectionValue(topic, selectionService)` — read.
+- `usePublishSelectionValue(topic, selectionService, moduleInstanceId)` — write.
+- **`useSelectionOverride(topic, selectionService, [localValue, setLocalValue])`** — the revert-aware hook. While the topic holds a non-null value: remembers `localValue` once (on the transition into override), then forces `setLocalValue(overrideValue)` on every change. When the topic returns to null: restores the remembered value and forgets it. A module that wants to *react* to realization selection wraps its existing atom/state pair in this hook — one line, no bespoke revert logic per module.
+
+**Chip overview**: reads `selectionService.getActiveSelections()`, renders one `Chip` (`frontend/src/lib/components/Chip/chip.tsx`, which already has a built-in `onRemove` "×") per active topic, `onRemove` → `selectionService.clearSelection(topic)`, cascading revert to every subscribed module via `useSelectionOverride`. Exact placement in the UI shell is deferred to implementation time — not blocking the service/hook contract.
+
+**Connection point to Part 1**: the QC status matrix's realization-click handler (`RealizationStatusMatrix.tsx`, which currently only toggles local `useState`) calls `selectionService.setSelection(SelectionTopic.REALIZATION, realization, moduleInstanceId)` in addition to its own local toggle — this is the concrete trigger the user described ("clicking a realization should select it and modules should automatically react").
+
+**Known follow-up, not blocking**: a module whose atom is wrapped in `useSelectionOverride` will have `setLocalValue` called with the override value, which — if that atom is a `persistableFixableAtom` — may get tagged `_source: USER` and get persisted/serialized while temporarily overridden. Whether this needs a new `Source` tag (e.g. `OVERRIDE`, excluded from serialization) is a decision for when `useSelectionOverride` is actually wired into a `persistableFixableAtom`-backed module; noted here so it isn't forgotten.
+
+### Selection service implementation order
+
+1. `SelectionService` + hooks, zero consumers wired up yet. Unit-test `useSelectionOverride`'s remember/restore transitions with a fake atom pair.
+2. Wire into `Workbench.ts`/`ModuleViewProps`/`ModuleSettingsProps`.
+3. Wire `RealizationStatusMatrix.tsx`'s click handler to `setSelection`.
+4. Wire one consumer (e.g. `FlowNetwork`'s `selectedRealizationAtom`) through `useSelectionOverride` end-to-end as the reference example.
+5. Chip overview UI + placement.
+
+---
 
 ## Verification
 
-- Unit tests (`qcStatusCounts`, `EnsembleQc` with fake check, `deriveStatus` for both hydrostatic checks) via the repo's `vitest run` (`test:unit` script).
-- Manual: run the dev server, open a dashboard with the Model QC module, select an ensemble+grid with hydrostatic equilibrium data. Click "Run" on the vector check and the grid check independently — confirm each runs/streams/completes without triggering the other. Confirm the generic status matrix/summary render for both. Change the grid threshold and confirm status recomputes instantly with no new network request. Switch to a different ensemble and back — confirm previously-computed results are preserved (`EnsembleQcSet` reuse). Trigger a realization reschedule and confirm only that realization re-runs.
+- Unit tests: `qcStatusCounts`, `EnsembleQc` (fake `QcCheck`: pending→success/error transitions, `setCheckParams` re-deriving without a fetch, `cancelCheck` aborting one check without affecting another), `deriveStatus` for both hydrostatic checks, `useSelectionOverride` (remember/restore).
+- Manual: run the dev server, open Model QC, select an ensemble+grid, run the vector and grid checks independently, confirm neither blocks the other, confirm generic matrix/summary render, confirm a threshold edit recomputes instantly with no new request, switch ensembles and back and confirm results persist, trigger a reschedule and confirm only that realization re-runs. Then click a realization in the status matrix, confirm FlowNetwork's realization selection updates and a chip appears in the overview, click the chip's "×", confirm FlowNetwork reverts to its original realization.
