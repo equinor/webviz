@@ -2,85 +2,106 @@ import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { file_description } from "@equinor/eds-icons";
-import Markdown from "react-markdown";
+import { Circle } from "@mui/icons-material";
 
-// import testimg from "@docs/images/changelog_system.png";
-import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md";
+import { extractMarkdownMetadata, MarkdownWrapper } from "@framework/internal/MarkdownWrapper";
+import { useUserSettings } from "@framework/internal/providers/UserSettingsProvider";
 import { Button } from "@lib/components/Button";
+import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Dialog } from "@lib/components/Dialog";
-import { Typography } from "@lib/components/Typography";
-import { Heading, Paragraph } from "@lib/components/Typography/compositions";
+
+// eslint-disable-next-line import/no-unresolved -- The file gets injected into frontend on docker build
+import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md";
 
 Icon.add({ file_description });
 
 export function ChangelogDialog(): React.ReactNode {
-    const [open, setOpen] = React.useState(true);
+    const [open, setOpen] = React.useState(false);
 
-    // const metadataLines: string[] = [];
-    let markdownContent = ChangelogMd;
+    const {
+        settings: { disableChangelogPopup, lastSeenChangelog },
+        setDisableChangelogPopup,
+        setLastSeenChangelog,
+    } = useUserSettings();
 
-    const metadata = new Map();
+    const [markdown, metadata] = extractMarkdownMetadata(ChangelogMd);
 
-    if (ChangelogMd.startsWith("%")) {
-        const lines = ChangelogMd.split("\n");
+    const currentRelease = Number(metadata.get("release"));
 
-        let i = 0;
+    const hasSeenRelease = currentRelease <= lastSeenChangelog;
 
-        while (i < lines.length && lines[i].startsWith("%")) {
-            // metadataLines.push(lines[i]);
-            const line = lines[i].substring(1).trim(); // Remove the leading '%' and trim whitespace
-            const [key, value] = line.split(/\s*:\s*/);
-
-            metadata.set(key, value);
-
-            i++;
+    React.useEffect(() => {
+        if (!hasSeenRelease && !disableChangelogPopup) {
+            setOpen(true);
+            setLastSeenChangelog(currentRelease);
         }
-
-        markdownContent = lines.slice(i).join("\n");
-    }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- should only check on mount
+    }, []);
 
     return (
         <>
-            <Button tone="accent" variant="ghost" onClick={() => setOpen(true)}>
-                <Icon name="file_description" fontSize="inherit" />
+            <Button
+                layoutClassName="group"
+                tone="accent"
+                variant="ghost"
+                onClick={() => {
+                    setLastSeenChangelog(currentRelease);
+                    setOpen(true);
+                }}
+            >
+                <div className="relative">
+                    <Icon name="file_description" fontSize="inherit" />
+                    {!hasSeenRelease && (
+                        <div className="absolute -top-1.5 -right-0.5">
+                            <Circle
+                                fontSize="inherit"
+                                // Weird class name since we need to apply the stroke to the nested path
+                                className="**:stroke-canvas group-hover:**:stroke-accent-hover overflow-visible! duration-150 **:stroke-6 **:transition-[stroke]"
+                                color="warning"
+                            />
+                        </div>
+                    )}
+                </div>
                 Changelog
             </Button>
 
-            <Dialog.Popup open={open} onOpenChange={setOpen}>
+            <Dialog.Popup
+                open={open}
+                onOpenChange={(newValue) => {
+                    if (newValue) setLastSeenChangelog(currentRelease);
+                    setOpen(newValue);
+                }}
+            >
                 <Dialog.Header>
                     <Dialog.Title>Changelog</Dialog.Title>
                     <Dialog.Close />
                 </Dialog.Header>
-                <div className="max-h-[50vh] overflow-y-auto">
+                <div className="max-h-[80vh] overflow-y-auto">
                     <Dialog.Body>
-                        <Markdown
-                            disallowedElements={["h1"]}
-                            components={{
-                                h2: (props) => <Heading layoutClassName="not-first:mt-2xl" as="h2" {...props} />,
-                                h3: (props) => <Heading layoutClassName="mt-xs mb-4xs" as="h3" {...props} />,
-                                h4: (props) => <Heading layoutClassName="mt-xs mb-4xs" as="h4" {...props} />,
-                                h5: (props) => <Heading layoutClassName="mt-xs mb-4xs" as="h5" {...props} />,
-                                h6: (props) => <Heading layoutClassName="mt-xs mb-4xs" as="h6" {...props} />,
-                                ul: (props) => (
-                                    <Typography layoutClassName="list-disc ml-md" as="ul" size="md" {...props} />
-                                ),
-                                li: (props) => <Typography as="li" size="md" {...props} />,
-                                p: (props) => <Paragraph size="md" {...props} />,
-                                img: (props) => (
-                                    <img
-                                        {...props}
-                                        className="my-2xs rounded-md"
-                                        src={props.src?.replace("./", "/docs/")}
-                                    />
-                                ),
-                            }}
-                        >
-                            {markdownContent}
-                        </Markdown>
+                        <MarkdownWrapper disallowedElements={["h1"]}>{markdown}</MarkdownWrapper>
                     </Dialog.Body>
                 </div>
                 <Dialog.Actions>
-                    <Button variant="ghost" tone="neutral" onClick={() => setOpen(false)}>
+                    <Button.AsLink
+                        layoutClassName="mr-auto"
+                        // TODO: Should keep a more explicit release number with a tag
+                        href="https://github.com/equinor/webviz/tree/main/docs/WEBVIZ_CHANGELOG.md"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="ghost"
+                        tone="accent"
+                        external
+                    >
+                        Full changelog
+                    </Button.AsLink>
+                    <CheckboxCompositions.WithLabel
+                        size="small"
+                        checked={disableChangelogPopup}
+                        onCheckedChange={setDisableChangelogPopup}
+                    >
+                        {"Don't show this again"}
+                    </CheckboxCompositions.WithLabel>
+                    <Button variant="ghost" tone="accent" onClick={() => setOpen(false)}>
                         Close
                     </Button>
                 </Dialog.Actions>
@@ -88,4 +109,3 @@ export function ChangelogDialog(): React.ReactNode {
         </>
     );
 }
-// "@docs/*": ["./docs/*"],
