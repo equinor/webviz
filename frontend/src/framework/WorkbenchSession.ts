@@ -9,6 +9,7 @@ import type { WorkbenchSessionTopicPayloads } from "./internal/WorkbenchSession/
 import type { RealizationFilterSet } from "./RealizationFilterSet";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { UserCreatedItems } from "./UserCreatedItems";
+import { EnsembleQcSet } from "./internal/QC/EnsembleQcSet";
 
 export enum WorkbenchSessionTopic {
     ENSEMBLE_SET = "EnsembleSet",
@@ -18,7 +19,7 @@ export enum WorkbenchSessionTopic {
 
 export interface WorkbenchSession extends PublishSubscribe<WorkbenchSessionTopicPayloads> {
     getEnsembleSet: () => EnsembleSet;
-    getEnsembleQcSet: () => EnsembleQc[];
+    getEnsembleQcSet: () => EnsembleQcSet;
     getRealizationFilterSet: () => RealizationFilterSet;
     getUserCreatedItems: () => UserCreatedItems;
 }

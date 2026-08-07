@@ -27,6 +27,7 @@ import {
     WorkbenchSessionSource,
     type WorkbenchSessionDataContainer,
 } from "./utils/WorkbenchSessionDataContainer";
+import { EnsembleQcSet } from "../QC/EnsembleQcSet";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -91,7 +92,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _dashboards: Dashboard[] = [];
     private _activeDashboardId: string | null = null;
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
-    private _ensembleQcSet: EnsembleQc[] = [];
+    private _ensembleQcSet: EnsembleQcSet = new EnsembleQcSet();
     private _realizationFilterSet = new RealizationFilterSet();
     private _wrappedRealizationFilterSet = {
         filterSet: this._realizationFilterSet,
@@ -283,6 +284,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     setEnsembleSet(set: EnsembleSet) {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
+        this._ensembleQcSet.synchronizeWithEnsembleSet(set, this._queryClient);
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
@@ -394,7 +396,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._ensembleSet;
     }
 
-    getEnsembleQcSet(): EnsembleQc[] {
+    getEnsembleQcSet(): EnsembleQcSet {
         return this._ensembleQcSet;
     }
 

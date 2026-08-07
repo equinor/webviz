@@ -45,6 +45,7 @@ export type QcCheckDefinition<TMetrics = unknown, TParams = void> = {
 export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements PublishSubscribe<
     QcCheckRuntimeTopicPayloads<TMetrics>
 > {
+    private _id: string;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<QcCheckRuntimeTopicPayloads<TMetrics>>();
     private _ensemble: RegularEnsemble;
     private _checkDefinition: QcCheckDefinition<TMetrics, TParams>;
@@ -57,14 +58,24 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
     private _onFetchCancelOrFinishFn: (() => void) | null = null;
 
     constructor(
+        id: string,
         checkDefinition: QcCheckDefinition<TMetrics, TParams>,
         ensemble: RegularEnsemble,
         queryClient: QueryClient,
     ) {
+        this._id = id;
         this._ensemble = ensemble;
         this._checkDefinition = checkDefinition;
         this._scopedQueryController = new ScopedQueryController(queryClient);
         this._results = new Map();
+    }
+
+    getId(): string {
+        return this._id;
+    }
+
+    getCheckDefinition(): QcCheckDefinition<TMetrics, TParams> {
+        return this._checkDefinition;
     }
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<QcCheckRuntimeTopicPayloads<TMetrics>> {
