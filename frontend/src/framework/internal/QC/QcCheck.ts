@@ -26,13 +26,20 @@ export type QcCheckRunContext<TMetrics, TParams> = {
 
 export enum QcCheckRuntimeTopic {
     RESULTS = "results",
+    STATUS = "status",
 }
+
+export type QcCheckRuntimeStatus = {
+    isRunning: boolean;
+    requestedRealizations: readonly number[];
+};
 
 export type QcCheckRuntimeTopicPayloads<TMetrics> = {
     [QcCheckRuntimeTopic.RESULTS]: {
         realization: number;
         result: QcCheckRealizationResult<TMetrics>;
     }[];
+    [QcCheckRuntimeTopic.STATUS]: QcCheckRuntimeStatus;
 };
 
 export type QcCheckDefinition<TMetrics = unknown, TParams = void> = {
@@ -56,6 +63,13 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
     >();
     private _progressMessages: Map<number, string> = new Map<number, string>();
     private _onFetchCancelOrFinishFn: (() => void) | null = null;
+    private _isRunning: boolean = false;
+    private _requestedRealizations: readonly number[] = [];
+    // `useSyncExternalStore` (via `usePublishSubscribeTopicValue`) requires `makeSnapshotGetter` to
+    // return a referentially stable value when nothing has changed - these caches are invalidated
+    // (set to `null`) only when the underlying state they represent actually changes.
+    private _resultsSnapshot: QcCheckRuntimeTopicPayloads<TMetrics>[QcCheckRuntimeTopic.RESULTS] | null = null;
+    private _statusSnapshot: QcCheckRuntimeStatus | null = null;
 
     constructor(
         id: string,
@@ -87,10 +101,22 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
     ): () => QcCheckRuntimeTopicPayloads<TMetrics>[T] {
         return () => {
             if (topic === QcCheckRuntimeTopic.RESULTS) {
-                return Array.from(this._results.entries()).map(([realization, result]) => ({
-                    realization,
-                    result,
-                })) as QcCheckRuntimeTopicPayloads<TMetrics>[T];
+                if (!this._resultsSnapshot) {
+                    this._resultsSnapshot = Array.from(this._results.entries()).map(([realization, result]) => ({
+                        realization,
+                        result,
+                    }));
+                }
+                return this._resultsSnapshot as QcCheckRuntimeTopicPayloads<TMetrics>[T];
+            }
+            if (topic === QcCheckRuntimeTopic.STATUS) {
+                if (!this._statusSnapshot) {
+                    this._statusSnapshot = {
+                        isRunning: this._isRunning,
+                        requestedRealizations: this._requestedRealizations,
+                    };
+                }
+                return this._statusSnapshot as QcCheckRuntimeTopicPayloads<TMetrics>[T];
             }
             throw new Error(`Unknown topic: ${String(topic)}`);
         };
@@ -100,6 +126,14 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         return this._results;
     }
 
+    isRunning(): boolean {
+        return this._isRunning;
+    }
+
+    getRequestedRealizations(): readonly number[] {
+        return this._requestedRealizations;
+    }
+
     private tidyUpFetchRelatedResources(): void {
         // Cancel any resources related to the last ongoing fetch.
         this._scopedQueryController.cancelActiveFetch();
@@ -107,10 +141,31 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         this._onFetchCancelOrFinishFn = null;
     }
 
+    private setIsRunning(isRunning: boolean): void {
+        this._isRunning = isRunning;
+        this._statusSnapshot = null;
+        this._publishSubscribeDelegate.notifySubscribers(QcCheckRuntimeTopic.STATUS);
+    }
+
+    /** Cancels the currently running check, if any. */
+    cancel(): void {
+        if (!this._isRunning) {
+            return;
+        }
+        this.tidyUpFetchRelatedResources();
+        this.setIsRunning(false);
+    }
+
     async run(realizations: readonly number[], params?: TParams): Promise<void> {
+        // Cancel a previous in-flight run (if any) before starting a new one.
+        this.tidyUpFetchRelatedResources();
+
         const onFetchCancelOrFinish = (fnc: () => void) => {
             this._onFetchCancelOrFinishFn = fnc;
         };
+
+        this._requestedRealizations = realizations;
+        this.setIsRunning(true);
 
         const context: QcCheckRunContext<TMetrics, TParams> = {
             ensemble: this._ensemble,
@@ -129,9 +184,15 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
             },
             reportRealizationResult: (realization: number, result: QcCheckRealizationResult<TMetrics>) => {
                 this._results.set(realization, result);
+                this._resultsSnapshot = null;
+                this._publishSubscribeDelegate.notifySubscribers(QcCheckRuntimeTopic.RESULTS);
             },
         };
 
-        await this._checkDefinition.run(context);
+        try {
+            await this._checkDefinition.run(context);
+        } finally {
+            this.setIsRunning(false);
+        }
     }
 }

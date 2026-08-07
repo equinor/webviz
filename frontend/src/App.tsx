@@ -6,6 +6,7 @@ import { WorkbenchWrapper } from "@framework/internal/components/WorkbenchWrappe
 import { UserSettingsProvider } from "@framework/internal/providers/UserSettingsProvider";
 import { AlertDialogNestingProvider } from "@lib/contexts/alertDialogNestingContext";
 
+import "./framework/internal/QC/registerAllQcChecks";
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
 
