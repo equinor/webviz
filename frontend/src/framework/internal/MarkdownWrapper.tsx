@@ -20,7 +20,7 @@ export function MarkdownWrapper(props: MarkdownWrapperProps): React.ReactNode {
             h5: (props) => <Heading layoutClassName="not-first:mt-sm mb-4xs" as="h5" {...props} />,
             h6: (props) => <Heading layoutClassName="not-first:mt-xs mb-4xs" as="h6" {...props} />,
             ul: (props) => <Typography layoutClassName="list-disc list ml-md" as="ul" size="md" {...props} />,
-            ol: (props) => <Typography layoutClassName="list-decimal ml-md" as="ul" size="md" {...props} />,
+            ol: (props) => <Typography layoutClassName="list-decimal ml-md" as="ol" size="md" {...props} />,
             li: (props) => <li {...props} />,
             p: (props) => <Paragraph size="md" {...props} />,
             hr: () => <Separator layoutClassName="my-lg!" />,
@@ -65,7 +65,7 @@ export function MarkdownWrapper(props: MarkdownWrapperProps): React.ReactNode {
 export function extractMarkdownMetadata(markdown: string): [strippedMarkdown: string, metadata: Map<string, string>] {
     let markdownContent = markdown;
 
-    const metadata = new Map();
+    const metadata = new Map<string, string>();
 
     if (markdown.startsWith("%")) {
         const lines = markdown.split("\n");
@@ -75,8 +75,11 @@ export function extractMarkdownMetadata(markdown: string): [strippedMarkdown: st
         while (i < lines.length && lines[i].startsWith("%")) {
             const line = lines[i].substring(1).trim(); // Remove the leading '%' and trim whitespace
             const [key, value] = line.split(/\s*:\s*/);
+            const trimmedValue = value?.trim();
 
-            metadata.set(key, value);
+            if (key && trimmedValue) {
+                metadata.set(key, value);
+            }
 
             i++;
         }

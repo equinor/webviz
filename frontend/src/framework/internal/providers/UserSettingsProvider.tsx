@@ -38,7 +38,9 @@ function resolveInitialDensity(): Density {
 
 function resolveInitialLastSeenChangelog(): number {
     const stored = localStorage.getItem(CHANGELOG_LAST_SEEN_KEY);
-    if (stored) return Number(stored);
+    const parsed = Number(stored);
+
+    if (Number.isFinite(parsed)) return parsed;
     return 0;
 }
 

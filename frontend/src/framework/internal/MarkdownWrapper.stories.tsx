@@ -60,16 +60,6 @@ function example() {
 > It can span multiple lines.
 `;
 
-// We dont care about tables, I think
-/*
-## Table
-
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
-| Cell 1   | Cell 2   | Cell 3   |
-| Cell 4   | Cell 5   | Cell 6   |
-*/
-
 export const Default: Story = {
     args: {
         children: sampleMarkdown,
