@@ -60,7 +60,7 @@
         "@webviz/well-completions-plot": "^1.9.12",
         "@webviz/well-log-viewer": "^2.9.2",
         "animate.css": "^4.1.1",
-        "axios": "^1.18.0",
+        "axios": "^1.19.0",
         "buffer": "^6.0.3",
         "comlink": "^4.4.2",
         "culori": "^4.0.2",
