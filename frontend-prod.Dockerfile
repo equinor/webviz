@@ -21,7 +21,7 @@ RUN npm ci --include=dev
 COPY --chown=node:node frontend/ ./
 
 # Make doc files available for frontend imports
-COPY --chown=node:node docs/ ./docs
+COPY --chown=node:node docs/ ../docs
 
 RUN npm run build && node compress_static.cjs
 

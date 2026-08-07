@@ -13,6 +13,7 @@ services:
       - ./frontend/src:/usr/src/app/frontend/src
       - ./frontend/theme:/usr/src/app/frontend/theme
       - ./frontend/index.html:/usr/src/app/frontend/index.html
+      - ./docs:/usr/src/app/docs
 
   backend-primary:
     build:
@@ -102,9 +103,15 @@ services:
       - 6379
     user: "999:999"
     # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
-    command: ["--maxmemory", "1gb", "--maxmemory-policy", "allkeys-lru", "--loglevel", "notice"]
-
-
+    command:
+      [
+        "--maxmemory",
+        "1gb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+        "--loglevel",
+        "notice",
+      ]
 # When using the Cosmos DB Emulator, make sure to uncomment the relevant parts in the backend-primary service as well,
 # to ensure it waits for the emulator to be healthy before starting.
 #

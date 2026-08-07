@@ -10,7 +10,6 @@ import { Button } from "@lib/components/Button";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Dialog } from "@lib/components/Dialog";
 
-// eslint-disable-next-line import/no-unresolved -- The file gets injected into frontend on docker build
 import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md";
 
 Icon.add({ file_description });

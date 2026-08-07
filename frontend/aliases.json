@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "paths": {
-            "@docs/*": ["./docs/*"],
+            "@docs/*": ["../docs/*"],
             "@api": ["./src/api"],
             "@api/*": ["./src/api/autogen/*"],
             "@assets/*": ["./src/assets/*"],

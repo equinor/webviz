@@ -68,6 +68,9 @@ export default defineConfig(() => {
                     rewrite: (path) => path.replace(/^\/api/, ""),
                 },
             },
+            fs: {
+                allow: [path.resolve(__dirname, "../docs"), path.resolve(__dirname, "./")],
+            },
         },
     };
 });

@@ -11,6 +11,7 @@
         "dev": "vite --host",
         "build": "tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
         "preview": "vite preview",
+        "setup:link-docs": "ln -s ../docs ./docs",
         "generate:api": "openapi-ts",
         "generate:module-states-map": "node scripts/generate-module-states-map.js && eslint src/modules/ModuleSerializedStateMap.ts --fix",
         "generate:color-utilities": "node scripts/generate-color-utilities.js",
