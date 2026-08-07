@@ -11,7 +11,7 @@ import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
 import { transfer, wrap } from "comlink";
-import { isEqual } from "lodash-es";
+import { isEqual, isNaN } from "lodash-es";
 
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
@@ -47,9 +47,11 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
 }
 
 function encodePropertyToColor(property: number, min: number, max: number): [number, number, number] {
+    if (isNaN(property)) return [1, 0, 0]; // Allow NaN values to be explicitly picked
+
     const normalized = (property - min) / (max - min);
     const safeNormalized = Math.max(1 / 16777215, normalized); // avoid zero
-    const colorIndex = Math.floor(safeNormalized * 16777215);
+    const colorIndex = Math.floor(safeNormalized * 16777215) + 1; // Add 1 to separate from
     const r = (colorIndex >> 16) & 255;
     const g = (colorIndex >> 8) & 255;
     const b = colorIndex & 255;
@@ -57,7 +59,9 @@ function encodePropertyToColor(property: number, min: number, max: number): [num
 }
 
 function decodeColorToProperty(r: number, g: number, b: number, min: number, max: number): number {
-    const colorIndex = r * 256 * 256 + g * 256 + b;
+    if (isEqual([r, g, b], [1, 0, 0])) return NaN;
+
+    const colorIndex = r * 256 * 256 + g * 256 + b - 1;
     const normalized = colorIndex / 16777215;
     return normalized * (max - min) + min;
 }
@@ -293,8 +297,21 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         let minProperty = Number.MAX_VALUE;
         let maxProperty = -Number.MAX_VALUE;
         for (let i = 0; i < data.properties.length; i++) {
+            if (Number.isNaN(data.properties[i])) continue;
+
             minProperty = Math.min(minProperty, data.properties[i]);
             maxProperty = Math.max(maxProperty, data.properties[i]);
+        }
+
+        if (minProperty === Number.MAX_VALUE && maxProperty === -Number.MAX_VALUE) {
+            minProperty = -1;
+            maxProperty = 1;
+        }
+
+        if (minProperty === maxProperty) {
+            // Avoid division by zero in encodePropertyToColor
+            minProperty -= 1;
+            maxProperty += 1;
         }
 
         this.setState({
@@ -305,14 +322,17 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         let colorIndex = 0;
         for (let i = 0; i < data.properties.length; i++) {
-            const property = data.properties[i];
+            const trueProperty = data.properties[i];
+            const property = isNaN(trueProperty) ? 0 : trueProperty;
+
             const [r, g, b, a] = colorMapFunction(property);
+
             colorsArray[colorIndex * 4 + 0] = r / 255;
             colorsArray[colorIndex * 4 + 1] = g / 255;
             colorsArray[colorIndex * 4 + 2] = b / 255;
             colorsArray[colorIndex * 4 + 3] = a / 255;
 
-            const [r2, g2, b2] = encodePropertyToColor(property, minProperty, maxProperty);
+            const [r2, g2, b2] = encodePropertyToColor(trueProperty, minProperty, maxProperty);
             pickingColorsArray[i * 3 + 0] = r2;
             pickingColorsArray[i * 3 + 1] = g2;
             pickingColorsArray[i * 3 + 2] = b2;
@@ -373,7 +393,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         mesh: geometry,
                         getPosition: [0, 0, 0],
                         getColor: [255, 255, 255, 255],
-                        material: { ambient: 0.35, diffuse: 0.6, shininess: 0, specularColor: [0, 0, 0] },
+                        material: { ambient: 0.6, diffuse: 0.4, shininess: 8, specularColor: [0, 0, 0] },
                         pickable: true,
                         _instanced: false,
                         opacity,
