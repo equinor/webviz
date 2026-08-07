@@ -98,7 +98,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Setting.Section title="Ensembles" defaultOpen>
                     <Setting.Field
                         label="Reference"
-                        description="The baseline the change is measured from."
+                        description="Baseline the change is measured from."
+                        help={{
+                            title: "Reference and comparison",
+                            content: (
+                                <>
+                                    The change is decomposed as <b>comparison &minus; reference</b>, the same convention
+                                    delta ensembles use.
+                                    <br />
+                                    <br />
+                                    The two ensembles are selected separately here rather than as a delta ensemble,
+                                    because the decomposition works on per-ensemble means and so does not require the
+                                    two to share realization numbering.
+                                </>
+                            ),
+                        }}
                         errorAnnotation={isSameEnsembleSelectedTwice ? "Must differ from the comparison" : undefined}
                     >
                         <EnsembleDropdown
@@ -108,7 +122,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onValueChange={setReferenceEnsembleIdent}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Comparison" description="The ensemble the change is measured to.">
+                    <Setting.Field label="Comparison" description="Ensemble the change is measured to.">
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={comparisonEnsembleIdent}

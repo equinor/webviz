@@ -1,8 +1,8 @@
 import type { DrawPreviewFunc } from "@framework/Preview";
 
-const BAR_COLOR_TOTAL = "darkgrey";
-const BAR_COLOR_INCREASING = "steelblue";
-const BAR_COLOR_DECREASING = "GoldenRod";
+const BAR_COLOR_TOTAL = "#7f7f7f";
+const BAR_COLOR_INCREASING = "#1f77b4";
+const BAR_COLOR_DECREASING = "#ff7f0e";
 
 /** Schematic waterfall: two grey totals with floating increase/decrease bars in between. */
 export const preview: DrawPreviewFunc = function (width: number, height: number) {

@@ -5,13 +5,18 @@ import type { Data, PlotData } from "plotly.js";
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure } from "@modules/_shared/Figure";
 import { makeSubplots } from "@modules/_shared/Figure";
+import type { NumberFormatOptions } from "@modules/_shared/utils/numberFormatting";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { VolumeChangeDecomposition } from "./computeVolumeChangeDecomposition";
 
-const INCREASING_COLOR = "steelblue";
-const DECREASING_COLOR = "GoldenRod";
-const TOTALS_COLOR = "darkgrey";
+// Tab10 blue/orange/grey, matching SensitivityPlot's signed-bar convention. Blue vs orange is the
+// colorblind-safe axis; the colors are directional only and carry no good/bad meaning.
+const INCREASING_COLOR = "#1f77b4";
+const DECREASING_COLOR = "#ff7f0e";
+const TOTALS_COLOR = "#7f7f7f";
+
+const BAR_TEXT_FORMAT_OPTIONS: NumberFormatOptions = { unitSystem: "si", numSignificantDigits: 3 };
 
 export interface WaterfallGroupDecomposition {
     /** Subplot label (e.g. a REGION value). Empty string for a single, ungrouped waterfall. */
@@ -35,13 +40,13 @@ function makeBarTexts(decomposition: VolumeChangeDecomposition): string[] {
     const { bars } = decomposition;
     return bars.map((bar, index) => {
         if (bar.measure === "absolute") {
-            return formatNumber(bar.value);
+            return formatNumber(bar.value, BAR_TEXT_FORMAT_OPTIONS);
         }
 
         const previousCumulative = bars[index - 1]?.cumulative ?? 0;
         const percent = previousCumulative !== 0 ? (100 * bar.value) / previousCumulative : 0;
         const sign = bar.value > 0 ? "+" : "";
-        return `${sign}${formatNumber(bar.value)}  ${sign}${percent.toFixed(1)}%`;
+        return `${sign}${formatNumber(bar.value, BAR_TEXT_FORMAT_OPTIONS)}  ${sign}${percent.toFixed(1)}%`;
     });
 }
 
