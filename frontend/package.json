@@ -87,6 +87,11 @@
     "overrides": {
         "@playwright/experimental-ct-react": {
             "vite": "$vite"
+        },
+        "@hey-api/openapi-ts": {
+            "@hey-api/json-schema-ref-parser": {
+                "js-yaml": "^4.3.0"
+            }
         }
     },
     "devDependencies": {
@@ -109,7 +114,7 @@
         "@vitejs/plugin-react": "^6.0.3",
         "@vitest/coverage-istanbul": "^4.1.9",
         "dependency-cruiser": "^17.4.3",
-        "eslint": "^9.39.4",
+        "eslint": "^9.39.5",
         "eslint-config-prettier": "^10.0.2",
         "eslint-import-resolver-typescript": "^4.4.5",
         "eslint-plugin-import": "^2.32.0",
