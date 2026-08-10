@@ -20,13 +20,17 @@
  *       impact  = running · multiplier
  *       running = running + impact
  *
- * The first and last bars are absolute (mean(target) of reference and comparison). The final
- * absolute bar is the true comparison mean; because the decomposition uses means of a product it
- * may not reconcile exactly (interaction/non-linearity residual), matching the reference behaviour.
+ * The first and last bars are absolute (mean(target) of reference and comparison). Because the
+ * factors telescope over ratios of means while the endpoints are means of a product
+ * (E[XY] != E[X]E[Y]), the factor bars generally do not sum to the total change. The remainder is
+ * emitted as an explicit "Interaction" bar so the waterfall always reconciles to the comparison mean
+ * rather than hiding the gap in the final connector.
  */
 
 export const WATERFALL_TARGET_RESULT_NAMES = ["STOIIP", "GIIP"] as const;
 export type WaterfallTargetResultName = (typeof WATERFALL_TARGET_RESULT_NAMES)[number];
+
+export const INTERACTION_LABEL = "Interaction";
 
 type FactorKind = "numerator" | "saturation" | "fvf";
 
@@ -61,6 +65,8 @@ export interface VolumeChangeDecomposition {
     bars: WaterfallBar[];
     referenceVolume: number;
     comparisonVolume: number;
+    /** Change not attributable to the individual factors (covariance between them). */
+    interaction: number;
 }
 
 const SATURATION_LABEL_BY_TARGET: Record<WaterfallTargetResultName, string> = {
@@ -212,7 +218,15 @@ export function computeVolumeChangeDecomposition(
         bars.push({ label: factor.label, measure: "relative", value: impact, cumulative: running });
     }
 
+    const interaction = comparisonVolume - running;
+    bars.push({
+        label: INTERACTION_LABEL,
+        measure: "relative",
+        value: interaction,
+        cumulative: comparisonVolume,
+    });
+
     bars.push({ label: "Comparison", measure: "absolute", value: comparisonVolume, cumulative: comparisonVolume });
 
-    return { target: spec.target, bars, referenceVolume, comparisonVolume };
+    return { target: spec.target, bars, referenceVolume, comparisonVolume, interaction };
 }

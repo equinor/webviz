@@ -33,23 +33,35 @@ export interface WaterfallResult {
 
 const SINGLE_GROUP_KEY = "__single__";
 
+type GroupStatistics = {
+    means: Map<string, number>;
+    /** Uncertainty band of the target volume, or null when the percentiles are unavailable. */
+    targetBand: { low: number; high: number } | null;
+};
+
 /**
- * Extract per-ensemble means of the required result names, grouped by the given subplot index column
- * (e.g. one entry per REGION value). When no group-by index is given, all rows collapse to a single
- * group. Returns a map of group key -> (result name -> mean), or null when no fluid selection has the
- * complete set of required results.
+ * Extract per-ensemble statistics for the required result names, grouped by the given subplot index
+ * column (e.g. one entry per REGION value). When no group-by index is given, all rows collapse to a
+ * single group. Returns null when no fluid selection has the complete set of required results.
  */
-function extractRequiredMeansByGroup(
+function extractRequiredStatisticsByGroup(
     statisticalTableData: InplaceVolumesStatisticalTableData,
     requiredResultNames: string[],
+    targetResultName: string,
     groupByIndexColumn: string | null,
-): Map<string, Map<string, number>> | null {
+): Map<string, GroupStatistics> | null {
     for (const fluidTableData of statisticalTableData.data.tableDataPerFluidSelection) {
         const meanArraysByResultName = new Map<string, number[]>();
+        let targetP10Array: number[] | undefined;
+        let targetP90Array: number[] | undefined;
         for (const resultColumn of fluidTableData.resultColumnStatistics) {
             const meanArray = resultColumn.statisticValues[InplaceVolumesStatistic_api.MEAN];
             if (meanArray) {
                 meanArraysByResultName.set(resultColumn.columnName, meanArray);
+            }
+            if (resultColumn.columnName === targetResultName) {
+                targetP10Array = resultColumn.statisticValues[InplaceVolumesStatistic_api.P10];
+                targetP90Array = resultColumn.statisticValues[InplaceVolumesStatistic_api.P90];
             }
         }
 
@@ -63,7 +75,7 @@ function extractRequiredMeansByGroup(
             : undefined;
 
         const numRows = meanArraysByResultName.get(requiredResultNames[0])!.length;
-        const meansByGroup = new Map<string, Map<string, number>>();
+        const statisticsByGroup = new Map<string, GroupStatistics>();
         for (let row = 0; row < numRows; row++) {
             const groupKey =
                 groupColumn !== undefined
@@ -73,9 +85,17 @@ function extractRequiredMeansByGroup(
             for (const resultName of requiredResultNames) {
                 means.set(resultName, meanArraysByResultName.get(resultName)![row]);
             }
-            meansByGroup.set(groupKey, means);
+
+            // The backend inverts the percentiles per oil industry convention: P10 is the high
+            // value and P90 the low. Min/max guards against that convention ever changing.
+            const p10 = targetP10Array?.[row];
+            const p90 = targetP90Array?.[row];
+            const targetBand =
+                p10 !== undefined && p90 !== undefined ? { low: Math.min(p10, p90), high: Math.max(p10, p90) } : null;
+
+            statisticsByGroup.set(groupKey, { means, targetBand });
         }
-        return meansByGroup;
+        return statisticsByGroup;
     }
     return null;
 }
@@ -152,37 +172,48 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         return { plots: null, isFetching: false, message: noDataMessage };
     }
 
-    const comparisonMeansByGroup = extractRequiredMeansByGroup(
+    const comparisonStatisticsByGroup = extractRequiredStatisticsByGroup(
         comparisonTableData,
         spec.requiredResultNames,
+        spec.target,
         subplotByIndex,
     );
-    const referenceMeansByGroup = extractRequiredMeansByGroup(
+    const referenceStatisticsByGroup = extractRequiredStatisticsByGroup(
         referenceTableData,
         spec.requiredResultNames,
+        spec.target,
         subplotByIndex,
     );
 
-    if (!comparisonMeansByGroup || !referenceMeansByGroup) {
+    if (!comparisonStatisticsByGroup || !referenceStatisticsByGroup) {
         return { plots: null, isFetching: false, message: noDataMessage };
     }
 
     // Compute a decomposition per group present in both ensembles.
-    const groupKeys = Array.from(comparisonMeansByGroup.keys())
-        .filter((groupKey) => referenceMeansByGroup.has(groupKey))
+    const groupKeys = Array.from(comparisonStatisticsByGroup.keys())
+        .filter((groupKey) => referenceStatisticsByGroup.has(groupKey))
         .sort((a, b) => a.localeCompare(b));
 
     const groupDecompositions: WaterfallGroupDecomposition[] = [];
     for (const groupKey of groupKeys) {
+        const referenceStatistics = referenceStatisticsByGroup.get(groupKey)!;
+        const comparisonStatistics = comparisonStatisticsByGroup.get(groupKey)!;
         const decomposition = computeVolumeChangeDecomposition(
             spec,
-            referenceMeansByGroup.get(groupKey)!,
-            comparisonMeansByGroup.get(groupKey)!,
+            referenceStatistics.means,
+            comparisonStatistics.means,
         );
         if (decomposition) {
             groupDecompositions.push({
                 groupLabel: groupKey === SINGLE_GROUP_KEY ? "" : groupKey,
                 decomposition,
+                uncertainty:
+                    referenceStatistics.targetBand && comparisonStatistics.targetBand
+                        ? {
+                              reference: referenceStatistics.targetBand,
+                              comparison: comparisonStatistics.targetBand,
+                          }
+                        : null,
             });
         }
     }

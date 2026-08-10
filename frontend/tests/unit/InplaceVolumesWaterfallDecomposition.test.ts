@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
     computeVolumeChangeDecomposition,
     getWaterfallFactorSpec,
+    INTERACTION_LABEL,
 } from "@modules/InplaceVolumesChangeDecomposition/view/utils/computeVolumeChangeDecomposition";
 
 describe("getWaterfallFactorSpec", () => {
@@ -60,17 +61,20 @@ describe("computeVolumeChangeDecomposition", () => {
         const decomposition = computeVolumeChangeDecomposition(spec, referenceMeans, comparisonMeans)!;
         expect(decomposition).not.toBeNull();
 
-        // [ref, BULK, PORO, SO, BO, comp]
-        expect(decomposition.bars).toHaveLength(6);
+        // [ref, BULK, PORO, SO, BO, interaction, comp]
+        expect(decomposition.bars).toHaveLength(7);
         expect(decomposition.bars[0].measure).toBe("absolute");
         expect(decomposition.bars[0].value).toBeCloseTo(11.2, 6);
-        expect(decomposition.bars[5].measure).toBe("absolute");
-        expect(decomposition.bars[5].value).toBeCloseTo(15.125, 6);
+        expect(decomposition.bars[6].measure).toBe("absolute");
+        expect(decomposition.bars[6].value).toBeCloseTo(15.125, 6);
 
         // BULK impact = 11.2 * (110/100 - 1) = 1.12
         expect(decomposition.bars[1].value).toBeCloseTo(1.12, 6);
 
-        // Sum of relative impacts equals the total change (exact reconciliation here).
+        // These factor means reconcile exactly, so there is no interaction remainder.
+        expect(decomposition.interaction).toBeCloseTo(0, 6);
+
+        // Sum of relative impacts equals the total change.
         const relativeSum = decomposition.bars
             .filter((bar) => bar.measure === "relative")
             .reduce((sum, bar) => sum + bar.value, 0);
@@ -78,6 +82,43 @@ describe("computeVolumeChangeDecomposition", () => {
 
         // The cumulative after the last factor equals the comparison volume.
         expect(decomposition.bars[4].cumulative).toBeCloseTo(15.125, 6);
+    });
+
+    test("emits an interaction bar that reconciles the waterfall to the comparison mean", () => {
+        const spec = getWaterfallFactorSpec("STOIIP", ["STOIIP", "BULK", "PORO", "SW", "BO"])!;
+        const referenceMeans = new Map<string, number>([
+            ["STOIIP", 11.2],
+            ["BULK", 100],
+            ["PORO", 0.2],
+            ["SW", 0.3],
+            ["BO", 1.25],
+        ]);
+        // Same factors as the exact case, but the target mean does not equal the product of the
+        // factor means (as happens for real data, since E[XY] != E[X]E[Y]).
+        const comparisonMeans = new Map<string, number>([
+            ["STOIIP", 16],
+            ["BULK", 110],
+            ["PORO", 0.22],
+            ["SW", 0.25],
+            ["BO", 1.2],
+        ]);
+
+        const decomposition = computeVolumeChangeDecomposition(spec, referenceMeans, comparisonMeans)!;
+
+        expect(decomposition.interaction).toBeCloseTo(16 - 15.125, 6);
+
+        const interactionBar = decomposition.bars[decomposition.bars.length - 2];
+        expect(interactionBar.label).toBe(INTERACTION_LABEL);
+        expect(interactionBar.value).toBeCloseTo(16 - 15.125, 6);
+
+        // With the interaction bar included the relative impacts sum to the full change.
+        const relativeSum = decomposition.bars
+            .filter((bar) => bar.measure === "relative")
+            .reduce((sum, bar) => sum + bar.value, 0);
+        expect(relativeSum).toBeCloseTo(16 - 11.2, 6);
+
+        // The waterfall lands exactly on the comparison mean.
+        expect(interactionBar.cumulative).toBeCloseTo(16, 6);
     });
 
     test("returns null when a reference factor mean is zero", () => {

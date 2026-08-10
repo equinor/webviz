@@ -18,10 +18,17 @@ const TOTALS_COLOR = "#7f7f7f";
 
 const BAR_TEXT_FORMAT_OPTIONS: NumberFormatOptions = { unitSystem: "si", numSignificantDigits: 3 };
 
+export interface WaterfallUncertaintyBand {
+    low: number;
+    high: number;
+}
+
 export interface WaterfallGroupDecomposition {
     /** Subplot label (e.g. a REGION value). Empty string for a single, ungrouped waterfall. */
     groupLabel: string;
     decomposition: VolumeChangeDecomposition;
+    /** Target volume spread in each ensemble, shown as whiskers on the endpoint bars. */
+    uncertainty: { reference: WaterfallUncertaintyBand; comparison: WaterfallUncertaintyBand } | null;
 }
 
 export interface WaterfallPlotOptions {
@@ -51,11 +58,11 @@ function makeBarTexts(decomposition: VolumeChangeDecomposition): string[] {
 }
 
 function makeWaterfallTrace(
-    decomposition: VolumeChangeDecomposition,
+    group: WaterfallGroupDecomposition,
     referenceLabel: string,
     comparisonLabel: string,
 ): Partial<PlotData> {
-    const { bars } = decomposition;
+    const { bars } = group.decomposition;
     const labels = bars.map((bar, index) => {
         if (index === 0) {
             return referenceLabel;
@@ -72,14 +79,44 @@ function makeWaterfallTrace(
         measure: bars.map((bar) => bar.measure),
         x: labels,
         y: bars.map((bar) => bar.value),
-        text: makeBarTexts(decomposition),
+        text: makeBarTexts(group.decomposition),
         textposition: "outside",
         textfont: { size: 11 },
+        hovertext: makeBarHoverTexts(group),
+        hoverinfo: "text",
         connector: { mode: "spanning" },
         increasing: { marker: { color: INCREASING_COLOR } },
         decreasing: { marker: { color: DECREASING_COLOR } },
         totals: { marker: { color: TOTALS_COLOR } },
     } as unknown as Partial<PlotData>;
+}
+
+/**
+ * Hover text per bar. The endpoint bars also carry the ensemble's uncertainty band, which is shown
+ * as text rather than whiskers: the within-ensemble spread is typically far wider than the change
+ * being decomposed, so drawing it on the same axis would dwarf the factor bars.
+ */
+function makeBarHoverTexts(group: WaterfallGroupDecomposition): string[] {
+    const { bars } = group.decomposition;
+    const barTexts = makeBarTexts(group.decomposition);
+
+    return bars.map((bar, index) => {
+        const isReference = index === 0;
+        const isComparison = index === bars.length - 1;
+        const band = isReference
+            ? group.uncertainty?.reference
+            : isComparison
+              ? group.uncertainty?.comparison
+              : undefined;
+
+        if (!band) {
+            return `${bar.label}: ${barTexts[index]}`;
+        }
+
+        const low = formatNumber(band.low, BAR_TEXT_FORMAT_OPTIONS);
+        const high = formatNumber(band.high, BAR_TEXT_FORMAT_OPTIONS);
+        return `${bar.label}: ${barTexts[index]}<br>P90–P10: ${low} – ${high}`;
+    });
 }
 
 function makeYAxisRange(decomposition: VolumeChangeDecomposition): [number, number] {
@@ -130,11 +167,7 @@ export function buildWaterfallPlot(
         const row = Math.floor(index / numCols) + 1;
         const col = (index % numCols) + 1;
 
-        figure.addTrace(
-            makeWaterfallTrace(group.decomposition, options.referenceLabel, options.comparisonLabel),
-            row,
-            col,
-        );
+        figure.addTrace(makeWaterfallTrace(group, options.referenceLabel, options.comparisonLabel), row, col);
 
         const axisIndex = figure.getAxisIndex(row, col);
         figure.updateLayout({
