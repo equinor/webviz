@@ -17,7 +17,7 @@ export const DialogActions: React.FC<DialogActionsProps> = (props: DialogActions
         if (props.isLoading) {
             return <CircularProgress size={16} />;
         }
-        return <Check fontSize="small" />;
+        return <Check style={{ fontSize: 16 }} />;
     };
 
     return (

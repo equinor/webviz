@@ -100,20 +100,24 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
-    client_secret_vars_for_dev = ClientSecretVars(
-        tenant_id=config.TENANT_ID,
-        client_id=config.CLIENT_ID,
-        client_secret=config.CLIENT_SECRET,
-    )
-    azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
-
-    # For local development, you can use the Cosmos DB Emulator. The emulator does not require credentials,
-    # so we can initialize the PersistenceStoresSingleton with the emulator connection settings.
-    # PersistenceStoresSingleton.initialize_with_emulator()
-    LOGGER.info(
-        f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
-    )
-    await PersistenceStoresSingleton.initialize_with_credential_async(config.COSMOS_DB_URL, azure_services_credential)
+    if config.COSMOS_DB_EMULATOR_HOST:
+        LOGGER.info(
+            f"Using Cosmos DB Emulator at {config.COSMOS_DB_EMULATOR_HOST} to initialize PersistenceStoresSingleton"
+        )
+        PersistenceStoresSingleton.initialize_with_emulator(config.COSMOS_DB_EMULATOR_HOST)
+    else:
+        client_secret_vars_for_dev = ClientSecretVars(
+            tenant_id=config.TENANT_ID,
+            client_id=config.CLIENT_ID,
+            client_secret=config.CLIENT_SECRET,
+        )
+        azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
+        LOGGER.info(
+            f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
+        )
+        await PersistenceStoresSingleton.initialize_with_credential_async(
+            config.COSMOS_DB_URL, azure_services_credential
+        )
 
     if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING is not None:
         LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
@@ -131,7 +135,8 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
-    await azure_services_credential.close()
+    if not config.COSMOS_DB_EMULATOR_HOST:
+        await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
