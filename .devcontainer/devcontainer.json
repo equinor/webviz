@@ -1,13 +1,13 @@
 {
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
     }
   },
-  "remoteUser": "codespace",
-  "containerUser": "codespace",
   "hostRequirements": {
     "cpus": 4,
     "memory": "8gb"
