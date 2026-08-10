@@ -2,7 +2,6 @@ import { hashKey } from "@tanstack/react-query";
 
 import type { GridPropertyCheckValue_api, TimeStepPair_api } from "@api";
 import {
-    getGridModelsInfoOptions,
     getHydrostaticEquilibriumGridPropertyCheckHybrid,
     getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey,
 } from "@api";
@@ -12,10 +11,14 @@ import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import type { QcCheckDefinition } from "../QcCheck";
 
+import { HydrostaticEquilibriumGridPropertyCheckResult } from "./HydrostaticEquilibriumCheckResults";
+import { HydrostaticEquilibriumCheckSettings } from "./HydrostaticEquilibriumCheckSettings";
 import {
     DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
     formatCaughtError,
+    getGridModelsInfoQueryOptions,
     resolveGridName,
+    resolveReferenceRealization,
     type HydrostaticEquilibriumCheckParams,
 } from "./hydrostaticEquilibriumShared";
 
@@ -36,6 +39,8 @@ export const HydrostaticEquilibriumGridPropertyCheck: QcCheckDefinition<
 > = {
     name: "Initial hydrostatic equilibrium - grid property check",
     defaultParams: DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
+    settingsComponent: HydrostaticEquilibriumCheckSettings,
+    resultComponent: HydrostaticEquilibriumGridPropertyCheckResult,
 
     async run(context) {
         const { ensemble, realizations, params, fetchQuery, setProgressMessage } = context;
@@ -49,20 +54,10 @@ export const HydrostaticEquilibriumGridPropertyCheck: QcCheckDefinition<
 
         let gridName: string;
         try {
-            // Deliberately resolved from the first of *all* ensemble realizations rather than the
-            // requested subset, so the realization filter never affects which realization is used
-            // as the metadata reference.
-            const referenceRealization = ensemble.getRealizations()[0] ?? realizations[0];
-            const gridModelsInfo = await fetchQuery(
-                getGridModelsInfoOptions({
-                    query: {
-                        case_uuid: caseUuid,
-                        ensemble_name: ensembleName,
-                        realization_num: referenceRealization,
-                        ...makeCacheBustingQueryParam(ensemble.getIdent()),
-                    },
-                }),
-            );
+            // Resolved from the same reference realization, and via the same cached query, as the
+            // settings component's grid picker.
+            const referenceRealization = resolveReferenceRealization(ensemble, realizations);
+            const gridModelsInfo = await fetchQuery(getGridModelsInfoQueryOptions(ensemble, referenceRealization));
 
             const resolvedGridName = resolveGridName(gridModelsInfo, params.gridName);
             if (!resolvedGridName) {
@@ -106,15 +101,18 @@ export const HydrostaticEquilibriumGridPropertyCheck: QcCheckDefinition<
                 });
 
                 try {
-                    const result = await fetchQuery(
-                        wrapLongRunningQuery({
+                    const result = await fetchQuery({
+                        ...wrapLongRunningQuery({
                             queryFn: getHydrostaticEquilibriumGridPropertyCheckHybrid,
                             queryFnArgs: apiArgs,
                             queryKey,
                             delayBetweenPollsSecs: 1.0,
                             maxTotalDurationSecs: 600,
                         }),
-                    );
+                        // A "Run" is an explicit user action - always hit the backend again rather
+                        // than reusing a cached result from the global 1-minute `staleTime` default.
+                        staleTime: 0,
+                    });
 
                     context.reportRealizationResult(realization, {
                         kind: "success",

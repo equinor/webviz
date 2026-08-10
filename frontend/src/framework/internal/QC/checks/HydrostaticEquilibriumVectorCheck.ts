@@ -1,22 +1,22 @@
 import { hashKey } from "@tanstack/react-query";
 
 import type { TimeStepPair_api, VectorCheckValue_api } from "@api";
-import {
-    getGridModelsInfoOptions,
-    getHydrostaticEquilibriumVectorCheckHybrid,
-    getHydrostaticEquilibriumVectorCheckHybridQueryKey,
-} from "@api";
+import { getHydrostaticEquilibriumVectorCheckHybrid, getHydrostaticEquilibriumVectorCheckHybridQueryKey } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import type { QcCheckDefinition, QcCheckRunContext } from "../QcCheck";
 
+import { HydrostaticEquilibriumVectorCheckResult } from "./HydrostaticEquilibriumCheckResults";
+import { HydrostaticEquilibriumCheckSettings } from "./HydrostaticEquilibriumCheckSettings";
 import {
     DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
     formatCaughtError,
+    getGridModelsInfoQueryOptions,
     resolveGridName,
     resolveHydrostaticTimeSteps,
+    resolveReferenceRealization,
     type HydrostaticEquilibriumCheckParams,
 } from "./hydrostaticEquilibriumShared";
 
@@ -44,6 +44,8 @@ export const HydrostaticEquilibriumVectorCheck: QcCheckDefinition<
 > = {
     name: "Initial hydrostatic equilibrium - vector check",
     defaultParams: DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
+    settingsComponent: HydrostaticEquilibriumCheckSettings,
+    resultComponent: HydrostaticEquilibriumVectorCheckResult,
 
     async run(context) {
         const { ensemble, realizations, params, fetchQuery, setProgressMessage, onFetchCancelOrFinish } = context;
@@ -58,21 +60,10 @@ export const HydrostaticEquilibriumVectorCheck: QcCheckDefinition<
         let t0Iso: string;
         let t1Iso: string;
         try {
-            // Time steps are shared ensemble-wide metadata, resolved from any single realization -
-            // deliberately the first of *all* ensemble realizations rather than the requested
-            // subset, so the realization filter never affects which realization is used as the
-            // metadata reference.
-            const referenceRealization = ensemble.getRealizations()[0] ?? realizations[0];
-            const gridModelsInfo = await fetchQuery(
-                getGridModelsInfoOptions({
-                    query: {
-                        case_uuid: caseUuid,
-                        ensemble_name: ensembleName,
-                        realization_num: referenceRealization,
-                        ...makeCacheBustingQueryParam(ensemble.getIdent()),
-                    },
-                }),
-            );
+            // Time steps are shared ensemble-wide metadata - resolved from the same reference
+            // realization, and via the same cached query, as the settings component's grid picker.
+            const referenceRealization = resolveReferenceRealization(ensemble, realizations);
+            const gridModelsInfo = await fetchQuery(getGridModelsInfoQueryOptions(ensemble, referenceRealization));
 
             const gridName = resolveGridName(gridModelsInfo, params.gridName);
             const gridInfo = gridModelsInfo.find((info) => info.grid_name === gridName);
@@ -110,15 +101,18 @@ export const HydrostaticEquilibriumVectorCheck: QcCheckDefinition<
         onFetchCancelOrFinish(unsubscribeProgress);
 
         try {
-            const result = await fetchQuery(
-                wrapLongRunningQuery({
+            const result = await fetchQuery({
+                ...wrapLongRunningQuery({
                     queryFn: getHydrostaticEquilibriumVectorCheckHybrid,
                     queryFnArgs: apiArgs,
                     queryKey,
                     delayBetweenPollsSecs: 1.0,
                     maxTotalDurationSecs: 600,
                 }),
-            );
+                // A "Run" is an explicit user action - always hit the backend again rather than
+                // reusing a cached result from the global 1-minute `staleTime` default.
+                staleTime: 0,
+            });
 
             const resultByRealization = new Map(result.realization_results.map((r) => [r.realization, r]));
             for (const realization of realizations) {
