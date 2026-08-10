@@ -7,10 +7,11 @@ import type { WaterfallFactorSpec } from "../utils/computeVolumeChangeDecomposit
 
 export const referenceEnsembleIdentAtom = atom<RegularEnsembleIdent | null>(null);
 export const comparisonEnsembleIdentAtom = atom<RegularEnsembleIdent | null>(null);
-export const tableNameAtom = atom<string | null>(null);
+export const referenceTableNameAtom = atom<string | null>(null);
+export const comparisonTableNameAtom = atom<string | null>(null);
 export const resultNameAtom = atom<string | null>(null);
 export const subplotByAtom = atom<string | null>(null);
 export const indicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_api[]>([]);
 export const waterfallFactorSpecAtom = atom<WaterfallFactorSpec | null>(null);
-export const isEnsemblePairValidAtom = atom<boolean>(false);
+export const areSourcesDistinctAtom = atom<boolean>(false);
 export const areSelectedTablesComparableAtom = atom<boolean>(true);

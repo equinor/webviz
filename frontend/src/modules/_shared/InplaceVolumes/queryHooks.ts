@@ -35,6 +35,13 @@ export type AggregatedStatisticalTableDataResults = {
     errors: Error[];
 };
 
+/** A single data source: one table within one ensemble. */
+export type InplaceVolumesSource = {
+    ensembleIdent: RegularEnsembleIdent;
+    realizations: readonly number[];
+    tableName: string;
+};
+
 export function useGetAggregatedStatisticalTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
@@ -43,14 +50,35 @@ export function useGetAggregatedStatisticalTableDataQueries(
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {
-    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
-        [];
+    const sources: InplaceVolumesSource[] = [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
-            uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
+            sources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
         }
     }
 
+    return useGetAggregatedStatisticalTableDataQueriesForSources(
+        sources,
+        resultNames,
+        groupByIndices,
+        indicesWithValues,
+        allowEnable,
+    );
+}
+
+/**
+ * Same as `useGetAggregatedStatisticalTableDataQueries`, but for an explicit list of sources rather
+ * than the cross-product of ensembles and table names. Lets a caller pair a different table with
+ * each ensemble, or use two tables from the same ensemble.
+ */
+export function useGetAggregatedStatisticalTableDataQueriesForSources(
+    sources: InplaceVolumesSource[],
+    resultNames: string[],
+    groupByIndices: string[],
+    indicesWithValues: InplaceVolumesIndexWithValues_api[],
+    allowEnable: boolean,
+) {
+    const uniqueSources = sources;
     const eachIndexHasValues = indicesWithValues.every((index) => index.values.length > 0);
     const validGroupByIndices = groupByIndices.length === 0 ? null : groupByIndices;
 

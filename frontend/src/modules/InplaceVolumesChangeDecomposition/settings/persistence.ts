@@ -8,17 +8,19 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import {
     selectedIndexValueCriteriaAtom,
     userSelectedComparisonEnsembleIdentAtom,
+    userSelectedComparisonTableNameAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedReferenceEnsembleIdentAtom,
+    userSelectedReferenceTableNameAtom,
     userSelectedResultNameAtom,
     userSelectedSubplotByAtom,
-    userSelectedTableNameAtom,
 } from "./atoms/baseAtoms";
 
 export type SerializedSettings = {
     referenceEnsembleIdentString: string | null;
     comparisonEnsembleIdentString: string | null;
-    tableName: string | null;
+    referenceTableName: string | null;
+    comparisonTableName: string | null;
     resultName: string | null;
     subplotBy: string | null;
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
@@ -29,7 +31,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
     properties: {
         referenceEnsembleIdentString: { type: "string", nullable: true },
         comparisonEnsembleIdentString: { type: "string", nullable: true },
-        tableName: { type: "string", nullable: true },
+        referenceTableName: { type: "string", nullable: true },
+        comparisonTableName: { type: "string", nullable: true },
         resultName: { type: "string", nullable: true },
         subplotBy: { type: "string", nullable: true },
         indicesWithValues: { ...inject("InplaceVolumesIndexWithValues") },
@@ -43,7 +46,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     return {
         referenceEnsembleIdentString: get(userSelectedReferenceEnsembleIdentAtom)?.toString() ?? null,
         comparisonEnsembleIdentString: get(userSelectedComparisonEnsembleIdentAtom)?.toString() ?? null,
-        tableName: get(userSelectedTableNameAtom),
+        referenceTableName: get(userSelectedReferenceTableNameAtom),
+        comparisonTableName: get(userSelectedComparisonTableNameAtom),
         resultName: get(userSelectedResultNameAtom),
         subplotBy: get(userSelectedSubplotByAtom),
         indicesWithValues: get(userSelectedIndicesWithValuesAtom).map((index) => ({
@@ -75,7 +79,8 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
         userSelectedComparisonEnsembleIdentAtom,
         parseRegularEnsembleIdent(raw.comparisonEnsembleIdentString),
     );
-    setIfDefined(set, userSelectedTableNameAtom, raw.tableName);
+    setIfDefined(set, userSelectedReferenceTableNameAtom, raw.referenceTableName);
+    setIfDefined(set, userSelectedComparisonTableNameAtom, raw.comparisonTableName);
     setIfDefined(set, userSelectedResultNameAtom, raw.resultName);
     setIfDefined(set, userSelectedSubplotByAtom, raw.subplotBy);
     setIfDefined(set, userSelectedIndicesWithValuesAtom, raw.indicesWithValues);

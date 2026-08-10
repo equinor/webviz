@@ -4,13 +4,14 @@ import type { SettingsToViewInterface } from "../../interfaces";
 
 import {
     areSelectedTablesComparableAtom,
+    areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
+    comparisonTableNameAtom,
     indicesWithValuesAtom,
-    isEnsemblePairValidAtom,
     referenceEnsembleIdentAtom,
+    referenceTableNameAtom,
     resultNameAtom,
     subplotByAtom,
-    tableNameAtom,
     waterfallFactorSpecAtom,
 } from "./baseAtoms";
 
@@ -22,7 +23,10 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(comparisonEnsembleIdentAtom, getInterfaceValue("comparisonEnsembleIdent"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(tableNameAtom, getInterfaceValue("tableName"));
+        setAtomValue(referenceTableNameAtom, getInterfaceValue("referenceTableName"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(comparisonTableNameAtom, getInterfaceValue("comparisonTableName"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(resultNameAtom, getInterfaceValue("resultName"));
@@ -37,7 +41,7 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(waterfallFactorSpecAtom, getInterfaceValue("waterfallFactorSpec"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(isEnsemblePairValidAtom, getInterfaceValue("isEnsemblePairValid"));
+        setAtomValue(areSourcesDistinctAtom, getInterfaceValue("areSourcesDistinct"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(areSelectedTablesComparableAtom, getInterfaceValue("areSelectedTablesComparable"));

@@ -6,7 +6,8 @@ import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinit
 
 export const userSelectedReferenceEnsembleIdentAtom = atom<RegularEnsembleIdent | null>(null);
 export const userSelectedComparisonEnsembleIdentAtom = atom<RegularEnsembleIdent | null>(null);
-export const userSelectedTableNameAtom = atom<string | null>(null);
+export const userSelectedReferenceTableNameAtom = atom<string | null>(null);
+export const userSelectedComparisonTableNameAtom = atom<string | null>(null);
 export const userSelectedResultNameAtom = atom<string | null>(null);
 export const userSelectedSubplotByAtom = atom<string | null>(null);
 export const userSelectedIndicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_api[]>([]);

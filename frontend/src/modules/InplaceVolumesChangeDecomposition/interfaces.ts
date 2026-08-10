@@ -8,11 +8,12 @@ import {
 } from "./settings/atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
-    isEnsemblePairValidAtom,
+    areSourcesDistinctAtom,
+    selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
+    selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
-    selectedTableNameAtom,
     waterfallFactorSpecAtom,
 } from "./settings/atoms/derivedAtoms";
 import type { WaterfallFactorSpec } from "./view/utils/computeVolumeChangeDecomposition";
@@ -20,12 +21,13 @@ import type { WaterfallFactorSpec } from "./view/utils/computeVolumeChangeDecomp
 export type SettingsToViewInterface = {
     referenceEnsembleIdent: RegularEnsembleIdent | null;
     comparisonEnsembleIdent: RegularEnsembleIdent | null;
-    tableName: string | null;
+    referenceTableName: string | null;
+    comparisonTableName: string | null;
     resultName: string | null;
     subplotBy: string | null;
     indicesWithValues: InplaceVolumesIndexWithValues_api[];
     waterfallFactorSpec: WaterfallFactorSpec | null;
-    isEnsemblePairValid: boolean;
+    areSourcesDistinct: boolean;
     areSelectedTablesComparable: boolean;
 };
 
@@ -36,11 +38,12 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     referenceEnsembleIdent: (get) => get(userSelectedReferenceEnsembleIdentAtom),
     comparisonEnsembleIdent: (get) => get(userSelectedComparisonEnsembleIdentAtom),
-    tableName: (get) => get(selectedTableNameAtom),
+    referenceTableName: (get) => get(selectedReferenceTableNameAtom),
+    comparisonTableName: (get) => get(selectedComparisonTableNameAtom),
     resultName: (get) => get(selectedResultNameAtom),
     subplotBy: (get) => get(selectedSubplotByAtom),
     indicesWithValues: (get) => get(selectedIndicesWithValuesAtom),
     waterfallFactorSpec: (get) => get(waterfallFactorSpecAtom),
-    isEnsemblePairValid: (get) => get(isEnsemblePairValidAtom),
+    areSourcesDistinct: (get) => get(areSourcesDistinctAtom),
     areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
 };

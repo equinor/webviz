@@ -13,16 +13,20 @@ import {
     referenceEnsembleIdentAtom,
     resultNameAtom,
     subplotByAtom,
-    tableNameAtom,
     waterfallFactorSpecAtom,
 } from "../atoms/baseAtoms";
-import { isWaterfallComputableAtom, waterfallStatisticalDataQueriesAtom } from "../atoms/queryAtoms";
+import {
+    isWaterfallComputableAtom,
+    waterfallSourcesAtom,
+    waterfallStatisticalDataQueriesAtom,
+} from "../atoms/queryAtoms";
 import { buildWaterfallPlot, type WaterfallGroupDecomposition } from "../utils/buildWaterfallPlot";
 import {
     computeVolumeChangeDecomposition,
     getRequiredFluidForWaterfallTarget,
     isWaterfallTargetResultName,
 } from "../utils/computeVolumeChangeDecomposition";
+import { findTableDataForSource, makeSourceLabels } from "../utils/waterfallSources";
 
 export interface WaterfallResult {
     plots: React.ReactNode | null;
@@ -108,25 +112,28 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     const referenceEnsembleIdent = useAtomValue(referenceEnsembleIdentAtom);
     const comparisonEnsembleIdent = useAtomValue(comparisonEnsembleIdentAtom);
     const resultName = useAtomValue(resultNameAtom);
-    const tableName = useAtomValue(tableNameAtom);
     const spec = useAtomValue(waterfallFactorSpecAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
     const isComputable = useAtomValue(isWaterfallComputableAtom);
     const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
     const subplotByIndex = useAtomValue(subplotByAtom);
+    const waterfallSources = useAtomValue(waterfallSourcesAtom);
 
     if (!referenceEnsembleIdent || !comparisonEnsembleIdent) {
         return { plots: null, isFetching: false, message: "Select a reference and a comparison ensemble." };
     }
-    if (referenceEnsembleIdent.equals(comparisonEnsembleIdent)) {
+    if (!waterfallSources) {
+        return { plots: null, isFetching: false, message: "Select a table source for both ensembles." };
+    }
+    if (
+        referenceEnsembleIdent.equals(comparisonEnsembleIdent) &&
+        waterfallSources.reference.tableName === waterfallSources.comparison.tableName
+    ) {
         return {
             plots: null,
             isFetching: false,
-            message: "The reference and comparison ensembles must be different.",
+            message: "The reference and comparison must differ in either ensemble or table source.",
         };
-    }
-    if (!tableName) {
-        return { plots: null, isFetching: false, message: "Select a table source." };
     }
     if (!areSelectedTablesComparable) {
         return {
@@ -161,12 +168,8 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     const requiredFluid = getRequiredFluidForWaterfallTarget(spec.target);
     const noDataMessage = `No data for the ${requiredFluid} fluid required by the ${spec.target} decomposition. Make sure '${requiredFluid}' is selected in the filters.`;
 
-    const comparisonTableData = statisticalDataQueries.tablesData.find((tableData) =>
-        tableData.ensembleIdent.equals(comparisonEnsembleIdent),
-    );
-    const referenceTableData = statisticalDataQueries.tablesData.find((tableData) =>
-        tableData.ensembleIdent.equals(referenceEnsembleIdent),
-    );
+    const comparisonTableData = findTableDataForSource(statisticalDataQueries.tablesData, waterfallSources.comparison);
+    const referenceTableData = findTableDataForSource(statisticalDataQueries.tablesData, waterfallSources.reference);
 
     if (!comparisonTableData || !referenceTableData) {
         return { plots: null, isFetching: false, message: noDataMessage };
@@ -226,13 +229,21 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         };
     }
 
-    const referenceLabel = makeDistinguishableEnsembleDisplayName(
-        referenceEnsembleIdent,
-        ensembleSet.getRegularEnsembleArray(),
-    );
-    const comparisonLabel = makeDistinguishableEnsembleDisplayName(
-        comparisonEnsembleIdent,
-        ensembleSet.getRegularEnsembleArray(),
+    const { referenceLabel, comparisonLabel } = makeSourceLabels(
+        {
+            ensembleName: makeDistinguishableEnsembleDisplayName(
+                referenceEnsembleIdent,
+                ensembleSet.getRegularEnsembleArray(),
+            ),
+            tableName: waterfallSources.reference.tableName,
+        },
+        {
+            ensembleName: makeDistinguishableEnsembleDisplayName(
+                comparisonEnsembleIdent,
+                ensembleSet.getRegularEnsembleArray(),
+            ),
+            tableName: waterfallSources.comparison.tableName,
+        },
     );
     const title = `${spec.target} change contributions from ${referenceLabel} to ${comparisonLabel}`;
 

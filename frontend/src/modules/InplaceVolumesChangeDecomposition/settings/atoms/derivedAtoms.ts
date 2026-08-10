@@ -1,6 +1,7 @@
 import { atom } from "jotai";
 
-import type { InplaceVolumesIndexWithValues_api } from "@api";
+import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import {
@@ -11,47 +12,95 @@ import {
 import {
     selectedIndexValueCriteriaAtom,
     userSelectedComparisonEnsembleIdentAtom,
+    userSelectedComparisonTableNameAtom,
     userSelectedIndicesWithValuesAtom,
     userSelectedReferenceEnsembleIdentAtom,
+    userSelectedReferenceTableNameAtom,
     userSelectedResultNameAtom,
     userSelectedSubplotByAtom,
-    userSelectedTableNameAtom,
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-export const selectedTableNameAtom = atom((get) => {
-    const userSelectedTableName = get(userSelectedTableNameAtom);
-    const availableTableNames = get(availableTableNamesAtom);
+type TableDefinitionsPerEnsemble = {
+    ensembleIdent: RegularEnsembleIdent;
+    tableDefinitions: InplaceVolumesTableDefinition_api[];
+};
 
-    if (userSelectedTableName && availableTableNames.includes(userSelectedTableName)) {
-        return userSelectedTableName;
+function makeAvailableTableNames(
+    tableDefinitionsData: TableDefinitionsPerEnsemble[],
+    ensembleIdent: RegularEnsembleIdent | null,
+): string[] {
+    if (!ensembleIdent) {
+        return [];
     }
-    return availableTableNames[0] ?? null;
-});
+    const forEnsemble = tableDefinitionsData.find((entry) => entry.ensembleIdent.equals(ensembleIdent));
+    return Array.from(new Set(forEnsemble?.tableDefinitions.map((definition) => definition.tableName) ?? []));
+}
 
+function clampToAvailable(userSelected: string | null, available: string[]): string | null {
+    if (userSelected && available.includes(userSelected)) {
+        return userSelected;
+    }
+    return available[0] ?? null;
+}
+
+/** Table names are per ensemble, not intersected, since the two sides may use different tables. */
+export const availableReferenceTableNamesAtom = atom((get) =>
+    makeAvailableTableNames(get(tableDefinitionsQueryAtom).data, get(userSelectedReferenceEnsembleIdentAtom)),
+);
+
+export const availableComparisonTableNamesAtom = atom((get) =>
+    makeAvailableTableNames(get(tableDefinitionsQueryAtom).data, get(userSelectedComparisonEnsembleIdentAtom)),
+);
+
+export const selectedReferenceTableNameAtom = atom((get) =>
+    clampToAvailable(get(userSelectedReferenceTableNameAtom), get(availableReferenceTableNamesAtom)),
+);
+
+export const selectedComparisonTableNameAtom = atom((get) =>
+    clampToAvailable(get(userSelectedComparisonTableNameAtom), get(availableComparisonTableNamesAtom)),
+);
+
+/**
+ * Accessor over exactly the two selected (ensemble, table) sources. The definitions are pre-filtered
+ * per source, because passing both table names to an unfiltered accessor would also intersect the
+ * two ensemble/table combinations that were not selected.
+ */
 export const tableDefinitionsAccessorAtom = atom((get) => {
     const tableDefinitions = get(tableDefinitionsQueryAtom);
-    const selectedTableName = get(selectedTableNameAtom);
     const selectedIndexValueCriteria = get(selectedIndexValueCriteriaAtom);
 
-    return new TableDefinitionsAccessor(
-        tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        selectedTableName ? [selectedTableName] : [],
-        selectedIndexValueCriteria,
-    );
-});
+    const sourceSpecs = [
+        {
+            ensembleIdent: get(userSelectedReferenceEnsembleIdentAtom),
+            tableName: get(selectedReferenceTableNameAtom),
+        },
+        {
+            ensembleIdent: get(userSelectedComparisonEnsembleIdentAtom),
+            tableName: get(selectedComparisonTableNameAtom),
+        },
+    ];
 
-/** Table names available across both selected ensembles. Derived without the table-name filter. */
-export const availableTableNamesAtom = atom((get) => {
-    const tableDefinitions = get(tableDefinitionsQueryAtom);
-    const selectedIndexValueCriteria = get(selectedIndexValueCriteriaAtom);
+    const definitionsPerSource: TableDefinitionsPerEnsemble[] = [];
+    for (const spec of sourceSpecs) {
+        const ensembleIdent = spec.ensembleIdent;
+        if (!ensembleIdent || !spec.tableName || tableDefinitions.isLoading) {
+            continue;
+        }
+        const forEnsemble = tableDefinitions.data.find((entry) => entry.ensembleIdent.equals(ensembleIdent));
+        definitionsPerSource.push({
+            ensembleIdent,
+            tableDefinitions: (forEnsemble?.tableDefinitions ?? []).filter(
+                (definition) => definition.tableName === spec.tableName,
+            ),
+        });
+    }
 
-    const unfilteredAccessor = new TableDefinitionsAccessor(
-        tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        [],
-        selectedIndexValueCriteria,
+    const tableNamesFilter = Array.from(
+        new Set(sourceSpecs.map((spec) => spec.tableName).filter((name): name is string => name !== null)),
     );
-    return unfilteredAccessor.getTableNamesIntersection();
+
+    return new TableDefinitionsAccessor(definitionsPerSource, tableNamesFilter, selectedIndexValueCriteria);
 });
 
 /** Only decomposable hydrocarbon volumes are selectable as the waterfall target. */
@@ -117,13 +166,33 @@ export const areSelectedTablesComparableAtom = atom((get) => {
     return get(tableDefinitionsAccessorAtom).getAreTablesComparable();
 });
 
-export const isEnsemblePairValidAtom = atom((get) => {
+/** True when the two selected sources are both complete and not the same ensemble/table pair. */
+export const areSourcesDistinctAtom = atom((get) => {
     const referenceEnsembleIdent = get(userSelectedReferenceEnsembleIdentAtom);
     const comparisonEnsembleIdent = get(userSelectedComparisonEnsembleIdentAtom);
+    const referenceTableName = get(selectedReferenceTableNameAtom);
+    const comparisonTableName = get(selectedComparisonTableNameAtom);
 
-    return (
-        referenceEnsembleIdent !== null &&
-        comparisonEnsembleIdent !== null &&
-        !referenceEnsembleIdent.equals(comparisonEnsembleIdent)
+    if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
+        return false;
+    }
+
+    const isSameEnsemble = referenceEnsembleIdent.equals(comparisonEnsembleIdent);
+    return !(isSameEnsemble && referenceTableName === comparisonTableName);
+});
+
+/** True when both sides use the same ensemble, i.e. the comparison is purely between table sources. */
+export const isSingleEnsembleComparisonAtom = atom((get) => {
+    const referenceEnsembleIdent = get(userSelectedReferenceEnsembleIdentAtom);
+    const comparisonEnsembleIdent = get(userSelectedComparisonEnsembleIdentAtom);
+    return Boolean(
+        referenceEnsembleIdent && comparisonEnsembleIdent && referenceEnsembleIdent.equals(comparisonEnsembleIdent),
     );
+});
+
+/** True when the two sides use different table sources. */
+export const isCrossTableComparisonAtom = atom((get) => {
+    const referenceTableName = get(selectedReferenceTableNameAtom);
+    const comparisonTableName = get(selectedComparisonTableNameAtom);
+    return Boolean(referenceTableName && comparisonTableName && referenceTableName !== comparisonTableName);
 });
