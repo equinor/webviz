@@ -1,5 +1,6 @@
 import { v4 } from "uuid";
 
+import { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -46,6 +47,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
+    private _elevatedSettingsService = new ElevatedSettingsService();
 
     constructor(atomStoreMaster: AtomStoreMaster) {
         this._id = v4();
@@ -55,6 +57,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<DashboardTopicPayloads> {
         return this._publishSubscribeDelegate;
+    }
+
+    getElevatedSettingsService(): ElevatedSettingsService {
+        return this._elevatedSettingsService;
     }
 
     makeSnapshotGetter<T extends DashboardTopic>(topic: T): () => DashboardTopicPayloads[T] {
@@ -129,6 +135,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             description: this._description,
             activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
+            elevatedSettings: this._elevatedSettingsService.serializeState(),
         };
     }
 
@@ -136,6 +143,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._id = serializedDashboard.id;
         this._name = serializedDashboard.name;
         this._description = serializedDashboard.description;
+        this._elevatedSettingsService.deserializeState(serializedDashboard.elevatedSettings);
 
         this.clearLayout();
 
@@ -276,6 +284,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         dashboard._name = serializedDashboard.name;
         dashboard._description = serializedDashboard.description;
         dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
+        dashboard._elevatedSettingsService.deserializeState(serializedDashboard.elevatedSettings);
 
         const layout: LayoutElement[] = [];
 

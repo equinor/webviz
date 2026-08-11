@@ -35,6 +35,7 @@ export function SettingManagerComponent<
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
     const valueConstraints = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CONSTRAINTS);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
+    const isElevated = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_ELEVATED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
         SettingTopic.EXTERNAL_CONTROLLER_PROVIDER,
@@ -62,6 +63,26 @@ export function SettingManagerComponent<
 
     if (!attributes.visible) {
         return null;
+    }
+
+    if (isElevated) {
+        return (
+            <React.Fragment key={props.setting.getId()}>
+                <div className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center">
+                    <span>{props.setting.getLabel()}</span>
+                    <span className="mb-2xs text-body-base">
+                        <Link
+                            style={{ fontSize: 16 }}
+                            titleAccess="This setting is controlled by an elevated dashboard setting"
+                        />
+                    </span>
+                </div>
+
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">
+                    Controlled by elevated dashboard setting
+                </div>
+            </React.Fragment>
+        );
     }
 
     if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {

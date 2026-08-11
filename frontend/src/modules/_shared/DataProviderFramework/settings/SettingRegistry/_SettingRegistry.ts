@@ -1,3 +1,5 @@
+import type { ElevatedSettingDefinition } from "@framework/ElevatedSettings/ElevatedSettingDefinition";
+
 import { SettingManager } from "../../framework/SettingManager/SettingManager";
 import type {
     CustomSettingImplementation,
@@ -5,6 +7,34 @@ import type {
     StaticSettingImplementation,
 } from "../../interfacesAndTypes/customSettingImplementation";
 import type { Setting, SettingTypeDefinitions } from "../settingsDefinitions";
+
+export type DpfElevatedSettingAdapter<TExternalValue, TValueConstraints, TElevatedValue, TElevatedConstraints> = {
+    definition: ElevatedSettingDefinition<TElevatedValue, TElevatedConstraints>;
+
+    mapValueConstraintsToElevatedConstraints: (valueConstraints: TValueConstraints) => TElevatedConstraints;
+
+    mapElevatedValueToExternalValue: (
+        elevatedValue: TElevatedValue,
+        valueConstraints: TValueConstraints,
+    ) => TExternalValue;
+};
+
+export function makeDpfElevatedSettingAdapter<TElevatedValue, TElevatedConstraints, TExternalValue, TValueConstraints>(
+    definition: ElevatedSettingDefinition<TElevatedValue, TElevatedConstraints>,
+    adapter: {
+        mapValueConstraintsToElevatedConstraints: (valueConstraints: TValueConstraints) => TElevatedConstraints;
+
+        mapElevatedValueToExternalValue: (
+            elevatedValue: TElevatedValue,
+            valueConstraints: TValueConstraints,
+        ) => TExternalValue;
+    },
+) {
+    return {
+        definition,
+        ...adapter,
+    };
+}
 
 export class SettingRegistry {
     private static _registeredSettings: Map<
@@ -17,6 +47,7 @@ export class SettingRegistry {
                 ): StaticSettingImplementation<any, any> | DynamicSettingImplementation<any, any, any>;
             };
             customConstructorParameters?: any;
+            elevatedSettingAdapter?: DpfElevatedSettingAdapter<any, any, any, any>;
         }
     > = new Map();
 
@@ -46,6 +77,12 @@ export class SettingRegistry {
         customSettingImplementation: TSettingImpl,
         options?: {
             customConstructorParameters?: ConstructorParameters<TSettingImpl>;
+            elevatedSettingAdapter?: DpfElevatedSettingAdapter<
+                TSettingDef["externalValue"],
+                TSettingDef["valueConstraints"],
+                any,
+                any
+            >;
         },
     ): void {
         if (this._registeredSettings.has(type)) {
@@ -55,6 +92,7 @@ export class SettingRegistry {
             label,
             customSettingImplementation,
             customConstructorParameters: options?.customConstructorParameters,
+            elevatedSettingAdapter: options?.elevatedSettingAdapter,
         });
     }
 
@@ -77,6 +115,7 @@ export class SettingRegistry {
                 SettingTypeDefinitions[TSetting]["externalValue"] | null,
                 SettingTypeDefinitions[TSetting]["valueConstraints"]
             >,
+            elevatedSettingAdapter: stored.elevatedSettingAdapter,
         });
     }
 }

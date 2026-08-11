@@ -1,3 +1,4 @@
+import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import {
     defaultContinuousDivergingColorPalettes,
     defaultContinuousSequentialColorPalettes,
@@ -36,7 +37,7 @@ import { WellboreDepthFilterAttributeSetting } from "../implementations/Wellbore
 import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilterSetting";
 import { Setting } from "../settingsDefinitions";
 
-import { SettingRegistry } from "./_SettingRegistry";
+import { makeDpfElevatedSettingAdapter, SettingRegistry } from "./_SettingRegistry";
 
 SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", InputNumberSetting, {
     customConstructorParameters: [{ min: 1, max: 6 }],
@@ -113,7 +114,20 @@ SettingRegistry.registerSetting(Setting.OPACITY_PERCENT, "Color Opacity", Slider
 SettingRegistry.registerSetting(Setting.POLYGONS_ATTRIBUTE, "Polygons Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGONS_NAME, "Polygons Name", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.POLYGON_VISUALIZATION, "Polygon Visualization", PolygonVisualizationSetting);
-SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting);
+SettingRegistry.registerSetting(Setting.REALIZATION, "Realization", DropdownNumberSetting, {
+    elevatedSettingAdapter: makeDpfElevatedSettingAdapter<
+        number | null,
+        readonly number[],
+        number | null,
+        readonly number[]
+    >(
+        REALIZATION_ELEVATED_SETTING,
+        {
+            mapValueConstraintsToElevatedConstraints: (valueConstraints) => valueConstraints,
+            mapElevatedValueToExternalValue: (elevatedValue) => elevatedValue,
+        },
+    ),
+});
 SettingRegistry.registerSetting(Setting.REALIZATIONS, "Realizations", SelectNumberSetting);
 SettingRegistry.registerSetting(Setting.SEISMIC_SLICES, "Seismic Slices", SeismicSliceSetting);
 SettingRegistry.registerSetting(Setting.SENSITIVITY, "Sensitivity", SensitivitySetting);

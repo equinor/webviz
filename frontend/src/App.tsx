@@ -8,6 +8,7 @@ import { AlertDialogNestingProvider } from "@lib/contexts/alertDialogNestingCont
 
 import "./modules/registerAllModules";
 import "./templates/registerAllTemplates";
+import "./framework/ElevatedSettings/registerAllSettings";
 
 const theme = createTheme({
     components: {

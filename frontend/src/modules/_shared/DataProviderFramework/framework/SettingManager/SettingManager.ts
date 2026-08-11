@@ -1,6 +1,15 @@
 import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
+import {
+    ElevatedSettingInstanceTopic,
+    type ElevatedSettingConsumerHandle,
+    type ElevatedSettingInstance,
+} from "@framework/ElevatedSettings/ElevatedSettingInstance";
+import {
+    ElevatedSettingsServiceTopic,
+    type ElevatedSettingsService,
+} from "@framework/ElevatedSettings/ElevatedSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -9,6 +18,7 @@ import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunct
 
 import type { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
 import type { SettingAttributes } from "../../interfacesAndTypes/customSettingsHandler";
+import type { DpfElevatedSettingAdapter } from "../../settings/SettingRegistry/_SettingRegistry";
 import type { Setting, SettingTypeDefinitions } from "../../settings/settingsDefinitions";
 import type { ExternalSettingController } from "../ExternalSettingController/ExternalSettingController";
 import { Group } from "../Group/Group";
@@ -27,6 +37,7 @@ export enum SettingTopic {
     IS_PERSISTED = "IS_PERSISTED",
     ATTRIBUTES = "ATTRIBUTES",
     IS_PERSISTED_VALUE_VALID = "IS_PERSISTED_VALUE_VALID",
+    IS_ELEVATED = "IS_ELEVATED",
 }
 
 export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstraints> = {
@@ -42,6 +53,7 @@ export type SettingTopicPayloads<TInternalValue, TExternalValue, TValueConstrain
     [SettingTopic.IS_PERSISTED]: boolean;
     [SettingTopic.ATTRIBUTES]: SettingAttributes;
     [SettingTopic.IS_PERSISTED_VALUE_VALID]: boolean;
+    [SettingTopic.IS_ELEVATED]: boolean;
 };
 
 export type SettingManagerParams<
@@ -59,6 +71,7 @@ export type SettingManagerParams<
     label: string;
     defaultValue: TInternalValue;
     customSettingImplementation: CustomSettingImplementation<TInternalValue, TExternalValue, TValueConstraints>;
+    elevatedSettingAdapter?: DpfElevatedSettingAdapter<TExternalValue, TValueConstraints, any, any>;
 };
 
 export enum ExternalControllerProviderType {
@@ -94,6 +107,11 @@ export class SettingManager<
         TExternalValue,
         TValueConstraints
     >;
+    private _elevatedSettingAdapter?: DpfElevatedSettingAdapter<TExternalValue, TValueConstraints, any, any>;
+    private _elevatedSettingInstance?: ElevatedSettingInstance<any, any>;
+    private _elevatedSettingConsumerHandle?: ElevatedSettingConsumerHandle<any>;
+    private _elevatedSettingsService?: ElevatedSettingsService;
+
     private _internalValue: TInternalValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<
@@ -124,11 +142,13 @@ export class SettingManager<
         customSettingImplementation,
         defaultValue,
         label,
+        elevatedSettingAdapter,
     }: SettingManagerParams<TSetting, TInternalValue, TExternalValue, TValueConstraints>) {
         this._id = v4();
         this._type = type;
         this._label = label;
         this._customSettingImplementation = customSettingImplementation;
+        this._elevatedSettingAdapter = elevatedSettingAdapter;
         this._internalValue = defaultValue;
         this._isStatic = customSettingImplementation.getIsStatic?.() ?? false;
         if (this._isStatic) {
@@ -141,6 +161,85 @@ export class SettingManager<
             return this._customSettingImplementation.valueConstraintsIntersectionReducerDefinition ?? null;
         }
         return null;
+    }
+
+    connectElevatedSettingsService(elevatedSettingsService: ElevatedSettingsService): void {
+        this._elevatedSettingsService = elevatedSettingsService;
+
+        this.updateElevatedSettingConnection();
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "elevated-settings-service",
+            elevatedSettingsService
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(ElevatedSettingsServiceTopic.ACTIVE_SETTINGS)(() => {
+                this.updateElevatedSettingConnection();
+            }),
+        );
+    }
+
+    private updateElevatedSettingConnection(): void {
+        if (!this._elevatedSettingAdapter || !this._elevatedSettingsService) {
+            return;
+        }
+
+        const instance = this._elevatedSettingsService.hasSetting(this._elevatedSettingAdapter.definition)
+            ? this._elevatedSettingsService.getSetting(this._elevatedSettingAdapter.definition)
+            : undefined;
+
+        if (instance === this._elevatedSettingInstance) {
+            return;
+        }
+
+        this.disconnectElevatedSettingInstance();
+
+        if (instance) {
+            this.connectElevatedSettingInstance(instance);
+        }
+
+        this._cachedExternalValue = NO_CACHE;
+
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.IS_ELEVATED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+    }
+
+    private connectElevatedSettingInstance(instance: ElevatedSettingInstance<any, any>): void {
+        this._elevatedSettingInstance = instance;
+
+        this._elevatedSettingConsumerHandle = instance.registerConsumer(this._id);
+
+        if (this._valueConstraints !== null) {
+            this.updateElevatedSettingConstraints();
+        }
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            "elevated-setting-instance",
+            instance.getPublishSubscribeDelegate().makeSubscriberFunction(ElevatedSettingInstanceTopic.VALUE)(() => {
+                this._cachedExternalValue = NO_CACHE;
+                this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE);
+            }),
+        );
+    }
+
+    private disconnectElevatedSettingInstance(): void {
+        this._elevatedSettingConsumerHandle?.unregister();
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("elevated-setting-instance");
+
+        this._elevatedSettingConsumerHandle = undefined;
+        this._elevatedSettingInstance = undefined;
+    }
+
+    private updateElevatedSettingConstraints(): void {
+        if (!this._elevatedSettingAdapter || !this._elevatedSettingConsumerHandle || this._valueConstraints === null) {
+            return;
+        }
+
+        const elevatedConstraints = this._elevatedSettingAdapter.mapValueConstraintsToElevatedConstraints(
+            this._valueConstraints,
+        );
+
+        this._elevatedSettingConsumerHandle.updateConstraints(elevatedConstraints);
     }
 
     registerExternalSettingController(
@@ -253,6 +352,7 @@ export class SettingManager<
     }
 
     beforeDestroy(): void {
+        this._elevatedSettingConsumerHandle?.unregister();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
 
@@ -300,6 +400,13 @@ export class SettingManager<
     getValue(): TExternalValue | null {
         if (this._externalController) {
             return this._externalController.getSetting().getValue();
+        }
+
+        if (this._elevatedSettingAdapter && this._elevatedSettingInstance) {
+            return this._elevatedSettingAdapter.mapElevatedValueToExternalValue(
+                this._elevatedSettingInstance.getValue(),
+                this._valueConstraints as TValueConstraints,
+            );
         }
 
         let value = this._internalValue;
@@ -554,6 +661,8 @@ export class SettingManager<
                     return this.isInitialized();
                 case SettingTopic.ATTRIBUTES:
                     return this._attributes;
+                case SettingTopic.IS_ELEVATED:
+                    return this._elevatedSettingInstance !== undefined;
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
             }
@@ -637,6 +746,10 @@ export class SettingManager<
         }
 
         this.setValueConstraintsAndInvalidateCache(valueConstraints);
+
+        if (valueConstraints !== null) {
+            this.updateElevatedSettingConstraints();
+        }
 
         const shouldNotifyValueChanged = this.applyValueConstraints();
         this.initialize();
