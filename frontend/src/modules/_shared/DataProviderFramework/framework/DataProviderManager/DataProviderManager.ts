@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash-es";
 
+import type { Dashboard } from "@framework/internal/Dashboard";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -54,6 +55,7 @@ export type GlobalSettings = {
 export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProviderManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
+    private _dashboard: Dashboard;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DataProviderManagerTopicPayload>();
@@ -64,9 +66,15 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _deserializing = false;
     private _groupColorGenerator: Generator<string, string>;
 
-    constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
+    constructor(
+        workbenchSession: WorkbenchSession,
+        workbenchSettings: WorkbenchSettings,
+        dashboard: Dashboard,
+        queryClient: QueryClient,
+    ) {
         this._workbenchSession = workbenchSession;
         this._workbenchSettings = workbenchSettings;
+        this._dashboard = dashboard;
         this._queryClient = queryClient;
         this._itemDelegate = new ItemDelegate("DataProviderManager", 0, this);
         this._groupDelegate = new GroupDelegate(this);
@@ -135,6 +143,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
         }
 
         this.publishTopic(DataProviderManagerTopic.GLOBAL_SETTINGS);
+    }
+
+    getDashboard(): Dashboard {
+        return this._dashboard;
     }
 
     getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] | null {

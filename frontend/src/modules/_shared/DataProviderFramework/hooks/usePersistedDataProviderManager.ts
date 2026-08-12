@@ -2,6 +2,7 @@ import React from "react";
 
 import type { QueryClient } from "@tanstack/query-core";
 
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary/activeDashboardBoundary";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -28,6 +29,8 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
         workbenchSettings,
         queryClient,
     } = options;
+
+    const activeDashboard = useActiveDashboard();
 
     const [internalDataProviderManager, setInternalDataProviderManager] = React.useState<DataProviderManager | null>(
         null,
@@ -81,7 +84,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
      */
     React.useEffect(
         function setupDataProviderManagerEffect() {
-            const manager = new DataProviderManager(workbenchSession, workbenchSettings, queryClient);
+            const manager = new DataProviderManager(workbenchSession, workbenchSettings, activeDashboard, queryClient);
             setInternalDataProviderManager(manager);
             setDataProviderManager(manager);
 
@@ -92,7 +95,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
                 manager.beforeDestroy();
             };
         },
-        [workbenchSession, workbenchSettings, queryClient, setDataProviderManager],
+        [workbenchSession, workbenchSettings, activeDashboard, queryClient, setDataProviderManager],
     );
 
     /**

@@ -110,6 +110,10 @@ export class SettingsContextDelegate<
         );
 
         for (const key in this._settings) {
+            this._settings[key].connectElevatedSettingsService(
+                this.getDataProviderManager().getDashboard().getElevatedSettingsService(),
+            );
+
             this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE)(() => {

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Link, Warning } from "@mui/icons-material";
+import { Link, PublicOutlined, Warning } from "@mui/icons-material";
 
 import { StatusWrapper } from "@lib/components/StatusWrapper";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
@@ -35,6 +35,7 @@ export function SettingManagerComponent<
     const isValidPersistedValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_PERSISTED_VALUE_VALID);
     const valueConstraints = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CONSTRAINTS);
     const isExternallyControlled = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_EXTERNALLY_CONTROLLED);
+    const isElevated = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_ELEVATED);
     const externalControllerProvider = usePublishSubscribeTopicValue(
         props.setting,
         SettingTopic.EXTERNAL_CONTROLLER_PROVIDER,
@@ -42,6 +43,9 @@ export function SettingManagerComponent<
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_LOADING);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.IS_INITIALIZED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, DataProviderManagerTopic.GLOBAL_SETTINGS);
+    // Subscribed for re-rendering when the elevated dashboard setting's value changes; the value
+    // itself is read on demand from valueToRepresentation below.
+    usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE);
 
     let actuallyLoading = isLoading || !isInitialized;
     if (!isLoading && isPersisted && !isValid) {
@@ -64,6 +68,29 @@ export function SettingManagerComponent<
         return null;
     }
 
+    if (isElevated) {
+        const elevatedValueAsString = props.setting.valueToRepresentation(
+            props.manager.getWorkbenchSession(),
+            props.manager.getWorkbenchSettings(),
+        );
+
+        return (
+            <React.Fragment key={props.setting.getId()}>
+                <div className="gap-x-2xs py-4xs px-2xs text-accent-subtle flex w-32 items-center">
+                    <span>{props.setting.getLabel()}</span>
+                    <span className="mb-2xs text-body-base">
+                        <PublicOutlined
+                            style={{ fontSize: 16 }}
+                            titleAccess="This setting is controlled by an elevated dashboard setting"
+                        />
+                    </span>
+                </div>
+
+                <div className="gap-x-2xs py-4xs px-2xs flex w-full items-center">{elevatedValueAsString}</div>
+            </React.Fragment>
+        );
+    }
+
     if (props.sharedSetting && !actuallyLoading && valueConstraints === null && !props.setting.isStatic()) {
         return (
             <React.Fragment key={props.setting.getId()}>
@@ -80,7 +107,6 @@ export function SettingManagerComponent<
             return null;
         }
         const valueAsString = props.setting.valueToRepresentation(
-            value,
             props.manager.getWorkbenchSession(),
             props.manager.getWorkbenchSettings(),
         );

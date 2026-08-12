@@ -1,5 +1,9 @@
 import type { JTDSchemaType } from "ajv/dist/core";
 
+import {
+    ELEVATED_SETTINGS_STATE_SCHEMA,
+    type SerializedElevatedSettingsState,
+} from "@framework/ElevatedSettings/ElevatedSettingsService.schema";
 import { MODULE_INSTANCE_STATE_SCHEMA, type SerializedModuleInstanceState } from "@framework/ModuleInstance.schema";
 
 import type { LayoutElement } from "./Dashboard";
@@ -17,6 +21,7 @@ export type SerializedDashboardState = {
     description?: string;
     activeModuleInstanceId: string | null;
     moduleInstances: SerializedModuleInstanceAndLayoutState[];
+    elevatedSettings: SerializedElevatedSettingsState;
 };
 
 const LAYOUT_ELEMENT_STATE_SCHEMA: JTDSchemaType<LayoutElementWithoutIdAndName> = {
@@ -47,6 +52,7 @@ export const DASHBOARD_STATE_SCHEMA: JTDSchemaType<SerializedDashboardState> = {
         moduleInstances: {
             elements: MODULE_INSTANCE_AND_LAYOUT_STATE_SCHEMA,
         },
+        elevatedSettings: ELEVATED_SETTINGS_STATE_SCHEMA,
     },
     optionalProperties: {
         description: { type: "string" },
