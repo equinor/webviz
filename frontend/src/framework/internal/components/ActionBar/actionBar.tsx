@@ -2,6 +2,8 @@ import { Close, Link } from "@mui/icons-material";
 
 import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
+import type { WellboreElevatedSettingOption } from "@framework/ElevatedSettings/definitions/wellbore";
+import { WELLBORE_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/wellbore";
 import {
     ElevatedSettingInstanceTopic,
     type ElevatedSettingInstance,
@@ -9,6 +11,7 @@ import {
 import { useElevatedSettingInstances } from "@framework/ElevatedSettings/ElevatedSettingsService";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
+import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Separator } from "@lib/components/Separator";
@@ -24,6 +27,7 @@ import { StartPanel } from "./_panels/start";
 const ELEVATED_SETTING_LABELS: Record<string, string> = {
     [REALIZATION_ELEVATED_SETTING.key]: "Realization",
     [GRID_PROPERTY_ELEVATED_SETTING.key]: "Grid property",
+    [WELLBORE_ELEVATED_SETTING.key]: "Wellbore",
 };
 
 export type ActionBarProps = {
@@ -74,6 +78,14 @@ function ElevatedSettingsIndicator() {
                         );
                     }
 
+                    if (key === WELLBORE_ELEVATED_SETTING.key) {
+                        return (
+                            <ElevatedSettingChip key={key} onRemove={handleRemoveClick}>
+                                <WellboreElevatedSettingContent instance={instance} />
+                            </ElevatedSettingChip>
+                        );
+                    }
+
                     const label = ELEVATED_SETTING_LABELS[key] ?? key;
                     const value = instance.getValue();
                     const valueAsString = value === null || value === undefined ? "Not set" : String(value);
@@ -99,17 +111,12 @@ type ElevatedSettingChipProps = {
 function ElevatedSettingChip(props: ElevatedSettingChipProps) {
     return (
         <Tooltip content="Elevated dashboard setting" side="bottom">
-            <div className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-xs flex items-center rounded-full">
+            <div className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-sm flex items-center rounded-full">
                 <Link fontSize="inherit" />
                 {props.children}
-                <div
-                    role="button"
-                    aria-label="Remove elevated setting"
-                    onClick={props.onRemove}
-                    className="hover:bg-accent hover:text-accent-strong-on-emphasis flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-full"
-                >
+                <Button size="small" variant="ghost" iconOnly onClick={props.onRemove}>
                     <Close fontSize="inherit" />
-                </div>
+                </Button>
             </div>
         </Tooltip>
     );
@@ -134,7 +141,7 @@ function RealizationElevatedSettingContent(props: RealizationElevatedSettingCont
 
     return (
         <>
-            <span className="text-body-xs shrink-0">Realization</span>
+            <span className="shrink-0">Realization</span>
             <Combobox
                 size="small"
                 items={items}
@@ -166,7 +173,39 @@ function GridPropertyElevatedSettingContent(props: GridPropertyElevatedSettingCo
 
     return (
         <>
-            <span className="text-body-xs shrink-0">Grid property</span>
+            <span className="shrink-0">Grid property</span>
+            <Combobox
+                size="small"
+                items={items}
+                value={value}
+                onValueChange={handleValueChange}
+                placeholder="Not set"
+                layoutClassName="w-32"
+            />
+        </>
+    );
+}
+
+type WellboreElevatedSettingContentProps = {
+    instance: ElevatedSettingInstance<string | null, readonly WellboreElevatedSettingOption[]>;
+};
+
+function WellboreElevatedSettingContent(props: WellboreElevatedSettingContentProps) {
+    const value = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.VALUE);
+    const constraints = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.CONSTRAINTS);
+
+    const items: ComboboxItem<string | null>[] = constraints.map((option) => ({
+        value: option.uuid,
+        label: option.name,
+    }));
+
+    function handleValueChange(newValue: string | null) {
+        props.instance.setValue(newValue);
+    }
+
+    return (
+        <>
+            <span className="shrink-0">Wellbore</span>
             <Combobox
                 size="small"
                 items={items}

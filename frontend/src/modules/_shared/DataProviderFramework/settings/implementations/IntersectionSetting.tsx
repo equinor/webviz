@@ -38,6 +38,13 @@ export type WellboreIntersectionSettingValue = IntersectionSettingOption & {
 
 export type IntersectionSettingValue = PolylineIntersectionSettingValue | WellboreIntersectionSettingValue;
 
+export function intersectionValueToRepresentation(value: IntersectionSettingValue | null): string {
+    if (value === null) {
+        return "-";
+    }
+    return `${value.type === IntersectionType.WELLBORE ? "Wellbore" : "Polyline"}: "${value.name}"`;
+}
+
 type ExtensionLengthConfig = {
     min: number;
     max: number;
@@ -310,10 +317,6 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
-        const { value } = args;
-        if (value === null) {
-            return "-";
-        }
-        return `${value.type === IntersectionType.WELLBORE ? "Wellbore" : "Polyline"}: "${value.name}"`;
+        return intersectionValueToRepresentation(args.value);
     }
 }

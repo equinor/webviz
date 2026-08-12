@@ -409,6 +409,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         if (template.elevatedSettings) {
             dashboard._elevatedSettingsService.deserializeState(template.elevatedSettings);
         }
+        template.applyElevatedSettings?.(dashboard._elevatedSettingsService);
 
         return dashboard;
     }

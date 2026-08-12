@@ -1,6 +1,7 @@
 import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
 import type { ElevatedSettingDefinition } from "./ElevatedSettings/ElevatedSettingDefinition";
+import type { ElevatedSettingsService } from "./ElevatedSettings/ElevatedSettingsService";
 import type { SerializedElevatedSettingsState } from "./ElevatedSettings/ElevatedSettingsService.schema";
 import type { LayoutElement } from "./internal/Dashboard";
 import type { SyncSettingKey } from "./SyncSettings";
@@ -32,8 +33,16 @@ export type Template = {
     moduleInstances: TemplateModuleInstance[];
     // Applied to the dashboard's `ElevatedSettingsService` (via `deserializeState`) once the
     // template's module instances are set up - merge multiple `createTemplateElevatedSetting` calls
-    // to set more than one.
+    // to set more than one. Only round-trips a plain value (it's shared with full dashboard session
+    // restore, where constraints are always recomputed live from connected consumers instead) - use
+    // `applyElevatedSettings` when a setting needs more than that, e.g. a constraint override.
     elevatedSettings?: SerializedElevatedSettingsState;
+    // Called once, right after this specific template's module instances/layout/`elevatedSettings`
+    // are set up on the dashboard. Each template is responsible for the elevated settings its own
+    // modules need - a template that doesn't use a given elevated setting shouldn't activate or
+    // constrain it, so this belongs here rather than on some check/template-group-wide hook that
+    // would run regardless of which template was actually applied.
+    applyElevatedSettings?: (elevatedSettingsService: ElevatedSettingsService) => void;
 };
 
 export function createTemplateModuleInstance<M extends keyof ModuleSerializedStateMap = keyof ModuleSerializedStateMap>(

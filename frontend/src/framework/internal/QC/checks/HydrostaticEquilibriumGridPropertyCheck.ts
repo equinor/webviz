@@ -7,6 +7,8 @@ import {
 } from "@api";
 import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
+import { WELLBORE_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/wellbore";
+import type { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import type { Template } from "@framework/TemplateRegistry";
 import { createTemplateModuleInstance } from "@framework/TemplateRegistry";
@@ -35,6 +37,7 @@ export type HydrostaticEquilibriumGridPropertyCheckMetrics = {
 };
 
 type ThreeDViewerSettings = NonNullable<ModuleSerializedStateMap["3DViewer"]["settings"]>;
+type IntersectionModuleSettings = NonNullable<ModuleSerializedStateMap["Intersection"]["settings"]>;
 
 // A `3DViewer` module instance's data providers are persisted as an opaque, hand-serialized JSON
 // blob (`SerializedDataProviderManager` in
@@ -89,6 +92,55 @@ function makeTwoViewsDataProviderManagerState(t0Iso: string | null, t1Iso: strin
     });
 }
 
+// One "INTERSECTION_VIEW" group per timestep - the Intersection module's equivalent of a `3DViewer`
+// "VIEW" group (a `DataProvider` can only ever live inside one of these, never as a bare root
+// sibling). Each holds one realization-grid-fence provider, pre-set to that view's timestep the same
+// way `makeGridViewGroup` does. Unlike the grid provider's own group-scoped fence setting
+// (`Setting.INTERSECTION`, key "intersection"), it's left unset here - it becomes elevated (and thus
+// shared across both views) once this template's own `applyElevatedSettings` activates
+// `WELLBORE_ELEVATED_SETTING`.
+function makeIntersectionViewGroup(id: string, name: string, color: string, timeOrIntervalIso: string | null) {
+    return {
+        id,
+        type: "group",
+        groupType: "INTERSECTION_VIEW",
+        name,
+        expanded: true,
+        visible: true,
+        color,
+        settings: {},
+        children: [
+            {
+                id: `${id}-grid`,
+                type: "data-provider",
+                // `DataProviderType.INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID` from
+                // `@modules/_shared/DataProviderFramework/dataProviders/dataProviderTypes` - the
+                // provider type the Intersection module's own "Add > Realization Grid" action uses.
+                dataProviderType: "INTERSECTION_WITH_WELLBORE_EXTENSION_REALIZATION_GRID",
+                name: "Grid Model Fence",
+                expanded: true,
+                visible: true,
+                // Keyed by `Setting.TIME_OR_INTERVAL` ("timeOrInterval"), same as `makeGridViewGroup`.
+                settings: { timeOrInterval: JSON.stringify(timeOrIntervalIso) },
+            },
+        ],
+    };
+}
+
+function makeTwoIntersectionViewsDataProviderManagerState(t0Iso: string | null, t1Iso: string | null): string {
+    return JSON.stringify({
+        id: "root",
+        type: "data-provider-manager",
+        name: "DataProviderManager",
+        expanded: true,
+        visible: true,
+        children: [
+            makeIntersectionViewGroup("intersection-view-t0", t0Iso ?? "T0", "#4C9959", t0Iso),
+            makeIntersectionViewGroup("intersection-view-t1", t1Iso ?? "T1", "#4C7899", t1Iso),
+        ],
+    });
+}
+
 // The `checkedPropertyNames`/`timeSteps` metrics are the same ensemble-wide metadata on every
 // successful realization result - reads it off the first one it finds.
 function summarizeResults(
@@ -108,6 +160,42 @@ function summarizeResults(
     }
 
     return { timeSteps, checkedPropertyNames: Array.from(checkedPropertyNames).sort() };
+}
+
+// Restricts the realization and grid-property pickers a template's grid provider(s) expose to just
+// what this run actually checked, rather than every realization/property in the ensemble. Shared by
+// both templates below, since both use realization-grid providers.
+//
+// The override is seeded via `addSetting`'s `constraintOverride` option (atomically, at
+// construction) rather than via a separate `setConstraintOverride` call afterward - `addSetting`
+// synchronously notifies any already-connected consumer (e.g. a grid provider's Attribute setting)
+// before returning, and that consumer would otherwise see a bare, not-yet-overridden instance and
+// contribute its own full value list into what's still a union.
+function applyRealizationAndGridPropertyElevatedSettings(
+    elevatedSettingsService: ElevatedSettingsService,
+    { realizations, results }: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>,
+): void {
+    if (elevatedSettingsService.hasSetting(REALIZATION_ELEVATED_SETTING)) {
+        elevatedSettingsService.getSetting(REALIZATION_ELEVATED_SETTING).setConstraintOverride(realizations);
+    } else {
+        elevatedSettingsService.addSetting(REALIZATION_ELEVATED_SETTING, { constraintOverride: realizations });
+    }
+
+    const { checkedPropertyNames } = summarizeResults(results);
+    // Constraining alone leaves the picker on its previous (or default `null`) value - point it at
+    // one of this run's properties so the template's grid view(s) actually show something.
+    const defaultPropertyName = checkedPropertyNames[0] ?? null;
+
+    if (elevatedSettingsService.hasSetting(GRID_PROPERTY_ELEVATED_SETTING)) {
+        const gridPropertySetting = elevatedSettingsService.getSetting(GRID_PROPERTY_ELEVATED_SETTING);
+        gridPropertySetting.setConstraintOverride(checkedPropertyNames);
+        gridPropertySetting.setValue(defaultPropertyName);
+    } else {
+        elevatedSettingsService.addSetting(GRID_PROPERTY_ELEVATED_SETTING, {
+            constraintOverride: checkedPropertyNames,
+            value: defaultPropertyName,
+        });
+    }
 }
 
 // A single 3D viewer, split into two views (t0 and t1, stacked top/bottom) - a starting point for
@@ -138,6 +226,40 @@ function makeGridPropertyTemplates(
                     },
                 }),
             ],
+            applyElevatedSettings: (elevatedSettingsService) =>
+                applyRealizationAndGridPropertyElevatedSettings(elevatedSettingsService, context),
+        },
+        {
+            name: "Grid property - t0 vs t1 (intersection)",
+            description:
+                "An intersection module split into two views, each showing the realization grid property " +
+                "as a wellbore fence, at t0 and at t1.",
+            moduleInstances: [
+                createTemplateModuleInstance("Intersection", {
+                    instanceRef: "IntersectionViews",
+                    layout: { relX: 0, relY: 0, relWidth: 1, relHeight: 1 },
+                    initialState: {
+                        settings: {
+                            dataProviderSerializedState: makeTwoIntersectionViewsDataProviderManagerState(
+                                timeSteps?.t0_iso ?? null,
+                                timeSteps?.t1_iso ?? null,
+                            ),
+                            preferredViewLayout: "vertical" as IntersectionModuleSettings["preferredViewLayout"],
+                        },
+                    },
+                }),
+            ],
+            applyElevatedSettings: (elevatedSettingsService) => {
+                applyRealizationAndGridPropertyElevatedSettings(elevatedSettingsService, context);
+
+                // Both fences' `Setting.INTERSECTION` (wellbore/polyline picker) become elevated once
+                // this is active, so both views follow one shared wellbore selection. Unlike
+                // realization/grid-property, this check has no run-specific wellbore data to restrict
+                // the picker to - just make sure it's active.
+                if (!elevatedSettingsService.hasSetting(WELLBORE_ELEVATED_SETTING)) {
+                    elevatedSettingsService.addSetting(WELLBORE_ELEVATED_SETTING);
+                }
+            },
         },
     ];
 }
@@ -155,38 +277,6 @@ export const HydrostaticEquilibriumGridPropertyCheck: QcCheckDefinition<
     settingsComponent: HydrostaticEquilibriumCheckSettings,
     resultComponent: HydrostaticEquilibriumGridPropertyCheckResult,
     templates: makeGridPropertyTemplates,
-
-    // Restricts the realization and grid-property pickers the template's 3D viewer exposes to just
-    // what this run actually checked, rather than every realization/property in the ensemble.
-    //
-    // The override is seeded via `addSetting`'s `constraintOverride` option (atomically, at
-    // construction) rather than via a separate `setConstraintOverride` call afterward -
-    // `addSetting` synchronously notifies any already-connected consumer (e.g. a grid provider's
-    // Attribute setting) before returning, and that consumer would otherwise see a bare, not-yet-
-    // overridden instance and contribute its own full value list into what's still a union.
-    onTemplateApplied(elevatedSettingsService, { realizations, results }) {
-        if (elevatedSettingsService.hasSetting(REALIZATION_ELEVATED_SETTING)) {
-            elevatedSettingsService.getSetting(REALIZATION_ELEVATED_SETTING).setConstraintOverride(realizations);
-        } else {
-            elevatedSettingsService.addSetting(REALIZATION_ELEVATED_SETTING, { constraintOverride: realizations });
-        }
-
-        const { checkedPropertyNames } = summarizeResults(results);
-        // Constraining alone leaves the picker on its previous (or default `null`) value - point it
-        // at one of this run's properties so the 3D viewer actually shows something.
-        const defaultPropertyName = checkedPropertyNames[0] ?? null;
-
-        if (elevatedSettingsService.hasSetting(GRID_PROPERTY_ELEVATED_SETTING)) {
-            const gridPropertySetting = elevatedSettingsService.getSetting(GRID_PROPERTY_ELEVATED_SETTING);
-            gridPropertySetting.setConstraintOverride(checkedPropertyNames);
-            gridPropertySetting.setValue(defaultPropertyName);
-        } else {
-            elevatedSettingsService.addSetting(GRID_PROPERTY_ELEVATED_SETTING, {
-                constraintOverride: checkedPropertyNames,
-                value: defaultPropertyName,
-            });
-        }
-    },
 
     async run(context) {
         const { ensemble, realizations, params, fetchQuery, setProgressMessage } = context;

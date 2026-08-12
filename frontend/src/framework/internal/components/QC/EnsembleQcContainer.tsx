@@ -130,23 +130,9 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     }
 
     function handleApplyTemplateClick(template: Template) {
-        workbench
-            .getSessionManager()
-            .applyTemplate(template)
-            .then((applied) => {
-                if (!applied || !checkDefinition.onTemplateApplied) {
-                    return;
-                }
-
-                // Not `activeDashboard` from `useActiveDashboard()` above - `applyTemplate` just
-                // replaced the session's dashboards, so that context value is stale until next render.
-                const dashboardAfterApply = workbench.getSessionManager().getActiveSession().getActiveDashboard();
-                if (!dashboardAfterApply) {
-                    return;
-                }
-
-                checkDefinition.onTemplateApplied(dashboardAfterApply.getElevatedSettingsService(), templateContext);
-            });
+        // Elevated settings the template's modules need are applied by `Dashboard.fromTemplate`
+        // itself (via `Template.elevatedSettings`/`applyElevatedSettings`) - nothing left to do here.
+        workbench.getSessionManager().applyTemplate(template);
     }
 
     function handleRealizationClick(realization: number) {
