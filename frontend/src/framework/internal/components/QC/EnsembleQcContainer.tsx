@@ -217,13 +217,16 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                                     </Button>
                                 </Menu.Trigger>
                                 <Menu.Popup>
-                                    {templates.map((template) => (
-                                        <Menu.Item
-                                            key={template.name}
-                                            text={template.name}
-                                            onClick={() => handleApplyTemplateClick(template)}
-                                        />
-                                    ))}
+                                    <Menu.Group>
+                                        <Menu.GroupLabel>Apply template</Menu.GroupLabel>
+                                        {templates.map((template) => (
+                                            <Menu.Item
+                                                key={template.name}
+                                                text={template.name}
+                                                onClick={() => handleApplyTemplateClick(template)}
+                                            />
+                                        ))}
+                                    </Menu.Group>
                                 </Menu.Popup>
                             </Menu.Root>
                         )}
