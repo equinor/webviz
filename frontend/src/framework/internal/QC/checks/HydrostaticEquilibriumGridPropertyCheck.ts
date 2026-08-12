@@ -5,11 +5,16 @@ import {
     getHydrostaticEquilibriumGridPropertyCheckHybrid,
     getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey,
 } from "@api";
+import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
+import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import { lroProgressBus } from "@framework/LroProgressBus";
+import type { Template } from "@framework/TemplateRegistry";
+import { createTemplateModuleInstance } from "@framework/TemplateRegistry";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
-import type { QcCheckDefinition } from "../QcCheck";
+import type { QcCheckDefinition, QcCheckTemplateContext } from "../QcCheck";
 
 import { HydrostaticEquilibriumGridPropertyCheckResult } from "./HydrostaticEquilibriumCheckResults";
 import { HydrostaticEquilibriumCheckSettings } from "./HydrostaticEquilibriumCheckSettings";
@@ -29,6 +34,114 @@ export type HydrostaticEquilibriumGridPropertyCheckMetrics = {
     propertyValues: GridPropertyCheckValue_api[];
 };
 
+type ThreeDViewerSettings = NonNullable<ModuleSerializedStateMap["3DViewer"]["settings"]>;
+
+// A `3DViewer` module instance's data providers are persisted as an opaque, hand-serialized JSON
+// blob (`SerializedDataProviderManager` in
+// `@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization`) - framework code isn't
+// allowed to import from `modules` (see `.dependency-cruiser.cjs`), so this builds that shape from
+// its literal string values instead of the real enums.
+//
+// One "View" group per timestep, matching what dropping a fresh "Grid Model 3D" provider into a new
+// view looks like, except its Time or Interval setting is pre-set to that view's timestep (a plain
+// per-provider setting value - not an elevated one, since each view is meant to show a *different*
+// timestep).
+function makeGridViewGroup(id: string, name: string, color: string, timeOrIntervalIso: string | null) {
+    return {
+        id,
+        type: "group",
+        groupType: "VIEW",
+        name,
+        expanded: true,
+        visible: true,
+        color,
+        settings: {},
+        children: [
+            {
+                id: `${id}-grid`,
+                type: "data-provider",
+                dataProviderType: "REALIZATION_GRID_3D",
+                name: "Grid Model 3D",
+                expanded: true,
+                visible: true,
+                // Keyed by `Setting.TIME_OR_INTERVAL` ("timeOrInterval") from
+                // `@modules/_shared/DataProviderFramework/settings/settingsDefinitions` - spelled out
+                // literally for the same dependency-boundary reason as above. Settings are serialized
+                // as JSON strings (`SerializedSettingsState`), matching `TimeOrIntervalSetting`'s own
+                // `serializeValue`.
+                settings: { timeOrInterval: JSON.stringify(timeOrIntervalIso) },
+            },
+        ],
+    };
+}
+
+function makeTwoViewsDataProviderManagerState(t0Iso: string | null, t1Iso: string | null): string {
+    return JSON.stringify({
+        id: "root",
+        type: "data-provider-manager",
+        name: "DataProviderManager",
+        expanded: true,
+        visible: true,
+        children: [
+            makeGridViewGroup("view-t0", t0Iso ?? "T0", "#4C9959", t0Iso),
+            makeGridViewGroup("view-t1", t1Iso ?? "T1", "#4C7899", t1Iso),
+        ],
+    });
+}
+
+// The `checkedPropertyNames`/`timeSteps` metrics are the same ensemble-wide metadata on every
+// successful realization result - reads it off the first one it finds.
+function summarizeResults(
+    results: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>["results"],
+): { timeSteps: TimeStepPair_api | null; checkedPropertyNames: string[] } {
+    const checkedPropertyNames = new Set<string>();
+    let timeSteps: TimeStepPair_api | null = null;
+
+    for (const result of results.values()) {
+        if (result.kind !== "success") {
+            continue;
+        }
+        timeSteps ??= result.metrics.timeSteps;
+        for (const propertyName of result.metrics.checkedPropertyNames) {
+            checkedPropertyNames.add(propertyName);
+        }
+    }
+
+    return { timeSteps, checkedPropertyNames: Array.from(checkedPropertyNames).sort() };
+}
+
+// A single 3D viewer, split into two views (t0 and t1, stacked top/bottom) - a starting point for
+// eyeballing a failing realization's grid property between the two timesteps this check compared.
+function makeGridPropertyTemplates(
+    context: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>,
+): Template[] {
+    const { timeSteps } = summarizeResults(context.results);
+
+    return [
+        {
+            name: "Grid property - t0 vs t1",
+            description: "A single 3D viewer split into two views, showing the grid property at t0 and at t1.",
+            moduleInstances: [
+                createTemplateModuleInstance("3DViewer", {
+                    instanceRef: "GridViews",
+                    layout: { relX: 0, relY: 0, relWidth: 1, relHeight: 1 },
+                    initialState: {
+                        settings: {
+                            dataProviderData: makeTwoViewsDataProviderManagerState(
+                                timeSteps?.t0_iso ?? null,
+                                timeSteps?.t1_iso ?? null,
+                            ),
+                            // "Vertical" here means stacked rows (t0 on top, t1 below), not
+                            // side-by-side columns - see `ViewportLayoutMenu`'s icon choice.
+                            preferredViewLayout: "vertical" as ThreeDViewerSettings["preferredViewLayout"],
+                        },
+                    },
+                }),
+            ],
+        },
+    ];
+}
+
 // Grid property check of the "Initial Hydrostatic Equilibrium" QC step: compares 3D grid
 // properties between an early (t0) and a later (t1) time step, one request per realization so
 // results can be reported as each realization resolves (ported from `ModelQc`'s
@@ -41,6 +154,39 @@ export const HydrostaticEquilibriumGridPropertyCheck: QcCheckDefinition<
     defaultParams: DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
     settingsComponent: HydrostaticEquilibriumCheckSettings,
     resultComponent: HydrostaticEquilibriumGridPropertyCheckResult,
+    templates: makeGridPropertyTemplates,
+
+    // Restricts the realization and grid-property pickers the template's 3D viewer exposes to just
+    // what this run actually checked, rather than every realization/property in the ensemble.
+    //
+    // The override is seeded via `addSetting`'s `constraintOverride` option (atomically, at
+    // construction) rather than via a separate `setConstraintOverride` call afterward -
+    // `addSetting` synchronously notifies any already-connected consumer (e.g. a grid provider's
+    // Attribute setting) before returning, and that consumer would otherwise see a bare, not-yet-
+    // overridden instance and contribute its own full value list into what's still a union.
+    onTemplateApplied(elevatedSettingsService, { realizations, results }) {
+        if (elevatedSettingsService.hasSetting(REALIZATION_ELEVATED_SETTING)) {
+            elevatedSettingsService.getSetting(REALIZATION_ELEVATED_SETTING).setConstraintOverride(realizations);
+        } else {
+            elevatedSettingsService.addSetting(REALIZATION_ELEVATED_SETTING, { constraintOverride: realizations });
+        }
+
+        const { checkedPropertyNames } = summarizeResults(results);
+        // Constraining alone leaves the picker on its previous (or default `null`) value - point it
+        // at one of this run's properties so the 3D viewer actually shows something.
+        const defaultPropertyName = checkedPropertyNames[0] ?? null;
+
+        if (elevatedSettingsService.hasSetting(GRID_PROPERTY_ELEVATED_SETTING)) {
+            const gridPropertySetting = elevatedSettingsService.getSetting(GRID_PROPERTY_ELEVATED_SETTING);
+            gridPropertySetting.setConstraintOverride(checkedPropertyNames);
+            gridPropertySetting.setValue(defaultPropertyName);
+        } else {
+            elevatedSettingsService.addSetting(GRID_PROPERTY_ELEVATED_SETTING, {
+                constraintOverride: checkedPropertyNames,
+                value: defaultPropertyName,
+            });
+        }
+    },
 
     async run(context) {
         const { ensemble, realizations, params, fetchQuery, setProgressMessage } = context;

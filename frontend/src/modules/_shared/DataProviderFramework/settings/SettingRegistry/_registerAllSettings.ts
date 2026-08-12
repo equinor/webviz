@@ -1,3 +1,4 @@
+import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import {
     defaultContinuousDivergingColorPalettes,
@@ -62,7 +63,15 @@ SettingRegistry.registerSetting(Setting.SHOW_LABELS, "Show labels", BooleanSetti
 SettingRegistry.registerSetting(Setting.LABEL_ROTATION, "Label rotation", StaticRotationSetting);
 SettingRegistry.registerSetting(Setting.SHOW_LINES, "Show lines", BooleanSetting);
 
-SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting, {
+    elevatedSettingAdapter: makeDpfElevatedSettingAdapter<string | null, readonly string[], string | null, string[]>(
+        GRID_PROPERTY_ELEVATED_SETTING,
+        {
+            mapValueConstraintsToElevatedConstraints: (valueConstraints) => valueConstraints,
+            mapElevatedValueToExternalValue: (elevatedValue) => elevatedValue,
+        },
+    ),
+});
 SettingRegistry.registerSetting(Setting.SEISMIC_ATTRIBUTE, "Seismic Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.DEPTH_ATTRIBUTE, "Depth Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);

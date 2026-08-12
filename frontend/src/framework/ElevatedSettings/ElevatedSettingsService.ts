@@ -5,7 +5,7 @@ import {
 } from "@lib/utils/PublishSubscribeDelegate";
 
 import type { ElevatedSettingDefinition } from "./ElevatedSettingDefinition";
-import { ElevatedSettingInstance } from "./ElevatedSettingInstance";
+import { ElevatedSettingInstance, type ElevatedSettingInstanceOptions } from "./ElevatedSettingInstance";
 import { ElevatedSettingRegistry } from "./ElevatedSettingRegistry";
 import type { SerializedElevatedSettingsState } from "./ElevatedSettingsService.schema";
 
@@ -37,12 +37,13 @@ export class ElevatedSettingsService implements PublishSubscribe<ElevatedSetting
 
     addSetting<TValue, TConstraints>(
         definition: ElevatedSettingDefinition<TValue, TConstraints>,
+        options?: ElevatedSettingInstanceOptions<TValue, TConstraints>,
     ): ElevatedSettingInstance<TValue, TConstraints> {
         if (this._instances.has(definition.key)) {
             throw new Error(`Elevated setting '${definition.key}' is already active.`);
         }
 
-        const instance = new ElevatedSettingInstance(definition);
+        const instance = new ElevatedSettingInstance(definition, options);
 
         this._instances = new Map(this._instances).set(definition.key, instance);
 

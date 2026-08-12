@@ -1,5 +1,7 @@
 import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
+import type { ElevatedSettingDefinition } from "./ElevatedSettings/ElevatedSettingDefinition";
+import type { SerializedElevatedSettingsState } from "./ElevatedSettings/ElevatedSettingsService.schema";
 import type { LayoutElement } from "./internal/Dashboard";
 import type { SyncSettingKey } from "./SyncSettings";
 import type { KeyKind } from "./types/dataChannnel";
@@ -28,6 +30,10 @@ export type Template = {
     name: string;
     description: string;
     moduleInstances: TemplateModuleInstance[];
+    // Applied to the dashboard's `ElevatedSettingsService` (via `deserializeState`) once the
+    // template's module instances are set up - merge multiple `createTemplateElevatedSetting` calls
+    // to set more than one.
+    elevatedSettings?: SerializedElevatedSettingsState;
 };
 
 export function createTemplateModuleInstance<M extends keyof ModuleSerializedStateMap = keyof ModuleSerializedStateMap>(
@@ -38,6 +44,16 @@ export function createTemplateModuleInstance<M extends keyof ModuleSerializedSta
         moduleName,
         ...options,
     };
+}
+
+// Type-checks `value` against the elevated setting's own `TValue` before handing it to `Template`'s
+// loosely-typed (`Record<string, unknown>`) `elevatedSettings`, which mirrors
+// `ElevatedSettingsService.deserializeState`'s session-restore contract.
+export function createTemplateElevatedSetting<TValue, TConstraints>(
+    definition: ElevatedSettingDefinition<TValue, TConstraints>,
+    value: TValue,
+): SerializedElevatedSettingsState {
+    return { [definition.key]: value };
 }
 
 export class TemplateRegistry {

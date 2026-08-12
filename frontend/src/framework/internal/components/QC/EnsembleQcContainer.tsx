@@ -1,35 +1,30 @@
 import React from "react";
 
-import {
-    Check,
-    Clear,
-    ExpandLess,
-    ExpandMore,
-    FactCheck,
-    PlayArrow,
-    PlaylistPlay,
-    Stop,
-    Verified,
-} from "@mui/icons-material";
-import { isEqual } from "lodash-es";
+import { ExpandLess, ExpandMore, FactCheck, PlaylistPlay, Stop } from "@mui/icons-material";
+import { startCase } from "lodash-es";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile";
-import { Drawer } from "@framework/internal/components/Drawer";
+import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
+import { useElevatedSettingValue } from "@framework/ElevatedSettings/hooks";
 import type { EnsembleQc } from "@framework/internal/QC/EnsembleQc";
 import type { QcCheckRealizationResult, QcCheckRuntime } from "@framework/internal/QC/QcCheck";
 import { QcCheckRuntimeTopic } from "@framework/internal/QC/QcCheck";
+import type { Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { HasChangesIndicator } from "@lib/components/HasChangesIndicator/hasChangesIndicator";
+import { Menu } from "@lib/components/Menu";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
 import { useQcRealizationPopover } from "./QcRealizationPopover";
 
 type EnsembleQcContainerProps = {
     ensembleQc: EnsembleQc;
+    workbench: Workbench;
 };
 
 export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
@@ -62,6 +57,7 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
                             key={checkRuntime.getId()}
                             checkRuntime={checkRuntime}
                             realizations={realizations}
+                            workbench={props.workbench}
                         />
                     ))}
                 </div>
@@ -73,10 +69,27 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
 type CheckRuntimeContainerProps = {
     checkRuntime: QcCheckRuntime;
     realizations: readonly number[];
+    workbench: Workbench;
 };
 
 function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
-    const { checkRuntime, realizations } = props;
+    const { checkRuntime, realizations, workbench } = props;
+
+    const [showSettings, setShowSettings] = React.useState(false);
+
+    // Params are staged locally while the settings view is open, and only committed into the
+    // runtime (via `setParams`) when the user clicks Run - there's no separate Apply step.
+    const appliedParams = usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.PARAMS);
+    const [stagedParams, setStagedParams] = React.useState(appliedParams);
+
+    const activeDashboard = useActiveDashboard();
+    const elevatedSettingsService = activeDashboard.getElevatedSettingsService();
+
+    // `useElevatedSettingValue` (not `getSetting`+`usePublishSubscribeTopicValue`) since a freshly
+    // created dashboard (e.g. right after applying a template) hasn't had "realization" added to its
+    // `ElevatedSettingsService` yet - `getSetting` throws in that case, this just returns `undefined`
+    // and re-renders once the setting shows up.
+    const selectedRealization = useElevatedSettingValue(elevatedSettingsService, REALIZATION_ELEVATED_SETTING) ?? null;
 
     const [expanded, setExpanded] = React.useState(false);
 
@@ -89,26 +102,133 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     const isRunning = checkRuntime.isRunning();
     const results = checkRuntime.getResults();
     const requestedRealizations = checkRuntime.getRequestedRealizations();
+    // Shared by template resolution and `onTemplateApplied` - both need this run's realizations and
+    // results, not the check in the abstract.
+    const templateContext = { realizations: requestedRealizations, results };
 
-    function handleToggleRun() {
-        if (isRunning) {
-            checkRuntime.cancel();
-        } else {
-            checkRuntime.run(realizations);
+    function handleRunClick() {
+        checkRuntime.setParams(stagedParams);
+        // Once `run()` flips `isRunning`, the settings view hides itself regardless of
+        // `showSettings` - reset it now so a run started from the "no results yet" view doesn't
+        // leave the re-run settings view showing once this run completes.
+        setShowSettings(false);
+        checkRuntime.run(realizations);
+    }
+
+    function handleCancelRunClick() {
+        checkRuntime.cancel();
+    }
+
+    function handleReRunClick() {
+        setShowSettings(true);
+    }
+
+    function handleBackToResultsClick() {
+        // Discard whatever was staged in the settings view - only Run commits it.
+        setStagedParams(appliedParams);
+        setShowSettings(false);
+    }
+
+    function handleApplyTemplateClick(template: Template) {
+        workbench
+            .getSessionManager()
+            .applyTemplate(template)
+            .then((applied) => {
+                if (!applied || !checkDefinition.onTemplateApplied) {
+                    return;
+                }
+
+                // Not `activeDashboard` from `useActiveDashboard()` above - `applyTemplate` just
+                // replaced the session's dashboards, so that context value is stale until next render.
+                const dashboardAfterApply = workbench.getSessionManager().getActiveSession().getActiveDashboard();
+                if (!dashboardAfterApply) {
+                    return;
+                }
+
+                checkDefinition.onTemplateApplied(dashboardAfterApply.getElevatedSettingsService(), templateContext);
+            });
+    }
+
+    function handleRealizationClick(realization: number) {
+        if (!elevatedSettingsService.hasSetting(REALIZATION_ELEVATED_SETTING)) {
+            elevatedSettingsService.addSetting(REALIZATION_ELEVATED_SETTING);
         }
+        const realizationSettingInstance = elevatedSettingsService.getSetting(REALIZATION_ELEVATED_SETTING);
+        realizationSettingInstance.setValue(realization);
     }
 
     function makeResultsContent() {
-        if (isRunning || results.size > 0) {
+        const hasResults = results.size > 0;
+        // Not-yet-run and re-run both land here: settings + a Play button, plus (only when there
+        // are existing results to fall back to) a Cancel button to back out without running again.
+        // `!isRunning` takes priority so this auto-hides the moment a run is kicked off, in favor of
+        // the progress view below.
+        const showSettingsView = !isRunning && (showSettings || !hasResults);
+
+        if (showSettingsView) {
             return (
-                <RealizationSquares
-                    checkRuntime={checkRuntime}
-                    checkName={checkDefinition.name}
-                    realizations={realizations}
-                    results={results}
-                    isRunning={isRunning}
-                    requestedRealizations={requestedRealizations}
-                />
+                <div className="p-2xs gap-2xs flex flex-col">
+                    {checkDefinition.settingsComponent && (
+                        <CheckSettings
+                            checkRuntime={checkRuntime}
+                            params={stagedParams}
+                            onParamsChange={setStagedParams}
+                        />
+                    )}
+                    <div className="gap-xs p-2xs flex items-center justify-end">
+                        {hasResults && (
+                            <Button tone="neutral" size="small" variant="ghost" onClick={handleBackToResultsClick}>
+                                Cancel
+                            </Button>
+                        )}
+                        <Button tone="accent" size="small" variant="contained" onClick={handleRunClick}>
+                            Run
+                        </Button>
+                    </div>
+                </div>
+            );
+        }
+
+        if (isRunning || hasResults) {
+            const templates = checkDefinition.templates?.(templateContext) ?? [];
+
+            return (
+                <div className="p-2xs gap-2xs flex flex-col items-center">
+                    <CheckParamsList params={appliedParams} />
+                    <RealizationSquares
+                        checkRuntime={checkRuntime}
+                        checkName={checkDefinition.name}
+                        realizations={realizations}
+                        results={results}
+                        isRunning={isRunning}
+                        requestedRealizations={requestedRealizations}
+                        selectedRealization={selectedRealization}
+                        onRealizationClick={handleRealizationClick}
+                    />
+                    <div className="gap-xs flex items-center">
+                        <Button tone="neutral" size="small" variant="ghost" onClick={handleReRunClick}>
+                            Re-run
+                        </Button>
+                        {templates.length > 0 && (
+                            <Menu.Root>
+                                <Menu.Trigger>
+                                    <Button tone="accent" size="small" variant="contained">
+                                        Investigate
+                                    </Button>
+                                </Menu.Trigger>
+                                <Menu.Popup>
+                                    {templates.map((template) => (
+                                        <Menu.Item
+                                            key={template.name}
+                                            text={template.name}
+                                            onClick={() => handleApplyTemplateClick(template)}
+                                        />
+                                    ))}
+                                </Menu.Popup>
+                            </Menu.Root>
+                        )}
+                    </div>
+                </div>
             );
         }
 
@@ -126,15 +246,16 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                     {isRunning ? <CircularProgress size={16} /> : <FactCheck style={{ fontSize: 16 }} />}
                     <span className="grow truncate">{checkDefinition.name}</span>
                 </div>
-                <div className="p-2xs">
-                    <Button tone="accent" size="small" variant="ghost" iconOnly onClick={handleToggleRun}>
-                        {isRunning ? <Stop style={{ fontSize: 16 }} /> : <PlayArrow style={{ fontSize: 16 }} />}
-                    </Button>
-                </div>
+                {isRunning && (
+                    <div className="p-2xs">
+                        <Button tone="accent" size="small" variant="ghost" iconOnly onClick={handleCancelRunClick}>
+                            <Stop style={{ fontSize: 16 }} />
+                        </Button>
+                    </div>
+                )}
             </div>
             {expanded && (
                 <>
-                    {checkDefinition.settingsComponent && <CheckSettings checkRuntime={checkRuntime} />}
                     <div className="p-2xs">{makeResultsContent()}</div>
                 </>
             )}
@@ -142,66 +263,64 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     );
 }
 
-type CheckSettingsProps = {
-    checkRuntime: QcCheckRuntime;
+type CheckParamsListProps = {
+    params: unknown;
 };
 
-// Renders a check's own `settingsComponent` against a locally staged copy of its params, only
-// committing into the runtime (via `setParams`) when Apply is clicked - mirrors the stage-then-
-// apply UX of `EnsembleRealizationFilter`.
-function CheckSettings(props: CheckSettingsProps) {
-    const { checkRuntime } = props;
+// Checks don't provide per-param display labels, so this renders whatever object shape a check's
+// `TParams` happens to be as a generic key/value list, humanizing the object keys.
+function CheckParamsList(props: CheckParamsListProps) {
+    const { params } = props;
 
-    const appliedParams = usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.PARAMS);
-    const [stagedParams, setStagedParams] = React.useState(appliedParams);
+    if (params === null || typeof params !== "object") {
+        return null;
+    }
+
+    const entries = Object.entries(params as Record<string, unknown>);
+    if (entries.length === 0) {
+        return null;
+    }
+
+    return (
+        <ul className="text-body-sm gap-3xs flex flex-col items-start">
+            {entries.map(([key, value]) => (
+                <li key={key}>
+                    <span className="text-neutral-subtle">{startCase(key)}:</span> {formatParamValue(value)}
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+function formatParamValue(value: unknown): string {
+    if (value === null || value === undefined) {
+        return "Not set";
+    }
+    if (typeof value === "string") {
+        return value;
+    }
+    return JSON.stringify(value);
+}
+
+type CheckSettingsProps = {
+    checkRuntime: QcCheckRuntime;
+    params: unknown;
+    onParamsChange: (params: unknown) => void;
+};
+
+// Renders a check's own `settingsComponent` against params staged by the parent - there's no
+// Apply step here, the parent commits them into the runtime (via `setParams`) when Run is clicked.
+function CheckSettings(props: CheckSettingsProps) {
+    const { checkRuntime, params, onParamsChange } = props;
 
     const SettingsComponent = checkRuntime.getCheckDefinition().settingsComponent;
     if (!SettingsComponent) {
         return null;
     }
 
-    const hasUnappliedChanges = !isEqual(stagedParams, appliedParams);
-
-    function handleApplyClick() {
-        checkRuntime.setParams(stagedParams);
-    }
-
-    function handleDiscardClick() {
-        setStagedParams(appliedParams);
-    }
-
     return (
         <div className="border-neutral-subtle p-2xs gap-2xs flex flex-col border-b">
-            <SettingsComponent
-                ensemble={checkRuntime.getEnsemble()}
-                params={stagedParams}
-                onParamsChange={setStagedParams}
-            />
-            <div className="gap-xs flex items-center justify-end">
-                <HasChangesIndicator visible={hasUnappliedChanges} tooltip="You have unapplied changes" size={16} />
-                <Button
-                    tone="accent"
-                    disabled={!hasUnappliedChanges}
-                    onClick={handleApplyClick}
-                    title={hasUnappliedChanges ? "Apply changes" : "No changes to apply"}
-                    size="small"
-                    variant="ghost"
-                    iconOnly
-                >
-                    <Check style={{ fontSize: 16 }} />
-                </Button>
-                <Button
-                    tone="danger"
-                    disabled={!hasUnappliedChanges}
-                    onClick={handleDiscardClick}
-                    title={hasUnappliedChanges ? "Discard changes" : "No changes to discard"}
-                    size="small"
-                    variant="ghost"
-                    iconOnly
-                >
-                    <Clear style={{ fontSize: 16 }} />
-                </Button>
-            </div>
+            <SettingsComponent ensemble={checkRuntime.getEnsemble()} params={params} onParamsChange={onParamsChange} />
         </div>
     );
 }
@@ -222,6 +341,8 @@ type RealizationSquaresProps = {
     results: Map<number, QcCheckRealizationResult<unknown>>;
     isRunning: boolean;
     requestedRealizations: readonly number[];
+    onRealizationClick: (realization: number) => void;
+    selectedRealization: number | null;
 };
 
 // Realizations are grouped into rows of 5 with a row-start label, same layout as
@@ -241,7 +362,8 @@ const LOADING_ANIMATION_STAGGER_STEP_SECS = 0.15;
 // currently running check but have not reported a result yet show a pulsing skeleton square
 // instead of a static one.
 function RealizationSquares(props: RealizationSquaresProps) {
-    const { checkRuntime, checkName, realizations, results, isRunning, requestedRealizations } = props;
+    const { checkRuntime, checkName, realizations, results, isRunning, requestedRealizations, onRealizationClick } =
+        props;
 
     const qcRealizationPopover = useQcRealizationPopover();
     // Anchors the popover to the whole realization-squares grid for this check, rather than to an
@@ -265,6 +387,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
             return;
         }
         qcRealizationPopover.select({ checkRuntime, checkName, realization, anchorElement: containerRef.current });
+        onRealizationClick(realization);
     }
 
     return (
@@ -315,6 +438,10 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                             className={resolveClassNames(
                                                 "cursor-pointer rounded-xs",
                                                 { "hover:outline": !isLoading },
+                                                {
+                                                    "outline-accent outline-2":
+                                                        realization === props.selectedRealization,
+                                                },
                                                 REALIZATION_STATUS_TONE_TO_CLASSNAME[tone],
                                             )}
                                         />

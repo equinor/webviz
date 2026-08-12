@@ -24,7 +24,13 @@ export const QcChecksPanel = React.memo(function QcChecksPanel(props: QcChecksPa
             <Drawer title="QC Checks" icon={<Verified />} visible={true} onClose={props.onClose}>
                 {ensembleQcs.map((ensembleQc) => {
                     const ensembleIdentString = ensembleQc.getEnsemble().getIdent().toString();
-                    return <EnsembleQcContainer key={ensembleIdentString} ensembleQc={ensembleQc} />;
+                    return (
+                        <EnsembleQcContainer
+                            key={ensembleIdentString}
+                            ensembleQc={ensembleQc}
+                            workbench={props.workbench}
+                        />
+                    );
                 })}
             </Drawer>
         </QcRealizationPopoverProvider>

@@ -7,9 +7,8 @@ export const REALIZATION_ELEVATED_SETTING = ElevatedSettingRegistry.registerElev
     key: "realization",
     defaultValue: 0,
     initialConstraints: [],
-    combineConstraints: (accumulator, current) => {
-        return accumulator.filter((value) => current.includes(value));
-    },
+    // No `constraintMode` - defaults to union, so the selector offers every realization any
+    // consumer knows about rather than only the ones common to all of them.
     isValueValid: (value, constraints) => {
         return value === null || constraints.includes(value);
     },

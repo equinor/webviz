@@ -1,4 +1,24 @@
-import type { RegisterElevatedSettingOptions } from "./ElevatedSettingRegistry";
+import { ElevatedSettingConstraintMode, type RegisterElevatedSettingOptions } from "./ElevatedSettingRegistry";
+
+// `TConstraints` isn't statically known to be an array here - these back `constraintMode`, which by
+// contract only applies when it is (see `RegisterElevatedSettingOptions`).
+function unionConstraints<TConstraints>(accumulator: TConstraints, current: TConstraints): TConstraints {
+    const accArr = accumulator as readonly unknown[];
+    const curArr = current as readonly unknown[];
+    return Array.from(new Set([...accArr, ...curArr])) as TConstraints;
+}
+
+function intersectionConstraints<TConstraints>(accumulator: TConstraints, current: TConstraints): TConstraints {
+    const accArr = accumulator as readonly unknown[];
+    const curArr = current as readonly unknown[];
+    return accArr.filter((value) => curArr.includes(value)) as TConstraints;
+}
+
+function makeDefaultCombineConstraints<TConstraints>(
+    mode: ElevatedSettingConstraintMode,
+): (accumulator: TConstraints, current: TConstraints) => TConstraints {
+    return mode === ElevatedSettingConstraintMode.INTERSECTION ? intersectionConstraints : unionConstraints;
+}
 
 export class ElevatedSettingDefinition<TValue, TConstraints> {
     readonly key: string;
@@ -12,7 +32,9 @@ export class ElevatedSettingDefinition<TValue, TConstraints> {
         this.key = options.key;
         this.defaultValue = options.defaultValue;
         this.initialConstraints = options.initialConstraints;
-        this._combineConstraints = options.combineConstraints;
+        this._combineConstraints =
+            options.combineConstraints ??
+            makeDefaultCombineConstraints(options.constraintMode ?? ElevatedSettingConstraintMode.UNION);
         this._isValueValid = options.isValueValid;
     }
 

@@ -406,6 +406,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         dashboard.setLayout(layout);
 
+        if (template.elevatedSettings) {
+            dashboard._elevatedSettingsService.deserializeState(template.elevatedSettings);
+        }
+
         return dashboard;
     }
 }

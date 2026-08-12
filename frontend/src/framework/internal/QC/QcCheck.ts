@@ -1,6 +1,8 @@
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { ElevatedSettingsService } from "@framework/ElevatedSettings/ElevatedSettingsService";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
 
@@ -44,6 +46,14 @@ export type QcCheckRuntimeTopicPayloads<TMetrics, TParams> = {
     [QcCheckRuntimeTopic.PARAMS]: TParams;
 };
 
+// Shared by `templates` and `onTemplateApplied` - a run's realizations/results, as needed to tailor
+// a template (e.g. seed a data provider's initial settings) or to pre-constrain elevated settings its
+// modules consume, to this specific run rather than the check in the abstract.
+export type QcCheckTemplateContext<TMetrics> = {
+    realizations: readonly number[];
+    results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>;
+};
+
 export type QcCheckDefinition<TMetrics = unknown, TParams = void> = {
     run(context: QcCheckRunContext<TMetrics, TParams>): Promise<void>;
 
@@ -57,6 +67,16 @@ export type QcCheckDefinition<TMetrics = unknown, TParams = void> = {
     // Renders a single realization's successful result (e.g. as a table) in the realization-result
     // popover. Falls back to a generic JSON dump when a check doesn't provide one.
     resultComponent?: React.ComponentType<{ metrics: TMetrics }>;
+    // A function (not a static array) since a template's initial module state can depend on the
+    // specific run - e.g. seeding a 3D view's grid provider with the same t0/t1 timestep this check
+    // itself compared.
+    templates?: (context: QcCheckTemplateContext<TMetrics>) => Template[];
+    // Called right after one of `templates` is applied to the active dashboard, so the check can
+    // pre-constrain any elevated settings its templates' modules consume (e.g. restrict a picker to
+    // only the values this specific run actually checked) - not something `templates` itself can do,
+    // since building the `Template` object happens before the dashboard (and its
+    // `ElevatedSettingsService`) even exists.
+    onTemplateApplied?: (elevatedSettingsService: ElevatedSettingsService, context: QcCheckTemplateContext<TMetrics>) => void;
 };
 
 export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements PublishSubscribe<
@@ -81,8 +101,7 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
     // `useSyncExternalStore` (via `usePublishSubscribeTopicValue`) requires `makeSnapshotGetter` to
     // return a referentially stable value when nothing has changed - these caches are invalidated
     // (set to `null`) only when the underlying state they represent actually changes.
-    private _resultsSnapshot: QcCheckRuntimeTopicPayloads<TMetrics, TParams>[QcCheckRuntimeTopic.RESULTS] | null =
-        null;
+    private _resultsSnapshot: QcCheckRuntimeTopicPayloads<TMetrics, TParams>[QcCheckRuntimeTopic.RESULTS] | null = null;
     private _statusSnapshot: QcCheckRuntimeStatus | null = null;
 
     constructor(

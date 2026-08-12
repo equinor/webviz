@@ -19,6 +19,16 @@ export type ElevatedSettingConsumerHandle<TConstraints> = {
     unregister(): void;
 };
 
+export type ElevatedSettingInstanceOptions<TValue, TConstraints> = {
+    // Seeds the value/constraint override atomically at construction. `ElevatedSettingsService.
+    // addSetting` synchronously notifies already-connected consumers before returning - seeding
+    // afterward via `setValue`/`setConstraintOverride` leaves a window where a consumer can react to
+    // the instance's plain defaults (e.g. contribute its own constraints into a union) before the
+    // caller's intended override is applied.
+    value?: TValue;
+    constraintOverride?: TConstraints;
+};
+
 export class ElevatedSettingInstance<TValue, TConstraints> {
     private _value: TValue;
 
@@ -26,16 +36,28 @@ export class ElevatedSettingInstance<TValue, TConstraints> {
 
     private readonly _consumerConstraints = new Map<string, TConstraints>();
 
+    // Set via `setConstraintOverride` to force the aggregated constraints to a fixed set (e.g. a
+    // dashboard-level filter), bypassing whatever consumers contribute until cleared again.
+    private _constraintOverride: TConstraints | null = null;
+
     private _aggregatedConstraints: TConstraints;
 
     private readonly _publishSubscribeDelegate = new PublishSubscribeDelegate<
         ElevatedSettingInstanceTopicPayloads<TValue, TConstraints>
     >();
 
-    constructor(definition: ElevatedSettingDefinition<TValue, TConstraints>) {
+    constructor(
+        definition: ElevatedSettingDefinition<TValue, TConstraints>,
+        options?: ElevatedSettingInstanceOptions<TValue, TConstraints>,
+    ) {
         this._definition = definition;
-        this._value = definition.defaultValue;
-        this._aggregatedConstraints = definition.initialConstraints;
+        this._value = options?.value ?? definition.defaultValue;
+        this._constraintOverride = options?.constraintOverride ?? null;
+        this._aggregatedConstraints = this._constraintOverride ?? definition.initialConstraints;
+    }
+
+    getDefinition(): ElevatedSettingDefinition<TValue, TConstraints> {
+        return this._definition;
     }
 
     isValueValid(value: TValue): boolean {
@@ -58,6 +80,22 @@ export class ElevatedSettingInstance<TValue, TConstraints> {
 
     getConstraints(): TConstraints {
         return this._aggregatedConstraints;
+    }
+
+    getConstraintOverride(): TConstraints | null {
+        return this._constraintOverride;
+    }
+
+    // Forces the aggregated constraints to `override` regardless of what consumers contribute, like
+    // a fixed filter - pass `null` to go back to combining consumer contributions normally.
+    setConstraintOverride(override: TConstraints | null): void {
+        if (isEqual(this._constraintOverride, override)) {
+            return;
+        }
+
+        this._constraintOverride = override;
+
+        this.recomputeConstraints();
     }
 
     registerConsumer(consumerId: string): ElevatedSettingConsumerHandle<TConstraints> {
@@ -116,16 +154,22 @@ export class ElevatedSettingInstance<TValue, TConstraints> {
     }
 
     private recomputeConstraints(): void {
-        const contributions = [...this._consumerConstraints.values()];
+        let newConstraints: TConstraints;
 
-        let newConstraints = this._definition.initialConstraints;
-        if (contributions.length > 0) {
-            newConstraints = contributions
-                .slice(1)
-                .reduce(
-                    (accumulator, current) => this._definition.combineConstraints(accumulator, current),
-                    contributions[0],
-                );
+        if (this._constraintOverride !== null) {
+            newConstraints = this._constraintOverride;
+        } else {
+            const contributions = [...this._consumerConstraints.values()];
+
+            newConstraints = this._definition.initialConstraints;
+            if (contributions.length > 0) {
+                newConstraints = contributions
+                    .slice(1)
+                    .reduce(
+                        (accumulator, current) => this._definition.combineConstraints(accumulator, current),
+                        contributions[0],
+                    );
+            }
         }
 
         if (isEqual(newConstraints, this._aggregatedConstraints)) {

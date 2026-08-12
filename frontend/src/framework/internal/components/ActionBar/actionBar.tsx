@@ -1,7 +1,6 @@
-import React from "react";
+import { Close, Link } from "@mui/icons-material";
 
-import { Link } from "@mui/icons-material";
-
+import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import {
     ElevatedSettingInstanceTopic,
@@ -10,7 +9,6 @@ import {
 import { useElevatedSettingInstances } from "@framework/ElevatedSettings/ElevatedSettingsService";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Separator } from "@lib/components/Separator";
@@ -25,6 +23,7 @@ import { StartPanel } from "./_panels/start";
 // Elevated settings have no display metadata of their own; map key -> label here.
 const ELEVATED_SETTING_LABELS: Record<string, string> = {
     [REALIZATION_ELEVATED_SETTING.key]: "Realization",
+    [GRID_PROPERTY_ELEVATED_SETTING.key]: "Grid property",
 };
 
 export type ActionBarProps = {
@@ -52,36 +51,27 @@ function ElevatedSettingsIndicator() {
     const service = dashboard.getElevatedSettingsService();
     const elevatedSettingInstances = useElevatedSettingInstances(service);
 
-    const isRealizationElevated = elevatedSettingInstances.has(REALIZATION_ELEVATED_SETTING.key);
-
-    // Temporary: automatically elevate the realization setting so the indicator has something to show.
-    // Remove once there is a real UI flow for elevating dashboard settings.
-    React.useEffect(
-        function autoAddRealizationElevatedSetting() {
-            if (!service.hasSetting(REALIZATION_ELEVATED_SETTING)) {
-                service.addSetting(REALIZATION_ELEVATED_SETTING);
-            }
-        },
-        [service],
-    );
-
-    function handleAddRealizationClick() {
-        if (!service.hasSetting(REALIZATION_ELEVATED_SETTING)) {
-            service.addSetting(REALIZATION_ELEVATED_SETTING);
-        }
-    }
-
-    function handleRemoveRealizationClick() {
-        service.removeSetting(REALIZATION_ELEVATED_SETTING);
-    }
-
     return (
         <>
             <Separator orientation="vertical" />
             <div className="gap-x-2xs flex items-center">
                 {Array.from(elevatedSettingInstances.entries()).map(([key, instance]) => {
+                    const handleRemoveClick = () => service.removeSetting(instance.getDefinition());
+
                     if (key === REALIZATION_ELEVATED_SETTING.key) {
-                        return <RealizationElevatedSettingChip key={key} instance={instance} />;
+                        return (
+                            <ElevatedSettingChip key={key} onRemove={handleRemoveClick}>
+                                <RealizationElevatedSettingContent instance={instance} />
+                            </ElevatedSettingChip>
+                        );
+                    }
+
+                    if (key === GRID_PROPERTY_ELEVATED_SETTING.key) {
+                        return (
+                            <ElevatedSettingChip key={key} onRemove={handleRemoveClick}>
+                                <GridPropertyElevatedSettingContent instance={instance} />
+                            </ElevatedSettingChip>
+                        );
                     }
 
                     const label = ELEVATED_SETTING_LABELS[key] ?? key;
@@ -89,42 +79,47 @@ function ElevatedSettingsIndicator() {
                     const valueAsString = value === null || value === undefined ? "Not set" : String(value);
 
                     return (
-                        <Tooltip key={key} content="Elevated dashboard setting" side="bottom">
-                            <span className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-xs flex items-center rounded-full">
-                                <Link fontSize="inherit" />
-                                {label}: {valueAsString}
-                            </span>
-                        </Tooltip>
+                        <ElevatedSettingChip key={key} onRemove={handleRemoveClick}>
+                            {label}: {valueAsString}
+                        </ElevatedSettingChip>
                     );
                 })}
-                <Button
-                    size="small"
-                    variant="outlined"
-                    tone="accent"
-                    disabled={isRealizationElevated}
-                    onClick={handleAddRealizationClick}
-                >
-                    Add realization
-                </Button>
-                <Button
-                    size="small"
-                    variant="outlined"
-                    tone="danger"
-                    disabled={!isRealizationElevated}
-                    onClick={handleRemoveRealizationClick}
-                >
-                    Remove realization
-                </Button>
             </div>
         </>
     );
 }
 
-type RealizationElevatedSettingChipProps = {
+type ElevatedSettingChipProps = {
+    onRemove: () => void;
+    children: React.ReactNode;
+};
+
+// The link icon and remove button are the same for every elevated setting - only the label/control
+// in between (`children`) differs per setting.
+function ElevatedSettingChip(props: ElevatedSettingChipProps) {
+    return (
+        <Tooltip content="Elevated dashboard setting" side="bottom">
+            <div className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-xs flex items-center rounded-full">
+                <Link fontSize="inherit" />
+                {props.children}
+                <div
+                    role="button"
+                    aria-label="Remove elevated setting"
+                    onClick={props.onRemove}
+                    className="hover:bg-accent hover:text-accent-strong-on-emphasis flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-full"
+                >
+                    <Close fontSize="inherit" />
+                </div>
+            </div>
+        </Tooltip>
+    );
+}
+
+type RealizationElevatedSettingContentProps = {
     instance: ElevatedSettingInstance<number | null, readonly number[]>;
 };
 
-function RealizationElevatedSettingChip(props: RealizationElevatedSettingChipProps) {
+function RealizationElevatedSettingContent(props: RealizationElevatedSettingContentProps) {
     const value = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.VALUE);
     const constraints = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.CONSTRAINTS);
 
@@ -138,19 +133,48 @@ function RealizationElevatedSettingChip(props: RealizationElevatedSettingChipPro
     }
 
     return (
-        <Tooltip content="Elevated dashboard setting" side="bottom">
-            <div className="gap-x-3xs text-accent-strong flex items-center">
-                <Link fontSize="inherit" />
-                <span className="text-body-xs shrink-0">Realization</span>
-                <Combobox
-                    size="small"
-                    items={items}
-                    value={value}
-                    onValueChange={handleValueChange}
-                    placeholder="Not set"
-                    layoutClassName="w-24"
-                />
-            </div>
-        </Tooltip>
+        <>
+            <span className="text-body-xs shrink-0">Realization</span>
+            <Combobox
+                size="small"
+                items={items}
+                value={value}
+                onValueChange={handleValueChange}
+                placeholder="Not set"
+                layoutClassName="w-24"
+            />
+        </>
+    );
+}
+
+type GridPropertyElevatedSettingContentProps = {
+    instance: ElevatedSettingInstance<string | null, readonly string[]>;
+};
+
+function GridPropertyElevatedSettingContent(props: GridPropertyElevatedSettingContentProps) {
+    const value = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.VALUE);
+    const constraints = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.CONSTRAINTS);
+
+    const items: ComboboxItem<string | null>[] = constraints.map((propertyName) => ({
+        value: propertyName,
+        label: propertyName,
+    }));
+
+    function handleValueChange(newValue: string | null) {
+        props.instance.setValue(newValue);
+    }
+
+    return (
+        <>
+            <span className="text-body-xs shrink-0">Grid property</span>
+            <Combobox
+                size="small"
+                items={items}
+                value={value}
+                onValueChange={handleValueChange}
+                placeholder="Not set"
+                layoutClassName="w-32"
+            />
+        </>
     );
 }
