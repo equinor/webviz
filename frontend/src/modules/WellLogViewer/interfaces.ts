@@ -4,17 +4,22 @@ import type { DataProviderManager } from "@modules/_shared/DataProviderFramework
 
 import { horizontalLayoutAtom, limitDomainToDataAtom, dataProviderManagerAtom } from "./settings/atoms/baseAtoms";
 import { selectedWellboreHeaderAtom } from "./settings/atoms/derivedAtoms";
-import { selectedFieldIdentAtom } from "./settings/atoms/persistableFixableAtoms";
+import { selectedFieldIdentAtom, selectedWellboreUuidAtom } from "./settings/atoms/persistableFixableAtoms";
 
 export type InterfaceTypes = {
     settingsToView: SettingsToViewInterface;
+};
+
+export type WellboreHeaderStatus = {
+    header: WellboreHeader_api | null;
+    isLoading: boolean;
 };
 
 export type SettingsToViewInterface = {
     providerManager: DataProviderManager | null;
 
     selectedField: string | null;
-    wellboreHeader: WellboreHeader_api | null;
+    wellboreHeaderStatus: WellboreHeaderStatus;
     horizontalLayout: boolean;
     limitDomainToData: boolean;
 };
@@ -22,7 +27,10 @@ export type SettingsToViewInterface = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     providerManager: (get) => get(dataProviderManagerAtom),
     selectedField: (get) => get(selectedFieldIdentAtom).value,
-    wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
+    wellboreHeaderStatus: (get) => ({
+        header: get(selectedWellboreHeaderAtom),
+        isLoading: get(selectedWellboreUuidAtom).isLoading,
+    }),
     horizontalLayout: (get) => get(horizontalLayoutAtom),
     limitDomainToData: (get) => get(limitDomainToDataAtom),
 };
