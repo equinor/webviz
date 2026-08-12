@@ -571,16 +571,25 @@ export class SettingManager<
         return this._loading;
     }
 
-    valueToRepresentation(
-        value: TInternalValue,
-        workbenchSession: WorkbenchSession,
-        workbenchSettings: WorkbenchSettings,
-    ): React.ReactNode {
+    valueToRepresentation(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings): React.ReactNode {
         if (this._externalController) {
-            return this._externalController
-                .getSetting()
-                .valueToRepresentation(value, workbenchSession, workbenchSettings);
+            return this._externalController.getSetting().valueToRepresentation(workbenchSession, workbenchSettings);
         }
+
+        if (this._elevatedSettingAdapter && this._elevatedSettingInstance) {
+            const elevatedValue = this._elevatedSettingInstance.getValue();
+            const valueConstraints = this._valueConstraints as TValueConstraints;
+
+            if (this._elevatedSettingAdapter.mapElevatedValueToRepresentation) {
+                return this._elevatedSettingAdapter.mapElevatedValueToRepresentation(elevatedValue, valueConstraints);
+            }
+
+            return this.primitiveValueToRepresentation(
+                this._elevatedSettingAdapter.mapElevatedValueToExternalValue(elevatedValue, valueConstraints),
+            );
+        }
+
+        const value = this.getInternalValue();
 
         if (this._customSettingImplementation.overriddenValueRepresentation) {
             return this._customSettingImplementation.overriddenValueRepresentation.bind(
@@ -592,6 +601,10 @@ export class SettingManager<
             });
         }
 
+        return this.primitiveValueToRepresentation(value);
+    }
+
+    private primitiveValueToRepresentation(value: unknown): React.ReactNode {
         if (typeof value === "boolean") {
             return value ? "true" : "false";
         }

@@ -17,6 +17,15 @@ export type DpfElevatedSettingAdapter<TExternalValue, TValueConstraints, TElevat
         elevatedValue: TElevatedValue,
         valueConstraints: TValueConstraints,
     ) => TExternalValue;
+
+    /**
+     * Optional formatter producing a UI representation of the elevated value directly.
+     * Falls back to a generic primitive-based representation of the mapped external value when omitted.
+     */
+    mapElevatedValueToRepresentation?: (
+        elevatedValue: TElevatedValue,
+        valueConstraints: TValueConstraints,
+    ) => React.ReactNode;
 };
 
 export function makeDpfElevatedSettingAdapter<TElevatedValue, TElevatedConstraints, TExternalValue, TValueConstraints>(
@@ -28,6 +37,11 @@ export function makeDpfElevatedSettingAdapter<TElevatedValue, TElevatedConstrain
             elevatedValue: TElevatedValue,
             valueConstraints: TValueConstraints,
         ) => TExternalValue;
+
+        mapElevatedValueToRepresentation?: (
+            elevatedValue: TElevatedValue,
+            valueConstraints: TValueConstraints,
+        ) => React.ReactNode;
     },
 ) {
     return {
