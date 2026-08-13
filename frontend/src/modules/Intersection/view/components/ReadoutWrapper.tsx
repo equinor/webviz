@@ -37,15 +37,29 @@ const VIEWPORT_HOVER_THRESHOLD_PERCENTAGE = 25.0; // Percentage of the viewport 
  * linearly beyond the endpoints using the trajectory's own tangent vectors, mirroring what
  * IntersectionReferenceSystem.getTrajectory does internally for its from/to range extension.
  */
+const MIN_DISPLACEMENT_M = 1e-6;
+
 function getWorldPositionAtCurtainX(referenceSystem: IntersectionReferenceSystem, curtainX: number): number[] {
+    const { trajectory } = referenceSystem.interpolators;
+    // getPointAt is typed to return Vector (number[] | VectorType) generically, but this library
+    // always uses plain number[] tuples for trajectory points.
+    const getTrajectoryPoint = (t: number): number[] => trajectory.getPointAt(t) as number[];
+
+    // A near-vertical fence has ~zero horizontal displacement, so the curtainX/displacement
+    // normalization below (and getPosition()'s own internal curtainX/maxX normalization) divides
+    // by ~0, producing NaN. The trajectory's XY position is constant regardless of depth in this
+    // case (the well doesn't move horizontally), so just use it directly.
+    if (Math.abs(referenceSystem.displacement) < MIN_DISPLACEMENT_M) {
+        return getTrajectoryPoint(0);
+    }
+
     const normalized = curtainX / referenceSystem.displacement;
     if (normalized >= 0 && normalized <= 1) {
         return referenceSystem.getPosition(curtainX);
     }
 
-    const { trajectory } = referenceSystem.interpolators;
     if (normalized < 0) {
-        const start = trajectory.getPointAt(0);
+        const start = getTrajectoryPoint(0);
         const excess = -normalized * referenceSystem.displacement;
         return [
             start[0] + referenceSystem.startVector[0] * excess,
@@ -53,7 +67,7 @@ function getWorldPositionAtCurtainX(referenceSystem: IntersectionReferenceSystem
         ];
     }
 
-    const end = trajectory.getPointAt(1);
+    const end = getTrajectoryPoint(1);
     const excess = (normalized - 1) * referenceSystem.displacement;
     return [end[0] + referenceSystem.endVector[0] * excess, end[1] + referenceSystem.endVector[1] * excess];
 }

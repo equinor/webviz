@@ -1,4 +1,4 @@
-import { Close, Link } from "@mui/icons-material";
+import { Close } from "@mui/icons-material";
 
 import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
@@ -110,7 +110,6 @@ type ElevatedSettingChipProps = {
 function ElevatedSettingChip(props: ElevatedSettingChipProps) {
     return (
         <div className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-sm flex items-center rounded-full">
-            <Link fontSize="inherit" />
             {props.children}
             <Button size="small" variant="ghost" iconOnly onClick={props.onRemove}>
                 <Close fontSize="inherit" />

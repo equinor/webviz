@@ -1,6 +1,15 @@
 import React from "react";
 
-import { ExpandLess, ExpandMore, FactCheck, PlaylistPlay, Stop } from "@mui/icons-material";
+import {
+    ExpandLess,
+    ExpandMore,
+    FactCheck,
+    PlayArrow,
+    PlaylistPlay,
+    Replay,
+    Stop,
+    Troubleshoot,
+} from "@mui/icons-material";
 import { startCase } from "lodash-es";
 
 import { EnsembleColorTile } from "@framework/components/EnsembleColorTile";
@@ -14,6 +23,7 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
+import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -27,11 +37,30 @@ type EnsembleQcContainerProps = {
     workbench: Workbench;
 };
 
+// True while at least one of the ensemble's check runtimes is running - subscribes directly to
+// each runtime's own STATUS topic rather than relying on a child re-render, since this needs to
+// know the aggregate state up here at the (possibly collapsed) ensemble header.
+function useIsAnyCheckRuntimeRunning(checkRuntimes: QcCheckRuntime[]): boolean {
+    return React.useSyncExternalStore(
+        (onStoreChange) => {
+            const unsubscribeFuncs = checkRuntimes.map((checkRuntime) =>
+                checkRuntime.getPublishSubscribeDelegate().subscribe(QcCheckRuntimeTopic.STATUS, onStoreChange),
+            );
+            return () => {
+                unsubscribeFuncs.forEach((unsubscribe) => unsubscribe());
+            };
+        },
+        () => checkRuntimes.some((checkRuntime) => checkRuntime.isRunning()),
+    );
+}
+
 export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
     const checkRuntimes = Array.from(props.ensembleQc.getCheckRuntimes().values());
     const ensemble = props.ensembleQc.getEnsemble();
     const realizations = ensemble.getRealizations();
     const [expanded, setExpanded] = React.useState(false);
+
+    const isAnyCheckRunning = useIsAnyCheckRuntimeRunning(checkRuntimes);
 
     const readableEnsembleName = ensemble.getCustomName() ?? ensemble.getDisplayName();
 
@@ -42,7 +71,16 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
                 onClick={() => setExpanded((prev) => !prev)}
             >
                 {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
-                <EnsembleColorTile wrapperClassName="w-5 h-5" ensemble={ensemble} />
+                <div className="relative flex h-5 w-5 items-center justify-center">
+                    <EnsembleColorTile wrapperClassName="w-5 h-5" ensemble={ensemble} />
+                    {isAnyCheckRunning && (
+                        <CircularProgress
+                            size={16}
+                            tone="on-emphasis"
+                            layoutClassName="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                        />
+                    )}
+                </div>
                 <div className="font-bolder px-2xs text-body-sm flex h-full min-w-0 grow cursor-pointer items-center">
                     <span className="truncate">{readableEnsembleName}</span>
                 </div>
@@ -168,6 +206,7 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                             </Button>
                         )}
                         <Button tone="accent" size="small" variant="contained" onClick={handleRunClick}>
+                            <PlayArrow style={{ fontSize: 16 }} />
                             Run
                         </Button>
                     </div>
@@ -179,8 +218,9 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
             const templates = checkDefinition.templates?.(templateContext) ?? [];
 
             return (
-                <div className="p-2xs gap-2xs flex flex-col items-center">
+                <div className="p-2xs gap-2xs flex flex-col">
                     <CheckParamsList params={appliedParams} />
+                    <Separator orientation="horizontal" />
                     <RealizationSquares
                         checkRuntime={checkRuntime}
                         checkName={checkDefinition.name}
@@ -191,32 +231,39 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                         selectedRealization={selectedRealization}
                         onRealizationClick={handleRealizationClick}
                     />
-                    <div className="gap-xs flex items-center">
-                        <Button tone="neutral" size="small" variant="ghost" onClick={handleReRunClick}>
-                            Re-run
-                        </Button>
-                        {templates.length > 0 && (
-                            <Menu.Root>
-                                <Menu.Trigger>
-                                    <Button tone="accent" size="small" variant="contained">
-                                        Investigate
-                                    </Button>
-                                </Menu.Trigger>
-                                <Menu.Popup>
-                                    <Menu.Group>
-                                        <Menu.GroupLabel>Apply template</Menu.GroupLabel>
-                                        {templates.map((template) => (
-                                            <Menu.Item
-                                                key={template.name}
-                                                text={template.name}
-                                                onClick={() => handleApplyTemplateClick(template)}
-                                            />
-                                        ))}
-                                    </Menu.Group>
-                                </Menu.Popup>
-                            </Menu.Root>
-                        )}
-                    </div>
+                    {!isRunning && (
+                        <>
+                            <Separator orientation="horizontal" />
+                            <div className="gap-xs flex items-center justify-end">
+                                <Button tone="neutral" size="small" variant="ghost" onClick={handleReRunClick}>
+                                    <Replay style={{ fontSize: 16 }} />
+                                    Re-run
+                                </Button>
+                                {templates.length > 0 && (
+                                    <Menu.Root>
+                                        <Menu.Trigger>
+                                            <Button tone="accent" size="small" variant="contained">
+                                                <Troubleshoot style={{ fontSize: 16 }} />
+                                                Investigate
+                                            </Button>
+                                        </Menu.Trigger>
+                                        <Menu.Popup>
+                                            <Menu.Group>
+                                                <Menu.GroupLabel>Apply template</Menu.GroupLabel>
+                                                {templates.map((template) => (
+                                                    <Menu.Item
+                                                        key={template.name}
+                                                        text={template.name}
+                                                        onClick={() => handleApplyTemplateClick(template)}
+                                                    />
+                                                ))}
+                                            </Menu.Group>
+                                        </Menu.Popup>
+                                    </Menu.Root>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
             );
         }
@@ -428,8 +475,10 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                                 "cursor-pointer rounded-xs",
                                                 { "hover:outline": !isLoading },
                                                 {
-                                                    "outline-accent outline-2":
+                                                    "outline-accent outline-3 outline-double":
                                                         realization === props.selectedRealization,
+                                                    "opacity-60":
+                                                        realization !== props.selectedRealization && !isLoading,
                                                 },
                                                 REALIZATION_STATUS_TONE_TO_CLASSNAME[tone],
                                             )}

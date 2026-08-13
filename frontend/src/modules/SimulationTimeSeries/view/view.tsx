@@ -4,6 +4,9 @@ import { useAtomValue, useSetAtom } from "jotai";
 import type { PlotDatum, PlotMouseEvent } from "plotly.js";
 
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
+import { useElevatedSettingValue } from "@framework/ElevatedSettings/hooks";
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -42,6 +45,13 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
     const isAnyQueryLoading = useAtomValue(queryIsFetchingAtom);
+
+    const activeDashboard = useActiveDashboard();
+
+    const elevatedRealizationSetting = useElevatedSettingValue(
+        activeDashboard.getElevatedSettingsService(),
+        REALIZATION_ELEVATED_SETTING,
+    );
 
     const setActiveTimestampUtcMs = useSetAtom(activeTimestampUtcMsAtom);
 
@@ -108,6 +118,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         vectorHexColorMap,
         subplotOwner,
         ensemblesParameterColoring,
+        elevatedRealizationSetting ?? null,
     );
 
     const hasQueryErrors = hasRealizationsQueryError || hasStatisticsQueryError;

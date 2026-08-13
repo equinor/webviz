@@ -31,6 +31,7 @@ export function usePlotBuilder(
     vectorHexColorMap: VectorHexColorMap,
     subplotOwner: SubplotOwner,
     ensemblesParameterColoring: EnsemblesParameterColoring | null,
+    highlightedRealizationNumber: number | null,
 ): PlotBuilder | null {
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -75,6 +76,7 @@ export function usePlotBuilder(
         subplotLimitation.maxDirectionElements,
         scatterType,
     );
+    plotBuilder.setHighlightedRealizationNumber(highlightedRealizationNumber);
 
     // Add traces based on visualization mode
     if (
