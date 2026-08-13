@@ -35,6 +35,11 @@ export type EsvIntersectionProps = {
     onReadout?: (event: EsvIntersectionReadoutEvent) => void;
     onViewportChange?: (viewport: Viewport) => void;
     onMousePositionChange?: (position: { x: number; y: number } | null) => void;
+    // Fired once with the live controller instance after it is created, and again with null on
+    // teardown. Lets callers issue imperative, read-only queries (e.g.
+    // controller.calcReadoutItemsAtReferenceSystemPoint) without threading reactive props/state
+    // through this component and re-rendering it on every query.
+    onControllerReady?: (controller: EsvIntersectionController | null) => void;
 };
 
 const DEFAULT_PROPS = {
@@ -80,13 +85,17 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     onViewportChangeRef.current = onViewportChange;
     const onMousePositionChangeRef = React.useRef(onMousePositionChange);
     onMousePositionChangeRef.current = onMousePositionChange;
+    const onControllerReadyRef = React.useRef(defaultedProps.onControllerReady);
+    onControllerReadyRef.current = defaultedProps.onControllerReady;
 
     React.useEffect(function initializeController() {
         if (!containerRef.current) return;
         const ctrl = new EsvIntersectionController();
         setController(ctrl);
+        onControllerReadyRef.current?.(ctrl);
         void ctrl.initialize(containerRef.current).catch(console.error);
         return function destroyController() {
+            onControllerReadyRef.current?.(null);
             ctrl.destroy();
         };
     }, []);

@@ -73,6 +73,18 @@ export class SharedSettingsDelegate<
         // Now create external controllers, passing internal settings if they exist
         for (const key in wrappedSettings) {
             const setting = wrappedSettings[key];
+
+            // Unlike a plain DataProvider's settings (see SettingsContextDelegate), a group's own
+            // (wrapped) settings are never connected to the elevated settings service anywhere else -
+            // without this, a group-scoped setting (e.g. a shared "which wellbore" picker) could never
+            // participate in an elevated dashboard setting, even though its controlled descendants
+            // individually can. A descendant that ends up externally controlled by this setting stops
+            // contributing to the elevated setting's constraints itself (see
+            // SettingManager.setValueConstraints' externally-controlled branch), so this wrapped
+            // setting - which already aggregates all of them via ExternalSettingController - is the
+            // one that needs to be the elevated consumer.
+            setting.connectElevatedSettingsService(dataProviderManager.getDashboard().getElevatedSettingsService());
+
             const internalSetting = this._internalSettings.get(key);
             const externalSettingController = new ExternalSettingController(parentItem, setting, internalSetting);
             this._externalSettingControllers[key] = externalSettingController;

@@ -27,4 +27,7 @@ export const WELLBORE_ELEVATED_SETTING = ElevatedSettingRegistry.registerElevate
     isValueValid: (value, constraints) => {
         return value === null || constraints.some((option) => option.uuid === value);
     },
+    fixupValue: (value, constraints) => {
+        return value ?? (constraints.at(0)?.uuid ?? null);
+    },
 });

@@ -39,6 +39,15 @@ export type HydrostaticEquilibriumGridPropertyCheckMetrics = {
 type ThreeDViewerSettings = NonNullable<ModuleSerializedStateMap["3DViewer"]["settings"]>;
 type IntersectionModuleSettings = NonNullable<ModuleSerializedStateMap["Intersection"]["settings"]>;
 
+// Keeps the t0/t1 label even once the actual timestep is known, so a view's name still says which
+// slot it is instead of just an ISO string a user has to compare against the other view to place.
+function makeTimestepViewName(label: "T0" | "T1", isoTimestamp: string | null): string {
+    if (isoTimestamp === null) {
+        return label;
+    }
+    return `${label}: ${isoTimestamp}`;
+}
+
 // A `3DViewer` module instance's data providers are persisted as an opaque, hand-serialized JSON
 // blob (`SerializedDataProviderManager` in
 // `@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization`) - framework code isn't
@@ -86,8 +95,8 @@ function makeTwoViewsDataProviderManagerState(t0Iso: string | null, t1Iso: strin
         expanded: true,
         visible: true,
         children: [
-            makeGridViewGroup("view-t0", t0Iso ?? "T0", "#4C9959", t0Iso),
-            makeGridViewGroup("view-t1", t1Iso ?? "T1", "#4C7899", t1Iso),
+            makeGridViewGroup("view-t0", makeTimestepViewName("T0", t0Iso), "#4C9959", t0Iso),
+            makeGridViewGroup("view-t1", makeTimestepViewName("T1", t1Iso), "#4C7899", t1Iso),
         ],
     });
 }
@@ -127,6 +136,9 @@ function makeIntersectionViewGroup(id: string, name: string, color: string, time
     };
 }
 
+const INTERSECTION_VIEW_T0_ID = "intersection-view-t0";
+const INTERSECTION_VIEW_T1_ID = "intersection-view-t1";
+
 function makeTwoIntersectionViewsDataProviderManagerState(t0Iso: string | null, t1Iso: string | null): string {
     return JSON.stringify({
         id: "root",
@@ -135,10 +147,30 @@ function makeTwoIntersectionViewsDataProviderManagerState(t0Iso: string | null, 
         expanded: true,
         visible: true,
         children: [
-            makeIntersectionViewGroup("intersection-view-t0", t0Iso ?? "T0", "#4C9959", t0Iso),
-            makeIntersectionViewGroup("intersection-view-t1", t1Iso ?? "T1", "#4C7899", t1Iso),
+            makeIntersectionViewGroup(INTERSECTION_VIEW_T0_ID, makeTimestepViewName("T0", t0Iso), "#4C9959", t0Iso),
+            makeIntersectionViewGroup(INTERSECTION_VIEW_T1_ID, makeTimestepViewName("T1", t1Iso), "#4C7899", t1Iso),
         ],
     });
+}
+
+// Links the two views' camera/vertical-scale together by default, matching what a user gets from
+// manually clicking "Link" between them (see `ViewLinkManager.toggleViewLink` in
+// `@modules/Intersection/view/components/ViewLinkManager`) - keyed by `SerializedView`'s `viewLinks`
+// field (`@modules/Intersection/view/persistence`), spelled out literally for the same
+// dependency-boundary reason as the data-provider-manager state above.
+function makeLinkedIntersectionViewsInitialViewState() {
+    return {
+        viewLinks: [
+            {
+                id: "view-link-t0-t1",
+                color: "#4C6699",
+                viewIds: [INTERSECTION_VIEW_T0_ID, INTERSECTION_VIEW_T1_ID],
+                viewportSourceViewId: INTERSECTION_VIEW_T0_ID,
+                bounds: null,
+                autoFitView: true,
+            },
+        ],
+    };
 }
 
 // The `checkedPropertyNames`/`timeSteps` metrics are the same ensemble-wide metadata on every
@@ -246,6 +278,7 @@ function makeGridPropertyTemplates(
                             ),
                             preferredViewLayout: "vertical" as IntersectionModuleSettings["preferredViewLayout"],
                         },
+                        view: makeLinkedIntersectionViewsInitialViewState(),
                     },
                 }),
             ],

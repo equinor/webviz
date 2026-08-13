@@ -15,7 +15,6 @@ import { Button } from "@lib/components/Button";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Separator } from "@lib/components/Separator";
-import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
@@ -110,15 +109,13 @@ type ElevatedSettingChipProps = {
 // in between (`children`) differs per setting.
 function ElevatedSettingChip(props: ElevatedSettingChipProps) {
     return (
-        <Tooltip content="Elevated dashboard setting" side="bottom">
-            <div className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-sm flex items-center rounded-full">
-                <Link fontSize="inherit" />
-                {props.children}
-                <Button size="small" variant="ghost" iconOnly onClick={props.onRemove}>
-                    <Close fontSize="inherit" />
-                </Button>
-            </div>
-        </Tooltip>
+        <div className="gap-x-3xs px-2xs py-4xs bg-accent-subtle text-accent-strong text-body-sm flex items-center rounded-full">
+            <Link fontSize="inherit" />
+            {props.children}
+            <Button size="small" variant="ghost" iconOnly onClick={props.onRemove}>
+                <Close fontSize="inherit" />
+            </Button>
+        </div>
     );
 }
 

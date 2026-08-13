@@ -28,6 +28,13 @@ export type RegisterElevatedSettingOptions<TValue, TConstraints> = {
     combineConstraints?: (accumulator: TConstraints, current: TConstraints) => TConstraints;
 
     isValueValid?: (value: TValue, constraints: TConstraints) => boolean;
+
+    // Called exactly once - the first time the aggregated constraints actually change after the
+    // setting is created - to let it pick a sensible initial value (e.g. the first available option)
+    // instead of leaving an intentionally-always-valid `null` sitting unset. Never called again after
+    // that, even as constraints keep changing later, so a user's own choice is never silently
+    // overridden. Return the value unchanged to opt out.
+    fixupValue?: (value: TValue, constraints: TConstraints) => TValue;
 };
 
 export class ElevatedSettingRegistry {

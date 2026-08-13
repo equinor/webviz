@@ -27,6 +27,7 @@ export class ElevatedSettingDefinition<TValue, TConstraints> {
 
     private readonly _combineConstraints: (accumulator: TConstraints, current: TConstraints) => TConstraints;
     private readonly _isValueValid?: (value: TValue, constraints: TConstraints) => boolean;
+    private readonly _fixupValue?: (value: TValue, constraints: TConstraints) => TValue;
 
     constructor(options: RegisterElevatedSettingOptions<TValue, TConstraints>) {
         this.key = options.key;
@@ -36,6 +37,7 @@ export class ElevatedSettingDefinition<TValue, TConstraints> {
             options.combineConstraints ??
             makeDefaultCombineConstraints(options.constraintMode ?? ElevatedSettingConstraintMode.UNION);
         this._isValueValid = options.isValueValid;
+        this._fixupValue = options.fixupValue;
     }
 
     combineConstraints(accumulator: TConstraints, current: TConstraints): TConstraints {
@@ -47,5 +49,14 @@ export class ElevatedSettingDefinition<TValue, TConstraints> {
             return this._isValueValid(value, constraints);
         }
         return true;
+    }
+
+    // See `RegisterElevatedSettingOptions.fixupValue` - callers are responsible for only invoking
+    // this on the first constraints change, since the definition itself has no notion of "first".
+    fixupValue(value: TValue, constraints: TConstraints): TValue {
+        if (this._fixupValue) {
+            return this._fixupValue(value, constraints);
+        }
+        return value;
     }
 }

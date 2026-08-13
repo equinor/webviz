@@ -42,6 +42,10 @@ export class ElevatedSettingInstance<TValue, TConstraints> {
 
     private _aggregatedConstraints: TConstraints;
 
+    // Whether `_definition.fixupValue` has already run once. Guards it to the first real constraints
+    // change only - see `RegisterElevatedSettingOptions.fixupValue`.
+    private _hasAppliedInitialFixup = false;
+
     private readonly _publishSubscribeDelegate = new PublishSubscribeDelegate<
         ElevatedSettingInstanceTopicPayloads<TValue, TConstraints>
     >();
@@ -179,5 +183,10 @@ export class ElevatedSettingInstance<TValue, TConstraints> {
         this._aggregatedConstraints = newConstraints;
 
         this._publishSubscribeDelegate.notifySubscribers(ElevatedSettingInstanceTopic.CONSTRAINTS);
+
+        if (!this._hasAppliedInitialFixup) {
+            this._hasAppliedInitialFixup = true;
+            this.setValue(this._definition.fixupValue(this._value, newConstraints));
+        }
     }
 }

@@ -53,13 +53,10 @@ export function makeIntersectionWellboreElevatedSettingAdapter(
         IntersectionSettingValue | null,
         IntersectionSettingOption[]
     >(WELLBORE_ELEVATED_SETTING, {
-        mapValueConstraintsToElevatedConstraints: (valueConstraints) => {
-            const mappedConstraints = valueConstraints
+        mapValueConstraintsToElevatedConstraints: (valueConstraints) =>
+            valueConstraints
                 .filter((option) => option.type === IntersectionType.WELLBORE)
-                .map((option) => ({ uuid: option.uuid, name: option.name }));
-            console.debug("makeIntersectionWellboreElevatedSettingAdapter", { valueConstraints, mappedConstraints });
-            return mappedConstraints;
-        },
+                .map((option) => ({ uuid: option.uuid, name: option.name })),
         mapElevatedValueToExternalValue: mapElevatedWellboreToIntersectionValue,
         mapElevatedValueToRepresentation: (elevatedValue, valueConstraints) =>
             intersectionValueToRepresentation(mapElevatedWellboreToIntersectionValue(elevatedValue, valueConstraints)),

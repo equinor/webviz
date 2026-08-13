@@ -403,10 +403,28 @@ export class SettingManager<
         }
 
         if (this._elevatedSettingAdapter && this._elevatedSettingInstance) {
-            return this._elevatedSettingAdapter.mapElevatedValueToExternalValue(
+            // Constraints may not have resolved for this setting instance yet (e.g. right after
+            // connecting, before this consumer's own dependency chain has produced a value) - the
+            // adapter's mapping functions are only meant to run against real constraints.
+            if (this._valueConstraints === null) {
+                return null;
+            }
+
+            // Must be cached like the non-elevated path below: useSyncExternalStore compares
+            // snapshots by reference, and an adapter whose mapping builds a fresh object/array each
+            // call (anything beyond a primitive passthrough) would otherwise never look stable,
+            // triggering a render loop. Invalidated wherever _cachedExternalValue already is
+            // (elevated value changes, constraints changes, connect/disconnect).
+            if (this._cachedExternalValue !== NO_CACHE) {
+                return this._cachedExternalValue;
+            }
+
+            const externalValue = this._elevatedSettingAdapter.mapElevatedValueToExternalValue(
                 this._elevatedSettingInstance.getValue(),
-                this._valueConstraints as TValueConstraints,
+                this._valueConstraints,
             );
+            this._cachedExternalValue = externalValue;
+            return externalValue;
         }
 
         let value = this._internalValue;
@@ -578,14 +596,23 @@ export class SettingManager<
 
         if (this._elevatedSettingAdapter && this._elevatedSettingInstance) {
             const elevatedValue = this._elevatedSettingInstance.getValue();
-            const valueConstraints = this._valueConstraints as TValueConstraints;
+
+            // Constraints may not have resolved for this setting instance yet - see the matching
+            // guard in getValue(). Fall back to a best-effort representation of the raw elevated
+            // value itself rather than calling adapter mapping functions that assume real constraints.
+            if (this._valueConstraints === null) {
+                return this.primitiveValueToRepresentation(elevatedValue);
+            }
 
             if (this._elevatedSettingAdapter.mapElevatedValueToRepresentation) {
-                return this._elevatedSettingAdapter.mapElevatedValueToRepresentation(elevatedValue, valueConstraints);
+                return this._elevatedSettingAdapter.mapElevatedValueToRepresentation(
+                    elevatedValue,
+                    this._valueConstraints,
+                );
             }
 
             return this.primitiveValueToRepresentation(
-                this._elevatedSettingAdapter.mapElevatedValueToExternalValue(elevatedValue, valueConstraints),
+                this._elevatedSettingAdapter.mapElevatedValueToExternalValue(elevatedValue, this._valueConstraints),
             );
         }
 
