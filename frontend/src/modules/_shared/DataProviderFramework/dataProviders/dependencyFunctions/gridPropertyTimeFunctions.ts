@@ -52,7 +52,13 @@ export function makeGridPropertyTimeInfo(
     };
 }
 
-export function getAvailableTimeTypes(timeInfo: GridPropertyTimeInfo): TimeType[] {
+/**
+ * Computed intervals require a backend endpoint that can diff two time steps, so they must be opted into.
+ */
+export function getAvailableTimeTypes(
+    timeInfo: GridPropertyTimeInfo,
+    options?: { allowComputedInterval?: boolean },
+): TimeType[] {
     const availableTimeTypes: TimeType[] = [];
 
     if (timeInfo.hasStatic) {
@@ -64,7 +70,7 @@ export function getAvailableTimeTypes(timeInfo: GridPropertyTimeInfo): TimeType[
     if (timeInfo.intervals.length > 0) {
         availableTimeTypes.push(TimeType.INTERVAL);
     }
-    if (timeInfo.timePoints.length >= 2) {
+    if (options?.allowComputedInterval && timeInfo.timePoints.length >= 2) {
         availableTimeTypes.push(TimeType.COMPUTED_INTERVAL);
     }
 

@@ -88,6 +88,7 @@ import {
     postGetAggregatedPerRealizationInplaceTableData,
     postGetAggregatedStatisticalInplaceTableData,
     postGetPolylineIntersection,
+    postGetPolylineIntersectionTimeDiff,
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
@@ -316,6 +317,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
+    PostGetPolylineIntersectionTimeDiffData_api,
+    PostGetPolylineIntersectionTimeDiffError_api,
+    PostGetPolylineIntersectionTimeDiffResponse_api,
     PostGetSampleSurfaceInPointsData_api,
     PostGetSampleSurfaceInPointsError_api,
     PostGetSampleSurfaceInPointsResponse_api,
@@ -1491,6 +1495,67 @@ export const postGetPolylineIntersectionMutation = (
     > = {
         mutationFn: async (fnOptions) => {
             const { data } = await postGetPolylineIntersection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const postGetPolylineIntersectionTimeDiffQueryKey = (
+    options: Options<PostGetPolylineIntersectionTimeDiffData_api>,
+) => createQueryKey("postGetPolylineIntersectionTimeDiff", options);
+
+/**
+ * Post Get Polyline Intersection Time Diff
+ *
+ * Get the intersection of a polyline with the grid, where the parameter values are the difference
+ * between two time steps, monitor minus base
+ */
+export const postGetPolylineIntersectionTimeDiffOptions = (
+    options: Options<PostGetPolylineIntersectionTimeDiffData_api>,
+) =>
+    queryOptions<
+        PostGetPolylineIntersectionTimeDiffResponse_api,
+        AxiosError<PostGetPolylineIntersectionTimeDiffError_api>,
+        PostGetPolylineIntersectionTimeDiffResponse_api,
+        ReturnType<typeof postGetPolylineIntersectionTimeDiffQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetPolylineIntersectionTimeDiff({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetPolylineIntersectionTimeDiffQueryKey(options),
+    });
+
+/**
+ * Post Get Polyline Intersection Time Diff
+ *
+ * Get the intersection of a polyline with the grid, where the parameter values are the difference
+ * between two time steps, monitor minus base
+ */
+export const postGetPolylineIntersectionTimeDiffMutation = (
+    options?: Partial<Options<PostGetPolylineIntersectionTimeDiffData_api>>,
+): UseMutationOptions<
+    PostGetPolylineIntersectionTimeDiffResponse_api,
+    AxiosError<PostGetPolylineIntersectionTimeDiffError_api>,
+    Options<PostGetPolylineIntersectionTimeDiffData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetPolylineIntersectionTimeDiffResponse_api,
+        AxiosError<PostGetPolylineIntersectionTimeDiffError_api>,
+        Options<PostGetPolylineIntersectionTimeDiffData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetPolylineIntersectionTimeDiff({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,

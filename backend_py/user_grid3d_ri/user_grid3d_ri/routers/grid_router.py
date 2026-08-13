@@ -15,9 +15,9 @@ from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_server_schemas.user_grid3d_ri import api_schemas
 
 from user_grid3d_ri.logic.data_cache import DataCache
-from user_grid3d_ri.logic.grid_properties import GridPropertiesExtractor
 from user_grid3d_ri.logic.local_blob_cache import LocalBlobCache
 from user_grid3d_ri.logic.resinsight_manager import RESINSIGHT_MANAGER
+from user_grid3d_ri.routers._property_source import make_property_extractor_async
 
 LOGGER = logging.getLogger(__name__)
 
@@ -157,7 +157,6 @@ async def post_get_grid_geometry(
 
 
 @router.post("/get_mapped_grid_properties")
-# pylint: disable-next=too-many-locals, too-many-statements
 async def post_get_mapped_grid_properties(
     req_body: api_schemas.MappedGridPropertiesRequest,
 ) -> api_schemas.MappedGridPropertiesResponse:
@@ -167,7 +166,7 @@ async def post_get_mapped_grid_properties(
     # LOGGER.debug(f"{req_body.sas_token=}")
     # LOGGER.debug(f"{req_body.blob_store_base_uri=}")
     # LOGGER.debug(f"{req_body.grid_blob_object_uuid=}")
-    # LOGGER.debug(f"{req_body.property_blob_object_uuid=}")
+    # LOGGER.debug(f"{req_body.property_source=}")
     # LOGGER.debug(f"{req_body.include_inactive_cells=}")
     # LOGGER.debug(f"{req_body.ijk_index_filter=}")
 
@@ -176,16 +175,11 @@ async def post_get_mapped_grid_properties(
     blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
 
     grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
-    property_path_name = await blob_cache.ensure_property_blob_downloaded_async(req_body.property_blob_object_uuid)
-
     if grid_path_name is None:
         raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
-    if property_path_name is None:
-        raise HTTPException(500, detail=f"Failed to download property blob: {req_body.property_blob_object_uuid=}")
 
     LOGGER.debug(f"{myfunc} - {grid_path_name=}")
-    LOGGER.debug(f"{myfunc} - {property_path_name=}")
-    perf_metrics.record_lap("get-blobs")
+    perf_metrics.record_lap("get-grid-blob")
 
     source_cell_indices_np, ri_total_time, ri_perf_metrics = await _get_source_cell_indices_async(
         grid_path_name=grid_path_name,
@@ -195,7 +189,7 @@ async def post_get_mapped_grid_properties(
         perf_metrics=perf_metrics,
     )
 
-    prop_extractor = await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
+    prop_extractor = await make_property_extractor_async(blob_cache, req_body.property_source)
     perf_metrics.record_lap("read-props")
 
     poly_props_b64arr: B64FloatArray | B64IntArray
@@ -229,85 +223,6 @@ async def post_get_mapped_grid_properties(
     )
 
     LOGGER.debug(f"{myfunc} - Got mapped grid properties in: {perf_metrics.to_string_s()}")
-
-    return ret_obj
-
-
-@router.post("/get_mapped_grid_properties_time_diff")
-async def post_get_mapped_grid_properties_time_diff(
-    req_body: api_schemas.MappedGridPropertiesTimeDiffRequest,
-) -> api_schemas.MappedGridPropertiesResponse:
-
-    myfunc = "post_get_mapped_grid_properties_time_diff()"
-    LOGGER.debug(f"{myfunc}")
-
-    perf_metrics = PerfMetrics()
-
-    blob_cache = LocalBlobCache(req_body.sas_token, req_body.blob_store_base_uri)
-
-    grid_path_name = await blob_cache.ensure_grid_blob_downloaded_async(req_body.grid_blob_object_uuid)
-    base_property_path_name = await blob_cache.ensure_property_blob_downloaded_async(
-        req_body.base_property_blob_object_uuid
-    )
-    monitor_property_path_name = await blob_cache.ensure_property_blob_downloaded_async(
-        req_body.monitor_property_blob_object_uuid
-    )
-
-    if grid_path_name is None:
-        raise HTTPException(500, detail=f"Failed to download grid blob: {req_body.grid_blob_object_uuid=}")
-    if base_property_path_name is None:
-        raise HTTPException(
-            500, detail=f"Failed to download property blob: {req_body.base_property_blob_object_uuid=}"
-        )
-    if monitor_property_path_name is None:
-        raise HTTPException(
-            500, detail=f"Failed to download property blob: {req_body.monitor_property_blob_object_uuid=}"
-        )
-
-    LOGGER.debug(f"{myfunc} - {grid_path_name=}")
-    LOGGER.debug(f"{myfunc} - {base_property_path_name=}")
-    LOGGER.debug(f"{myfunc} - {monitor_property_path_name=}")
-    perf_metrics.record_lap("get-blobs")
-
-    source_cell_indices_np, ri_total_time, ri_perf_metrics = await _get_source_cell_indices_async(
-        grid_path_name=grid_path_name,
-        grid_blob_object_uuid=req_body.grid_blob_object_uuid,
-        include_inactive_cells=req_body.include_inactive_cells,
-        ijk_index_filter=req_body.ijk_index_filter,
-        perf_metrics=perf_metrics,
-    )
-
-    base_extractor = await GridPropertiesExtractor.from_roff_property_file_async(base_property_path_name)
-    monitor_extractor = await GridPropertiesExtractor.from_roff_property_file_async(monitor_property_path_name)
-    perf_metrics.record_lap("read-props")
-
-    try:
-        diff_extractor = GridPropertiesExtractor.from_difference(monitor_extractor, base_extractor)
-    except ValueError as exc:
-        raise HTTPException(400, detail=str(exc)) from exc
-
-    float_prop_arr_np = diff_extractor.get_float_prop_values_for_cells(source_cell_indices_np)
-    perf_metrics.record_lap("proc-props")
-
-    ret_obj = api_schemas.MappedGridPropertiesResponse(
-        poly_props_b64arr=b64_encode_float_array_as_float32(float_prop_arr_np),
-        undefined_int_value=None,
-        min_grid_prop_value=diff_extractor.get_min_global_val(),
-        max_grid_prop_value=diff_extractor.get_max_global_val(),
-        stats=None,
-    )
-    perf_metrics.record_lap("make-response")
-
-    ret_obj.stats = api_schemas.Stats(
-        total_time=perf_metrics.get_elapsed_ms(),
-        perf_metrics=perf_metrics.to_dict(),
-        ri_total_time=ri_total_time,
-        ri_perf_metrics=ri_perf_metrics,
-        vertex_count=-1,
-        poly_count=int(len(source_cell_indices_np)),
-    )
-
-    LOGGER.debug(f"{myfunc} - Got mapped grid properties time diff in: {perf_metrics.to_string_s()}")
 
     return ret_obj
 

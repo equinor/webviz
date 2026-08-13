@@ -92,6 +92,16 @@ export type BodyPostGetPolylineIntersection_api = {
 };
 
 /**
+ * Body_post_get_polyline_intersection_time_diff
+ */
+export type BodyPostGetPolylineIntersectionTimeDiff_api = {
+    /**
+     * Polyline Utm Xy
+     */
+    polyline_utm_xy: Array<number>;
+};
+
+/**
  * Body_post_get_sample_surface_in_points
  */
 export type BodyPostGetSampleSurfaceInPoints_api = {
@@ -5107,6 +5117,77 @@ export type PostGetPolylineIntersectionResponses_api = {
 
 export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
+
+export type PostGetPolylineIntersectionTimeDiffData_api = {
+    body: BodyPostGetPolylineIntersectionTimeDiff_api;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Grid Name
+         *
+         * Grid name
+         */
+        grid_name: string;
+        /**
+         * Parameter Name
+         *
+         * Grid parameter
+         */
+        parameter_name: string;
+        /**
+         * Realization Num
+         *
+         * Realization
+         */
+        realization_num: number;
+        /**
+         * Base Time Str
+         *
+         * Time point string of the base time step
+         */
+        base_time_str: string;
+        /**
+         * Monitor Time Str
+         *
+         * Time point string of the monitor time step
+         */
+        monitor_time_str: string;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/get_polyline_intersection_time_diff";
+};
+
+export type PostGetPolylineIntersectionTimeDiffErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostGetPolylineIntersectionTimeDiffError_api =
+    PostGetPolylineIntersectionTimeDiffErrors_api[keyof PostGetPolylineIntersectionTimeDiffErrors_api];
+
+export type PostGetPolylineIntersectionTimeDiffResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PolylineIntersection_api;
+};
+
+export type PostGetPolylineIntersectionTimeDiffResponse_api =
+    PostGetPolylineIntersectionTimeDiffResponses_api[keyof PostGetPolylineIntersectionTimeDiffResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
     body?: never;

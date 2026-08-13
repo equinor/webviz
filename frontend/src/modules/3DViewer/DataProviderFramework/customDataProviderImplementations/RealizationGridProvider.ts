@@ -345,7 +345,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 return { timeInfo: read.sharedResult(timeInfo) };
             },
             resolve({ timeInfo }) {
-                return timeInfo ? getAvailableTimeTypes(timeInfo) : [];
+                return timeInfo ? getAvailableTimeTypes(timeInfo, { allowComputedInterval: true }) : [];
             },
         });
 

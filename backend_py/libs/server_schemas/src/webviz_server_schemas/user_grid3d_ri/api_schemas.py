@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Annotated, Literal
+
+from pydantic import BaseModel, Field
 
 from webviz_core_utils.b64 import B64FloatArray, B64UintArray, B64IntArray
 
@@ -56,11 +58,26 @@ class GridGeometryResponse(BaseModel):
     stats: Stats | None
 
 
+class SinglePropertySource(BaseModel):
+    type: Literal["single"] = "single"
+    property_blob_object_uuid: str
+
+
+class TimeDiffPropertySource(BaseModel):
+    type: Literal["time_diff"] = "time_diff"
+    base_property_blob_object_uuid: str
+    monitor_property_blob_object_uuid: str
+
+
+# Describes which property values to map onto the grid, allowing the values to be derived rather than read as-is
+PropertySource = Annotated[SinglePropertySource | TimeDiffPropertySource, Field(discriminator="type")]
+
+
 class MappedGridPropertiesRequest(BaseModel):
     sas_token: str
     blob_store_base_uri: str
     grid_blob_object_uuid: str
-    property_blob_object_uuid: str
+    property_source: PropertySource
     include_inactive_cells: bool
     ijk_index_filter: IJKIndexFilter | None
 
@@ -73,21 +90,11 @@ class MappedGridPropertiesResponse(BaseModel):
     stats: Stats | None
 
 
-class MappedGridPropertiesTimeDiffRequest(BaseModel):
-    sas_token: str
-    blob_store_base_uri: str
-    grid_blob_object_uuid: str
-    base_property_blob_object_uuid: str
-    monitor_property_blob_object_uuid: str
-    include_inactive_cells: bool
-    ijk_index_filter: IJKIndexFilter | None
-
-
 class PolylineIntersectionRequest(BaseModel):
     sas_token: str
     blob_store_base_uri: str
     grid_blob_object_uuid: str
-    property_blob_object_uuid: str
+    property_source: PropertySource
     include_inactive_cells: bool
     polyline_utm_xy: list[float]
 

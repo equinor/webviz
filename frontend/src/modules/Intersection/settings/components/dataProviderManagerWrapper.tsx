@@ -128,6 +128,18 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             case "date":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
                 return;
+            case "time-type":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_TYPE, null, props.dataProviderManager));
+                return;
+            case "time-point":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT, null, props.dataProviderManager));
+                return;
+            case "time-interval":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "time-point-pair":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT_PAIR, null, props.dataProviderManager));
+                return;
         }
     }
 
@@ -250,6 +262,26 @@ const SHARED_SETTINGS_CHILDREN = [
         identifier: "date",
         icon: <Icon data={settings} size={16} />,
         label: "Date",
+    },
+    {
+        identifier: "time-type",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time type",
+    },
+    {
+        identifier: "time-point",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time step",
+    },
+    {
+        identifier: "time-interval",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time interval",
+    },
+    {
+        identifier: "time-point-pair",
+        icon: <Icon data={settings} size={16} />,
+        label: "Time steps (difference)",
     },
 ];
 
