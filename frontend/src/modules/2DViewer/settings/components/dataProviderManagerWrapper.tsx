@@ -183,6 +183,12 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "time-interval":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
                 return;
+            case "time-type":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_TYPE, null, props.dataProviderManager));
+                return;
+            case "time-point-pair":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT_PAIR, null, props.dataProviderManager));
+                return;
             case "color-scale":
                 groupDelegate.prependChild(new SharedSetting(Setting.COLOR_SCALE, null, props.dataProviderManager));
                 return;
@@ -429,6 +435,16 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "time-interval",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Time interval",
+            },
+            {
+                identifier: "time-type",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time type",
+            },
+            {
+                identifier: "time-point-pair",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time steps (difference)",
             },
             {
                 identifier: "color-scale",
