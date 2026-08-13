@@ -350,6 +350,19 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
         this._pubSubDelegate.notifySubscribers(EsvIntersectionControllerTopic.MOUSE_POSITION_CHANGE);
     }
 
+    /**
+     * Computes readout and highlight items at the given reference-system point, e.g. a hover
+     * position synced from another view on the same fence. Does not affect this view's own local
+     * mouse-driven readout/highlight state.
+     */
+    calcReadoutAndHighlightItemsAtReferenceSystemPoint(referenceSystemCoordinates: number[]): {
+        readoutItems: ReadoutItem[];
+        highlightItems: HighlightItem[];
+    } {
+        if (!this._interactionHandler) return { readoutItems: [], highlightItems: [] };
+        return this._interactionHandler.calcReadoutAndHighlightItemsAtReferenceSystemPoint(referenceSystemCoordinates);
+    }
+
     // --- Private helpers ---
 
     private setLifeCycleState(state: EsvIntersectionLifeCycleState): void {

@@ -5,10 +5,12 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
+import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
 import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
+import type { EsvIntersectionController } from "@modules/_shared/components/EsvIntersection/EsvIntersectionController";
 import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
 import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
@@ -27,6 +29,34 @@ const READOUT_EDGE_DISTANCE_REM = { left: 6, bottom: 6 };
 
 const DEPTH_HOVER_MIN_THRESHOLD_M = 1000; // Minimum threshold for hover in depth direction, in meters
 const VIEWPORT_HOVER_THRESHOLD_PERCENTAGE = 25.0; // Percentage of the viewport height
+
+/**
+ * referenceSystem.getPosition() clamps internally to the trajectory's real extent, so past the
+ * fence's actual start/end (e.g. within the axis's visual extension margin) it keeps returning
+ * the same boundary coordinate instead of a genuine position for the cursor. This extrapolates
+ * linearly beyond the endpoints using the trajectory's own tangent vectors, mirroring what
+ * IntersectionReferenceSystem.getTrajectory does internally for its from/to range extension.
+ */
+function getWorldPositionAtCurtainX(referenceSystem: IntersectionReferenceSystem, curtainX: number): number[] {
+    const normalized = curtainX / referenceSystem.displacement;
+    if (normalized >= 0 && normalized <= 1) {
+        return referenceSystem.getPosition(curtainX);
+    }
+
+    const { trajectory } = referenceSystem.interpolators;
+    if (normalized < 0) {
+        const start = trajectory.getPointAt(0);
+        const excess = -normalized * referenceSystem.displacement;
+        return [
+            start[0] + referenceSystem.startVector[0] * excess,
+            start[1] + referenceSystem.startVector[1] * excess,
+        ];
+    }
+
+    const end = trajectory.getPointAt(1);
+    const excess = (normalized - 1) * referenceSystem.displacement;
+    return [end[0] + referenceSystem.endVector[0] * excess, end[1] + referenceSystem.endVector[1] * excess];
+}
 
 export type ReadoutWrapperProps = {
     intersectionSource: IntersectionSettingValue | null;
@@ -50,11 +80,29 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     // Track if hovering is from this view, or externally:
     const isLocallyHoveringRef = React.useRef(false);
 
+    // Live controller instance, exposed once by EsvIntersection on mount. Used to issue
+    // read-only "what would be read out at this position" queries for synced hover, without
+    // making EsvIntersection itself re-render on every hover tick.
+    const controllerRef = React.useRef<EsvIntersectionController | null>(null);
+    const handleControllerReady = React.useCallback(function handleControllerReady(
+        controller: EsvIntersectionController | null,
+    ) {
+        controllerRef.current = controller;
+    }, []);
+
     // Hover synchronization
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
     const [polylineHoverData, setPolylineHoverData] = useHover(
         HoverTopic.POLYLINE_LENGTH_ALONG,
+        props.hoverService,
+        moduleInstanceId,
+    );
+    // Same-fence readout position sync: a raw (x, y) point in this fence's own reference-system
+    // space (length-along, depth), independent of MD. Works uniformly for wellbore and
+    // custom-polyline fences alike, since both use that same axis space.
+    const [hoveredFencePosition, setHoveredFencePosition] = useHover(
+        HoverTopic.INTERSECTION_FENCE_POSITION,
         props.hoverService,
         moduleInstanceId,
     );
@@ -64,6 +112,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.intersectionSource?.type === IntersectionType.WELLBORE ? props.intersectionSource.uuid : null;
     const polylineId =
         props.intersectionSource?.type === IntersectionType.CUSTOM_POLYLINE ? props.intersectionSource.uuid : null;
+    // Typed fence identity (type + uuid) for this view, used to scope readout position sync to
+    // views on the exact same fence. Memoized so it is referentially stable across renders where
+    // the underlying type/uuid haven't changed - it feeds a useCallback dependency array below.
+    const intersectionSourceType = props.intersectionSource?.type ?? null;
+    const intersectionSourceUuid = props.intersectionSource?.uuid ?? null;
+    const fence: Intersection | null = React.useMemo(
+        function makeFence() {
+            if (intersectionSourceType === null || intersectionSourceUuid === null) {
+                return null;
+            }
+            return { type: intersectionSourceType, uuid: intersectionSourceUuid };
+        },
+        [intersectionSourceType, intersectionSourceUuid],
+    );
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -108,22 +170,33 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 setPolylineHoverData(polylineHoverData);
             }
 
+            // Sync the raw fence-local (x, y) position for same-fence readout queries. Uses
+            // position.x/y directly (already in reference-system space) rather than MD, so it
+            // works uniformly for wellbore and custom-polyline fences.
+            if (fence) {
+                setHoveredFencePosition(
+                    isValidCursorPosition && position ? { fence, x: position.x, y: position.y } : null,
+                );
+            }
+
             if (!isValidCursorPosition || !props.referenceSystem || !position) {
                 setMouseCursorUtmCoordinate(null);
                 return;
             }
 
             // Extract UTM coordinates from the intersection ref system
-            const utmPos = props.referenceSystem.getPosition(position.x);
+            const utmPos = getWorldPositionAtCurtainX(props.referenceSystem, position.x);
             setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
         },
         [
             polylineId,
+            fence,
             props.bounds,
             props.verticalScale,
             props.viewport,
             props.referenceSystem,
             setPolylineHoverData,
+            setHoveredFencePosition,
             setMouseCursorUtmCoordinate,
         ],
     );
@@ -141,6 +214,25 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 
     const highlightItems: HighlightItem[] = [];
+
+    // Readout items for a same-fence hover synced from another view, driven by the raw fence-local
+    // (x, y) position - independent of MD, so it works uniformly for wellbore and custom-polyline
+    // fences.
+    let syncedReadoutItems: ReadoutItem[] = [];
+    if (
+        !isLocallyHoveringRef.current &&
+        fence &&
+        hoveredFencePosition &&
+        hoveredFencePosition.fence.type === fence.type &&
+        hoveredFencePosition.fence.uuid === fence.uuid
+    ) {
+        const synced = controllerRef.current?.calcReadoutAndHighlightItemsAtReferenceSystemPoint([
+            hoveredFencePosition.x,
+            hoveredFencePosition.y,
+        ]) ?? { readoutItems: [], highlightItems: [] };
+        syncedReadoutItems = synced.readoutItems.map(formatEsvLayout);
+        highlightItems.push(...synced.highlightItems);
+    }
 
     // External hover on wellbore path
     // - red point at the hovered MD position
@@ -174,6 +266,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         });
     }
 
+    const displayedReadoutItems = isLocallyHoveringRef.current ? readoutItems : syncedReadoutItems;
+
     return (
         <>
             <EsvIntersection
@@ -195,8 +289,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 onReadout={handleReadoutItemsChange}
                 onMousePositionChange={handleMousePositionChange}
                 onViewportChange={props.onViewportChange}
+                onControllerReady={handleControllerReady}
             />
-            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} compact />
+            <ReadoutBox readoutItems={displayedReadoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} compact />
             <PositionReadout
                 coordinates={mouseCursorUtmCoordinate}
                 labels={{ z: "Depth" }}
