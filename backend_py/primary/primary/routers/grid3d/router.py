@@ -159,6 +159,58 @@ async def get_grid_parameter(
     return response
 
 
+@router.get("/grid_parameter_time_diff")
+@cache_time(CacheTime.LONG)
+# pylint: disable=too-many-arguments
+async def get_grid_parameter_time_diff(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
+    parameter_name: Annotated[str, Query(description="Grid parameter")],
+    realization_num: Annotated[int, Query(description="Realization")],
+    base_time_str: Annotated[str, Query(description="Time point string of the base time step")],
+    monitor_time_str: Annotated[str, Query(description="Time point string of the monitor time step")],
+    i_min: Annotated[int, Query(description="Min i index")] = 0,
+    i_max: Annotated[int, Query(description="Max i index")] = -1,
+    j_min: Annotated[int, Query(description="Min j index")] = 0,
+    j_max: Annotated[int, Query(description="Max j index")] = -1,
+    k_min: Annotated[int, Query(description="Min k index")] = 0,
+    k_max: Annotated[int, Query(description="Max k index")] = -1,
+) -> schemas.Grid3dMappedProperty:
+    """Get the difference between two time steps of a grid parameter, monitor minus base"""
+
+    perf_metrics = PerfMetrics()
+
+    ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
+
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    perf_metrics.record_lap("create-service")
+
+    mapped_grid_properties = await grid_service.get_mapped_grid_property_time_diff_async(
+        ensemble_name=ensemble_name,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        base_time_str=base_time_str,
+        monitor_time_str=monitor_time_str,
+        realization=realization_num,
+        ijk_index_filter=ijk_index_filter,
+    )
+    perf_metrics.record_lap("call-service")
+
+    response = schemas.Grid3dMappedProperty(
+        poly_props_b64arr=_hack_ensure_b64_property_array_is_float(
+            mapped_grid_properties.poly_props_b64arr, mapped_grid_properties.undefined_int_value
+        ),
+        min_grid_prop_value=mapped_grid_properties.min_grid_prop_value,
+        max_grid_prop_value=mapped_grid_properties.max_grid_prop_value,
+    )
+
+    LOGGER.debug(f"------------------ GRID3D - grid_parameter_time_diff took: {perf_metrics.to_string_s()}")
+
+    return response
+
+
 @router.post("/get_polyline_intersection")
 async def post_get_polyline_intersection(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],

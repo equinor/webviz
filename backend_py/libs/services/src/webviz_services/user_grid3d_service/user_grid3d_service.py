@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Literal, Sequence
 
@@ -235,6 +236,85 @@ class UserGrid3dService:
 
         self._log_grid_and_poly_info(".get_mapped_grid_properties_async()", None, api_obj.stats)
         self._log_perf_messages(".get_mapped_grid_properties_async()", perf_metrics, api_obj.stats)
+
+        return ret_obj
+
+    async def get_mapped_grid_property_time_diff_async(
+        self,
+        ensemble_name: str,
+        realization: int,
+        grid_name: str,
+        property_name: str,
+        base_time_str: str,
+        monitor_time_str: str,
+        ijk_index_filter: IJKIndexFilter | None,
+    ) -> MappedGridProperties:
+        """Get the cell by cell difference between two time steps of a grid property, monitor minus base"""
+        perf_metrics = PerfMetrics()
+
+        base_blob_ids, monitor_blob_ids = await asyncio.gather(
+            get_grid_geometry_and_property_blob_ids_async(
+                self._sumo_client,
+                self._case_uuid,
+                ensemble_name,
+                realization,
+                grid_name,
+                property_name,
+                base_time_str,
+            ),
+            get_grid_geometry_and_property_blob_ids_async(
+                self._sumo_client,
+                self._case_uuid,
+                ensemble_name,
+                realization,
+                grid_name,
+                property_name,
+                monitor_time_str,
+            ),
+        )
+        grid_blob_object_uuid = base_blob_ids[0]
+        base_property_blob_object_uuid = base_blob_ids[1]
+        monitor_property_blob_object_uuid = monitor_blob_ids[1]
+        LOGGER.debug(f".get_mapped_grid_property_time_diff_async() - {grid_blob_object_uuid=}")
+        LOGGER.debug(f".get_mapped_grid_property_time_diff_async() - {base_property_blob_object_uuid=}")
+        LOGGER.debug(f".get_mapped_grid_property_time_diff_async() - {monitor_property_blob_object_uuid=}")
+        perf_metrics.record_lap("blob-ids")
+
+        effective_ijk_index_filter: server_api_schemas.IJKIndexFilter | None = None
+        if ijk_index_filter:
+            effective_ijk_index_filter = server_api_schemas.IJKIndexFilter.model_validate(ijk_index_filter.model_dump())
+
+        request_body = server_api_schemas.MappedGridPropertiesTimeDiffRequest(
+            sas_token=self._sas_token,
+            blob_store_base_uri=self._blob_store_base_uri,
+            grid_blob_object_uuid=grid_blob_object_uuid,
+            base_property_blob_object_uuid=base_property_blob_object_uuid,
+            monitor_property_blob_object_uuid=monitor_property_blob_object_uuid,
+            include_inactive_cells=self._include_inactive_cells,
+            ijk_index_filter=effective_ijk_index_filter,
+        )
+
+        perf_metrics.reset_lap_timer()
+        response = await self._call_service_endpoint_post_async(
+            endpoint="get_mapped_grid_properties_time_diff",
+            body_pydantic_model=request_body,
+            operation_descr="getting mapped grid property time difference from grid3d user session",
+        )
+        perf_metrics.record_lap("call-user-session")
+
+        api_obj = server_api_schemas.MappedGridPropertiesResponse.model_validate_json(response.content)
+        perf_metrics.record_lap("parse-response")
+
+        ret_obj = MappedGridProperties(
+            poly_props_b64arr=api_obj.poly_props_b64arr,
+            undefined_int_value=api_obj.undefined_int_value,
+            max_grid_prop_value=api_obj.max_grid_prop_value,
+            min_grid_prop_value=api_obj.min_grid_prop_value,
+        )
+        perf_metrics.record_lap("convert")
+
+        self._log_grid_and_poly_info(".get_mapped_grid_property_time_diff_async()", None, api_obj.stats)
+        self._log_perf_messages(".get_mapped_grid_property_time_diff_async()", perf_metrics, api_obj.stats)
 
         return ret_obj
 

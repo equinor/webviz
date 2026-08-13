@@ -73,6 +73,16 @@ class MappedGridPropertiesResponse(BaseModel):
     stats: Stats | None
 
 
+class MappedGridPropertiesTimeDiffRequest(BaseModel):
+    sas_token: str
+    blob_store_base_uri: str
+    grid_blob_object_uuid: str
+    base_property_blob_object_uuid: str
+    monitor_property_blob_object_uuid: str
+    include_inactive_cells: bool
+    ijk_index_filter: IJKIndexFilter | None
+
+
 class PolylineIntersectionRequest(BaseModel):
     sas_token: str
     blob_store_base_uri: str

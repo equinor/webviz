@@ -61,6 +61,9 @@ import type {
     GetGridParameterData_api,
     GetGridParameterErrors_api,
     GetGridParameterResponses_api,
+    GetGridParameterTimeDiffData_api,
+    GetGridParameterTimeDiffErrors_api,
+    GetGridParameterTimeDiffResponses_api,
     GetGridSurfaceData_api,
     GetGridSurfaceErrors_api,
     GetGridSurfaceResponses_api,
@@ -839,6 +842,24 @@ export const getGridParameter = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GetGridParameterResponses_api, GetGridParameterErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/grid3d/grid_parameter",
+        ...options,
+    });
+
+/**
+ * Get Grid Parameter Time Diff
+ *
+ * Get the difference between two time steps of a grid parameter, monitor minus base
+ */
+export const getGridParameterTimeDiff = <ThrowOnError extends boolean = false>(
+    options: Options<GetGridParameterTimeDiffData_api, ThrowOnError>,
+): RequestResult<GetGridParameterTimeDiffResponses_api, GetGridParameterTimeDiffErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetGridParameterTimeDiffResponses_api,
+        GetGridParameterTimeDiffErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/grid3d/grid_parameter_time_diff",
         ...options,
     });
 

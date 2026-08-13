@@ -4936,6 +4936,113 @@ export type GetGridParameterResponses_api = {
 
 export type GetGridParameterResponse_api = GetGridParameterResponses_api[keyof GetGridParameterResponses_api];
 
+export type GetGridParameterTimeDiffData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Grid Name
+         *
+         * Grid name
+         */
+        grid_name: string;
+        /**
+         * Parameter Name
+         *
+         * Grid parameter
+         */
+        parameter_name: string;
+        /**
+         * Realization Num
+         *
+         * Realization
+         */
+        realization_num: number;
+        /**
+         * Base Time Str
+         *
+         * Time point string of the base time step
+         */
+        base_time_str: string;
+        /**
+         * Monitor Time Str
+         *
+         * Time point string of the monitor time step
+         */
+        monitor_time_str: string;
+        /**
+         * I Min
+         *
+         * Min i index
+         */
+        i_min?: number;
+        /**
+         * I Max
+         *
+         * Max i index
+         */
+        i_max?: number;
+        /**
+         * J Min
+         *
+         * Min j index
+         */
+        j_min?: number;
+        /**
+         * J Max
+         *
+         * Max j index
+         */
+        j_max?: number;
+        /**
+         * K Min
+         *
+         * Min k index
+         */
+        k_min?: number;
+        /**
+         * K Max
+         *
+         * Max k index
+         */
+        k_max?: number;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/grid_parameter_time_diff";
+};
+
+export type GetGridParameterTimeDiffErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetGridParameterTimeDiffError_api =
+    GetGridParameterTimeDiffErrors_api[keyof GetGridParameterTimeDiffErrors_api];
+
+export type GetGridParameterTimeDiffResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Grid3dMappedProperty_api;
+};
+
+export type GetGridParameterTimeDiffResponse_api =
+    GetGridParameterTimeDiffResponses_api[keyof GetGridParameterTimeDiffResponses_api];
+
 export type PostGetPolylineIntersectionData_api = {
     body: BodyPostGetPolylineIntersection_api;
     path?: never;

@@ -32,6 +32,7 @@ import {
     getFieldScreens,
     getGridModelsInfo,
     getGridParameter,
+    getGridParameterTimeDiff,
     getGridSurface,
     getHistoricalVectorData,
     getInjectionData,
@@ -151,6 +152,9 @@ import type {
     GetGridParameterData_api,
     GetGridParameterError_api,
     GetGridParameterResponse_api,
+    GetGridParameterTimeDiffData_api,
+    GetGridParameterTimeDiffError_api,
+    GetGridParameterTimeDiffResponse_api,
     GetGridSurfaceData_api,
     GetGridSurfaceError_api,
     GetGridSurfaceResponse_api,
@@ -1412,6 +1416,33 @@ export const getGridParameterOptions = (options: Options<GetGridParameterData_ap
             return data;
         },
         queryKey: getGridParameterQueryKey(options),
+    });
+
+export const getGridParameterTimeDiffQueryKey = (options: Options<GetGridParameterTimeDiffData_api>) =>
+    createQueryKey("getGridParameterTimeDiff", options);
+
+/**
+ * Get Grid Parameter Time Diff
+ *
+ * Get the difference between two time steps of a grid parameter, monitor minus base
+ */
+export const getGridParameterTimeDiffOptions = (options: Options<GetGridParameterTimeDiffData_api>) =>
+    queryOptions<
+        GetGridParameterTimeDiffResponse_api,
+        AxiosError<GetGridParameterTimeDiffError_api>,
+        GetGridParameterTimeDiffResponse_api,
+        ReturnType<typeof getGridParameterTimeDiffQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getGridParameterTimeDiff({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getGridParameterTimeDiffQueryKey(options),
     });
 
 export const postGetPolylineIntersectionQueryKey = (options: Options<PostGetPolylineIntersectionData_api>) =>
