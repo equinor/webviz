@@ -326,6 +326,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             const property = isNaN(trueProperty) ? 0 : trueProperty;
 
             const [r, g, b, a] = colorMapFunction(property);
+
             colorsArray[colorIndex * 4 + 0] = r / 255;
             colorsArray[colorIndex * 4 + 1] = g / 255;
             colorsArray[colorIndex * 4 + 2] = b / 255;
@@ -392,7 +393,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         mesh: geometry,
                         getPosition: [0, 0, 0],
                         getColor: [255, 255, 255, 255],
-                        material: { ambient: 0.35, diffuse: 0.6, shininess: 0, specularColor: [0, 0, 0] },
+                        material: { ambient: 0.6, diffuse: 0.4, shininess: 8, specularColor: [0, 0, 0] },
                         pickable: true,
                         _instanced: false,
                         opacity,
