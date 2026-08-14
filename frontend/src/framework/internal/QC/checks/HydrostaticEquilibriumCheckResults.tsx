@@ -5,8 +5,8 @@ import { Check, Close } from "@mui/icons-material";
 import { Table } from "@lib/components/Table";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import type { HydrostaticEquilibriumGridPropertyCheckMetrics } from "./HydrostaticEquilibriumGridPropertyCheck";
-import type { HydrostaticEquilibriumVectorCheckMetrics } from "./HydrostaticEquilibriumVectorCheck";
+import type { HydrostaticEquilibriumGridPropertyCheckMetrics } from "./HydrostaticEquilibriumGridPropertyCheckStep";
+import type { HydrostaticEquilibriumVectorCheckMetrics } from "./HydrostaticEquilibriumVectorCheckStep";
 
 // Mirrors the backend's default max allowed relative change for the grid property check
 // (webviz_services.qc_service.hydrostatic_equilibrium.equilibrium_logic.DEFAULT_GRID_CHANGE_THRESHOLD

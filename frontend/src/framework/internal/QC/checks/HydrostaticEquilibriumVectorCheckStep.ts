@@ -10,15 +10,13 @@ import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
-import type { QcCheckDefinition, QcCheckRunContext, QcCheckTemplateContext } from "../QcCheck";
+import type { QcCheckStepDefinition, QcCheckStepRunContext, QcCheckTemplateContext } from "../QcCheckStep";
 
 import { HydrostaticEquilibriumVectorCheckResult } from "./HydrostaticEquilibriumCheckResults";
-import { HydrostaticEquilibriumCheckSettings } from "./HydrostaticEquilibriumCheckSettings";
 import {
-    DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
     formatCaughtError,
     getGridModelsInfoQueryOptions,
-    resolveGridName,
+    hydrostaticGridMatrixCoordinates,
     resolveHydrostaticTimeSteps,
     resolveReferenceRealization,
     type HydrostaticEquilibriumCheckParams,
@@ -59,7 +57,7 @@ function summarizeResults(results: QcCheckTemplateContext<HydrostaticEquilibrium
 
 // A single `SimulationTimeSeries` module showing all vectors this run checked, as individual
 // realization traces, for the checked ensemble - a starting point for eyeballing a failing
-// realization's vector behavior around the t0/t1 window this check compared.
+// realization's vector behavior around the t0/t1 window this step compared.
 function makeVectorTemplates(context: QcCheckTemplateContext<HydrostaticEquilibriumVectorCheckMetrics>): Template[] {
     const { checkedVectorNames, ensembleIdentString } = summarizeResults(context.results);
 
@@ -104,7 +102,7 @@ function makeVectorTemplates(context: QcCheckTemplateContext<HydrostaticEquilibr
 }
 
 function reportErrorForAllRealizations(
-    context: QcCheckRunContext<HydrostaticEquilibriumVectorCheckMetrics, HydrostaticEquilibriumCheckParams>,
+    context: QcCheckStepRunContext<HydrostaticEquilibriumVectorCheckMetrics, HydrostaticEquilibriumCheckParams>,
     errorMessage: string,
 ): void {
     for (const realization of context.realizations) {
@@ -112,25 +110,30 @@ function reportErrorForAllRealizations(
     }
 }
 
-// Vector (summary) check of the "Initial Hydrostatic Equilibrium" QC step: compares production/
+// Vector (summary) step of the "Initial Hydrostatic Equilibrium" QC check: compares production/
 // injection vectors between an early (t0) and a later (t1) time step, ensemble-wide in one request
-// (ported from `ModelQc`'s `useVectorCheckQuery.ts`).
-export const HydrostaticEquilibriumVectorCheck: QcCheckDefinition<
+// (ported from `ModelQc`'s `useVectorCheckQuery.ts`). One matrix coordinate per selected grid (see
+// `hydrostaticGridMatrixCoordinates`), each with its own independent realization matrix.
+export const HydrostaticEquilibriumVectorCheckStep: QcCheckStepDefinition<
     HydrostaticEquilibriumVectorCheckMetrics,
     HydrostaticEquilibriumCheckParams
 > = {
-    name: "Initial hydrostatic equilibrium - vector check",
-    defaultParams: DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
-    settingsComponent: HydrostaticEquilibriumCheckSettings,
+    name: "Vector check",
     resultComponent: HydrostaticEquilibriumVectorCheckResult,
     templates: makeVectorTemplates,
+    matrixCoordinates: hydrostaticGridMatrixCoordinates,
 
     async run(context) {
-        const { ensemble, realizations, params, fetchQuery, setProgressMessage, onFetchCancelOrFinish } = context;
+        const { ensemble, realizations, matrixCoordinate, fetchQuery, setProgressMessage, onFetchCancelOrFinish } =
+            context;
 
         if (realizations.length === 0) {
             return;
         }
+
+        // Always set - this step declares `matrixCoordinates`, so the runtime invokes `run()` once
+        // per selected grid.
+        const gridName = matrixCoordinate!.key;
 
         const caseUuid = ensemble.getCaseUuid();
         const ensembleName = ensemble.getEnsembleName();
@@ -143,9 +146,12 @@ export const HydrostaticEquilibriumVectorCheck: QcCheckDefinition<
             const referenceRealization = resolveReferenceRealization(ensemble, realizations);
             const gridModelsInfo = await fetchQuery(getGridModelsInfoQueryOptions(ensemble, referenceRealization));
 
-            const gridName = resolveGridName(gridModelsInfo, params.gridName);
             const gridInfo = gridModelsInfo.find((info) => info.grid_name === gridName);
-            const resolvedTimeSteps = gridInfo ? resolveHydrostaticTimeSteps(gridInfo) : null;
+            if (!gridInfo) {
+                reportErrorForAllRealizations(context, `Grid '${gridName}' is no longer available for this ensemble.`);
+                return;
+            }
+            const resolvedTimeSteps = resolveHydrostaticTimeSteps(gridInfo);
             if (!resolvedTimeSteps) {
                 reportErrorForAllRealizations(
                     context,

@@ -16,16 +16,12 @@ import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
-import type { QcCheckDefinition, QcCheckTemplateContext } from "../QcCheck";
+import type { QcCheckStepDefinition, QcCheckTemplateContext } from "../QcCheckStep";
 
 import { HydrostaticEquilibriumGridPropertyCheckResult } from "./HydrostaticEquilibriumCheckResults";
-import { HydrostaticEquilibriumCheckSettings } from "./HydrostaticEquilibriumCheckSettings";
 import {
-    DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
     formatCaughtError,
-    getGridModelsInfoQueryOptions,
-    resolveGridName,
-    resolveReferenceRealization,
+    hydrostaticGridMatrixCoordinates,
     type HydrostaticEquilibriumCheckParams,
 } from "./hydrostaticEquilibriumShared";
 
@@ -231,7 +227,7 @@ function applyRealizationAndGridPropertyElevatedSettings(
 }
 
 // A single 3D viewer, split into two views (t0 and t1, stacked top/bottom) - a starting point for
-// eyeballing a failing realization's grid property between the two timesteps this check compared.
+// eyeballing a failing realization's grid property between the two timesteps this step compared.
 function makeGridPropertyTemplates(
     context: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>,
 ): Template[] {
@@ -287,7 +283,7 @@ function makeGridPropertyTemplates(
 
                 // Both fences' `Setting.INTERSECTION` (wellbore/polyline picker) become elevated once
                 // this is active, so both views follow one shared wellbore selection. Unlike
-                // realization/grid-property, this check has no run-specific wellbore data to restrict
+                // realization/grid-property, this step has no run-specific wellbore data to restrict
                 // the picker to - just make sure it's active.
                 if (!elevatedSettingsService.hasSetting(WELLBORE_ELEVATED_SETTING)) {
                     elevatedSettingsService.addSetting(WELLBORE_ELEVATED_SETTING);
@@ -297,55 +293,35 @@ function makeGridPropertyTemplates(
     ];
 }
 
-// Grid property check of the "Initial Hydrostatic Equilibrium" QC step: compares 3D grid
+// Grid property step of the "Initial Hydrostatic Equilibrium" QC check: compares 3D grid
 // properties between an early (t0) and a later (t1) time step, one request per realization so
 // results can be reported as each realization resolves (ported from `ModelQc`'s
-// `useGridPropertyCheckQueries.ts`).
-export const HydrostaticEquilibriumGridPropertyCheck: QcCheckDefinition<
+// `useGridPropertyCheckQueries.ts`). One matrix coordinate per selected grid, matching the vector
+// step's own coordinates exactly (both derive them from the same params via
+// `hydrostaticGridMatrixCoordinates`) - so this step doesn't need to resolve or reuse anything from
+// the vector step's results, it just uses its own coordinate's grid name directly.
+export const HydrostaticEquilibriumGridPropertyCheckStep: QcCheckStepDefinition<
     HydrostaticEquilibriumGridPropertyCheckMetrics,
     HydrostaticEquilibriumCheckParams
 > = {
-    name: "Initial hydrostatic equilibrium - grid property check",
-    defaultParams: DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS,
-    settingsComponent: HydrostaticEquilibriumCheckSettings,
+    name: "Grid property check",
     resultComponent: HydrostaticEquilibriumGridPropertyCheckResult,
     templates: makeGridPropertyTemplates,
+    matrixCoordinates: hydrostaticGridMatrixCoordinates,
 
     async run(context) {
-        const { ensemble, realizations, params, fetchQuery, setProgressMessage } = context;
+        const { ensemble, realizations, matrixCoordinate, fetchQuery, setProgressMessage } = context;
 
         if (realizations.length === 0) {
             return;
         }
 
+        // Always set - this step declares `matrixCoordinates`, so the runtime invokes `run()` once
+        // per selected grid.
+        const gridName = matrixCoordinate!.key;
+
         const caseUuid = ensemble.getCaseUuid();
         const ensembleName = ensemble.getEnsembleName();
-
-        let gridName: string;
-        try {
-            // Resolved from the same reference realization, and via the same cached query, as the
-            // settings component's grid picker.
-            const referenceRealization = resolveReferenceRealization(ensemble, realizations);
-            const gridModelsInfo = await fetchQuery(getGridModelsInfoQueryOptions(ensemble, referenceRealization));
-
-            const resolvedGridName = resolveGridName(gridModelsInfo, params.gridName);
-            if (!resolvedGridName) {
-                for (const realization of realizations) {
-                    context.reportRealizationResult(realization, {
-                        kind: "error",
-                        errorMessage: "No 3D grid model is available for this ensemble.",
-                    });
-                }
-                return;
-            }
-            gridName = resolvedGridName;
-        } catch (error) {
-            const errorMessage = formatCaughtError(error);
-            for (const realization of realizations) {
-                context.reportRealizationResult(realization, { kind: "error", errorMessage });
-            }
-            return;
-        }
 
         // One request per realization, so results can be aggregated and reported as each
         // realization's check resolves - mirrors the eventual per-realization worker-queue

@@ -4,6 +4,7 @@ import { Verified } from "@mui/icons-material";
 
 import { Drawer } from "@framework/internal/components/Drawer";
 import type { Workbench } from "@framework/Workbench";
+import { useEnsembleQcSet } from "@framework/WorkbenchSession";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { EnsembleQcContainer } from "../../QC/EnsembleQcContainer";
@@ -17,7 +18,10 @@ export type QcChecksPanelProps = {
 export const QcChecksPanel = React.memo(function QcChecksPanel(props: QcChecksPanelProps) {
     const workbenchSession = useActiveSession();
 
-    const ensembleQcs = workbenchSession.getEnsembleQcSet().getEnsembleQcsArray();
+    // Subscribes to `WorkbenchSessionTopic.ENSEMBLE_QC_SET` (rather than reading
+    // `getEnsembleQcSet()` directly) so this panel re-renders when an ensemble is added to or
+    // removed from the session while it's open.
+    const ensembleQcs = useEnsembleQcSet(workbenchSession);
 
     return (
         <QcRealizationPopoverProvider>

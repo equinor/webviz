@@ -1,32 +1,32 @@
 import type { QueryClient } from "@tanstack/query-core";
 
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
-import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { ScopedQueryController } from "@lib/utils/ScopedQueryController";
 
-export type QcCheckRealizationResult<TMetrics> =
-    | {
-          kind: "success";
-          metrics: TMetrics;
-      }
-    | {
-          kind: "error";
-          errorMessage: string;
-      };
+import type { QcCheckStepDefinition } from "./QcCheckStep";
+import { QcCheckStepRuntime } from "./QcCheckStep";
 
-export type QcCheckRunContext<TMetrics, TParams> = {
-    ensemble: RegularEnsemble;
-    realizations: number[];
-    params: TParams;
-    fetchQuery: ScopedQueryController["fetchQuery"];
-    onFetchCancelOrFinish: (callback: () => void) => void;
-    setProgressMessage: (message: string, realization?: number) => void;
-    reportRealizationResult: (realization: number, result: QcCheckRealizationResult<TMetrics>) => void;
+export type { QcCheckRealizationResult, QcCheckTemplateContext } from "./QcCheckStep";
+
+export type QcCheckDefinition<TParams = void> = {
+    name: string;
+    defaultParams: TParams;
+    settingsComponent?: React.ComponentType<{
+        ensemble: RegularEnsemble;
+        params: TParams;
+        onParamsChange: (newParams: TParams) => void;
+    }>;
+    // Run in sequence, never in parallel (see `QcCheckRuntime.run`) - each step sees its
+    // predecessor's per-realization results via `QcCheckStepRunContext.previousStepResults`, and
+    // only realizations the predecessor reported as successful are carried into the next step.
+    //
+    // Steps are registered with their own concrete `TMetrics`, hence `any` here - each step
+    // definition itself stays fully typed (see e.g. `HydrostaticEquilibriumGridPropertyCheckStep`).
+    steps: QcCheckStepDefinition<any, TParams, any>[];
 };
 
 export enum QcCheckRuntimeTopic {
-    RESULTS = "results",
     STATUS = "status",
     PARAMS = "params",
 }
@@ -36,73 +36,37 @@ export type QcCheckRuntimeStatus = {
     requestedRealizations: readonly number[];
 };
 
-export type QcCheckRuntimeTopicPayloads<TMetrics, TParams> = {
-    [QcCheckRuntimeTopic.RESULTS]: {
-        realization: number;
-        result: QcCheckRealizationResult<TMetrics>;
-    }[];
+export type QcCheckRuntimeTopicPayloads<TParams> = {
     [QcCheckRuntimeTopic.STATUS]: QcCheckRuntimeStatus;
     [QcCheckRuntimeTopic.PARAMS]: TParams;
 };
 
-// Used by `templates` - a run's realizations/results, as needed to tailor a template (e.g. seed a
-// data provider's initial settings, or pre-constrain an elevated setting one of its modules
-// consumes via `Template.applyElevatedSettings`) to this specific run rather than the check in the
-// abstract.
-export type QcCheckTemplateContext<TMetrics> = {
-    realizations: readonly number[];
-    results: ReadonlyMap<number, QcCheckRealizationResult<TMetrics>>;
-};
-
-export type QcCheckDefinition<TMetrics = unknown, TParams = void> = {
-    run(context: QcCheckRunContext<TMetrics, TParams>): Promise<void>;
-
-    defaultParams: TParams;
-    name: string;
-    settingsComponent?: React.ComponentType<{
-        ensemble: RegularEnsemble;
-        params: TParams;
-        onParamsChange: (newParams: TParams) => void;
-    }>;
-    // Renders a single realization's successful result (e.g. as a table) in the realization-result
-    // popover. Falls back to a generic JSON dump when a check doesn't provide one.
-    resultComponent?: React.ComponentType<{ metrics: TMetrics }>;
-    // A function (not a static array) since a template's initial module state can depend on the
-    // specific run - e.g. seeding a 3D view's grid provider with the same t0/t1 timestep this check
-    // itself compared. Each returned `Template` is responsible for its own elevated settings (see
-    // `Template.applyElevatedSettings`) - e.g. restricting a picker to only the values this specific
-    // run actually checked.
-    templates?: (context: QcCheckTemplateContext<TMetrics>) => Template[];
-};
-
-export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements PublishSubscribe<
-    QcCheckRuntimeTopicPayloads<TMetrics, TParams>
-> {
+export class QcCheckRuntime<TParams = unknown> implements PublishSubscribe<QcCheckRuntimeTopicPayloads<TParams>> {
     private _id: string;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<QcCheckRuntimeTopicPayloads<TMetrics, TParams>>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<QcCheckRuntimeTopicPayloads<TParams>>();
     private _ensemble: RegularEnsemble;
-    private _checkDefinition: QcCheckDefinition<TMetrics, TParams>;
+    private _checkDefinition: QcCheckDefinition<TParams>;
     private _scopedQueryController: ScopedQueryController;
-    private _results: Map<number, QcCheckRealizationResult<TMetrics>> = new Map<
-        number,
-        QcCheckRealizationResult<TMetrics>
-    >();
-    private _progressMessages: Map<number, string> = new Map<number, string>();
+    private _stepRuntimes: QcCheckStepRuntime[];
     private _onFetchCancelOrFinishFn: (() => void) | null = null;
     private _isRunning: boolean = false;
     private _requestedRealizations: readonly number[] = [];
     // The last-applied params for this check, seeded from its default and only ever replaced
-    // wholesale via `setParams` - what a run without an explicit override uses.
+    // wholesale via `setParams` - what a run without an explicit override uses. Shared by every
+    // step, since a check's steps are all facets of the same underlying check.
     private _params: TParams;
     // `useSyncExternalStore` (via `usePublishSubscribeTopicValue`) requires `makeSnapshotGetter` to
-    // return a referentially stable value when nothing has changed - these caches are invalidated
-    // (set to `null`) only when the underlying state they represent actually changes.
-    private _resultsSnapshot: QcCheckRuntimeTopicPayloads<TMetrics, TParams>[QcCheckRuntimeTopic.RESULTS] | null = null;
+    // return a referentially stable value when nothing has changed - invalidated (set to `null`)
+    // only when the underlying state it represents actually changes.
     private _statusSnapshot: QcCheckRuntimeStatus | null = null;
+    // Incremented on every `run()`/`cancel()` call - lets a run loop that's since been superseded
+    // by a newer `run()`, or stopped by `cancel()`, notice (once its current step's `await`
+    // resolves) that it should stop advancing to further steps.
+    private _runGeneration: number = 0;
 
     constructor(
         id: string,
-        checkDefinition: QcCheckDefinition<TMetrics, TParams>,
+        checkDefinition: QcCheckDefinition<TParams>,
         ensemble: RegularEnsemble,
         queryClient: QueryClient,
     ) {
@@ -110,7 +74,7 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         this._ensemble = ensemble;
         this._checkDefinition = checkDefinition;
         this._scopedQueryController = new ScopedQueryController(queryClient);
-        this._results = new Map();
+        this._stepRuntimes = checkDefinition.steps.map((stepDefinition) => new QcCheckStepRuntime(stepDefinition));
         this._params = checkDefinition.defaultParams;
     }
 
@@ -122,27 +86,23 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         return this._ensemble;
     }
 
-    getCheckDefinition(): QcCheckDefinition<TMetrics, TParams> {
+    getCheckDefinition(): QcCheckDefinition<TParams> {
         return this._checkDefinition;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<QcCheckRuntimeTopicPayloads<TMetrics, TParams>> {
+    /** The check's steps, in the sequence they run in. */
+    getStepRuntimes(): QcCheckStepRuntime[] {
+        return this._stepRuntimes;
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<QcCheckRuntimeTopicPayloads<TParams>> {
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends keyof QcCheckRuntimeTopicPayloads<TMetrics, TParams>>(
+    makeSnapshotGetter<T extends keyof QcCheckRuntimeTopicPayloads<TParams>>(
         topic: T,
-    ): () => QcCheckRuntimeTopicPayloads<TMetrics, TParams>[T] {
+    ): () => QcCheckRuntimeTopicPayloads<TParams>[T] {
         return () => {
-            if (topic === QcCheckRuntimeTopic.RESULTS) {
-                if (!this._resultsSnapshot) {
-                    this._resultsSnapshot = Array.from(this._results.entries()).map(([realization, result]) => ({
-                        realization,
-                        result,
-                    }));
-                }
-                return this._resultsSnapshot as QcCheckRuntimeTopicPayloads<TMetrics, TParams>[T];
-            }
             if (topic === QcCheckRuntimeTopic.STATUS) {
                 if (!this._statusSnapshot) {
                     this._statusSnapshot = {
@@ -150,17 +110,13 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
                         requestedRealizations: this._requestedRealizations,
                     };
                 }
-                return this._statusSnapshot as QcCheckRuntimeTopicPayloads<TMetrics, TParams>[T];
+                return this._statusSnapshot as QcCheckRuntimeTopicPayloads<TParams>[T];
             }
             if (topic === QcCheckRuntimeTopic.PARAMS) {
-                return this._params as QcCheckRuntimeTopicPayloads<TMetrics, TParams>[T];
+                return this._params as QcCheckRuntimeTopicPayloads<TParams>[T];
             }
             throw new Error(`Unknown topic: ${String(topic)}`);
         };
-    }
-
-    getResults(): Map<number, QcCheckRealizationResult<TMetrics>> {
-        return this._results;
     }
 
     isRunning(): boolean {
@@ -194,11 +150,12 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         this._publishSubscribeDelegate.notifySubscribers(QcCheckRuntimeTopic.STATUS);
     }
 
-    /** Cancels the currently running check, if any. */
+    /** Cancels the currently running check, if any - including any steps still to come. */
     cancel(): void {
         if (!this._isRunning) {
             return;
         }
+        this._runGeneration++;
         this.tidyUpFetchRelatedResources();
         this.setIsRunning(false);
     }
@@ -207,12 +164,17 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         // Cancel a previous in-flight run (if any) before starting a new one.
         this.tidyUpFetchRelatedResources();
 
-        // Clear results/progress left over from a previous run, so realizations don't keep showing a
-        // stale pass/fail status while this run is still working on them.
-        this._results.clear();
-        this._resultsSnapshot = null;
-        this._progressMessages.clear();
-        this._publishSubscribeDelegate.notifySubscribers(QcCheckRuntimeTopic.RESULTS);
+        this._runGeneration++;
+        const generation = this._runGeneration;
+
+        // Clear results/progress left over from a previous run for every step (not just the ones
+        // this run will reach), so a step further down the sequence doesn't keep showing stale
+        // results from a previous run that got further than this one does. Also reconciles each
+        // step's matrix-coordinate entries against the current params (see
+        // `QcCheckStepRuntime.reset`).
+        for (const stepRuntime of this._stepRuntimes) {
+            stepRuntime.reset(this._params);
+        }
 
         const onFetchCancelOrFinish = (fnc: () => void) => {
             this._onFetchCancelOrFinishFn = fnc;
@@ -221,32 +183,41 @@ export class QcCheckRuntime<TMetrics = unknown, TParams = unknown> implements Pu
         this._requestedRealizations = realizations;
         this.setIsRunning(true);
 
-        const context: QcCheckRunContext<TMetrics, TParams> = {
-            ensemble: this._ensemble,
-            realizations: realizations as number[],
-            params: this._params,
-            fetchQuery: this._scopedQueryController.fetchQuery.bind(this._scopedQueryController),
-            onFetchCancelOrFinish,
-            setProgressMessage: (message: string, realization?: number) => {
-                if (realization !== undefined) {
-                    this._progressMessages.set(realization, message);
+        try {
+            // Only a realization a step reported as a success (for a given matrix coordinate) is
+            // carried into the next step for that same coordinate - a realization that errored out
+            // (or was never reached because every realization ahead of it already failed) doesn't
+            // get a further chance to succeed downstream. All of that bookkeeping - including
+            // per-matrix-coordinate carry-forward - lives on `QcCheckStepRuntime` itself; this loop
+            // just hands each step its predecessor and lets it figure out the rest.
+            let previousStepRuntime: QcCheckStepRuntime | null = null;
+
+            for (const stepRuntime of this._stepRuntimes) {
+                if (generation !== this._runGeneration) {
                     return;
                 }
-                realizations.forEach((r) => {
-                    this._progressMessages.set(r, message);
-                });
-            },
-            reportRealizationResult: (realization: number, result: QcCheckRealizationResult<TMetrics>) => {
-                this._results.set(realization, result);
-                this._resultsSnapshot = null;
-                this._publishSubscribeDelegate.notifySubscribers(QcCheckRuntimeTopic.RESULTS);
-            },
-        };
 
-        try {
-            await this._checkDefinition.run(context);
+                await stepRuntime.run({
+                    checkRealizations: realizations,
+                    previousStepRuntime,
+                    params: this._params,
+                    ensemble: this._ensemble,
+                    fetchQuery: this._scopedQueryController.fetchQuery.bind(this._scopedQueryController),
+                    onFetchCancelOrFinish,
+                });
+
+                if (generation !== this._runGeneration) {
+                    return;
+                }
+
+                previousStepRuntime = stepRuntime;
+            }
         } finally {
-            this.setIsRunning(false);
+            // A stale/cancelled run's `cancel()` (or the newer `run()` that superseded it) has
+            // already flipped `isRunning` off - don't flip a newer run's own state back off here.
+            if (generation === this._runGeneration) {
+                this.setIsRunning(false);
+            }
         }
     }
 }

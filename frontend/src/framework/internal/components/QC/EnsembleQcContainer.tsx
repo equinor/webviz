@@ -1,14 +1,19 @@
 import React from "react";
 
 import {
+    Block,
+    Cancel,
+    CheckCircle,
     ExpandLess,
     ExpandMore,
     FactCheck,
     PlayArrow,
     PlaylistPlay,
+    RadioButtonUnchecked,
     Replay,
     Stop,
     Troubleshoot,
+    Warning,
 } from "@mui/icons-material";
 import { startCase } from "lodash-es";
 
@@ -16,8 +21,17 @@ import { EnsembleColorTile } from "@framework/components/EnsembleColorTile";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import { useElevatedSettingValue } from "@framework/ElevatedSettings/hooks";
 import type { EnsembleQc } from "@framework/internal/QC/EnsembleQc";
-import type { QcCheckRealizationResult, QcCheckRuntime } from "@framework/internal/QC/QcCheck";
+import type { QcCheckRuntime } from "@framework/internal/QC/QcCheck";
 import { QcCheckRuntimeTopic } from "@framework/internal/QC/QcCheck";
+import type {
+    QcCheckMatrixCoordinate,
+    QcCheckRealizationResult,
+    QcCheckStepDefinition,
+    QcCheckStepMatrixEntry,
+    QcCheckStepMatrixRuntime,
+    QcCheckStepRuntime,
+} from "@framework/internal/QC/QcCheckStep";
+import { QcCheckStepGroupTopic, QcCheckStepTopic } from "@framework/internal/QC/QcCheckStep";
 import type { Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
@@ -54,6 +68,122 @@ function useIsAnyCheckRuntimeRunning(checkRuntimes: QcCheckRuntime[]): boolean {
     );
 }
 
+// Subscribes to every step's COORDINATES topic (fires when a step's matrix-coordinate entries are
+// added/removed) plus every *currently known* entry's own STATUS/RESULTS - shared by
+// `useHasAnyStepRun`/`useCheckOutcomeTone` below. An entry added *after* this subscribes won't have
+// its own later updates individually watched by this particular subscription, but that's fine for
+// both of those hooks: `CheckRuntimeContainer` already unconditionally subscribes to the check's own
+// STATUS topic, which is guaranteed to fire again once the check finishes running - by then every
+// entry has settled, and the next `getSnapshot()` call reads it fresh regardless of exactly which
+// topic fired.
+function subscribeToAllStepEntries(stepRuntimes: QcCheckStepRuntime[], onStoreChange: () => void): () => void {
+    const unsubscribeFuncs: (() => void)[] = [];
+    for (const stepRuntime of stepRuntimes) {
+        unsubscribeFuncs.push(
+            stepRuntime.getPublishSubscribeDelegate().subscribe(QcCheckStepGroupTopic.COORDINATES, onStoreChange),
+        );
+        for (const entry of stepRuntime.getEntries()) {
+            const delegate = entry.runtime.getPublishSubscribeDelegate();
+            unsubscribeFuncs.push(delegate.subscribe(QcCheckStepTopic.STATUS, onStoreChange));
+            unsubscribeFuncs.push(delegate.subscribe(QcCheckStepTopic.RESULTS, onStoreChange));
+        }
+    }
+    return () => {
+        unsubscribeFuncs.forEach((unsubscribe) => unsubscribe());
+    };
+}
+
+// True once at least one of the check's steps has any matrix entry that has been run at least once
+// - a check's own results now live on its steps' entries rather than on the check runtime itself.
+function useHasAnyStepRun(stepRuntimes: QcCheckStepRuntime[]): boolean {
+    return React.useSyncExternalStore(
+        (onStoreChange) => subscribeToAllStepEntries(stepRuntimes, onStoreChange),
+        () => stepRuntimes.some((stepRuntime) => stepRuntime.getEntries().some((entry) => entry.runtime.hasRun())),
+    );
+}
+
+type OutcomeTone = "success" | "warning" | "danger";
+
+// A check's overall outcome, once it's done running: green only if every requested realization
+// made it all the way through the last step as a success, red if none did, yellow for a mix. When
+// the last step is matrixed (e.g. one entry per selected grid), a realization only counts as a
+// check-level success if it succeeded in *every* one of the last step's entries - a realization
+// that failed anywhere along the way (an earlier step, or any one matrix coordinate of the last
+// step) never reappears as a success in all of the last step's entries, so this single check
+// already accounts for failures anywhere in the sequence. `null` while the check hasn't finished a
+// run yet (its last step hasn't run, e.g. cancelled partway through an earlier step).
+function useCheckOutcomeTone(checkRuntime: QcCheckRuntime, stepRuntimes: QcCheckStepRuntime[]): OutcomeTone | null {
+    return React.useSyncExternalStore(
+        (onStoreChange) => subscribeToAllStepEntries(stepRuntimes, onStoreChange),
+        () => {
+            const lastStepRuntime = stepRuntimes[stepRuntimes.length - 1];
+            const requestedRealizations = checkRuntime.getRequestedRealizations();
+            if (!lastStepRuntime || requestedRealizations.length === 0) {
+                return null;
+            }
+            const entries = lastStepRuntime.getEntries();
+            if (!entries.some((entry) => entry.runtime.hasRun())) {
+                return null;
+            }
+
+            let successCount = 0;
+            let failureCount = 0;
+            for (const realization of requestedRealizations) {
+                const succeededEverywhere = entries.every(
+                    (entry) => entry.runtime.getResults().get(realization)?.kind === "success",
+                );
+                if (succeededEverywhere) {
+                    successCount++;
+                } else {
+                    failureCount++;
+                }
+            }
+            if (failureCount === 0) {
+                return "success";
+            }
+            if (successCount === 0) {
+                return "danger";
+            }
+            return "warning";
+        },
+    );
+}
+
+// Flat tally across a set of results (e.g. every cell of every matrix coordinate of one step):
+// green only if every result succeeded, red if none did, yellow for a mix. Unlike
+// `useCheckOutcomeTone` (which requires a realization to succeed in *every* coordinate), this is
+// purely informational - "how much of this step's matrix failed" - so each cell counts on its own.
+function outcomeToneFromResults(results: Iterable<QcCheckRealizationResult<unknown>>): OutcomeTone {
+    let successCount = 0;
+    let failureCount = 0;
+    for (const result of results) {
+        if (result.kind === "success") {
+            successCount++;
+        } else {
+            failureCount++;
+        }
+    }
+    if (failureCount === 0) {
+        return "success";
+    }
+    if (successCount === 0) {
+        return "danger";
+    }
+    return "warning";
+}
+
+// Icon + color for a resolved (non-running, non-skipped, non-idle) outcome - shared by the check's
+// own header icon and each step's status icon so the two use the same traffic-light language.
+function OutcomeIcon(props: { tone: OutcomeTone }) {
+    if (props.tone === "danger") {
+        return <Cancel style={{ fontSize: 16 }} className="text-danger-subtle" />;
+    }
+    if (props.tone === "warning") {
+        return <Warning style={{ fontSize: 16 }} className="text-warning-subtle" />;
+    }
+    return <CheckCircle style={{ fontSize: 16 }} className="text-success-subtle" />;
+}
+
 export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
     const checkRuntimes = Array.from(props.ensembleQc.getCheckRuntimes().values());
     const ensemble = props.ensembleQc.getEnsemble();
@@ -65,9 +195,9 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
     const readableEnsembleName = ensemble.getCustomName() ?? ensemble.getDisplayName();
 
     return (
-        <div className={resolveClassNames("group outline-neutral-subtle cursor-pointer outline")}>
+        <div className={resolveClassNames("group outline-neutral-subtle outline")}>
             <div
-                className="bg-neutral gap-xs p-2xs flex items-center justify-center"
+                className="bg-neutral border-b-neutral-subtle gap-xs p-2xs flex cursor-pointer items-center justify-center border-b"
                 onClick={() => setExpanded((prev) => !prev)}
             >
                 {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
@@ -116,7 +246,8 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     const [showSettings, setShowSettings] = React.useState(false);
 
     // Params are staged locally while the settings view is open, and only committed into the
-    // runtime (via `setParams`) when the user clicks Run - there's no separate Apply step.
+    // runtime (via `setParams`) when the user clicks Run - there's no separate Apply step. Shared
+    // across every step of this check.
     const appliedParams = usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.PARAMS);
     const [stagedParams, setStagedParams] = React.useState(appliedParams);
 
@@ -131,18 +262,16 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 
     const [expanded, setExpanded] = React.useState(false);
 
-    // Re-renders whenever the runtime's results or running state change - see the
-    // `notifySubscribers` calls in `QcCheckRuntime.run()`/`cancel()`.
-    usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.RESULTS);
+    // Re-renders whenever the check's running state changes - see the `notifySubscribers` calls in
+    // `QcCheckRuntime.run()`/`cancel()`. Each step's own results/status are subscribed to
+    // individually by `StepBlock` below.
     usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.STATUS);
 
     const checkDefinition = checkRuntime.getCheckDefinition();
+    const stepRuntimes = checkRuntime.getStepRuntimes();
     const isRunning = checkRuntime.isRunning();
-    const results = checkRuntime.getResults();
-    const requestedRealizations = checkRuntime.getRequestedRealizations();
-    // Shared by template resolution and `onTemplateApplied` - both need this run's realizations and
-    // results, not the check in the abstract.
-    const templateContext = { realizations: requestedRealizations, results };
+    const hasResults = useHasAnyStepRun(stepRuntimes);
+    const outcomeTone = useCheckOutcomeTone(checkRuntime, stepRuntimes);
 
     function handleRunClick() {
         checkRuntime.setParams(stagedParams);
@@ -182,11 +311,10 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
     }
 
     function makeResultsContent() {
-        const hasResults = results.size > 0;
         // Not-yet-run and re-run both land here: settings + a Play button, plus (only when there
         // are existing results to fall back to) a Cancel button to back out without running again.
         // `!isRunning` takes priority so this auto-hides the moment a run is kicked off, in favor of
-        // the progress view below.
+        // the step-by-step progress view below.
         const showSettingsView = !isRunning && (showSettings || !hasResults);
 
         if (showSettingsView) {
@@ -215,22 +343,25 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
         }
 
         if (isRunning || hasResults) {
-            const templates = checkDefinition.templates?.(templateContext) ?? [];
-
             return (
                 <div className="p-2xs gap-2xs flex flex-col">
                     <CheckParamsList params={appliedParams} />
                     <Separator orientation="horizontal" />
-                    <RealizationSquares
-                        checkRuntime={checkRuntime}
-                        checkName={checkDefinition.name}
-                        realizations={realizations}
-                        results={results}
-                        isRunning={isRunning}
-                        requestedRealizations={requestedRealizations}
-                        selectedRealization={selectedRealization}
-                        onRealizationClick={handleRealizationClick}
-                    />
+                    <div className="gap-2xs flex flex-col">
+                        {stepRuntimes.map((stepRuntime, index) => (
+                            <React.Fragment key={stepRuntime.getStepDefinition().name}>
+                                {index > 0 && <Separator orientation="horizontal" />}
+                                <StepBlock
+                                    stepRuntime={stepRuntime}
+                                    realizations={realizations}
+                                    selectedRealization={selectedRealization}
+                                    onRealizationClick={handleRealizationClick}
+                                    onApplyTemplateClick={handleApplyTemplateClick}
+                                    isLastStep={index === stepRuntimes.length - 1}
+                                />
+                            </React.Fragment>
+                        ))}
+                    </div>
                     {!isRunning && (
                         <>
                             <Separator orientation="horizontal" />
@@ -239,28 +370,6 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                                     <Replay style={{ fontSize: 16 }} />
                                     Re-run
                                 </Button>
-                                {templates.length > 0 && (
-                                    <Menu.Root>
-                                        <Menu.Trigger>
-                                            <Button tone="accent" size="small" variant="contained">
-                                                <Troubleshoot style={{ fontSize: 16 }} />
-                                                Investigate
-                                            </Button>
-                                        </Menu.Trigger>
-                                        <Menu.Popup>
-                                            <Menu.Group>
-                                                <Menu.GroupLabel>Apply template</Menu.GroupLabel>
-                                                {templates.map((template) => (
-                                                    <Menu.Item
-                                                        key={template.name}
-                                                        text={template.name}
-                                                        onClick={() => handleApplyTemplateClick(template)}
-                                                    />
-                                                ))}
-                                            </Menu.Group>
-                                        </Menu.Popup>
-                                    </Menu.Root>
-                                )}
                             </div>
                         </>
                     )}
@@ -273,13 +382,19 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 
     return (
         <div className="flex flex-col">
-            <div className="gap-xs bg-neutral/50 flex items-center">
+            <div className="gap-xs bg-neutral/50 border-b-neutral-subtle flex items-center border-b">
                 <div
-                    className="font-bolder p-2xs text-body-sm gap-xs flex grow"
+                    className="font-bolder p-2xs text-body-sm gap-xs flex grow cursor-pointer"
                     onClick={() => setExpanded((prev) => !prev)}
                 >
                     {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
-                    {isRunning ? <CircularProgress size={16} /> : <FactCheck style={{ fontSize: 16 }} />}
+                    {isRunning ? (
+                        <CircularProgress size={16} />
+                    ) : outcomeTone ? (
+                        <OutcomeIcon tone={outcomeTone} />
+                    ) : (
+                        <FactCheck style={{ fontSize: 16 }} />
+                    )}
                     <span className="grow truncate">{checkDefinition.name}</span>
                 </div>
                 {isRunning && (
@@ -293,6 +408,241 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
             {expanded && (
                 <>
                     <div className="p-2xs">{makeResultsContent()}</div>
+                </>
+            )}
+        </div>
+    );
+}
+
+type MatrixEntriesAggregateStatus = {
+    isRunning: boolean;
+    hasRun: boolean;
+    // `true` only once every entry is skipped - a step with a mix of skipped/ran entries still has
+    // something to show, so it isn't treated as skipped overall.
+    skipped: boolean;
+    outcomeTone: OutcomeTone | null;
+};
+
+function computeMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntriesAggregateStatus {
+    const isRunning = entries.some((entry) => entry.runtime.isRunning());
+    const hasRun = entries.some((entry) => entry.runtime.hasRun());
+    const skipped = entries.length > 0 && entries.every((entry) => entry.runtime.isSkipped());
+    const outcomeTone =
+        hasRun && !isRunning && !skipped
+            ? outcomeToneFromResults(entries.flatMap((entry) => Array.from(entry.runtime.getResults().values())))
+            : null;
+    return { isRunning, hasRun, skipped, outcomeTone };
+}
+
+// Aggregates a step's current matrix entries into one status for the step's own header icon -
+// re-renders whenever any entry's own STATUS/RESULTS changes. Caches the computed aggregate
+// (invalidated only when a subscribed topic actually fires) since `useSyncExternalStore` requires
+// `getSnapshot` to return a referentially stable value when nothing has changed.
+function useMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntriesAggregateStatus {
+    const cacheRef = React.useRef<{ entries: QcCheckStepMatrixEntry[]; status: MatrixEntriesAggregateStatus } | null>(
+        null,
+    );
+
+    return React.useSyncExternalStore(
+        (onStoreChange) => {
+            const unsubscribeFuncs = entries.flatMap((entry) => {
+                const delegate = entry.runtime.getPublishSubscribeDelegate();
+                const invalidateAndNotify = () => {
+                    cacheRef.current = null;
+                    onStoreChange();
+                };
+                return [
+                    delegate.subscribe(QcCheckStepTopic.STATUS, invalidateAndNotify),
+                    delegate.subscribe(QcCheckStepTopic.RESULTS, invalidateAndNotify),
+                ];
+            });
+            return () => {
+                unsubscribeFuncs.forEach((unsubscribe) => unsubscribe());
+            };
+        },
+        () => {
+            if (!cacheRef.current || cacheRef.current.entries !== entries) {
+                cacheRef.current = { entries, status: computeMatrixEntriesStatus(entries) };
+            }
+            return cacheRef.current.status;
+        },
+    );
+}
+
+type StepBlockProps = {
+    stepRuntime: QcCheckStepRuntime;
+    realizations: readonly number[];
+    selectedRealization: number | null;
+    onRealizationClick: (realization: number) => void;
+    onApplyTemplateClick: (template: Template) => void;
+    // Only the last step's details are shown by default - earlier steps are collapsed to just
+    // their status, since the last step's outcome is what a passing/failing check ultimately comes
+    // down to. Any step can still be expanded on demand as soon as it has something to show (see
+    // `showBody` below) - not just once the whole check has finished running.
+    isLastStep: boolean;
+};
+
+// One step of a check's sequence, mirroring a GitHub Actions job's step list: its own status
+// (pending/running/skipped/done), and one `MatrixEntryBlock` per matrix-coordinate entry (just one,
+// unlabeled, for a plain non-matrixed step - see `QcCheckStepRuntime`).
+function StepBlock(props: StepBlockProps) {
+    const { stepRuntime, realizations, selectedRealization, onRealizationClick, onApplyTemplateClick, isLastStep } =
+        props;
+
+    const [expanded, setExpanded] = React.useState(isLastStep);
+
+    // Re-renders whenever this step's set of matrix-coordinate entries changes (rare - only on
+    // add/remove, see `QcCheckStepRuntime.reset`).
+    const entries = usePublishSubscribeTopicValue(stepRuntime, QcCheckStepGroupTopic.COORDINATES);
+    const { isRunning, hasRun, skipped, outcomeTone } = useMatrixEntriesStatus(entries);
+    // A step becomes expandable as soon as it's running or has something to show (`hasRun` is set
+    // the moment a step starts, before `isRunning` - see `QcCheckStepMatrixRuntime.run`) - not
+    // gated on the whole check having finished, so an earlier step's progress can be watched live
+    // while a later step is still running.
+    const showBody = expanded && hasRun;
+
+    const stepDefinition = stepRuntime.getStepDefinition();
+    // Only label each entry with its coordinate once there's more than one to tell apart - a
+    // single-grid matrixed step (or a plain non-matrixed one) renders exactly like today.
+    const showCoordinateLabels = entries.length > 1;
+
+    function statusIcon() {
+        if (isRunning) {
+            return <CircularProgress size={16} />;
+        }
+        if (skipped) {
+            return <Block style={{ fontSize: 16 }} className="text-neutral-subtle" />;
+        }
+        if (hasRun && outcomeTone) {
+            return <OutcomeIcon tone={outcomeTone} />;
+        }
+        return <RadioButtonUnchecked style={{ fontSize: 16 }} className="text-neutral-subtle" />;
+    }
+
+    return (
+        <div className="gap-2xs flex flex-col">
+            <div
+                className="gap-xs text-body-sm font-bolder flex cursor-pointer items-center"
+                onClick={() => setExpanded((prev) => !prev)}
+            >
+                {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
+                {statusIcon()}
+                <span>{stepDefinition.name}</span>
+            </div>
+            {showBody && (
+                <div className="gap-2xs pl-lg flex flex-col">
+                    {entries.map((entry) => (
+                        <MatrixEntryBlock
+                            key={entry.coordinate?.key ?? "single"}
+                            matrixRuntime={entry.runtime}
+                            coordinate={showCoordinateLabels ? entry.coordinate : null}
+                            checkName={
+                                showCoordinateLabels && entry.coordinate
+                                    ? `${stepDefinition.name} (${entry.coordinate.label})`
+                                    : stepDefinition.name
+                            }
+                            stepDefinition={stepDefinition}
+                            realizations={realizations}
+                            selectedRealization={selectedRealization}
+                            onRealizationClick={onRealizationClick}
+                            onApplyTemplateClick={onApplyTemplateClick}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+type MatrixEntryBlockProps = {
+    matrixRuntime: QcCheckStepMatrixRuntime;
+    // Non-`null` only when this entry's coordinate should be labeled (see `StepBlock`'s
+    // `showCoordinateLabels`).
+    coordinate: QcCheckMatrixCoordinate | null;
+    checkName: string;
+    stepDefinition: QcCheckStepDefinition;
+    realizations: readonly number[];
+    selectedRealization: number | null;
+    onRealizationClick: (realization: number) => void;
+    onApplyTemplateClick: (template: Template) => void;
+};
+
+// One matrix coordinate's own realization matrix - its own results, its own skipped/loading state,
+// its own "Investigate" menu - since a step's `TMetrics` (and thus its `resultComponent`/
+// `templates`) is its own, and each coordinate independently produces one full set of it.
+function MatrixEntryBlock(props: MatrixEntryBlockProps) {
+    const {
+        matrixRuntime,
+        coordinate,
+        checkName,
+        stepDefinition,
+        realizations,
+        selectedRealization,
+        onRealizationClick,
+        onApplyTemplateClick,
+    } = props;
+
+    usePublishSubscribeTopicValue(matrixRuntime, QcCheckStepTopic.RESULTS);
+    usePublishSubscribeTopicValue(matrixRuntime, QcCheckStepTopic.STATUS);
+
+    const isRunning = matrixRuntime.isRunning();
+    const hasRun = matrixRuntime.hasRun();
+    const skipped = matrixRuntime.isSkipped();
+    const results = matrixRuntime.getResults();
+    const requestedRealizations = matrixRuntime.getRequestedRealizations();
+    // Shared by template resolution and `onApplyTemplateClick` - both need this coordinate's own
+    // realizations and results, not the step in the abstract.
+    const templateContext = { realizations: requestedRealizations, results };
+    const templates = !isRunning && hasRun && !skipped ? (stepDefinition.templates?.(templateContext) ?? []) : [];
+
+    if (!hasRun && !skipped) {
+        return null;
+    }
+
+    return (
+        <div className="gap-2xs flex flex-col">
+            {coordinate && <span className="text-neutral-subtle text-body-xs font-bolder">{coordinate.label}</span>}
+            {skipped && (
+                <span className="text-neutral-subtle text-body-sm">
+                    Skipped - none of the previous step&apos;s realizations succeeded.
+                </span>
+            )}
+            {!skipped && (
+                <>
+                    <RealizationSquares
+                        matrixRuntime={matrixRuntime}
+                        checkName={checkName}
+                        realizations={realizations}
+                        results={results}
+                        isRunning={isRunning}
+                        requestedRealizations={requestedRealizations}
+                        selectedRealization={selectedRealization}
+                        onRealizationClick={onRealizationClick}
+                    />
+                    {templates.length > 0 && (
+                        <div className="flex items-center justify-end">
+                            <Menu.Root>
+                                <Menu.Trigger>
+                                    <Button tone="accent" size="small" variant="contained">
+                                        <Troubleshoot style={{ fontSize: 16 }} />
+                                        Investigate
+                                    </Button>
+                                </Menu.Trigger>
+                                <Menu.Popup>
+                                    <Menu.Group>
+                                        <Menu.GroupLabel>Apply template</Menu.GroupLabel>
+                                        {templates.map((template) => (
+                                            <Menu.Item
+                                                key={template.name}
+                                                text={template.name}
+                                                onClick={() => onApplyTemplateClick(template)}
+                                            />
+                                        ))}
+                                    </Menu.Group>
+                                </Menu.Popup>
+                            </Menu.Root>
+                        </div>
+                    )}
                 </>
             )}
         </div>
@@ -335,7 +685,15 @@ function formatParamValue(value: unknown): string {
     if (typeof value === "string") {
         return value;
     }
-    return JSON.stringify(value);
+    if (Array.isArray(value)) {
+        // E.g. a multi-select param like the hydrostatic equilibrium check's `gridNames` - a
+        // comma-separated list reads far better than `JSON.stringify`'s `["A","B"]`.
+        return value.length === 0 ? "Not set" : value.map(formatParamValue).join(", ");
+    }
+    if (typeof value === "object") {
+        return JSON.stringify(value);
+    }
+    return String(value);
 }
 
 type CheckSettingsProps = {
@@ -371,10 +729,10 @@ const REALIZATION_STATUS_TONE_TO_CLASSNAME: Record<RealizationStatusTone, string
 };
 
 type RealizationSquaresProps = {
-    checkRuntime: QcCheckRuntime;
+    matrixRuntime: QcCheckStepMatrixRuntime;
     checkName: string;
     realizations: readonly number[];
-    results: Map<number, QcCheckRealizationResult<unknown>>;
+    results: ReadonlyMap<number, QcCheckRealizationResult<unknown>>;
     isRunning: boolean;
     requestedRealizations: readonly number[];
     onRealizationClick: (realization: number) => void;
@@ -395,16 +753,16 @@ const LOADING_ANIMATION_STAGGER_COUNT = 5;
 const LOADING_ANIMATION_STAGGER_STEP_SECS = 0.15;
 
 // One small square per realization, colored by outcome. Realizations that are part of the
-// currently running check but have not reported a result yet show a pulsing skeleton square
-// instead of a static one.
+// currently running matrix coordinate but have not reported a result yet show a pulsing skeleton
+// square instead of a static one.
 function RealizationSquares(props: RealizationSquaresProps) {
-    const { checkRuntime, checkName, realizations, results, isRunning, requestedRealizations, onRealizationClick } =
+    const { matrixRuntime, checkName, realizations, results, isRunning, requestedRealizations, onRealizationClick } =
         props;
 
     const qcRealizationPopover = useQcRealizationPopover();
-    // Anchors the popover to the whole realization-squares grid for this check, rather than to an
-    // individual square or row - anchoring to a single row overlapped neighboring rows since they
-    // sit so close together.
+    // Anchors the popover to the whole realization-squares grid for this matrix coordinate, rather
+    // than to an individual square or row - anchoring to a single row overlapped neighboring rows
+    // since they sit so close together.
     const containerRef = React.useRef<HTMLDivElement>(null);
 
     if (realizations.length === 0) {
@@ -422,7 +780,7 @@ function RealizationSquares(props: RealizationSquaresProps) {
         if (!containerRef.current) {
             return;
         }
-        qcRealizationPopover.select({ checkRuntime, checkName, realization, anchorElement: containerRef.current });
+        qcRealizationPopover.select({ matrixRuntime, checkName, realization, anchorElement: containerRef.current });
         onRealizationClick(realization);
     }
 

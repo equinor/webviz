@@ -1,12 +1,12 @@
 import React from "react";
 
-import type { QcCheckRuntime } from "@framework/internal/QC/QcCheck";
-import { QcCheckRuntimeTopic } from "@framework/internal/QC/QcCheck";
+import type { QcCheckStepMatrixRuntime } from "@framework/internal/QC/QcCheckStep";
+import { QcCheckStepTopic } from "@framework/internal/QC/QcCheckStep";
 import { Popover } from "@lib/components/Popover";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type QcRealizationSelection = {
-    checkRuntime: QcCheckRuntime;
+    matrixRuntime: QcCheckStepMatrixRuntime;
     checkName: string;
     realization: number;
     // The clicked realization's own check row - the popover anchors here (rather than to the
@@ -65,17 +65,18 @@ export function QcRealizationPopoverProvider(props: QcRealizationPopoverProvider
 }
 
 // A dedicated component (rather than inlined) so its topic subscriptions only exist while a
-// realization is actually selected - it re-subscribes to the *selected* check's own runtime, so the
-// popover's content keeps updating live if that check is still running when opened.
+// realization is actually selected - it re-subscribes to the *selected* matrix coordinate's own
+// runtime, so the popover's content keeps updating live if that coordinate is still running when
+// opened.
 function QcRealizationResultDetails(props: { selection: QcRealizationSelection }): React.ReactNode {
-    const { checkRuntime, realization } = props.selection;
+    const { matrixRuntime, realization } = props.selection;
 
-    usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.RESULTS);
-    usePublishSubscribeTopicValue(checkRuntime, QcCheckRuntimeTopic.STATUS);
+    usePublishSubscribeTopicValue(matrixRuntime, QcCheckStepTopic.RESULTS);
+    usePublishSubscribeTopicValue(matrixRuntime, QcCheckStepTopic.STATUS);
 
-    const result = checkRuntime.getResults().get(realization);
-    const isRunning = checkRuntime.isRunning();
-    const isLoading = !result && isRunning && checkRuntime.getRequestedRealizations().includes(realization);
+    const result = matrixRuntime.getResults().get(realization);
+    const isRunning = matrixRuntime.isRunning();
+    const isLoading = !result && isRunning && matrixRuntime.getRequestedRealizations().includes(realization);
 
     if (isLoading) {
         return <span className="text-neutral-subtle text-body-sm">Running…</span>;
@@ -87,7 +88,7 @@ function QcRealizationResultDetails(props: { selection: QcRealizationSelection }
         return <span className="text-danger-subtle text-body-sm">{result.errorMessage}</span>;
     }
 
-    const ResultComponent = checkRuntime.getCheckDefinition().resultComponent;
+    const ResultComponent = matrixRuntime.getStepDefinition().resultComponent;
     if (ResultComponent) {
         return <ResultComponent metrics={result.metrics} />;
     }

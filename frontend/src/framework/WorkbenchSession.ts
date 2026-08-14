@@ -5,11 +5,11 @@ import { usePublishSubscribeTopicValue, type PublishSubscribe } from "@lib/utils
 import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import type { EnsembleSet } from "./EnsembleSet";
 import type { EnsembleQc } from "./internal/QC/EnsembleQc";
+import type { EnsembleQcSet } from "./internal/QC/EnsembleQcSet";
 import type { WorkbenchSessionTopicPayloads } from "./internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { RealizationFilterSet } from "./RealizationFilterSet";
 import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import type { UserCreatedItems } from "./UserCreatedItems";
-import { EnsembleQcSet } from "./internal/QC/EnsembleQcSet";
 
 export enum WorkbenchSessionTopic {
     ENSEMBLE_SET = "EnsembleSet",
@@ -30,7 +30,8 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
 }
 
 export function useEnsembleQcSet(workbenchSession: WorkbenchSession): EnsembleQc[] {
-    return usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_QC_SET);
+    const { qcSet } = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_QC_SET);
+    return qcSet.getEnsembleQcsArray();
 }
 
 export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {

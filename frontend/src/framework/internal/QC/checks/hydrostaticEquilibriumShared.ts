@@ -2,6 +2,7 @@ import { isAxiosError } from "axios";
 
 import type { Grid3dInfo_api } from "@api";
 import { getGridModelsInfoOptions } from "@api";
+import type { QcCheckMatrixCoordinate } from "@framework/internal/QC/QcCheckStep";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
@@ -53,19 +54,6 @@ export function resolveHydrostaticTimeSteps(gridInfo: Grid3dInfo_api): ResolvedH
     return { t0Iso: sortedIsoDates[0], t1Iso: sortedIsoDates[1] };
 }
 
-// Picks the grid to run the hydrostatic-equilibrium checks against: the requested grid name if
-// given and present, otherwise the first grid returned for the ensemble (mirrors `ModelQc`'s old
-// `selectedGridNameAtom` fixup, which defaulted to the first available grid name).
-export function resolveGridName(
-    gridModelsInfo: readonly Grid3dInfo_api[],
-    requestedGridName: string | null,
-): string | null {
-    if (requestedGridName) {
-        return gridModelsInfo.find((info) => info.grid_name === requestedGridName)?.grid_name ?? null;
-    }
-    return gridModelsInfo[0]?.grid_name ?? null;
-}
-
 // The list of 3D grid models for a case/ensemble essentially never changes mid-session, so the
 // settings component's picker (fetched on expand) and a check's own resolution (fetched on run)
 // can safely share one cached response instead of each hitting the backend independently.
@@ -99,11 +87,20 @@ export function getGridModelsInfoQueryOptions(ensemble: RegularEnsemble, referen
 }
 
 export type HydrostaticEquilibriumCheckParams = {
-    // Grid to run the check against. `null` auto-resolves to the first available grid for the
-    // ensemble (mirrors `ModelQc`'s previous default-grid behavior).
-    gridName: string | null;
+    // Grids to run the check against - one matrix coordinate (and thus one independent realization
+    // matrix per step) per grid, see `hydrostaticGridMatrixCoordinates`. Empty until
+    // `HydrostaticEquilibriumCheckSettings` seeds it with every available grid once the grid list
+    // has loaded (mirrors `ModelQc`'s previous default-grid behavior, extended to "default to all").
+    gridNames: string[];
 };
 
 export const DEFAULT_HYDROSTATIC_EQUILIBRIUM_CHECK_PARAMS: HydrostaticEquilibriumCheckParams = {
-    gridName: null,
+    gridNames: [],
 };
+
+// Shared by both hydrostatic-equilibrium steps so their matrix coordinates always derive from the
+// exact same params the exact same way, guaranteeing their coordinate keys line up one-to-one -
+// see `QcCheckStepDefinition.matrixCoordinates`.
+export function hydrostaticGridMatrixCoordinates(params: HydrostaticEquilibriumCheckParams): QcCheckMatrixCoordinate[] {
+    return params.gridNames.map((gridName) => ({ key: gridName, label: gridName }));
+}

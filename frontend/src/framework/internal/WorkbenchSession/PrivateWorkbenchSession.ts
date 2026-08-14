@@ -20,7 +20,7 @@ import {
     type EnsembleLoadingWarningInfoMap,
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
-import type { EnsembleQc } from "../QC/EnsembleQc";
+import { EnsembleQcSet } from "../QC/EnsembleQcSet";
 
 import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
 import {
@@ -28,7 +28,6 @@ import {
     WorkbenchSessionSource,
     type WorkbenchSessionDataContainer,
 } from "./utils/WorkbenchSessionDataContainer";
-import { EnsembleQcSet } from "../QC/EnsembleQcSet";
 
 export type SerializedRegularEnsemble = {
     ensembleIdent: string;
@@ -71,7 +70,7 @@ export enum PrivateWorkbenchSessionTopic {
 
 export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
-    [WorkbenchSessionTopic.ENSEMBLE_QC_SET]: EnsembleQc[];
+    [WorkbenchSessionTopic.ENSEMBLE_QC_SET]: { qcSet: EnsembleQcSet };
     [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard | null;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
@@ -299,6 +298,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleQcSet.synchronizeWithEnsembleSet(set, this._queryClient);
         this._ensembleSet = set;
+        // `_ensembleQcSet` is mutated in place by `synchronizeWithEnsembleSet` above, so its own
+        // reference never changes - `_wrappedEnsembleQcSet` has to be replaced with a fresh object
+        // here too (not just inside `notifyAboutEnsembleQcSetChange`), or `useSyncExternalStore`-based
+        // subscribers (`usePublishSubscribeTopicValue`) see the same snapshot reference on the
+        // following `getSnapshot()` call and skip re-rendering even though we just notified them.
+        this._wrappedEnsembleQcSet = { qcSet: this._ensembleQcSet };
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
