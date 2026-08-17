@@ -49,7 +49,7 @@ test.describe("Simulation Time Series module", () => {
         await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
         await pace(page);
 
-        await smoothClick(page, page.getByLabel("Asset"));
+        await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
         await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
         await pace(page);
 
