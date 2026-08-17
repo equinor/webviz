@@ -123,17 +123,28 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     }, []);
 
     const handlePickingInfoChange = React.useCallback(
-        function handlePickingInfoChange(newPickingInfoPerView: Record<string, PickingInfo[]>) {
-            const coordPerView: Record<string, [number, number, number][]> = {};
+        function handlePickingInfoChange(
+            newPickingInfoPerView: Record<string, PickingInfo[]>,
+            activeViewport?: string,
+        ) {
+            const coordsPerView: Record<string, [number, number, number][]> = {};
             for (const [viewId, picks] of Object.entries(newPickingInfoPerView)) {
-                coordPerView[viewId] = picks
+                coordsPerView[viewId] = picks
                     .map((pick) => pick.coordinate)
                     .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3)
                     .map((coord): [number, number, number] => [coord[0], coord[1], coord[2]]);
             }
-            setUnscaledCoordinatesPerView(coordPerView);
+            setUnscaledCoordinatesPerView(coordsPerView);
 
-            const allPickingInfo = Object.values(newPickingInfoPerView).flat();
+            let allPickingInfo: PickingInfo[];
+
+            // Ensure picks in the hovered viewport is prioritized
+            if (activeViewport) {
+                const { [activeViewport]: hoveredPicks, ...otherPicks } = newPickingInfoPerView;
+                allPickingInfo = [...hoveredPicks, ...Object.values(otherPicks).flat()];
+            } else {
+                allPickingInfo = Object.values(newPickingInfoPerView).flat();
+            }
 
             const hoverData = allPickingInfo.reduce<Partial<HoverData>>((acc, info) => {
                 if (!info.layer) return acc;
@@ -149,7 +160,8 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
 
                 const hoverData = transformationFunc(info);
 
-                return { ...acc, ...hoverData };
+                // ! Acc should override here to ensure that the first (aka, directly hovered and then closest) hovered data is being used
+                return { ...hoverData, ...acc };
             }, {});
 
             publishHoverValues(hoverData);

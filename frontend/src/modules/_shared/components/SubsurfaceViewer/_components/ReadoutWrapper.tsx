@@ -49,7 +49,7 @@ export type ReadoutWrapperProps = {
     children?: React.ReactNode;
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
-    onPickingInfoChange?: (pickingInfoPerView: PickingInfoPerView) => void;
+    onPickingInfoChange?: (pickingInfoPerView: PickingInfoPerView, activeViewport?: string) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
@@ -236,7 +236,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             onViewerHover?.(event);
             onViewportHover?.(hoveredViewPort);
-            onPickingInfoChange?.(updatedPickingInfoPerView);
+            onPickingInfoChange?.(updatedPickingInfoPerView, hoveredViewPort.id);
 
             // Now, initiate debounce for picking across all viewports
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
@@ -293,7 +293,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
-            onPickingInfoChange?.(newPickInfoDict);
+            onPickingInfoChange?.(newPickInfoDict, hoveredViewPort.id);
         },
         [
             collectReadoutInformationFromAllViewports,
