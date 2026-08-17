@@ -97,27 +97,29 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
     return args;
 }
 
+/** Mux one folder's clips into its video. Returns true on success, false on any failure. */
 function narrateFolder(dir) {
     const manifestPath = join(dir, MANIFEST_NAME);
     const clips = JSON.parse(readFileSync(manifestPath, "utf-8")).clips ?? [];
     if (clips.length === 0) {
-        return;
+        return true;
     }
 
     const videoPath = findSourceVideo(dir);
     if (!videoPath) {
-        console.warn(`  [narration] No source video found in ${dir}; skipping.`);
-        return;
+        console.error(`  [narration] No source video found in ${dir}.`);
+        return false;
     }
 
     const outputPath = videoPath.replace(/\.webm$/, NARRATED_SUFFIX);
     const args = buildFfmpegArgs(videoPath, clips, outputPath);
     const result = spawnSync("ffmpeg", args, { encoding: "utf-8" });
-    if (result.status !== 0) {
+    if (result.error || result.status !== 0) {
         console.error(`  [narration] ffmpeg failed for ${videoPath}:\n${result.stderr ?? result.error}`);
-        return;
+        return false;
     }
     console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s)).`);
+    return true;
 }
 
 function main() {
@@ -130,16 +132,21 @@ function main() {
     }
 
     if (!ffmpegAvailable()) {
-        console.warn(
-            "[narration] ffmpeg not found on PATH; skipping voiceover muxing. " +
-                "Install ffmpeg to produce narrated videos.",
-        );
+        console.error("[narration] ffmpeg not found on PATH; cannot mux voiceover into the recordings.");
+        process.exitCode = 1;
         return;
     }
 
     console.log(`[narration] Muxing voiceover into ${manifestDirs.length} recording(s).`);
+    let failures = 0;
     for (const dir of manifestDirs) {
-        narrateFolder(dir);
+        if (!narrateFolder(dir)) {
+            failures += 1;
+        }
+    }
+    if (failures > 0) {
+        console.error(`[narration] ${failures} of ${manifestDirs.length} recording(s) failed to mux.`);
+        process.exitCode = 1;
     }
 }
 

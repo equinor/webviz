@@ -17,13 +17,17 @@ async function globalTeardown(): Promise<void> {
 
     const scriptPath = resolve(currentDir, "../support/add-narration.mjs");
     const result = spawnSync(process.execPath, [scriptPath], { stdio: "inherit" });
-    if (result.status !== 0) {
-        // Muxing is a post-processing nicety; never fail the whole run over it.
-        console.warn(`Narration muxing exited with status ${result.status}.`);
-    }
 
     // Keep the persisted audio cache bounded so orphaned clips can't accumulate across runs.
     pruneNarrationCache();
+
+    // Fail the run on a muxing error so a later upload step can't publish silent/incomplete videos.
+    if (result.error) {
+        throw result.error;
+    }
+    if (result.status !== 0) {
+        throw new Error(`Narration muxing failed (exit code ${result.status}); recordings may be silent or incomplete.`);
+    }
 }
 
 export default globalTeardown;
