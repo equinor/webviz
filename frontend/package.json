@@ -74,7 +74,6 @@
         "jotai-tanstack-query": "~0.11.0",
         "list": "^2.0.19",
         "lodash-es": "^4.18.1",
-        "npm": "^11.19.0",
         "pixi.js": "^8.19.0",
         "plotly.js": "^3.6.0",
         "rbush": "^4.0.1",
