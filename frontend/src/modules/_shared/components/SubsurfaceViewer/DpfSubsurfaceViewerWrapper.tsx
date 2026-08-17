@@ -24,8 +24,8 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/t
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
 import type { LayerTransformationLookupMap } from "../../utils/subsurfaceViewer/hoverTransformations";
 import {
-    getWellboreData,
-    getWorldPosition,
+    transformToWellboreHoverData,
+    transformToWorldPosHoverData,
     makeHoverTransformationLookup,
 } from "../../utils/subsurfaceViewer/hoverTransformations";
 
@@ -77,9 +77,9 @@ export type DpfSubsurfaceViewerWrapperProps = {
 };
 
 const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
-    [AdjustedWellsLayer, getWellboreData],
-    [MapLayer, getWorldPosition],
-    [Grid3DLayer, getWorldPosition],
+    [AdjustedWellsLayer, transformToWellboreHoverData],
+    [MapLayer, transformToWorldPosHoverData],
+    [Grid3DLayer, transformToWorldPosHoverData],
 );
 
 export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {

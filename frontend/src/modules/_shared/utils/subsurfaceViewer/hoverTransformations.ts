@@ -25,7 +25,9 @@ export function makeHoverTransformationLookup(
     return new Map([...hoverTransformations]);
 }
 
-export function getWellboreData(wellInfo: LayerPickInfoWithReadout<ExtendedWellFeature>): Partial<HoverData> {
+export function transformToWellboreHoverData(
+    wellInfo: LayerPickInfoWithReadout<ExtendedWellFeature>,
+): Partial<HoverData> {
     const wellFeature = getWellFeatureFromSubLayerData(wellInfo);
 
     const mdProperty = wellInfo?.readout?.properties?.find((prop) => prop.name === "MD");
@@ -41,7 +43,7 @@ export function getWellboreData(wellInfo: LayerPickInfoWithReadout<ExtendedWellF
     };
 }
 
-export function getWorldPosition(info: PickingInfo): Partial<HoverData> {
+export function transformToWorldPosHoverData(info: PickingInfo): Partial<HoverData> {
     if (!info.coordinate) return {};
 
     const [x, y, z] = info.coordinate;
