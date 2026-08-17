@@ -34,11 +34,11 @@ export class DeckGlPlugin {
     }
 
     protected requestDisablePanning() {
-        this._manager.disablePanning();
+        this._manager.disableDragInteraction();
     }
 
     protected requestEnablePanning() {
-        this._manager.enablePanning();
+        this._manager.enableDragInteraction();
     }
 
     protected getFirstLayerUnderCursorInfo(x: number, y: number): PickingInfo | undefined {
@@ -106,6 +106,8 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _verticalScale: number = 1;
     private _suppressingReadoutPlugins = new Set<DeckGlPlugin>();
 
+    private _dragInteractionEnabled: boolean = true;
+
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
         this.addKeyboardEventListeners();
@@ -170,30 +172,18 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
     }
 
-    disablePanning() {
-        if (!this._ref) {
-            return;
-        }
+    disableDragInteraction() {
+        if (!this._dragInteractionEnabled) return;
 
-        this._ref.deck?.setProps({
-            controller: {
-                dragPan: false,
-                dragRotate: false,
-            },
-        });
+        this._dragInteractionEnabled = false;
+        this.redraw();
     }
 
-    enablePanning() {
-        if (!this._ref) {
-            return;
-        }
+    enableDragInteraction() {
+        if (this._dragInteractionEnabled) return;
 
-        this._ref.deck?.setProps({
-            controller: {
-                dragRotate: true,
-                dragPan: true,
-            },
-        });
+        this._dragInteractionEnabled = true;
+        this.redraw();
     }
 
     getDeck() {
@@ -407,6 +397,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 viewports: (props.views?.viewports ?? []).map((viewport) => ({
                     ...viewport,
                     layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
+                    controller: {
+                        ...viewport.controller,
+                        dragRotate: this._dragInteractionEnabled,
+                        dragPan: this._dragInteractionEnabled,
+                    },
                 })),
                 layout: props.views?.layout ?? [1, 1],
             },
@@ -414,7 +409,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     beforeDestroy() {
-        this.enablePanning();
+        this.enableDragInteraction();
         this.maybeRemoveKeyboardEventListeners();
     }
 }
