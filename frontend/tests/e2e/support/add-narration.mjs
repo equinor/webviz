@@ -6,7 +6,7 @@
 // at its recorded timestamp with ffmpeg and writes a `*.narrated.webm` alongside the silent original.
 //
 // Run via the Playwright global teardown (tests/e2e/setup/globalTeardown.ts) or directly:
-//   node scripts/add-narration.mjs [testResultsDir]
+//   node tests/e2e/support/add-narration.mjs [testResultsDir]
 
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -14,7 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const DEFAULT_RESULTS_DIR = resolve(scriptDir, "../test-results");
+const DEFAULT_RESULTS_DIR = resolve(scriptDir, "../../../test-results");
 const MANIFEST_NAME = "narration.json";
 const NARRATED_SUFFIX = ".narrated.webm";
 
@@ -42,19 +42,26 @@ function findSourceVideo(dir) {
 
 /** Build the ffmpeg argument list that overlays the delayed clips onto the video. */
 function buildFfmpegArgs(videoPath, clips, outputPath) {
-    const args = ["-y", "-i", videoPath];
+    // Trim the video's blank/loading lead-in by starting at the first narration clip.
+    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
+
+    const args = ["-y"];
+    if (trimStartMs > 0) {
+        args.push("-ss", (trimStartMs / 1000).toFixed(3));
+    }
+    args.push("-i", videoPath);
     for (const clip of clips) {
         args.push("-i", join(dirname(videoPath), clip.file));
     }
 
-    // Delay each clip's audio to its start time, then mix them into a single track. normalize=0
-    // keeps each clip at full volume; dropout_transition=0 avoids volume ramps as clips end.
+    // Delay each clip's audio to its start time (relative to the trimmed video), then mix them into
+    // a single track. normalize=0 keeps each clip at full volume; dropout_transition=0 avoids ramps.
     const filters = [];
     const mixLabels = [];
     clips.forEach((clip, index) => {
         const inputIndex = index + 1; // 0 is the video
         const label = `a${index}`;
-        const delayMs = Math.max(0, Math.round(clip.startMs));
+        const delayMs = Math.max(0, Math.round(clip.startMs - trimStartMs));
         filters.push(`[${inputIndex}:a]adelay=${delayMs}:all=1[${label}]`);
         mixLabels.push(`[${label}]`);
     });
