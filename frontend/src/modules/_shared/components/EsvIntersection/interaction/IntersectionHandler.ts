@@ -116,18 +116,25 @@ export class IntersectionHandler {
         return curtain.getArcLength(1 - nearestPosition.u) + referenceSystem.offset;
     }
 
-    private handleMouseMove(event: OverlayMouseMoveEvent<Controller>) {
-        const { x, y } = event;
+    /**
+     * Computes intersections for an arbitrary reference-system point, using the given screen
+     * point as the center for threshold-distance checks. Shared by real mouse-driven hover
+     * (where the screen point is the actual cursor position) and externally-supplied positions
+     * (e.g. a synced hover from another view), where the screen point is the projection of the
+     * reference-system point in this view's own scale.
+     */
+    private calcIntersectionsAtPoint(
+        referenceSystemCoordinates: number[],
+        screenPoint: { x: number; y: number },
+    ): Intersection[] {
         const { xScale, yScale } = this._controller.currentStateAsEvent;
-
-        const referenceSystemCoordinates = [xScale.invert(x), yScale.invert(y)];
 
         const intersections: Intersection[] = [];
 
         const calcDistance = (point: number[]): number => {
             const x1 = xScale(point[0]);
             const y1 = yScale(point[1]);
-            const distance = Math.sqrt(Math.pow(x1 - x, 2) + Math.pow(y1 - y, 2));
+            const distance = Math.sqrt(Math.pow(x1 - screenPoint.x, 2) + Math.pow(y1 - screenPoint.y, 2));
             return distance;
         };
 
@@ -138,6 +145,28 @@ export class IntersectionHandler {
                 intersections.push({ id, item: intersectionWithMd });
             }
         }
+
+        return intersections;
+    }
+
+    /**
+     * Computes intersections at a reference-system point supplied from outside this view (e.g. a
+     * position synced from another, same-fence view via hover). Pure/read-only - unlike
+     * handleMouseMove, it does not update _previousIntersections or publish INTERSECTION.
+     */
+    calcIntersectionsAtReferenceSystemPoint(referenceSystemCoordinates: number[]): Intersection[] {
+        const { xScale, yScale } = this._controller.currentStateAsEvent;
+        const screenPoint = { x: xScale(referenceSystemCoordinates[0]), y: yScale(referenceSystemCoordinates[1]) };
+        return this.calcIntersectionsAtPoint(referenceSystemCoordinates, screenPoint);
+    }
+
+    private handleMouseMove(event: OverlayMouseMoveEvent<Controller>) {
+        const { x, y } = event;
+        const { xScale, yScale } = this._controller.currentStateAsEvent;
+
+        const referenceSystemCoordinates = [xScale.invert(x), yScale.invert(y)];
+
+        const intersections = this.calcIntersectionsAtPoint(referenceSystemCoordinates, { x, y });
 
         if (isEqual(intersections, this._previousIntersections)) {
             return;
