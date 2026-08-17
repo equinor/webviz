@@ -85,9 +85,6 @@
         "wonka": "^6.3.4"
     },
     "overrides": {
-        "@playwright/experimental-ct-react": {
-            "vite": "$vite"
-        },
         "@hey-api/openapi-ts": {
             "@hey-api/json-schema-ref-parser": {
                 "js-yaml": "^4.3.0"
@@ -97,12 +94,17 @@
             "ajv": {
                 "fast-uri": "^3.1.3"
             }
+        },
+        "@equinor/eds-core-react": {
+            "styled-components": {
+                "postcss": "^8.5.25"
+            }
         }
     },
     "devDependencies": {
         "@hey-api/openapi-ts": "~0.99.0",
-        "@playwright/experimental-ct-react": "~1.61.1",
-        "@playwright/test": "~1.61.1",
+        "@playwright/experimental-ct-react": "~1.62.1",
+        "@playwright/test": "~1.62.1",
         "@rolldown/plugin-babel": "^0.2.3",
         "@storybook/addon-docs": "^10.5.5",
         "@storybook/react-vite": "^10.5.5",
@@ -136,7 +138,7 @@
         "tailwindcss": "^4.3.1",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.25.0",
-        "vite": "^8.1.0",
+        "vite": "^8.2.0",
         "vite-plugin-checker": "^0.14.4",
         "vite-plugin-glsl": "^1.3.1",
         "vitest": "^4.1.9"
