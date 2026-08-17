@@ -85,10 +85,8 @@
         "wonka": "^6.3.4"
     },
     "overrides": {
-        "@equinor/eds-core-react": {
-            "styled-components": {
-                "postcss": "^8.5.26"
-            }
+        "styled-components": {
+            "postcss": "^8.5.26"
         },
         "@hey-api/openapi-ts": {
             "@hey-api/json-schema-ref-parser": {
