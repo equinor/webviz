@@ -12,7 +12,11 @@ from webviz_services.user_session_manager.user_session_manager import UserCompon
 from webviz_services.user_session_manager.user_session_manager import _USER_SESSION_DEFS
 from webviz_services.user_session_manager._radix_helpers import RadixResourceRequests, RadixJobApi
 from webviz_services.user_session_manager._user_session_directory import UserSessionDirectory
-from webviz_services.user_grid3d_service.user_grid3d_service import UserGrid3dService, IJKIndexFilter
+from webviz_services.user_grid3d_service.user_grid3d_service import (
+    UserGrid3dService,
+    IJKIndexFilter,
+    SinglePropertyTime,
+)
 from webviz_services.service_exceptions import Service, ServiceUnavailableError, ServiceRequestError
 from webviz_services.utils.otel_span_tracing import start_otel_span_async
 from webviz_services.utils.task_meta_tracker import get_task_meta_tracker_for_user
@@ -275,7 +279,7 @@ async def get_ri_surf(
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     await grid_service.get_grid_geometry_async(ensemble_name, realization, grid_name, ijk_index_filter)
     await grid_service.get_mapped_grid_properties_async(
-        ensemble_name, realization, grid_name, property_name, None, ijk_index_filter
+        ensemble_name, realization, grid_name, property_name, SinglePropertyTime(), ijk_index_filter
     )
 
     return "OK"
@@ -310,7 +314,7 @@ async def get_ri_isect(
 
     grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
     await grid_service.get_polyline_intersection_async(
-        ensemble_name, realization, grid_name, property_name, None, xy_arr
+        ensemble_name, realization, grid_name, property_name, SinglePropertyTime(), xy_arr
     )
 
     return "OK"

@@ -1,9 +1,13 @@
 import { isEqual } from "lodash-es";
 
-import { getGridModelsInfoOptions, postGetPolylineIntersectionOptions } from "@api";
+import {
+    getGridModelsInfoOptions,
+    postGetPolylineIntersectionOptions,
+    postGetPolylineIntersectionTimeDiffOptions,
+} from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
-import { sortTimeOrIntervalArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
+import { TimeType } from "@modules/_shared/DataProviderFramework/settings/implementations/TimeTypeSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { PolylineIntersection_trans } from "@modules/_shared/Intersection/gridIntersectionTransform";
 import { transformPolylineIntersection } from "@modules/_shared/Intersection/gridIntersectionTransform";
@@ -16,6 +20,7 @@ import type {
 } from "../../interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
+import { getAvailableTimeTypes, makeGridPropertyTimeInfo } from "../dependencyFunctions/gridPropertyTimeFunctions";
 import {
     createIntersectionPolylineWithSectionLengthsForField,
     fetchWellboreHeaders,
@@ -32,7 +37,10 @@ const intersectionRealizationGridSettings = [
     Setting.REALIZATION,
     Setting.GRID_NAME,
     Setting.ATTRIBUTE,
-    Setting.TIME_OR_INTERVAL,
+    Setting.TIME_TYPE,
+    Setting.TIME_POINT,
+    Setting.TIME_INTERVAL,
+    Setting.TIME_POINT_PAIR,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
@@ -72,7 +80,10 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             !isEqual(prevSettings.realization, newSettings.realization) ||
             !isEqual(prevSettings.gridName, newSettings.gridName) ||
             !isEqual(prevSettings.attribute, newSettings.attribute) ||
-            !isEqual(prevSettings.timeOrInterval, newSettings.timeOrInterval)
+            !isEqual(prevSettings.timeType, newSettings.timeType) ||
+            !isEqual(prevSettings.timePoint, newSettings.timePoint) ||
+            !isEqual(prevSettings.timeInterval, newSettings.timeInterval) ||
+            !isEqual(prevSettings.timePointPair, newSettings.timePointPair)
         );
     }
 
@@ -103,16 +114,30 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         IntersectionRealizationGridData,
         IntersectionRealizationGridStoredData
     >): boolean {
-        return (
-            getSetting(Setting.INTERSECTION) !== null &&
-            getSetting(Setting.ENSEMBLE) !== null &&
-            getSetting(Setting.REALIZATION) !== null &&
-            getSetting(Setting.GRID_NAME) !== null &&
-            getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.TIME_OR_INTERVAL) !== null &&
-            getSetting(Setting.SHOW_GRID_LINES) !== null &&
-            getSetting(Setting.COLOR_SCALE) !== null
-        );
+        if (
+            getSetting(Setting.INTERSECTION) === null ||
+            getSetting(Setting.ENSEMBLE) === null ||
+            getSetting(Setting.REALIZATION) === null ||
+            getSetting(Setting.GRID_NAME) === null ||
+            getSetting(Setting.ATTRIBUTE) === null ||
+            getSetting(Setting.SHOW_GRID_LINES) === null ||
+            getSetting(Setting.COLOR_SCALE) === null
+        ) {
+            return false;
+        }
+
+        switch (getSetting(Setting.TIME_TYPE)) {
+            case TimeType.NO_TIME:
+                return true;
+            case TimeType.TIME_POINT:
+                return getSetting(Setting.TIME_POINT) !== null;
+            case TimeType.INTERVAL:
+                return getSetting(Setting.TIME_INTERVAL) !== null;
+            case TimeType.COMPUTED_INTERVAL:
+                return getSetting(Setting.TIME_POINT_PAIR) !== null;
+            default:
+                return false;
+        }
     }
 
     setupBindings({
@@ -122,7 +147,6 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<IntersectionRealizationGridSettings, IntersectionRealizationGridStoredData>): void {
-
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
                 return {
@@ -247,7 +271,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             },
         });
 
-        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+        const timeInfoDep = makeSharedResult({
+            debugName: "RealizationGridPropertyTimeInfo",
             read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
@@ -256,24 +281,61 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                 };
             },
             resolve({ gridName, gridAttribute, data }) {
-                if (!gridName || !gridAttribute || !data) {
-                    return [];
-                }
-
-                const gridAttributeArr =
-                    data.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
-
-                return sortTimeOrIntervalArray(
-                    Array.from(
-                        new Set(
-                            gridAttributeArr
-                                .filter((attr) => attr.property_name === gridAttribute)
-                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                        ),
-                    ),
-                );
+                return makeGridPropertyTimeInfo(data, gridName, gridAttribute);
             },
         });
+
+        setting(Setting.TIME_TYPE).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfoDep) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo ? getAvailableTimeTypes(timeInfo, { allowComputedInterval: true }) : [];
+            },
+        });
+
+        setting(Setting.TIME_POINT).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfoDep) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo?.timePoints ?? [];
+            },
+        });
+
+        setting(Setting.TIME_INTERVAL).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfoDep) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo?.intervals ?? [];
+            },
+        });
+
+        setting(Setting.TIME_POINT_PAIR).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfoDep) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo?.timePoints ?? [];
+            },
+        });
+
+        for (const [timeSetting, requiredTimeType] of [
+            [Setting.TIME_POINT, TimeType.TIME_POINT],
+            [Setting.TIME_INTERVAL, TimeType.INTERVAL],
+            [Setting.TIME_POINT_PAIR, TimeType.COMPUTED_INTERVAL],
+        ] as const) {
+            setting(timeSetting).bindAttributes({
+                read(read) {
+                    return { timeType: read.localSetting(Setting.TIME_TYPE) };
+                },
+                resolve({ timeType }) {
+                    const visible = timeType === requiredTimeType;
+                    return { enabled: visible, visible };
+                },
+            });
+        }
 
         // Create intersection polyline and actual section lengths data asynchronously
         const intersectionPolylineWithSectionLengthsDep = makeSharedResult({
@@ -330,10 +392,8 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
         const realizationNum = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const gridName = assertNonNull(getSetting(Setting.GRID_NAME), "No grid name selected");
         const parameterName = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
-        let timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-        if (timeOrInterval === "NO_TIME") {
-            timeOrInterval = null;
-        }
+
+        const timeType = getSetting(Setting.TIME_TYPE);
 
         const polylineWithSectionLengths = assertNonNull(
             getStoredData("polylineWithSectionLengths"),
@@ -343,20 +403,48 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             throw new Error("Invalid polyline in stored data. Must contain at least two (x,y)-points");
         }
 
-        const queryOptions = postGetPolylineIntersectionOptions({
-            query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                grid_name: gridName,
-                parameter_name: parameterName,
-                parameter_time_or_interval_str: timeOrInterval,
-                realization_num: realizationNum,
-            },
-            body: { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy },
-        });
+        const commonQuery = {
+            case_uuid: ensembleIdent.getCaseUuid(),
+            ensemble_name: ensembleIdent.getEnsembleName(),
+            grid_name: gridName,
+            parameter_name: parameterName,
+            realization_num: realizationNum,
+        };
+        const body = { polyline_utm_xy: polylineWithSectionLengths.polylineUtmXy };
 
-        const gridIntersectionPromise = fetchQuery(queryOptions).then(transformPolylineIntersection);
+        if (timeType === TimeType.COMPUTED_INTERVAL) {
+            const timePointPair = assertNonNull(
+                getSetting(Setting.TIME_POINT_PAIR),
+                "No time steps to calculate the difference between selected",
+            );
 
-        return gridIntersectionPromise;
+            return fetchQuery(
+                postGetPolylineIntersectionTimeDiffOptions({
+                    query: {
+                        ...commonQuery,
+                        base_time_str: timePointPair[0],
+                        monitor_time_str: timePointPair[1],
+                    },
+                    body,
+                }),
+            ).then(transformPolylineIntersection);
+        }
+
+        let timeOrInterval: string | null = null;
+        if (timeType === TimeType.TIME_POINT) {
+            timeOrInterval = getSetting(Setting.TIME_POINT);
+        } else if (timeType === TimeType.INTERVAL) {
+            timeOrInterval = getSetting(Setting.TIME_INTERVAL);
+        }
+
+        return fetchQuery(
+            postGetPolylineIntersectionOptions({
+                query: {
+                    ...commonQuery,
+                    parameter_time_or_interval_str: timeOrInterval,
+                },
+                body,
+            }),
+        ).then(transformPolylineIntersection);
     }
 }

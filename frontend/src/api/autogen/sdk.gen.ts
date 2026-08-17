@@ -70,6 +70,9 @@ import type {
     GetGridParameterData_api,
     GetGridParameterErrors_api,
     GetGridParameterResponses_api,
+    GetGridParameterTimeDiffData_api,
+    GetGridParameterTimeDiffErrors_api,
+    GetGridParameterTimeDiffResponses_api,
     GetGridSurfaceData_api,
     GetGridSurfaceErrors_api,
     GetGridSurfaceResponses_api,
@@ -238,6 +241,9 @@ import type {
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionErrors_api,
     PostGetPolylineIntersectionResponses_api,
+    PostGetPolylineIntersectionTimeDiffData_api,
+    PostGetPolylineIntersectionTimeDiffErrors_api,
+    PostGetPolylineIntersectionTimeDiffResponses_api,
     PostGetSampleSurfaceInPointsData_api,
     PostGetSampleSurfaceInPointsErrors_api,
     PostGetSampleSurfaceInPointsResponses_api,
@@ -902,6 +908,24 @@ export const getGridParameter = <ThrowOnError extends boolean = false>(
     });
 
 /**
+ * Get Grid Parameter Time Diff
+ *
+ * Get the difference between two time steps of a grid parameter, monitor minus base
+ */
+export const getGridParameterTimeDiff = <ThrowOnError extends boolean = false>(
+    options: Options<GetGridParameterTimeDiffData_api, ThrowOnError>,
+): RequestResult<GetGridParameterTimeDiffResponses_api, GetGridParameterTimeDiffErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetGridParameterTimeDiffResponses_api,
+        GetGridParameterTimeDiffErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/grid3d/grid_parameter_time_diff",
+        ...options,
+    });
+
+/**
  * Post Get Polyline Intersection
  *
  * Get the intersection of a polyline with the grid, including intersected cells and interpolated parameter values at intersection points
@@ -916,6 +940,33 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
     >({
         responseType: "json",
         url: "/grid3d/get_polyline_intersection",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Post Get Polyline Intersection Time Diff
+ *
+ * Get the intersection of a polyline with the grid, where the parameter values are the difference
+ * between two time steps, monitor minus base
+ */
+export const postGetPolylineIntersectionTimeDiff = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetPolylineIntersectionTimeDiffData_api, ThrowOnError>,
+): RequestResult<
+    PostGetPolylineIntersectionTimeDiffResponses_api,
+    PostGetPolylineIntersectionTimeDiffErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        PostGetPolylineIntersectionTimeDiffResponses_api,
+        PostGetPolylineIntersectionTimeDiffErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/grid3d/get_polyline_intersection_time_diff",
         ...options,
         headers: {
             "Content-Type": "application/json",

@@ -13,6 +13,8 @@ from webviz_services.user_grid3d_service.user_grid3d_service import (
     UserGrid3dService,
     IJKIndexFilter,
     PolylineIntersection,
+    PropertyTimeDifference,
+    SinglePropertyTime,
 )
 
 from primary.auth.auth_helper import AuthHelper
@@ -138,7 +140,7 @@ async def get_grid_parameter(
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         property_name=parameter_name,
-        property_time_or_interval_str=parameter_time_or_interval_str,
+        property_time=SinglePropertyTime(time_or_interval_str=parameter_time_or_interval_str),
         realization=realization_num,
         ijk_index_filter=ijk_index_filter,
     )
@@ -155,6 +157,57 @@ async def get_grid_parameter(
     )
 
     LOGGER.debug(f"------------------ GRID3D - grid_parameter took: {perf_metrics.to_string_s()}")
+
+    return response
+
+
+@router.get("/grid_parameter_time_diff")
+@cache_time(CacheTime.LONG)
+# pylint: disable=too-many-arguments
+async def get_grid_parameter_time_diff(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
+    parameter_name: Annotated[str, Query(description="Grid parameter")],
+    realization_num: Annotated[int, Query(description="Realization")],
+    base_time_str: Annotated[str, Query(description="Time point string of the base time step")],
+    monitor_time_str: Annotated[str, Query(description="Time point string of the monitor time step")],
+    i_min: Annotated[int, Query(description="Min i index")] = 0,
+    i_max: Annotated[int, Query(description="Max i index")] = -1,
+    j_min: Annotated[int, Query(description="Min j index")] = 0,
+    j_max: Annotated[int, Query(description="Max j index")] = -1,
+    k_min: Annotated[int, Query(description="Min k index")] = 0,
+    k_max: Annotated[int, Query(description="Max k index")] = -1,
+) -> schemas.Grid3dMappedProperty:
+    """Get the difference between two time steps of a grid parameter, monitor minus base"""
+
+    perf_metrics = PerfMetrics()
+
+    ijk_index_filter = IJKIndexFilter(min_i=i_min, max_i=i_max, min_j=j_min, max_j=j_max, min_k=k_min, max_k=k_max)
+
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    perf_metrics.record_lap("create-service")
+
+    mapped_grid_properties = await grid_service.get_mapped_grid_properties_async(
+        ensemble_name=ensemble_name,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        property_time=PropertyTimeDifference(base_time_str=base_time_str, monitor_time_str=monitor_time_str),
+        realization=realization_num,
+        ijk_index_filter=ijk_index_filter,
+    )
+    perf_metrics.record_lap("call-service")
+
+    response = schemas.Grid3dMappedProperty(
+        poly_props_b64arr=_hack_ensure_b64_property_array_is_float(
+            mapped_grid_properties.poly_props_b64arr, mapped_grid_properties.undefined_int_value
+        ),
+        min_grid_prop_value=mapped_grid_properties.min_grid_prop_value,
+        max_grid_prop_value=mapped_grid_properties.max_grid_prop_value,
+    )
+
+    LOGGER.debug(f"------------------ GRID3D - grid_parameter_time_diff took: {perf_metrics.to_string_s()}")
 
     return response
 
@@ -182,13 +235,49 @@ async def post_get_polyline_intersection(
         ensemble_name=ensemble_name,
         grid_name=grid_name,
         property_name=parameter_name,
-        property_time_or_interval_str=parameter_time_or_interval_str,
+        property_time=SinglePropertyTime(time_or_interval_str=parameter_time_or_interval_str),
         realization=realization_num,
         polyline_utm_xy=polyline_utm_xy,
     )
     perf_metrics.record_lap("call-service")
 
     LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection took: {perf_metrics.to_string_s()}")
+
+    return polyline_intersection
+
+
+@router.post("/get_polyline_intersection_time_diff")
+async def post_get_polyline_intersection_time_diff(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    grid_name: Annotated[str, Query(description="Grid name")],
+    parameter_name: Annotated[str, Query(description="Grid parameter")],
+    realization_num: Annotated[int, Query(description="Realization")],
+    base_time_str: Annotated[str, Query(description="Time point string of the base time step")],
+    monitor_time_str: Annotated[str, Query(description="Time point string of the monitor time step")],
+    polyline_utm_xy: list[float] = Body(embed=True),
+) -> PolylineIntersection:
+    """Get the intersection of a polyline with the grid, where the parameter values are the difference
+    between two time steps, monitor minus base"""
+    perf_metrics = PerfMetrics()
+
+    grid_service = await UserGrid3dService.create_async(authenticated_user, case_uuid)
+    perf_metrics.record_lap("create-service")
+
+    polyline_intersection = await grid_service.get_polyline_intersection_async(
+        ensemble_name=ensemble_name,
+        grid_name=grid_name,
+        property_name=parameter_name,
+        property_time=PropertyTimeDifference(base_time_str=base_time_str, monitor_time_str=monitor_time_str),
+        realization=realization_num,
+        polyline_utm_xy=polyline_utm_xy,
+    )
+    perf_metrics.record_lap("call-service")
+
+    LOGGER.debug(
+        f"------------------ GRID3D - get_polyline_intersection_time_diff took: {perf_metrics.to_string_s()}"
+    )
 
     return polyline_intersection
 
