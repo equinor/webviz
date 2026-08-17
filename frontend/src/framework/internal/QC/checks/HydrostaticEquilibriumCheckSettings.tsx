@@ -96,5 +96,6 @@ function gridContainsPropertyWithTimeSteps(gridModelInfo: Grid3dInfo_api): boole
 
 function isSingleTimeStep(timeStep: string): boolean {
     // Check if the time step is a single time step (not an interval)
+    // Is the format standardized?
     return !timeStep.includes("/");
 }

@@ -33,33 +33,38 @@ export type HydrostaticEquilibriumVectorCheckMetrics = {
 
 type SimulationTimeSeriesSettings = NonNullable<ModuleSerializedStateMap["SimulationTimeSeries"]["settings"]>;
 
-// The `checkedVectorNames`/`ensembleIdentString` metrics are the same ensemble-wide metadata on
-// every successful realization result - reads them off the first one it finds.
+// The `checkedVectorNames`/`ensembleIdentString`/`t1Iso` metrics are the same ensemble-wide
+// metadata on every successful realization result - reads them off the first one it finds.
 function summarizeResults(results: QcCheckTemplateContext<HydrostaticEquilibriumVectorCheckMetrics>["results"]): {
     checkedVectorNames: string[];
     ensembleIdentString: string | null;
+    t1Iso: string | null;
 } {
     const checkedVectorNames = new Set<string>();
     let ensembleIdentString: string | null = null;
+    let t1Iso: string | null = null;
 
     for (const result of results.values()) {
         if (result.kind !== "success") {
             continue;
         }
         ensembleIdentString ??= result.metrics.ensembleIdentString;
+        t1Iso ??= result.metrics.timeSteps.t1_iso;
         for (const vectorName of result.metrics.checkedVectorNames) {
             checkedVectorNames.add(vectorName);
         }
     }
 
-    return { checkedVectorNames: Array.from(checkedVectorNames).sort(), ensembleIdentString };
+    return { checkedVectorNames: Array.from(checkedVectorNames).sort(), ensembleIdentString, t1Iso };
 }
 
 // A single `SimulationTimeSeries` module showing all vectors this run checked, as individual
 // realization traces, for the checked ensemble - a starting point for eyeballing a failing
-// realization's vector behavior around the t0/t1 window this step compared.
+// realization's vector behavior around the t0/t1 window this step compared. The plot's active
+// timestamp marker is pre-set to t1 (the later of the two time steps compared), since that's the
+// one a failing "value at t1" result is actually about.
 function makeVectorTemplates(context: QcCheckTemplateContext<HydrostaticEquilibriumVectorCheckMetrics>): Template[] {
-    const { checkedVectorNames, ensembleIdentString } = summarizeResults(context.results);
+    const { checkedVectorNames, ensembleIdentString, t1Iso } = summarizeResults(context.results);
 
     return [
         {
@@ -78,6 +83,13 @@ function makeVectorTemplates(context: QcCheckTemplateContext<HydrostaticEquilibr
                             // since framework code isn't allowed to import from `modules`.
                             visualizationMode:
                                 "IndividualRealizations" as SimulationTimeSeriesSettings["visualizationMode"],
+                        },
+                        view: {
+                            // `SerializedView.activeTimestampUtcMs` from
+                            // `@modules/SimulationTimeSeries/view/persistence` - epoch ms, not an ISO
+                            // string, hence the conversion. Drives `PlotBuilder.addTimeAnnotation`,
+                            // which draws a vertical marker line on the plot at that timestamp.
+                            activeTimestampUtcMs: t1Iso ? new Date(t1Iso).getTime() : null,
                         },
                     },
                 }),
