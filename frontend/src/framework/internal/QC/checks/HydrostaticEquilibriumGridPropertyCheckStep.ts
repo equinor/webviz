@@ -32,7 +32,6 @@ export type HydrostaticEquilibriumGridPropertyCheckMetrics = {
     propertyValues: GridPropertyCheckValue_api[];
 };
 
-type ThreeDViewerSettings = NonNullable<ModuleSerializedStateMap["3DViewer"]["settings"]>;
 type IntersectionModuleSettings = NonNullable<ModuleSerializedStateMap["Intersection"]["settings"]>;
 
 // Keeps the t0/t1 label even once the actual timestep is known, so a view's name still says which
@@ -44,17 +43,32 @@ function makeTimestepViewName(label: "T0" | "T1", isoTimestamp: string | null): 
     return `${label}: ${isoTimestamp}`;
 }
 
+// Name for the single computed-interval view - keeps the "T0 -> T1" label even once the actual
+// timesteps are known, so the view still says what it's showing instead of just an ISO pair a user
+// has to interpret.
+function makeComputedIntervalViewName(t0Iso: string | null, t1Iso: string | null): string {
+    if (t0Iso === null || t1Iso === null) {
+        return "T0 → T1";
+    }
+    return `T0 → T1: ${t0Iso} → ${t1Iso}`;
+}
+
 // A `3DViewer` module instance's data providers are persisted as an opaque, hand-serialized JSON
 // blob (`SerializedDataProviderManager` in
 // `@modules/_shared/DataProviderFramework/interfacesAndTypes/serialization`) - framework code isn't
 // allowed to import from `modules` (see `.dependency-cruiser.cjs`), so this builds that shape from
 // its literal string values instead of the real enums.
 //
-// One "View" group per timestep, matching what dropping a fresh "Grid Model 3D" provider into a new
-// view looks like, except its Time or Interval setting is pre-set to that view's timestep (a plain
-// per-provider setting value - not an elevated one, since each view is meant to show a *different*
-// timestep).
-function makeGridViewGroup(id: string, name: string, color: string, timeOrIntervalIso: string | null) {
+// A single "View" group showing the grid property's *computed interval* - the change from t0 (the
+// pair's base timestep) to t1 (its monitor timestep) - directly, rather than two separate views a
+// user has to compare by eye.
+function makeGridComputedIntervalViewGroup(
+    id: string,
+    name: string,
+    color: string,
+    t0Iso: string | null,
+    t1Iso: string | null,
+) {
     return {
         id,
         type: "group",
@@ -72,18 +86,23 @@ function makeGridViewGroup(id: string, name: string, color: string, timeOrInterv
                 name: "Grid Model 3D",
                 expanded: true,
                 visible: true,
-                // Keyed by `Setting.TIME_OR_INTERVAL` ("timeOrInterval") from
-                // `@modules/_shared/DataProviderFramework/settings/settingsDefinitions` - spelled out
-                // literally for the same dependency-boundary reason as above. Settings are serialized
-                // as JSON strings (`SerializedSettingsState`), matching `TimeOrIntervalSetting`'s own
-                // `serializeValue`.
-                settings: { timeOrInterval: JSON.stringify(timeOrIntervalIso) },
+                // Keyed by `Setting.TIME_TYPE`/`Setting.TIME_POINT_PAIR` ("timeType"/"timePointPair")
+                // from `@modules/_shared/DataProviderFramework/settings/settingsDefinitions` -
+                // spelled out literally for the same dependency-boundary reason as above. Settings
+                // are serialized as JSON strings (`SerializedSettingsState`), matching
+                // `TimeTypeSetting`/`TimePointPairSetting`'s own `serializeValue`.
+                // `TimeType.COMPUTED_INTERVAL` ("computedInterval") makes the provider read the grid
+                // as the difference between the pair's base (t0) and monitor (t1) timesteps.
+                settings: {
+                    timeType: JSON.stringify("computedInterval"),
+                    timePointPair: JSON.stringify(t0Iso !== null && t1Iso !== null ? [t0Iso, t1Iso] : null),
+                },
             },
         ],
     };
 }
 
-function makeTwoViewsDataProviderManagerState(t0Iso: string | null, t1Iso: string | null): string {
+function makeComputedIntervalDataProviderManagerState(t0Iso: string | null, t1Iso: string | null): string {
     return JSON.stringify({
         id: "root",
         type: "data-provider-manager",
@@ -91,19 +110,23 @@ function makeTwoViewsDataProviderManagerState(t0Iso: string | null, t1Iso: strin
         expanded: true,
         visible: true,
         children: [
-            makeGridViewGroup("view-t0", makeTimestepViewName("T0", t0Iso), "#4C9959", t0Iso),
-            makeGridViewGroup("view-t1", makeTimestepViewName("T1", t1Iso), "#4C7899", t1Iso),
+            makeGridComputedIntervalViewGroup(
+                "view-computed-interval",
+                makeComputedIntervalViewName(t0Iso, t1Iso),
+                "#4C7899",
+                t0Iso,
+                t1Iso,
+            ),
         ],
     });
 }
 
 // One "INTERSECTION_VIEW" group per timestep - the Intersection module's equivalent of a `3DViewer`
 // "VIEW" group (a `DataProvider` can only ever live inside one of these, never as a bare root
-// sibling). Each holds one realization-grid-fence provider, pre-set to that view's timestep the same
-// way `makeGridViewGroup` does. Unlike the grid provider's own group-scoped fence setting
-// (`Setting.INTERSECTION`, key "intersection"), it's left unset here - it becomes elevated (and thus
-// shared across both views) once this template's own `applyElevatedSettings` activates
-// `WELLBORE_ELEVATED_SETTING`.
+// sibling). Each holds one realization-grid-fence provider, pre-set to that view's own timestep.
+// Unlike the grid provider's own group-scoped fence setting (`Setting.INTERSECTION`, key
+// "intersection"), it's left unset here - it becomes elevated (and thus shared across both views)
+// once this template's own `applyElevatedSettings` activates `WELLBORE_ELEVATED_SETTING`.
 function makeIntersectionViewGroup(id: string, name: string, color: string, timeOrIntervalIso: string | null) {
     return {
         id,
@@ -125,7 +148,8 @@ function makeIntersectionViewGroup(id: string, name: string, color: string, time
                 name: "Grid Model Fence",
                 expanded: true,
                 visible: true,
-                // Keyed by `Setting.TIME_OR_INTERVAL` ("timeOrInterval"), same as `makeGridViewGroup`.
+                // Keyed by `Setting.TIME_OR_INTERVAL` ("timeOrInterval") from
+                // `@modules/_shared/DataProviderFramework/settings/settingsDefinitions`.
                 settings: { timeOrInterval: JSON.stringify(timeOrIntervalIso) },
             },
         ],
@@ -226,8 +250,9 @@ function applyRealizationAndGridPropertyElevatedSettings(
     }
 }
 
-// A single 3D viewer, split into two views (t0 and t1, stacked top/bottom) - a starting point for
-// eyeballing a failing realization's grid property between the two timesteps this step compared.
+// A single 3D viewer showing the grid property's computed change from t0 to t1 directly (rather
+// than two separate views a user has to compare by eye) - a starting point for eyeballing a
+// failing realization's grid property change between the two timesteps this step compared.
 function makeGridPropertyTemplates(
     context: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>,
 ): Template[] {
@@ -235,21 +260,18 @@ function makeGridPropertyTemplates(
 
     return [
         {
-            name: "Grid property - t0 vs t1",
-            description: "A single 3D viewer split into two views, showing the grid property at t0 and at t1.",
+            name: "Grid property - t0 to t1 change",
+            description: "A single 3D viewer view showing the grid property's computed change from t0 to t1.",
             moduleInstances: [
                 createTemplateModuleInstance("3DViewer", {
                     instanceRef: "GridViews",
                     layout: { relX: 0, relY: 0, relWidth: 1, relHeight: 1 },
                     initialState: {
                         settings: {
-                            dataProviderData: makeTwoViewsDataProviderManagerState(
+                            dataProviderData: makeComputedIntervalDataProviderManagerState(
                                 timeSteps?.t0_iso ?? null,
                                 timeSteps?.t1_iso ?? null,
                             ),
-                            // "Vertical" here means stacked rows (t0 on top, t1 below), not
-                            // side-by-side columns - see `ViewportLayoutMenu`'s icon choice.
-                            preferredViewLayout: "vertical" as ThreeDViewerSettings["preferredViewLayout"],
                         },
                     },
                 }),
