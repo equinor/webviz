@@ -99,6 +99,9 @@
             "styled-components": {
                 "postcss": "^8.5.25"
             }
+        },
+        "storybook": {
+            "esbuild": "^0.28.1"
         }
     },
     "devDependencies": {
@@ -106,8 +109,8 @@
         "@playwright/experimental-ct-react": "~1.62.1",
         "@playwright/test": "~1.62.1",
         "@rolldown/plugin-babel": "^0.2.3",
-        "@storybook/addon-docs": "^10.5.5",
-        "@storybook/react-vite": "^10.5.5",
+        "@storybook/addon-docs": "^10.5.7",
+        "@storybook/react-vite": "^10.5.7",
         "@tailwindcss/vite": "^4.3.1",
         "@types/culori": "^4.0.0",
         "@types/geojson": "^7946.0.16",
@@ -134,7 +137,7 @@
         "prettier-plugin-glsl": "^0.3.0",
         "prettier-plugin-tailwindcss": "^0.7.2",
         "sass-embedded": "^1.100.0",
-        "storybook": "^10.5.5",
+        "storybook": "^10.5.7",
         "tailwindcss": "^4.3.1",
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.25.0",
