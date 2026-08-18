@@ -4,7 +4,7 @@ import type { Template } from "@framework/TemplateRegistry";
 import { TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
-import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesPlot/channelDefs";
+import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
 import { ChannelIds as TimeSeriesChannelIds } from "@modules/SimulationTimeSeries/channelDefs";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
@@ -32,7 +32,7 @@ const template: Template = {
         },
         {
             instanceRef: "MainInplaceVolumesPlotInstance",
-            moduleName: "InplaceVolumesPlot",
+            moduleName: "InplaceVolumesNew",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
