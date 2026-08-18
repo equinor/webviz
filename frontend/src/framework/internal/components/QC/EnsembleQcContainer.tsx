@@ -190,8 +190,9 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
     const session = useActiveSession();
     const checkRuntimes = Array.from(props.ensembleQc.getCheckRuntimes().values());
     const ensemble = props.ensembleQc.getEnsemble();
+    const allRealizations = ensemble.getRealizations();
     const realizationsFilterFunc = useEnsembleRealizationFilterFunc(session);
-    const realizations = realizationsFilterFunc(ensemble.getIdent());
+    const activeRealizations = realizationsFilterFunc(ensemble.getIdent());
     const [expanded, setExpanded] = React.useState(false);
 
     const isAnyCheckRunning = useIsAnyCheckRuntimeRunning(checkRuntimes);
@@ -227,8 +228,9 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
                     {checkRuntimes.map((checkRuntime) => (
                         <CheckRuntimeContainer
                             key={checkRuntime.getId()}
+                            activeRealizations={activeRealizations}
+                            allRealizations={allRealizations}
                             checkRuntime={checkRuntime}
-                            realizations={realizations}
                             workbench={props.workbench}
                         />
                     ))}
@@ -240,12 +242,13 @@ export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
 
 type CheckRuntimeContainerProps = {
     checkRuntime: QcCheckRuntime;
-    realizations: readonly number[];
+    allRealizations: readonly number[];
+    activeRealizations: readonly number[];
     workbench: Workbench;
 };
 
 function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
-    const { checkRuntime, realizations, workbench } = props;
+    const { checkRuntime, activeRealizations, allRealizations, workbench } = props;
 
     const [showSettings, setShowSettings] = React.useState(false);
 
@@ -283,7 +286,7 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
         // `showSettings` - reset it now so a run started from the "no results yet" view doesn't
         // leave the re-run settings view showing once this run completes.
         setShowSettings(false);
-        checkRuntime.run(realizations);
+        checkRuntime.run(activeRealizations);
     }
 
     function handleCancelRunClick() {
@@ -357,7 +360,8 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
                                 {index > 0 && <Separator orientation="horizontal" />}
                                 <StepBlock
                                     stepRuntime={stepRuntime}
-                                    realizations={realizations}
+                                    activeRealizations={activeRealizations}
+                                    allRealizations={allRealizations}
                                     selectedRealization={selectedRealization}
                                     onRealizationClick={handleRealizationClick}
                                     onApplyTemplateClick={handleApplyTemplateClick}
@@ -475,7 +479,8 @@ function useMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntrie
 
 type StepBlockProps = {
     stepRuntime: QcCheckStepRuntime;
-    realizations: readonly number[];
+    allRealizations: readonly number[];
+    activeRealizations: readonly number[];
     selectedRealization: number | null;
     onRealizationClick: (realization: number) => void;
     onApplyTemplateClick: (template: Template) => void;
@@ -490,8 +495,15 @@ type StepBlockProps = {
 // (pending/running/skipped/done), and one `MatrixEntryBlock` per matrix-coordinate entry (just one,
 // unlabeled, for a plain non-matrixed step - see `QcCheckStepRuntime`).
 function StepBlock(props: StepBlockProps) {
-    const { stepRuntime, realizations, selectedRealization, onRealizationClick, onApplyTemplateClick, isLastStep } =
-        props;
+    const {
+        stepRuntime,
+        activeRealizations,
+        allRealizations,
+        selectedRealization,
+        onRealizationClick,
+        onApplyTemplateClick,
+        isLastStep,
+    } = props;
 
     const [expanded, setExpanded] = React.useState(isLastStep);
 
@@ -546,7 +558,8 @@ function StepBlock(props: StepBlockProps) {
                                     : stepDefinition.name
                             }
                             stepDefinition={stepDefinition}
-                            realizations={realizations}
+                            activeRealizations={activeRealizations}
+                            allRealizations={allRealizations}
                             selectedRealization={selectedRealization}
                             onRealizationClick={onRealizationClick}
                             onApplyTemplateClick={onApplyTemplateClick}
@@ -565,7 +578,8 @@ type MatrixEntryBlockProps = {
     coordinate: QcCheckMatrixCoordinate | null;
     checkName: string;
     stepDefinition: QcCheckStepDefinition;
-    realizations: readonly number[];
+    allRealizations: readonly number[];
+    activeRealizations: readonly number[];
     selectedRealization: number | null;
     onRealizationClick: (realization: number) => void;
     onApplyTemplateClick: (template: Template) => void;
@@ -580,7 +594,8 @@ function MatrixEntryBlock(props: MatrixEntryBlockProps) {
         coordinate,
         checkName,
         stepDefinition,
-        realizations,
+        allRealizations,
+        activeRealizations,
         selectedRealization,
         onRealizationClick,
         onApplyTemplateClick,
@@ -616,10 +631,12 @@ function MatrixEntryBlock(props: MatrixEntryBlockProps) {
                     <RealizationSquares
                         matrixRuntime={matrixRuntime}
                         checkName={checkName}
-                        realizations={realizations}
+                        activeRealizations={activeRealizations}
+                        allRealizations={allRealizations}
                         results={results}
                         isRunning={isRunning}
                         requestedRealizations={requestedRealizations}
+                        hasRun={hasRun}
                         selectedRealization={selectedRealization}
                         onRealizationClick={onRealizationClick}
                     />
@@ -738,10 +755,16 @@ const REALIZATION_STATUS_TONE_TO_CLASSNAME: Record<RealizationStatusTone, string
 type RealizationSquaresProps = {
     matrixRuntime: QcCheckStepMatrixRuntime;
     checkName: string;
-    realizations: readonly number[];
+    allRealizations: readonly number[];
+    activeRealizations: readonly number[];
     results: ReadonlyMap<number, QcCheckRealizationResult<unknown>>;
     isRunning: boolean;
+    // This step's own carried-forward realizations for this matrix coordinate (see
+    // `QcCheckStepMatrixRuntime.getRequestedRealizations`) - an active realization missing from this
+    // set didn't fail *here*, it never made it past an earlier step, so it renders as "excluded"
+    // rather than "idle".
     requestedRealizations: readonly number[];
+    hasRun: boolean;
     onRealizationClick: (realization: number) => void;
     selectedRealization: number | null;
 };
@@ -763,8 +786,17 @@ const LOADING_ANIMATION_STAGGER_STEP_SECS = 0.15;
 // currently running matrix coordinate but have not reported a result yet show a pulsing skeleton
 // square instead of a static one.
 function RealizationSquares(props: RealizationSquaresProps) {
-    const { matrixRuntime, checkName, realizations, results, isRunning, requestedRealizations, onRealizationClick } =
-        props;
+    const {
+        matrixRuntime,
+        checkName,
+        allRealizations,
+        activeRealizations,
+        results,
+        isRunning,
+        requestedRealizations,
+        hasRun,
+        onRealizationClick,
+    } = props;
 
     const qcRealizationPopover = useQcRealizationPopover();
     // Anchors the popover to the whole realization-squares grid for this matrix coordinate, rather
@@ -772,12 +804,13 @@ function RealizationSquares(props: RealizationSquaresProps) {
     // since they sit so close together.
     const containerRef = React.useRef<HTMLDivElement>(null);
 
-    if (realizations.length === 0) {
+    if (allRealizations.length === 0) {
         return null;
     }
 
+    const activeRealizationsSet = new Set(activeRealizations);
     const requestedRealizationsSet = new Set(requestedRealizations);
-    const sortedRealizations = [...realizations].sort((a, b) => a - b);
+    const sortedRealizations = [...allRealizations].sort((a, b) => a - b);
     const numGroups = Math.ceil(sortedRealizations.length / REALIZATION_GROUP_SIZE);
     const groups = Array.from({ length: numGroups }, (_, g) =>
         sortedRealizations.slice(g * REALIZATION_GROUP_SIZE, g * REALIZATION_GROUP_SIZE + REALIZATION_GROUP_SIZE),
@@ -791,32 +824,54 @@ function RealizationSquares(props: RealizationSquaresProps) {
         onRealizationClick(realization);
     }
 
+    // A realization not in `activeRealizations` was excluded by the realization filter before this
+    // check ever ran, so it never has a result. A realization that *is* active but missing from
+    // `requestedRealizations` (this step's own carried-forward set, see
+    // `QcCheckStepMatrixRuntime.getRequestedRealizations`) wasn't filtered - it simply didn't survive
+    // an earlier step - so the two get visually distinct tones ("filteredAway" vs "excluded") even
+    // though neither has a result to show here.
     function makeSquareColor(realization: number): RealizationStatusTone {
+        if (!activeRealizationsSet.has(realization)) {
+            return "filteredAway";
+        }
         const result = results.get(realization);
         const isLoading = !result && isRunning && requestedRealizationsSet.has(realization);
-
         if (isLoading) {
             return "loading";
         }
-        if (!result) {
-            return "idle";
+        if (result) {
+            if (result.kind === "success") {
+                return "success";
+            }
+            return result.kind === "failure" ? "failure" : "exception";
         }
-        if (result.kind === "success") {
-            return "success";
-        }
-        if (result.kind === "failure") {
-            return "failure";
-        }
-        if (result.kind === "exception") {
-            return "exception";
-        }
-        if (result.kind === "excluded") {
+        if (hasRun && !requestedRealizationsSet.has(realization)) {
             return "excluded";
         }
-        if (result.kind === "filteredAway") {
-            return "filteredAway";
-        }
         return "idle";
+    }
+
+    function makeTooltipContent(realization: number, tone: RealizationStatusTone): string {
+        const result = results.get(realization);
+        if (tone === "filteredAway") {
+            return `Realization ${realization}: filtered away`;
+        }
+        if (tone === "excluded") {
+            return `Realization ${realization}: excluded - did not succeed in an earlier step`;
+        }
+        if (tone === "loading") {
+            return `Realization ${realization}: running…`;
+        }
+        if (!result) {
+            return `Realization ${realization}: not run`;
+        }
+        if (result.kind === "success") {
+            return `Realization ${realization}: success`;
+        }
+        if (result.kind === "failure") {
+            return `Realization ${realization}: failed - ${result.reason}`;
+        }
+        return `Realization ${realization}: ${result.errorMessage}`;
     }
 
     return (
@@ -838,23 +893,9 @@ function RealizationSquares(props: RealizationSquaresProps) {
                         </span>
                         <div className="bg-surface relative z-1 flex" style={{ gap: GAP_PX, paddingRight: GAP_PX }}>
                             {group.map((realization) => {
-                                const result = results.get(realization);
-                                const isLoading = !result && isRunning && requestedRealizationsSet.has(realization);
-
-                                const tone: RealizationStatusTone = isLoading
-                                    ? "loading"
-                                    : !result
-                                      ? "idle"
-                                      : result.kind === "success"
-                                        ? "success"
-                                        : "danger";
-                                const tooltipContent = isLoading
-                                    ? `Realization ${realization}: running…`
-                                    : !result
-                                      ? `Realization ${realization}: not run`
-                                      : result.kind === "success"
-                                        ? `Realization ${realization}: success`
-                                        : `Realization ${realization}: ${result.errorMessage}`;
+                                const tone = makeSquareColor(realization);
+                                const isLoading = tone === "loading";
+                                const tooltipContent = makeTooltipContent(realization, tone);
                                 const animationDelay = isLoading
                                     ? `${(realization % LOADING_ANIMATION_STAGGER_COUNT) * LOADING_ANIMATION_STAGGER_STEP_SECS}s`
                                     : undefined;

@@ -8,8 +8,20 @@ export type QcCheckRealizationResult<TMetrics> =
           kind: "success";
           metrics: TMetrics;
       }
+    // The check ran to completion and determined this realization fails QC (e.g. a value fell
+    // outside its allowed threshold) - as opposed to "exception", where the check itself couldn't
+    // be completed. Still carries `metrics`, same as "success", so the result popover/table can
+    // show exactly what was measured alongside why it failed.
     | {
-          kind: "error";
+          kind: "failure";
+          metrics: TMetrics;
+          reason: string;
+      }
+    // The check itself couldn't be completed for this realization - a network/backend error, a
+    // programming bug, missing prerequisite data, etc. - as opposed to "failure", which is a
+    // completed check's own verdict.
+    | {
+          kind: "exception";
           errorMessage: string;
       };
 

@@ -22,6 +22,7 @@ import { HydrostaticEquilibriumGridPropertyCheckResult } from "./HydrostaticEqui
 import {
     formatCaughtError,
     hydrostaticGridMatrixCoordinates,
+    isGridPropertyValueWithinThreshold,
     type HydrostaticEquilibriumCheckParams,
 } from "./hydrostaticEquilibriumShared";
 
@@ -381,18 +382,27 @@ export const HydrostaticEquilibriumGridPropertyCheckStep: QcCheckStepDefinition<
                         staleTime: 0,
                     });
 
-                    context.reportRealizationResult(realization, {
-                        kind: "success",
-                        metrics: {
-                            timeSteps: result.time_steps,
-                            gridName: result.grid_name,
-                            checkedPropertyNames: result.checked_property_names,
-                            propertyValues: result.realization_result.property_values,
-                        },
-                    });
+                    const metrics: HydrostaticEquilibriumGridPropertyCheckMetrics = {
+                        timeSteps: result.time_steps,
+                        gridName: result.grid_name,
+                        checkedPropertyNames: result.checked_property_names,
+                        propertyValues: result.realization_result.property_values,
+                    };
+                    const failingPropertyNames = result.realization_result.property_values
+                        .filter((propertyValue) => !isGridPropertyValueWithinThreshold(propertyValue))
+                        .map((propertyValue) => propertyValue.property_name);
+                    if (failingPropertyNames.length > 0) {
+                        context.reportRealizationResult(realization, {
+                            kind: "failure",
+                            metrics,
+                            reason: `${failingPropertyNames.join(", ")} exceeded the allowed change threshold.`,
+                        });
+                    } else {
+                        context.reportRealizationResult(realization, { kind: "success", metrics });
+                    }
                 } catch (error) {
                     context.reportRealizationResult(realization, {
-                        kind: "error",
+                        kind: "exception",
                         errorMessage: formatCaughtError(error),
                     });
                 } finally {

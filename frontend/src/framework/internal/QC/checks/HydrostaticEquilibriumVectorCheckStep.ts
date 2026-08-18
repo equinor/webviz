@@ -113,12 +113,12 @@ function makeVectorTemplates(context: QcCheckTemplateContext<HydrostaticEquilibr
     ];
 }
 
-function reportErrorForAllRealizations(
+function reportExceptionForAllRealizations(
     context: QcCheckStepRunContext<HydrostaticEquilibriumVectorCheckMetrics, HydrostaticEquilibriumCheckParams>,
     errorMessage: string,
 ): void {
     for (const realization of context.realizations) {
-        context.reportRealizationResult(realization, { kind: "error", errorMessage });
+        context.reportRealizationResult(realization, { kind: "exception", errorMessage });
     }
 }
 
@@ -160,12 +160,12 @@ export const HydrostaticEquilibriumVectorCheckStep: QcCheckStepDefinition<
 
             const gridInfo = gridModelsInfo.find((info) => info.grid_name === gridName);
             if (!gridInfo) {
-                reportErrorForAllRealizations(context, `Grid '${gridName}' is no longer available for this ensemble.`);
+                reportExceptionForAllRealizations(context, `Grid '${gridName}' is no longer available for this ensemble.`);
                 return;
             }
             const resolvedTimeSteps = resolveHydrostaticTimeSteps(gridInfo);
             if (!resolvedTimeSteps) {
-                reportErrorForAllRealizations(
+                reportExceptionForAllRealizations(
                     context,
                     "At least two distinct grid property time steps are required for the equilibrium check.",
                 );
@@ -174,7 +174,7 @@ export const HydrostaticEquilibriumVectorCheckStep: QcCheckStepDefinition<
             t0Iso = resolvedTimeSteps.t0Iso;
             t1Iso = resolvedTimeSteps.t1Iso;
         } catch (error) {
-            reportErrorForAllRealizations(context, formatCaughtError(error));
+            reportExceptionForAllRealizations(context, formatCaughtError(error));
             return;
         }
 
@@ -215,23 +215,32 @@ export const HydrostaticEquilibriumVectorCheckStep: QcCheckStepDefinition<
                 const realizationResult = resultByRealization.get(realization);
                 if (!realizationResult) {
                     context.reportRealizationResult(realization, {
-                        kind: "error",
+                        kind: "exception",
                         errorMessage: "No vector check result was returned for this realization.",
                     });
                     continue;
                 }
-                context.reportRealizationResult(realization, {
-                    kind: "success",
-                    metrics: {
-                        timeSteps: result.time_steps,
-                        checkedVectorNames: result.checked_vector_names,
-                        vectorValues: realizationResult.vector_values,
-                        ensembleIdentString: ensemble.getIdent().toString(),
-                    },
-                });
+                const metrics: HydrostaticEquilibriumVectorCheckMetrics = {
+                    timeSteps: result.time_steps,
+                    checkedVectorNames: result.checked_vector_names,
+                    vectorValues: realizationResult.vector_values,
+                    ensembleIdentString: ensemble.getIdent().toString(),
+                };
+                const nonZeroVectorNames = realizationResult.vector_values
+                    .filter((vectorValue) => !vectorValue.is_zero)
+                    .map((vectorValue) => vectorValue.vector_name);
+                if (nonZeroVectorNames.length > 0) {
+                    context.reportRealizationResult(realization, {
+                        kind: "failure",
+                        metrics,
+                        reason: `${nonZeroVectorNames.join(", ")} ${nonZeroVectorNames.length === 1 ? "is" : "are"} not zero at t1.`,
+                    });
+                    continue;
+                }
+                context.reportRealizationResult(realization, { kind: "success", metrics });
             }
         } catch (error) {
-            reportErrorForAllRealizations(context, formatCaughtError(error));
+            reportExceptionForAllRealizations(context, formatCaughtError(error));
         } finally {
             unsubscribeProgress();
         }

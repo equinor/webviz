@@ -7,12 +7,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { HydrostaticEquilibriumGridPropertyCheckMetrics } from "./HydrostaticEquilibriumGridPropertyCheckStep";
 import type { HydrostaticEquilibriumVectorCheckMetrics } from "./HydrostaticEquilibriumVectorCheckStep";
-
-// Mirrors the backend's default max allowed relative change for the grid property check
-// (webviz_services.qc_service.hydrostatic_equilibrium.equilibrium_logic.DEFAULT_GRID_CHANGE_THRESHOLD
-// = 1e-3). There's no UI setting for this yet, so it's only used to color the "within threshold"
-// column below, same as `ModelQc`'s `gridCheckThresholdAtom` default.
-const DEFAULT_GRID_CHECK_THRESHOLD = 1e-3;
+import { isGridPropertyValueWithinThreshold } from "./hydrostaticEquilibriumShared";
 
 // Compact pass/fail indicator used in table cells - ported from `ModelQc`'s `PassFailIndicator`.
 function PassFailIndicator(props: { passed: boolean; passedLabel?: string; failedLabel?: string }): React.ReactNode {
@@ -82,9 +77,7 @@ export function HydrostaticEquilibriumGridPropertyCheckResult(props: {
                         <Table.Cell>{propertyValue.max_abs_change.toPrecision(4)}</Table.Cell>
                         <Table.Cell>{propertyValue.max_rel_change.toPrecision(4)}</Table.Cell>
                         <Table.Cell>
-                            <PassFailIndicator
-                                passed={propertyValue.max_rel_change <= DEFAULT_GRID_CHECK_THRESHOLD}
-                            />
+                            <PassFailIndicator passed={isGridPropertyValueWithinThreshold(propertyValue)} />
                         </Table.Cell>
                     </Table.Row>
                 ))}

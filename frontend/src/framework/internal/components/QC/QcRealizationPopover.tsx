@@ -84,17 +84,28 @@ function QcRealizationResultDetails(props: { selection: QcRealizationSelection }
     if (!result) {
         return <span className="text-neutral-subtle text-body-sm">This realization has not been checked yet.</span>;
     }
-    if (result.kind === "error") {
+    if (result.kind === "exception") {
         return <span className="text-danger-subtle text-body-sm">{result.errorMessage}</span>;
     }
 
     const ResultComponent = matrixRuntime.getStepDefinition().resultComponent;
-    if (ResultComponent) {
-        return <ResultComponent metrics={result.metrics} />;
-    }
-    return (
+    const metricsContent = ResultComponent ? (
+        <ResultComponent metrics={result.metrics} />
+    ) : (
         <pre className="text-body-xs max-h-64 max-w-80 overflow-auto break-all whitespace-pre-wrap">
             {JSON.stringify(result.metrics, null, 2)}
         </pre>
     );
+
+    // A "failure" still carries `metrics` (same as "success") - show why it failed alongside them,
+    // rather than in place of them.
+    if (result.kind === "failure") {
+        return (
+            <div className="gap-3xs flex flex-col">
+                <span className="text-danger-subtle text-body-sm">{result.reason}</span>
+                {metricsContent}
+            </div>
+        );
+    }
+    return metricsContent;
 }

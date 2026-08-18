@@ -1,10 +1,21 @@
 import { isAxiosError } from "axios";
 
-import type { Grid3dInfo_api } from "@api";
+import type { Grid3dInfo_api, GridPropertyCheckValue_api } from "@api";
 import { getGridModelsInfoOptions } from "@api";
 import type { QcCheckMatrixCoordinate } from "@framework/internal/QC/QcCheckStep";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
+
+// Mirrors the backend's default max allowed relative change for the grid property check
+// (webviz_services.qc_service.hydrostatic_equilibrium.equilibrium_logic.DEFAULT_GRID_CHANGE_THRESHOLD
+// = 1e-3). There's no UI setting for this yet. Shared by the step's own pass/fail verdict
+// (`HydrostaticEquilibriumGridPropertyCheckStep`) and the results table's "within threshold" column
+// (`HydrostaticEquilibriumCheckResults`), so both always agree on the same threshold.
+const DEFAULT_GRID_CHECK_THRESHOLD = 1e-3;
+
+export function isGridPropertyValueWithinThreshold(propertyValue: GridPropertyCheckValue_api): boolean {
+    return propertyValue.max_rel_change <= DEFAULT_GRID_CHECK_THRESHOLD;
+}
 
 // Turns a caught fetch/query error into a user-facing message, surfacing the HTTP status when the
 // error originated from an axios request (mirrors the error formatting previously done ad-hoc in
