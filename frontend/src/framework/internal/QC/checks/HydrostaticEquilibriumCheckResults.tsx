@@ -6,8 +6,8 @@ import { Table } from "@lib/components/Table";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { HydrostaticEquilibriumGridPropertyCheckMetrics } from "./HydrostaticEquilibriumGridPropertyCheckStep";
-import type { HydrostaticEquilibriumVectorCheckMetrics } from "./HydrostaticEquilibriumVectorCheckStep";
 import { isGridPropertyValueWithinThreshold } from "./hydrostaticEquilibriumShared";
+import type { HydrostaticEquilibriumVectorCheckMetrics } from "./HydrostaticEquilibriumVectorCheckStep";
 
 // Compact pass/fail indicator used in table cells - ported from `ModelQc`'s `PassFailIndicator`.
 function PassFailIndicator(props: { passed: boolean; passedLabel?: string; failedLabel?: string }): React.ReactNode {
