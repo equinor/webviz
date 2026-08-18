@@ -152,6 +152,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 <Setting.Section title="Network" defaultOpen>
                     <Setting.Field
                         label="Tree Type"
+                        help={{
+                            content:
+                                "Which network definition from the reservoir simulator to display. \"Standard Network\" is the simulator's GRUPTREE group hierarchy (producers + injectors); \"Extended Network\" is the BRANPROP production-network topology, shown only when the model defines it.",
+                        }}
                         loadingOverlay={selectedTreeType.isLoading}
                         errorOverlay={selectedTreeType.depsHaveError ? "Could not load tree types." : undefined}
                         annotations={selectedTreeTypeAnnotations}

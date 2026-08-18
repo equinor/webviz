@@ -1,5 +1,7 @@
 import path from "path";
 
+import fs from "fs";
+
 import babel from "@rolldown/plugin-babel";
 import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -18,6 +20,27 @@ const paths = {
     root: "./src",
 };
 
+const VIRTUAL_TUTORIAL_MEDIA_ID = "virtual:tutorial-media-base-url";
+const RESOLVED_VIRTUAL_TUTORIAL_MEDIA_ID = "\0" + VIRTUAL_TUTORIAL_MEDIA_ID;
+
+// Exposes the tutorial media base URL to the app: local public/tutorial-videos when it exists, else "" (Azure).
+// A virtual module is used instead of `define`, which rolldown-vite doesn't substitute during dev serve.
+function tutorialMediaBaseUrlPlugin() {
+    return {
+        name: "tutorial-media-base-url",
+        resolveId(id: string) {
+            return id === VIRTUAL_TUTORIAL_MEDIA_ID ? RESOLVED_VIRTUAL_TUTORIAL_MEDIA_ID : undefined;
+        },
+        load(id: string) {
+            if (id !== RESOLVED_VIRTUAL_TUTORIAL_MEDIA_ID) {
+                return undefined;
+            }
+            const localExists = fs.existsSync(path.resolve(__dirname, "public/tutorial-videos"));
+            return `export const TUTORIAL_MEDIA_LOCAL_BASE_URL = ${JSON.stringify(localExists ? "/tutorial-videos" : "")};`;
+        },
+    };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
     const define: Record<string, any> = {
@@ -28,6 +51,7 @@ export default defineConfig(() => {
 
     return {
         plugins: [
+            tutorialMediaBaseUrlPlugin(),
             plotlyWebglContextReleasePlugin(),
             tailwindPlugin(),
             react(),

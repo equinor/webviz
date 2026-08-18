@@ -18,7 +18,7 @@ export function DarkModeButton(): React.ReactNode {
 
     return (
         <Tooltip content="Toggle dark mode">
-            <Button variant="ghost" tone="accent" iconOnly onClick={toggleDarkMode}>
+            <Button variant="ghost" tone="accent" iconOnly aria-label="Toggle dark mode" onClick={toggleDarkMode}>
                 {settings.colorScheme === "dark" ? <DarkMode fontSize="inherit" /> : <LightMode fontSize="inherit" />}
             </Button>
         </Tooltip>
