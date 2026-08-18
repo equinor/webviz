@@ -751,7 +751,7 @@ const REALIZATION_STATUS_TONE_TO_CLASSNAME: Record<RealizationStatusTone, string
     success: "bg-success-strong hover:outline hover:outline-success cursor-pointer hover:outline-2",
     failure: "bg-danger-strong hover:outline-danger cursor-pointer hover:outline-2",
     exception:
-        "bg-danger-strong text-danger-subtle-on-emphasis hover:outline hover:outline-danger hover:outline-2 cursor-pointer",
+        "text-danger-subtle border-neutral-strong border hover:outline hover:outline-danger hover:outline-2 cursor-pointer",
     excluded: "bg-warning-strong border border-warning-strong cursor-not-allowed",
     filteredAway: "border-neutral-subtle border text-neutral-subtle/40 cursor-not-allowed",
 };
