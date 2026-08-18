@@ -23,12 +23,42 @@ export class SessionValidationError extends Error {
     }
 }
 
+/**
+ * Migrates legacy persisted content (from before multi-dashboard sessions) where the
+ * RealizationFilterSet lived at the session level (`ensembleRealizationFilterSet`) into the
+ * new per-dashboard shape (`dashboards[i].realizationFilterSet`).
+ *
+ * Legacy sessions/snapshots always had exactly one dashboard, so the whole session-level filter
+ * set is moved onto dashboards[0]. Mutates and returns the same object so it can be validated
+ * afterwards by AJV. Safe to call on already-migrated content: if `ensembleRealizationFilterSet`
+ * is absent, this is a no-op.
+ */
+export function migrateLegacyRealizationFilterSetLocation(content: any): any {
+    if (!content || typeof content !== "object" || !("ensembleRealizationFilterSet" in content)) {
+        return content;
+    }
+
+    const legacyFilterSet = content.ensembleRealizationFilterSet;
+    delete content.ensembleRealizationFilterSet;
+
+    if (Array.isArray(content.dashboards) && content.dashboards.length > 0) {
+        content.dashboards[0].realizationFilterSet = legacyFilterSet;
+    }
+    // If there are zero dashboards, there's nothing to migrate into - the filter data is simply
+    // dropped (legacy sessions always had exactly one dashboard).
+
+    return content;
+}
+
 export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataContainer | null {
     const json = localStorage.getItem(key);
     if (!json) {
         return null;
     }
     const parsed = JSON.parse(json);
+    if (parsed && typeof parsed === "object" && parsed.content) {
+        migrateLegacyRealizationFilterSetLocation(parsed.content);
+    }
     if (!validateFull(parsed)) {
         throw new SessionValidationError(`Local storage session validation failed ${validateFull.errors}`);
     }
@@ -45,6 +75,7 @@ export function deserializeFromLocalStorage(key: string): WorkbenchSessionDataCo
 
 export function deserializeSessionFromBackend(raw: Session_api): WorkbenchSessionDataContainer {
     const parsed = JSON.parse(raw.content);
+    migrateLegacyRealizationFilterSetLocation(parsed);
     if (!validateContent(parsed)) {
         throw new SessionValidationError(`Backend session validation failed ${validateContent.errors}`);
     }
@@ -69,6 +100,7 @@ export function deserializeSessionFromBackend(raw: Session_api): WorkbenchSessio
 
 export function deserializeSnapshotFromBackend(raw: Snapshot_api): WorkbenchSessionDataContainer {
     const parsed = JSON.parse(raw.content);
+    migrateLegacyRealizationFilterSetLocation(parsed);
     if (!validateContent(parsed)) {
         throw new SessionValidationError(`Backend session validation failed ${validateContent.errors}`);
     }

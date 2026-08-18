@@ -17,7 +17,9 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
+import { BottomBar } from "../BottomBar/bottomBar";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
+import { DocumentTitleSync } from "../DocumentTitleSync";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
 import { InitialEnsemblesLoadingWarningInfoDialog } from "../InitialEnsemblesLoadingWarningInfoDialog";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
@@ -72,6 +74,7 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <ActiveDashboardBoundary>
+                    <DocumentTitleSync workbench={workbench} />
                     <ActionBar workbench={workbench} />
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
@@ -85,6 +88,7 @@ export function WorkbenchWrapper() {
                             <RightSideBar workbench={workbench} />
                         </div>
                     </div>
+                    <BottomBar workbench={workbench} />
                 </ActiveDashboardBoundary>
             </ActiveSessionBoundary>
             {content}

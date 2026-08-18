@@ -4,10 +4,11 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { NodeType_api, Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
@@ -37,7 +38,7 @@ import {
 } from "./atoms/persistableFixableAtoms";
 import { realizationFlowNetworkQueryAtom } from "./atoms/queryAtoms";
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, dashboard, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
@@ -61,7 +62,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     usePropagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
 
-    const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
+    const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(dashboard);
     const timeStepSliderDebounceTimeMs = 10;
     const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 

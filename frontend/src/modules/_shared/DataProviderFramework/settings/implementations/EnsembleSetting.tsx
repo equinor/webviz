@@ -2,7 +2,6 @@ import type React from "react";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 
 import type {
     CustomSettingImplementation,
@@ -57,12 +56,10 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, V
                 availableValues.some((value) => value.equals(ensemble.getIdent())),
             );
 
-            const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
-
             return (
                 <EnsembleDropdown
                     ensembles={ensembles}
-                    ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                    ensembleRealizationFilterFunction={props.globalSettings.realizationFilterFunction}
                     value={props.value}
                     onValueChange={props.onValueChange}
                     disabled={props.disabled}

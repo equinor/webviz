@@ -4,12 +4,13 @@ import { useSetAtom } from "jotai";
 
 import type { SurfaceStatisticFunction_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Hidden } from "@lib/components/Hidden";
 import { NumberInput } from "@lib/components/NumberInput";
 import { RadioCompositions } from "@lib/components/Radio/compositions";
@@ -231,7 +232,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                     <EnsembleDropdown
                         ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={computedEnsembleIdent}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.dashboard)}
                         onValueChange={handleEnsembleSelectionChange}
                     />
                 </Setting.Field>

@@ -5,12 +5,13 @@ import { cloneDeep, isEqual } from "lodash-es";
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
 import type { EnsembleSet } from "@framework/EnsembleSet";
+import { useEnsembleRealizationFilterFunc, type Dashboard } from "@framework/internal/Dashboard";
 import type { SettingsContext } from "@framework/ModuleContext";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
-import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { Banner } from "@lib/components/Banner";
 import { Select } from "@lib/components/Select";
 import type { SettingAnnotation } from "@lib/components/Setting";
@@ -22,6 +23,7 @@ export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any>;
     workbenchSession: WorkbenchSession;
+    dashboard: Dashboard;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
@@ -228,7 +230,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         value={ensembleIdents}
                         allowDeltaEnsembles={false}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.dashboard)}
                         onValueChange={handleEnsembleIdentsChange}
                     />
                 </Setting.Field>

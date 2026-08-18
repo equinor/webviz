@@ -3,10 +3,11 @@ import React from "react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
@@ -106,10 +107,10 @@ function arraysHaveSameValues(left: string[], right: string[]): boolean {
     return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
+export function Settings({ workbenchSession, dashboard, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
-    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(dashboard);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
     const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);

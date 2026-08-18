@@ -11,22 +11,17 @@ import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useActiveSession } from "../../ActiveSessionBoundary";
+
 export type StartPanelProps = {
     workbench: Workbench;
 };
 
 export function StartPanel(props: StartPanelProps) {
-    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
-    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+    const workbenchSession = useActiveSession();
     const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
-    const isEnsembleSetLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
-    const setEnsembleDialogOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
     const setTemplatesDialogOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.TemplatesDialogOpen);
-
-    function handleEnsembleDialogOpenClick() {
-        setEnsembleDialogOpen(true);
-    }
 
     function handleTemplatesListClick() {
         setTemplatesDialogOpen(true);
@@ -34,53 +29,57 @@ export function StartPanel(props: StartPanelProps) {
 
     return (
         <>
-            <Tooltip
-                content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
-                side="bottom"
-            >
-                {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                <span>
-                    <Button
-                        disabled={isSnapshot}
-                        iconOnly
-                        onClick={handleEnsembleDialogOpenClick}
-                        tone="accent"
-                        variant="ghost"
-                    >
-                        <Badge
-                            invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
-                            tone="accent"
-                            badgeContent={
-                                isEnsembleSetLoading ? (
-                                    <CircularProgress size={16} tone="on-emphasis" />
-                                ) : (
-                                    ensembleSet.getEnsembleArray().length
-                                )
-                            }
-                        >
-                            <List fontSize="inherit" />
-                        </Badge>
-                    </Button>
-                </span>
-            </Tooltip>
+            <EnsembleSettingsButton workbench={props.workbench} />
             <Separator orientation="vertical" />
-            <Tooltip
-                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Show templates dialog"}
-                side="bottom"
-            >
-                {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                <span>
-                    <Button
-                        disabled={isSnapshot}
-                        iconOnly
-                        onClick={handleTemplatesListClick}
-                        tone="accent"
-                        variant="ghost"
-                    >
-                        <GridView fontSize="inherit" />
-                    </Button>
-                </span>
-            </Tooltip>
+            <Button disabled={isSnapshot} iconOnly onClick={handleTemplatesListClick} tone="accent" variant="ghost">
+                <GridView fontSize="inherit" />
+            </Button>
         </>
+    );
+}
+
+type EnsembleSettingsButtonProps = {
+    workbench: Workbench;
+};
+
+function EnsembleSettingsButton(props: EnsembleSettingsButtonProps): React.ReactNode {
+    const workbenchSession = props.workbench.getSessionManager().getActiveSession();
+    const ensembleSet = usePublishSubscribeTopicValue(workbenchSession, WorkbenchSessionTopic.ENSEMBLE_SET);
+    const isSnapshot = usePublishSubscribeTopicValue(workbenchSession, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
+
+    const isEnsembleSetLoading = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.IsLoadingEnsembleSet);
+    const setEnsembleDialogOpen = useSetGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);
+
+    function handleEnsembleDialogOpenClick() {
+        setEnsembleDialogOpen(true);
+    }
+
+    return (
+        <Tooltip
+            content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
+            side="bottom"
+        >
+            <Button
+                disabled={isSnapshot}
+                iconOnly
+                onClick={handleEnsembleDialogOpenClick}
+                tone="accent"
+                variant="ghost"
+            >
+                <Badge
+                    invisible={ensembleSet.getEnsembleArray().length === 0 && !isEnsembleSetLoading}
+                    tone="accent"
+                    badgeContent={
+                        isEnsembleSetLoading ? (
+                            <CircularProgress size={16} tone="on-emphasis" />
+                        ) : (
+                            ensembleSet.getEnsembleArray().length
+                        )
+                    }
+                >
+                    <List />
+                </Badge>
+            </Button>
+        </Tooltip>
     );
 }

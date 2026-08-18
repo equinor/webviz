@@ -1,6 +1,10 @@
 import type { JTDSchemaType } from "ajv/dist/core";
 
 import { MODULE_INSTANCE_STATE_SCHEMA, type SerializedModuleInstanceState } from "@framework/ModuleInstance.schema";
+import {
+    REALIZATION_FILTER_SET_STATE_SCHEMA,
+    type SerializedRealizationFilterSetState,
+} from "@framework/RealizationFilterSet.schema";
 
 import type { LayoutElement } from "./Dashboard";
 
@@ -17,6 +21,7 @@ export type SerializedDashboardState = {
     description?: string;
     activeModuleInstanceId: string | null;
     moduleInstances: SerializedModuleInstanceAndLayoutState[];
+    realizationFilterSet: SerializedRealizationFilterSetState;
 };
 
 const LAYOUT_ELEMENT_STATE_SCHEMA: JTDSchemaType<LayoutElementWithoutIdAndName> = {
@@ -47,6 +52,7 @@ export const DASHBOARD_STATE_SCHEMA: JTDSchemaType<SerializedDashboardState> = {
         moduleInstances: {
             elements: MODULE_INSTANCE_AND_LAYOUT_STATE_SCHEMA,
         },
+        realizationFilterSet: REALIZATION_FILTER_SET_STATE_SCHEMA,
     },
     optionalProperties: {
         description: { type: "string" },

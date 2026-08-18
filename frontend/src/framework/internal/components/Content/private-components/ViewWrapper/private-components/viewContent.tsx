@@ -2,6 +2,7 @@ import React from "react";
 
 import { Provider } from "jotai";
 
+import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
@@ -29,6 +30,7 @@ type ViewContentProps = {
 
 export const ViewContent = React.memo((props: ViewContentProps) => {
     const workbenchSession = useActiveSession();
+    const dashboard = useActiveDashboard();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
     const moduleInstanceLifeCycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
@@ -160,6 +162,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                 <View
                                     viewContext={props.moduleInstance.getContext()}
                                     workbenchSession={props.workbench.getSessionManager().getActiveSession()}
+                                    dashboard={dashboard}
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     hoverService={props.workbench.getHoverService()}
                                     workbenchSettings={props.workbench

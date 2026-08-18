@@ -6,6 +6,7 @@ import {
     AddLink,
     Apps,
     ArrowDropDown,
+    ChevronRight,
     Close,
     Edit,
     Fullscreen,
@@ -23,6 +24,7 @@ import { FmuLogo } from "@assets/FmuLogo";
 import SumoLogo from "@assets/sumo.svg";
 
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import { DashboardTopic, type Dashboard } from "@framework/internal/Dashboard";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -243,6 +245,12 @@ function Title(props: TitleProps): React.ReactNode {
         props.workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.ACTIVE_SESSION,
     );
+
+    const activeDashboard = usePublishSubscribeTopicValue(
+        activeSession!,
+        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
+    );
+
     const isSnapshot = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     let content = <SessionTitle workbench={props.workbench} />;
@@ -251,7 +259,16 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return <div className="gap-x-sm flex grow items-center overflow-hidden">{content}</div>;
+    return (
+        <div className="gap-x-sm flex grow items-center overflow-hidden">
+            {content}
+            {activeDashboard && (
+                <>
+                    <DashboardTitle dashboard={activeDashboard} />
+                </>
+            )}
+        </div>
+    );
 }
 
 type SnapshotTitleProps = {
@@ -361,6 +378,23 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
                 {metadata.title}
             </Heading>
             <HasChangesIndicator visible={hasChanges} />
+        </>
+    );
+}
+
+type DashboardTitleProps = {
+    dashboard: Dashboard;
+};
+
+function DashboardTitle(props: DashboardTitleProps): React.ReactNode {
+    const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
+
+    return (
+        <>
+            <ChevronRight className="text-neutral-subtle" />
+            <Typography family="header" size="sm" tone="neutral" weight="bolder" layoutClassName="truncate">
+                {metadata.name}
+            </Typography>
         </>
     );
 }

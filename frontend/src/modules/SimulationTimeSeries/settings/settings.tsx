@@ -8,11 +8,12 @@ import { ParameterListFilter } from "@framework/components/ParameterListFilter";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { Hidden } from "@lib/components/Hidden";
@@ -276,7 +277,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             ensembles={ensembleSet.getEnsembleArray()}
                             value={selectedEnsembleIdents.value ?? []}
                             allowDeltaEnsembles={true}
-                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.dashboard)}
                             onValueChange={handleEnsembleSelectChange}
                         />
                     </Setting.Field>

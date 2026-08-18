@@ -5,11 +5,12 @@ import { isEqual } from "lodash-es";
 
 import { Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { useEnsembleRealizationFilterFunc } from "@framework/internal/Dashboard";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox/combobox";
 import { Select } from "@lib/components/Select";
@@ -117,7 +118,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedRegularEnsembleIdent.value}
-                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
+                            ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.dashboard)}
                             onValueChange={handleEnsembleSelectionChange}
                         />
                     </Setting.Field>

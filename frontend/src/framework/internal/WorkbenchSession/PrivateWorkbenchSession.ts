@@ -3,13 +3,13 @@ import type { QueryClient } from "@tanstack/query-core";
 import { AtomStoreMaster } from "@framework/AtomStoreMaster";
 import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
-import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { makeUniqueName } from "@lib/utils/uniqueName";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
@@ -69,7 +69,6 @@ export enum PrivateWorkbenchSessionTopic {
 
 export type WorkbenchSessionTopicPayloads = {
     [WorkbenchSessionTopic.ENSEMBLE_SET]: EnsembleSet;
-    [WorkbenchSessionTopic.REALIZATION_FILTER_SET]: { filterSet: RealizationFilterSet };
     [PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD]: Dashboard | null;
     [PrivateWorkbenchSessionTopic.DASHBOARDS]: Dashboard[];
     [PrivateWorkbenchSessionTopic.METADATA]: WorkbenchSessionMetadata;
@@ -90,10 +89,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _dashboards: Dashboard[] = [];
     private _activeDashboardId: string | null = null;
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
-    private _realizationFilterSet = new RealizationFilterSet();
-    private _wrappedRealizationFilterSet = {
-        filterSet: this._realizationFilterSet,
-    };
     private _userCreatedItems: UserCreatedItems;
     private _metadata: WorkbenchSessionMetadata = {
         title: "New Session",
@@ -111,7 +106,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._atomStoreMaster = new AtomStoreMaster();
         this._queryClient = queryClient;
         this._userCreatedItems = new UserCreatedItems(this._atomStoreMaster);
-        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, this._wrappedRealizationFilterSet);
         this._isSnapshot = isSnapshot;
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
@@ -223,7 +217,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
                     }),
                 ),
             },
-            ensembleRealizationFilterSet: this._realizationFilterSet.serializeState(),
         };
     }
 
@@ -267,12 +260,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._ensembleLoadingErrorInfoMap = ensembleLoadingErrorInfoMap;
         this._ensembleLoadingWarningInfoMap = ensembleLoadingWarningInfoMap;
 
-        // This has to be done after loading the ensemble set
-        // in order to guarantee that all realization filters for the ensembles exist
-        this._realizationFilterSet.deserializeState(contentState.ensembleRealizationFilterSet);
-        this.notifyAboutEnsembleRealizationFilterChange();
-
         // --- Now that the ensemble set is loaded, we can deserialize dashboards and modules ---
+        // Each dashboard's realization filter set is synchronized against this._ensembleSet
+        // inside registerDashboard() (guaranteeing a filter exists for every ensemble) before
+        // its persisted filter selections are overlaid inside deserializeState().
 
         for (const dashboard of contentState.dashboards) {
             const newDashboard = new Dashboard(this._atomStoreMaster);
@@ -285,12 +276,13 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     setEnsembleSet(set: EnsembleSet) {
-        this._realizationFilterSet.synchronizeWithEnsembleSet(set);
         this._ensembleSet = set;
         // Await the update of the EnsembleTimestampsStore with the latest timestamps before notifying any subscribers
         this._atomStoreMaster.setAtomValue(EnsembleSetAtom, set);
+        for (const dashboard of this._dashboards) {
+            dashboard.syncRealizationFilterSetWithEnsembleSet(set);
+        }
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.ENSEMBLE_SET);
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
         this.handleStateChange();
     }
 
@@ -309,8 +301,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             switch (topic) {
                 case WorkbenchSessionTopic.ENSEMBLE_SET:
                     return this._ensembleSet;
-                case WorkbenchSessionTopic.REALIZATION_FILTER_SET:
-                    return this._wrappedRealizationFilterSet;
                 case PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD:
                     return this.getActiveDashboard();
                 case PrivateWorkbenchSessionTopic.DASHBOARDS:
@@ -338,12 +328,61 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return found ?? null;
     }
 
+    setActiveDashboard(dashboardId: string): void {
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (dashboardId && !dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        if (this._activeDashboardId === (dashboard ? dashboard.getId() : null)) {
+            return;
+        }
+        this._activeDashboardId = dashboard ? dashboard.getId() : null;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    addDashboard(): void {
+        this.assertIsNotSnapshot();
+        const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), "Dashboard");
+        const newDashboard = new Dashboard(this._atomStoreMaster, name);
+        this.registerDashboard(newDashboard);
+        this.setActiveDashboard(newDashboard.getId());
+    }
+
+    removeDashboard(dashboardId: string): void {
+        this.assertIsNotSnapshot();
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (!dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        // Capture the index before removal, since the dashboard is no longer findable in the array afterwards
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        this.unregisterDashboard(dashboard);
+
+        // If the removed dashboard was the active one, set the active dashboard to the previous one in the list, or null if there are no dashboards left
+        if (this._activeDashboardId === dashboardId) {
+            if (index > 0) {
+                this._activeDashboardId = this._dashboards[index - 1].getId();
+            } else if (this._dashboards.length > 0) {
+                this._activeDashboardId = this._dashboards[0].getId();
+            } else {
+                this._activeDashboardId = null;
+            }
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+    }
+
     getDashboards(): Dashboard[] {
         return this._dashboards;
     }
 
     private registerDashboard(dashboard: Dashboard): void {
-        this._dashboards.push(dashboard);
+        this._dashboards = [...this._dashboards, dashboard];
+
+        // Guarantees a realization filter exists for every ensemble currently in the session
+        // before the caller proceeds to (optionally) overlay persisted filter selections via
+        // dashboard.deserializeState().
+        dashboard.syncRealizationFilterSetWithEnsembleSet(this._ensembleSet);
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             `dashboard-${dashboard.getId()}`,
@@ -352,13 +391,16 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             ),
         );
 
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+
         this.handleStateChange();
     }
 
     private unregisterDashboard(dashboard: Dashboard): void {
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
         dashboard.beforeUnload();
-        this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
+        this._dashboards = [...this._dashboards.filter((d) => d.getId() !== dashboard.getId())];
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
 
     private clearDashboards() {
@@ -387,6 +429,41 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this.handleStateChange();
     }
 
+    /**
+     * Replaces a single dashboard in place, preserving its position and the rest of the session's
+     * dashboards. Used when applying a template so that only the targeted dashboard is affected.
+     */
+    replaceDashboard(dashboardId: string, newDashboard: Dashboard): void {
+        this.assertIsNotSnapshot();
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        if (index === -1) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        const oldDashboard = this._dashboards[index];
+        const wasActive = this._activeDashboardId === dashboardId;
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
+        oldDashboard.beforeUnload();
+
+        newDashboard.syncRealizationFilterSetWithEnsembleSet(this._ensembleSet);
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${newDashboard.getId()}`,
+            newDashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this._dashboards = [...this._dashboards.slice(0, index), newDashboard, ...this._dashboards.slice(index + 1)];
+
+        if (wasActive) {
+            this._activeDashboardId = newDashboard.getId();
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this.handleStateChange();
+    }
+
     getEnsembleLoadingErrorInfoMap(): EnsembleLoadingErrorInfoMap {
         return this._ensembleLoadingErrorInfoMap;
     }
@@ -399,24 +476,8 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._ensembleSet;
     }
 
-    getRealizationFilterSet(): RealizationFilterSet {
-        return this._realizationFilterSet;
-    }
-
     getUserCreatedItems(): UserCreatedItems {
         return this._userCreatedItems;
-    }
-
-    notifyAboutEnsembleRealizationFilterChange(): void {
-        console.debug("Notifying about ensemble realization filter change");
-        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
-            filterSet: this._realizationFilterSet,
-        });
-        this._wrappedRealizationFilterSet = {
-            filterSet: this._realizationFilterSet,
-        };
-        this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionTopic.REALIZATION_FILTER_SET);
-        this.handleStateChange();
     }
 
     private makeDefaultDashboard(): void {

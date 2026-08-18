@@ -2,6 +2,7 @@ import React from "react";
 
 import type { QueryClient } from "@tanstack/query-core";
 
+import type { Dashboard } from "@framework/internal/Dashboard";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
@@ -15,6 +16,7 @@ export type UsePersistedDataProviderManagerOptions = {
     setSerializedState: (state: string) => void;
     serializedState: string | null;
     workbenchSession: WorkbenchSession;
+    dashboard: Dashboard;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
 };
@@ -25,6 +27,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
         serializedState,
         setSerializedState,
         workbenchSession,
+        dashboard,
         workbenchSettings,
         queryClient,
     } = options;
@@ -74,14 +77,17 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
 
     /**
      * Setup DataProviderManager on mount, and clean up on unmount.
-     * Dependencies: workbenchSession, workbenchSettings, queryClient
+     * Dependencies: workbenchSession, dashboard, workbenchSettings, queryClient
      * - setDataProviderManager is excluded as it's a stable atom setter
      * - When workbenchSession/workbenchSettings change, we get a new atom store, so this recreates the manager
+     * - dashboard must be included: switching the active dashboard within the same session doesn't
+     *   change workbenchSession, so without this the manager would keep listening to the previous
+     *   dashboard's realization filter set instead of the new one
      * - queryClient should never change in practice
      */
     React.useEffect(
         function setupDataProviderManagerEffect() {
-            const manager = new DataProviderManager(workbenchSession, workbenchSettings, queryClient);
+            const manager = new DataProviderManager(workbenchSession, dashboard, workbenchSettings, queryClient);
             setInternalDataProviderManager(manager);
             setDataProviderManager(manager);
 
@@ -92,7 +98,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
                 manager.beforeDestroy();
             };
         },
-        [workbenchSession, workbenchSettings, queryClient, setDataProviderManager],
+        [workbenchSession, dashboard, workbenchSettings, queryClient, setDataProviderManager],
     );
 
     /**

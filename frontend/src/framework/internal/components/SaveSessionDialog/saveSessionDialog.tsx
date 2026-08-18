@@ -16,7 +16,7 @@ import { Typography } from "@lib/components/Typography";
 import { truncateString } from "@lib/utils/strings";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type SaveSessionDialogProps = {
     workbench: Workbench;
@@ -88,7 +88,15 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         [isOpen],
     );
 
-    const layout = props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() || [];
+    const dashboards = props.workbench
+        .getSessionManager()
+        .getActiveSession()
+        .getDashboards()
+        .map((dashboard) => ({
+            id: dashboard.getId(),
+            name: dashboard.getMetadata().name,
+            layout: dashboard.getLayout(),
+        }));
 
     return (
         <>
@@ -101,7 +109,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
                         Sessions are not guaranteed to persist, as underlying data or module states may change.
                     </Banner>
                     <form id={formId} className="gap-x-sm flex items-center" onSubmit={handleSave}>
-                        <DashboardPreview height={220} width={150} layout={layout} />
+                        <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"

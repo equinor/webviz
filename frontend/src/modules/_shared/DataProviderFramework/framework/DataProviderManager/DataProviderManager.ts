@@ -1,14 +1,16 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { clone, isEqual } from "lodash-es";
 
+import {
+    DashboardTopic,
+    createEnsembleRealizationFilterFuncForDashboard,
+    type Dashboard,
+} from "@framework/internal/Dashboard";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
-import {
-    WorkbenchSessionTopic,
-    createEnsembleRealizationFilterFuncForWorkbenchSession,
-} from "@framework/WorkbenchSession";
+import { WorkbenchSessionTopic } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import type { PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
@@ -53,6 +55,7 @@ export type GlobalSettings = {
  */
 export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProviderManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
+    private _dashboard: Dashboard;
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
@@ -64,8 +67,14 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private _deserializing = false;
     private _groupColorGenerator: Generator<string, string>;
 
-    constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
+    constructor(
+        workbenchSession: WorkbenchSession,
+        dashboard: Dashboard,
+        workbenchSettings: WorkbenchSettings,
+        queryClient: QueryClient,
+    ) {
         this._workbenchSession = workbenchSession;
+        this._dashboard = dashboard;
         this._workbenchSettings = workbenchSettings;
         this._queryClient = queryClient;
         this._itemDelegate = new ItemDelegate("DataProviderManager", 0, this);
@@ -80,10 +89,10 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
                 .makeSubscriberFunction(WorkbenchSessionTopic.ENSEMBLE_SET)(this.handleEnsembleSetChanged.bind(this)),
         );
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
-            "workbenchSession",
-            this._workbenchSession
+            "dashboard",
+            this._dashboard
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(WorkbenchSessionTopic.REALIZATION_FILTER_SET)(
+                .makeSubscriberFunction(DashboardTopic.REALIZATION_FILTER_SET)(
                 this.handleRealizationFilterSetChanged.bind(this),
             ),
         );
@@ -237,7 +246,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
 
         return {
             ensembles,
-            realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
+            realizationFilterFunction: createEnsembleRealizationFilterFuncForDashboard(this._dashboard),
             intersectionPolylines,
         };
     }
@@ -245,7 +254,7 @@ export class DataProviderManager implements ItemGroup, PublishSubscribe<DataProv
     private handleRealizationFilterSetChanged() {
         this.updateGlobalSetting(
             "realizationFilterFunction",
-            createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
+            createEnsembleRealizationFilterFuncForDashboard(this._dashboard),
         );
     }
 
