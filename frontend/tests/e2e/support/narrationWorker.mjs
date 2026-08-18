@@ -5,7 +5,7 @@ import { parentPort } from "node:worker_threads";
 import { KokoroTTS } from "kokoro-js";
 
 const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
-const VOICE = "bf_emma";
+const VOICE = "af_heart";
 const SPEED = 1;
 const DTYPE = "q8";
 

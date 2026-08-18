@@ -97,7 +97,7 @@ function synthesizeInWorker(text: string, outPath: string): Promise<number> {
  * Audio cache is keyed by content/text. On a cache hit the WAV is just copied out from cache.
  */
 const CACHE_DIR = fileURLToPath(new URL("../../../.narration-cache/", import.meta.url));
-const CACHE_VOICE = "bf_emma";
+const CACHE_VOICE = "af_heart";
 const CACHE_SPEED = 1;
 
 function cacheKeyFor(text: string): string {
