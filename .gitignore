@@ -127,6 +127,9 @@ frontend/.narration-cache/
 # Seeded auth state for e2e tests
 frontend/tests/e2e/setup/storageState.json
 
+# Scratch output from `playwright codegen` (see test:e2e:codegen)
+frontend/tests/e2e/stories/_recorded.gen.ts
+
 # Ignore Jupyter Notebook files
 *.ipynb
 
