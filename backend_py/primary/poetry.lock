@@ -4014,14 +4014,14 @@ redis = ["redis (>=4.2.0rc1)"]
 
 [[package]]
 name = "sumo-wrapper-python"
-version = "1.6.1"
+version = "1.9.0"
 description = "Python wrapper for the Sumo API"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "sumo_wrapper_python-1.6.1-py3-none-any.whl", hash = "sha256:04628a19c3166376b70ad97e7593b14cd03cb30364bf2777255a69bfeebf2cfb"},
-    {file = "sumo_wrapper_python-1.6.1.tar.gz", hash = "sha256:5834998ef4fb0f4573a153c9791550f58d8b028ac9b6d808a43639023ad96f2a"},
+    {file = "sumo_wrapper_python-1.9.0-py3-none-any.whl", hash = "sha256:6a3d4a1efb35b5384f18aeb2827ed27c99b4817647e8a09da1a9f880bd46e81a"},
+    {file = "sumo_wrapper_python-1.9.0.tar.gz", hash = "sha256:6985eb60763864ec822ff8b44e1c6e76203fb13346e1be929133f8daa36e1bbd"},
 ]
 
 [package.dependencies]
@@ -4260,7 +4260,7 @@ pyarrow-stubs = "^20.0.0.20251215"
 pydantic = "~2.12.0"
 redis = "7.1.1"
 requests-toolbelt = "^1.0.0"
-sumo-wrapper-python = "^1.6.0"
+sumo-wrapper-python = "^1.9.0"
 types-redis = "^4.6.0"
 webviz-core-utils = {path = "../core_utils", develop = true}
 webviz-server-schemas = {path = "../server_schemas", develop = true}

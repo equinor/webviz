@@ -161,13 +161,12 @@ spec:
         maxReplicas: 4
         pollingInterval: 15
         triggers:
-        - name: cpu
-          cpu:
-            value: 20
-        - name: memory
-          memory:
-            value: 20
-
+          - name: cpu
+            cpu:
+              value: 20
+          - name: memory
+            memory:
+              value: 20
 
     - name: pyworker-default
       dockerFileName: ./backend_py/pyworker_default/Dockerfile
@@ -198,7 +197,7 @@ spec:
       variables:
         WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: webviz-test.servicebus.windows.net
         WEBVIZ_SERVICE_BUS_QUEUE_NAME: test-queue
-        WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: 3
+        WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: 1
       secrets:
         - WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY
       resources:
@@ -220,7 +219,6 @@ spec:
               activationMessageCount: 0
               connectionFromEnv: SERVICEBUS_MANAGE_CONNECTION_STRING
 
-
     - name: redis-auth-store
       dockerFileName: ./docker/redis/Dockerfile
       identity:
@@ -234,7 +232,15 @@ spec:
               - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
                 envVar: REDIS_REQUIREPASS
       runAsUser: 999
-      args: ["--maxmemory", "800mb",  "--maxmemory-policy", "noeviction", "--loglevel", "notice"]
+      args:
+        [
+          "--maxmemory",
+          "800mb",
+          "--maxmemory-policy",
+          "noeviction",
+          "--loglevel",
+          "notice",
+        ]
       ports:
         - name: http
           port: 6379
@@ -244,7 +250,6 @@ spec:
           cpu: 500m
         limits:
           memory: 1Gi
-
 
     - name: redis-cache
       dockerFileName: ./docker/redis/Dockerfile
@@ -261,7 +266,15 @@ spec:
       runAsUser: 999
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
-      args: ["--maxmemory", "3gb",  "--maxmemory-policy", "allkeys-lru",  "--loglevel", "notice"]
+      args:
+        [
+          "--maxmemory",
+          "3gb",
+          "--maxmemory-policy",
+          "allkeys-lru",
+          "--loglevel",
+          "notice",
+        ]
       ports:
         - name: http
           port: 6379
@@ -271,7 +284,6 @@ spec:
           cpu: 1000m
         limits:
           memory: 4Gi
-
 
   jobs:
     - name: user-mock
