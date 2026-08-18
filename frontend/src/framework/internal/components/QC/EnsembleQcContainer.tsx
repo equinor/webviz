@@ -7,8 +7,10 @@ import {
     ExpandLess,
     ExpandMore,
     FactCheck,
+    FilterAlt,
     PlayArrow,
     PlaylistPlay,
+    PriorityHigh,
     RadioButtonUnchecked,
     Replay,
     Stop,
@@ -34,8 +36,10 @@ import type {
 import { QcCheckStepGroupTopic, QcCheckStepTopic } from "@framework/internal/QC/QcCheckStep";
 import type { Template } from "@framework/TemplateRegistry";
 import type { Workbench } from "@framework/Workbench";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { LinearProgress } from "@lib/components/LinearProgress";
 import { Menu } from "@lib/components/Menu";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
@@ -43,10 +47,9 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
+import { useActiveSession } from "../ActiveSessionBoundary";
 
 import { useQcRealizationPopover } from "./QcRealizationPopover";
-import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { useActiveSession } from "../ActiveSessionBoundary";
 
 type EnsembleQcContainerProps = {
     ensembleQc: EnsembleQc;
@@ -743,13 +746,20 @@ function CheckSettings(props: CheckSettingsProps) {
 type RealizationStatusTone = "idle" | "loading" | "success" | "failure" | "exception" | "excluded" | "filteredAway";
 
 const REALIZATION_STATUS_TONE_TO_CLASSNAME: Record<RealizationStatusTone, string> = {
-    idle: "bg-neutral-strong",
-    loading: "bg-neutral/50 animate-pulse",
-    success: "bg-success-strong",
-    failure: "bg-danger-strong",
-    exception: "bg-warning-strong",
-    excluded: "bg-neutral/50",
-    filteredAway: "bg-neutral/100",
+    idle: "border border-neutral-strong hover:outline-2",
+    loading: "animate-pulse border border-accent-strong hover:outline-2",
+    success: "bg-success-strong hover:outline hover:outline-success cursor-pointer hover:outline-2",
+    failure: "bg-danger-strong hover:outline-danger cursor-pointer hover:outline-2",
+    exception:
+        "bg-danger-strong text-danger-subtle-on-emphasis hover:outline hover:outline-danger hover:outline-2 cursor-pointer",
+    excluded: "bg-warning-strong border border-warning-strong cursor-not-allowed",
+    filteredAway: "border-neutral-subtle border text-neutral-subtle/40 cursor-not-allowed",
+};
+
+const REALIZATION_STATUS_TO_CONTENT: Partial<Record<RealizationStatusTone, React.ReactNode>> = {
+    loading: <LinearProgress />,
+    exception: <PriorityHigh />,
+    filteredAway: <FilterAlt />,
 };
 
 type RealizationSquaresProps = {
@@ -900,23 +910,31 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                     ? `${(realization % LOADING_ANIMATION_STAGGER_COUNT) * LOADING_ANIMATION_STAGGER_STEP_SECS}s`
                                     : undefined;
 
+                                function localHandleSquareClick(realization: number) {
+                                    if (tone === "loading" || tone === "filteredAway") {
+                                        return;
+                                    }
+                                    handleSquareClick(realization);
+                                }
+
                                 return (
                                     <Tooltip key={realization} content={tooltipContent}>
                                         <div
-                                            onClick={() => handleSquareClick(realization)}
+                                            onClick={() => localHandleSquareClick(realization)}
                                             style={{ width: SQUARE_SIZE_PX, height: SQUARE_SIZE_PX, animationDelay }}
                                             className={resolveClassNames(
-                                                "cursor-pointer rounded-xs",
-                                                { "hover:outline": !isLoading },
+                                                "flex items-center justify-center rounded-xs p-0",
                                                 {
                                                     "outline-accent outline-3 outline-double":
                                                         realization === props.selectedRealization,
-                                                    "opacity-60":
+                                                    "opacity-70":
                                                         realization !== props.selectedRealization && !isLoading,
                                                 },
                                                 REALIZATION_STATUS_TONE_TO_CLASSNAME[tone],
                                             )}
-                                        />
+                                        >
+                                            {REALIZATION_STATUS_TO_CONTENT[tone] ?? null}
+                                        </div>
                                     </Tooltip>
                                 );
                             })}
