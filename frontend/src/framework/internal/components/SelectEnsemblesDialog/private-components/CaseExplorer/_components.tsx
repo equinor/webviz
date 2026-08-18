@@ -23,6 +23,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
             <div
                 className="group relative flex h-full min-w-0 items-center"
                 title={`${props.caseName} - ${props.caseId}`}
+                data-case-uuid={props.caseId}
             >
                 <div className="gap-x-2xs flex items-center overflow-hidden text-ellipsis whitespace-nowrap">
                     {props.caseName}
@@ -44,6 +45,7 @@ export function CaseNameAndIdCell(props: CaseNameAndIdCellProps): React.ReactNod
  */
 type DescriptionCellProps = {
     description: string;
+    caseId: string;
 };
 export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
     function handleCopyRequested() {
@@ -52,7 +54,7 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
 
     return (
         <TableCompositions.CopyCellValue onCopyRequested={handleCopyRequested}>
-            <div className="flex h-full min-w-0 items-center" title={props.description}>
+            <div className="flex h-full min-w-0 items-center" title={props.description} data-case-uuid={props.caseId}>
                 <span className="overflow-hidden text-ellipsis whitespace-nowrap">{props.description}</span>
             </div>
         </TableCompositions.CopyCellValue>
@@ -64,16 +66,33 @@ export function DescriptionCell(props: DescriptionCellProps): React.ReactNode {
  */
 type AuthorCellProps = {
     author: string;
+    caseId: string;
 };
 export function AuthorCell(props: AuthorCellProps): React.ReactNode {
     const avatarSrc = useUserAvatar(`${props.author}@equinor.com`, props.author);
 
     return (
-        <div className="gap-x-xs flex items-center">
+        <div className="gap-x-xs flex items-center" data-case-uuid={props.caseId}>
             <Avatar key={props.author} size={24} userData={avatarSrc} />
             <span className="block w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap" title={props.author}>
                 {props.author}
             </span>
+        </div>
+    );
+}
+
+/**
+ * Component to render a nullable text cell (e.g. model name / revision)
+ */
+type NullableTextCellProps = {
+    value: string | null;
+    caseId: string;
+};
+export function NullableTextCell(props: NullableTextCellProps): React.ReactNode {
+    const text = props.value ?? "";
+    return (
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap" title={text} data-case-uuid={props.caseId}>
+            {text}
         </div>
     );
 }

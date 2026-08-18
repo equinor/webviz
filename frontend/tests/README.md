@@ -32,8 +32,6 @@ A check for test coverage is automatically performed using `istanbul / nyc`. The
 
 ## e2e tests
 
-_NOTE:_ e2e tests are currently not performed due to missing test authentication towards our backend services
-
 End-to-end tests are performed using `Playwright`. Each module author is encouraged to write one or more e2e tests for their respective module.
 
 ### How to write e2e tests

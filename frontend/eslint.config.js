@@ -131,4 +131,17 @@ export default eslintTypescript.config(
             ],
         },
     },
+
+    // Playwright test fixtures use conventions that trip up React/lint rules ------------
+    {
+        files: ["tests/e2e/**/*.ts"],
+        rules: {
+            // Playwright's `use` fixture callback is not a React hook.
+            "react-hooks/rules-of-hooks": "off",
+            // Fixtures that don't consume other fixtures use `async ({}, use) => {}`.
+            "no-empty-pattern": "off",
+            // Allow `_`-prefixed fixture dependencies that are requested only for setup ordering.
+            "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+        },
+    },
 );
