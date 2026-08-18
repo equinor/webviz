@@ -12,7 +12,8 @@
     },
     "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
-  "postCreateCommand": "cd frontend && npx playwright install --with-deps chromium",
+  "postCreateCommand": "cd frontend && npx --yes playwright install --with-deps chromium",
+  "forwardPorts": [6080],
   "hostRequirements": {
     "cpus": 4,
     "memory": "8gb"
