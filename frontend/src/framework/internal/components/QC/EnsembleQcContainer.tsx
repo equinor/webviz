@@ -45,6 +45,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useActiveDashboard } from "../ActiveDashboardBoundary";
 
 import { useQcRealizationPopover } from "./QcRealizationPopover";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import { useActiveSession } from "../ActiveSessionBoundary";
 
 type EnsembleQcContainerProps = {
     ensembleQc: EnsembleQc;
@@ -185,9 +187,11 @@ function OutcomeIcon(props: { tone: OutcomeTone }) {
 }
 
 export function EnsembleQcContainer(props: EnsembleQcContainerProps) {
+    const session = useActiveSession();
     const checkRuntimes = Array.from(props.ensembleQc.getCheckRuntimes().values());
     const ensemble = props.ensembleQc.getEnsemble();
-    const realizations = ensemble.getRealizations();
+    const realizationsFilterFunc = useEnsembleRealizationFilterFunc(session);
+    const realizations = realizationsFilterFunc(ensemble.getIdent());
     const [expanded, setExpanded] = React.useState(false);
 
     const isAnyCheckRunning = useIsAnyCheckRuntimeRunning(checkRuntimes);
