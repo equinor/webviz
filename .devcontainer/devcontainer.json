@@ -9,8 +9,10 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
-    }
+    },
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
+  "postCreateCommand": "cd frontend && npx playwright install --with-deps chromium",
   "hostRequirements": {
     "cpus": 4,
     "memory": "8gb"
@@ -28,6 +30,9 @@
   "portsAttributes": {
     "8080": {
       "label": "Development server"
+    },
+    "6080": {
+      "label": "noVNC desktop"
     }
   }
 }

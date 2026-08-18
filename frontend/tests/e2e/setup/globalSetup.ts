@@ -44,7 +44,7 @@ type SeedResult = {
     sumoToken: string;
 };
 
-function seedSession(): SeedResult {
+export function seedSession(): SeedResult {
     if (!existsSync(SEED_SCRIPT_PATH)) {
         throw new Error(`Seed script not found at ${SEED_SCRIPT_PATH}`);
     }
@@ -85,7 +85,7 @@ function seedSession(): SeedResult {
     return JSON.parse(lastJsonLine) as SeedResult;
 }
 
-function writeStorageState(seedResult: SeedResult): void {
+export function writeStorageState(seedResult: SeedResult): void {
     const expires = Math.floor(Date.now() / 1000) + 30 * 24 * 3600;
 
     const storageState = {

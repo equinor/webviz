@@ -56,6 +56,36 @@ npx playwright codegen http://localhost:8080
 
 Read more: https://playwright.dev/docs/codegen-intro
 
+### Recording new stories with codegen (incl. GitHub Codespaces)
+
+Stories live in `tests/e2e/stories/` and are recorded walkthroughs: they import `test` from
+`support/recordingFixtures` and use the `support/walkthroughHelpers` (`smoothClick`, `narrate`,
+pacing) so the same test doubles as a tutorial video when run with `RECORD=1`.
+
+To author a new story starting from `codegen`:
+
+1. Start the full docker stack (`docker compose up`) so the app is served on
+   `http://localhost:8080` and the backend is available for session seeding.
+2. In a Codespace, `codegen` needs a display for its headed browser. This repo's dev container
+   ships the `desktop-lite` feature, which serves a lightweight desktop over the forwarded
+   **port 6080** (noVNC) — open it in a browser tab to watch/drive the recorded browser.
+3. Seed an authenticated session and launch codegen (it starts logged in via the seeded
+   `storageState.json`):
+
+   ```bash
+   npm run test:e2e:codegen
+   ```
+
+   This runs `npm run test:e2e:seed` first (writes `tests/e2e/setup/storageState.json`) and then
+   opens `playwright codegen`, saving the captured actions to `tests/e2e/stories/_recorded.gen.ts`
+   (git-ignored). If you only need to refresh the session, run `npm run test:e2e:seed` on its own.
+4. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
+   selectors/actions into it, wrapping interactions in `smoothClick`/`smoothFill` and adding
+   `narrate(...)` lines. `codegen` emits plain Playwright calls, so this adaptation is manual.
+5. Verify with `npm run test:e2e` (fast regression run) or `npm run test:e2e:record` (produces the
+   narrated video).
+
+
 ## Component tests
 
 Component tests are performed using `Playwright`. Each author of a generic component (i.e. placed in the `src/lib/components/` folder) is encouraged to write one or more component tests for their respective component.
