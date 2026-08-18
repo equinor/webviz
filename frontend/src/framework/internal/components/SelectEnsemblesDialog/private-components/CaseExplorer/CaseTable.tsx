@@ -15,7 +15,7 @@ import { Virtualization } from "@lib/components/Virtualization";
 import { formatDate } from "@lib/utils/dates";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { AuthorCell, CaseNameAndIdCell, DescriptionCell } from "./_components";
+import { AuthorCell, CaseNameAndIdCell, DescriptionCell, NullableTextCell } from "./_components";
 import type { CaseTableFilterState } from "./CaseTableFilterRow";
 import { CaseTableFilterRow, useCaseDataFilter } from "./CaseTableFilterRow";
 
@@ -269,15 +269,19 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
                                     />
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <DescriptionCell description={caseRow.description} />
+                                    <DescriptionCell description={caseRow.description} caseId={caseRow.uuid} />
                                 </Table.Cell>
                                 <Table.Cell>
-                                    <AuthorCell author={caseRow.user} />
+                                    <AuthorCell author={caseRow.user} caseId={caseRow.uuid} />
                                 </Table.Cell>
                                 <Table.Cell>{caseRow.status}</Table.Cell>
                                 <Table.Cell>{formatDate(caseRow.updatedAtUtcMs)}</Table.Cell>
-                                <Table.Cell>{formatNullableText(caseRow.modelName)}</Table.Cell>
-                                <Table.Cell>{formatNullableText(caseRow.modelRevision)}</Table.Cell>
+                                <Table.Cell>
+                                    <NullableTextCell value={caseRow.modelName} caseId={caseRow.uuid} />
+                                </Table.Cell>
+                                <Table.Cell>
+                                    <NullableTextCell value={caseRow.modelRevision} caseId={caseRow.uuid} />
+                                </Table.Cell>
                             </Table.Row>
                         );
                     }}
@@ -285,8 +289,4 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
             </Table.Body>
         </Table.Root>
     );
-}
-
-function formatNullableText(value: string | null): string {
-    return value ?? "";
 }

@@ -38,6 +38,7 @@ export type SmartNodeSelectorSelection = {
 
 export type SmartNodeSelectorProps = {
     id?: string;
+    dataTestId?: string;
     maxNumSelectedNodes?: number;
     delimiter?: string;
     numMetaNodes?: number;
@@ -1710,7 +1711,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         const duplicateFlags = this.computeDuplicateFlags(nodeSelections);
 
         return (
-            <div id={id} ref={this.ref} className={resolveClassNames({ "cursor-not-allowed": disabled ?? false })}>
+            <div id={id} data-testid={this.props.dataTestId || undefined} ref={this.ref} className={resolveClassNames({ "cursor-not-allowed": disabled ?? false })}>
                 <div
                     {...(this.props.fieldStateDataAttributes ?? {})}
                     data-disabled={disabled || undefined}
@@ -1799,6 +1800,7 @@ export const SmartNodeSelector = React.forwardRef<HTMLInputElement, SmartNodeSel
     const fieldStateDataAttributes = useFieldStateDataAttributes();
     const adjustedProps: SmartNodeSelectorComponentProps = {
         id: props.id ?? "",
+        dataTestId: props.dataTestId ?? "",
         data: props.data,
         onValueChange:
             props.onValueChange ??

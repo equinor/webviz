@@ -139,6 +139,7 @@ export function ModulesListItem(props: ModulesListItemProps): React.ReactNode {
         return (
             <div
                 ref={isDragged ? undefined : ref}
+                title={props.displayName}
                 className={resolveClassNames(
                     "hover:bg-accent text-body-md flex h-12 w-full touch-none flex-col select-none",
                     {

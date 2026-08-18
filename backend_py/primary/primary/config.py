@@ -30,6 +30,9 @@ RESOURCE_SCOPES_DICT = {
 SESSION_STORE_FERNET_KEY = os.environ["WEBVIZ_SESSION_STORE_FERNET_KEY"]
 REDIS_AUTH_STORE_PASSWORD = os.environ["WEBVIZ_REDIS_AUTH_STORE_PASSWORD"]
 REDIS_AUTH_STORE_URL = f"redis://:{REDIS_AUTH_STORE_PASSWORD}@redis-auth-store:6379"
+# Redis key prefix for the encrypted auth session store. Shared so the e2e seed script writes to the
+# same keys the SessionMiddleware reads (see scripts/seed_e2e_session.py).
+AUTH_SESSION_STORE_PREFIX = "auth-sessions:"
 
 REDIS_CACHE_PASSWORD = os.environ["WEBVIZ_REDIS_CACHE_PASSWORD"]
 REDIS_CACHE_URL = f"redis://:{REDIS_CACHE_PASSWORD}@redis-cache:6379"
