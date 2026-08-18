@@ -66,11 +66,22 @@ To author a new story starting from `codegen`:
 
 1. Start the full docker stack (`docker compose up`) so the app is served on
    `http://localhost:8080` and the backend is available for session seeding.
-2. In a Codespace, `codegen` needs a display for its headed browser. This repo's dev container
+2. Give the backend access to real Sumo data. The seeded session authenticates with a testing
+   sentinel token, so the backend falls back to a Sumo **shared key** that is not present outside
+   CI. Add the prod key as a Codespace secret named `SHARED_KEY_DROGON_READ_PROD`, then install it
+   into the running `backend-primary` container:
+
+   ```bash
+   npm run test:e2e:sumo-key
+   ```
+
+   Re-run this whenever the stack is recreated (the key lives inside the container). Without it,
+   backend fetches to Sumo fail.
+3. In a Codespace, `codegen` needs a display for its headed browser. This repo's dev container
    ships the `desktop-lite` feature, which serves a lightweight desktop over the forwarded
    **port 6080** (noVNC) — open it in a browser tab to watch/drive the recorded browser.
-3. Seed an authenticated session and launch codegen (it starts logged in via the seeded
-   `storageState.json`):
+4. Seed an authenticated session and launch codegen (it starts logged in via the seeded
+   `storageState.json`, so no interactive login is needed):
 
    ```bash
    npm run test:e2e:codegen
@@ -79,9 +90,11 @@ To author a new story starting from `codegen`:
    This runs `npm run test:e2e:seed` first (writes `tests/e2e/setup/storageState.json`) and then
    opens `playwright codegen`, saving the captured actions to `tests/e2e/stories/_recorded.gen.ts`
    (git-ignored). If you only need to refresh the session, run `npm run test:e2e:seed` on its own.
-4. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
+5. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
    selectors/actions into it, wrapping interactions in `smoothClick`/`smoothFill` and adding
    `narrate(...)` lines. `codegen` emits plain Playwright calls, so this adaptation is manual.
+6. Verify with `npm run test:e2e` (fast regression run) or `npm run test:e2e:record` (produces the
+   narrated video).
 5. Verify with `npm run test:e2e` (fast regression run) or `npm run test:e2e:record` (produces the
    narrated video).
 
