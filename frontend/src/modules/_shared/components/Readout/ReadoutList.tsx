@@ -34,15 +34,15 @@ export function ReadoutList(props: ReadoutListProps): React.ReactNode {
 
     return (
         <ul className={`${props.className ?? ""} space-y-2`}>
-            {groupEntries.map(([group, groupReadouts], groupIdx) => (
+            {groupEntries.map(([group, groupReadouts]) => (
                 <li key={group} className="group">
                     {numGroups > 1 && group !== "default" && (
                         <GroupTitle name={group} endAdornment={makeTitleAdornment()} />
                     )}
                     <ul className="space-y-2">
-                        {groupReadouts.map((readout, idx) => (
+                        {groupReadouts.map((readout) => (
                             <ReadoutItem
-                                key={`${readout.name}-${groupIdx}-${idx}`}
+                                key={`${readout.name}`}
                                 readout={readout}
                                 titleAdornment={makeTitleAdornment()}
                             />
@@ -95,6 +95,7 @@ function ReadoutPropertyList(props: { properties?: ReadoutProperty<any>[] }): Re
     return (
         <dl className="ml-4xs border-neutral-subtle pl-2xs text-neutral-subtle w-full border-l-2">
             {props.properties.map((property, idx) => (
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- These are so generic that it's hard to make a useful key
                 <ReadoutPropertyItem key={`${property.name}-${idx}`} property={property} />
             ))}
         </dl>

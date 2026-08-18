@@ -542,6 +542,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
         return [
             {
+                id: "edit",
                 icon: <Edit />,
                 label: "Edit",
                 onClick: () => {
@@ -549,6 +550,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 },
             },
             {
+                id: "delete",
                 icon: <Remove />,
                 label: "Delete",
                 onClick: () => {

@@ -1,8 +1,8 @@
 import { useAtomValue } from "jotai";
 
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
@@ -19,7 +19,7 @@ export function useMakeViewStatusWriterMessages(
     const queriesResult = useAtomValue(aggregatedTableDataQueriesAtom);
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
 
     for (const elm of indicesWithValues) {
         if (elm.values.length === 0) {

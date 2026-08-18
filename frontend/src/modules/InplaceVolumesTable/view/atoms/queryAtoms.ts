@@ -1,7 +1,7 @@
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import {
-    useGetAggregatedPerRealizationTableDataQueries,
-    useGetAggregatedStatisticalTableDataQueries,
+    getAggregatedPerRealizationTableDataQueries,
+    getAggregatedStatisticalTableDataQueries,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
@@ -27,7 +27,7 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const enableQueries =
         tableType === TableType.PER_REALIZATION && areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedPerRealizationTableDataQueries(
+    return getAggregatedPerRealizationTableDataQueries(
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
@@ -51,7 +51,7 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
     const enableQueries =
         tableType === TableType.STATISTICAL && areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedStatisticalTableDataQueries(
+    return getAggregatedStatisticalTableDataQueries(
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,

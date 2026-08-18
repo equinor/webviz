@@ -70,7 +70,7 @@ export function ParametersSelector({
                     ),
                 );
 
-                let newSelectedParameters: ParameterIdent[] = [];
+                let newSelectedParameters: ParameterIdent[];
 
                 if (autoSelectAllOnGroupChange) {
                     newSelectedParameters = parametersThatMatchNewGroups;

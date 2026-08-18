@@ -71,7 +71,7 @@ export type UseListFocusReturn = {
 
 export function useListFocus(listLength: number, options: UseListFocusOptions = {}): UseListFocusReturn {
     const { initialIndex = -1, onFocusChange, startFrom = "end" } = options;
-    const [focusedIndex, setFocusedIndexState] = React.useState(initialIndex);
+    const [focusedIndexState, setFocusedIndexState] = React.useState(initialIndex);
     const [lastDirection, setLastDirection] = React.useState<Direction | null>(null);
 
     const setFocusedIndex = React.useCallback(
@@ -92,8 +92,8 @@ export function useListFocus(listLength: number, options: UseListFocusOptions = 
         (direction: Direction): number | null => {
             const step = direction === Direction.Forwards ? 1 : -1;
 
-            let currentFocus = focusedIndex;
-            if (focusedIndex === -1 && startFrom === "end") {
+            let currentFocus = focusedIndexState;
+            if (focusedIndexState === -1 && startFrom === "end") {
                 currentFocus = listLength;
             }
 
@@ -106,7 +106,7 @@ export function useListFocus(listLength: number, options: UseListFocusOptions = 
             }
             return null;
         },
-        [focusedIndex, listLength, setFocusedIndex, startFrom],
+        [focusedIndexState, listLength, setFocusedIndex, startFrom],
     );
 
     const focusNext = React.useCallback((): number | null => {
@@ -136,14 +136,14 @@ export function useListFocus(listLength: number, options: UseListFocusOptions = 
 
     const isFocused = React.useCallback(
         (index: number): boolean => {
-            return focusedIndex === index;
+            return focusedIndexState === index;
         },
-        [focusedIndex],
+        [focusedIndexState],
     );
 
     return {
         direction: lastDirection,
-        focusedIndex,
+        focusedIndex: focusedIndexState,
         moveFocus,
         setFocusedIndex,
         focusNext,

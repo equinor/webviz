@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -21,11 +21,11 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
     const wellboreTrajectoryDataQuery = useAtomValue(wellboreTrajectoryQueryAtom);
 
-    usePropagateQueryErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
 
     React.useEffect(
         function setModuleName() {
-            let title = "";
+            let title;
 
             if (selectedWellboreHeader?.uniqueWellboreIdentifier) {
                 title = selectedWellboreHeader.uniqueWellboreIdentifier;
@@ -40,7 +40,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
     if (!providerManager || !wellboreTrajectoryDataQuery.data) {
         return (
-            <div className="absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center">
+            <div className="absolute z-10 flex h-full w-full items-center justify-center bg-white opacity-50">
                 <CircularProgress />
             </div>
         );

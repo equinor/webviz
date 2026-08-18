@@ -24,7 +24,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const vfpPlotData = usePlotBuilder(viewContext, workbenchSettings, wrapperDivSize);
 
-    let content = null;
+    let content;
     if (tableDataStatus.isError || tableNamesStatus.isError) {
         const source = tableDataStatus.isError ? "data" : "names";
         content = <ContentError>Error when loading VFP table {source}. See the log for details.</ContentError>;

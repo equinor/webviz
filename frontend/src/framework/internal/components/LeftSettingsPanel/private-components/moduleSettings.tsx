@@ -116,6 +116,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 <Provider store={atomStore}>
                     <HydrateQueryClientAtom>
                         <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                            {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
                             <Settings
                                 settingsContext={props.moduleInstance.getContext()}
                                 workbenchSession={props.workbench.getSessionManager().getActiveSession()}
@@ -133,6 +134,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
         );
     }
 
+    // eslint-disable-next-line @eslint-react/static-components -- Legacy
     const Settings = props.moduleInstance.getSettingsFC();
     return (
         <div

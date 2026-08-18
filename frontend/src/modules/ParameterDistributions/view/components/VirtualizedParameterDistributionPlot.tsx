@@ -70,7 +70,7 @@ export function VirtualizedParameterDistributionPlot(props: ParameterDistributio
     const FIXED_PLOT_HEIGHT = 350;
     const PLOT_MARGIN = 10;
     const containerRef = useRef<HTMLDivElement>(null);
-    const [visibleIndices, setVisibleIndices] = useState<Set<number>>(new Set());
+    const [visibleIndices, setVisibleIndices] = useState<Set<number>>(() => new Set());
 
     // Calculate grid dimensions
     const numSubplots = props.dataArr.length;

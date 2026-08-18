@@ -4,7 +4,7 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
-import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";
@@ -19,7 +19,7 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom).value ?? [];
     const selectedVectorNames = useAtomValue(selectedVectorNamesAtom);
 
-    usePropagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
+    propagateQueryErrorsToStatusWriter(vectorListQueries, statusWriter);
 
     // Set warning for vector names not existing in a selected ensemble
     function validateVectorNamesInEnsemble(

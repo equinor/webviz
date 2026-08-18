@@ -23,7 +23,7 @@ export type ParameterCorrelationMatrixFigureProps = {
     numCols: number;
     numRows: number;
     showLabels: boolean;
-    useFixedColorRange: boolean;
+    fixedColorRange: boolean;
 };
 export class ParameterCorrelationMatrixFigure {
     private _figure: Figure;
@@ -37,11 +37,11 @@ export class ParameterCorrelationMatrixFigure {
         numCols,
         numRows,
         showLabels,
-        useFixedColorRange,
+        fixedColorRange,
     }: ParameterCorrelationMatrixFigureProps) {
         this._showLabels = showLabels;
         this._forceShowYAxisLabels = plotType === PlotType.ParameterResponseMatrix;
-        this._useFixedColorRange = useFixedColorRange;
+        this._useFixedColorRange = fixedColorRange;
         this._figure = makeSubplots({
             numRows: numRows,
             numCols: numCols,

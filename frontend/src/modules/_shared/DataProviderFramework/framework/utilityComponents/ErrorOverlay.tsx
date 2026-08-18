@@ -47,6 +47,7 @@ export function ErrorOverlay(props: ErrorOverlayProps) {
                 <div className="overflow-auto">
                     <ul className="pl-lg list-disc">
                         {deserializationErrors.map((error, index) => (
+                            // eslint-disable-next-line @eslint-react/no-array-index-key -- No good key
                             <li key={index}>{error}</li>
                         ))}
                     </ul>

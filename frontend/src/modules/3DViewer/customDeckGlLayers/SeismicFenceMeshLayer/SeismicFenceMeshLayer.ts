@@ -19,7 +19,7 @@ import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
-// eslint-disable-next-line import/default
+// eslint-disable-next-line import-x/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebWorkerParameters, type WebworkerResult } from "./_private/webworker/types";
 

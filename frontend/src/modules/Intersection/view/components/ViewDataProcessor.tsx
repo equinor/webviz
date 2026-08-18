@@ -70,7 +70,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
         props.workbenchSession,
     );
 
-    const dataIsReady = useDataIsReady(view);
+    const dataIsReady = checkDataReady(view);
     const dataBounds = useDataBounds(dataIsReady, view, intersectionReferenceSystem);
     const focusBounds = useFocusBounds(dataIsReady, view, intersectionReferenceSystem);
 
@@ -156,7 +156,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
 /**
  * Checks if the view's provider data is ready to be aggregated.
  */
-function useDataIsReady(
+function checkDataReady(
     view: VisualizationGroup<VisualizationTarget.ESV, TargetViewReturnTypes, Record<string, any>, GroupType>,
 ) {
     const dataIsReady = (view.numLoadingDataProviders ?? 0) === 0;

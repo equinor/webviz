@@ -65,7 +65,7 @@ const SensitivityTable: React.FC<SensitivityTableProps> = ({ sensitivityResponse
             return orderBy(tableRows, [columnSorting.columnKey], [columnSorting.direction]);
         },
         // tableRows is recomputed every render; depend on the underlying inputs instead
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line @eslint-react/exhaustive-deps
         [sensitivityResponseDataset, sensitivityDataScaler, isPercentage, columnSorting],
     );
 

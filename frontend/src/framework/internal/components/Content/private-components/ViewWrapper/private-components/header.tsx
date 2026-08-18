@@ -702,8 +702,12 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     function makeHotStatusMessages(): React.ReactNode {
         return (
             <ul className="gap-y-2xs p-2xs flex flex-col">
-                {hotStatusMessages.map((entry, i) => (
-                    <li key={`${entry.message}-${i}`} className="px-3xs py-4xs">
+                {hotStatusMessages.map((entry) => (
+                    <li
+                        key={`${entry.message}-${entry.source}-${entry.datetimeMs}
+                        datetimeMs}`}
+                        className="px-3xs py-4xs"
+                    >
                         <Typography
                             as="span"
                             size="xs"

@@ -145,6 +145,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         return null;
     }
 
+    // eslint-disable-next-line @eslint-react/static-components -- Legacy
     const View = props.moduleInstance.getViewFC();
     return (
         <ErrorBoundary moduleInstance={props.moduleInstance}>
@@ -158,6 +159,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                     <Provider store={atomStore}>
                         <HydrateQueryClientAtom>
                             <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
+                                {/* eslint-disable-next-line @eslint-react/static-components -- Legacy */}
                                 <View
                                     viewContext={props.moduleInstance.getContext()}
                                     workbenchSession={props.workbench.getSessionManager().getActiveSession()}

@@ -18,7 +18,7 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -134,8 +134,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const tableNameQueries = useAtomValue(relPermTableNamesQueriesAtom);
     const tableDefinitionQueries = useAtomValue(relPermTableDefinitionQueriesAtom);
-    usePropagateQueryErrorsToStatusWriter(tableNameQueries, statusWriter);
-    usePropagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
+    propagateQueryErrorsToStatusWriter(tableNameQueries, statusWriter);
+    propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
 
     const availableTableNames = useAtomValue(availableTableNamesAtom);
     const selectedTableName = useAtomValue(selectedTableNameAtom);

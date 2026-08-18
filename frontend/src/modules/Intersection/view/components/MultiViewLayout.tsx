@@ -40,6 +40,7 @@ export function MultiViewLayout(props: MultiViewLayoutProps): React.ReactNode {
 
     return (
         <div className={resolveClassNames("h-full w-full", containerClasses)} style={gridStyle}>
+            {/* eslint-disable-next-line @eslint-react/no-children-map -- Special case needed two wrap children */}
             {React.Children.map(children, (child) => (
                 <div className={resolveClassNames("overflow-hidden p-0.5", childClasses)}>{child}</div>
             ))}

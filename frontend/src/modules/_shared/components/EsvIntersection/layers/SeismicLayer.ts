@@ -243,21 +243,13 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
         // Generate image
         const imageDataUint8Arr = new Uint8ClampedArray(width * height * 4);
 
-        let offset = 0;
-
         let pos = options?.isLeftToRight ? trajectory[0][0] : trajectory[trajectory.length - 1][0];
 
         const step = (length / width) * (options?.isLeftToRight ? -1 : 1);
 
-        let val1: number;
-        let val2: number;
-        let val: number;
-        let color: [number, number, number];
         const black: [number, number, number] = [0, 0, 0];
-        let opacity: number;
 
         for (let x = 0; x < width; x++) {
-            offset = x * 4;
             const index = findIndexOfSample(trajectory, pos);
             const x1 = trajectory[index][0];
             const x2 = trajectory[index + 1][0];
@@ -269,6 +261,14 @@ export class SeismicLayer extends CanvasLayer<SeismicLayerData> {
             const span = x2 - x1;
             const dx = pos - x1;
             const ratio = dx / span;
+
+            let val1: number;
+            let val2: number;
+            let val: number;
+            let color: [number, number, number];
+            let opacity: number;
+
+            let offset = x * 4;
 
             for (let y = 0; y < height; y++) {
                 val1 = dp[y]?.[index];

@@ -35,7 +35,7 @@ export type AggregatedStatisticalTableDataResults = {
     errors: Error[];
 };
 
-export function useGetAggregatedStatisticalTableDataQueries(
+export function getAggregatedStatisticalTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
@@ -116,7 +116,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     };
 }
 
-export function useGetAggregatedPerRealizationTableDataQueries(
+export function getAggregatedPerRealizationTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],

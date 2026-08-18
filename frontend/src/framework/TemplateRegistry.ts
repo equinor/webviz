@@ -1,3 +1,5 @@
+import { v4 } from "uuid";
+
 import type { ModuleSerializedStateMap } from "@modules/ModuleSerializedStateMap";
 
 import type { LayoutElement } from "./internal/Dashboard";
@@ -13,6 +15,7 @@ export type DataChannelTemplate = {
 export type TemplateLayoutElement = Omit<LayoutElement, "moduleInstanceId" | "moduleName">;
 
 export type TemplateModuleInstance<M extends keyof ModuleSerializedStateMap = keyof ModuleSerializedStateMap> = {
+    id: string;
     instanceRef?: string;
     moduleName: M;
     layout: TemplateLayoutElement;
@@ -32,10 +35,11 @@ export type Template = {
 
 export function createTemplateModuleInstance<M extends keyof ModuleSerializedStateMap = keyof ModuleSerializedStateMap>(
     moduleName: M,
-    options: Omit<TemplateModuleInstance<M>, "moduleName">,
+    options: Omit<TemplateModuleInstance<M>, "moduleName" | "id">,
 ): TemplateModuleInstance<M> {
     return {
         moduleName,
+        id: v4(),
         ...options,
     };
 }

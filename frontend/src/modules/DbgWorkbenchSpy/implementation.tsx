@@ -33,9 +33,9 @@ export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
     const triggeredRefreshCounter = props.viewContext.useSettingsToViewInterfaceValue("triggeredRefreshCounter");
 
-    const componentRenderCount = React.useRef(0);
+    const componentRenderCountRef = React.useRef(0);
     React.useEffect(function incrementComponentRenderCount() {
-        componentRenderCount.current = componentRenderCount.current + 1;
+        componentRenderCountRef.current = componentRenderCountRef.current + 1;
     });
 
     const componentLastRenderTS = getTimestampString();
@@ -60,7 +60,7 @@ export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
             <br />
             refreshCounter: {triggeredRefreshCounter}
             <br />
-            componentRenderCount: {componentRenderCount.current}
+            componentRenderCount: {componentRenderCountRef.current}
             <br />
             componentLastRenderTS: {componentLastRenderTS}
         </code>
@@ -84,8 +84,8 @@ function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
     return (
         <table>
             <tbody>
-                {ensembleArr.map((ens, index) => (
-                    <tr key={index}>
+                {ensembleArr.map((ens) => (
+                    <tr key={ens.getIdent().toString()}>
                         <td> {ens.getEnsembleName()} </td>
                         <td> ({ens.getCaseUuid()}) </td>
                         <td> {ens.getRealizations().length} realizations</td>

@@ -49,7 +49,7 @@ export class LayoutBox {
     private _rectRelativeToParent: Rect2D;
     private _children: LayoutBox[];
     private _level: number;
-    private _moduleInstanceId: string | undefined;
+    private _moduleInstanceId: string;
     private _moduleName: string;
     private _isWrapper: boolean;
     private _parent: LayoutBox | null;
@@ -813,7 +813,7 @@ export class LayoutBox {
                 relY: absoluteRect.y,
                 relWidth: absoluteRect.width,
                 relHeight: absoluteRect.height,
-                moduleInstanceId: this._moduleInstanceId || undefined,
+                moduleInstanceId: this._moduleInstanceId,
                 moduleName: this._moduleName,
             });
         }

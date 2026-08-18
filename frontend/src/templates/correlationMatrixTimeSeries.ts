@@ -1,7 +1,7 @@
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { Template } from "@framework/TemplateRegistry";
-import { TemplateRegistry } from "@framework/TemplateRegistry";
+import { createTemplateModuleInstance, TemplateRegistry } from "@framework/TemplateRegistry";
 import { KeyKind } from "@framework/types/dataChannnel";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { ChannelIds as InplaceChannelIds } from "@modules/InplaceVolumesNew/channelDefs";
@@ -14,9 +14,8 @@ const template: Template = {
         "Example template for a correlation matrix between input parameters and various responses. " +
         "Either a full matrix or a parameter vs. response matrix can be shown. ",
     moduleInstances: [
-        {
+        createTemplateModuleInstance("SimulationTimeSeries", {
             instanceRef: "MainSimulationTimeSeriesInstance",
-            moduleName: "SimulationTimeSeries",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -29,10 +28,9 @@ const template: Template = {
                     visualizationMode: VisualizationMode.INDIVIDUAL_REALIZATIONS,
                 },
             },
-        },
-        {
+        }),
+        createTemplateModuleInstance("InplaceVolumesPlot", {
             instanceRef: "MainInplaceVolumesPlotInstance",
-            moduleName: "InplaceVolumesNew",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,
@@ -45,17 +43,15 @@ const template: Template = {
                     indexValueCriteria: IndexValueCriteria.ALLOW_INTERSECTION,
                 },
             },
-        },
-        {
+        }),
+        createTemplateModuleInstance("ParameterResponseCorrelationMatrixPlot", {
             instanceRef: "MyParameterResponseCorrelationMatrixPlotInstance",
-            moduleName: "ParameterResponseCorrelationMatrixPlot",
             layout: {
                 relHeight: 0.5,
                 relWidth: 1,
                 relX: 0,
                 relY: 0.5,
             },
-
             dataChannelsToInitialSettingsMapping: {
                 channelResponse: {
                     listensToInstanceRef: "MainSimulationTimeSeriesInstance",
@@ -91,7 +87,7 @@ const template: Template = {
                     ],
                 },
             },
-        },
+        }),
     ],
 };
 

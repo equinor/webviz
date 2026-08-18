@@ -1,7 +1,6 @@
 import type { Layer } from "@equinor/esv-intersection";
 import { isEqual } from "lodash-es";
 
-
 import type { IntersectionItem, LayerDataItem } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 
@@ -109,7 +108,7 @@ export function makeLayerDataItems(layer: Layer<any>): LayerDataItem[] {
             const id = fanchart.id ?? `${layer.id}-${index}`;
             let hull: number[][] = [];
             const lines: number[][][] = [];
-            let intersectionItem: IntersectionItem | null = null;
+            let intersectionItem: IntersectionItem;
 
             if (fanchart.visibility?.mean ?? true) {
                 lines.push(fanchart.data.mean);
@@ -152,14 +151,12 @@ export function makeLayerDataItems(layer: Layer<any>): LayerDataItem[] {
                 };
             }
 
-            if (intersectionItem) {
-                dataItems.push({
-                    id,
-                    layer,
-                    index,
-                    intersectionItem,
-                });
-            }
+            dataItems.push({
+                id,
+                layer,
+                index,
+                intersectionItem,
+            });
         }
         return dataItems;
     }

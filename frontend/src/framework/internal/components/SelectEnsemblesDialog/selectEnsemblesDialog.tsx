@@ -49,8 +49,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [showEnsemblesLoadingErrorDialog, setShowEnsemblesLoadingErrorDialog] = React.useState(false);
 
     // States for ensemble explorer mode and delta ensemble editing
+    /* eslint-disable @eslint-react/use-state -- The full objects are being passed as is in hooks further down  */
     const ensembleExplorerModeState = React.useState<EnsembleExplorerMode | null>(null);
     const deltaEnsembleUuidToEditState = React.useState<string>("");
+    /* eslint-enable @eslint-react/use-state */
 
     // Gui states
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.EnsembleDialogOpen);

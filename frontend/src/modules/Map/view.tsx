@@ -13,7 +13,7 @@ import type { Vec2 } from "@lib/utils/vec2";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { SurfaceDataFormat } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/types";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules/_shared/Surface";
 import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
@@ -78,7 +78,7 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     }
 
     const hasError = activeDataQuery.isError;
-    usePropagateQueryErrorToStatusWriter(activeDataQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(activeDataQuery, statusWriter);
 
     let surfData: SurfaceDataFloat_trans | undefined = undefined;
     if (normal_dataQuery?.data) {

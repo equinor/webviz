@@ -45,10 +45,10 @@ export function CaseExplorer(props: CaseExplorerProps): React.ReactNode {
     const [numberOfCases, setNumberOfCases] = React.useState<number>(0);
 
     const [showOnlyMyCases, setShowOnlyMyCases] = React.useState<boolean>(
-        readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
+        () => readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
     );
     const [showOnlyOfficialCases, setShowOnlyOfficialCases] = React.useState<boolean>(
-        readInitialStateFromLocalStorage("showOfficialCases") === "true",
+        () => readInitialStateFromLocalStorage("showOfficialCases") === "true",
     );
 
     // Have without fixup to allow resetting to null when table filters out selected case

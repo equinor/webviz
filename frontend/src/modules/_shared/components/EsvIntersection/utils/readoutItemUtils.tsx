@@ -467,6 +467,7 @@ export function esvReadoutToGenericReadout(
     axesLabels?: { xLabel?: string; yLabel?: string },
 ): GenericReadoutItem {
     return {
+        id: `readout-${readout.layer.id}`,
         label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
         color: getColorFromLayerData(readout.layer, readout.index),
         info: esvReadoutToInfoItems(readout, axesLabels),
@@ -490,6 +491,7 @@ function esvReadoutToInfoItems(item: ReadoutItem, axesLabels?: { xLabel?: string
                 name = axesLabels.yLabel;
             }
             return {
+                id: `info-${name}`,
                 name,
                 unit: el.unit,
                 adornment: makeAdornment(el),
