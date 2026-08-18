@@ -719,13 +719,16 @@ function CheckSettings(props: CheckSettingsProps) {
     );
 }
 
-type RealizationStatusTone = "idle" | "loading" | "success" | "danger";
+type RealizationStatusTone = "idle" | "loading" | "success" | "failure" | "exception" | "excluded" | "filteredAway";
 
 const REALIZATION_STATUS_TONE_TO_CLASSNAME: Record<RealizationStatusTone, string> = {
     idle: "bg-neutral-strong",
     loading: "bg-neutral/50 animate-pulse",
     success: "bg-success-strong",
-    danger: "bg-danger-strong",
+    failure: "bg-danger-strong",
+    exception: "bg-warning-strong",
+    excluded: "bg-neutral/50",
+    filteredAway: "bg-neutral/100",
 };
 
 type RealizationSquaresProps = {
@@ -782,6 +785,34 @@ function RealizationSquares(props: RealizationSquaresProps) {
         }
         qcRealizationPopover.select({ matrixRuntime, checkName, realization, anchorElement: containerRef.current });
         onRealizationClick(realization);
+    }
+
+    function makeSquareColor(realization: number): RealizationStatusTone {
+        const result = results.get(realization);
+        const isLoading = !result && isRunning && requestedRealizationsSet.has(realization);
+
+        if (isLoading) {
+            return "loading";
+        }
+        if (!result) {
+            return "idle";
+        }
+        if (result.kind === "success") {
+            return "success";
+        }
+        if (result.kind === "failure") {
+            return "failure";
+        }
+        if (result.kind === "exception") {
+            return "exception";
+        }
+        if (result.kind === "excluded") {
+            return "excluded";
+        }
+        if (result.kind === "filteredAway") {
+            return "filteredAway";
+        }
+        return "idle";
     }
 
     return (
