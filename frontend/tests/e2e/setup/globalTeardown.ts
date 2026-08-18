@@ -3,12 +3,14 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { pruneNarrationCache } from "../support/narration";
+import { publishTutorials } from "../support/publishTutorials";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Global teardown: after a recording run, mux the synthesized voiceover clips into each recorded
- * video (see support/add-narration.mjs). No-op unless RECORD is set, so normal runs are unaffected.
+ * video and publish the results under stable slug-based filenames.
+ * No-op unless RECORD is set, so normal test runs are unaffected.
  */
 async function globalTeardown(): Promise<void> {
     if (!process.env.RECORD) {
@@ -28,6 +30,8 @@ async function globalTeardown(): Promise<void> {
     if (result.status !== 0) {
         throw new Error(`Narration muxing failed (exit code ${result.status}); recordings may be silent or incomplete.`);
     }
+
+    publishTutorials();
 }
 
 export default globalTeardown;

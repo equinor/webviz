@@ -45,3 +45,11 @@
         @apply p-sm min-h-0 shrink-0;
     }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 220ms;
+        animation-timing-function: ease-out;
+    }
+}
