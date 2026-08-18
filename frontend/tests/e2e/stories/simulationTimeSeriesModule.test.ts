@@ -107,7 +107,7 @@ test.describe("Simulation Time Series module", () => {
         }
 
         // Select a vector so the chart has something to plot
-        const vectorSelectorContainer = page.locator("div.cursor-text.min-w-48").first();
+        const vectorSelectorContainer = page.getByTestId("vector-selector");
         await expect(vectorSelectorContainer).toBeVisible();
         const vectorInput = vectorSelectorContainer.locator("input").last();
         const foprTag = vectorSelectorContainer.locator('li[title="FOPR"]');
