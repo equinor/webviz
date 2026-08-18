@@ -324,6 +324,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                                 customVectorDefinitions={customVectorDefinitions ?? undefined}
                                 selectedTags={selectedVectorTags}
                                 inputRef={vectorSelectorRef}
+                                dataTestId="vector-selector"
                             />
                         </>
                     </Setting.Field>
