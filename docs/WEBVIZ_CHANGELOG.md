@@ -1,5 +1,5 @@
 <!--::metadata
-           changelog_counter: 0
+  changelog_counter: 0
   date: 05.08.2026
 -->
 
