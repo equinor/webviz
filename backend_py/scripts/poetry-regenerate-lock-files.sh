@@ -11,14 +11,14 @@ which python
 status=0
 
 for path in \
-    libs/core_utils/src/webviz_core_utils \
-    libs/server_schemas/src/webviz_server_schemas \
-    libs/services/src/webviz_services \
+    libs/core_utils \
+    libs/server_schemas \
+    libs/services \
     primary 
 do
     echo
     echo "Refreshing lockfile in: $path"
-    poetry lock
+    poetry lock --directory=$path
 done
 
 exit "$status"
