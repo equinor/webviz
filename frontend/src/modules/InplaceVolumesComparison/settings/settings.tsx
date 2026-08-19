@@ -121,15 +121,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
                         label="Reference ensemble"
-                        description="Baseline the change is measured from."
+                        description="Ensemble the change is measured from."
                         help={{
                             title: "Reference and comparison",
                             content: (
                                 <>
-                                    The change is decomposed as <b>comparison &minus; reference</b>.
+                                    The change is computed as <b>comparison &minus; reference</b>.
                                     <br />
                                     <br />
-                                    The decomposition works on per-ensemble means, so the two sides do not need to share
+                                    The comparison works on per-ensemble means, so the two sides do not need to share
                                     realization numbering.
                                     <br />
                                     <br />
@@ -198,7 +198,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Setting.Field>
 
                     {isCrossTableComparison && (
-                        <Banner tone="warning">
+                        <Banner tone="warning" layoutClassName="col-span-3">
                             <strong>Comparing different table sources.</strong> Differences in BULK and PORO between
                             table sources reflect gridding and upscaling as well as any reservoir change, so the factor
                             contributions are not a like-for-like comparison.
@@ -233,7 +233,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Setting.Field>
 
                     {selectedResultName.value !== null && waterfallFactorSpec === null && (
-                        <Banner tone="warning">
+                        <Banner tone="warning" layoutClassName="col-span-3">
                             <strong>Note:</strong> {selectedResultName.value} cannot be decomposed for the selected
                             table. The volume columns it is built from (BULK, PORV, HCPV) must all be available.
                         </Banner>

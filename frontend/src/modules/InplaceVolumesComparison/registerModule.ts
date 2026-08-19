@@ -6,14 +6,16 @@ import type { Interfaces } from "./interfaces";
 import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
-export const MODULE_NAME = "InplaceVolumesChangeDecomposition";
+export const MODULE_NAME = "InplaceVolumesComparison";
 
 const description =
-    "Decomposes the change in STOIIP/GIIP between two ensembles into contributions from its volumetric factors.";
+    "Compare two inplace volumes sources: two ensembles, or two volume tables. Shows a waterfall " +
+    "decomposing the STOIIP/GIIP change into contributions from its volumetric factors. Compares mean " +
+    "volumes, so the two sources do not need matching realizations.";
 
 ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
-    defaultTitle: "Volume Change Decomposition",
+    defaultTitle: "Inplace Volumes Comparison",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
     dataTagIds: [ModuleDataTagId.INPLACE_VOLUMES],

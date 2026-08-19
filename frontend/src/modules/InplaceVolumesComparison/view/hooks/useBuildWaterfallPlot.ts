@@ -173,7 +173,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         );
     }
     if (!isWaterfallTargetResultName(resultName)) {
-        return makeErrorResult("The volume change decomposition is only available for STOIIP or GIIP.");
+        return makeErrorResult("The waterfall is only available for STOIIP or GIIP.");
     }
     if (!spec) {
         return makeErrorResult(
@@ -253,7 +253,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     }
 
     if (groupDecompositions.length === 0) {
-        return makeErrorResult("The waterfall decomposition could not be computed for the selected data.");
+        return makeErrorResult("The waterfall could not be computed for the selected data.");
     }
 
     const { referenceLabel, comparisonLabel } = makeSourceLabels(

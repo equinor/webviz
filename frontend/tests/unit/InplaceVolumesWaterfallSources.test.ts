@@ -4,7 +4,7 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import {
     findTableDataForSource,
     makeSourceLabels,
-} from "@modules/InplaceVolumesChangeDecomposition/view/utils/waterfallSources";
+} from "@modules/InplaceVolumesComparison/view/utils/waterfallSources";
 
 const CASE_UUID = "11111111-2222-3333-8444-555555555555";
 const OTHER_CASE_UUID = "66666666-7777-4888-9999-000000000000";

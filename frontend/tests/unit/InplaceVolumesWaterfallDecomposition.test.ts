@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
     computeVolumeChangeDecomposition,
     getWaterfallFactorSpec,
-} from "@modules/InplaceVolumesChangeDecomposition/view/utils/computeVolumeChangeDecomposition";
+} from "@modules/InplaceVolumesComparison/view/utils/computeVolumeChangeDecomposition";
 
 const COLLAPSED_RESULT_NAMES = ["STOIIP", "BULK", "PORV", "HCPV"];
 
