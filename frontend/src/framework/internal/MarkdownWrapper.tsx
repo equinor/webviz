@@ -67,21 +67,24 @@ export function extractMarkdownMetadata(markdown: string): [strippedMarkdown: st
 
     const metadata = new Map<string, string>();
 
-    if (markdown.startsWith("%")) {
+    // ! We expect the markdown to always be on top of the file
+    if (markdown.startsWith("<!--::metadata")) {
         const lines = markdown.split("\n");
 
         let i = 0;
+        let currentLine = lines[i] ?? null;
 
-        while (i < lines.length && lines[i].startsWith("%")) {
-            const line = lines[i].substring(1).trim(); // Remove the leading '%' and trim whitespace
-            const [key, value] = line.split(/\s*:\s*/);
+        while (currentLine !== null && !currentLine.endsWith("-->")) {
+            const [key, value] = currentLine.split(/\s*:\s*/);
+
+            const trimmedKey = key?.trim();
             const trimmedValue = value?.trim();
 
             if (key && trimmedValue) {
-                metadata.set(key, value);
+                metadata.set(trimmedKey, trimmedValue);
             }
 
-            i++;
+            currentLine = lines[i++];
         }
 
         markdownContent = lines.slice(i).join("\n");

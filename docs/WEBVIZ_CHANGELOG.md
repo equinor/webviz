@@ -1,5 +1,7 @@
-% release: 0
-% date: 05.08.2026
+<!--::metadata
+           changelog_counter: 0
+  date: 05.08.2026
+-->
 
 # Changelog
 

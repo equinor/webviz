@@ -25,7 +25,7 @@ export function ChangelogDialog(): React.ReactNode {
 
     const [markdown, metadata] = extractMarkdownMetadata(ChangelogMd);
 
-    const currentRelease = Number(metadata.get("release") ?? -1);
+    const currentRelease = Number(metadata.get("changelog_counter") ?? -1);
 
     const hasSeenRelease = currentRelease <= lastSeenChangelog;
 
