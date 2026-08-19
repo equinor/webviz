@@ -20,8 +20,11 @@ import {
     dragModuleOntoLayout,
     hideDevOverlays,
     installFakeCursor,
+    pace,
     smoothClick,
+    smoothFill,
 } from "../support/walkthroughHelpers";
+import { DROGON_AHM } from "../support/drogonTestData";
 
 test.describe("My module", () => {
     test("does the thing", async ({ page, narrate }) => {
@@ -35,19 +38,47 @@ test.describe("My module", () => {
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
         await narrate("Describe what this walkthrough will show.");
-
-        
-        await page.goto('/');
+const newSessionNarration = narrate("Let's start by creating a new session...")
         await smoothClick(page, page.getByRole("button", { name: "New session" }));
+        await newSessionNarration;
 
-        await smoothClick(page, page.getByRole('button', { name: 'New session' }));
-        await smoothClick(page, page.getByTestId('add-regular-ensemble-button'));
-        await smoothClick(page, page.locator('[id="base-ui-:rbn:"]'));
-        await page.locator('[id="base-ui-:rbn:"]').fill('My description');
-        await smoothClick(page, page.getByText('My description').first());
-        await smoothClick(page, page.getByText('iter-0 (100 realizations)'));
-        await smoothClick(page, page.getByRole('button', { name: 'Apply' }));
-        await smoothClick(page, page.getByRole('button', { name: 'Apply' }));
+        const ensembleNarration = narrate(
+            "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
+        );
+        await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
+        await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
+        await pace(page);
+
+        await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
+        await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
+        await pace(page);
+
+        // Filter the case table by the test case UUID.
+        await smoothFill(page, page.getByPlaceholder("Filter ...").first(), DROGON_AHM.caseUuid);
+        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 60_000 });
+        await pace(page);
+
+        await smoothClick(
+            page,
+            page
+                .locator("tbody")
+                .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
+                .first(),
+        );
+
+        await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
+        await ensembleNarration;
+        await pace(page);
+
+        const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
+        await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
+
+        await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
+        await pace(page);
+
+        await smoothClick(page, page.getByRole("button", { name: "Apply" }));
+        await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
+        await applyNarration;
         
         const dragNarration = narrate(
                     "Now we drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
@@ -55,14 +86,16 @@ test.describe("My module", () => {
         await dragModuleOntoLayout(page, "3D Viewer");
         await dragNarration;
 
-        await smoothClick(page, page.getByText('3D Viewer'));
-        await smoothClick(page, page.getByTestId('module-layout').getByTestId('WebAssetIcon'));
         await expect(page.getByRole('button', { name: 'Add first view' })).toBeVisible();
         await smoothClick(page, page.getByRole('button', { name: 'Add first view' }));
         await smoothClick(page, page.getByRole('button', { name: 'Add' }).nth(1));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Layers' }));
-        await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model' }));
+        await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model', exact: true }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model 3D' }));
         
+        await expect(page.getByTestId('module-layout')).toContainText('Loading 0%Loading assets...');
+        await expect(page.getByTestId('module-layout')).not.toContainText('Loading 0%Loading assets...');
+
+        await narrate("And there we see our 3D model grid");
     });
 });
