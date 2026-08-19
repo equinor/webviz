@@ -110,6 +110,12 @@ jobs:
           pip install poetry==2.4.1
           poetry config virtualenvs.create false
 
+          # Changes in path-dependency locks do not get picked up during the check, so we need to 
+          # verify that each lock is as recent as possible and check that each lock file is 
+          # correctly generated
+          scripts/poetry-regenerate-lock-files.sh
+          git diff --exit-code ./frontend/src/api || exit 1
+
           # Check that lock files are consistent with pyproject.toml
           poetry check --lock
           poetry check --lock --directory=./libs/core_utils
