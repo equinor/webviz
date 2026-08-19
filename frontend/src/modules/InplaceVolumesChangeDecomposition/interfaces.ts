@@ -3,19 +3,19 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
-    userSelectedComparisonEnsembleIdentAtom,
-    userSelectedReferenceEnsembleIdentAtom,
-} from "./settings/atoms/baseAtoms";
-import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
+    indicesWithValuesForQueryAtom,
+    waterfallFactorSpecAtom,
+} from "./settings/atoms/derivedAtoms";
+import {
+    selectedComparisonEnsembleIdentAtom,
     selectedComparisonTableNameAtom,
-    selectedIndicesWithValuesAtom,
+    selectedReferenceEnsembleIdentAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
-    waterfallFactorSpecAtom,
-} from "./settings/atoms/derivedAtoms";
+} from "./settings/atoms/persistableFixableAtoms";
 import type { WaterfallFactorSpec } from "./view/utils/computeVolumeChangeDecomposition";
 
 export type SettingsToViewInterface = {
@@ -36,13 +36,13 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    referenceEnsembleIdent: (get) => get(userSelectedReferenceEnsembleIdentAtom),
-    comparisonEnsembleIdent: (get) => get(userSelectedComparisonEnsembleIdentAtom),
-    referenceTableName: (get) => get(selectedReferenceTableNameAtom),
-    comparisonTableName: (get) => get(selectedComparisonTableNameAtom),
-    resultName: (get) => get(selectedResultNameAtom),
-    subplotBy: (get) => get(selectedSubplotByAtom),
-    indicesWithValues: (get) => get(selectedIndicesWithValuesAtom),
+    referenceEnsembleIdent: (get) => get(selectedReferenceEnsembleIdentAtom).value,
+    comparisonEnsembleIdent: (get) => get(selectedComparisonEnsembleIdentAtom).value,
+    referenceTableName: (get) => get(selectedReferenceTableNameAtom).value,
+    comparisonTableName: (get) => get(selectedComparisonTableNameAtom).value,
+    resultName: (get) => get(selectedResultNameAtom).value,
+    subplotBy: (get) => get(selectedSubplotByAtom).value,
+    indicesWithValues: (get) => get(indicesWithValuesForQueryAtom),
     waterfallFactorSpec: (get) => get(waterfallFactorSpecAtom),
     areSourcesDistinct: (get) => get(areSourcesDistinctAtom),
     areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),

@@ -12,9 +12,8 @@ type TableDataForSource = {
 };
 
 /**
- * Locate the fetched data for a source. Matching on the ensemble alone is not enough: both sides may
- * use the same ensemble with different tables, which would otherwise resolve to the same entry and
- * silently produce a decomposition of a table against itself.
+ * Locate the fetched data for a source. Both sides may use the same ensemble with different tables,
+ * so a source is only identified by the ensemble and table name together.
  */
 export function findTableDataForSource<T extends TableDataForSource>(
     tablesData: T[],

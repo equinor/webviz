@@ -6,16 +6,17 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
-import { userSelectedComparisonEnsembleIdentAtom, userSelectedReferenceEnsembleIdentAtom } from "./baseAtoms";
+import { selectedComparisonEnsembleIdentAtom, selectedReferenceEnsembleIdentAtom } from "./persistableFixableAtoms";
 
 export type TableDefinitionsQueryResult = {
     data: { ensembleIdent: RegularEnsembleIdent; tableDefinitions: InplaceVolumesTableDefinition_api[] }[];
     isLoading: boolean;
+    errors: Error[];
 };
 
 export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
-    const referenceEnsembleIdent = get(userSelectedReferenceEnsembleIdentAtom);
-    const comparisonEnsembleIdent = get(userSelectedComparisonEnsembleIdentAtom);
+    const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
+    const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
 
     const ensembleIdents: RegularEnsembleIdent[] = [];
     for (const ensembleIdent of [referenceEnsembleIdent, comparisonEnsembleIdent]) {
@@ -45,6 +46,7 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
                 tableDefinitions: result.data ?? [],
             })),
             isLoading: results.some((result) => result.isLoading),
+            errors: results.map((result) => result.error).filter((error): error is Error => error !== null),
         }),
     };
 });

@@ -5,16 +5,16 @@ import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinit
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
+import { selectedIndexValueCriteriaAtom } from "./atoms/baseAtoms";
 import {
-    selectedIndexValueCriteriaAtom,
-    userSelectedComparisonEnsembleIdentAtom,
-    userSelectedComparisonTableNameAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedReferenceEnsembleIdentAtom,
-    userSelectedReferenceTableNameAtom,
-    userSelectedResultNameAtom,
-    userSelectedSubplotByAtom,
-} from "./atoms/baseAtoms";
+    selectedComparisonEnsembleIdentAtom,
+    selectedComparisonTableNameAtom,
+    selectedIndicesWithValuesAtom,
+    selectedReferenceEnsembleIdentAtom,
+    selectedReferenceTableNameAtom,
+    selectedResultNameAtom,
+    selectedSubplotByAtom,
+} from "./atoms/persistableFixableAtoms";
 
 export type SerializedSettings = {
     referenceEnsembleIdentString: string | null;
@@ -44,13 +44,13 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     return {
-        referenceEnsembleIdentString: get(userSelectedReferenceEnsembleIdentAtom)?.toString() ?? null,
-        comparisonEnsembleIdentString: get(userSelectedComparisonEnsembleIdentAtom)?.toString() ?? null,
-        referenceTableName: get(userSelectedReferenceTableNameAtom),
-        comparisonTableName: get(userSelectedComparisonTableNameAtom),
-        resultName: get(userSelectedResultNameAtom),
-        subplotBy: get(userSelectedSubplotByAtom),
-        indicesWithValues: get(userSelectedIndicesWithValuesAtom).map((index) => ({
+        referenceEnsembleIdentString: get(selectedReferenceEnsembleIdentAtom).value?.toString() ?? null,
+        comparisonEnsembleIdentString: get(selectedComparisonEnsembleIdentAtom).value?.toString() ?? null,
+        referenceTableName: get(selectedReferenceTableNameAtom).value,
+        comparisonTableName: get(selectedComparisonTableNameAtom).value,
+        resultName: get(selectedResultNameAtom).value,
+        subplotBy: get(selectedSubplotByAtom).value,
+        indicesWithValues: get(selectedIndicesWithValuesAtom).value.map((index) => ({
             indexColumn: index.indexColumn,
             values: index.values.map((value) => value.toString()),
         })),
@@ -69,20 +69,16 @@ function parseRegularEnsembleIdent(identString: string | null | undefined): Regu
 }
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
+    setIfDefined(set, selectedReferenceEnsembleIdentAtom, parseRegularEnsembleIdent(raw.referenceEnsembleIdentString));
     setIfDefined(
         set,
-        userSelectedReferenceEnsembleIdentAtom,
-        parseRegularEnsembleIdent(raw.referenceEnsembleIdentString),
-    );
-    setIfDefined(
-        set,
-        userSelectedComparisonEnsembleIdentAtom,
+        selectedComparisonEnsembleIdentAtom,
         parseRegularEnsembleIdent(raw.comparisonEnsembleIdentString),
     );
-    setIfDefined(set, userSelectedReferenceTableNameAtom, raw.referenceTableName);
-    setIfDefined(set, userSelectedComparisonTableNameAtom, raw.comparisonTableName);
-    setIfDefined(set, userSelectedResultNameAtom, raw.resultName);
-    setIfDefined(set, userSelectedSubplotByAtom, raw.subplotBy);
-    setIfDefined(set, userSelectedIndicesWithValuesAtom, raw.indicesWithValues);
+    setIfDefined(set, selectedReferenceTableNameAtom, raw.referenceTableName);
+    setIfDefined(set, selectedComparisonTableNameAtom, raw.comparisonTableName);
+    setIfDefined(set, selectedResultNameAtom, raw.resultName);
+    setIfDefined(set, selectedSubplotByAtom, raw.subplotBy);
+    setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
 };

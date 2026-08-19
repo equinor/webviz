@@ -9,6 +9,7 @@ import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/Inplac
 
 import {
     areSelectedTablesComparableAtom,
+    areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
     referenceEnsembleIdentAtom,
     resultNameAtom,
@@ -28,14 +29,33 @@ import {
 } from "../utils/computeVolumeChangeDecomposition";
 import { findTableDataForSource, makeSourceLabels } from "../utils/waterfallSources";
 
+export type WaterfallMessage = {
+    text: string;
+    /** "info" for an incomplete selection the user still has to finish, "error" for a real failure. */
+    severity: "info" | "error";
+};
+
 export interface WaterfallResult {
     plots: React.ReactNode | null;
     isFetching: boolean;
     /** User-facing message when the waterfall cannot be shown. */
-    message: string | null;
+    message: WaterfallMessage | null;
+    /** Non-blocking note shown alongside a rendered plot. */
+    warning: string | null;
+}
+
+function makeInfoResult(text: string): WaterfallResult {
+    return { plots: null, isFetching: false, message: { text, severity: "info" }, warning: null };
+}
+
+function makeErrorResult(text: string): WaterfallResult {
+    return { plots: null, isFetching: false, message: { text, severity: "error" }, warning: null };
 }
 
 const SINGLE_GROUP_KEY = "__single__";
+
+/** Number of group labels listed before the rest are elided. */
+const MAX_LISTED_SKIPPED_GROUPS = 5;
 
 type GroupStatistics = {
     means: Map<string, number>;
@@ -43,65 +63,83 @@ type GroupStatistics = {
     targetBand: { low: number; high: number } | null;
 };
 
+function makeSkippedGroupsWarning(skippedGroupLabels: string[]): string | null {
+    if (skippedGroupLabels.length === 0) {
+        return null;
+    }
+    const listed = skippedGroupLabels.slice(0, MAX_LISTED_SKIPPED_GROUPS).join(", ");
+    const elision = skippedGroupLabels.length > MAX_LISTED_SKIPPED_GROUPS ? ", ..." : "";
+    return `Could not decompose ${skippedGroupLabels.length} of the selected groups (${listed}${elision}). They are omitted from the plot.`;
+}
+
 /**
  * Extract per-ensemble statistics for the required result names, grouped by the given subplot index
  * column (e.g. one entry per REGION value). When no group-by index is given, all rows collapse to a
- * single group. Returns null when no fluid selection has the complete set of required results.
+ * single group. Returns null when the required fluid is absent, lacks any of the required results,
+ * or does not carry the requested group-by column.
  */
 function extractRequiredStatisticsByGroup(
     statisticalTableData: InplaceVolumesStatisticalTableData,
     requiredResultNames: string[],
     targetResultName: string,
+    requiredFluid: string,
     groupByIndexColumn: string | null,
 ): Map<string, GroupStatistics> | null {
-    for (const fluidTableData of statisticalTableData.data.tableDataPerFluidSelection) {
-        const meanArraysByResultName = new Map<string, number[]>();
-        let targetP10Array: number[] | undefined;
-        let targetP90Array: number[] | undefined;
-        for (const resultColumn of fluidTableData.resultColumnStatistics) {
-            const meanArray = resultColumn.statisticValues[InplaceVolumesStatistic_api.MEAN];
-            if (meanArray) {
-                meanArraysByResultName.set(resultColumn.columnName, meanArray);
-            }
-            if (resultColumn.columnName === targetResultName) {
-                targetP10Array = resultColumn.statisticValues[InplaceVolumesStatistic_api.P10];
-                targetP90Array = resultColumn.statisticValues[InplaceVolumesStatistic_api.P90];
-            }
-        }
-
-        // Only use the fluid selection that has all required results.
-        if (!requiredResultNames.every((resultName) => meanArraysByResultName.has(resultName))) {
-            continue;
-        }
-
-        const groupColumn = groupByIndexColumn
-            ? fluidTableData.selectorColumns.find((column) => column.columnName === groupByIndexColumn)
-            : undefined;
-
-        const numRows = meanArraysByResultName.get(requiredResultNames[0])!.length;
-        const statisticsByGroup = new Map<string, GroupStatistics>();
-        for (let row = 0; row < numRows; row++) {
-            const groupKey =
-                groupColumn !== undefined
-                    ? String(groupColumn.uniqueValues[groupColumn.indices[row]])
-                    : SINGLE_GROUP_KEY;
-            const means = new Map<string, number>();
-            for (const resultName of requiredResultNames) {
-                means.set(resultName, meanArraysByResultName.get(resultName)![row]);
-            }
-
-            // The backend inverts the percentiles per oil industry convention: P10 is the high
-            // value and P90 the low. Min/max guards against that convention ever changing.
-            const p10 = targetP10Array?.[row];
-            const p90 = targetP90Array?.[row];
-            const targetBand =
-                p10 !== undefined && p90 !== undefined ? { low: Math.min(p10, p90), high: Math.max(p10, p90) } : null;
-
-            statisticsByGroup.set(groupKey, { means, targetBand });
-        }
-        return statisticsByGroup;
+    // The target dictates the fluid: STOIIP decomposes oil, GIIP gas.
+    const fluidTableData = statisticalTableData.data.tableDataPerFluidSelection.find(
+        (tableData) => tableData.fluidSelection === requiredFluid,
+    );
+    if (!fluidTableData) {
+        return null;
     }
-    return null;
+
+    const meanArraysByResultName = new Map<string, number[]>();
+    let targetP10Array: number[] | undefined;
+    let targetP90Array: number[] | undefined;
+    for (const resultColumn of fluidTableData.resultColumnStatistics) {
+        const meanArray = resultColumn.statisticValues[InplaceVolumesStatistic_api.MEAN];
+        if (meanArray) {
+            meanArraysByResultName.set(resultColumn.columnName, meanArray);
+        }
+        if (resultColumn.columnName === targetResultName) {
+            targetP10Array = resultColumn.statisticValues[InplaceVolumesStatistic_api.P10];
+            targetP90Array = resultColumn.statisticValues[InplaceVolumesStatistic_api.P90];
+        }
+    }
+
+    if (!requiredResultNames.every((resultName) => meanArraysByResultName.has(resultName))) {
+        return null;
+    }
+
+    const groupColumn = groupByIndexColumn
+        ? fluidTableData.selectorColumns.find((column) => column.columnName === groupByIndexColumn)
+        : undefined;
+
+    // Without the requested column every row would collapse onto one key and overwrite the last.
+    if (groupByIndexColumn && !groupColumn) {
+        return null;
+    }
+
+    const numRows = meanArraysByResultName.get(requiredResultNames[0])!.length;
+    const statisticsByGroup = new Map<string, GroupStatistics>();
+    for (let row = 0; row < numRows; row++) {
+        const groupKey =
+            groupColumn !== undefined ? String(groupColumn.uniqueValues[groupColumn.indices[row]]) : SINGLE_GROUP_KEY;
+        const means = new Map<string, number>();
+        for (const resultName of requiredResultNames) {
+            means.set(resultName, meanArraysByResultName.get(resultName)![row]);
+        }
+
+        // The backend inverts the percentiles per oil industry convention: P10 is the high
+        // value and P90 the low. Min/max guards against that convention ever changing.
+        const p10 = targetP10Array?.[row];
+        const p90 = targetP90Array?.[row];
+        const targetBand =
+            p10 !== undefined && p90 !== undefined ? { low: Math.min(p10, p90), high: Math.max(p10, p90) } : null;
+
+        statisticsByGroup.set(groupKey, { means, targetBand });
+    }
+    return statisticsByGroup;
 }
 
 /**
@@ -113,6 +151,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     const comparisonEnsembleIdent = useAtomValue(comparisonEnsembleIdentAtom);
     const resultName = useAtomValue(resultNameAtom);
     const spec = useAtomValue(waterfallFactorSpecAtom);
+    const areSourcesDistinct = useAtomValue(areSourcesDistinctAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
     const isComputable = useAtomValue(isWaterfallComputableAtom);
     const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
@@ -120,76 +159,65 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     const waterfallSources = useAtomValue(waterfallSourcesAtom);
 
     if (!referenceEnsembleIdent || !comparisonEnsembleIdent) {
-        return { plots: null, isFetching: false, message: "Select a reference and a comparison ensemble." };
+        return makeInfoResult("Select a reference and a comparison ensemble.");
     }
     if (!waterfallSources) {
-        return { plots: null, isFetching: false, message: "Select a table source for both ensembles." };
+        return makeInfoResult("Select a table source for both ensembles.");
     }
-    if (
-        referenceEnsembleIdent.equals(comparisonEnsembleIdent) &&
-        waterfallSources.reference.tableName === waterfallSources.comparison.tableName
-    ) {
-        return {
-            plots: null,
-            isFetching: false,
-            message: "The reference and comparison must differ in either ensemble or table source.",
-        };
+    if (!areSourcesDistinct) {
+        return makeInfoResult("The reference and comparison must differ in either ensemble or table source.");
     }
     if (!areSelectedTablesComparable) {
-        return {
-            plots: null,
-            isFetching: false,
-            message: "The selected tables are not comparable due to mismatching result names or index columns.",
-        };
+        return makeErrorResult(
+            "The selected tables are not comparable due to mismatching result names or index columns.",
+        );
     }
     if (!isWaterfallTargetResultName(resultName)) {
-        return {
-            plots: null,
-            isFetching: false,
-            message: "The volume change decomposition is only available for STOIIP or GIIP.",
-        };
+        return makeErrorResult("The volume change decomposition is only available for STOIIP or GIIP.");
     }
     if (!spec) {
-        return {
-            plots: null,
-            isFetching: false,
-            message:
-                "The required factor columns (BULK, PORO or NTG+PORO_NET, SW, BO/BG) are not available for the selected table.",
-        };
+        return makeErrorResult(
+            "The volume columns the decomposition is built from (BULK, PORV, HCPV) are not available for the selected table.",
+        );
     }
     if (!isComputable) {
-        return { plots: null, isFetching: false, message: null };
+        return { plots: null, isFetching: false, message: null, warning: null };
     }
 
     if (statisticalDataQueries.isFetching) {
-        return { plots: null, isFetching: true, message: null };
+        return { plots: null, isFetching: true, message: null, warning: null };
     }
 
     const requiredFluid = getRequiredFluidForWaterfallTarget(spec.target);
-    const noDataMessage = `No data for the ${requiredFluid} fluid required by the ${spec.target} decomposition. Make sure '${requiredFluid}' is selected in the filters.`;
+    const noDataMessage = `No ${requiredFluid} data available for the ${spec.target} decomposition in the selected tables.`;
 
     const comparisonTableData = findTableDataForSource(statisticalDataQueries.tablesData, waterfallSources.comparison);
     const referenceTableData = findTableDataForSource(statisticalDataQueries.tablesData, waterfallSources.reference);
 
     if (!comparisonTableData || !referenceTableData) {
-        return { plots: null, isFetching: false, message: noDataMessage };
+        if (statisticalDataQueries.errors.length > 0) {
+            return makeErrorResult("Failed to load inplace volumes table data.");
+        }
+        return makeErrorResult(noDataMessage);
     }
 
     const comparisonStatisticsByGroup = extractRequiredStatisticsByGroup(
         comparisonTableData,
         spec.requiredResultNames,
         spec.target,
+        requiredFluid,
         subplotByIndex,
     );
     const referenceStatisticsByGroup = extractRequiredStatisticsByGroup(
         referenceTableData,
         spec.requiredResultNames,
         spec.target,
+        requiredFluid,
         subplotByIndex,
     );
 
     if (!comparisonStatisticsByGroup || !referenceStatisticsByGroup) {
-        return { plots: null, isFetching: false, message: noDataMessage };
+        return makeErrorResult(noDataMessage);
     }
 
     // Compute a decomposition per group present in both ensembles.
@@ -198,6 +226,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         .sort((a, b) => a.localeCompare(b));
 
     const groupDecompositions: WaterfallGroupDecomposition[] = [];
+    const skippedGroupLabels: string[] = [];
     for (const groupKey of groupKeys) {
         const referenceStatistics = referenceStatisticsByGroup.get(groupKey)!;
         const comparisonStatistics = comparisonStatisticsByGroup.get(groupKey)!;
@@ -206,27 +235,25 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
             referenceStatistics.means,
             comparisonStatistics.means,
         );
-        if (decomposition) {
-            groupDecompositions.push({
-                groupLabel: groupKey === SINGLE_GROUP_KEY ? "" : groupKey,
-                decomposition,
-                uncertainty:
-                    referenceStatistics.targetBand && comparisonStatistics.targetBand
-                        ? {
-                              reference: referenceStatistics.targetBand,
-                              comparison: comparisonStatistics.targetBand,
-                          }
-                        : null,
-            });
+        if (!decomposition) {
+            skippedGroupLabels.push(groupKey);
+            continue;
         }
+        groupDecompositions.push({
+            groupLabel: groupKey === SINGLE_GROUP_KEY ? "" : groupKey,
+            decomposition,
+            uncertainty:
+                referenceStatistics.targetBand && comparisonStatistics.targetBand
+                    ? {
+                          reference: referenceStatistics.targetBand,
+                          comparison: comparisonStatistics.targetBand,
+                      }
+                    : null,
+        });
     }
 
     if (groupDecompositions.length === 0) {
-        return {
-            plots: null,
-            isFetching: false,
-            message: "The waterfall decomposition could not be computed for the selected data.",
-        };
+        return makeErrorResult("The waterfall decomposition could not be computed for the selected data.");
     }
 
     const { referenceLabel, comparisonLabel } = makeSourceLabels(
@@ -255,5 +282,5 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         comparisonLabel,
     });
 
-    return { plots, isFetching: false, message: null };
+    return { plots, isFetching: false, message: null, warning: makeSkippedGroupsWarning(skippedGroupLabels) };
 }

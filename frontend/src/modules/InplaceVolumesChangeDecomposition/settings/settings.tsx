@@ -10,20 +10,14 @@ import { Banner } from "@lib/components/Banner";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Select } from "@lib/components/Select";
+import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
+import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
+import { FLUID_INDEX_COLUMN } from "../view/utils/computeVolumeChangeDecomposition";
 
-import {
-    userSelectedComparisonEnsembleIdentAtom,
-    userSelectedComparisonTableNameAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedReferenceEnsembleIdentAtom,
-    userSelectedReferenceTableNameAtom,
-    userSelectedResultNameAtom,
-    userSelectedSubplotByAtom,
-} from "./atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
@@ -33,13 +27,17 @@ import {
     availableResultNamesAtom,
     isCrossTableComparisonAtom,
     isSingleEnsembleComparisonAtom,
+    waterfallFactorSpecAtom,
+} from "./atoms/derivedAtoms";
+import {
+    selectedComparisonEnsembleIdentAtom,
     selectedComparisonTableNameAtom,
     selectedIndicesWithValuesAtom,
+    selectedReferenceEnsembleIdentAtom,
     selectedReferenceTableNameAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
-    waterfallFactorSpecAtom,
-} from "./atoms/derivedAtoms";
+} from "./atoms/persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 const NO_SUBPLOT_VALUE = "__none__";
@@ -51,30 +49,40 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const tableDefinitionsQuery = useAtomValue(tableDefinitionsQueryAtom);
 
-    const [referenceEnsembleIdent, setReferenceEnsembleIdent] = useAtom(userSelectedReferenceEnsembleIdentAtom);
-    const [comparisonEnsembleIdent, setComparisonEnsembleIdent] = useAtom(userSelectedComparisonEnsembleIdentAtom);
-    const [, setUserSelectedReferenceTableName] = useAtom(userSelectedReferenceTableNameAtom);
-    const [, setUserSelectedComparisonTableName] = useAtom(userSelectedComparisonTableNameAtom);
-    const [, setUserSelectedResultName] = useAtom(userSelectedResultNameAtom);
-    const [, setUserSelectedSubplotBy] = useAtom(userSelectedSubplotByAtom);
-    const [, setUserSelectedIndicesWithValues] = useAtom(userSelectedIndicesWithValuesAtom);
+    const [referenceEnsembleIdent, setReferenceEnsembleIdent] = useAtom(selectedReferenceEnsembleIdentAtom);
+    const [comparisonEnsembleIdent, setComparisonEnsembleIdent] = useAtom(selectedComparisonEnsembleIdentAtom);
+    const [selectedReferenceTableName, setSelectedReferenceTableName] = useAtom(selectedReferenceTableNameAtom);
+    const [selectedComparisonTableName, setSelectedComparisonTableName] = useAtom(selectedComparisonTableNameAtom);
+    const [selectedResultName, setSelectedResultName] = useAtom(selectedResultNameAtom);
+    const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
+    const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
 
     const availableReferenceTableNames = useAtomValue(availableReferenceTableNamesAtom);
     const availableComparisonTableNames = useAtomValue(availableComparisonTableNamesAtom);
     const availableResultNames = useAtomValue(availableResultNamesAtom);
     const availableIndicesWithValues = useAtomValue(availableIndicesWithValuesAtom);
-    const selectedReferenceTableName = useAtomValue(selectedReferenceTableNameAtom);
-    const selectedComparisonTableName = useAtomValue(selectedComparisonTableNameAtom);
-    const selectedResultName = useAtomValue(selectedResultNameAtom);
-    const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
-    const selectedIndicesWithValues = useAtomValue(selectedIndicesWithValuesAtom);
     const areSourcesDistinct = useAtomValue(areSourcesDistinctAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
     const waterfallFactorSpec = useAtomValue(waterfallFactorSpecAtom);
     const isSingleEnsembleComparison = useAtomValue(isSingleEnsembleComparisonAtom);
     const isCrossTableComparison = useAtomValue(isCrossTableComparisonAtom);
 
-    const isSameSourceSelectedTwice = Boolean(referenceEnsembleIdent && comparisonEnsembleIdent && !areSourcesDistinct);
+    const persistedReferenceEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedReferenceEnsembleIdentAtom,
+    );
+    const comparisonEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(selectedComparisonEnsembleIdentAtom);
+    const referenceTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedReferenceTableNameAtom);
+    const comparisonTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedComparisonTableNameAtom);
+    const resultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
+    const subplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
+
+    const isSameSourceSelectedTwice = Boolean(
+        referenceEnsembleIdent.value && comparisonEnsembleIdent.value && !areSourcesDistinct,
+    );
+
+    const referenceEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
+        ? [...persistedReferenceEnsembleAnnotations, { type: "error", message: "Must differ from the comparison" }]
+        : persistedReferenceEnsembleAnnotations;
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
         statusWriter.addWarning("The selected table sources are not comparable.");
@@ -101,10 +109,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     ];
 
     function handleIndexValuesChange(indexColumn: string, values: string[]) {
-        const newIndicesWithValues = selectedIndicesWithValues.map((index) =>
-            index.indexColumn === indexColumn ? { indexColumn, values } : index,
-        );
-        setUserSelectedIndicesWithValues(newIndicesWithValues);
+        const newIndicesWithValues = selectedIndicesWithValues.value
+            .filter((index) => index.indexColumn !== FLUID_INDEX_COLUMN)
+            .map((index) => (index.indexColumn === indexColumn ? { indexColumn, values } : index));
+        setSelectedIndicesWithValues(newIndicesWithValues);
     }
 
     return (
@@ -118,12 +126,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             title: "Reference and comparison",
                             content: (
                                 <>
-                                    The change is decomposed as <b>comparison &minus; reference</b>, the same convention
-                                    delta ensembles use.
+                                    The change is decomposed as <b>comparison &minus; reference</b>.
                                     <br />
                                     <br />
-                                    The two sides are selected separately rather than as a delta ensemble, because the
-                                    decomposition works on per-ensemble means and so does not require the two to share
+                                    The decomposition works on per-ensemble means, so the two sides do not need to share
                                     realization numbering.
                                     <br />
                                     <br />
@@ -132,11 +138,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 </>
                             ),
                         }}
-                        errorAnnotation={isSameSourceSelectedTwice ? "Must differ from the comparison" : undefined}
+                        annotations={referenceEnsembleAnnotations}
                     >
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
-                            value={referenceEnsembleIdent}
+                            value={referenceEnsembleIdent.value}
                             ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                             onValueChange={setReferenceEnsembleIdent}
                         />
@@ -144,25 +150,30 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     <Setting.Field
                         label="Reference table"
                         loadingOverlay={tableDefinitionsQuery.isLoading}
+                        annotations={referenceTableNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            referenceEnsembleIdent &&
+                            referenceEnsembleIdent.value &&
                             referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
                     >
                         <Combobox
-                            value={selectedReferenceTableName}
+                            value={selectedReferenceTableName.value}
                             items={referenceTableNameOptions}
-                            onValueChange={(v) => setUserSelectedReferenceTableName(v)}
+                            onValueChange={(v) => setSelectedReferenceTableName(v)}
                         />
                     </Setting.Field>
 
-                    <Setting.Field label="Comparison ensemble" description="Ensemble the change is measured to.">
+                    <Setting.Field
+                        label="Comparison ensemble"
+                        description="Ensemble the change is measured to."
+                        annotations={comparisonEnsembleAnnotations}
+                    >
                         <EnsembleDropdown
                             ensembles={ensembleSet.getRegularEnsembleArray()}
-                            value={comparisonEnsembleIdent}
+                            value={comparisonEnsembleIdent.value}
                             ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                             onValueChange={setComparisonEnsembleIdent}
                         />
@@ -170,18 +181,19 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     <Setting.Field
                         label="Comparison table"
                         loadingOverlay={tableDefinitionsQuery.isLoading}
+                        annotations={comparisonTableNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            comparisonEnsembleIdent &&
+                            comparisonEnsembleIdent.value &&
                             comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
                     >
                         <Combobox
-                            value={selectedComparisonTableName}
+                            value={selectedComparisonTableName.value}
                             items={comparisonTableNameOptions}
-                            onValueChange={(v) => setUserSelectedComparisonTableName(v)}
+                            onValueChange={(v) => setSelectedComparisonTableName(v)}
                         />
                     </Setting.Field>
 
@@ -198,6 +210,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 <Setting.Section title="Data" defaultOpen>
                     <Setting.Field
                         label="Response"
+                        annotations={resultNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading && areSourcesDistinct && resultNameOptions.length === 0
                                 ? "Neither STOIIP nor GIIP is available for the selected tables."
@@ -205,24 +218,24 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         }
                     >
                         <Combobox
-                            value={selectedResultName}
+                            value={selectedResultName.value}
                             items={resultNameOptions}
-                            onValueChange={(v) => setUserSelectedResultName(v)}
+                            onValueChange={(v) => setSelectedResultName(v)}
                         />
                     </Setting.Field>
 
-                    <Setting.Field label="Subplot by">
+                    <Setting.Field label="Subplot by" annotations={subplotByAnnotations}>
                         <Combobox
-                            value={selectedSubplotBy ?? NO_SUBPLOT_VALUE}
+                            value={selectedSubplotBy.value ?? NO_SUBPLOT_VALUE}
                             items={subplotByOptions}
-                            onValueChange={(v) => setUserSelectedSubplotBy(v === NO_SUBPLOT_VALUE ? null : v)}
+                            onValueChange={(v) => setSelectedSubplotBy(v === NO_SUBPLOT_VALUE ? null : v)}
                         />
                     </Setting.Field>
 
-                    {selectedResultName !== null && waterfallFactorSpec === null && (
+                    {selectedResultName.value !== null && waterfallFactorSpec === null && (
                         <Banner tone="warning">
-                            <strong>Note:</strong> {selectedResultName} cannot be decomposed for the selected table. The
-                            factor columns (BULK, PORO or NTG+PORO_NET, SW, BO/BG) must all be available.
+                            <strong>Note:</strong> {selectedResultName.value} cannot be decomposed for the selected
+                            table. The volume columns it is built from (BULK, PORV, HCPV) must all be available.
                         </Banner>
                     )}
                 </Setting.Section>
@@ -236,7 +249,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     label: value.toString(),
                                 }))}
                                 value={
-                                    selectedIndicesWithValues.find(
+                                    selectedIndicesWithValues.value.find(
                                         (index) => index.indexColumn === indexWithValues.indexColumn,
                                     )?.values ?? []
                                 }

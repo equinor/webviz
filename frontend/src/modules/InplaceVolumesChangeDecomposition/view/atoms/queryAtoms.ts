@@ -3,8 +3,9 @@ import { atom } from "jotai";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
-import { useGetAggregatedStatisticalTableDataQueriesForSources } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { makeAggregatedStatisticalTableDataQueryOptions } from "@modules/_shared/InplaceVolumes/queryHooks";
 
+import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
 import type { WaterfallSource } from "../utils/waterfallSources";
 
 import {
@@ -65,12 +66,12 @@ export const waterfallStatisticalDataQueriesAtom = atomWithQueries((get) => {
           }))
         : [];
 
-    // Group by FLUID so the backend keeps the fluid-specific FVF (BO for oil, BG for gas); without it
-    // fluids are summed and BO/BG are dropped. A selected "Subplot by" index is added to produce one
-    // waterfall per value (e.g. per REGION).
-    const groupByIndices = subplotBy ? ["FLUID", subplotBy] : ["FLUID"];
+    // Group by FLUID so the volumes belong to a single fluid zone. Summing fluids would mix the oil
+    // and gas pore volumes, and HCPV/PORV and HCPV/STOIIP would no longer be that zone's saturation
+    // and FVF. A selected "Subplot by" index is added to produce one waterfall per value.
+    const groupByIndices = subplotBy ? [FLUID_INDEX_COLUMN, subplotBy] : [FLUID_INDEX_COLUMN];
 
-    return useGetAggregatedStatisticalTableDataQueriesForSources(
+    return makeAggregatedStatisticalTableDataQueryOptions(
         sources,
         factorSpec?.requiredResultNames ?? [],
         groupByIndices,

@@ -8,7 +8,18 @@ import { makeSubplots } from "@modules/_shared/Figure";
 import type { NumberFormatOptions } from "@modules/_shared/utils/numberFormatting";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
-import type { VolumeChangeDecomposition } from "./computeVolumeChangeDecomposition";
+import type { VolumeChangeDecomposition, WaterfallMeasure } from "./computeVolumeChangeDecomposition";
+
+// plotly.js ships no types for the native "waterfall" trace, so describe the subset we set. Keeping
+// the literal typed means a typo in e.g. `measure` or `connector` is still caught.
+type WaterfallTrace = Omit<Partial<PlotData>, "type" | "increasing" | "decreasing"> & {
+    type: "waterfall";
+    measure: WaterfallMeasure[];
+    connector?: { mode?: "spanning" | "between" };
+    increasing?: { marker?: { color?: string } };
+    decreasing?: { marker?: { color?: string } };
+    totals?: { marker?: { color?: string } };
+};
 
 // Tab10 blue/orange/grey, matching SensitivityPlot's signed-bar convention. Blue vs orange is the
 // colorblind-safe axis; the colors are directional only and carry no good/bad meaning.
@@ -27,7 +38,7 @@ export interface WaterfallGroupDecomposition {
     /** Subplot label (e.g. a REGION value). Empty string for a single, ungrouped waterfall. */
     groupLabel: string;
     decomposition: VolumeChangeDecomposition;
-    /** Target volume spread in each ensemble, shown as whiskers on the endpoint bars. */
+    /** Target volume spread in each ensemble, shown in the endpoint bars' hover text. */
     uncertainty: { reference: WaterfallUncertaintyBand; comparison: WaterfallUncertaintyBand } | null;
 }
 
@@ -41,7 +52,7 @@ export interface WaterfallPlotOptions {
 
 /**
  * Build the per-bar text: absolute value for the endpoint bars, and "+Δ +pct%" for the factor bars
- * (percent relative to the previous cumulative bar), matching the legacy waterfall.
+ * (percent relative to the previous cumulative bar).
  */
 function makeBarTexts(decomposition: VolumeChangeDecomposition): string[] {
     const { bars } = decomposition;
@@ -52,8 +63,9 @@ function makeBarTexts(decomposition: VolumeChangeDecomposition): string[] {
 
         const previousCumulative = bars[index - 1]?.cumulative ?? 0;
         const percent = previousCumulative !== 0 ? (100 * bar.value) / previousCumulative : 0;
-        const sign = bar.value > 0 ? "+" : "";
-        return `${sign}${formatNumber(bar.value, BAR_TEXT_FORMAT_OPTIONS)}  ${sign}${percent.toFixed(1)}%`;
+        const valueSign = bar.value > 0 ? "+" : "";
+        const percentSign = percent > 0 ? "+" : "";
+        return `${valueSign}${formatNumber(bar.value, BAR_TEXT_FORMAT_OPTIONS)}  ${percentSign}${percent.toFixed(1)}%`;
     });
 }
 
@@ -88,13 +100,13 @@ function makeWaterfallTrace(
         increasing: { marker: { color: INCREASING_COLOR } },
         decreasing: { marker: { color: DECREASING_COLOR } },
         totals: { marker: { color: TOTALS_COLOR } },
-    } as unknown as Partial<PlotData>;
+    } satisfies WaterfallTrace as unknown as Partial<PlotData>;
 }
 
 /**
- * Hover text per bar. The endpoint bars also carry the ensemble's uncertainty band, which is shown
- * as text rather than whiskers: the within-ensemble spread is typically far wider than the change
- * being decomposed, so drawing it on the same axis would dwarf the factor bars.
+ * Hover text per bar. The endpoint bars also carry the ensemble's uncertainty band as text: the
+ * within-ensemble spread is typically far wider than the change being decomposed, so drawing it on
+ * the same axis would dwarf the factor bars.
  */
 function makeBarHoverTexts(group: WaterfallGroupDecomposition): string[] {
     const { bars } = group.decomposition;

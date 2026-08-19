@@ -57,7 +57,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
         }
     }
 
-    return useGetAggregatedStatisticalTableDataQueriesForSources(
+    return makeAggregatedStatisticalTableDataQueryOptions(
         sources,
         resultNames,
         groupByIndices,
@@ -70,19 +70,20 @@ export function useGetAggregatedStatisticalTableDataQueries(
  * Same as `useGetAggregatedStatisticalTableDataQueries`, but for an explicit list of sources rather
  * than the cross-product of ensembles and table names. Lets a caller pair a different table with
  * each ensemble, or use two tables from the same ensemble.
+ *
+ * Builds query options only, so it can be called from an atom as well as from a hook.
  */
-export function useGetAggregatedStatisticalTableDataQueriesForSources(
+export function makeAggregatedStatisticalTableDataQueryOptions(
     sources: InplaceVolumesSource[],
     resultNames: string[],
     groupByIndices: string[],
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {
-    const uniqueSources = sources;
     const eachIndexHasValues = indicesWithValues.every((index) => index.values.length > 0);
     const validGroupByIndices = groupByIndices.length === 0 ? null : groupByIndices;
 
-    const queries = uniqueSources.map((source) => {
+    const queries = sources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         const options = postGetAggregatedStatisticalInplaceTableDataOptions({
@@ -120,8 +121,8 @@ export function useGetAggregatedStatisticalTableDataQueriesForSources(
         for (const [index, result] of results.entries()) {
             if (result.data) {
                 tablesData.push({
-                    ensembleIdent: uniqueSources[index].ensembleIdent,
-                    tableName: uniqueSources[index].tableName,
+                    ensembleIdent: sources[index].ensembleIdent,
+                    tableName: sources[index].tableName,
                     data: result.data,
                 });
             }

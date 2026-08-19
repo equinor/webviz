@@ -5,20 +5,22 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 
 import {
+    FLUID_INDEX_COLUMN,
+    getRequiredFluidForWaterfallTarget,
     getWaterfallFactorSpec,
+    isWaterfallTargetResultName,
     WATERFALL_TARGET_RESULT_NAMES,
 } from "../../view/utils/computeVolumeChangeDecomposition";
 
+import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
-    selectedIndexValueCriteriaAtom,
-    userSelectedComparisonEnsembleIdentAtom,
-    userSelectedComparisonTableNameAtom,
-    userSelectedIndicesWithValuesAtom,
-    userSelectedReferenceEnsembleIdentAtom,
-    userSelectedReferenceTableNameAtom,
-    userSelectedResultNameAtom,
-    userSelectedSubplotByAtom,
-} from "./baseAtoms";
+    selectedComparisonEnsembleIdentAtom,
+    selectedComparisonTableNameAtom,
+    selectedIndicesWithValuesAtom,
+    selectedReferenceEnsembleIdentAtom,
+    selectedReferenceTableNameAtom,
+    selectedResultNameAtom,
+} from "./persistableFixableAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
 type TableDefinitionsPerEnsemble = {
@@ -37,28 +39,13 @@ function makeAvailableTableNames(
     return Array.from(new Set(forEnsemble?.tableDefinitions.map((definition) => definition.tableName) ?? []));
 }
 
-function clampToAvailable(userSelected: string | null, available: string[]): string | null {
-    if (userSelected && available.includes(userSelected)) {
-        return userSelected;
-    }
-    return available[0] ?? null;
-}
-
 /** Table names are per ensemble, not intersected, since the two sides may use different tables. */
 export const availableReferenceTableNamesAtom = atom((get) =>
-    makeAvailableTableNames(get(tableDefinitionsQueryAtom).data, get(userSelectedReferenceEnsembleIdentAtom)),
+    makeAvailableTableNames(get(tableDefinitionsQueryAtom).data, get(selectedReferenceEnsembleIdentAtom).value),
 );
 
 export const availableComparisonTableNamesAtom = atom((get) =>
-    makeAvailableTableNames(get(tableDefinitionsQueryAtom).data, get(userSelectedComparisonEnsembleIdentAtom)),
-);
-
-export const selectedReferenceTableNameAtom = atom((get) =>
-    clampToAvailable(get(userSelectedReferenceTableNameAtom), get(availableReferenceTableNamesAtom)),
-);
-
-export const selectedComparisonTableNameAtom = atom((get) =>
-    clampToAvailable(get(userSelectedComparisonTableNameAtom), get(availableComparisonTableNamesAtom)),
+    makeAvailableTableNames(get(tableDefinitionsQueryAtom).data, get(selectedComparisonEnsembleIdentAtom).value),
 );
 
 /**
@@ -72,12 +59,12 @@ export const tableDefinitionsAccessorAtom = atom((get) => {
 
     const sourceSpecs = [
         {
-            ensembleIdent: get(userSelectedReferenceEnsembleIdentAtom),
-            tableName: get(selectedReferenceTableNameAtom),
+            ensembleIdent: get(selectedReferenceEnsembleIdentAtom).value,
+            tableName: get(selectedReferenceTableNameAtom).value,
         },
         {
-            ensembleIdent: get(userSelectedComparisonEnsembleIdentAtom),
-            tableName: get(selectedComparisonTableNameAtom),
+            ensembleIdent: get(selectedComparisonEnsembleIdentAtom).value,
+            tableName: get(selectedComparisonTableNameAtom).value,
         },
     ];
 
@@ -104,60 +91,43 @@ export const tableDefinitionsAccessorAtom = atom((get) => {
 });
 
 /** Only decomposable hydrocarbon volumes are selectable as the waterfall target. */
-export const availableResultNamesAtom = atom((get) => {
+export const availableResultNamesAtom = atom<string[]>((get) => {
     const resultNamesIntersection = get(tableDefinitionsAccessorAtom).getResultNamesIntersection();
     return WATERFALL_TARGET_RESULT_NAMES.filter((resultName) => resultNamesIntersection.includes(resultName));
 });
 
-export const selectedResultNameAtom = atom<string | null>((get) => {
-    const userSelectedResultName = get(userSelectedResultNameAtom);
-    const availableResultNames: string[] = get(availableResultNamesAtom);
-
-    if (userSelectedResultName && availableResultNames.includes(userSelectedResultName)) {
-        return userSelectedResultName;
-    }
-    return availableResultNames[0] ?? null;
-});
-
+/** FLUID is excluded: it is dictated by the selected target volume, not chosen by the user. */
 export const availableIndicesWithValuesAtom = atom((get) => {
-    return get(tableDefinitionsAccessorAtom).getCommonIndicesWithValues();
+    return get(tableDefinitionsAccessorAtom)
+        .getCommonIndicesWithValues()
+        .filter((indexWithValues) => indexWithValues.indexColumn !== FLUID_INDEX_COLUMN);
 });
 
-export const selectedIndicesWithValuesAtom = atom((get) => {
-    const userSelectedIndicesWithValues = get(userSelectedIndicesWithValuesAtom);
-    const availableIndicesWithValues = get(availableIndicesWithValuesAtom);
+/**
+ * The user-selected filters plus the fluid implied by the target. STOIIP decomposes the oil zone and
+ * GIIP the gas zone, so the fluid follows from the target rather than being chosen by the user.
+ */
+export const indicesWithValuesForQueryAtom = atom<InplaceVolumesIndexWithValues_api[]>((get) => {
+    const selectedIndicesWithValues = get(selectedIndicesWithValuesAtom).value;
+    const selectedResultName = get(selectedResultNameAtom).value;
 
-    const selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[] = [];
-    for (const availableIndexWithValues of availableIndicesWithValues) {
-        const userSelected = userSelectedIndicesWithValues.find(
-            (index) => index.indexColumn === availableIndexWithValues.indexColumn,
-        );
-        const values = (userSelected?.values ?? availableIndexWithValues.values).filter((value) =>
-            availableIndexWithValues.values.includes(value),
-        );
-        selectedIndicesWithValues.push({
-            indexColumn: availableIndexWithValues.indexColumn,
-            values: values.length > 0 ? values : availableIndexWithValues.values,
-        });
+    if (!isWaterfallTargetResultName(selectedResultName)) {
+        return selectedIndicesWithValues;
     }
-    return selectedIndicesWithValues;
-});
 
-export const selectedSubplotByAtom = atom((get) => {
-    const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
-    const availableIndicesWithValues = get(availableIndicesWithValuesAtom);
-
-    const isAvailable = availableIndicesWithValues.some((index) => index.indexColumn === userSelectedSubplotBy);
-    return isAvailable ? userSelectedSubplotBy : null;
+    return [
+        ...selectedIndicesWithValues,
+        { indexColumn: FLUID_INDEX_COLUMN, values: [getRequiredFluidForWaterfallTarget(selectedResultName)] },
+    ];
 });
 
 /**
  * Factor decomposition spec for the selected target, or null when the target is not decomposable or
- * a required factor result is unavailable. Computed once here and passed to the view, so settings
- * and view can never disagree on whether the waterfall is computable.
+ * a required volume column is unavailable. Passed to the view through the interface so settings and
+ * view cannot disagree on whether the waterfall is computable.
  */
 export const waterfallFactorSpecAtom = atom((get) => {
-    const selectedResultName = get(selectedResultNameAtom);
+    const selectedResultName = get(selectedResultNameAtom).value;
     const resultNamesIntersection = get(tableDefinitionsAccessorAtom).getResultNamesIntersection();
     return getWaterfallFactorSpec(selectedResultName, resultNamesIntersection);
 });
@@ -168,10 +138,10 @@ export const areSelectedTablesComparableAtom = atom((get) => {
 
 /** True when the two selected sources are both complete and not the same ensemble/table pair. */
 export const areSourcesDistinctAtom = atom((get) => {
-    const referenceEnsembleIdent = get(userSelectedReferenceEnsembleIdentAtom);
-    const comparisonEnsembleIdent = get(userSelectedComparisonEnsembleIdentAtom);
-    const referenceTableName = get(selectedReferenceTableNameAtom);
-    const comparisonTableName = get(selectedComparisonTableNameAtom);
+    const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
+    const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
+    const referenceTableName = get(selectedReferenceTableNameAtom).value;
+    const comparisonTableName = get(selectedComparisonTableNameAtom).value;
 
     if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
         return false;
@@ -183,8 +153,8 @@ export const areSourcesDistinctAtom = atom((get) => {
 
 /** True when both sides use the same ensemble, i.e. the comparison is purely between table sources. */
 export const isSingleEnsembleComparisonAtom = atom((get) => {
-    const referenceEnsembleIdent = get(userSelectedReferenceEnsembleIdentAtom);
-    const comparisonEnsembleIdent = get(userSelectedComparisonEnsembleIdentAtom);
+    const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
+    const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
     return Boolean(
         referenceEnsembleIdent && comparisonEnsembleIdent && referenceEnsembleIdent.equals(comparisonEnsembleIdent),
     );
@@ -192,7 +162,7 @@ export const isSingleEnsembleComparisonAtom = atom((get) => {
 
 /** True when the two sides use different table sources. */
 export const isCrossTableComparisonAtom = atom((get) => {
-    const referenceTableName = get(selectedReferenceTableNameAtom);
-    const comparisonTableName = get(selectedComparisonTableNameAtom);
+    const referenceTableName = get(selectedReferenceTableNameAtom).value;
+    const comparisonTableName = get(selectedComparisonTableNameAtom).value;
     return Boolean(referenceTableName && comparisonTableName && referenceTableName !== comparisonTableName);
 });
