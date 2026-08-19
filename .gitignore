@@ -116,6 +116,8 @@ storybook-static
 !.vscode/launch.json
 !backend_py/primary/.vscode/launch.json
 
+frontend/docs/
+
 # playwright results
 playwright-report/
 test-results/

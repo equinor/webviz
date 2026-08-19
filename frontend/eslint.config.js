@@ -121,7 +121,9 @@ export default eslintTypescript.config(
                         { pattern: "@core/**", group: "internal", position: "before" },
                         { pattern: "@components/**", group: "internal", position: "before" },
                         { pattern: "@shared-types/**", group: "internal", position: "before" },
+
                         { pattern: "@assets/**", group: "internal", position: "before" },
+                        { pattern: "@docs/**", group: "internal", position: "after" },
                         { pattern: "@/**", group: "internal" }, // fallback for anything else under @
                     ],
                     pathGroupsExcludedImportTypes: ["react"],
