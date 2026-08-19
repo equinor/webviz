@@ -10,7 +10,7 @@ import { Button } from "@lib/components/Button";
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Dialog } from "@lib/components/Dialog";
 
-import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md";
+import ChangelogMd from "@docs/WEBVIZ_CHANGELOG.md?raw";
 
 Icon.add({ file_description });
 
