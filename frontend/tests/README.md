@@ -72,16 +72,15 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    ```bash
    npm run test:e2e:codegen --prefix ./frontend
    ```
-   If you are in GitHub codespace you can view the application on port XXX.
-   
+   If you are in GitHub codespace you can view the application on port 6080.
    Captured actions are stored to `tests/e2e/stories/_recorded.gen.ts`
 5. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
    selectors/actions into it, wrapping interactions in `smoothClick`/`smoothFill` and adding
-   `narrate(...)` lines. `codegen` emits plain Playwright calls, so this adaptation is manual.
-6. Verify with `npm run test:e2e:record`
-
-## TODO: Do we need to run sudo iptables-legacy -P FORWARD ACCEPT ?
-
+   `narrate(...)` lines.
+6. Verify with
+   ```bash
+      npm run test:e2e:record --prefix ./frontend
+   ```
 
 ## Component tests
 
