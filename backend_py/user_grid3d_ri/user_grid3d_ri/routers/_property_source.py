@@ -17,9 +17,7 @@ async def make_property_extractor_async(
     """Build the property extractor described by the property source, downloading the blobs it needs"""
 
     if isinstance(property_source, api_schemas.SinglePropertySource):
-        property_path_name = await _download_property_blob_async(
-            blob_cache, property_source.property_blob_object_uuid
-        )
+        property_path_name = await _download_property_blob_async(blob_cache, property_source.property_blob_object_uuid)
         return await GridPropertiesExtractor.from_roff_property_file_async(property_path_name)
 
     base_path_name, monitor_path_name = await asyncio.gather(

@@ -275,9 +275,7 @@ async def post_get_polyline_intersection_time_diff(
     )
     perf_metrics.record_lap("call-service")
 
-    LOGGER.debug(
-        f"------------------ GRID3D - get_polyline_intersection_time_diff took: {perf_metrics.to_string_s()}"
-    )
+    LOGGER.debug(f"------------------ GRID3D - get_polyline_intersection_time_diff took: {perf_metrics.to_string_s()}")
 
     return polyline_intersection
 
