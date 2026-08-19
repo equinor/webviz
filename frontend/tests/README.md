@@ -98,6 +98,8 @@ To author a new story starting from `codegen`:
 5. Verify with `npm run test:e2e` (fast regression run) or `npm run test:e2e:record` (produces the
    narrated video).
 
+## TODO: Do we need to run sudo iptables-legacy -P FORWARD ACCEPT ?
+
 
 ## Component tests
 

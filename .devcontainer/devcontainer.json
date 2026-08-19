@@ -12,6 +12,10 @@
     },
     "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
+  "containerEnv": {
+    "VNC_RESOLUTION": "1920x1080",
+    "VNC_DPI": "96"
+  },
   "postCreateCommand": "cd frontend && npx --yes playwright install --with-deps chromium",
   "forwardPorts": [6080],
   "hostRequirements": {
