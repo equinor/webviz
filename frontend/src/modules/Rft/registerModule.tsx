@@ -15,7 +15,7 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "RFT",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     dataTagIds: [ModuleDataTagId.RFT, ModuleDataTagId.OBSERVATIONS],
     serializedStateSchema: SERIALIZED_STATE_SCHEMA,
     channelDefinitions: channelDefs,
