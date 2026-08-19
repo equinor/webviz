@@ -9,7 +9,7 @@ import { SERIALIZED_STATE_SCHEMA, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 // NOTE: The module name is part of the persisted session format and must not be changed.
 export const MODULE_NAME = "InplaceVolumesPlot";
-const description = "Deprecated. Use the Inplace Volumes module instead.";
+const description = "Deprecated. Use the Inplace Volumes Plot module instead.";
 
 ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
