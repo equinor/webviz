@@ -440,13 +440,21 @@ type MatrixEntriesAggregateStatus = {
     skipped: boolean;
     outcomeTone: OutcomeTone | null;
     // Flat tally across every matrix entry's results, by `QcCheckRealizationResult.kind` - powers
-    // the collapsed-state summary (see `StepResultCountsSummary`) as well as `outcomeTone` below.
+    // the summary (see `StepResultCountsSummary`) as well as `outcomeTone` below.
     successCount: number;
     failureCount: number;
     exceptionCount: number;
+    // Every one of `allRealizations` that has no result on a given entry, summed across entries -
+    // either filtered away before this step ever ran, or excluded because it didn't survive an
+    // earlier step (see `RealizationSquares.makeSquareColor`'s "filteredAway"/"excluded" tones,
+    // which distinguish the same two cases per-square).
+    notRunCount: number;
 };
 
-function computeMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntriesAggregateStatus {
+function computeMatrixEntriesStatus(
+    entries: QcCheckStepMatrixEntry[],
+    allRealizations: readonly number[],
+): MatrixEntriesAggregateStatus {
     const isRunning = entries.some((entry) => entry.runtime.isRunning());
     const hasRun = entries.some((entry) => entry.runtime.hasRun());
     const skipped = entries.length > 0 && entries.every((entry) => entry.runtime.isSkipped());
@@ -454,8 +462,10 @@ function computeMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEn
     let successCount = 0;
     let failureCount = 0;
     let exceptionCount = 0;
+    let notRunCount = 0;
     for (const entry of entries) {
-        for (const result of entry.runtime.getResults().values()) {
+        const results = entry.runtime.getResults();
+        for (const result of results.values()) {
             if (result.kind === "success") {
                 successCount++;
             } else if (result.kind === "failure") {
@@ -464,23 +474,29 @@ function computeMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEn
                 exceptionCount++;
             }
         }
+        notRunCount += Math.max(allRealizations.length - results.size, 0);
     }
 
     const outcomeTone =
         hasRun && !isRunning && !skipped
             ? outcomeToneFromResults(entries.flatMap((entry) => Array.from(entry.runtime.getResults().values())))
             : null;
-    return { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount };
+    return { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount, notRunCount };
 }
 
 // Aggregates a step's current matrix entries into one status for the step's own header icon -
 // re-renders whenever any entry's own STATUS/RESULTS changes. Caches the computed aggregate
 // (invalidated only when a subscribed topic actually fires) since `useSyncExternalStore` requires
 // `getSnapshot` to return a referentially stable value when nothing has changed.
-function useMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntriesAggregateStatus {
-    const cacheRef = React.useRef<{ entries: QcCheckStepMatrixEntry[]; status: MatrixEntriesAggregateStatus } | null>(
-        null,
-    );
+function useMatrixEntriesStatus(
+    entries: QcCheckStepMatrixEntry[],
+    allRealizations: readonly number[],
+): MatrixEntriesAggregateStatus {
+    const cacheRef = React.useRef<{
+        entries: QcCheckStepMatrixEntry[];
+        allRealizations: readonly number[];
+        status: MatrixEntriesAggregateStatus;
+    } | null>(null);
 
     return React.useSyncExternalStore(
         (onStoreChange) => {
@@ -500,8 +516,12 @@ function useMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntrie
             };
         },
         () => {
-            if (!cacheRef.current || cacheRef.current.entries !== entries) {
-                cacheRef.current = { entries, status: computeMatrixEntriesStatus(entries) };
+            if (
+                !cacheRef.current ||
+                cacheRef.current.entries !== entries ||
+                cacheRef.current.allRealizations !== allRealizations
+            ) {
+                cacheRef.current = { entries, allRealizations, status: computeMatrixEntriesStatus(entries, allRealizations) };
             }
             return cacheRef.current.status;
         },
@@ -541,8 +561,8 @@ function StepBlock(props: StepBlockProps) {
     // Re-renders whenever this step's set of matrix-coordinate entries changes (rare - only on
     // add/remove, see `QcCheckStepRuntime.reset`).
     const entries = usePublishSubscribeTopicValue(stepRuntime, QcCheckStepGroupTopic.COORDINATES);
-    const { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount } =
-        useMatrixEntriesStatus(entries);
+    const { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount, notRunCount } =
+        useMatrixEntriesStatus(entries, allRealizations);
     // A step becomes expandable as soon as it's running or has something to show (`hasRun` is set
     // the moment a step starts, before `isRunning` - see `QcCheckStepMatrixRuntime.run`) - not
     // gated on the whole check having finished, so an earlier step's progress can be watched live
@@ -581,6 +601,7 @@ function StepBlock(props: StepBlockProps) {
                         successCount={successCount}
                         failureCount={failureCount}
                         exceptionCount={exceptionCount}
+                        notRunCount={notRunCount}
                     />
                 )}
             </div>
@@ -614,12 +635,13 @@ type StepResultCountsSummaryProps = {
     successCount: number;
     failureCount: number;
     exceptionCount: number;
+    notRunCount: number;
 };
 
-// A quick success/failure/error tally shown next to a step's name only while it's collapsed, so its
-// outcome breakdown is visible without expanding into the full realization matrix below.
+// A quick success/failure/error/not-run tally shown next to a step's name, so its outcome
+// breakdown is visible without expanding into the full realization matrix below.
 function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
-    const { successCount, failureCount, exceptionCount } = props;
+    const { successCount, failureCount, exceptionCount, notRunCount } = props;
 
     return (
         <span className="gap-sm text-body-xs flex items-center font-normal">
@@ -640,6 +662,16 @@ function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
                     <span className="text-warning-subtle gap-2xs flex items-center">
                         <Error style={{ fontSize: 14 }} />
                         {exceptionCount}
+                    </span>
+                </Tooltip>
+            )}
+            {notRunCount > 0 && (
+                <Tooltip
+                    content={`${notRunCount} realization${notRunCount === 1 ? "" : "s"} not run - filtered away or excluded because they did not succeed in an earlier step`}
+                >
+                    <span className="text-neutral-subtle gap-2xs flex items-center">
+                        <Block style={{ fontSize: 14 }} />
+                        {notRunCount}
                     </span>
                 </Tooltip>
             )}
