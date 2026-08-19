@@ -1,3 +1,4 @@
+import { GRID_MODEL_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridModel";
 import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import {
@@ -116,7 +117,15 @@ SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetti
 });
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", NumberRangeDropdownSetting);
 SettingRegistry.registerSetting(Setting.GRID_LAYER_RANGE, "Grid Ranges", GridLayerRangeSetting);
-SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting, {
+    elevatedSettingAdapter: makeDpfElevatedSettingAdapter<string | null, readonly string[], string | null, string[]>(
+        GRID_MODEL_ELEVATED_SETTING,
+        {
+            mapValueConstraintsToElevatedConstraints: (valueConstraints) => valueConstraints,
+            mapElevatedValueToExternalValue: (elevatedValue) => elevatedValue,
+        },
+    ),
+});
 const INTERSECTION_EXTENSION_LENGTH_CONFIG = { min: 0, max: 5000, defaultValue: 500 };
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
     customConstructorParameters: [{ extensionLengthConfig: INTERSECTION_EXTENSION_LENGTH_CONFIG }],

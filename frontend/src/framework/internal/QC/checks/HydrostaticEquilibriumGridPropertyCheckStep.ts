@@ -5,6 +5,7 @@ import {
     getHydrostaticEquilibriumGridPropertyCheckHybrid,
     getHydrostaticEquilibriumGridPropertyCheckHybridQueryKey,
 } from "@api";
+import { GRID_MODEL_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridModel";
 import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import { WELLBORE_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/wellbore";
@@ -198,33 +199,35 @@ function makeLinkedIntersectionViewsInitialViewState() {
 // successful realization result - reads it off the first one it finds.
 function summarizeResults(
     results: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>["results"],
-): { timeSteps: TimeStepPair_api | null; checkedPropertyNames: string[] } {
+): { timeSteps: TimeStepPair_api | null; checkedPropertyNames: string[]; gridName: string | null } {
     const checkedPropertyNames = new Set<string>();
     let timeSteps: TimeStepPair_api | null = null;
+    let gridName: string | null = null;
 
     for (const result of results.values()) {
         if (result.kind !== "success") {
             continue;
         }
         timeSteps ??= result.metrics.timeSteps;
+        gridName ??= result.metrics.gridName;
         for (const propertyName of result.metrics.checkedPropertyNames) {
             checkedPropertyNames.add(propertyName);
         }
     }
 
-    return { timeSteps, checkedPropertyNames: Array.from(checkedPropertyNames).sort() };
+    return { timeSteps, checkedPropertyNames: Array.from(checkedPropertyNames).sort(), gridName };
 }
 
-// Restricts the realization and grid-property pickers a template's grid provider(s) expose to just
-// what this run actually checked, rather than every realization/property in the ensemble. Shared by
-// both templates below, since both use realization-grid providers.
+// Restricts the realization, grid-model, and grid-property pickers a template's grid provider(s)
+// expose to just what this run actually checked, rather than every realization/grid/property in the
+// ensemble. Shared by both templates below, since both use realization-grid providers.
 //
 // The override is seeded via `addSetting`'s `constraintOverride` option (atomically, at
 // construction) rather than via a separate `setConstraintOverride` call afterward - `addSetting`
 // synchronously notifies any already-connected consumer (e.g. a grid provider's Attribute setting)
 // before returning, and that consumer would otherwise see a bare, not-yet-overridden instance and
 // contribute its own full value list into what's still a union.
-function applyRealizationAndGridPropertyElevatedSettings(
+function applyRealizationGridModelAndGridPropertyElevatedSettings(
     elevatedSettingsService: ElevatedSettingsService,
     { realizations, results }: QcCheckTemplateContext<HydrostaticEquilibriumGridPropertyCheckMetrics>,
 ): void {
@@ -234,7 +237,23 @@ function applyRealizationAndGridPropertyElevatedSettings(
         elevatedSettingsService.addSetting(REALIZATION_ELEVATED_SETTING, { constraintOverride: realizations });
     }
 
-    const { checkedPropertyNames } = summarizeResults(results);
+    const { checkedPropertyNames, gridName } = summarizeResults(results);
+    // Every result shares the same grid (one matrix coordinate, and thus one independent
+    // realization matrix, per selected grid - see `hydrostaticGridMatrixCoordinates`), so this run
+    // only ever has one grid to offer the picker.
+    const gridNameConstraint = gridName !== null ? [gridName] : [];
+
+    if (elevatedSettingsService.hasSetting(GRID_MODEL_ELEVATED_SETTING)) {
+        const gridModelSetting = elevatedSettingsService.getSetting(GRID_MODEL_ELEVATED_SETTING);
+        gridModelSetting.setConstraintOverride(gridNameConstraint);
+        gridModelSetting.setValue(gridName);
+    } else {
+        elevatedSettingsService.addSetting(GRID_MODEL_ELEVATED_SETTING, {
+            constraintOverride: gridNameConstraint,
+            value: gridName,
+        });
+    }
+
     // Constraining alone leaves the picker on its previous (or default `null`) value - point it at
     // one of this run's properties so the template's grid view(s) actually show something.
     const defaultPropertyName = checkedPropertyNames[0] ?? null;
@@ -278,7 +297,7 @@ function makeGridPropertyTemplates(
                 }),
             ],
             applyElevatedSettings: (elevatedSettingsService) =>
-                applyRealizationAndGridPropertyElevatedSettings(elevatedSettingsService, context),
+                applyRealizationGridModelAndGridPropertyElevatedSettings(elevatedSettingsService, context),
         },
         {
             name: "Grid property - t0 vs t1 (intersection)",
@@ -302,12 +321,12 @@ function makeGridPropertyTemplates(
                 }),
             ],
             applyElevatedSettings: (elevatedSettingsService) => {
-                applyRealizationAndGridPropertyElevatedSettings(elevatedSettingsService, context);
+                applyRealizationGridModelAndGridPropertyElevatedSettings(elevatedSettingsService, context);
 
                 // Both fences' `Setting.INTERSECTION` (wellbore/polyline picker) become elevated once
                 // this is active, so both views follow one shared wellbore selection. Unlike
-                // realization/grid-property, this step has no run-specific wellbore data to restrict
-                // the picker to - just make sure it's active.
+                // realization/grid-model/grid-property, this step has no run-specific wellbore data
+                // to restrict the picker to - just make sure it's active.
                 if (!elevatedSettingsService.hasSetting(WELLBORE_ELEVATED_SETTING)) {
                     elevatedSettingsService.addSetting(WELLBORE_ELEVATED_SETTING);
                 }

@@ -1,5 +1,6 @@
 import { Close } from "@mui/icons-material";
 
+import { GRID_MODEL_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridModel";
 import { GRID_PROPERTY_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/gridProperty";
 import { REALIZATION_ELEVATED_SETTING } from "@framework/ElevatedSettings/definitions/realization";
 import type { WellboreElevatedSettingOption } from "@framework/ElevatedSettings/definitions/wellbore";
@@ -25,6 +26,7 @@ import { StartPanel } from "./_panels/start";
 // Elevated settings have no display metadata of their own; map key -> label here.
 const ELEVATED_SETTING_LABELS: Record<string, string> = {
     [REALIZATION_ELEVATED_SETTING.key]: "Realization",
+    [GRID_MODEL_ELEVATED_SETTING.key]: "Grid model",
     [GRID_PROPERTY_ELEVATED_SETTING.key]: "Grid property",
     [WELLBORE_ELEVATED_SETTING.key]: "Wellbore",
 };
@@ -65,6 +67,14 @@ function ElevatedSettingsIndicator() {
                         return (
                             <ElevatedSettingChip key={key} onRemove={handleRemoveClick}>
                                 <RealizationElevatedSettingContent instance={instance} />
+                            </ElevatedSettingChip>
+                        );
+                    }
+
+                    if (key === GRID_MODEL_ELEVATED_SETTING.key) {
+                        return (
+                            <ElevatedSettingChip key={key} onRemove={handleRemoveClick}>
+                                <GridModelElevatedSettingContent instance={instance} />
                             </ElevatedSettingChip>
                         );
                     }
@@ -145,6 +155,38 @@ function RealizationElevatedSettingContent(props: RealizationElevatedSettingCont
                 onValueChange={handleValueChange}
                 placeholder="Not set"
                 layoutClassName="w-24"
+            />
+        </>
+    );
+}
+
+type GridModelElevatedSettingContentProps = {
+    instance: ElevatedSettingInstance<string | null, readonly string[]>;
+};
+
+function GridModelElevatedSettingContent(props: GridModelElevatedSettingContentProps) {
+    const value = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.VALUE);
+    const constraints = usePublishSubscribeTopicValue(props.instance, ElevatedSettingInstanceTopic.CONSTRAINTS);
+
+    const items: ComboboxItem<string | null>[] = constraints.map((gridName) => ({
+        value: gridName,
+        label: gridName,
+    }));
+
+    function handleValueChange(newValue: string | null) {
+        props.instance.setValue(newValue);
+    }
+
+    return (
+        <>
+            <span className="shrink-0">Grid model</span>
+            <Combobox
+                size="small"
+                items={items}
+                value={value}
+                onValueChange={handleValueChange}
+                placeholder="Not set"
+                layoutClassName="w-32"
             />
         </>
     );

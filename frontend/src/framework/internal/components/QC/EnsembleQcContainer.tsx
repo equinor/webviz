@@ -4,6 +4,7 @@ import {
     Block,
     Cancel,
     CheckCircle,
+    Error,
     ExpandLess,
     ExpandMore,
     FactCheck,
@@ -39,10 +40,10 @@ import type { Workbench } from "@framework/Workbench";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { LinearProgress } from "@lib/components/LinearProgress";
 import { Menu } from "@lib/components/Menu";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
+import { DiagonalLine } from "@lib/icons";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -354,9 +355,15 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 
         if (isRunning || hasResults) {
             return (
-                <div className="p-2xs gap-2xs flex flex-col">
-                    <CheckParamsList params={appliedParams} />
-                    <Separator orientation="horizontal" />
+                <div className="px-2xs py-sm gap-2xs flex flex-col">
+                    {appliedParams !== null &&
+                        typeof appliedParams === "object" &&
+                        Object.keys(appliedParams).length > 0 && (
+                            <>
+                                <CheckParamsList params={appliedParams} />
+                                <Separator orientation="horizontal" />
+                            </>
+                        )}
                     <div className="gap-2xs flex flex-col">
                         {stepRuntimes.map((stepRuntime, index) => (
                             <React.Fragment key={stepRuntime.getStepDefinition().name}>
@@ -393,7 +400,7 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
 
     return (
         <div className="flex flex-col">
-            <div className="gap-xs bg-neutral/50 border-b-neutral-subtle flex items-center border-b">
+            <div className="gap-xs bg-neutral/50 border-b-neutral-subtle hover:bg-neutral/80 flex items-center border-b">
                 <div
                     className="font-bolder p-2xs text-body-sm gap-xs flex grow cursor-pointer"
                     onClick={() => setExpanded((prev) => !prev)}
@@ -418,7 +425,7 @@ function CheckRuntimeContainer(props: CheckRuntimeContainerProps) {
             </div>
             {expanded && (
                 <>
-                    <div className="p-2xs">{makeResultsContent()}</div>
+                    <div>{makeResultsContent()}</div>
                 </>
             )}
         </div>
@@ -432,17 +439,38 @@ type MatrixEntriesAggregateStatus = {
     // something to show, so it isn't treated as skipped overall.
     skipped: boolean;
     outcomeTone: OutcomeTone | null;
+    // Flat tally across every matrix entry's results, by `QcCheckRealizationResult.kind` - powers
+    // the collapsed-state summary (see `StepResultCountsSummary`) as well as `outcomeTone` below.
+    successCount: number;
+    failureCount: number;
+    exceptionCount: number;
 };
 
 function computeMatrixEntriesStatus(entries: QcCheckStepMatrixEntry[]): MatrixEntriesAggregateStatus {
     const isRunning = entries.some((entry) => entry.runtime.isRunning());
     const hasRun = entries.some((entry) => entry.runtime.hasRun());
     const skipped = entries.length > 0 && entries.every((entry) => entry.runtime.isSkipped());
+
+    let successCount = 0;
+    let failureCount = 0;
+    let exceptionCount = 0;
+    for (const entry of entries) {
+        for (const result of entry.runtime.getResults().values()) {
+            if (result.kind === "success") {
+                successCount++;
+            } else if (result.kind === "failure") {
+                failureCount++;
+            } else {
+                exceptionCount++;
+            }
+        }
+    }
+
     const outcomeTone =
         hasRun && !isRunning && !skipped
             ? outcomeToneFromResults(entries.flatMap((entry) => Array.from(entry.runtime.getResults().values())))
             : null;
-    return { isRunning, hasRun, skipped, outcomeTone };
+    return { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount };
 }
 
 // Aggregates a step's current matrix entries into one status for the step's own header icon -
@@ -513,7 +541,8 @@ function StepBlock(props: StepBlockProps) {
     // Re-renders whenever this step's set of matrix-coordinate entries changes (rare - only on
     // add/remove, see `QcCheckStepRuntime.reset`).
     const entries = usePublishSubscribeTopicValue(stepRuntime, QcCheckStepGroupTopic.COORDINATES);
-    const { isRunning, hasRun, skipped, outcomeTone } = useMatrixEntriesStatus(entries);
+    const { isRunning, hasRun, skipped, outcomeTone, successCount, failureCount, exceptionCount } =
+        useMatrixEntriesStatus(entries);
     // A step becomes expandable as soon as it's running or has something to show (`hasRun` is set
     // the moment a step starts, before `isRunning` - see `QcCheckStepMatrixRuntime.run`) - not
     // gated on the whole check having finished, so an earlier step's progress can be watched live
@@ -541,12 +570,19 @@ function StepBlock(props: StepBlockProps) {
     return (
         <div className="gap-2xs flex flex-col">
             <div
-                className="gap-xs text-body-sm font-bolder flex cursor-pointer items-center"
+                className="gap-xs text-body-sm font-bolder hover:bg-neutral/30 p-2xs flex cursor-pointer items-center"
                 onClick={() => setExpanded((prev) => !prev)}
             >
                 {expanded ? <ExpandLess style={{ fontSize: 16 }} /> : <ExpandMore style={{ fontSize: 16 }} />}
                 {statusIcon()}
-                <span>{stepDefinition.name}</span>
+                <span className="grow">{stepDefinition.name}</span>
+                {hasRun && !skipped && (
+                    <StepResultCountsSummary
+                        successCount={successCount}
+                        failureCount={failureCount}
+                        exceptionCount={exceptionCount}
+                    />
+                )}
             </div>
             {showBody && (
                 <div className="gap-2xs pl-lg flex flex-col">
@@ -571,6 +607,43 @@ function StepBlock(props: StepBlockProps) {
                 </div>
             )}
         </div>
+    );
+}
+
+type StepResultCountsSummaryProps = {
+    successCount: number;
+    failureCount: number;
+    exceptionCount: number;
+};
+
+// A quick success/failure/error tally shown next to a step's name only while it's collapsed, so its
+// outcome breakdown is visible without expanding into the full realization matrix below.
+function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
+    const { successCount, failureCount, exceptionCount } = props;
+
+    return (
+        <span className="gap-sm text-body-xs flex items-center font-normal">
+            <Tooltip content={`${successCount} realization${successCount === 1 ? "" : "s"} succeeded`}>
+                <span className="text-success-subtle gap-2xs flex items-center">
+                    <CheckCircle style={{ fontSize: 14 }} />
+                    {successCount}
+                </span>
+            </Tooltip>
+            <Tooltip content={`${failureCount} realization${failureCount === 1 ? "" : "s"} failed`}>
+                <span className="text-danger-subtle gap-2xs flex items-center">
+                    <Cancel style={{ fontSize: 14 }} />
+                    {failureCount}
+                </span>
+            </Tooltip>
+            {exceptionCount > 0 && (
+                <Tooltip content={`${exceptionCount} realization${exceptionCount === 1 ? "" : "s"} errored`}>
+                    <span className="text-warning-subtle gap-2xs flex items-center">
+                        <Error style={{ fontSize: 14 }} />
+                        {exceptionCount}
+                    </span>
+                </Tooltip>
+            )}
+        </span>
     );
 }
 
@@ -747,19 +820,27 @@ type RealizationStatusTone = "idle" | "loading" | "success" | "failure" | "excep
 
 const REALIZATION_STATUS_TONE_TO_CLASSNAME: Record<RealizationStatusTone, string> = {
     idle: "border border-neutral-strong hover:outline-2",
-    loading: "animate-pulse border border-accent-strong hover:outline-2",
-    success: "bg-success-strong hover:outline hover:outline-success cursor-pointer hover:outline-2",
-    failure: "bg-danger-strong hover:outline-danger cursor-pointer hover:outline-2",
+    loading: "bg-neutral animate-pulse transition-opacity duration-4000 hover:outline",
+    success:
+        "bg-success-strong border-success-strong border hover:outline hover:outline-success cursor-pointer hover:outline",
+    failure: "bg-danger-strong border border-danger-strong hover:outline-danger cursor-pointer hover:outline",
     exception:
-        "text-danger-subtle border-neutral-strong border hover:outline hover:outline-danger hover:outline-2 cursor-pointer",
-    excluded: "bg-warning-strong border border-warning-strong cursor-not-allowed",
-    filteredAway: "border-neutral-subtle border text-neutral-subtle/40 cursor-not-allowed",
+        "text-danger-subtle border-danger-subtle border hover:outline hover:outline-danger hover:outline cursor-pointer opacity-50",
+    excluded: "border border-warning-subtle text-warning-subtle hover:border-warning-strong opacity-50 cursor-pointer",
+    filteredAway: "border-neutral-subtle border text-neutral-subtle cursor-not-allowed opacity-50",
+};
+
+const REALIZATION_STATUS_TO_SELECTED_CLASSNAME: Partial<Record<RealizationStatusTone, string>> = {
+    success: "outline outline-focus hover:outline-focus!",
+    failure: "outline outline-focus hover:outline-focus!",
+    exception: "outline outline-focus hover:outline-focus!",
+    excluded: "outline outline-focus hover:outline-focus!",
 };
 
 const REALIZATION_STATUS_TO_CONTENT: Partial<Record<RealizationStatusTone, React.ReactNode>> = {
-    loading: <LinearProgress />,
     exception: <PriorityHigh />,
     filteredAway: <FilterAlt />,
+    excluded: <DiagonalLine />,
 };
 
 type RealizationSquaresProps = {
@@ -927,8 +1008,8 @@ function RealizationSquares(props: RealizationSquaresProps) {
                                                 {
                                                     "outline-accent outline-3 outline-double":
                                                         realization === props.selectedRealization,
-                                                    "opacity-70":
-                                                        realization !== props.selectedRealization && !isLoading,
+                                                    [REALIZATION_STATUS_TO_SELECTED_CLASSNAME[tone] ?? ""]:
+                                                        realization === props.selectedRealization && !isLoading,
                                                 },
                                                 REALIZATION_STATUS_TONE_TO_CLASSNAME[tone],
                                             )}

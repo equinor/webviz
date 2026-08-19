@@ -160,7 +160,10 @@ export const HydrostaticEquilibriumVectorCheckStep: QcCheckStepDefinition<
 
             const gridInfo = gridModelsInfo.find((info) => info.grid_name === gridName);
             if (!gridInfo) {
-                reportExceptionForAllRealizations(context, `Grid '${gridName}' is no longer available for this ensemble.`);
+                reportExceptionForAllRealizations(
+                    context,
+                    `Grid '${gridName}' is no longer available for this ensemble.`,
+                );
                 return;
             }
             const resolvedTimeSteps = resolveHydrostaticTimeSteps(gridInfo);
