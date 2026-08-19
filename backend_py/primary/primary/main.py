@@ -196,7 +196,9 @@ app.add_middleware(
 )
 
 encrypted_session_store = EncryptedRedisSessionStore(
-    fernet_key=config.SESSION_STORE_FERNET_KEY, redis_url=config.REDIS_AUTH_STORE_URL, prefix="auth-sessions:"
+    fernet_key=config.SESSION_STORE_FERNET_KEY,
+    redis_url=config.REDIS_AUTH_STORE_URL,
+    prefix=config.AUTH_SESSION_STORE_PREFIX,
 )
 app.add_middleware(SessionMiddleware, store=encrypted_session_store)
 
