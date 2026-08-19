@@ -120,7 +120,7 @@ export class SettingsContextDelegate<
                 "settings",
                 this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.IS_LOADING)(
                     () => {
-                        this.handleSettingsLoadingStateChanged();
+                        this.handleSettingChanged();
                     },
                 ),
             );
@@ -584,7 +584,12 @@ export class SettingsContextDelegate<
     }
 
     private handleSettingChanged() {
-        if (!this.areAllSettingsLoaded() || !this.areAllDependenciesLoaded() || !this.isAllStoredDataLoaded()) {
+        if (
+            !this.areAllSettingsLoaded() ||
+            !this.areAllDependenciesLoaded() ||
+            !this.isAllStoredDataLoaded() ||
+            !this.areAllSettingsInitialized()
+        ) {
             this.setStatus(SettingsContextStatus.LOADING);
             return;
         }
@@ -600,15 +605,6 @@ export class SettingsContextDelegate<
 
         this.setStatus(SettingsContextStatus.VALID_SETTINGS);
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_AND_STORED_DATA_CHANGED);
-    }
-
-    private handleSettingsLoadingStateChanged() {
-        if (!this.areAllSettingsLoaded() || !this.areAllDependenciesLoaded() || !this.areAllSettingsInitialized()) {
-            this.setStatus(SettingsContextStatus.LOADING);
-            return;
-        }
-
-        this.handleSettingChanged();
     }
 
     private subscribeToDependencyStatusMessages(dependency: Dependency<any, any, any, any, any>): void {
