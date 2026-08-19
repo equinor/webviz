@@ -173,7 +173,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         );
     }
     if (!isWaterfallTargetResultName(resultName)) {
-        return makeErrorResult("The waterfall is only available for STOIIP or GIIP.");
+        return makeErrorResult("Neither STOIIP nor GIIP is available for the selected tables.");
     }
     if (!spec) {
         return makeErrorResult(
@@ -236,7 +236,10 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
             comparisonStatistics.means,
         );
         if (!decomposition) {
-            skippedGroupLabels.push(groupKey);
+            // The ungrouped sentinel is never user-facing: a failed single group ends in the empty check below.
+            if (groupKey !== SINGLE_GROUP_KEY) {
+                skippedGroupLabels.push(groupKey);
+            }
             continue;
         }
         groupDecompositions.push({

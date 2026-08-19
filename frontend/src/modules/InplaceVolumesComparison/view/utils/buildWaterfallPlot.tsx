@@ -69,13 +69,14 @@ function makeBarTexts(decomposition: VolumeChangeDecomposition): string[] {
     });
 }
 
-function makeWaterfallTrace(
-    group: WaterfallGroupDecomposition,
+/** Bar labels as displayed: the endpoints carry the source names, the rest their factor name. */
+function makeBarDisplayLabels(
+    decomposition: VolumeChangeDecomposition,
     referenceLabel: string,
     comparisonLabel: string,
-): Partial<PlotData> {
-    const { bars } = group.decomposition;
-    const labels = bars.map((bar, index) => {
+): string[] {
+    const { bars } = decomposition;
+    return bars.map((bar, index) => {
         if (index === 0) {
             return referenceLabel;
         }
@@ -84,6 +85,15 @@ function makeWaterfallTrace(
         }
         return bar.label;
     });
+}
+
+function makeWaterfallTrace(
+    group: WaterfallGroupDecomposition,
+    referenceLabel: string,
+    comparisonLabel: string,
+): Partial<PlotData> {
+    const { bars } = group.decomposition;
+    const labels = makeBarDisplayLabels(group.decomposition, referenceLabel, comparisonLabel);
 
     return {
         type: "waterfall",
@@ -94,7 +104,7 @@ function makeWaterfallTrace(
         text: makeBarTexts(group.decomposition),
         textposition: "outside",
         textfont: { size: 11 },
-        hovertext: makeBarHoverTexts(group),
+        hovertext: makeBarHoverTexts(group, labels),
         hoverinfo: "text",
         connector: { mode: "spanning" },
         increasing: { marker: { color: INCREASING_COLOR } },
@@ -108,7 +118,7 @@ function makeWaterfallTrace(
  * within-ensemble spread is typically far wider than the change being decomposed, so drawing it on
  * the same axis would dwarf the factor bars.
  */
-function makeBarHoverTexts(group: WaterfallGroupDecomposition): string[] {
+function makeBarHoverTexts(group: WaterfallGroupDecomposition, displayLabels: string[]): string[] {
     const { bars } = group.decomposition;
     const barTexts = makeBarTexts(group.decomposition);
 
@@ -122,12 +132,12 @@ function makeBarHoverTexts(group: WaterfallGroupDecomposition): string[] {
               : undefined;
 
         if (!band) {
-            return `${bar.label}: ${barTexts[index]}`;
+            return `${displayLabels[index]}: ${barTexts[index]}`;
         }
 
         const low = formatNumber(band.low, BAR_TEXT_FORMAT_OPTIONS);
         const high = formatNumber(band.high, BAR_TEXT_FORMAT_OPTIONS);
-        return `${bar.label}: ${barTexts[index]}<br>P90–P10: ${low} – ${high}`;
+        return `${displayLabels[index]}: ${barTexts[index]}<br>P90–P10: ${low} – ${high}`;
     });
 }
 
