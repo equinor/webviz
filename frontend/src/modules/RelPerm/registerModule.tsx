@@ -14,7 +14,7 @@ ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
     defaultTitle: "Relative Permeability",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     dataTagIds: [ModuleDataTagId.RELPERM],
     serializedStateSchema: SERIALIZED_STATE_SCHEMA,
     preview,
