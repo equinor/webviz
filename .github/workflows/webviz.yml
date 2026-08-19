@@ -114,7 +114,7 @@ jobs:
           # verify that each lock is as recent as possible and check that each lock file is 
           # correctly generated
           scripts/poetry-regenerate-lock-files.sh
-          git diff --exit-code ./frontend/src/api || exit 1
+          git diff --exit-code || exit 1
 
           # Check that lock files are consistent with pyproject.toml
           poetry check --lock
