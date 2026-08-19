@@ -602,6 +602,7 @@ function StepBlock(props: StepBlockProps) {
                         failureCount={failureCount}
                         exceptionCount={exceptionCount}
                         notRunCount={notRunCount}
+                        isRunning={isRunning}
                     />
                 )}
             </div>
@@ -636,12 +637,16 @@ type StepResultCountsSummaryProps = {
     failureCount: number;
     exceptionCount: number;
     notRunCount: number;
+    // The not-run count includes realizations this step just hasn't reached yet while still
+    // running (e.g. later entries in a matrixed step) - only meaningful, so only shown, once the
+    // step is done.
+    isRunning: boolean;
 };
 
 // A quick success/failure/error/not-run tally shown next to a step's name, so its outcome
 // breakdown is visible without expanding into the full realization matrix below.
 function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
-    const { successCount, failureCount, exceptionCount, notRunCount } = props;
+    const { successCount, failureCount, exceptionCount, notRunCount, isRunning } = props;
 
     return (
         <span className="gap-sm text-body-xs flex items-center font-normal">
@@ -665,7 +670,7 @@ function StepResultCountsSummary(props: StepResultCountsSummaryProps) {
                     </span>
                 </Tooltip>
             )}
-            {notRunCount > 0 && (
+            {!isRunning && notRunCount > 0 && (
                 <Tooltip
                     content={`${notRunCount} realization${notRunCount === 1 ? "" : "s"} not run - filtered away or excluded because they did not succeed in an earlier step`}
                 >
