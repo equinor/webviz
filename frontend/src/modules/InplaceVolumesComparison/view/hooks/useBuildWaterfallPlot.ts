@@ -42,14 +42,35 @@ export interface WaterfallResult {
     message: WaterfallMessage | null;
     /** Non-blocking note shown alongside a rendered plot. */
     warning: string | null;
+    /** The plotted decompositions, for rendering the same numbers as a table. */
+    groups: WaterfallGroupDecomposition[];
+    endpointLabels: { referenceLabel: string; comparisonLabel: string } | null;
 }
 
 function makeInfoResult(text: string): WaterfallResult {
-    return { plots: null, isFetching: false, message: { text, severity: "info" }, warning: null };
+    return {
+        plots: null,
+        isFetching: false,
+        message: { text, severity: "info" },
+        warning: null,
+        groups: [],
+        endpointLabels: null,
+    };
 }
 
 function makeErrorResult(text: string): WaterfallResult {
-    return { plots: null, isFetching: false, message: { text, severity: "error" }, warning: null };
+    return {
+        plots: null,
+        isFetching: false,
+        message: { text, severity: "error" },
+        warning: null,
+        groups: [],
+        endpointLabels: null,
+    };
+}
+
+function makePendingResult(isFetching: boolean): WaterfallResult {
+    return { plots: null, isFetching, message: null, warning: null, groups: [], endpointLabels: null };
 }
 
 const SINGLE_GROUP_KEY = "__single__";
@@ -181,11 +202,11 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         );
     }
     if (!isComputable) {
-        return { plots: null, isFetching: false, message: null, warning: null };
+        return makePendingResult(false);
     }
 
     if (statisticalDataQueries.isFetching) {
-        return { plots: null, isFetching: true, message: null, warning: null };
+        return makePendingResult(true);
     }
 
     const requiredFluid = getRequiredFluidForWaterfallTarget(spec.target);
@@ -285,5 +306,12 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         comparisonLabel,
     });
 
-    return { plots, isFetching: false, message: null, warning: makeSkippedGroupsWarning(skippedGroupLabels) };
+    return {
+        plots,
+        isFetching: false,
+        message: null,
+        warning: makeSkippedGroupsWarning(skippedGroupLabels),
+        groups: groupDecompositions,
+        endpointLabels: { referenceLabel, comparisonLabel },
+    };
 }

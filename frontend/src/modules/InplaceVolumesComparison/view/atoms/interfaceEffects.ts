@@ -11,6 +11,7 @@ import {
     referenceEnsembleIdentAtom,
     referenceTableNameAtom,
     resultNameAtom,
+    showTableAtom,
     subplotByAtom,
     waterfallFactorSpecAtom,
 } from "./baseAtoms";
@@ -45,5 +46,8 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(areSelectedTablesComparableAtom, getInterfaceValue("areSelectedTablesComparable"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(showTableAtom, getInterfaceValue("showTable"));
     },
 ];

@@ -1,5 +1,7 @@
 import React from "react";
 
+import { useAtomValue } from "jotai";
+
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -9,11 +11,14 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 
 import type { Interfaces } from "../interfaces";
 
+import { showTableAtom } from "./atoms/baseAtoms";
+import { WaterfallTable } from "./components/WaterfallTable";
 import { useBuildWaterfallPlot } from "./hooks/useBuildWaterfallPlot";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
+    const showTable = useAtomValue(showTableAtom);
 
     const plotDivRef = React.useRef<HTMLDivElement>(null);
     const plotDivBoundingRect = useElementBoundingRect(plotDivRef);
@@ -30,8 +35,19 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <StatusWrapper className="h-full" isPending={waterfall.isFetching} errorMessage={errorMessage}>
-            <div ref={plotDivRef} className="h-full overflow-hidden">
-                {infoMessage ? <ContentInfo>{infoMessage}</ContentInfo> : waterfall.plots}
+            <div className="flex h-full min-h-0 flex-col">
+                <div ref={plotDivRef} className="min-h-0 flex-1 overflow-hidden">
+                    {infoMessage ? <ContentInfo>{infoMessage}</ContentInfo> : waterfall.plots}
+                </div>
+                {showTable && waterfall.endpointLabels && waterfall.groups.length > 0 && (
+                    <div className="px-sm py-xs max-h-1/3 min-h-0 flex-none overflow-auto">
+                        <WaterfallTable
+                            groups={waterfall.groups}
+                            referenceLabel={waterfall.endpointLabels.referenceLabel}
+                            comparisonLabel={waterfall.endpointLabels.comparisonLabel}
+                        />
+                    </div>
+                )}
             </div>
         </StatusWrapper>
     );

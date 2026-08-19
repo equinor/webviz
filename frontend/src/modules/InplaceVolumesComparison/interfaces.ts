@@ -2,6 +2,7 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
+import { showTableAtom } from "./settings/atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
@@ -29,6 +30,7 @@ export type SettingsToViewInterface = {
     waterfallFactorSpec: WaterfallFactorSpec | null;
     areSourcesDistinct: boolean;
     areSelectedTablesComparable: boolean;
+    showTable: boolean;
 };
 
 export type Interfaces = {
@@ -46,4 +48,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     waterfallFactorSpec: (get) => get(waterfallFactorSpecAtom),
     areSourcesDistinct: (get) => get(areSourcesDistinctAtom),
     areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
+    showTable: (get) => get(showTableAtom),
 };

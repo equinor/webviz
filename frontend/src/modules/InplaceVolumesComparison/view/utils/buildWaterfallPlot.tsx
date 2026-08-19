@@ -9,6 +9,7 @@ import type { NumberFormatOptions } from "@modules/_shared/utils/numberFormattin
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { VolumeChangeDecomposition, WaterfallMeasure } from "./computeVolumeChangeDecomposition";
+import { computeBarChangePercent, makeBarDisplayLabels } from "./waterfallBarPresentation";
 
 // plotly.js ships no types for the native "waterfall" trace, so describe the subset we set. Keeping
 // the literal typed means a typo in e.g. `measure` or `connector` is still caught.
@@ -57,33 +58,14 @@ export interface WaterfallPlotOptions {
 function makeBarTexts(decomposition: VolumeChangeDecomposition): string[] {
     const { bars } = decomposition;
     return bars.map((bar, index) => {
-        if (bar.measure === "absolute") {
+        const percent = computeBarChangePercent(bars, index);
+        if (percent === null) {
             return formatNumber(bar.value, BAR_TEXT_FORMAT_OPTIONS);
         }
 
-        const previousCumulative = bars[index - 1]?.cumulative ?? 0;
-        const percent = previousCumulative !== 0 ? (100 * bar.value) / previousCumulative : 0;
         const valueSign = bar.value > 0 ? "+" : "";
         const percentSign = percent > 0 ? "+" : "";
         return `${valueSign}${formatNumber(bar.value, BAR_TEXT_FORMAT_OPTIONS)}  ${percentSign}${percent.toFixed(1)}%`;
-    });
-}
-
-/** Bar labels as displayed: the endpoints carry the source names, the rest their factor name. */
-function makeBarDisplayLabels(
-    decomposition: VolumeChangeDecomposition,
-    referenceLabel: string,
-    comparisonLabel: string,
-): string[] {
-    const { bars } = decomposition;
-    return bars.map((bar, index) => {
-        if (index === 0) {
-            return referenceLabel;
-        }
-        if (index === bars.length - 1) {
-            return comparisonLabel;
-        }
-        return bar.label;
     });
 }
 

@@ -12,12 +12,14 @@ import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { Select } from "@lib/components/Select";
 import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
 import { FLUID_INDEX_COLUMN } from "../view/utils/computeVolumeChangeDecomposition";
 
+import { showTableAtom } from "./atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
@@ -56,6 +58,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedResultName, setSelectedResultName] = useAtom(selectedResultNameAtom);
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
+    const [showTable, setShowTable] = useAtom(showTableAtom);
 
     const availableReferenceTableNames = useAtomValue(availableReferenceTableNamesAtom);
     const availableComparisonTableNames = useAtomValue(availableComparisonTableNamesAtom);
@@ -238,6 +241,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             table. The volume columns it is built from (BULK, PORV, HCPV) must all be available.
                         </Banner>
                     )}
+
+                    <Setting.Field stacked>
+                        <SwitchCompositions.WithLabel
+                            label="Show contributions table below plot"
+                            checked={showTable}
+                            onCheckedChange={setShowTable}
+                            size="small"
+                        />
+                    </Setting.Field>
                 </Setting.Section>
 
                 <Setting.Section title="Filters" defaultOpen>

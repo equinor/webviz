@@ -5,7 +5,7 @@ import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinit
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 
-import { selectedIndexValueCriteriaAtom } from "./atoms/baseAtoms";
+import { selectedIndexValueCriteriaAtom, showTableAtom } from "./atoms/baseAtoms";
 import {
     selectedComparisonEnsembleIdentAtom,
     selectedComparisonTableNameAtom,
@@ -25,6 +25,7 @@ export type SerializedSettings = {
     subplotBy: string | null;
     indicesWithValues: InplaceVolumesIndexWithValuesAsStrings[];
     indexValueCriteria: IndexValueCriteria;
+    showTable: boolean;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
@@ -37,6 +38,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(({ inject }) => ({
         subplotBy: { type: "string", nullable: true },
         indicesWithValues: { ...inject("InplaceVolumesIndexWithValues") },
         indexValueCriteria: { enum: Object.values(IndexValueCriteria) },
+        showTable: { type: "boolean" },
     },
 }));
 
@@ -55,6 +57,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
             values: index.values.map((value) => value.toString()),
         })),
         indexValueCriteria: get(selectedIndexValueCriteriaAtom),
+        showTable: get(showTableAtom),
     };
 };
 
@@ -81,4 +84,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedSubplotByAtom, raw.subplotBy);
     setIfDefined(set, selectedIndicesWithValuesAtom, raw.indicesWithValues);
     setIfDefined(set, selectedIndexValueCriteriaAtom, raw.indexValueCriteria);
+    setIfDefined(set, showTableAtom, raw.showTable);
 };

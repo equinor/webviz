@@ -15,3 +15,4 @@ export const indicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_api[]>([
 export const waterfallFactorSpecAtom = atom<WaterfallFactorSpec | null>(null);
 export const areSourcesDistinctAtom = atom<boolean>(false);
 export const areSelectedTablesComparableAtom = atom<boolean>(true);
+export const showTableAtom = atom<boolean>(false);
