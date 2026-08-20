@@ -2,6 +2,7 @@ import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { play_circle } from "@equinor/eds-icons";
+import { KeyboardArrowLeft } from "@mui/icons-material";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
@@ -70,7 +71,7 @@ function TutorialCollection(props: TutorialCollectionProps): React.ReactNode {
             {groupByCategory(TUTORIAL_VIDEOS).map(([category, videos]) => (
                 <div key={category} className="gap-y-2xs flex flex-col">
                     <Heading as="h6">{category}</Heading>
-                    <div className="gap-xs grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="gap-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                         {videos.map((video) => (
                             <TutorialCard key={video.slug} video={video} onClick={() => props.onSelect(video)} />
                         ))}
@@ -110,11 +111,11 @@ type TutorialCardProps = {
 function TutorialCard(props: TutorialCardProps): React.ReactNode {
     return (
         <div
-            className="group selectable gap-y-2xs p-2xs box-border flex cursor-pointer flex-col select-none transition-transform duration-200 hover:scale-[1.01]"
+            className="border-neutral-subtle bg-surface shadow-elevation-raised group selectable gap-y-2xs box-border flex cursor-pointer flex-col select-none rounded-md border p-2xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevation-overlay focus-within:outline-2"
             onClick={props.onClick}
         >
             <div
-                className="bg-neutral-subtle relative aspect-video w-full overflow-hidden"
+                className="bg-neutral-subtle relative aspect-video w-full overflow-hidden rounded-sm"
                 style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}
             >
                 {/* loading="lazy" + no <video> here: only the poster image is fetched until a card is clicked. */}
@@ -199,16 +200,25 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
             <aside className="gap-y-sm flex min-h-0 shrink-0 flex-col overflow-hidden lg:w-72">
                 <button
                     type="button"
-                    className="text-accent-strong self-start text-body-sm hover:underline"
+                    className="text-accent-strong gap-x-2xs inline-flex cursor-pointer items-center self-start rounded-sm px-2xs py-2xs text-body-sm transition-colors hover:bg-accent-canvas focus-visible:outline-2 focus-visible:outline-offset-1"
                     onClick={props.onBack}
                 >
-                    &lt; Back to tutorials
+                    <KeyboardArrowLeft fontSize="small" aria-hidden="true" />
+                    <span>Back to tutorials</span>
                 </button>
-                <Heading as="h6">{props.video.title}</Heading>
-                <div className="text-neutral-subtle text-body-sm">{props.video.description}</div>
+                <div className="gap-y-2xs flex flex-col">
+                    <Heading as="h5" layoutClassName="text-xl leading-tight font-bolder">
+                        {props.video.title}
+                    </Heading>
+                    <div className="border-neutral-subtle text-neutral-subtle border-b pb-sm text-body-sm leading-relaxed">
+                        {props.video.description}
+                    </div>
+                </div>
                 {steps.length > 0 && (
-                    <nav aria-label="Video steps" className="gap-y-2xs flex min-h-0 flex-1 flex-col">
-                        <Heading as="h6">Steps</Heading>
+                    <nav aria-label="Video steps" className="gap-y-2xs flex min-h-0 flex-1 flex-col pt-sm">
+                        <Heading as="h6" layoutClassName="text-body-xs text-neutral-subtle uppercase tracking-wide">
+                            Steps
+                        </Heading>
                         <div className="relative min-h-0 flex-1 overflow-y-auto pl-sm">
                             {steps.map((step, index) => {
                                 const isCurrentStep = currentStepIndex === index;
