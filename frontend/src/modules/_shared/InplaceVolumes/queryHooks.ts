@@ -212,11 +212,8 @@ export function useGetAggregatedPerRealizationTableDataQueries(
  * then computed client-side, matched per (realization, selector) tuple, and returned in the same
  * shape as regular per-realization table data.
  *
- * TODO (per-realization delta validity): the difference is matched on realization number (inner
- * join), which is only meaningful when the two ensembles are realization-aligned (same Monte Carlo
- * sample per realization number, e.g. iterations of the same history-matched ensemble). For
- * independently-sampled ensembles this is not statistically valid; consider warning when realization
- * sets differ, or offering a distribution-level delta mode. See DELTA_ENSEMBLE_PLAN.md §9.
+ * Assumes the delta ensemble's constituents are realization-aligned, i.e. realization N is the same
+ * sample in both. That is validated where the delta ensemble is defined, not here.
  */
 export function useGetAggregatedPerRealizationDeltaTableDataQueries(
     deltaEnsembleIdentsWithRealizations: DeltaEnsembleIdentWithRealizations[],

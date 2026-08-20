@@ -13,14 +13,6 @@ import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
 const FACIES_FRACTION_RESULT_NAME = "FACIES_FRACTION";
 const FACIES_INDEX_COLUMN = "FACIES";
 
-function haveEqualRealizationSets(a: readonly number[], b: readonly number[]): boolean {
-    if (a.length !== b.length) {
-        return false;
-    }
-    const bSet = new Set(b);
-    return a.every((realization) => bSet.has(realization));
-}
-
 export function useMakeViewStatusWriterMessages(
     statusWriter: ViewStatusWriter,
     ensembleSet: EnsembleSet,
@@ -40,20 +32,25 @@ export function useMakeViewStatusWriterMessages(
         }
     }
 
-    // Warn when a delta ensemble's constituents are not realization-aligned. The per-realization
-    // difference is matched on realization number and is only meaningful when realization N is the
-    // same Monte Carlo sample in both ensembles (see DELTA_ENSEMBLE_PLAN.md §9).
+    // The per-realization difference drops realizations missing from either constituent, which
+    // reduces the sample size behind every statistic shown.
     const deltaEnsembleIdents = filterEnsembleIdentsByType(filter?.ensembleIdents ?? [], DeltaEnsembleIdent);
     for (const deltaEnsembleIdent of deltaEnsembleIdents) {
+        const deltaEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent);
         const comparisonEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent.getComparisonEnsembleIdent());
         const referenceEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent.getReferenceEnsembleIdent());
-        if (!comparisonEnsemble || !referenceEnsemble) {
+        if (!deltaEnsemble || !comparisonEnsemble || !referenceEnsemble) {
             continue;
         }
-        if (!haveEqualRealizationSets(comparisonEnsemble.getRealizations(), referenceEnsemble.getRealizations())) {
+
+        const sharedRealizationCount = deltaEnsemble.getRealizations().length;
+        const largestConstituentRealizationCount = Math.max(
+            comparisonEnsemble.getRealizations().length,
+            referenceEnsemble.getRealizations().length,
+        );
+        if (sharedRealizationCount < largestConstituentRealizationCount) {
             statusWriter.addWarning(
-                `Delta ensemble "${deltaEnsembleIdent.getEnsembleName()}": the comparison and reference ensembles have different realizations. ` +
-                    "The per-realization difference uses only the shared realizations and assumes realization numbers correspond to the same sample.",
+                `Delta ensemble "${deltaEnsembleIdent.getEnsembleName()}": using the ${sharedRealizationCount} realizations shared by the comparison and reference ensembles.`,
             );
         }
     }

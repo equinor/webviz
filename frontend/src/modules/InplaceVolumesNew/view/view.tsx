@@ -45,6 +45,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const [tableSortState, setTableSortState] = React.useState<TableSortState[]>([]);
 
+    statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter, ensembleSet, resultName, subplotBy, colorBy);
 
     const plotAndTableData = useBuildPlotAndTable(
@@ -57,8 +58,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         hoveredZone?.zoneName ?? null,
         hoveredFacies?.faciesName ?? null,
     );
-
-    statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
 
     const table = plotAndTableData?.table;
     const plots = plotAndTableData?.plots;
