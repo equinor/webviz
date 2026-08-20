@@ -10,6 +10,7 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
 import { WorkbenchSessionTopic, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
+import { makeUniqueName } from "@lib/utils/uniqueName";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import {
@@ -338,6 +339,50 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return found ?? null;
     }
 
+    setActiveDashboard(dashboardId: string): void {
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (dashboardId && !dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        if (this._activeDashboardId === (dashboard ? dashboard.getId() : null)) {
+            return;
+        }
+        this._activeDashboardId = dashboard ? dashboard.getId() : null;
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    addDashboard(): void {
+        this.assertIsNotSnapshot();
+        const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), "Dashboard");
+        const newDashboard = new Dashboard(this._atomStoreMaster, name);
+        this.registerDashboard(newDashboard);
+        this.setActiveDashboard(newDashboard.getId());
+    }
+
+    removeDashboard(dashboardId: string): void {
+        this.assertIsNotSnapshot();
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (!dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        // Capture the index before removal, since the dashboard is no longer findable in the array afterwards
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        this.unregisterDashboard(dashboard);
+
+        // If the removed dashboard was the active one, set the active dashboard to the previous one in the list, or null if there are no dashboards left
+        if (this._activeDashboardId === dashboardId) {
+            if (index > 0) {
+                this._activeDashboardId = this._dashboards[index - 1].getId();
+            } else if (this._dashboards.length > 0) {
+                this._activeDashboardId = this._dashboards[0].getId();
+            } else {
+                this._activeDashboardId = null;
+            }
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+    }
+
     getDashboards(): Dashboard[] {
         return this._dashboards;
     }
@@ -384,6 +429,40 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        this.handleStateChange();
+    }
+
+    /**
+     * Replaces a single dashboard in place, preserving its position and the rest of the session's
+     * dashboards. Used when applying a template so that only the targeted dashboard is affected.
+     */
+    replaceDashboard(dashboardId: string, newDashboard: Dashboard): void {
+        this.assertIsNotSnapshot();
+        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        if (index === -1) {
+            throw new Error("Dashboard not registered in this session");
+        }
+        const oldDashboard = this._dashboards[index];
+        const wasActive = this._activeDashboardId === dashboardId;
+
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
+        oldDashboard.beforeUnload();
+
+        this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+            `dashboard-${newDashboard.getId()}`,
+            newDashboard.getPublishSubscribeDelegate().makeSubscriberFunction(DashboardTopic.SERIALIZED_STATE)(
+                this.handleStateChange.bind(this),
+            ),
+        );
+
+        this._dashboards = [...this._dashboards.slice(0, index), newDashboard, ...this._dashboards.slice(index + 1)];
+
+        if (wasActive) {
+            this._activeDashboardId = newDashboard.getId();
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+        }
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this.handleStateChange();
     }
 
