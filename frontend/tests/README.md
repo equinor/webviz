@@ -77,7 +77,8 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
 5. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
    selectors/actions into it, wrapping interactions in `smoothClick`/`smoothFill` and adding
    `narrate(...)` lines.
-6. Verify with
+6. Add named chapter markers at the meaningful points in a walkthrough with `markChapter("Chapter title")`.
+7. Verify with
    ```bash
       npm run test:e2e:record --prefix ./frontend
    ```

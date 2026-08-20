@@ -9,7 +9,7 @@
 //   node tests/e2e/support/add-narration.mjs [testResultsDir]
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,7 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RESULTS_DIR = resolve(scriptDir, "../../../test-results");
 const MANIFEST_NAME = "narration.json";
 const NARRATED_SUFFIX = ".narrated.webm";
+const CHAPTERS_SUFFIX = ".chapters.json";
 
 function ffmpegAvailable() {
     const result = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -97,11 +98,30 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
     return args;
 }
 
+function writeChapters(videoPath, chapters, trimStartMs) {
+    const chaptersPath = videoPath.replace(/\.webm$/, CHAPTERS_SUFFIX);
+    if (!chapters || chapters.length === 0) {
+        rmSync(chaptersPath, { force: true });
+        return;
+    }
+    const normalized = chapters.map((chapter) => ({
+        title: chapter.title,
+        startSeconds: Math.max(0, chapter.startMs - trimStartMs) / 1000,
+    }));
+    writeFileSync(chaptersPath, JSON.stringify({ chapters: normalized }, null, 2));
+}
+
 /** Mux one folder's clips into its video. Returns true on success, false on any failure. */
 function narrateFolder(dir) {
     const manifestPath = join(dir, MANIFEST_NAME);
-    const clips = JSON.parse(readFileSync(manifestPath, "utf-8")).clips ?? [];
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    const clips = manifest.clips ?? [];
+    const chapters = manifest.chapters ?? [];
     if (clips.length === 0) {
+        const videoPath = findSourceVideo(dir);
+        if (videoPath) {
+            writeChapters(videoPath, chapters, 0);
+        }
         return true;
     }
 
@@ -118,6 +138,8 @@ function narrateFolder(dir) {
         console.error(`  [narration] ffmpeg failed for ${videoPath}:\n${result.stderr ?? result.error}`);
         return false;
     }
+    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
+    writeChapters(videoPath, chapters, trimStartMs);
     console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s)).`);
     return true;
 }

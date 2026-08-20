@@ -36,7 +36,7 @@ export const meta = tutorialMeta({
 });
 
 test.describe("My module", () => {
-    test("does the thing", async ({ page, narrate }) => {
+    test("does the thing", async ({ page, narrate, markChapter }) => {
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
@@ -47,14 +47,17 @@ test.describe("My module", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
+        markChapter("Introduction");
         await narrate("Describe what this walkthrough will show.");
 const newSessionNarration = narrate("Let's start by creating a new session...")
+        markChapter("Create a session");
         await smoothClick(page, page.getByRole("button", { name: "New session" }));
         await newSessionNarration;
 
         const ensembleNarration = narrate(
             "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
         );
+        markChapter("Add the Drogon ensemble");
         await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
         await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
         await pace(page);
@@ -81,6 +84,7 @@ const newSessionNarration = narrate("Let's start by creating a new session...")
         await pace(page);
 
         const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
+        markChapter("Apply the ensemble");
         await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
 
         await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
@@ -93,6 +97,7 @@ const newSessionNarration = narrate("Let's start by creating a new session...")
         const dragNarration = narrate(
                     "Now we drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
                 );
+        markChapter("Add the 3D Viewer");
         await dragModuleOntoLayout(page, "3D Viewer");
         await dragNarration;
 
@@ -104,6 +109,7 @@ const newSessionNarration = narrate("Let's start by creating a new session...")
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model 3D' }));
 
         await captureThumbnail(page);
+        markChapter("View the grid model");
         await narrate("And there we see our 3D model grid");
     });
 });

@@ -115,7 +115,49 @@ type TutorialDetailsProps = {
     video: TutorialVideo | null;
 };
 
+type TutorialChapter = {
+    title: string;
+    startSeconds: number;
+};
+
 function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
+    const videoRef = React.useRef<HTMLVideoElement>(null);
+    const [chapters, setChapters] = React.useState<TutorialChapter[]>([]);
+
+    React.useEffect(() => {
+        if (!props.video) {
+            setChapters([]);
+            return;
+        }
+
+        const controller = new AbortController();
+        setChapters([]);
+        fetch(props.video.chaptersUrl, { signal: controller.signal })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((payload: unknown) => {
+                if (!payload || typeof payload !== "object" || !("chapters" in payload)) {
+                    return;
+                }
+                const candidateChapters = (payload as { chapters?: unknown }).chapters;
+                if (!Array.isArray(candidateChapters)) {
+                    return;
+                }
+                setChapters(
+                    candidateChapters.filter(
+                        (chapter): chapter is TutorialChapter =>
+                            typeof chapter === "object" &&
+                            chapter !== null &&
+                            typeof (chapter as TutorialChapter).title === "string" &&
+                            Number.isFinite((chapter as TutorialChapter).startSeconds) &&
+                            (chapter as TutorialChapter).startSeconds >= 0,
+                    ),
+                );
+            })
+            .catch(() => undefined);
+
+        return () => controller.abort();
+    }, [props.video]);
+
     if (!props.video) {
         return (
             <Paragraph
@@ -135,6 +177,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
             {/* key={slug} unmounts the previous player, so only the selected video is ever fetched. */}
             <video
                 key={props.video.slug}
+                ref={videoRef}
                 controls
                 autoPlay
                 preload="none"
@@ -142,7 +185,35 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                 src={props.video.videoUrl}
                 className="w-full bg-black"
             />
+            {chapters.length > 0 && (
+                <nav aria-label="Video chapters" className="gap-y-2xs flex flex-col">
+                    <Heading as="h6">Chapters</Heading>
+                    {chapters.map((chapter) => (
+                        <button
+                            key={`${chapter.title}-${chapter.startSeconds}`}
+                            type="button"
+                            className="text-accent-strong text-left text-body-sm hover:underline"
+                            onClick={() => {
+                                const player = videoRef.current;
+                                if (!player) {
+                                    return;
+                                }
+                                player.currentTime = chapter.startSeconds;
+                                void player.play();
+                            }}
+                        >
+                            {formatChapterTime(chapter.startSeconds)} {chapter.title}
+                        </button>
+                    ))}
+                </nav>
+            )}
             <div className="text-neutral-subtle text-body-sm">{props.video.description}</div>
         </div>
     );
+}
+
+function formatChapterTime(seconds: number): string {
+    const totalSeconds = Math.floor(seconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
 }
