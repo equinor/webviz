@@ -340,6 +340,14 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     setActiveDashboard(dashboardId: string): void {
+        if (this._activeDashboardId === dashboardId) {
+            return;
+        }
+
+        const previouslyActiveDashboard = this.getActiveDashboard();
+        if (previouslyActiveDashboard) {
+            previouslyActiveDashboard.unload();
+        }
         const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
         if (dashboardId && !dashboard) {
             throw new Error("Dashboard not registered in this session");
@@ -348,6 +356,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             return;
         }
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
+        dashboard?.load();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
         this.handleStateChange();
     }

@@ -158,6 +158,18 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         this.clearLayout();
 
+        // Stopping here since we don't want to initialize module instances for
+        // inactive dashboards. The module instances will be initialized when the dashboard is activated.
+        this._cachedState = serializedDashboard;
+    }
+
+    initializeModuleInstancesFromCachedState(): void {
+        if (!this._cachedState) {
+            return;
+        }
+
+        const serializedDashboard = this._cachedState;
+
         for (const serializedInstance of serializedDashboard.moduleInstances) {
             const { id, name } = serializedInstance.moduleInstanceState;
             this.makeAndRegisterModuleInstance(name, id);
@@ -290,7 +302,15 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
      * This is loading the dashboard's layout and initializing its module instances. This is called
      * when the dashboard becomes active.
      */
-    load(): void {}
+    load(): void {
+        this.initializeModuleInstancesFromCachedState();
+        this._cachedState = null;
+    }
+
+    unload(): void {
+        this._cachedState = this.serializeState();
+        this.clearLayout();
+    }
 
     beforeUnload(): void {
         this.clearLayout();
