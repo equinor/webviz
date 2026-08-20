@@ -5,8 +5,8 @@
 
 # Changelog
 
-## 20.08.2026
+## August 2026
 
-### Bug fixes
+### Fixed
 
 - **Ensemble selection**: The "Only my cases" filter is now applied as soon as the ensemble dialog opens. Previously, when the setting was remembered as enabled, the case list was not filtered until the switch was toggled off and on again.
