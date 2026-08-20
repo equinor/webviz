@@ -22,6 +22,7 @@ export type LayoutElement = {
 };
 
 export enum DashboardTopic {
+    METADATA = "Metadata",
     LAYOUT = "Layout",
     MODULE_INSTANCES = "ModuleInstances",
     ACTIVE_MODULE_INSTANCE_ID = "ActiveModuleInstanceId",
@@ -29,6 +30,7 @@ export enum DashboardTopic {
 }
 
 export type DashboardTopicPayloads = {
+    [DashboardTopic.METADATA]: DashboardMetadata;
     [DashboardTopic.LAYOUT]: LayoutElement[];
     [DashboardTopic.MODULE_INSTANCES]: ModuleInstance<any, any>[];
     [DashboardTopic.ACTIVE_MODULE_INSTANCE_ID]: string | null;
@@ -40,16 +42,17 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
     private _id: string;
-    private _name: string;
+    private _metadata: DashboardMetadata;
     private _description?: string;
     private _layout: LayoutElement[] = [];
     private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
 
-    constructor(atomStoreMaster: AtomStoreMaster) {
+    constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = v4();
-        this._name = "New Dashboard";
+        this._metadata = { name: name ?? "Dashboard" };
+
         this._atomStoreMaster = atomStoreMaster;
     }
 
@@ -71,6 +74,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (topic === DashboardTopic.SERIALIZED_STATE) {
                 return;
             }
+            if (topic === DashboardTopic.METADATA) {
+                return this._metadata;
+            }
 
             throw new Error(`No snapshot getter for topic ${topic}`);
         };
@@ -82,8 +88,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._id;
     }
 
-    getName(): string {
-        return this._name;
+    getMetadata(): DashboardMetadata {
+        return this._metadata;
     }
 
     getLayout(): LayoutElement[] {
@@ -125,8 +131,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         return {
             id: this._id,
-            name: this._name,
-            description: this._description,
+            name: this._metadata.name,
+            description: this._metadata.description,
             activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
         };
@@ -134,8 +140,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     deserializeState(serializedDashboard: SerializedDashboardState): void {
         this._id = serializedDashboard.id;
-        this._name = serializedDashboard.name;
-        this._description = serializedDashboard.description;
+        this._metadata = {
+            name: serializedDashboard.name,
+            description: serializedDashboard.description,
+        };
 
         this.clearLayout();
 
@@ -273,8 +281,11 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     ): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = serializedDashboard.id;
-        dashboard._name = serializedDashboard.name;
-        dashboard._description = serializedDashboard.description;
+        dashboard._metadata = {
+            name: serializedDashboard.name,
+            description: serializedDashboard.description,
+        };
+
         dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
 
         const layout: LayoutElement[] = [];
@@ -322,7 +333,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = v4();
-        dashboard._description = template.description;
+        dashboard._metadata = {
+            name: template.name,
+            description: template.description,
+        };
 
         const layout: LayoutElement[] = [];
         const moduleInstances: ModuleInstance<any, any>[] = [];

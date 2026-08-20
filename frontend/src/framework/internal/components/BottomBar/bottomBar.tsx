@@ -4,13 +4,13 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
-import { StartPanel } from "./_panels/start";
+import { DashboardPanel } from "./_panels/dashboardPanel";
 
-export type ActionBarProps = {
+export type BottomBarProps = {
     workbench: Workbench;
 };
 
-export function ActionBar(props: ActionBarProps) {
+export function BottomBar(props: BottomBarProps) {
     const session = useActiveSession();
     const isSnapshot = usePublishSubscribeTopicValue(session, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
@@ -19,8 +19,8 @@ export function ActionBar(props: ActionBarProps) {
     }
 
     return (
-        <div className="border-b-neutral-subtle bg-surface/30 px-xs shadow-elevation-raised flex border-b-2">
-            <StartPanel workbench={props.workbench} />
+        <div className="border-t-neutral-subtle bg-surface/30 shadow-elevation-raised flex border-t-2">
+            <DashboardPanel workbench={props.workbench} />
         </div>
     );
 }

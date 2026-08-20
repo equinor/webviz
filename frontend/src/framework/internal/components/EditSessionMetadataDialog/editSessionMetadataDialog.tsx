@@ -16,7 +16,7 @@ import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
 
-import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
+import { DashboardPreviewCarousel } from "../DashboardPreview/dashboardPreviewCarousel";
 
 export type EditSessionMetadataDialogProps = {
     workbench: Workbench;
@@ -126,8 +126,15 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         props.onClose?.();
     }
 
-    const layout = hasActiveSession
-        ? (props.workbench.getSessionManager().getActiveSession().getActiveDashboard()?.getLayout() ?? [])
+    const activeWorkbenchSession = hasActiveSession ? props.workbench.getSessionManager().getActiveSession() : null;
+    const isEditingActiveSession =
+        activeWorkbenchSession !== null && (activeWorkbenchSession.getId() === props.id || props.id === null);
+    const dashboards = isEditingActiveSession
+        ? activeWorkbenchSession.getDashboards().map((dashboard) => ({
+              id: dashboard.getId(),
+              name: dashboard.getMetadata().name,
+              layout: dashboard.getLayout(),
+          }))
         : [];
 
     return (
@@ -138,7 +145,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
                 </Dialog.Header>
                 <form id={formId} onSubmit={handleSave}>
                     <Dialog.Body layoutClassName="flex items-center gap-x-sm">
-                        <DashboardPreview height={220} width={150} layout={layout} />
+                        <DashboardPreviewCarousel height={220} width={150} dashboards={dashboards} />
                         <div className="gap-y-sm flex min-w-0 grow flex-col">
                             <FieldCompositions.Default
                                 label="Title"
