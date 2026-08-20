@@ -2,7 +2,9 @@ import { expect } from "@playwright/test";
 
 import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
+import { tutorialMeta } from "../support/tutorialMeta";
 import {
+    captureThumbnail,
     dragModuleOntoLayout,
     hideDevOverlays,
     installCaseRowRedaction,
@@ -12,6 +14,13 @@ import {
     smoothFill,
 } from "../support/walkthroughHelpers";
 
+export const meta = tutorialMeta({
+    slug: "simulation-time-series-chart",
+    category: "Charts",
+    title: "Plot a Simulation Time Series chart",
+    description: "Add the Simulation Time Series module and plot a vector from a Drogon ensemble.",
+});
+
 /**
  * Adds an instance of the "Simulation Time Series" module
  * to the dashboard and waits for a chart to render from real Sumo data.
@@ -19,6 +28,7 @@ import {
 test.describe("Simulation Time Series module", () => {
     test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate }) => {
         test.setTimeout(180_000);
+        test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         const SIMULATION_TIME_SERIES = "Simulation Time Series";
 
@@ -132,6 +142,7 @@ test.describe("Simulation Time Series module", () => {
         
         // Plotly mounts the SVG container before the data is drawn, wait also for an actual trace line to be rendered:
         await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
+        await captureThumbnail(page);
         await narrate(
             "And there's our chart. By default, it plots statistical curves over time, like min, P10, mean, P90 and max.",
         );

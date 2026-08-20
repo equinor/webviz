@@ -1,5 +1,5 @@
 import { Icon } from "@equinor/eds-core-react";
-import { category, dashboard, folder_open, github, external_link, add } from "@equinor/eds-icons";
+import { category, dashboard, folder_open, github, external_link, add, play_circle } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
@@ -10,7 +10,7 @@ import { Heading } from "@lib/components/Typography/compositions";
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
 
-Icon.add({ dashboard, category, folder_open, github, external_link, add });
+Icon.add({ dashboard, category, folder_open, github, external_link, add, play_circle });
 
 export type StartPageProps = {
     workbench: Workbench;
@@ -31,12 +31,21 @@ export function StartPage(props: StartPageProps) {
         GuiState.TemplatesDialogOpen,
     );
 
+    const setIsOpenTutorialsDialog = useSetGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.TutorialsDialogOpen,
+    );
+
     function handleNewSession() {
         props.workbench.getSessionManager().startNewSession();
     }
 
     function handleOpenTemplatesDialog() {
         setIsOpenTemplatesDialog(true);
+    }
+
+    function handleOpenTutorialsDialog() {
+        setIsOpenTutorialsDialog(true);
     }
 
     function openOverviewDialogOnSessions() {
@@ -80,6 +89,11 @@ export function StartPage(props: StartPageProps) {
                     <RecentSessions workbench={props.workbench} />
                     <section className="gap-y-sm flex flex-col">
                         <Heading as="h3">Resources</Heading>
+
+                        <Button variant="ghost" onClick={handleOpenTutorialsDialog}>
+                            <Icon name="play_circle" fontSize="inherit" />
+                            Watch tutorials
+                        </Button>
 
                         <Button.AsLink
                             href="https://github.com/equinor/webviz"

@@ -13,6 +13,7 @@
         "preview": "vite preview",
         "generate:api": "openapi-ts",
         "generate:module-states-map": "node scripts/generate-module-states-map.js && eslint src/modules/ModuleSerializedStateMap.ts --fix",
+        "generate:tutorials-manifest": "node scripts/generate-tutorials-manifest.js && eslint src/framework/internal/components/TutorialsDialog/tutorials.generated.ts --fix",
         "generate:color-utilities": "node scripts/generate-color-utilities.js",
         "generate:spacing-utilities": "node scripts/generate-spacing-utilities.js",
         "generate:theme": "node scripts/generate-color-utilities.js && node scripts/generate-spacing-utilities.js",
