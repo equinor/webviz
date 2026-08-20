@@ -1,5 +1,7 @@
+import path from "path";
+
 import type { Locator, Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 /**
  * Helpers for the recorded UI walkthrough tests.
@@ -11,6 +13,18 @@ import { expect } from "@playwright/test";
 
 /** True when the run is capturing video (set via RECORD=1, see tests/e2e/_playwright.config.ts). */
 export const RECORDING = !!process.env.RECORD;
+
+/**
+ * Save a still frame of the page as the tutorial's preview thumbnail (used as the poster image in
+ * the in-app Tutorials dialog). Call this at the moment that best represents the finished result.
+ * No-op unless RECORD=1.
+ */
+export async function captureThumbnail(page: Page): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await page.screenshot({ path: path.join(test.info().outputDir, "thumbnail.png") });
+}
 
 /** Pause lengths (ms) used only while recording, to give the viewer time to follow along. */
 const PACING_MS = {

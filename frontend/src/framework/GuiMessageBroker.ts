@@ -39,6 +39,7 @@ export enum GuiState {
     ActiveSessionRecoveryDialogOpen = "activeSessionRecoveryDialogOpen",
     MakeSnapshotDialogOpen = "makeSnapshotDialogOpen",
     TemplatesDialogOpen = "templatesDialogOpen",
+    TutorialsDialogOpen = "tutorialsDialogOpen",
     SessionSnapshotOverviewDialogOpen = "sessionSnapshotOverviewDialogOpen",
     SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
     EnsemblesLoadingErrorInfoMap = "ensemblesLoadingErrorInfoMap",
@@ -135,6 +136,7 @@ type GuiStateValueTypes = {
     [GuiState.IsMakingSnapshot]: boolean;
     [GuiState.SaveSessionDialogOpen]: boolean;
     [GuiState.TemplatesDialogOpen]: boolean;
+    [GuiState.TutorialsDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogOpen]: boolean;
     [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
     [GuiState.EnsemblesLoadingErrorInfoMap]: EnsembleLoadingErrorInfoMap;
@@ -166,6 +168,7 @@ defaultStates.set(GuiState.ActiveSessionRecoveryDialogOpen, false);
 defaultStates.set(GuiState.MakeSnapshotDialogOpen, false);
 defaultStates.set(GuiState.IsMakingSnapshot, false);
 defaultStates.set(GuiState.TemplatesDialogOpen, false);
+defaultStates.set(GuiState.TutorialsDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
 defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
