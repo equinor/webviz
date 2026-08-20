@@ -15,8 +15,11 @@
  */
 import { expect } from "@playwright/test";
 
+import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
+import { tutorialMeta } from "../support/tutorialMeta";
 import {
+    captureThumbnail,
     dragModuleOntoLayout,
     hideDevOverlays,
     installFakeCursor,
@@ -24,11 +27,18 @@ import {
     smoothClick,
     smoothFill,
 } from "../support/walkthroughHelpers";
-import { DROGON_AHM } from "../support/drogonTestData";
+
+export const meta = tutorialMeta({
+    slug: "grid3d-viewer-3d-grid-model",
+    category: "3D Visualization",
+    title: "Explore a grid model in 3D",
+    description: "Add the 3D Viewer module to a session and load a Drogon grid model.",
+});
 
 test.describe("My module", () => {
     test("does the thing", async ({ page, narrate }) => {
         test.setTimeout(180_000);
+        test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         // Render a visible cursor and hide dev-only overlays so the recorded video stays clean.
         await installFakeCursor(page);
@@ -96,6 +106,7 @@ const newSessionNarration = narrate("Let's start by creating a new session...")
         await expect(page.getByTestId('module-layout')).toContainText('Loading 0%Loading assets...');
         await expect(page.getByTestId('module-layout')).not.toContainText('Loading 0%Loading assets...');
 
+        await captureThumbnail(page);
         await narrate("And there we see our 3D model grid");
     });
 });

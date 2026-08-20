@@ -1,5 +1,5 @@
 import { Icon } from "@equinor/eds-core-react";
-import { category, dashboard, folder_open } from "@equinor/eds-icons";
+import { category, dashboard, folder_open, play_circle } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
@@ -13,7 +13,7 @@ import { FeedbackDialog } from "./private-components/feedbackModal";
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
 
-Icon.add({ dashboard, category, folder_open });
+Icon.add({ dashboard, category, folder_open, play_circle });
 
 export type StartPageProps = {
     workbench: Workbench;
@@ -34,12 +34,21 @@ export function StartPage(props: StartPageProps) {
         GuiState.TemplatesDialogOpen,
     );
 
+    const setIsOpenTutorialsDialog = useSetGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.TutorialsDialogOpen,
+    );
+
     function handleNewSession() {
         props.workbench.getSessionManager().startNewSession();
     }
 
     function handleOpenTemplatesDialog() {
         setIsOpenTemplatesDialog(true);
+    }
+
+    function handleOpenTutorialsDialog() {
+        setIsOpenTutorialsDialog(true);
     }
 
     function openOverviewDialogOnSessions() {
@@ -80,6 +89,8 @@ export function StartPage(props: StartPageProps) {
                                     Start from template...
                                 </Button>
                             </Tooltip>
+
+                            
                         </section>
 
                         {/*
@@ -101,6 +112,11 @@ export function StartPage(props: StartPageProps) {
                             <Heading as="h3">Resources</Heading>
 
                             <ChangelogDialog />
+
+                            <Button variant="ghost" onClick={handleOpenTutorialsDialog}>
+                                <Icon name="play_circle" fontSize="inherit" />
+                                Watch tutorials
+                            </Button>
 
                             <FeedbackDialog workbench={props.workbench} />
                         </section>
