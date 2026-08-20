@@ -53,6 +53,7 @@ export async function generateTutorialsManifest() {
             `        description: ${JSON.stringify(entry.description)},\n` +
             `        videoUrl: "${TUTORIAL_VIDEOS_BASE_URL}/${entry.slug}.webm",\n` +
             `        thumbnailUrl: "${TUTORIAL_VIDEOS_BASE_URL}/${entry.slug}.png",\n` +
+            `        chaptersUrl: "${TUTORIAL_VIDEOS_BASE_URL}/${entry.slug}.chapters.json",\n` +
             `    },`,
     );
 
@@ -66,6 +67,7 @@ export async function generateTutorialsManifest() {
         `    description: string;\n` +
         `    videoUrl: string;\n` +
         `    thumbnailUrl: string;\n` +
+        `    chaptersUrl: string;\n` +
         `};\n\n` +
         `export const TUTORIAL_VIDEOS: TutorialVideo[] = [\n${entryLines.join("\n")}\n];\n`;
 
