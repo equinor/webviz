@@ -26,7 +26,7 @@ export const meta = tutorialMeta({
  * to the dashboard and waits for a chart to render from real Sumo data.
  */
 test.describe("Simulation Time Series module", () => {
-    test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate, markChapter }) => {
+    test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate, markStep }) => {
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
@@ -44,20 +44,20 @@ test.describe("Simulation Time Series module", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
-        markChapter("Introduction");
+        markStep("Introduction");
         await narrate(
             "In this walkthrough we'll add the Simulation Time Series module to a new dashboard.",
         );
 
         const newSessionNarration = narrate("Let's start by creating a new session...")
-        markChapter("Create a session");
+        markStep("Create a session");
         await smoothClick(page, page.getByRole("button", { name: "New session" }));
         await newSessionNarration;
 
         const ensembleNarration = narrate(
             "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
         );
-        markChapter("Add the Drogon ensemble");
+        markStep("Add the Drogon ensemble");
         await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
         await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
         await pace(page);
@@ -84,7 +84,7 @@ test.describe("Simulation Time Series module", () => {
         await pace(page);
 
         const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
-        markChapter("Apply the ensemble");
+        markStep("Apply the ensemble");
         await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
 
         await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
@@ -104,7 +104,7 @@ test.describe("Simulation Time Series module", () => {
         const dragNarration = narrate(
             "Now we drag the Simulation Time Series module from the list onto the dashboard and wait for the relevant data and settings to load.",
         );
-        markChapter("Add the time series module");
+        markStep("Add the time series module");
         await dragModuleOntoLayout(page, SIMULATION_TIME_SERIES);
         await dragNarration;
 
@@ -130,7 +130,7 @@ test.describe("Simulation Time Series module", () => {
         const vectorNarration = narrate(
             "Finally, we choose a vector to plot \u2014 here, the field oil production rate, F O P R.",
         );
-        markChapter("Choose a vector");
+        markStep("Choose a vector");
         await smoothClick(page, vectorInput);
         await expect(async () => {
             if ((await foprTag.count()) === 0) {
@@ -149,7 +149,7 @@ test.describe("Simulation Time Series module", () => {
         // Plotly mounts the SVG container before the data is drawn, wait also for an actual trace line to be rendered:
         await expect(plot.locator(".scatterlayer .js-line").first()).toBeVisible({ timeout: 90_000 });
         await captureThumbnail(page);
-        markChapter("View the chart");
+        markStep("View the chart");
         await narrate(
             "And there's our chart. By default, it plots statistical curves over time, like min, P10, mean, P90 and max.",
         );
