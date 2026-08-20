@@ -134,43 +134,43 @@ type TutorialDetailsProps = {
     onBack: () => void;
 };
 
-type TutorialChapter = {
+type TutorialStep = {
     title: string;
     startSeconds: number;
 };
 
 function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
     const videoRef = React.useRef<HTMLVideoElement>(null);
-    const [chapters, setChapters] = React.useState<TutorialChapter[]>([]);
+    const [steps, setSteps] = React.useState<TutorialStep[]>([]);
     const [currentTime, setCurrentTime] = React.useState(0);
 
     React.useEffect(() => {
         if (!props.video) {
-            setChapters([]);
+            setSteps([]);
             return;
         }
 
         const controller = new AbortController();
-        setChapters([]);
+        setSteps([]);
         setCurrentTime(0);
-        fetch(props.video.chaptersUrl, { signal: controller.signal })
+        fetch(props.video.stepsUrl, { signal: controller.signal })
             .then((response) => (response.ok ? response.json() : null))
             .then((payload: unknown) => {
-                if (!payload || typeof payload !== "object" || !("chapters" in payload)) {
+                if (!payload || typeof payload !== "object" || !("steps" in payload)) {
                     return;
                 }
-                const candidateChapters = (payload as { chapters?: unknown }).chapters;
-                if (!Array.isArray(candidateChapters)) {
+                const candidateSteps = (payload as { steps?: unknown }).steps;
+                if (!Array.isArray(candidateSteps)) {
                     return;
                 }
-                setChapters(
-                    candidateChapters.filter(
-                        (chapter): chapter is TutorialChapter =>
-                            typeof chapter === "object" &&
-                            chapter !== null &&
-                            typeof (chapter as TutorialChapter).title === "string" &&
-                            Number.isFinite((chapter as TutorialChapter).startSeconds) &&
-                            (chapter as TutorialChapter).startSeconds >= 0,
+                setSteps(
+                    candidateSteps.filter(
+                        (step): step is TutorialStep =>
+                            typeof step === "object" &&
+                            step !== null &&
+                            typeof (step as TutorialStep).title === "string" &&
+                            Number.isFinite((step as TutorialStep).startSeconds) &&
+                            (step as TutorialStep).startSeconds >= 0,
                     ),
                 );
             })
@@ -192,11 +192,11 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
         );
     }
 
-    const currentChapterIndex = getCurrentChapterIndex(chapters, currentTime);
+    const currentStepIndex = getCurrentStepIndex(steps, currentTime);
 
     return (
         <div className="gap-x-sm p-xs flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
-            <aside className="gap-y-sm flex min-h-0 shrink-0 flex-col overflow-y-auto lg:w-64">
+            <aside className="gap-y-sm flex min-h-0 shrink-0 flex-col overflow-hidden lg:w-72">
                 <button
                     type="button"
                     className="text-accent-strong self-start text-body-sm hover:underline"
@@ -206,34 +206,43 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                 </button>
                 <Heading as="h6">{props.video.title}</Heading>
                 <div className="text-neutral-subtle text-body-sm">{props.video.description}</div>
-                {chapters.length > 0 && (
-                    <nav aria-label="Video chapters" className="gap-y-2xs flex min-h-0 flex-col">
-                        <Heading as="h6">Chapters</Heading>
-                        <div className="gap-y-2xs flex min-h-0 flex-col overflow-y-auto">
-                            {chapters.map((chapter, index) => {
-                                const isCurrentChapter = currentChapterIndex === index;
+                {steps.length > 0 && (
+                    <nav aria-label="Video steps" className="gap-y-2xs flex min-h-0 flex-1 flex-col">
+                        <Heading as="h6">Steps</Heading>
+                        <div className="relative min-h-0 flex-1 overflow-y-auto pl-sm">
+                            {steps.map((step, index) => {
+                                const isCurrentStep = currentStepIndex === index;
                                 return (
                                     <button
-                                        key={`${chapter.title}-${chapter.startSeconds}`}
+                                        key={`${step.title}-${step.startSeconds}`}
                                         type="button"
-                                        aria-current={isCurrentChapter ? "step" : undefined}
+                                        aria-current={isCurrentStep ? "step" : undefined}
                                         className={resolveClassNames(
-                                            "text-left text-body-sm hover:underline",
-                                            isCurrentChapter
-                                                ? "bg-accent-strong text-neutral-strong-on-emphasis"
-                                                : "text-accent-strong",
+                                            "relative mb-2xs flex w-full cursor-pointer items-start gap-x-2xs rounded-sm px-2xs py-2xs text-left text-body-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-1",
+                                            isCurrentStep
+                                                ? "bg-accent-canvas text-accent-strong font-bolder"
+                                                : "text-neutral-strong hover:bg-accent-canvas hover:text-accent-strong",
                                         )}
                                         onClick={() => {
                                             const player = videoRef.current;
                                             if (!player) {
                                                 return;
                                             }
-                                            player.currentTime = chapter.startSeconds;
-                                            setCurrentTime(chapter.startSeconds);
+                                            player.currentTime = step.startSeconds;
+                                            setCurrentTime(step.startSeconds);
                                             void player.play();
                                         }}
                                     >
-                                        {formatChapterTime(chapter.startSeconds)} {chapter.title}
+                                        <span
+                                            aria-hidden="true"
+                                            className={resolveClassNames(
+                                                "absolute top-1/2 -left-[calc(0.5rem+3px)] z-10 h-2 w-2 -translate-y-1/2 rounded-full border-2",
+                                                isCurrentStep
+                                                    ? "border-accent-strong bg-accent-strong"
+                                                    : "border-neutral-subtle bg-canvas",
+                                            )}
+                                        />
+                                        <span>{step.title}</span>
                                     </button>
                                 );
                             })}
@@ -241,7 +250,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                     </nav>
                 )}
             </aside>
-            <div className="flex min-h-0 min-w-0 grow items-center justify-center overflow-hidden bg-black">
+            <div className="flex min-h-0 min-w-0 grow items-center justify-center overflow-hidden">
                 {/* key={slug} unmounts the previous player, so only the selected video is ever fetched. */}
                 <video
                     key={props.video.slug}
@@ -252,7 +261,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                     poster={props.video.thumbnailUrl}
                     src={props.video.videoUrl}
                     onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-                    className="h-full max-h-full max-w-full object-contain"
+                    className="border-neutral-subtle shadow-elevation-overlay h-full max-h-full max-w-full rounded-md border-2 object-contain"
                     style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}
                 />
             </div>
@@ -260,18 +269,12 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
     );
 }
 
-function getCurrentChapterIndex(chapters: TutorialChapter[], currentTime: number): number {
+function getCurrentStepIndex(steps: TutorialStep[], currentTime: number): number {
     let currentIndex = -1;
-    chapters.forEach((chapter, index) => {
-        if (chapter.startSeconds <= currentTime) {
+    steps.forEach((step, index) => {
+        if (step.startSeconds <= currentTime) {
             currentIndex = index;
         }
     });
     return currentIndex;
-}
-
-function formatChapterTime(seconds: number): string {
-    const totalSeconds = Math.floor(seconds);
-    const minutes = Math.floor(totalSeconds / 60);
-    return `${minutes}:${String(totalSeconds % 60).padStart(2, "0")}`;
 }

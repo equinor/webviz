@@ -26,7 +26,7 @@ const PUBLISH_DIR = resolve(FRONTEND_ROOT, "tutorial-publish");
 const PARSE_TUTORIAL_META_PATH = resolve(FRONTEND_ROOT, "scripts/lib/parseTutorialMeta.js");
 const NARRATED_SUFFIX = ".narrated.webm";
 const THUMBNAIL_NAME = "thumbnail.png";
-const CHAPTERS_SUFFIX = ".chapters.json";
+const STEPS_SUFFIX = ".steps.json";
 
 /** Flatten a Playwright JSON report's suite tree into a list of {slug, videoPath} per test. */
 function collectSlugToVideoPath(report) {
@@ -104,9 +104,9 @@ async function main() {
 
         copyFileSync(videoFile, join(PUBLISH_DIR, `${slug}.webm`));
         copyFileSync(thumbnailFile, join(PUBLISH_DIR, `${slug}.png`));
-        const chaptersFile = videoPath.replace(/\.webm$/, CHAPTERS_SUFFIX);
-        if (existsSync(chaptersFile)) {
-            copyFileSync(chaptersFile, join(PUBLISH_DIR, `${slug}${CHAPTERS_SUFFIX}`));
+        const stepsFile = videoPath.replace(/\.webm$/, STEPS_SUFFIX);
+        if (existsSync(stepsFile)) {
+            copyFileSync(stepsFile, join(PUBLISH_DIR, `${slug}${STEPS_SUFFIX}`));
         }
         console.log(`[publish-tutorials] ✅ Published "${slug}" (${readdirSync(PUBLISH_DIR).length} file(s) so far).`);
     }

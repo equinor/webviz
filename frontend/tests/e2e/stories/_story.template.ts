@@ -30,7 +30,7 @@ export const meta = tutorialMeta({
 });
 
 test.describe("My module", () => {
-    test("does the thing", async ({ page, narrate, markChapter }) => {
+    test("does the thing", async ({ page, narrate, markStep }) => {
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
@@ -41,7 +41,7 @@ test.describe("My module", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
-        markChapter("Introduction");
+        markStep("Introduction");
         await narrate("Describe what this walkthrough will show.");
 
         // --- Replace below with your captured, adapted actions ---

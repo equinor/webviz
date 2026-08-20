@@ -17,7 +17,7 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RESULTS_DIR = resolve(scriptDir, "../../../test-results");
 const MANIFEST_NAME = "narration.json";
 const NARRATED_SUFFIX = ".narrated.webm";
-const CHAPTERS_SUFFIX = ".chapters.json";
+const STEPS_SUFFIX = ".steps.json";
 
 function ffmpegAvailable() {
     const result = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -98,17 +98,17 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
     return args;
 }
 
-function writeChapters(videoPath, chapters, trimStartMs) {
-    const chaptersPath = videoPath.replace(/\.webm$/, CHAPTERS_SUFFIX);
-    if (!chapters || chapters.length === 0) {
-        rmSync(chaptersPath, { force: true });
+function writeSteps(videoPath, steps, trimStartMs) {
+    const stepsPath = videoPath.replace(/\.webm$/, STEPS_SUFFIX);
+    if (!steps || steps.length === 0) {
+        rmSync(stepsPath, { force: true });
         return;
     }
-    const normalized = chapters.map((chapter) => ({
-        title: chapter.title,
-        startSeconds: Math.max(0, chapter.startMs - trimStartMs) / 1000,
+    const normalized = steps.map((step) => ({
+        title: step.title,
+        startSeconds: Math.max(0, step.startMs - trimStartMs) / 1000,
     }));
-    writeFileSync(chaptersPath, JSON.stringify({ chapters: normalized }, null, 2));
+    writeFileSync(stepsPath, JSON.stringify({ steps: normalized }, null, 2));
 }
 
 /** Mux one folder's clips into its video. Returns true on success, false on any failure. */
@@ -116,11 +116,11 @@ function narrateFolder(dir) {
     const manifestPath = join(dir, MANIFEST_NAME);
     const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
     const clips = manifest.clips ?? [];
-    const chapters = manifest.chapters ?? [];
+    const steps = manifest.steps ?? [];
     if (clips.length === 0) {
         const videoPath = findSourceVideo(dir);
         if (videoPath) {
-            writeChapters(videoPath, chapters, 0);
+            writeSteps(videoPath, steps, 0);
         }
         return true;
     }
@@ -139,7 +139,7 @@ function narrateFolder(dir) {
         return false;
     }
     const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
-    writeChapters(videoPath, chapters, trimStartMs);
+    writeSteps(videoPath, steps, trimStartMs);
     console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s)).`);
     return true;
 }
