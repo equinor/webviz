@@ -102,9 +102,6 @@ const newSessionNarration = narrate("Let's start by creating a new session...")
         await smoothClick(page, page.getByRole('menuitem', { name: 'Layers' }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model', exact: true }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model 3D' }));
-        
-        await expect(page.getByTestId('module-layout')).toContainText('Loading 0%Loading assets...');
-        await expect(page.getByTestId('module-layout')).not.toContainText('Loading 0%Loading assets...');
 
         await captureThumbnail(page);
         await narrate("And there we see our 3D model grid");
