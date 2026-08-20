@@ -29,6 +29,11 @@ export enum DashboardTopic {
     SERIALIZED_STATE = "SerializedState",
 }
 
+export type DashboardMetadata = {
+    name: string;
+    description?: string;
+};
+
 export type DashboardTopicPayloads = {
     [DashboardTopic.METADATA]: DashboardMetadata;
     [DashboardTopic.LAYOUT]: LayoutElement[];
@@ -43,11 +48,11 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     private _id: string;
     private _metadata: DashboardMetadata;
-    private _description?: string;
     private _layout: LayoutElement[] = [];
     private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
+    private _cachedState: SerializedDashboardState | null = null;
 
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = v4();
@@ -90,6 +95,12 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     getMetadata(): DashboardMetadata {
         return this._metadata;
+    }
+
+    updateMetadata(metadata: Partial<DashboardMetadata>): void {
+        this._metadata = { ...this._metadata, ...metadata };
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.METADATA);
+        this.handleStateChange();
     }
 
     getLayout(): LayoutElement[] {
@@ -275,61 +286,23 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._activeModuleInstanceId;
     }
 
-    static fromPersistedState(
-        serializedDashboard: SerializedDashboardState,
-        atomStoreMaster: AtomStoreMaster,
-    ): Dashboard {
-        const dashboard = new Dashboard(atomStoreMaster);
-        dashboard._id = serializedDashboard.id;
-        dashboard._metadata = {
-            name: serializedDashboard.name,
-            description: serializedDashboard.description,
-        };
-
-        dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
-
-        const layout: LayoutElement[] = [];
-
-        for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name } = serializedInstance.moduleInstanceState;
-            dashboard.makeAndRegisterModuleInstance(name, id);
-        }
-
-        // Doing this after all module instances have been registered
-        // ensures that the module instances are available for data channel initialization.
-        for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const {
-                moduleInstanceState: { id, name },
-                layoutState,
-            } = serializedInstance;
-            const moduleInstance = dashboard.getModuleInstance(id);
-            if (!moduleInstance) {
-                throw new Error(`Module instance with ID ${id} not found`);
-            }
-
-            moduleInstance.initiateDeserialization(serializedInstance.moduleInstanceState, dashboard);
-
-            layout.push({
-                moduleInstanceId: id,
-                moduleName: name,
-                relX: layoutState.relX,
-                relY: layoutState.relY,
-                relHeight: layoutState.relHeight,
-                relWidth: layoutState.relWidth,
-                minimized: layoutState.minimized,
-                maximized: layoutState.maximized,
-            });
-        }
-
-        dashboard.setLayout(layout);
-
-        return dashboard;
-    }
+    /**
+     * This is loading the dashboard's layout and initializing its module instances. This is called
+     * when the dashboard becomes active.
+     */
+    load(): void {}
 
     beforeUnload(): void {
         this.clearLayout();
     }
 
+    // Note: the dashboard created here starts with a fresh, empty RealizationFilterSet (not yet
+    // synced against any ensembles), so module instances created below transiently get an empty
+    // wrapped filter set pushed into their atom stores at creation time. This is corrected
+    // synchronously afterwards by PrivateWorkbenchSession.replaceDashboard()/setDashboards()
+    // (called from WorkbenchSessionManager.applyTemplate()), which re-syncs and re-pushes the
+    // now-correct filter set into every one of this dashboard's module instances before anything
+    // renders. Do not "fix" this method in a way that breaks that ordering.
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
         dashboard._id = v4();
