@@ -8,6 +8,7 @@ export type TutorialVideo = {
     description: string;
     videoUrl: string;
     thumbnailUrl: string;
+    chaptersUrl: string;
 };
 
 export const TUTORIAL_VIDEOS: TutorialVideo[] = [
@@ -18,6 +19,7 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         description: "Add the 3D Viewer module to a session and load a Drogon grid model.",
         videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.webm",
         thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.png",
+        chaptersUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.chapters.json",
     },
     {
         slug: "simulation-time-series-chart",
@@ -26,5 +28,6 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         description: "Add the Simulation Time Series module and plot a vector from a Drogon ensemble.",
         videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/simulation-time-series-chart.webm",
         thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/simulation-time-series-chart.png",
+        chaptersUrl: "https://webviz.blob.core.windows.net/tutorial-videos/simulation-time-series-chart.chapters.json",
     },
 ];
