@@ -5,10 +5,8 @@ import { useAtom, useAtomValue } from "jotai";
 import { InplaceVolumesStatistic_api } from "@api";
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
-import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
@@ -92,7 +90,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
-        setSelectedEnsembleIdents(filterEnsembleIdentsByType(newFilter.ensembleIdents, RegularEnsembleIdent));
+        setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
         setSelectedIndexValueCriteria(
@@ -195,6 +193,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     selectionAnnotations={selectedIndicesWithValuesAnnotations}
                     onChange={handleFilterChange}
+                    allowDeltaEnsembles
                 />
             </Setting.Panel>
         </Setting.ScrollArea>

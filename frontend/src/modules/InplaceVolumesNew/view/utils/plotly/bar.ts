@@ -2,9 +2,8 @@ import { sortBy } from "lodash-es";
 import type { Dash, PlotData } from "plotly.js";
 
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-
-import { computeStatistics } from "../statistics";
 
 export { BarSortBy };
 export const MAX_LABELS_FOR_BARS = 20;
