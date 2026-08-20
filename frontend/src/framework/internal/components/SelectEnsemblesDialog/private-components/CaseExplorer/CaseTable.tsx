@@ -64,8 +64,11 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         },
     ]);
 
-    const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState(props.showOnlyMyCases);
-    const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState(props.showOnlyOfficialCases);
+    // Initialized to null so the filter state also gets synced on the initial render
+    const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState<boolean | undefined | null>(null);
+    const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState<boolean | undefined | null>(null);
+    // The username resolves asynchronously, so the author filter must be re-synced when it arrives
+    const [prevUserName, setPrevUserName] = React.useState<string | null>(null);
 
     if (!isEqual(props.showOnlyOfficialCases, prevShowOnlyOfficialCases)) {
         setPrevShowOnlyOfficialCases(props.showOnlyOfficialCases);
@@ -76,8 +79,9 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         }));
     }
 
-    if (!isEqual(props.showOnlyMyCases, prevShowOnlyMyCases)) {
+    if (!isEqual(props.showOnlyMyCases, prevShowOnlyMyCases) || !isEqual(userName, prevUserName)) {
         setPrevShowOnlyMyCases(props.showOnlyMyCases);
+        setPrevUserName(userName);
 
         setTableFilterState((prev) => ({
             ...prev,
