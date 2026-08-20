@@ -180,7 +180,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                 ref={videoRef}
                 controls
                 autoPlay
-                preload="none"
+                preload="metadata"
                 poster={props.video.thumbnailUrl}
                 src={props.video.videoUrl}
                 className="w-full bg-black"
