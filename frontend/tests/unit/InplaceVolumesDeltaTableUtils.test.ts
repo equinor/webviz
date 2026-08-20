@@ -6,7 +6,10 @@ import type {
     RepeatedTableColumnData_api,
     TableColumnData_api,
 } from "@api";
-import { subtractPerRealizationTables } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
+import {
+    subtractPerRealizationTables,
+    subtractPerRealizationTablesMemoized,
+} from "@modules/_shared/InplaceVolumes/deltaTableUtils";
 
 function makeRealColumn(realizations: number[]): RepeatedTableColumnData_api {
     const uniqueValues = Array.from(new Set(realizations));
@@ -137,5 +140,40 @@ describe("subtractPerRealizationTables", () => {
 
         const oil = delta.tableDataPerFluidSelection[0];
         expect(oil.resultColumns.map((column) => column.columnName)).toEqual(["STOIIP"]);
+    });
+});
+
+describe("subtractPerRealizationTablesMemoized", () => {
+    const comparison = makePerFluidSelection([
+        makeFluidData("Oil", [makeRealColumn([0, 1])], [makeResultColumn("STOIIP", [100, 200])]),
+    ]);
+    const reference = makePerFluidSelection([
+        makeFluidData("Oil", [makeRealColumn([0, 1])], [makeResultColumn("STOIIP", [90, 210])]),
+    ]);
+
+    test("returns the same result reference for the same inputs", () => {
+        const first = subtractPerRealizationTablesMemoized(comparison, reference);
+        const second = subtractPerRealizationTablesMemoized(comparison, reference);
+        expect(second).toBe(first);
+    });
+
+    test("recomputes when either input identity changes", () => {
+        const first = subtractPerRealizationTablesMemoized(comparison, reference);
+
+        const otherReference = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0, 1])], [makeResultColumn("STOIIP", [90, 210])]),
+        ]);
+        const second = subtractPerRealizationTablesMemoized(comparison, otherReference);
+
+        expect(second).not.toBe(first);
+        expect(second.tableDataPerFluidSelection[0].resultColumns[0].columnValues).toEqual(
+            first.tableDataPerFluidSelection[0].resultColumns[0].columnValues,
+        );
+    });
+
+    test("agrees with the unmemoized function", () => {
+        expect(subtractPerRealizationTablesMemoized(comparison, reference)).toEqual(
+            subtractPerRealizationTables(comparison, reference),
+        );
     });
 });

@@ -156,3 +156,35 @@ export function subtractPerRealizationTables(
 
     return { tableDataPerFluidSelection };
 }
+
+const subtractionResultByInputs = new WeakMap<
+    InplaceVolumesTableDataPerFluidSelection_api,
+    WeakMap<InplaceVolumesTableDataPerFluidSelection_api, InplaceVolumesTableDataPerFluidSelection_api>
+>();
+
+/**
+ * `subtractPerRealizationTables` memoized on the identity of both inputs.
+ *
+ * React Query keeps `data` references stable while the underlying data is unchanged, so this skips
+ * the subtraction when a query result object is rebuilt for an unrelated reason such as a fetch
+ * state transition. Entries are dropped with their inputs, since the cache is weakly held.
+ */
+export function subtractPerRealizationTablesMemoized(
+    comparisonData: InplaceVolumesTableDataPerFluidSelection_api,
+    referenceData: InplaceVolumesTableDataPerFluidSelection_api,
+): InplaceVolumesTableDataPerFluidSelection_api {
+    let resultByReferenceData = subtractionResultByInputs.get(comparisonData);
+    if (!resultByReferenceData) {
+        resultByReferenceData = new WeakMap();
+        subtractionResultByInputs.set(comparisonData, resultByReferenceData);
+    }
+
+    const cachedResult = resultByReferenceData.get(referenceData);
+    if (cachedResult) {
+        return cachedResult;
+    }
+
+    const result = subtractPerRealizationTables(comparisonData, referenceData);
+    resultByReferenceData.set(referenceData, result);
+    return result;
+}

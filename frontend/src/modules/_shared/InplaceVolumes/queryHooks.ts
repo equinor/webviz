@@ -12,7 +12,7 @@ import {
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import { subtractPerRealizationTables } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
+import { subtractPerRealizationTablesMemoized } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
 import type {
     InplaceVolumesStatisticalTableData,
     InplaceVolumesTableData,
@@ -224,34 +224,48 @@ export function useGetAggregatedPerRealizationDeltaTableDataQueries(
     allowEnable: boolean,
 ) {
     type DeltaQuerySpec = {
-        deltaEnsembleIdent: DeltaEnsembleIdent;
         tableName: string;
-        role: "comparison" | "reference";
         caseUuid: string;
         ensembleName: string;
         realizations: readonly number[];
     };
 
+    /** Which two queries make up one delta, so `combine` does not depend on their ordering. */
+    type DeltaQueryPair = {
+        deltaEnsembleIdent: DeltaEnsembleIdent;
+        tableName: string;
+        comparisonQueryIndex: number;
+        referenceQueryIndex: number;
+    };
+
     const querySpecs: DeltaQuerySpec[] = [];
+    const queryPairs: DeltaQueryPair[] = [];
     for (const el of deltaEnsembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             const comparisonEnsembleIdent = el.ensembleIdent.getComparisonEnsembleIdent();
             const referenceEnsembleIdent = el.ensembleIdent.getReferenceEnsembleIdent();
+
+            const comparisonQueryIndex = querySpecs.length;
             querySpecs.push({
-                deltaEnsembleIdent: el.ensembleIdent,
                 tableName,
-                role: "comparison",
                 caseUuid: comparisonEnsembleIdent.getCaseUuid(),
                 ensembleName: comparisonEnsembleIdent.getEnsembleName(),
                 realizations: el.realizations,
             });
+
+            const referenceQueryIndex = querySpecs.length;
             querySpecs.push({
-                deltaEnsembleIdent: el.ensembleIdent,
                 tableName,
-                role: "reference",
                 caseUuid: referenceEnsembleIdent.getCaseUuid(),
                 ensembleName: referenceEnsembleIdent.getEnsembleName(),
                 realizations: el.realizations,
+            });
+
+            queryPairs.push({
+                deltaEnsembleIdent: el.ensembleIdent,
+                tableName,
+                comparisonQueryIndex,
+                referenceQueryIndex,
             });
         }
     }
@@ -296,11 +310,9 @@ export function useGetAggregatedPerRealizationDeltaTableDataQueries(
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];
 
-        // Query specs come in comparison/reference pairs (per delta ensemble + table name).
-        for (let pairIndex = 0; pairIndex < querySpecs.length; pairIndex += 2) {
-            const comparisonSpec = querySpecs[pairIndex];
-            const comparisonResult = results[pairIndex];
-            const referenceResult = results[pairIndex + 1];
+        for (const queryPair of queryPairs) {
+            const comparisonResult = results[queryPair.comparisonQueryIndex];
+            const referenceResult = results[queryPair.referenceQueryIndex];
 
             if (comparisonResult?.error) {
                 errors.push(comparisonResult.error);
@@ -311,9 +323,9 @@ export function useGetAggregatedPerRealizationDeltaTableDataQueries(
 
             if (comparisonResult?.data && referenceResult?.data) {
                 tablesData.push({
-                    ensembleIdent: comparisonSpec.deltaEnsembleIdent,
-                    tableName: comparisonSpec.tableName,
-                    data: subtractPerRealizationTables(comparisonResult.data, referenceResult.data),
+                    ensembleIdent: queryPair.deltaEnsembleIdent,
+                    tableName: queryPair.tableName,
+                    data: subtractPerRealizationTablesMemoized(comparisonResult.data, referenceResult.data),
                 });
             }
         }
