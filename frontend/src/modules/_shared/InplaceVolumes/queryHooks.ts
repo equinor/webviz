@@ -14,6 +14,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { subtractPerRealizationTablesMemoized } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
 import type {
+    DeltaDroppedFluidSelections,
     InplaceVolumesStatisticalTableData,
     InplaceVolumesTableData,
 } from "@modules/_shared/InplaceVolumes/types";
@@ -42,7 +43,11 @@ export type AggregatedStatisticalTableDataResults = {
     errors: Error[];
 };
 
-export function useGetAggregatedStatisticalTableDataQueries(
+export type AggregatedDeltaTableDataResults = AggregatedTableDataResults & {
+    droppedFluidSelections: DeltaDroppedFluidSelections[];
+};
+
+export function makeAggregatedStatisticalTableDataQueryOptions(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
@@ -123,7 +128,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     };
 }
 
-export function useGetAggregatedPerRealizationTableDataQueries(
+export function makeAggregatedPerRealizationTableDataQueryOptions(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
@@ -215,7 +220,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
  * Assumes the delta ensemble's constituents are realization-aligned, i.e. realization N is the same
  * sample in both. That is validated where the delta ensemble is defined, not here.
  */
-export function useGetAggregatedPerRealizationDeltaTableDataQueries(
+export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     deltaEnsembleIdentsWithRealizations: DeltaEnsembleIdentWithRealizations[],
     tableNames: string[],
     resultNames: string[],
@@ -306,9 +311,10 @@ export function useGetAggregatedPerRealizationDeltaTableDataQueries(
 
     function combine(
         results: UseQueryResult<InplaceVolumesTableDataPerFluidSelection_api, Error>[],
-    ): AggregatedTableDataResults {
+    ): AggregatedDeltaTableDataResults {
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];
+        const droppedFluidSelections: DeltaDroppedFluidSelections[] = [];
 
         for (const queryPair of queryPairs) {
             const comparisonResult = results[queryPair.comparisonQueryIndex];
@@ -322,11 +328,19 @@ export function useGetAggregatedPerRealizationDeltaTableDataQueries(
             }
 
             if (comparisonResult?.data && referenceResult?.data) {
+                const deltaResult = subtractPerRealizationTablesMemoized(comparisonResult.data, referenceResult.data);
                 tablesData.push({
                     ensembleIdent: queryPair.deltaEnsembleIdent,
                     tableName: queryPair.tableName,
-                    data: subtractPerRealizationTablesMemoized(comparisonResult.data, referenceResult.data),
+                    data: deltaResult.data,
                 });
+                if (deltaResult.droppedFluidSelections.length > 0) {
+                    droppedFluidSelections.push({
+                        ensembleIdent: queryPair.deltaEnsembleIdent,
+                        tableName: queryPair.tableName,
+                        fluidSelections: deltaResult.droppedFluidSelections,
+                    });
+                }
             }
         }
 
@@ -335,6 +349,7 @@ export function useGetAggregatedPerRealizationDeltaTableDataQueries(
             isFetching: results.some((result) => result.isFetching),
             allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
             errors: errors,
+            droppedFluidSelections,
         };
     }
 

@@ -20,6 +20,13 @@ export type InplaceVolumesStatisticalTableData = {
     data: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
+/** Fluid selections excluded from a delta ensemble's difference, per source table. */
+export type DeltaDroppedFluidSelections = {
+    ensembleIdent: DeltaEnsembleIdent;
+    tableName: string;
+    fluidSelections: string[];
+};
+
 export enum TableType {
     PER_REALIZATION = "PER_REALIZATION",
     STATISTICAL = "STATISTICAL",

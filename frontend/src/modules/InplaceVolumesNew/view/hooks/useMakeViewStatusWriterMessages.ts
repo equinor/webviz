@@ -1,10 +1,12 @@
 import { useAtomValue } from "jotai";
 
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
+    makeDeltaRealizationCountWarnings,
+    makeDroppedFluidSelectionWarnings,
+} from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 
 import { filterAtom } from "../atoms/baseAtoms";
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
@@ -32,27 +34,12 @@ export function useMakeViewStatusWriterMessages(
         }
     }
 
-    // The per-realization difference drops realizations missing from either constituent, which
-    // reduces the sample size behind every statistic shown.
-    const deltaEnsembleIdents = filterEnsembleIdentsByType(filter?.ensembleIdents ?? [], DeltaEnsembleIdent);
-    for (const deltaEnsembleIdent of deltaEnsembleIdents) {
-        const deltaEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent);
-        const comparisonEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent.getComparisonEnsembleIdent());
-        const referenceEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent.getReferenceEnsembleIdent());
-        if (!deltaEnsemble || !comparisonEnsemble || !referenceEnsemble) {
-            continue;
-        }
+    for (const warning of makeDeltaRealizationCountWarnings(filter?.ensembleIdents ?? [], ensembleSet)) {
+        statusWriter.addWarning(warning);
+    }
 
-        const sharedRealizationCount = deltaEnsemble.getRealizations().length;
-        const largestConstituentRealizationCount = Math.max(
-            comparisonEnsemble.getRealizations().length,
-            referenceEnsemble.getRealizations().length,
-        );
-        if (sharedRealizationCount < largestConstituentRealizationCount) {
-            statusWriter.addWarning(
-                `Delta ensemble "${deltaEnsembleIdent.getEnsembleName()}": using the ${sharedRealizationCount} realizations shared by the comparison and reference ensembles.`,
-            );
-        }
+    for (const warning of makeDroppedFluidSelectionWarnings(queriesResult.droppedFluidSelections)) {
+        statusWriter.addWarning(warning);
     }
 
     if (

@@ -52,7 +52,6 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const ensembleIdents = filter?.ensembleIdents ?? [];
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    // Delta ensembles are not yet supported for volume data in this module.
     const regularEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent);
 
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];

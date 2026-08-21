@@ -2,21 +2,15 @@ import { atom } from "jotai";
 
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import {
-    useGetAggregatedPerRealizationDeltaTableDataQueries,
-    useGetAggregatedPerRealizationTableDataQueries,
-    useGetAggregatedStatisticalTableDataQueries,
+    makeAggregatedPerRealizationDeltaTableDataQueryOptions,
+    makeAggregatedPerRealizationTableDataQueryOptions,
+    makeAggregatedStatisticalTableDataQueryOptions,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { computeStatisticalTableFromPerRealizationTableMemoized } from "@modules/_shared/InplaceVolumes/statisticalTableUtils";
 import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
-import {
-    groupByIndicesAtom,
-    areTableDefinitionSelectionsValidAtom,
-    resultNamesAtom,
-    statisticOptionsAtom,
-    tableTypeAtom,
-} from "./baseAtoms";
+import { groupByIndicesAtom, areTableDefinitionSelectionsValidAtom, resultNamesAtom, tableTypeAtom } from "./baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     deltaEnsembleIdentsWithRealizationsAtom,
@@ -39,7 +33,7 @@ const regularPerRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const enableQueries =
         tableType === TableType.PER_REALIZATION && areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedPerRealizationTableDataQueries(
+    return makeAggregatedPerRealizationTableDataQueryOptions(
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
@@ -63,7 +57,7 @@ const deltaPerRealizationTableDataResultsAtom = atomWithQueries((get) => {
     // the backend cannot aggregate a difference.
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedPerRealizationDeltaTableDataQueries(
+    return makeAggregatedPerRealizationDeltaTableDataQueryOptions(
         deltaEnsembleIdentsWithRealizations,
         tableNames,
         resultNames,
@@ -85,6 +79,7 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
         isFetching: regular.isFetching || delta.isFetching,
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        droppedFluidSelections: delta.droppedFluidSelections,
     };
 });
 
@@ -102,7 +97,7 @@ const regularStatisticalTableDataResultsAtom = atomWithQueries((get) => {
     const enableQueries =
         tableType === TableType.STATISTICAL && areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedStatisticalTableDataQueries(
+    return makeAggregatedStatisticalTableDataQueryOptions(
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
@@ -119,12 +114,11 @@ const regularStatisticalTableDataResultsAtom = atomWithQueries((get) => {
 export const statisticalTableDataResultsAtom = atom((get) => {
     const regular = get(regularStatisticalTableDataResultsAtom);
     const delta = get(deltaPerRealizationTableDataResultsAtom);
-    const statisticOptions = get(statisticOptionsAtom);
 
     const deltaTablesData: InplaceVolumesStatisticalTableData[] = delta.tablesData.map((tableData) => ({
         ensembleIdent: tableData.ensembleIdent,
         tableName: tableData.tableName,
-        data: computeStatisticalTableFromPerRealizationTableMemoized(tableData.data, statisticOptions),
+        data: computeStatisticalTableFromPerRealizationTableMemoized(tableData.data),
     }));
 
     const tablesData = [...regular.tablesData, ...deltaTablesData];
@@ -134,5 +128,6 @@ export const statisticalTableDataResultsAtom = atom((get) => {
         isFetching: regular.isFetching || delta.isFetching,
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        droppedFluidSelections: delta.droppedFluidSelections,
     };
 });

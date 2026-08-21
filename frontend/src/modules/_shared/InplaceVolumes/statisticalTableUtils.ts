@@ -23,9 +23,11 @@ const STATISTIC_TO_FIELD: Record<InplaceVolumesStatistic_api, keyof Statistics> 
     [InplaceVolumesStatistic_api.P90]: "p90",
 };
 
+/** The backend always returns every statistic and lets the view filter, so match that. */
+const ALL_STATISTICS = Object.values(InplaceVolumesStatistic_api);
+
 function computeStatisticalFluidSelectionTableData(
     perRealizationData: InplaceVolumesTableData_api,
-    statistics: InplaceVolumesStatistic_api[],
 ): InplaceVolumesStatisticalTableData_api {
     // Statistics are computed across realizations, so REAL is what the rows collapse over.
     const groupSelectorColumns = perRealizationData.selectorColumns.filter(
@@ -63,7 +65,7 @@ function computeStatisticalFluidSelectionTableData(
 
     const resultColumnStatistics: TableColumnStatisticalData_api[] = perRealizationData.resultColumns.map((column) => {
         const statisticValues: TableColumnStatisticalData_api["statisticValues"] = {};
-        for (const statistic of statistics) {
+        for (const statistic of ALL_STATISTICS) {
             statisticValues[statistic] = [];
         }
 
@@ -72,7 +74,7 @@ function computeStatisticalFluidSelectionTableData(
             const values = rowIndices.map((row) => column.columnValues[row]).filter((value) => Number.isFinite(value));
             const computedStatistics = computeStatistics(values);
 
-            for (const statistic of statistics) {
+            for (const statistic of ALL_STATISTICS) {
                 statisticValues[statistic]!.push(computedStatistics[STATISTIC_TO_FIELD[statistic]]);
             }
         }
@@ -96,41 +98,32 @@ function computeStatisticalFluidSelectionTableData(
  */
 export function computeStatisticalTableFromPerRealizationTable(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,
-    statistics: InplaceVolumesStatistic_api[],
 ): InplaceVolumesStatisticalTableDataPerFluidSelection_api {
     return {
         tableDataPerFluidSelection: perRealizationData.tableDataPerFluidSelection.map((fluidSelectionData) =>
-            computeStatisticalFluidSelectionTableData(fluidSelectionData, statistics),
+            computeStatisticalFluidSelectionTableData(fluidSelectionData),
         ),
     };
 }
 
-const resultByDataAndStatistics = new WeakMap<
+const resultByData = new WeakMap<
     InplaceVolumesTableDataPerFluidSelection_api,
-    Map<string, InplaceVolumesStatisticalTableDataPerFluidSelection_api>
+    InplaceVolumesStatisticalTableDataPerFluidSelection_api
 >();
 
 /**
- * `computeStatisticalTableFromPerRealizationTable` memoized on the input identity and the requested
- * statistics, so it is not redone when a query result object is rebuilt for an unrelated reason.
+ * `computeStatisticalTableFromPerRealizationTable` memoized on the input identity, so it is not
+ * redone when a query result object is rebuilt for an unrelated reason.
  */
 export function computeStatisticalTableFromPerRealizationTableMemoized(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,
-    statistics: InplaceVolumesStatistic_api[],
 ): InplaceVolumesStatisticalTableDataPerFluidSelection_api {
-    let resultByStatistics = resultByDataAndStatistics.get(perRealizationData);
-    if (!resultByStatistics) {
-        resultByStatistics = new Map();
-        resultByDataAndStatistics.set(perRealizationData, resultByStatistics);
-    }
-
-    const statisticsKey = statistics.join(",");
-    const cachedResult = resultByStatistics.get(statisticsKey);
+    const cachedResult = resultByData.get(perRealizationData);
     if (cachedResult) {
         return cachedResult;
     }
 
-    const result = computeStatisticalTableFromPerRealizationTable(perRealizationData, statistics);
-    resultByStatistics.set(statisticsKey, result);
+    const result = computeStatisticalTableFromPerRealizationTable(perRealizationData);
+    resultByData.set(perRealizationData, result);
     return result;
 }

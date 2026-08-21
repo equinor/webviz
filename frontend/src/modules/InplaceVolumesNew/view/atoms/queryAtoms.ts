@@ -2,8 +2,8 @@ import { atom } from "jotai";
 
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import {
-    useGetAggregatedPerRealizationDeltaTableDataQueries,
-    useGetAggregatedPerRealizationTableDataQueries,
+    makeAggregatedPerRealizationDeltaTableDataQueryOptions,
+    makeAggregatedPerRealizationTableDataQueryOptions,
 } from "@modules/_shared/InplaceVolumes/queryHooks";
 
 import { areTableDefinitionSelectionsValidAtom, resultNameAtom } from "./baseAtoms";
@@ -33,7 +33,7 @@ const regularAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedPerRealizationTableDataQueries(
+    return makeAggregatedPerRealizationTableDataQueryOptions(
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,
@@ -60,7 +60,7 @@ const deltaAggregatedTableDataQueriesAtom = atomWithQueries((get) => {
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedPerRealizationDeltaTableDataQueries(
+    return makeAggregatedPerRealizationDeltaTableDataQueryOptions(
         deltaEnsembleIdentsWithRealizations,
         tableNames,
         resultNames,
@@ -86,5 +86,6 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
         // Only surface an "all failed" state when there is genuinely no data to show.
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
+        droppedFluidSelections: delta.droppedFluidSelections,
     };
 });

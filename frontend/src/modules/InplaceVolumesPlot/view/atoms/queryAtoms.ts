@@ -1,5 +1,5 @@
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { useGetAggregatedPerRealizationTableDataQueries } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { makeAggregatedPerRealizationTableDataQueryOptions } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { PlotType } from "@modules/InplaceVolumesPlot/typesAndEnums";
 
 import {
@@ -38,7 +38,7 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
 
     const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
-    return useGetAggregatedPerRealizationTableDataQueries(
+    return makeAggregatedPerRealizationTableDataQueryOptions(
         ensembleIdentsWithRealizations,
         tableNames,
         resultNames,

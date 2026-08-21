@@ -58,7 +58,7 @@ describe("subtractPerRealizationTables", () => {
             makeFluidData("Oil", [makeRealColumn([0, 1, 2])], [makeResultColumn("STOIIP", [90, 210, 280])]),
         ]);
 
-        const delta = subtractPerRealizationTables(comparison, reference);
+        const delta = subtractPerRealizationTables(comparison, reference).data;
 
         expect(delta.tableDataPerFluidSelection).toHaveLength(1);
         const oil = delta.tableDataPerFluidSelection[0];
@@ -75,7 +75,7 @@ describe("subtractPerRealizationTables", () => {
             makeFluidData("Oil", [makeRealColumn([1, 2, 3])], [makeResultColumn("STOIIP", [210, 280, 400])]),
         ]);
 
-        const delta = subtractPerRealizationTables(comparison, reference);
+        const delta = subtractPerRealizationTables(comparison, reference).data;
 
         const oil = delta.tableDataPerFluidSelection[0];
         // Only realizations 1 and 2 are common.
@@ -102,7 +102,7 @@ describe("subtractPerRealizationTables", () => {
             ),
         ]);
 
-        const delta = subtractPerRealizationTables(comparison, reference);
+        const delta = subtractPerRealizationTables(comparison, reference).data;
 
         const oil = delta.tableDataPerFluidSelection[0];
         // Rows follow comparison order: (0,A),(0,B),(1,A),(1,B)
@@ -120,8 +120,9 @@ describe("subtractPerRealizationTables", () => {
 
         const delta = subtractPerRealizationTables(comparison, reference);
 
-        expect(delta.tableDataPerFluidSelection).toHaveLength(1);
-        expect(delta.tableDataPerFluidSelection[0].fluidSelection).toBe("Oil");
+        expect(delta.data.tableDataPerFluidSelection).toHaveLength(1);
+        expect(delta.data.tableDataPerFluidSelection[0].fluidSelection).toBe("Oil");
+        expect(delta.droppedFluidSelections).toEqual(["Gas"]);
     });
 
     test("only includes result columns present in both ensembles", () => {
@@ -136,7 +137,7 @@ describe("subtractPerRealizationTables", () => {
             makeFluidData("Oil", [makeRealColumn([0, 1])], [makeResultColumn("STOIIP", [90, 210])]),
         ]);
 
-        const delta = subtractPerRealizationTables(comparison, reference);
+        const delta = subtractPerRealizationTables(comparison, reference).data;
 
         const oil = delta.tableDataPerFluidSelection[0];
         expect(oil.resultColumns.map((column) => column.columnName)).toEqual(["STOIIP"]);
@@ -166,8 +167,8 @@ describe("subtractPerRealizationTablesMemoized", () => {
         const second = subtractPerRealizationTablesMemoized(comparison, otherReference);
 
         expect(second).not.toBe(first);
-        expect(second.tableDataPerFluidSelection[0].resultColumns[0].columnValues).toEqual(
-            first.tableDataPerFluidSelection[0].resultColumns[0].columnValues,
+        expect(second.data.tableDataPerFluidSelection[0].resultColumns[0].columnValues).toEqual(
+            first.data.tableDataPerFluidSelection[0].resultColumns[0].columnValues,
         );
     });
 

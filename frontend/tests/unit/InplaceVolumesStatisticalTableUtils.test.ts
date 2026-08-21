@@ -47,7 +47,7 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
             },
         ]);
 
-        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization, ALL_STATISTICS);
+        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization);
         const oil = statistical.tableDataPerFluidSelection[0];
 
         expect(oil.selectorColumns.map((column) => column.columnName)).not.toContain("REAL");
@@ -77,9 +77,7 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
             },
         ]);
 
-        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization, [
-            InplaceVolumesStatistic_api.MEAN,
-        ]);
+        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization);
         const oil = statistical.tableDataPerFluidSelection[0];
 
         const zoneColumn = oil.selectorColumns.find((column) => column.columnName === "ZONE")!;
@@ -87,7 +85,7 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
         expect(oil.resultColumnStatistics[0].statisticValues[InplaceVolumesStatistic_api.MEAN]).toEqual([15, 200]);
     });
 
-    test("only emits the requested statistics", () => {
+    test("emits every statistic, as the backend does", () => {
         const perRealization = makePerFluidSelection([
             {
                 fluidSelection: "oil",
@@ -96,13 +94,11 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
             },
         ]);
 
-        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization, [
-            InplaceVolumesStatistic_api.MEAN,
-        ]);
+        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization);
 
         expect(
-            Object.keys(statistical.tableDataPerFluidSelection[0].resultColumnStatistics[0].statisticValues),
-        ).toEqual([InplaceVolumesStatistic_api.MEAN]);
+            Object.keys(statistical.tableDataPerFluidSelection[0].resultColumnStatistics[0].statisticValues).sort(),
+        ).toEqual([...ALL_STATISTICS].sort());
     });
 
     test("ignores non-finite values, as the backend drops nulls and NaNs", () => {
@@ -114,9 +110,7 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
             },
         ]);
 
-        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization, [
-            InplaceVolumesStatistic_api.MEAN,
-        ]);
+        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization);
 
         expect(
             statistical.tableDataPerFluidSelection[0].resultColumnStatistics[0].statisticValues[
@@ -139,9 +133,7 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
             },
         ]);
 
-        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization, [
-            InplaceVolumesStatistic_api.MEAN,
-        ]);
+        const statistical = computeStatisticalTableFromPerRealizationTable(perRealization);
 
         expect(statistical.tableDataPerFluidSelection.map((data) => data.fluidSelection)).toEqual(["oil", "gas"]);
     });
@@ -157,16 +149,24 @@ describe("computeStatisticalTableFromPerRealizationTableMemoized", () => {
     ]);
 
     test("returns the same result reference for the same inputs", () => {
-        const first = computeStatisticalTableFromPerRealizationTableMemoized(perRealization, ALL_STATISTICS);
-        const second = computeStatisticalTableFromPerRealizationTableMemoized(perRealization, ALL_STATISTICS);
+        const first = computeStatisticalTableFromPerRealizationTableMemoized(perRealization);
+        const second = computeStatisticalTableFromPerRealizationTableMemoized(perRealization);
         expect(second).toBe(first);
     });
 
-    test("recomputes when the requested statistics change", () => {
-        const first = computeStatisticalTableFromPerRealizationTableMemoized(perRealization, ALL_STATISTICS);
-        const second = computeStatisticalTableFromPerRealizationTableMemoized(perRealization, [
-            InplaceVolumesStatistic_api.MEAN,
+    test("recomputes when the input identity changes", () => {
+        const first = computeStatisticalTableFromPerRealizationTableMemoized(perRealization);
+
+        const otherPerRealization = makePerFluidSelection([
+            {
+                fluidSelection: "oil",
+                selectorColumns: [makeSelectorColumn("REAL", [0, 1])],
+                resultColumns: [makeResultColumn("STOIIP", [10, 20])],
+            },
         ]);
+        const second = computeStatisticalTableFromPerRealizationTableMemoized(otherPerRealization);
+
         expect(second).not.toBe(first);
+        expect(second).toEqual(first);
     });
 });

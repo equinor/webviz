@@ -90,6 +90,12 @@ function subtractFluidSelectionTableData(
     };
 }
 
+export type DeltaTableResult = {
+    data: InplaceVolumesTableDataPerFluidSelection_api;
+    /** Fluid selections in the comparison that the reference lacks, so cannot be differenced. */
+    droppedFluidSelections: string[];
+};
+
 /**
  * Compute the per-realization difference (comparison − reference) for inplace volumes table data.
  *
@@ -99,16 +105,18 @@ function subtractFluidSelectionTableData(
 export function subtractPerRealizationTables(
     comparisonData: InplaceVolumesTableDataPerFluidSelection_api,
     referenceData: InplaceVolumesTableDataPerFluidSelection_api,
-): InplaceVolumesTableDataPerFluidSelection_api {
+): DeltaTableResult {
     const referenceByFluidSelection = new Map<string, InplaceVolumesTableData_api>();
     for (const fluidTableData of referenceData.tableDataPerFluidSelection) {
         referenceByFluidSelection.set(fluidTableData.fluidSelection, fluidTableData);
     }
 
     const tableDataPerFluidSelection: InplaceVolumesTableData_api[] = [];
+    const droppedFluidSelections: string[] = [];
     for (const comparisonFluidTableData of comparisonData.tableDataPerFluidSelection) {
         const referenceFluidTableData = referenceByFluidSelection.get(comparisonFluidTableData.fluidSelection);
         if (!referenceFluidTableData) {
+            droppedFluidSelections.push(comparisonFluidTableData.fluidSelection);
             continue;
         }
         tableDataPerFluidSelection.push(
@@ -116,12 +124,12 @@ export function subtractPerRealizationTables(
         );
     }
 
-    return { tableDataPerFluidSelection };
+    return { data: { tableDataPerFluidSelection }, droppedFluidSelections };
 }
 
 const subtractionResultByInputs = new WeakMap<
     InplaceVolumesTableDataPerFluidSelection_api,
-    WeakMap<InplaceVolumesTableDataPerFluidSelection_api, InplaceVolumesTableDataPerFluidSelection_api>
+    WeakMap<InplaceVolumesTableDataPerFluidSelection_api, DeltaTableResult>
 >();
 
 /**
@@ -134,7 +142,7 @@ const subtractionResultByInputs = new WeakMap<
 export function subtractPerRealizationTablesMemoized(
     comparisonData: InplaceVolumesTableDataPerFluidSelection_api,
     referenceData: InplaceVolumesTableDataPerFluidSelection_api,
-): InplaceVolumesTableDataPerFluidSelection_api {
+): DeltaTableResult {
     let resultByReferenceData = subtractionResultByInputs.get(comparisonData);
     if (!resultByReferenceData) {
         resultByReferenceData = new WeakMap();

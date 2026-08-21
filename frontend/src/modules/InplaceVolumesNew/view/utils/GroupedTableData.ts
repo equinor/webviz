@@ -5,7 +5,13 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
-import { isConstant } from "./statistics";
+function isConstant(values: number[]): boolean {
+    if (values.length === 0) {
+        return true;
+    }
+    const firstValue = values[0];
+    return values.every((v) => v === firstValue);
+}
 
 export interface GroupedEntry {
     subplotKey: string;

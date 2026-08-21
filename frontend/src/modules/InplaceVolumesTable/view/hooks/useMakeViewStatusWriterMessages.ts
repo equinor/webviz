@@ -1,10 +1,15 @@
 import { useAtomValue } from "jotai";
 
 import type { InplaceVolumesStatisticalTableData_api, InplaceVolumesTableData_api } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
+    makeDeltaRealizationCountWarnings,
+    makeDroppedFluidSelectionWarnings,
+} from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 
-import { resultNamesAtom } from "../atoms/baseAtoms";
+import { filterAtom, resultNamesAtom } from "../atoms/baseAtoms";
 import { activeQueriesResultAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";
 
 // Type guard for InplaceVolumesTableData
@@ -21,10 +26,11 @@ function isInplaceVolumesStatisticalTableData(
     return obj && typeof obj === "object" && "resultColumnStatistics" in obj;
 }
 
-export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) {
+export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, ensembleSet: EnsembleSet) {
     const activeQueriesResult = useAtomValue(activeQueriesResultAtom);
     const indicesValues = useAtomValue(indicesWithValuesAtom);
     const resultNames = useAtomValue(resultNamesAtom);
+    const filter = useAtomValue(filterAtom);
 
     usePropagateAllApiErrorsToStatusWriter(activeQueriesResult.errors, statusWriter);
 
@@ -32,6 +38,14 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
         if (elm.values.length === 0) {
             statusWriter.addWarning(`Select at least one filter value for ${elm.indexColumn.valueOf()}`);
         }
+    }
+
+    for (const warning of makeDeltaRealizationCountWarnings(filter?.ensembleIdents ?? [], ensembleSet)) {
+        statusWriter.addWarning(warning);
+    }
+
+    for (const warning of makeDroppedFluidSelectionWarnings(activeQueriesResult.droppedFluidSelections)) {
+        statusWriter.addWarning(warning);
     }
 
     // Due to no throw in back-end for missing/non-existing result for specific tables, we should compare
