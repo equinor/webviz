@@ -50,18 +50,24 @@ test.describe("My module", () => {
         await createSessionAndSelectEnsemble(page);
 
         const dragNarration = narrate(
-                    "We drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
-                );
+            "We drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
+        );
         markStep("Add the 3D Viewer");
         await dragModuleOntoLayout(page, "3D Viewer");
         await dragNarration;
 
+        markStep("Add view and grid");
+
+        const addViewNarration = narrate(
+            "We then add a view to the newly added module, and add a grid model layer to it.",
+        );
         await expect(page.getByRole('button', { name: 'Add first view' })).toBeVisible();
         await smoothClick(page, page.getByRole('button', { name: 'Add first view' }));
         await smoothClick(page, page.getByRole('button', { name: 'Add' }).nth(1));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Layers' }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model', exact: true }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model 3D' }));
+        await addViewNarration;
 
         // Adding the layer kicks off a blob fetch + mesh build; wait for the module's own loading
         // indicator to clear and the deck.gl canvas to actually mount before treating this as done.
