@@ -32,9 +32,6 @@ test.describe("Session and ensemble selection", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
-        markStep("Introduction");
-        await narrate("Let's create a new session and add an ensemble to it.");
-
         await createSessionAndSelectEnsemble(page, { narrate, markStep });
 
         markStep("Ensemble applied");

@@ -49,9 +49,6 @@ test.describe("My module", () => {
         // Shared setup (new session + ensemble selection) is narrated separately, in its own story.
         await createSessionAndSelectEnsemble(page);
 
-        markStep("Introduction");
-        await narrate("In this walkthrough we'll add the 3D Viewer module to a new dashboard.");
-
         const dragNarration = narrate(
                     "We drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
                 );
