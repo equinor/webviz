@@ -23,6 +23,7 @@ import {
     dragModuleOntoLayout,
     hideDevOverlays,
     installFakeCursor,
+    pace,
     smoothClick,
 } from "../support/walkthroughHelpers";
 
@@ -46,13 +47,13 @@ test.describe("My module", () => {
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
         markStep("Introduction");
-        await narrate("Describe what this walkthrough will show.");
+        await narrate("In this walkthrough we'll add the 3D Viewer module to a new dashboard.");
 
         // Shared setup (new session + ensemble selection) is narrated separately, in its own story.
         await createSessionAndSelectEnsemble(page);
 
         const dragNarration = narrate(
-                    "Now we drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
+                    "We drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
                 );
         markStep("Add the 3D Viewer");
         await dragModuleOntoLayout(page, "3D Viewer");
@@ -64,6 +65,16 @@ test.describe("My module", () => {
         await smoothClick(page, page.getByRole('menuitem', { name: 'Layers' }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model', exact: true }));
         await smoothClick(page, page.getByRole('menuitem', { name: 'Grid Model 3D' }));
+
+        // Adding the layer kicks off a blob fetch + mesh build; wait for the module's own loading
+        // indicator to clear and the deck.gl canvas to actually mount before treating this as done.
+        const moduleLayout = page.getByTestId("module-layout");
+        const loadingBar = moduleLayout.getByRole("progressbar");
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await expect(moduleLayout.locator("canvas").first()).toBeVisible({ timeout: 30_000 });
+
+        // Give WebGL a moment to actually paint the grid geometry after mounting.
+        await pace(page, "long");
 
         await captureThumbnail(page);
         markStep("View the grid model");
