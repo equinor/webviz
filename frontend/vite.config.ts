@@ -18,19 +18,24 @@ const paths = {
 };
 
 // https://vitejs.dev/config/
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
     const define: Record<string, any> = {
         "process.env": {},
         // Subsurface viewer expects this to be polyfilled
         global: "globalThis",
     };
 
+    // jotaiReactRefresh preserves atom identity across Vite HMR updates by permanently caching every
+    // atom object on globalThis.jotaiAtomCache. That cache is a dev-server-only concern (HMR doesn't
+    // exist in production) and it defeats WeakMap-based GC of per-atom state if left enabled in builds.
+    const babelPlugins = command === "serve" ? [jotaiDebugLabel, jotaiReactRefresh] : [jotaiDebugLabel];
+
     return {
         plugins: [
             tailwindPlugin(),
             react(),
             vitePluginChecker({ typescript: true }),
-            babel({ plugins: [jotaiDebugLabel, jotaiReactRefresh] }),
+            babel({ plugins: babelPlugins }),
             glsl({
                 include: "**/*.glsl",
                 defaultExtension: "glsl",

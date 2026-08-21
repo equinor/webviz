@@ -32,7 +32,7 @@ export function LeftSettingsPanel(props: LeftSettingsPanelProps): React.ReactNod
     const [drawerContent, setDrawerContent] = React.useState<DrawerContent>(DrawerContent.ModuleSettings);
 
     const dashboard = useActiveDashboard();
-    const moduleInstances = dashboard.getModuleInstances();
+    const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
     const activeModuleInstance = activeModuleInstanceId ? dashboard.getModuleInstance(activeModuleInstanceId) : null;
 

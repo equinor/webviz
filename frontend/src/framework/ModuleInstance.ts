@@ -511,18 +511,20 @@ export class ModuleInstance<
 
     unload() {
         this._module.onInstanceUnload(this._id);
-        this._channelManager.unregisterAllChannels();
-        this._channelManager.unregisterAllReceivers();
+        this.beforeDestroy();
     }
 
     beforeDestroy(): void {
         this._channelManager.unregisterAllChannels();
         this._channelManager.unregisterAllReceivers();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this._context = null;
         this._settingsToViewInterface = null;
         this._viewToSettingsInterface = null;
         this._settingsToViewInterfaceEffectsAtom = null;
         this._viewToSettingsInterfaceEffectsAtom = null;
+        this._serializer?.beforeDestroy();
+        this._module.removeInstance(this._id);
     }
 }
 

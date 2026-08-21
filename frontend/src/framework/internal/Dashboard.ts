@@ -307,6 +307,15 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._cachedState = null;
     }
 
+    // Note on memory: this drops every strong reference this framework holds to the dashboard's
+    // module instances (see clearLayout -> removeModuleInstance -> unregisterAndUnloadModuleInstance,
+    // and ModuleInstance.beforeDestroy/Module.removeInstance for the rest of the teardown chain), but
+    // an instance isn't guaranteed to become GC-eligible the instant this call returns. Any still-
+    // mounted component that read a now-removed instance (e.g. LeftSettingsPanel's activeModuleInstance)
+    // keeps a reference alive for one extra render cycle via React's fiber double-buffering - the old
+    // `current` fiber (holding the stale props) becomes the new `alternate` rather than being discarded,
+    // and isn't overwritten until that component renders again. In practice this resolves itself within
+    // the next render or two of the surrounding UI;.
     unload(): void {
         this._cachedState = this.serializeState();
         this.clearLayout();
