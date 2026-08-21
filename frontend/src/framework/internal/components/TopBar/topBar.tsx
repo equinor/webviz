@@ -44,6 +44,7 @@ import { DarkModeButton } from "../DarkModeButton";
 import { DensityModeToggle } from "../DensityModeToggle/densityModeToggle";
 import { EditSessionMetadataDialog } from "../EditSessionMetadataDialog";
 import { LoginButton } from "../LoginButton";
+import { FeedbackDialog } from "../StartPage/private-components/feedbackModal";
 import { ToggleDevToolsButton } from "../ToggleDevToolsButton";
 
 export type TopBarProps = {
@@ -87,6 +88,7 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     <DensityModeToggle />
                     <ToggleDevToolsButton guiMessageBroker={props.workbench.getGuiMessageBroker()} />
                     <Separator orientation="vertical" />
+                    <FeedbackDialog iconOnly workbench={props.workbench} />
                     <LoginButton showText={false} />
                 </div>
             </div>
