@@ -41,13 +41,26 @@ export function makeDeltaRealizationCountWarnings(
 }
 
 /**
- * Warnings for fluid selections excluded from a delta because the reference ensemble has no rows for
- * them. Without this the affected volumes simply disappear from the table.
+ * Warnings for fluid selections excluded from a delta because only one side has them. Without this
+ * the affected volumes simply disappear from the table.
  */
 export function makeDroppedFluidSelectionWarnings(droppedFluidSelections: DeltaDroppedFluidSelections[]): string[] {
-    return droppedFluidSelections.map(
-        (dropped) =>
-            `Delta ensemble "${dropped.ensembleIdent.getEnsembleName()}" (${dropped.tableName}): ${dropped.fluidSelections.join(", ")} ` +
-            "not present in the reference ensemble, so excluded from the difference.",
-    );
+    const warnings: string[] = [];
+
+    for (const dropped of droppedFluidSelections) {
+        for (const missingFrom of ["comparison", "reference"] as const) {
+            const fluidSelections = dropped.fluidSelections
+                .filter((entry) => entry.missingFrom === missingFrom)
+                .map((entry) => entry.fluidSelection);
+            if (fluidSelections.length === 0) {
+                continue;
+            }
+            warnings.push(
+                `Delta ensemble "${dropped.ensembleIdent.getEnsembleName()}" (${dropped.tableName}): ${fluidSelections.join(", ")} ` +
+                    `not present in the ${missingFrom} ensemble, so excluded from the difference.`,
+            );
+        }
+    }
+
+    return warnings;
 }

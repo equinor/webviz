@@ -90,10 +90,16 @@ function subtractFluidSelectionTableData(
     };
 }
 
+export type DroppedFluidSelection = {
+    fluidSelection: string;
+    /** The side lacking the fluid selection, so the other side's rows cannot be differenced. */
+    missingFrom: "comparison" | "reference";
+};
+
 export type DeltaTableResult = {
     data: InplaceVolumesTableDataPerFluidSelection_api;
-    /** Fluid selections in the comparison that the reference lacks, so cannot be differenced. */
-    droppedFluidSelections: string[];
+    /** Fluid selections excluded because only one side has them. */
+    droppedFluidSelections: DroppedFluidSelection[];
 };
 
 /**
@@ -112,16 +118,32 @@ export function subtractPerRealizationTables(
     }
 
     const tableDataPerFluidSelection: InplaceVolumesTableData_api[] = [];
-    const droppedFluidSelections: string[] = [];
+    const droppedFluidSelections: DroppedFluidSelection[] = [];
+    const comparisonFluidSelections = new Set<string>();
     for (const comparisonFluidTableData of comparisonData.tableDataPerFluidSelection) {
+        comparisonFluidSelections.add(comparisonFluidTableData.fluidSelection);
+
         const referenceFluidTableData = referenceByFluidSelection.get(comparisonFluidTableData.fluidSelection);
         if (!referenceFluidTableData) {
-            droppedFluidSelections.push(comparisonFluidTableData.fluidSelection);
+            droppedFluidSelections.push({
+                fluidSelection: comparisonFluidTableData.fluidSelection,
+                missingFrom: "reference",
+            });
             continue;
         }
         tableDataPerFluidSelection.push(
             subtractFluidSelectionTableData(comparisonFluidTableData, referenceFluidTableData),
         );
+    }
+
+    // The inner join also drops reference-only fluid selections, which the loop above never visits.
+    for (const referenceFluidTableData of referenceData.tableDataPerFluidSelection) {
+        if (!comparisonFluidSelections.has(referenceFluidTableData.fluidSelection)) {
+            droppedFluidSelections.push({
+                fluidSelection: referenceFluidTableData.fluidSelection,
+                missingFrom: "comparison",
+            });
+        }
     }
 
     return { data: { tableDataPerFluidSelection }, droppedFluidSelections };

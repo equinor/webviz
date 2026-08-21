@@ -347,7 +347,13 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
         return {
             tablesData: tablesData,
             isFetching: results.some((result) => result.isFetching),
-            allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
+            // A delta needs both sides, so failure is per pair rather than per raw request.
+            allQueriesFailed:
+                queryPairs.length > 0 &&
+                queryPairs.every(
+                    ({ comparisonQueryIndex, referenceQueryIndex }) =>
+                        results[comparisonQueryIndex]?.isError || results[referenceQueryIndex]?.isError,
+                ),
             errors: errors,
             droppedFluidSelections,
         };

@@ -6,6 +6,7 @@ import { InplaceVolumesStatistic_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
+import type { DroppedFluidSelection } from "./deltaTableUtils";
 import type { Column } from "./Table";
 
 export type InplaceVolumesTableData = {
@@ -24,7 +25,7 @@ export type InplaceVolumesStatisticalTableData = {
 export type DeltaDroppedFluidSelections = {
     ensembleIdent: DeltaEnsembleIdent;
     tableName: string;
-    fluidSelections: string[];
+    fluidSelections: DroppedFluidSelection[];
 };
 
 export enum TableType {

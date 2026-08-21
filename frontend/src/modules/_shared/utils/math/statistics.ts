@@ -66,7 +66,17 @@ export interface Statistics {
  */
 export function computeStatistics(values: number[]): Statistics {
     if (values.length === 0) {
-        return { count: 0, mean: 0, stdDev: 0, min: 0, max: 0, p10: 0, p50: 0, p90: 0 };
+        // Undefined rather than zero: a zero volume is indistinguishable from a real result.
+        return {
+            count: 0,
+            mean: Number.NaN,
+            stdDev: Number.NaN,
+            min: Number.NaN,
+            max: Number.NaN,
+            p10: Number.NaN,
+            p50: Number.NaN,
+            p90: Number.NaN,
+        };
     }
 
     const count = values.length;

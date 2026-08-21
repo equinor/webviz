@@ -122,7 +122,26 @@ describe("subtractPerRealizationTables", () => {
 
         expect(delta.data.tableDataPerFluidSelection).toHaveLength(1);
         expect(delta.data.tableDataPerFluidSelection[0].fluidSelection).toBe("Oil");
-        expect(delta.droppedFluidSelections).toEqual(["Gas"]);
+        expect(delta.droppedFluidSelections).toEqual([{ fluidSelection: "Gas", missingFrom: "reference" }]);
+    });
+
+    test("reports fluid selections missing from either side", () => {
+        const comparison = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0])], [makeResultColumn("STOIIP", [100])]),
+            makeFluidData("Gas", [makeRealColumn([0])], [makeResultColumn("GIIP", [500])]),
+        ]);
+        const reference = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0])], [makeResultColumn("STOIIP", [90])]),
+            makeFluidData("Water", [makeRealColumn([0])], [makeResultColumn("STOIIP", [10])]),
+        ]);
+
+        const delta = subtractPerRealizationTables(comparison, reference);
+
+        expect(delta.data.tableDataPerFluidSelection.map((data) => data.fluidSelection)).toEqual(["Oil"]);
+        expect(delta.droppedFluidSelections).toEqual([
+            { fluidSelection: "Gas", missingFrom: "reference" },
+            { fluidSelection: "Water", missingFrom: "comparison" },
+        ]);
     });
 
     test("only includes result columns present in both ensembles", () => {
