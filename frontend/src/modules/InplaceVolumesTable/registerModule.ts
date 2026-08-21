@@ -8,7 +8,9 @@ import { SERIALIZED_STATE, type SerializedState } from "./persistence";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "InplaceVolumesTable";
-const description = "Inplace Volumes Table";
+const description =
+    "Tabulated inplace volumes for several responses at once, either per realization or as statistics " +
+    "(mean, standard deviation, P10/P90, min/max), grouped by the chosen index columns.";
 
 ModuleRegistry.registerModule<Interfaces, SerializedState>({
     moduleName: MODULE_NAME,
