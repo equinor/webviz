@@ -7,7 +7,12 @@ import { expect } from "@playwright/test";
 
 import { test } from "../support/recordingFixtures";
 import { tutorialMeta } from "../support/tutorialMeta";
-import { createSessionAndSelectEnsemble, hideDevOverlays, installFakeCursor } from "../support/walkthroughHelpers";
+import {
+    captureThumbnail,
+    createSessionAndSelectEnsemble,
+    hideDevOverlays,
+    installFakeCursor,
+} from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
     slug: "session-and-ensemble-selection",
@@ -34,5 +39,7 @@ test.describe("Session and ensemble selection", () => {
 
         markStep("Ensemble applied");
         await narrate("The ensemble is now applied and ready to use in the session.");
+
+        await captureThumbnail(page);
     });
 });
