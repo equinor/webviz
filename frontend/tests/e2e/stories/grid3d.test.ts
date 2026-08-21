@@ -15,24 +15,22 @@
  */
 import { expect } from "@playwright/test";
 
-import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
 import { tutorialMeta } from "../support/tutorialMeta";
 import {
     captureThumbnail,
+    createSessionAndSelectEnsemble,
     dragModuleOntoLayout,
     hideDevOverlays,
     installFakeCursor,
-    pace,
     smoothClick,
-    smoothFill,
 } from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
     slug: "grid3d-viewer-3d-grid-model",
-    category: "3D Visualization",
-    title: "Explore a grid model in 3D",
-    description: "Add the 3D Viewer module to a session and load a Drogon grid model.",
+    category: "Modules",
+    title: "3D Viewer",
+    description: "Add the 3D Viewer module to a session.",
 });
 
 test.describe("My module", () => {
@@ -49,51 +47,10 @@ test.describe("My module", () => {
 
         markStep("Introduction");
         await narrate("Describe what this walkthrough will show.");
-const newSessionNarration = narrate("Let's start by creating a new session...")
-        markStep("Create a session");
-        await smoothClick(page, page.getByRole("button", { name: "New session" }));
-        await newSessionNarration;
 
-        const ensembleNarration = narrate(
-            "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
-        );
-        markStep("Add the Drogon ensemble");
-        await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
-        await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
-        await pace(page);
+        // Shared setup (new session + ensemble selection) is narrated separately, in its own story.
+        await createSessionAndSelectEnsemble(page);
 
-        await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
-        await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
-        await pace(page);
-
-        // Filter the case table by the test case UUID.
-        await smoothFill(page, page.getByPlaceholder("Filter ...").first(), DROGON_AHM.caseUuid);
-        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 60_000 });
-        await pace(page);
-
-        await smoothClick(
-            page,
-            page
-                .locator("tbody")
-                .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
-                .first(),
-        );
-
-        await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
-        await ensembleNarration;
-        await pace(page);
-
-        const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
-        markStep("Apply the ensemble");
-        await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
-
-        await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
-        await pace(page);
-
-        await smoothClick(page, page.getByRole("button", { name: "Apply" }));
-        await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
-        await applyNarration;
-        
         const dragNarration = narrate(
                     "Now we drag the 3D Viewer module from the list onto the dashboard and wait for the relevant data and settings to load.",
                 );

@@ -5,20 +5,20 @@ import { test } from "../support/recordingFixtures";
 import { tutorialMeta } from "../support/tutorialMeta";
 import {
     captureThumbnail,
+    createSessionAndSelectEnsemble,
     dragModuleOntoLayout,
     hideDevOverlays,
     installCaseRowRedaction,
     installFakeCursor,
     pace,
     smoothClick,
-    smoothFill,
 } from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
     slug: "simulation-time-series-chart",
-    category: "Charts",
-    title: "Plot a Simulation Time Series chart",
-    description: "Add the Simulation Time Series module and plot a vector from a Drogon ensemble.",
+    category: "Modules",
+    title: "Simulation Time Series",
+    description: "Add the Simulation Time Series module.",
 });
 
 /**
@@ -49,50 +49,8 @@ test.describe("Simulation Time Series module", () => {
             "In this walkthrough we'll add the Simulation Time Series module to a new dashboard.",
         );
 
-        const newSessionNarration = narrate("Let's start by creating a new session...")
-        markStep("Create a session");
-        await smoothClick(page, page.getByRole("button", { name: "New session" }));
-        await newSessionNarration;
-
-        const ensembleNarration = narrate(
-            "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
-        );
-        markStep("Add the Drogon ensemble");
-        await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
-        await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
-        await pace(page);
-
-        await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
-        await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
-        await pace(page);
-
-        // Filter the case table by the test case UUID.
-        await smoothFill(page, page.getByPlaceholder("Filter ...").first(), DROGON_AHM.caseUuid);
-        await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 60_000 });
-        await pace(page);
-
-        await smoothClick(
-            page,
-            page
-                .locator("tbody")
-                .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
-                .first(),
-        );
-
-        await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
-        await ensembleNarration;
-        await pace(page);
-
-        const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
-        markStep("Apply the ensemble");
-        await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
-
-        await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
-        await pace(page);
-
-        await smoothClick(page, page.getByRole("button", { name: "Apply" }));
-        await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
-        await applyNarration;
+        // Shared setup (new session + ensemble selection) is narrated separately, in its own story.
+        await createSessionAndSelectEnsemble(page);
 
         const moduleListItem = page.locator(`[title="${SIMULATION_TIME_SERIES}"]`).first();
         if (!(await moduleListItem.isVisible())) {
