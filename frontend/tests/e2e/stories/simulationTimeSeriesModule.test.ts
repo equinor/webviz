@@ -60,7 +60,7 @@ test.describe("Simulation Time Series module", () => {
         await pace(page);
 
         const dragNarration = narrate(
-            "Now we drag the Simulation Time Series module from the list onto the dashboard and wait for the relevant data and settings to load.",
+            "We start by dragging the Simulation Time Series module from the list onto the dashboard and wait for the relevant data and settings to load.",
         );
         markStep("Add the time series module");
         await dragModuleOntoLayout(page, SIMULATION_TIME_SERIES);
