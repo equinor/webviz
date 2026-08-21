@@ -1,7 +1,7 @@
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { GroupedTableData } from "./GroupedTableData";
-import { computeStatistics } from "./statistics";
 
 export type StatisticsTableRowData = {
     id: string;

@@ -3,20 +3,29 @@ import type {
     InplaceVolumesTableDataPerFluidSelection_api,
 } from "@api";
 import { InplaceVolumesStatistic_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
+import type { DroppedFluidSelection } from "./deltaTableUtils";
 import type { Column } from "./Table";
 
 export type InplaceVolumesTableData = {
-    ensembleIdent: RegularEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
     data: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
 export type InplaceVolumesStatisticalTableData = {
-    ensembleIdent: RegularEnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     tableName: string;
     data: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
+};
+
+/** Fluid selections excluded from a delta ensemble's difference, per source table. */
+export type DeltaDroppedFluidSelections = {
+    ensembleIdent: DeltaEnsembleIdent;
+    tableName: string;
+    fluidSelections: DroppedFluidSelection[];
 };
 
 export enum TableType {

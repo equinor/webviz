@@ -1,8 +1,14 @@
 import { useAtomValue } from "jotai";
 
+import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
+    makeDeltaRealizationCountWarnings,
+    makeDroppedFluidSelectionWarnings,
+} from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 
+import { filterAtom } from "../atoms/baseAtoms";
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
 
@@ -11,12 +17,14 @@ const FACIES_INDEX_COLUMN = "FACIES";
 
 export function useMakeViewStatusWriterMessages(
     statusWriter: ViewStatusWriter,
+    ensembleSet: EnsembleSet,
     resultName: string | null,
     subplotBy: string,
     colorBy: string,
 ) {
     const queriesResult = useAtomValue(aggregatedTableDataQueriesAtom);
     const indicesWithValues = useAtomValue(indicesWithValuesAtom);
+    const filter = useAtomValue(filterAtom);
 
     usePropagateAllApiErrorsToStatusWriter(queriesResult.errors, statusWriter);
 
@@ -24,6 +32,14 @@ export function useMakeViewStatusWriterMessages(
         if (elm.values.length === 0) {
             statusWriter.addWarning(`Select at least one filter value for ${elm.indexColumn.valueOf()}`);
         }
+    }
+
+    for (const warning of makeDeltaRealizationCountWarnings(filter?.ensembleIdents ?? [], ensembleSet)) {
+        statusWriter.addWarning(warning);
+    }
+
+    for (const warning of makeDroppedFluidSelectionWarnings(queriesResult.droppedFluidSelections)) {
+        statusWriter.addWarning(warning);
     }
 
     if (

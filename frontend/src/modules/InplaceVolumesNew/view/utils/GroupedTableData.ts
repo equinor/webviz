@@ -1,11 +1,17 @@
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import type { ColorSet } from "@lib/utils/ColorSet";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import type { Table } from "@modules/_shared/InplaceVolumes/Table";
 import { TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
-import { isConstant } from "./statistics";
+function isConstant(values: number[]): boolean {
+    if (values.length === 0) {
+        return true;
+    }
+    const firstValue = values[0];
+    return values.every((v) => v === firstValue);
+}
 
 export interface GroupedEntry {
     subplotKey: string;
@@ -75,8 +81,8 @@ export class GroupedTableData {
             const key = value.toString();
 
             if (this._colorBy === TableOriginKey.ENSEMBLE) {
-                const ensembleIdent = RegularEnsembleIdent.fromString(key);
-                const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
+                const ensembleIdent = getEnsembleIdentFromString(key);
+                const ensemble = ensembleIdent ? this._ensembleSet.findEnsemble(ensembleIdent) : null;
                 if (ensemble) {
                     this._colorMap.set(key, ensemble.getColor());
                     continue;
@@ -90,13 +96,10 @@ export class GroupedTableData {
 
     private formatLabel(columnName: string, value: string | number): string {
         if (columnName === TableOriginKey.ENSEMBLE) {
-            const ensembleIdent = RegularEnsembleIdent.fromString(value.toString());
-            const ensemble = this._ensembleSet.findEnsemble(ensembleIdent);
-            if (ensemble) {
-                return makeDistinguishableEnsembleDisplayName(
-                    ensembleIdent,
-                    this._ensembleSet.getRegularEnsembleArray(),
-                );
+            const ensembleIdent = getEnsembleIdentFromString(value.toString());
+            const ensemble = ensembleIdent ? this._ensembleSet.findEnsemble(ensembleIdent) : null;
+            if (ensembleIdent && ensemble) {
+                return makeDistinguishableEnsembleDisplayName(ensembleIdent, this._ensembleSet.getEnsembleArray());
             }
         }
         return value.toString();

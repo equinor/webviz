@@ -1,7 +1,9 @@
 import { isEqual } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 
 import { sortResultNameStrings } from "./sortResultNames";
 
@@ -178,9 +180,23 @@ export class TableDefinitionsAccessor {
         return !this._tablesNotComparable;
     }
 
-    hasEnsembleIdents(ensembleIdents: RegularEnsembleIdent[]): boolean {
+    hasEnsembleIdents(ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[]): boolean {
+        // Delta ensembles are represented by their constituent regular ensembles in the table
+        // definitions, so expand them before checking presence.
+        const requiredRegularEnsembleIdents: RegularEnsembleIdent[] = [];
         for (const ensembleIdent of ensembleIdents) {
-            if (!this._uniqueEnsembleIdents.includes(ensembleIdent)) {
+            if (isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)) {
+                requiredRegularEnsembleIdents.push(
+                    ensembleIdent.getComparisonEnsembleIdent(),
+                    ensembleIdent.getReferenceEnsembleIdent(),
+                );
+            } else {
+                requiredRegularEnsembleIdents.push(ensembleIdent);
+            }
+        }
+
+        for (const ensembleIdent of requiredRegularEnsembleIdents) {
+            if (!this._uniqueEnsembleIdents.some((existing) => existing.equals(ensembleIdent))) {
                 return false;
             }
         }

@@ -1,9 +1,8 @@
 import type { Dash, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
-
-import { computeStatistics } from "../statistics";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
