@@ -16,6 +16,7 @@ import {
     availableIndicesWithValuesAtom,
     availableReferenceTableNamesAtom,
     availableResultNamesAtom,
+    commonIndicesWithValuesAtom,
 } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
@@ -79,12 +80,16 @@ export const selectedResultNameAtom = persistableFixableAtom<string | null, stri
     fixupFunction: ({ value, precomputedValue }) => fixupUserSelection([value ?? null], precomputedValue)[0] ?? null,
 });
 
-/** Index column to split the waterfall into one subplot per value. null means a single waterfall. */
+/**
+ * Index column to split the waterfall into one subplot per value. null means a single waterfall.
+ * Columns whose values differ between the sources are groupable even when they are not filterable;
+ * groups present on only one side are then dropped by the view.
+ */
 export const selectedSubplotByAtom = persistableFixableAtom<string | null, string[]>({
     initialValue: null,
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) =>
-        get(availableIndicesWithValuesAtom).map((indexWithValues) => indexWithValues.indexColumn),
+        get(commonIndicesWithValuesAtom).map((indexWithValues) => indexWithValues.indexColumn),
     isValidFunction: ({ value, precomputedValue }) => value === null || precomputedValue.includes(value),
     fixupFunction: () => null,
 });

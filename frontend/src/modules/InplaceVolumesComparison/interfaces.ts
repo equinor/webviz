@@ -6,7 +6,10 @@ import { showTableAtom } from "./settings/atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
+    indexColumnsLeftUnfilteredAtom,
+    indexColumnsWithNoSelectedValuesAtom,
     indicesWithValuesForQueryAtom,
+    isIndexValueIntersectionActiveAtom,
     waterfallFactorSpecAtom,
 } from "./settings/atoms/derivedAtoms";
 import {
@@ -27,6 +30,12 @@ export type SettingsToViewInterface = {
     resultName: string | null;
     subplotBy: string | null;
     indicesWithValues: InplaceVolumesIndexWithValues_api[];
+    /** Index columns the sources disagree on that are compared unfiltered rather than intersected. */
+    indexColumnsLeftUnfiltered: string[];
+    /** True when the compared volumes are restricted to the index values shared by both sources. */
+    isIndexValueIntersectionActive: boolean;
+    /** Index filters with no selected value, which would exclude every row. */
+    indexColumnsWithNoSelectedValues: string[];
     waterfallFactorSpec: WaterfallFactorSpec | null;
     areSourcesDistinct: boolean;
     areSelectedTablesComparable: boolean;
@@ -45,6 +54,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     resultName: (get) => get(selectedResultNameAtom).value,
     subplotBy: (get) => get(selectedSubplotByAtom).value,
     indicesWithValues: (get) => get(indicesWithValuesForQueryAtom),
+    indexColumnsLeftUnfiltered: (get) => get(indexColumnsLeftUnfilteredAtom),
+    isIndexValueIntersectionActive: (get) => get(isIndexValueIntersectionActiveAtom),
+    indexColumnsWithNoSelectedValues: (get) => get(indexColumnsWithNoSelectedValuesAtom),
     waterfallFactorSpec: (get) => get(waterfallFactorSpecAtom),
     areSourcesDistinct: (get) => get(areSourcesDistinctAtom),
     areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),

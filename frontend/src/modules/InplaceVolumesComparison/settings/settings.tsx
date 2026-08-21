@@ -14,12 +14,13 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
 import { FLUID_INDEX_COLUMN } from "../view/utils/computeVolumeChangeDecomposition";
 
-import { showTableAtom } from "./atoms/baseAtoms";
+import { selectedIndexValueCriteriaAtom, showTableAtom } from "./atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
@@ -27,6 +28,9 @@ import {
     availableIndicesWithValuesAtom,
     availableReferenceTableNamesAtom,
     availableResultNamesAtom,
+    commonIndicesWithValuesAtom,
+    indexColumnDifferencesAtom,
+    indexColumnsWithNoSelectedValuesAtom,
     isCrossTableComparisonAtom,
     isSingleEnsembleComparisonAtom,
     waterfallFactorSpecAtom,
@@ -44,6 +48,14 @@ import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 const NO_SUBPLOT_VALUE = "__none__";
 
+/** Number of index values listed in the mismatch banner before the rest are elided. */
+const MAX_LISTED_INDEX_VALUES = 6;
+
+function formatIndexValueList(values: string[]): string {
+    const listed = values.slice(0, MAX_LISTED_INDEX_VALUES).join(", ");
+    return values.length > MAX_LISTED_INDEX_VALUES ? `${listed}, ... (${values.length} in total)` : listed;
+}
+
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
@@ -59,11 +71,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(selectedSubplotByAtom);
     const [selectedIndicesWithValues, setSelectedIndicesWithValues] = useAtom(selectedIndicesWithValuesAtom);
     const [showTable, setShowTable] = useAtom(showTableAtom);
+    const [selectedIndexValueCriteria, setSelectedIndexValueCriteria] = useAtom(selectedIndexValueCriteriaAtom);
 
     const availableReferenceTableNames = useAtomValue(availableReferenceTableNamesAtom);
     const availableComparisonTableNames = useAtomValue(availableComparisonTableNamesAtom);
     const availableResultNames = useAtomValue(availableResultNamesAtom);
     const availableIndicesWithValues = useAtomValue(availableIndicesWithValuesAtom);
+    const commonIndicesWithValues = useAtomValue(commonIndicesWithValuesAtom);
+    const indexColumnDifferences = useAtomValue(indexColumnDifferencesAtom);
+    const indexColumnsWithNoSelectedValues = useAtomValue(indexColumnsWithNoSelectedValuesAtom);
     const areSourcesDistinct = useAtomValue(areSourcesDistinctAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
     const waterfallFactorSpec = useAtomValue(waterfallFactorSpecAtom);
@@ -88,8 +104,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         : persistedReferenceEnsembleAnnotations;
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
-        statusWriter.addWarning("The selected table sources are not comparable.");
+        statusWriter.addWarning("The selected table sources share no index columns and are not comparable.");
     }
+
+    const isIndexValueIntersectionEnabled = selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION;
 
     const referenceTableNameOptions: ComboboxItem<string>[] = availableReferenceTableNames.map((name) => ({
         label: name,
@@ -108,7 +126,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const subplotByOptions: ComboboxItem<string>[] = [
         { label: "None (single waterfall)", value: NO_SUBPLOT_VALUE },
-        ...availableIndicesWithValues.map((index) => ({ label: index.indexColumn, value: index.indexColumn })),
+        ...commonIndicesWithValues.map((index) => ({ label: index.indexColumn, value: index.indexColumn })),
     ];
 
     function handleIndexValuesChange(indexColumn: string, values: string[]) {
@@ -253,8 +271,98 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 </Setting.Section>
 
                 <Setting.Section title="Filters" defaultOpen>
+                    {indexColumnDifferences.length > 0 && (
+                        <Banner tone="warning" layoutClassName="col-span-3">
+                            <strong>The two sources do not have the same indices.</strong>
+                            <ul className="mt-xs ml-md list-disc">
+                                {indexColumnDifferences.map((difference) => (
+                                    <li key={difference.indexColumn}>
+                                        <strong>{difference.indexColumn}</strong>
+                                        {difference.missingFrom !== null ? (
+                                            <> exists only in the {difference.missingFrom}, so it cannot be used.</>
+                                        ) : (
+                                            <>
+                                                {difference.referenceOnlyValues.length > 0 && (
+                                                    <>
+                                                        {" "}
+                                                        only in reference:{" "}
+                                                        {formatIndexValueList(difference.referenceOnlyValues)}.
+                                                    </>
+                                                )}
+                                                {difference.comparisonOnlyValues.length > 0 && (
+                                                    <>
+                                                        {" "}
+                                                        only in comparison:{" "}
+                                                        {formatIndexValueList(difference.comparisonOnlyValues)}.
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="mt-xs">
+                                {isIndexValueIntersectionEnabled
+                                    ? "Only values present in both are compared, so the totals below are for that shared subset and will not match the full-field volumes."
+                                    : "These indices are left unfiltered, so the full volume of both sources is compared and the difference in coverage shows up in the BULK contribution."}
+                            </div>
+                        </Banner>
+                    )}
+
+                    {commonIndicesWithValues.length > 0 && (
+                        <Setting.Field
+                            help={{
+                                title: "Compare shared index values only",
+                                content: (
+                                    <>
+                                        When the two sources offer different zones, regions or facies, this controls how
+                                        the mismatch is resolved.
+                                        <br />
+                                        <br />
+                                        <b>Off</b>: the mismatching index is left unfiltered. Both sources are compared
+                                        in full, so the anchor bars are the whole-field volumes and any difference in
+                                        coverage lands in the BULK contribution.
+                                        <br />
+                                        <br />
+                                        <b>On</b>: only values present in both are included, giving a like-for-like
+                                        comparison of the shared sub-domain. The anchor bars are then partial volumes
+                                        and will not match the reported field volumes.
+                                    </>
+                                ),
+                            }}
+                        >
+                            <SwitchCompositions.WithLabel
+                                checked={isIndexValueIntersectionEnabled}
+                                onCheckedChange={(checked) =>
+                                    setSelectedIndexValueCriteria(
+                                        checked
+                                            ? IndexValueCriteria.ALLOW_INTERSECTION
+                                            : IndexValueCriteria.REQUIRE_EQUALITY,
+                                    )
+                                }
+                                size="small"
+                            >
+                                Compare shared index values only
+                            </SwitchCompositions.WithLabel>
+                        </Setting.Field>
+                    )}
+
                     {availableIndicesWithValues.map((indexWithValues) => (
-                        <Setting.Field key={indexWithValues.indexColumn} label={indexWithValues.indexColumn} stacked>
+                        <Setting.Field
+                            key={indexWithValues.indexColumn}
+                            label={indexWithValues.indexColumn}
+                            stacked
+                            errorOverlay={
+                                indexWithValues.values.length === 0
+                                    ? "The two sources have no values in common for this index."
+                                    : undefined
+                            }
+                            annotations={
+                                indexColumnsWithNoSelectedValues.includes(indexWithValues.indexColumn)
+                                    ? [{ type: "error", message: "Select at least one value" }]
+                                    : undefined
+                            }
+                        >
                             <Select
                                 options={indexWithValues.values.map((value) => ({
                                     value,

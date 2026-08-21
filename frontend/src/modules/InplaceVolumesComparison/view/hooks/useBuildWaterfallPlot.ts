@@ -11,6 +11,9 @@ import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
+    indexColumnsLeftUnfilteredAtom,
+    indexColumnsWithNoSelectedValuesAtom,
+    isIndexValueIntersectionActiveAtom,
     referenceEnsembleIdentAtom,
     resultNameAtom,
     subplotByAtom,
@@ -40,8 +43,8 @@ export interface WaterfallResult {
     isFetching: boolean;
     /** User-facing message when the waterfall cannot be shown. */
     message: WaterfallMessage | null;
-    /** Non-blocking note shown alongside a rendered plot. */
-    warning: string | null;
+    /** Non-blocking notes shown alongside a rendered plot. */
+    warnings: string[];
     /** The plotted decompositions, for rendering the same numbers as a table. */
     groups: WaterfallGroupDecomposition[];
     endpointLabels: { referenceLabel: string; comparisonLabel: string } | null;
@@ -52,7 +55,7 @@ function makeInfoResult(text: string): WaterfallResult {
         plots: null,
         isFetching: false,
         message: { text, severity: "info" },
-        warning: null,
+        warnings: [],
         groups: [],
         endpointLabels: null,
     };
@@ -63,14 +66,14 @@ function makeErrorResult(text: string): WaterfallResult {
         plots: null,
         isFetching: false,
         message: { text, severity: "error" },
-        warning: null,
+        warnings: [],
         groups: [],
         endpointLabels: null,
     };
 }
 
 function makePendingResult(isFetching: boolean): WaterfallResult {
-    return { plots: null, isFetching, message: null, warning: null, groups: [], endpointLabels: null };
+    return { plots: null, isFetching, message: null, warnings: [], groups: [], endpointLabels: null };
 }
 
 const SINGLE_GROUP_KEY = "__single__";
@@ -84,13 +87,37 @@ type GroupStatistics = {
     targetBand: { low: number; high: number } | null;
 };
 
+function formatGroupList(groupLabels: string[]): string {
+    const listed = groupLabels.slice(0, MAX_LISTED_SKIPPED_GROUPS).join(", ");
+    return groupLabels.length > MAX_LISTED_SKIPPED_GROUPS ? `${listed}, ...` : listed;
+}
+
 function makeSkippedGroupsWarning(skippedGroupLabels: string[]): string | null {
     if (skippedGroupLabels.length === 0) {
         return null;
     }
-    const listed = skippedGroupLabels.slice(0, MAX_LISTED_SKIPPED_GROUPS).join(", ");
-    const elision = skippedGroupLabels.length > MAX_LISTED_SKIPPED_GROUPS ? ", ..." : "";
-    return `Could not decompose ${skippedGroupLabels.length} of the selected groups (${listed}${elision}). They are omitted from the plot.`;
+    return `Could not decompose ${skippedGroupLabels.length} of the selected groups (${formatGroupList(skippedGroupLabels)}). They are omitted from the plot.`;
+}
+
+/**
+ * A group present on only one side has no reference to measure the change from, so its change cannot
+ * be split into multiplicative factor contributions and it is dropped rather than plotted.
+ */
+function makeSingleSidedGroupsWarning(
+    referenceOnlyGroupLabels: string[],
+    comparisonOnlyGroupLabels: string[],
+): string | null {
+    if (referenceOnlyGroupLabels.length === 0 && comparisonOnlyGroupLabels.length === 0) {
+        return null;
+    }
+    const parts: string[] = [];
+    if (comparisonOnlyGroupLabels.length > 0) {
+        parts.push(`only in the comparison (${formatGroupList(comparisonOnlyGroupLabels)})`);
+    }
+    if (referenceOnlyGroupLabels.length > 0) {
+        parts.push(`only in the reference (${formatGroupList(referenceOnlyGroupLabels)})`);
+    }
+    return `No subplot is shown for groups present ${parts.join(" or ")}, since a change from or to nothing cannot be decomposed into factor contributions.`;
 }
 
 /**
@@ -178,6 +205,9 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
     const subplotByIndex = useAtomValue(subplotByAtom);
     const waterfallSources = useAtomValue(waterfallSourcesAtom);
+    const indexColumnsLeftUnfiltered = useAtomValue(indexColumnsLeftUnfilteredAtom);
+    const isIndexValueIntersectionActive = useAtomValue(isIndexValueIntersectionActiveAtom);
+    const indexColumnsWithNoSelectedValues = useAtomValue(indexColumnsWithNoSelectedValuesAtom);
 
     if (!referenceEnsembleIdent || !comparisonEnsembleIdent) {
         return makeInfoResult("Select a reference and a comparison ensemble.");
@@ -190,7 +220,12 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     }
     if (!areSelectedTablesComparable) {
         return makeErrorResult(
-            "The selected tables are not comparable due to mismatching result names or index columns.",
+            "The selected tables are not comparable: they have no result names or index columns in common.",
+        );
+    }
+    if (indexColumnsWithNoSelectedValues.length > 0) {
+        return makeInfoResult(
+            `Select at least one value for ${indexColumnsWithNoSelectedValues.join(", ")}. No data is included otherwise.`,
         );
     }
     if (!isWaterfallTargetResultName(resultName)) {
@@ -244,6 +279,13 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     // Compute a decomposition per group present in both ensembles.
     const groupKeys = Array.from(comparisonStatisticsByGroup.keys())
         .filter((groupKey) => referenceStatisticsByGroup.has(groupKey))
+        .sort((a, b) => a.localeCompare(b));
+
+    const comparisonOnlyGroupLabels = Array.from(comparisonStatisticsByGroup.keys())
+        .filter((groupKey) => groupKey !== SINGLE_GROUP_KEY && !referenceStatisticsByGroup.has(groupKey))
+        .sort((a, b) => a.localeCompare(b));
+    const referenceOnlyGroupLabels = Array.from(referenceStatisticsByGroup.keys())
+        .filter((groupKey) => groupKey !== SINGLE_GROUP_KEY && !comparisonStatisticsByGroup.has(groupKey))
         .sort((a, b) => a.localeCompare(b));
 
     const groupDecompositions: WaterfallGroupDecomposition[] = [];
@@ -306,11 +348,22 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         comparisonLabel,
     });
 
+    const warnings = [
+        isIndexValueIntersectionActive
+            ? "Only index values present in both sources are included, so the volumes shown are for that shared subset and do not match the full-field volumes."
+            : null,
+        indexColumnsLeftUnfiltered.length > 0
+            ? `The sources offer different values for ${indexColumnsLeftUnfiltered.join(", ")}. Both are compared unfiltered, so the difference in coverage is part of the BULK contribution.`
+            : null,
+        makeSingleSidedGroupsWarning(referenceOnlyGroupLabels, comparisonOnlyGroupLabels),
+        makeSkippedGroupsWarning(skippedGroupLabels),
+    ].filter((warning): warning is string => warning !== null);
+
     return {
         plots,
         isFetching: false,
         message: null,
-        warning: makeSkippedGroupsWarning(skippedGroupLabels),
+        warnings,
         groups: groupDecompositions,
         endpointLabels: { referenceLabel, comparisonLabel },
     };

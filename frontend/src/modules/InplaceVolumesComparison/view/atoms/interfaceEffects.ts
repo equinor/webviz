@@ -7,7 +7,10 @@ import {
     areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
     comparisonTableNameAtom,
+    indexColumnsLeftUnfilteredAtom,
+    indexColumnsWithNoSelectedValuesAtom,
     indicesWithValuesAtom,
+    isIndexValueIntersectionActiveAtom,
     referenceEnsembleIdentAtom,
     referenceTableNameAtom,
     resultNameAtom,
@@ -37,6 +40,15 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(indicesWithValuesAtom, getInterfaceValue("indicesWithValues"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(indexColumnsLeftUnfilteredAtom, getInterfaceValue("indexColumnsLeftUnfiltered"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(isIndexValueIntersectionActiveAtom, getInterfaceValue("isIndexValueIntersectionActive"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(indexColumnsWithNoSelectedValuesAtom, getInterfaceValue("indexColumnsWithNoSelectedValues"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(waterfallFactorSpecAtom, getInterfaceValue("waterfallFactorSpec"));

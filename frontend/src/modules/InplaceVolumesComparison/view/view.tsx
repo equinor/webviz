@@ -26,8 +26,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const waterfall = useBuildWaterfallPlot(ensembleSet, plotDivBoundingRect.width, plotDivBoundingRect.height);
 
     statusWriter.setLoading(waterfall.isFetching);
-    if (waterfall.warning) {
-        statusWriter.addWarning(waterfall.warning);
+    for (const warning of waterfall.warnings) {
+        statusWriter.addWarning(warning);
     }
 
     const infoMessage = waterfall.message?.severity === "info" ? waterfall.message.text : null;
