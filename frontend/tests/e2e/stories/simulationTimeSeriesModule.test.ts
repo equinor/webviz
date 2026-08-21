@@ -44,13 +44,13 @@ test.describe("Simulation Time Series module", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
+        // Shared setup (new session + ensemble selection) is narrated separately, in its own story.
+        await createSessionAndSelectEnsemble(page);
+
         markStep("Introduction");
         await narrate(
             "In this walkthrough we'll add the Simulation Time Series module to a new dashboard.",
         );
-
-        // Shared setup (new session + ensemble selection) is narrated separately, in its own story.
-        await createSessionAndSelectEnsemble(page);
 
         const moduleListItem = page.locator(`[title="${SIMULATION_TIME_SERIES}"]`).first();
         if (!(await moduleListItem.isVisible())) {
