@@ -12,6 +12,7 @@ import { createSectionWiseResampledPolylineWithSectionLengths } from "@modules/_
 import type { SeismicFenceData_trans } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { transformSeismicFenceData } from "@modules/_shared/Intersection/seismicIntersectionTransform";
 import { createSeismicFencePolylineFromPolylineXy } from "@modules/_shared/Intersection/seismicIntersectionUtils";
+import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 
 import type {
     CustomDataProviderImplementation,
@@ -52,7 +53,7 @@ export type IntersectionSeismicStoredData = {
     seismicFencePolylineWithSectionLengths: PolylineWithSectionLengths;
 };
 
-export type IntersectionSeismicData = SeismicFenceData_trans;
+export type IntersectionSeismicData = SeismicFenceData_trans & { source: { id: string; name: string } };
 
 export class IntersectionSeismicProvider implements CustomDataProviderImplementation<
     IntersectionSeismicSettings,
@@ -390,6 +391,8 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         IntersectionSeismicData,
         IntersectionSeismicStoredData
     >): Promise<IntersectionSeismicData> {
+        const sourceIntersection = assertNonNull(getSetting(Setting.INTERSECTION), "No intersection selected");
+
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization number selected");
         const attribute = assertNonNull(getSetting(Setting.ATTRIBUTE), "No attribute selected");
@@ -403,6 +406,11 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         if (seismicFencePolylineUtmXy.length < 4) {
             throw new Error("Invalid seismic fence polyline in stored data. Must contain at least two (x,y)-points");
         }
+
+        const source = {
+            id: makeFenceSourceId(sourceIntersection),
+            name: sourceIntersection.name,
+        };
 
         const apiSeismicFencePolyline = createSeismicFencePolylineFromPolylineXy(seismicFencePolylineUtmXy);
         const queryOptions = postGetSeismicFenceOptions({
@@ -419,7 +427,10 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
             },
         });
 
-        const seismicFenceDataPromise = fetchQuery(queryOptions).then(transformSeismicFenceData);
+        const seismicFenceDataPromise = fetchQuery(queryOptions).then((data) => ({
+            ...transformSeismicFenceData(data),
+            source,
+        }));
 
         return seismicFenceDataPromise;
     }

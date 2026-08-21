@@ -14,6 +14,8 @@ import { HoverTopic } from "@framework/HoverService";
 import type { HoverData } from "@framework/HoverService";
 import type { FlowDataColors } from "@framework/types/wellbore";
 import { InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
+import type { SeismicFenceMeshLayerPickingInfo } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
+import { SeismicFenceMeshLayer } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 
 import type { CategoricalReadout, ReadoutProperty } from "../components/Readout/types";
 import { AdjustedWellsLayer } from "../customDeckGlLayers/AdjustedWellsLayer";
@@ -126,6 +128,29 @@ function getTopicHoverDataFromPicks<TTopic extends keyof HoverData>(
 
             return { x, y, z: zValue } as HoverData[TTopic];
         }
+
+        case HoverTopic.FENCE: {
+            const fencePick = getInfoPickForLayer<SeismicFenceMeshLayerPickingInfo>(
+                pickingInfos,
+                SeismicFenceMeshLayer,
+            );
+
+            const fenceId = fencePick?.sourceFence?.id;
+            const lengthAlong = fencePick?.lengthAlongFence;
+
+            if (fenceId && lengthAlong) {
+                const payload: HoverData[HoverTopic.FENCE] = {
+                    fenceId: fenceId,
+                    lengthAlong,
+                    depth: fencePick.fenceDepth ?? null,
+                };
+
+                return payload as HoverData[TTopic];
+            }
+
+            return null;
+        }
+
         default:
             console.warn("Unsupported hover topic", topic);
             return null;

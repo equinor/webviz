@@ -12,6 +12,7 @@ import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/
 import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
 import { makeIntersectionRealizationGridLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeIntersectionRealizationGridLayer";
+import { makeIntersectionSeismicHoverVisualizationFunction } from "@modules/3DViewer/DataProviderFramework/visualization/makeIntersectionSeismicHoverVisualizationFunction";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
 import { makeSeismicSlicesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicSlicesLayer";
 import {
@@ -126,6 +127,7 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
         transformToVisualization: makeSeismicIntersectionMeshLayer,
         transformToAnnotations: makeColorScaleAnnotation,
         transformToBoundingBox: makeIntersectionSeismicBoundingBox,
+        transformToHoverVisualization: makeIntersectionSeismicHoverVisualizationFunction,
     },
 );
 

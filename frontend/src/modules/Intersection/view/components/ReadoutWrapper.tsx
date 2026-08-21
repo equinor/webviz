@@ -17,7 +17,10 @@ import { PositionReadout, type PositionCoordinates } from "@modules/_shared/comp
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 import type { Interfaces } from "@modules/Intersection/interfaces";
+
+import { inBounds } from "../utils/boundsUtils";
 
 const AXES_LABELS = { xLabel: "Length along", yLabel: "Depth" };
 
@@ -36,6 +39,7 @@ export type ReadoutWrapperProps = {
     layerIdToNameMap: Record<string, string>;
     viewport?: Viewport;
     bounds: Bounds;
+    focusBounds: Bounds | null;
     verticalScale: number;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
@@ -52,18 +56,15 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // Hover synchronization
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.WELLBORE_MD, props.hoverService, moduleInstanceId);
-    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
-    const [polylineHoverData, setPolylineHoverData] = useHover(
-        HoverTopic.POLYLINE_LENGTH_ALONG,
-        props.hoverService,
-        moduleInstanceId,
-    );
+    const [hoveredFence, setHoveredFence] = useHover(HoverTopic.FENCE, props.hoverService, moduleInstanceId);
 
-    // Extract wellbore and polyline id
+    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
+
+    // Extract wellbore and fence id
     const wellboreUuid =
         props.intersectionSource?.type === IntersectionType.WELLBORE ? props.intersectionSource.uuid : null;
-    const polylineId =
-        props.intersectionSource?.type === IntersectionType.CUSTOM_POLYLINE ? props.intersectionSource.uuid : null;
+
+    const fenceSourceId = props.intersectionSource ? makeFenceSourceId(props.intersectionSource) : null;
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -103,9 +104,11 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 position.y >= props.bounds.y[0] - depthThreshold &&
                 position.y <= props.bounds.y[1] + depthThreshold;
 
-            if (polylineId) {
-                const polylineHoverData = isValidCursorPosition ? { polylineId, lengthAlong: position.x } : null;
-                setPolylineHoverData(polylineHoverData);
+            if (fenceSourceId) {
+                const fenceHoverData = isValidCursorPosition
+                    ? { fenceId: fenceSourceId, lengthAlong: position.x, depth: position.y }
+                    : null;
+                setHoveredFence(fenceHoverData);
             }
 
             if (!isValidCursorPosition || !props.referenceSystem || !position) {
@@ -118,19 +121,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
         },
         [
-            polylineId,
-            props.bounds,
-            props.verticalScale,
             props.viewport,
+            props.verticalScale,
+            props.bounds.y,
+            props.bounds.x,
             props.referenceSystem,
-            setPolylineHoverData,
-            setMouseCursorUtmCoordinate,
+            fenceSourceId,
+            setHoveredFence,
         ],
     );
 
     const handleReadoutItemsChange = React.useCallback(
         function handleReadoutItemsChange(event: EsvIntersectionReadoutEvent): void {
             const items = event.readoutItems;
+
             const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
 
             publishWellboreHoverEvent(wellboreReadoutItem?.md ?? null);
@@ -159,19 +163,31 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         });
     }
 
-    // External hover on polyline
+    // External hover on fence
     // - vertical red line at the length-along position
-    if (polylineId && !isLocallyHoveringRef.current && polylineHoverData?.polylineId === polylineId) {
-        const yExtension = Math.abs(props.bounds.y[1] - props.bounds.y[0]) * 0.1;
+    if (fenceSourceId && !isLocallyHoveringRef.current && hoveredFence?.fenceId === fenceSourceId) {
+        const bounds = props.focusBounds ?? props.bounds;
+
+        const yExtension = Math.abs(bounds.y[1] - bounds.y[0]) * 0.01;
+
         highlightItems.push({
             shape: HighlightItemShape.LINE,
             line: [
-                [polylineHoverData.lengthAlong, props.bounds.y[0] - yExtension],
-                [polylineHoverData.lengthAlong, props.bounds.y[1] + yExtension],
+                [hoveredFence.lengthAlong, bounds.y[0] - yExtension],
+                [hoveredFence.lengthAlong, bounds.y[1] + yExtension],
             ],
             color: "red",
             paintOrder: 5,
         });
+
+        if (hoveredFence.depth && inBounds([hoveredFence.lengthAlong, hoveredFence.depth], bounds)) {
+            highlightItems.push({
+                shape: HighlightItemShape.CROSS,
+                center: [hoveredFence.lengthAlong, hoveredFence.depth],
+                color: "red",
+                paintOrder: 5,
+            });
+        }
     }
 
     return (
