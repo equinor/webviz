@@ -61,7 +61,9 @@ Read more: https://playwright.dev/docs/codegen-intro
 Stories live in `tests/e2e/stories/`. To create a new story using Playwright Codegen:
 
 1. Start the full docker development stack:
-   `docker-compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up`
+   ```bash
+   docker-compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
+   ```
 2. Give the backend access to Drogon Sumo data using the test user. You can do this by first ensuring
    the environment variable `SHARED_KEY_DROGON_READ_PROD` is set and then run
    ```bash
@@ -80,7 +82,7 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
 6. Add named step markers at the meaningful points in a walkthrough with `markStep("Step title")`.
 7. Verify with
    ```bash
-      npm run test:e2e:record --prefix ./frontend
+   npm run test:e2e:record --prefix ./frontend
    ```
 
 ## Component tests
