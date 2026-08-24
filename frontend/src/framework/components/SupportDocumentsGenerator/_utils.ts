@@ -18,7 +18,7 @@ export async function makeErrorFile(
     }
 
     stackTrace ||= error.stack || "Stack not available";
-    componentStack ||= "Stack no available";
+    componentStack ||= "Stack not available";
 
     return {
         filename: "report_error_details.txt",

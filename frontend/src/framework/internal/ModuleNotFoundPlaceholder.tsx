@@ -56,8 +56,7 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
                 >
                     The module is no longer available and might have been removed from the application. You can safely
                     remove the module instance by clicking on the cross in its header. If you are wondering why this
-                    module has been removed, please get in touch with us on For general thoughts and comments, you can
-                    contact us on{" "}
+                    module has been removed, please get in touch with us on{" "}
                     <a className="inline-anchor" href={SLACK_HREF} target="_blank" rel="noopener noreferrer">
                         Slack
                     </a>{" "}

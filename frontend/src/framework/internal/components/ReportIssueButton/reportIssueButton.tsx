@@ -16,7 +16,6 @@ export type ReportIssueButtonProps = {
     session: WorkbenchSession | null;
     componentStack: string | null | undefined;
     details?: React.ReactNode;
-    title?: string;
     buttonSize?: ButtonProps["size"];
     dialogStacked?: boolean;
 };
@@ -49,8 +48,8 @@ export function ReportIssueButton(props: ReportIssueButtonProps): React.ReactNod
                         ServiceNow <OpenInNew />
                     </a>
                     . Please provide as much detail as possible to explain what caused the error to happen, as this will
-                    help us identify issue. You can use the button below to generate some extra debugging files to add
-                    to the report.
+                    help us identify the issue. You can also use the button below to generate some extra debugging files
+                    to add to the report.
                 </Dialog.Body>
 
                 <Dialog.Actions>

@@ -31,7 +31,7 @@ export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFo
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!includeStackTrace && !includeSession) return props.onFilesGenerated?.(false);
+        if (!includeStackTrace && !includeSession && !includeUserAgent) return props.onFilesGenerated?.(false);
 
         setIsGenerating(true);
 
@@ -40,16 +40,21 @@ export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFo
         const sessionFile = includeSession ? await makeSessionStateFile(props.session) : null;
 
         const files = [errorFile, sessionFile, userAgentFile].filter((v) => v != null);
-
-        if (files.length) {
-            await downloadFilesZip(files, createZipFilename("error_report"));
-            toastManager.add({ title: "Generated files", type: "success" });
-            props.onFilesGenerated?.(true);
-        } else {
-            toastManager.add({ title: "No data available for download", type: "default" });
+        try {
+            if (files.length) {
+                await downloadFilesZip(files, createZipFilename("error_report"));
+                toastManager.add({ title: "Generated files", type: "success" });
+                props.onFilesGenerated?.(true);
+            } else {
+                toastManager.add({ title: "No data available for download", type: "default" });
+                props.onFilesGenerated?.(false);
+            }
+        } catch {
+            toastManager.add({ title: "Failed to generate files", type: "error" });
             props.onFilesGenerated?.(false);
+        } finally {
+            setIsGenerating(false);
         }
-        setIsGenerating(false);
     }
 
     return (
@@ -97,7 +102,7 @@ export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFo
                 iconPosition="end"
                 size="small"
                 icon={isGenerating ? <CircularProgress /> : <FileDownload fontSize="inherit" />}
-                disabled={!includeSession && !includeStackTrace}
+                disabled={!includeSession && !includeStackTrace && !includeUserAgent}
             >
                 Generate
             </Button>

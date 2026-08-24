@@ -61,7 +61,7 @@ export function FeedbackDialog(props: { iconOnly?: boolean; workbench: Workbench
                         </a>{" "}
                         or{" "}
                         <a className="inline-anchor" href={GITHUB_HREF} target="_blank" rel="noopener noreferrer">
-                            Github
+                            GitHub
                         </a>
                         .
                     </Paragraph>
