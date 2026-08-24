@@ -230,7 +230,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     async deserializeContentState(contentState: SerializedWorkbenchSessionContentState): Promise<void> {
         this._isPersisted = this._id !== null;
-        this._activeDashboardId = contentState.activeDashboardId;
+        this._activeDashboardId = null;
 
         this.clearDashboards();
 
@@ -281,6 +281,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             newDashboard.deserializeState(dashboard);
         }
 
+        this.setActiveDashboard(contentState.activeDashboardId ?? this._dashboards[0]?.getId() ?? null);
         this._settings.deserializeState(contentState.settings);
         this._userCreatedItems.deserializeState(contentState.userCreatedItems);
     }
@@ -332,9 +333,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     getActiveDashboard(): Dashboard | null {
-        if (!this._activeDashboardId && this._dashboards.length > 0) {
-            this._activeDashboardId = this._dashboards[0].getId();
-        }
         const found = this._dashboards.find((d) => d.getId() === this._activeDashboardId);
         return found ?? null;
     }
@@ -390,6 +388,25 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             }
             this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
         }
+    }
+
+    moveDashboard(dashboardId: string, newIndex: number): void {
+        this.assertIsNotSnapshot();
+        const currentIndex = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+        if (currentIndex === -1) {
+            throw new Error("Dashboard not registered in this session");
+        }
+
+        const clampedIndex = Math.max(0, Math.min(newIndex, this._dashboards.length - 1));
+        if (clampedIndex === currentIndex) {
+            return;
+        }
+
+        const [dashboard] = this._dashboards.splice(currentIndex, 1);
+        this._dashboards.splice(clampedIndex, 0, dashboard);
+
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this.handleStateChange();
     }
 
     getDashboards(): Dashboard[] {

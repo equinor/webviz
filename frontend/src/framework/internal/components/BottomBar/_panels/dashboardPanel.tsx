@@ -1,6 +1,16 @@
 import React from "react";
 
-import { Add, ChevronLeft, ChevronRight, Close, Edit, MoreVert } from "@mui/icons-material";
+import {
+    Add,
+    ArrowDropDown,
+    ChevronLeft,
+    ChevronRight,
+    Close,
+    Description,
+    DragIndicator,
+    Edit,
+    MoreVert,
+} from "@mui/icons-material";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { Dashboard } from "@framework/internal/Dashboard";
@@ -21,6 +31,7 @@ import { TextInput } from "@lib/components/TextInput";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
 
@@ -119,6 +130,80 @@ export function DashboardPanel(props: DashboardPanelProps) {
         [workbenchSession],
     );
 
+    const [draggedDashboardId, setDraggedDashboardId] = React.useState<string | null>(null);
+    const [dropTarget, setDropTarget] = React.useState<{ dashboardId: string; insertAfter: boolean } | null>(null);
+    const dragImageRef = React.useRef<HTMLDivElement>(null);
+
+    // Native HTML5 drag-and-drop, not SortableList: SortableList's ghost-clone mechanism duplicates
+    // the dragged element into a portal, which breaks Tabs.Tab (a stateful base-ui component that
+    // registers with Tabs.Root/Tabs.Indicator) - two simultaneously-mounted instances with the same
+    // value fight over the active-tab indicator's positioning and cause a render loop. Native DnD
+    // never clones the element, so it doesn't hit that problem.
+    const handleDashboardDragStart = React.useCallback(function handleDashboardDragStart(
+        dashboardId: string,
+        event: React.DragEvent,
+    ) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", dashboardId);
+        if (dragImageRef.current) {
+            event.dataTransfer.setDragImage(dragImageRef.current, 12, 12);
+        }
+        setDraggedDashboardId(dashboardId);
+    }, []);
+
+    const handleDashboardDragOver = React.useCallback(function handleDashboardDragOver(
+        dashboardId: string,
+        event: React.DragEvent,
+    ) {
+        if (!draggedDashboardId || draggedDashboardId === dashboardId) {
+            return;
+        }
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+
+        const rect = event.currentTarget.getBoundingClientRect();
+        const insertAfter = event.clientX - rect.left > rect.width / 2;
+        setDropTarget((prev) => {
+            if (prev?.dashboardId === dashboardId && prev.insertAfter === insertAfter) {
+                return prev;
+            }
+            return { dashboardId, insertAfter };
+        });
+    },
+    [draggedDashboardId]);
+
+    const handleDashboardDrop = React.useCallback(
+        function handleDashboardDrop(targetDashboardId: string, event: React.DragEvent) {
+            event.preventDefault();
+            const draggedId = event.dataTransfer.getData("text/plain");
+            const insertAfter = dropTarget?.dashboardId === targetDashboardId && dropTarget.insertAfter;
+            setDraggedDashboardId(null);
+            setDropTarget(null);
+
+            if (!draggedId || draggedId === targetDashboardId) {
+                return;
+            }
+            const draggedIndex = dashboards.findIndex((d) => d.getId() === draggedId);
+            const targetIndex = dashboards.findIndex((d) => d.getId() === targetDashboardId);
+            if (draggedIndex === -1 || targetIndex === -1) {
+                return;
+            }
+
+            // moveDashboard's newIndex is a position in the array *after* the dragged item has
+            // already been removed - shift the target index down by one when the dragged item
+            // currently sits before it, since removing it closes that gap.
+            const postRemovalTargetIndex = targetIndex - (draggedIndex < targetIndex ? 1 : 0);
+            const newIndex = insertAfter ? postRemovalTargetIndex + 1 : postRemovalTargetIndex;
+            workbenchSession.moveDashboard(draggedId, newIndex);
+        },
+        [dashboards, dropTarget, workbenchSession],
+    );
+
+    const handleDashboardDragEnd = React.useCallback(function handleDashboardDragEnd() {
+        setDraggedDashboardId(null);
+        setDropTarget(null);
+    }, []);
+
     const handleAddDashboardClick = React.useCallback(
         function handleAddDashboardClick() {
             workbenchSession.addDashboard();
@@ -156,7 +241,7 @@ export function DashboardPanel(props: DashboardPanelProps) {
                 </Button>
                 <div
                     ref={tabsScrollContainerRef}
-                    className="scrollbar-none min-w-0 snap-x snap-mandatory overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    className="min-w-0 snap-x snap-mandatory scrollbar-none overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                 >
                     <Tabs.Root
                         ref={tabsContentRef}
@@ -170,12 +255,25 @@ export function DashboardPanel(props: DashboardPanelProps) {
                                     key={dashboard.getId()}
                                     dashboard={dashboard}
                                     isOnlyDashboard={dashboards.length === 1}
+                                    draggable={!isSnapshot}
+                                    isDragged={draggedDashboardId === dashboard.getId()}
+                                    dropIndicatorSide={
+                                        dropTarget?.dashboardId === dashboard.getId()
+                                            ? dropTarget.insertAfter
+                                                ? "after"
+                                                : "before"
+                                            : null
+                                    }
                                     onDelete={() => {
                                         handleRemoveDashboardClick(dashboard.getId());
                                     }}
                                     onEdit={() => {
                                         handleEditDashboardClick(dashboard.getId());
                                     }}
+                                    onDragStart={(e) => handleDashboardDragStart(dashboard.getId(), e)}
+                                    onDragOver={(e) => handleDashboardDragOver(dashboard.getId(), e)}
+                                    onDrop={(e) => handleDashboardDrop(dashboard.getId(), e)}
+                                    onDragEnd={handleDashboardDragEnd}
                                 />
                             ))}
                         </Tabs.List>
@@ -215,6 +313,17 @@ export function DashboardPanel(props: DashboardPanelProps) {
                     onClose={() => setEditingDashboard(null)}
                 />
             )}
+            {/* Custom drag image (a generic document icon, rather than the tiny drag handle icon
+                itself) used via dataTransfer.setDragImage in handleDashboardDragStart. Rendered
+                off-screen since it only needs to exist as a DOM node for the browser to snapshot. */}
+            <div
+                ref={dragImageRef}
+                className="bg-surface border-neutral-subtle text-accent-strong pointer-events-none fixed flex h-6 w-6 items-center justify-center rounded border shadow"
+                style={{ left: -9999, top: 0 }}
+                aria-hidden
+            >
+                <Description fontSize="small" />
+            </div>
         </div>
     );
 }
@@ -222,8 +331,15 @@ export function DashboardPanel(props: DashboardPanelProps) {
 type DashboardTabProps = {
     dashboard: Dashboard;
     isOnlyDashboard: boolean;
+    draggable: boolean;
+    isDragged: boolean;
+    dropIndicatorSide: "before" | "after" | null;
     onDelete: () => void;
     onEdit: () => void;
+    onDragStart: (event: React.DragEvent) => void;
+    onDragOver: (event: React.DragEvent) => void;
+    onDrop: (event: React.DragEvent) => void;
+    onDragEnd: () => void;
 };
 
 function DashboardTab(props: DashboardTabProps) {
@@ -262,7 +378,33 @@ function DashboardTab(props: DashboardTabProps) {
     return (
         <>
             <Tooltip content={props.dashboard.getMetadata().name} side="bottom">
-                <Tabs.Tab value={props.dashboard.getId()} layoutClassName="flex items-center gap-x-xs snap-start">
+                <Tabs.Tab
+                    value={props.dashboard.getId()}
+                    layoutClassName={resolveClassNames("relative flex items-center gap-x-xs snap-start", {
+                        "opacity-50": props.isDragged,
+                    })}
+                    onDragOver={props.onDragOver}
+                    onDrop={props.onDrop}
+                >
+                    {props.dropIndicatorSide && (
+                        <ArrowDropDown
+                            fontSize="small"
+                            className={resolveClassNames("text-accent-strong pointer-events-none absolute -top-3xs", {
+                                "-left-3xs": props.dropIndicatorSide === "before",
+                                "-right-3xs": props.dropIndicatorSide === "after",
+                            })}
+                        />
+                    )}
+                    <span
+                        draggable={props.draggable}
+                        onDragStart={props.onDragStart}
+                        onDragEnd={props.onDragEnd}
+                        className={resolveClassNames("flex items-center", {
+                            "cursor-grab": props.draggable,
+                        })}
+                    >
+                        <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                    </span>
                     <span className="truncate">{metadata.name}</span>
                     <Menu.Root>
                         <Menu.Trigger>
@@ -389,7 +531,7 @@ function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogProps) {
         <>
             <Dialog.Popup open={true} onOpenChange={handleCancel} minWidth={400}>
                 <Dialog.Header closeIconVisible>
-                    <Dialog.Title>Edit dashboard name and title</Dialog.Title>
+                    <Dialog.Title>Edit dashboard name and description</Dialog.Title>
                 </Dialog.Header>
                 <Form onSubmit={handleSubmit} id={formId}>
                     <Dialog.Body layoutClassName="flex flex-col gap-y-sm">

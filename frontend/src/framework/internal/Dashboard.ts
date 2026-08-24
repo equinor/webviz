@@ -1,3 +1,4 @@
+import { nanoid } from "nanoid";
 import { v4 } from "uuid";
 
 import type { Template } from "@framework/TemplateRegistry";
@@ -9,6 +10,7 @@ import { ModuleInstanceTopic, type ModuleInstance } from "../ModuleInstance";
 import { ModuleRegistry } from "../ModuleRegistry";
 
 import type { SerializedDashboardState } from "./Dashboard.schema";
+import { DASHBOARD_ID_LENGTH } from "./persistence/constants";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -55,7 +57,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _cachedState: SerializedDashboardState | null = null;
 
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
-        this._id = v4();
+        this._id = nanoid(DASHBOARD_ID_LENGTH);
         this._metadata = { name: name ?? "Dashboard" };
 
         this._atomStoreMaster = atomStoreMaster;
@@ -118,6 +120,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     serializeState(): SerializedDashboardState {
+        if (this._cachedState) {
+            return this._cachedState;
+        }
+
         const moduleInstances = this._moduleInstances.map((moduleInstance) => {
             const moduleInstanceState = moduleInstance.serializeState();
 
@@ -334,7 +340,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     // renders. Do not "fix" this method in a way that breaks that ordering.
     static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
-        dashboard._id = v4();
         dashboard._metadata = {
             name: template.name,
             description: template.description,
