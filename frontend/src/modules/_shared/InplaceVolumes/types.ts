@@ -38,6 +38,17 @@ export enum TableOriginKey {
     FLUID = "FLUID",
 }
 
+// Properties that are only defined for one specific fluid. The backend discards these results when
+// the fluids are summed, so the data must be grouped by FLUID for them to be computed at all.
+export const FLUID_SPECIFIC_RESULT_NAMES: Record<string, string> = {
+    BO: "oil",
+    BG: "gas",
+};
+
+export function isFluidSpecificResultName(resultName: string | null): boolean {
+    return resultName !== null && resultName in FLUID_SPECIFIC_RESULT_NAMES;
+}
+
 export type StatisticalColumns = Partial<{
     [key in InplaceVolumesStatistic_api]: Column<number>;
 }>;
