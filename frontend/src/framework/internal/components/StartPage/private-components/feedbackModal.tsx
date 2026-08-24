@@ -74,9 +74,7 @@ export function FeedbackDialog(props: { iconOnly?: boolean; workbench: Workbench
                 </Dialog.Body>
 
                 <Dialog.Actions>
-                    <SupportDocumentsGenerator error={null} activeWorkbench={props.workbench} componentStack={null}>
-                        Get debugging info
-                    </SupportDocumentsGenerator>
+                    <SupportDocumentsGenerator error={null} activeWorkbench={props.workbench} componentStack={null} />
                     <Button tone="accent" onClick={() => setOpen(false)}>
                         Close
                     </Button>

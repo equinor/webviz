@@ -2,7 +2,10 @@ import type { Workbench } from "@framework/Workbench";
 import type { DownloadFile } from "@lib/utils/downloadUtils";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
-export async function makeErrorFile(error: Error | null, componentStack: string | null): Promise<DownloadFile | null> {
+export async function makeErrorFile(
+    error: Error | null,
+    componentStack: string | null | undefined,
+): Promise<DownloadFile | null> {
     if (!error) return null;
 
     let stackTrace;

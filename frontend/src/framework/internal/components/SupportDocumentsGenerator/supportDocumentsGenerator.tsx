@@ -1,129 +1,41 @@
 import React from "react";
 
-import { FileDownload } from "@mui/icons-material";
-
-import { toastManager } from "@framework/toastManager";
 import type { Workbench } from "@framework/Workbench";
-import { Button } from "@lib/components/Button";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CircularProgress } from "@lib/components/CircularProgress";
-import { Field } from "@lib/components/Field";
-import { Form } from "@lib/components/Form";
 import { Popover } from "@lib/components/Popover";
-import { createZipFilename, downloadFilesZip } from "@lib/utils/downloadUtils";
 
-import { makeErrorFile, makeSessionStateFile, makeUserAgentFile } from "./_utils";
+import { SupportDocumentsGeneratorForm } from "./supportDocumentsGeneratorForm";
 
 export type SupportDocumentsGeneratorProps = {
     error: Error | null;
     activeWorkbench: Workbench | null;
-    componentStack: string | null;
+    componentStack: string | null | undefined;
     children?: React.ReactNode;
 };
 
 export function SupportDocumentsGenerator(props: SupportDocumentsGeneratorProps): React.ReactNode {
-    const hasActiveSession = props.activeWorkbench?.getSessionManager().hasActiveSession() ?? false;
-
-    const [isGenerating, setIsGenerating] = React.useState(false);
     const [popoverOpen, setPopoverOpen] = React.useState(false);
-
-    const [includeStackTrace, setIncludeStackTrace] = React.useState(true);
-    const [includeUserAgent, setIncludeUserAgent] = React.useState(true);
-    const [includeSession, setIncludeSession] = React.useState(hasActiveSession);
-
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!includeStackTrace && !includeSession) return;
-
-        setIsGenerating(true);
-
-        const errorFile = includeStackTrace ? await makeErrorFile(props.error, props.componentStack) : null;
-        const userAgentFile = includeUserAgent ? await makeUserAgentFile() : null;
-        const sessionFile = includeSession ? await makeSessionStateFile(props.activeWorkbench) : null;
-
-        const files = [errorFile, sessionFile, userAgentFile].filter((v) => v != null);
-
-        if (files.length) {
-            await downloadFilesZip(files, createZipFilename("error_report"));
-            toastManager.add({ title: "Generated files", type: "success" });
-        } else {
-            toastManager.add({ title: "No data available for download", type: "default" });
-        }
-
-        setIsGenerating(false);
-        setPopoverOpen(false);
-    }
 
     return (
         <Popover.Root
             open={popoverOpen}
             onOpenChange={(newValue) => {
                 setPopoverOpen(newValue);
-                if (newValue) {
-                    setIncludeStackTrace(true);
-                    setIncludeUserAgent(true);
-                    setIncludeSession(hasActiveSession);
-                }
             }}
         >
             <Popover.Trigger variant="ghost" tone="neutral">
-                {props.children ?? "Generate debugging attachments"}
+                {props.children ?? "Generate debugging files"}
             </Popover.Trigger>
 
             <Popover.Popup side="top" align="end">
                 <Popover.Title>
                     Include the generated file(s) in your report to help us troubleshoot your issue!
                 </Popover.Title>
-                <Form onSubmit={handleSubmit} layoutClassName="mb-[2px]">
-                    <Field.Root layoutClassName="flex flex-row items-start gap-2xs">
-                        <Checkbox size="small" checked={includeUserAgent} onCheckedChange={setIncludeUserAgent} />
-                        <div className="pt-4xs">
-                            <Field.Label>Include system details</Field.Label>
-                            <Field.Description>
-                                This will include information about your browser and system, which can help us identify
-                                environment-specific issues.
-                            </Field.Description>
-                        </div>
-                    </Field.Root>
-
-                    {props.error && (
-                        <Field.Root layoutClassName="flex flex-row items-start gap-2xs">
-                            <Checkbox size="small" checked={includeStackTrace} onCheckedChange={setIncludeStackTrace} />
-                            <div className="pt-4xs">
-                                <Field.Label>Include error details</Field.Label>
-                                <Field.Description>
-                                    This will include the error message and stack trace, which can help us identify the
-                                    source of the problem.
-                                </Field.Description>
-                            </div>
-                        </Field.Root>
-                    )}
-
-                    {hasActiveSession && (
-                        <Field.Root layoutClassName="mt-xs flex flex-row items-start gap-2xs">
-                            <Checkbox size="small" checked={includeSession} onCheckedChange={setIncludeSession} />
-                            <div className="pt-4xs">
-                                <Field.Label>Include session settings</Field.Label>
-                                <Field.Description>
-                                    This will include the current dashboard settings, which can help us reproduce your
-                                    issue. Be mindful that this might include sensitive information, such as parameter
-                                    and property names
-                                </Field.Description>
-                            </div>
-                        </Field.Root>
-                    )}
-
-                    <Button
-                        type="submit"
-                        layoutClassName="mt-sm ml-auto block!"
-                        iconPosition="end"
-                        size="small"
-                        icon={isGenerating ? <CircularProgress /> : <FileDownload fontSize="inherit" />}
-                        disabled={!includeSession && !includeStackTrace}
-                    >
-                        Generate
-                    </Button>
-                </Form>
+                <SupportDocumentsGeneratorForm
+                    error={props.error}
+                    activeWorkbench={props.activeWorkbench}
+                    componentStack={props.componentStack}
+                    onFilesGenerated={(success) => setPopoverOpen(!success)}
+                />
             </Popover.Popup>
         </Popover.Root>
     );
