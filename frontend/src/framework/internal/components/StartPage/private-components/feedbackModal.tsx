@@ -3,14 +3,13 @@ import React from "react";
 import { Icon } from "@equinor/eds-core-react";
 import { comment_discussion } from "@equinor/eds-icons";
 
+import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
 import { GITHUB_HREF, SERVICE_NOW_HREF, SLACK_HREF, VIVA_ENGAGE_HREF } from "@framework/utils/externalUrls";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Paragraph } from "@lib/components/Typography/compositions";
-
-import { SupportDocumentsGenerator } from "../../SupportDocumentsGenerator";
 
 Icon.add({ comment_discussion });
 

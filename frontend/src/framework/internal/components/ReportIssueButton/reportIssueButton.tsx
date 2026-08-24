@@ -2,6 +2,7 @@ import React from "react";
 
 import { BugReport, OpenInNew } from "@mui/icons-material";
 
+import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
 import { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
@@ -9,8 +10,6 @@ import type { ButtonProps } from "@lib/components/Button";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Separator } from "@lib/components/Separator";
-
-import { SupportDocumentsGenerator } from "../SupportDocumentsGenerator";
 
 export type ReportIssueButtonProps = {
     error: Error | null;

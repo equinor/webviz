@@ -2,7 +2,7 @@ import React from "react";
 
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
-import { SupportDocumentsGenerator } from "@framework/internal/components/SupportDocumentsGenerator";
+import { SupportDocumentsGenerator } from "@framework/components/SupportDocumentsGenerator";
 import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
