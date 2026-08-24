@@ -1,4 +1,4 @@
-import type { Workbench } from "@framework/Workbench";
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { DownloadFile } from "@lib/utils/downloadUtils";
 import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
@@ -48,24 +48,21 @@ Pixel Ratio: ${window.devicePixelRatio}`,
     };
 }
 
-export async function makeSessionStateFile(workbench: Workbench | null): Promise<DownloadFile | null> {
-    if (!workbench) return null;
+export async function makeSessionStateFile(session: PrivateWorkbenchSession | null): Promise<DownloadFile | null> {
+    if (!session) return null;
 
-    const activeSession = workbench.getSessionManager().getActiveSessionOrNull();
     let content = "No session loaded";
 
-    if (activeSession) {
-        try {
-            const serializedState = activeSession.serializeContentState();
-            content = JSON.stringify(serializedState, null, 2);
-        } catch (err) {
-            if (typeof err === "string") {
-                content = `!! Error while serializing state: ${err} `;
-            } else if (err instanceof Error) {
-                content = `!! Error while serializing state: ${err.name}::${err.message} `;
-            } else {
-                content = "!! Error while serializing state: unknown";
-            }
+    try {
+        const serializedState = session.serializeContentState();
+        content = JSON.stringify(serializedState, null, 2);
+    } catch (err) {
+        if (typeof err === "string") {
+            content = `!! Error while serializing state: ${err} `;
+        } else if (err instanceof Error) {
+            content = `!! Error while serializing state: ${err.name}::${err.message} `;
+        } else {
+            content = "!! Error while serializing state: unknown";
         }
     }
 

@@ -1,11 +1,10 @@
 import React from "react";
 
-import { BugReport, Info, OpenInNew, Refresh } from "@mui/icons-material";
+import { Info, Refresh } from "@mui/icons-material";
 
 import crashIllustration from "@assets/moduleCrash.svg";
 
-import { SupportDocumentsGenerator } from "@framework/internal/components/SupportDocumentsGenerator";
-import { makeServiceNowErrorReportUrl } from "@framework/utils/makeServiceNowErrorReportUrl";
+import { ReportIssueButton } from "@framework/internal/components/ReportIssueButton";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Code } from "@lib/components/Code";
@@ -57,7 +56,6 @@ function formatStack(stack: string): React.ReactNode {
 
 export function CrashView(props: FormattedErrorProps): React.ReactNode {
     const [showDetails, setShowDetails] = React.useState<boolean>(false);
-    const [showErrorReportDialog, setShowErrorReportDialog] = React.useState(false);
 
     const handleReload = () => {
         if (!props.onReload) {
@@ -102,56 +100,22 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
                         <Info fontSize="inherit" /> Show details
                     </Button>
 
-                    <Button size="small" variant="ghost" tone="neutral" onClick={() => setShowErrorReportDialog(true)}>
-                        <BugReport fontSize="inherit" /> Report error
-                    </Button>
+                    <ReportIssueButton
+                        buttonSize="small"
+                        error={props.error}
+                        session={props.workbench.getSessionManager().getActiveSessionOrNull()}
+                        componentStack={props.errorInfo.componentStack}
+                        details={
+                            <>
+                                <Heading as="h6" weight="bolder">
+                                    {props.moduleName} crashed with the following error:
+                                </Heading>
+                                <Code layoutClassName="mt-xs">{props.error.message}</Code>
+                            </>
+                        }
+                    />
                 </div>
             </div>
-            <Dialog.Popup width={500} open={showErrorReportDialog} onOpenChange={setShowErrorReportDialog}>
-                <Dialog.Header>
-                    <Dialog.Title>Report Error</Dialog.Title>
-                    <Dialog.Close />
-                </Dialog.Header>
-
-                <Dialog.Body>
-                    <Heading as="h6" weight="bolder">
-                        {props.moduleName} crashed with the following error:
-                    </Heading>
-                    <Code layoutClassName="mt-xs">{props.error.message}</Code>
-                </Dialog.Body>
-
-                <Separator layoutClassName="mx-sm" />
-                <Dialog.Body>
-                    Errors should be reported on{" "}
-                    <a
-                        className="inline-anchor"
-                        href={makeServiceNowErrorReportUrl().href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        ServiceNow <OpenInNew />
-                    </a>
-                    . Please provide as much detail as possible to explain what caused the error to happen, as this will
-                    help us identify issue. You can use the button below to generate some extra debugging files to add
-                    to the report.
-                </Dialog.Body>
-
-                <Dialog.Actions>
-                    <SupportDocumentsGenerator
-                        error={props.error}
-                        activeWorkbench={props.workbench}
-                        componentStack={props.errorInfo.componentStack}
-                    />
-                    <Button.AsLink
-                        href={makeServiceNowErrorReportUrl().href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        external
-                    >
-                        ServiceNow
-                    </Button.AsLink>
-                </Dialog.Actions>
-            </Dialog.Popup>
 
             {showDetails && (
                 <Dialog.Popup onOpenChange={() => setShowDetails(false)} open modal>

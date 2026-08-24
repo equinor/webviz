@@ -1,15 +1,19 @@
-import { BugReport, Forum } from "@mui/icons-material";
+import { Forum } from "@mui/icons-material";
 
 import notFoundIllustration from "@assets/moduleNotFound.svg";
 
 import type { AtomStore } from "@framework/AtomStoreMaster";
+import type { ModuleViewProps } from "@framework/Module";
 import { ImportStatus, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
 import type { ModuleInstance } from "@framework/ModuleInstance";
+import { SLACK_HREF, VIVA_ENGAGE_HREF } from "@framework/utils/externalUrls";
 import { Button } from "@lib/components/Button";
 import { Separator } from "@lib/components/Separator";
 import { Tag } from "@lib/components/Tag";
 import { Paragraph } from "@lib/components/Typography/compositions";
 import { Heading } from "@lib/components/Typography/compositions/Heading/heading";
+
+import { ReportIssueButton } from "./components/ReportIssueButton";
 
 export class ModuleNotFoundPlaceholder extends Module<any, any> {
     constructor(moduleName: string) {
@@ -27,18 +31,7 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
         return instance;
     }
 
-    viewFC = () => {
-        function reportIssue() {
-            window.open("https://github.com/equinor/webviz/issues/new", "_blank");
-        }
-
-        function startDiscussion() {
-            window.open(
-                "https://github.com/equinor/webviz/discussions/new?category=announcements&welcome_text=true",
-                "_blank",
-            );
-        }
-
+    viewFC = (props: ModuleViewProps<any>) => {
         return (
             <div className="gap-y-md flex h-full w-full flex-col items-center">
                 <div className="bg-danger px-md py-md gap-y-sm flex w-full flex-col items-center text-center">
@@ -59,20 +52,33 @@ export class ModuleNotFoundPlaceholder extends Module<any, any> {
                     layoutClassName="w-full line-clamp-4 text-center"
                     title="The module is no longer available and might have been removed from the application. You can safely
                     remove the module instance by clicking on the cross in its header. If you are wondering why this
-                    module has been removed, please get in touch with us on GitHub."
+                    module has been removed, please get in touch with us on Slack or Viva Engage."
                 >
                     The module is no longer available and might have been removed from the application. You can safely
                     remove the module instance by clicking on the cross in its header. If you are wondering why this
-                    module has been removed, please get in touch with us on GitHub.
+                    module has been removed, please get in touch with us on For general thoughts and comments, you can
+                    contact us on{" "}
+                    <a className="inline-anchor" href={SLACK_HREF} target="_blank" rel="noopener noreferrer">
+                        Slack
+                    </a>{" "}
+                    or{" "}
+                    <a className="inline-anchor" href={VIVA_ENGAGE_HREF} target="_blank" rel="noopener noreferrer">
+                        Viva Engage
+                    </a>
+                    .
                 </Paragraph>
                 <Separator orientation="horizontal" />
                 <div className="gap-x-2xs flex">
-                    <Button variant="ghost" onClick={reportIssue} size="small">
-                        <BugReport fontSize="inherit" /> Report issue
-                    </Button>
-                    <Button variant="ghost" onClick={startDiscussion} size="small">
+                    <Button.AsLink external variant="ghost" href={SLACK_HREF} size="small">
                         <Forum fontSize="inherit" /> Start discussion
-                    </Button>
+                    </Button.AsLink>
+
+                    <ReportIssueButton
+                        buttonSize="small"
+                        error={new Error(`${this.getName()} not found`)}
+                        session={props.workbenchSession}
+                        componentStack={null}
+                    />
                 </div>
             </div>
         );

@@ -1,13 +1,13 @@
 import React from "react";
 
-import type { Workbench } from "@framework/Workbench";
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { Popover } from "@lib/components/Popover";
 
 import { SupportDocumentsGeneratorForm } from "./supportDocumentsGeneratorForm";
 
 export type SupportDocumentsGeneratorProps = {
     error: Error | null;
-    activeWorkbench: Workbench | null;
+    session: PrivateWorkbenchSession | null;
     componentStack: string | null | undefined;
     children?: React.ReactNode;
 };
@@ -32,7 +32,7 @@ export function SupportDocumentsGenerator(props: SupportDocumentsGeneratorProps)
                 </Popover.Title>
                 <SupportDocumentsGeneratorForm
                     error={props.error}
-                    activeWorkbench={props.activeWorkbench}
+                    session={props.session}
                     componentStack={props.componentStack}
                     onFilesGenerated={(success) => setPopoverOpen(!success)}
                 />

@@ -3,7 +3,7 @@ import React from "react";
 import { BugReport, ContentCopy } from "@mui/icons-material";
 
 import { SupportDocumentsGenerator } from "@framework/internal/components/SupportDocumentsGenerator";
-import { makeServiceNowErrorReportUrl } from "@framework/utils/makeServiceNowErrorReportUrl";
+import { SERVICE_NOW_HREF } from "@framework/utils/externalUrls";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -138,15 +138,12 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                         <div className="gap-x-xs p-sm bg-canvas flex justify-end shadow-sm">
                             <SupportDocumentsGenerator
                                 error={this.state.error}
-                                activeWorkbench={this.state.activeWorkbench}
+                                session={
+                                    this.state.activeWorkbench?.getSessionManager().getActiveSessionOrNull() ?? null
+                                }
                                 componentStack={this.state.componentStack}
                             />
-                            <Button.AsLink
-                                href={makeServiceNowErrorReportUrl().href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                external
-                            >
+                            <Button.AsLink href={SERVICE_NOW_HREF} target="_blank" rel="noopener noreferrer" external>
                                 <BugReport fontSize="small" />
                                 Report issue
                             </Button.AsLink>

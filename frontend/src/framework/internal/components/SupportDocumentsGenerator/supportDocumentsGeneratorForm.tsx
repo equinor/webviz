@@ -2,8 +2,8 @@ import React from "react";
 
 import { FileDownload } from "@mui/icons-material";
 
+import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { toastManager } from "@framework/toastManager";
-import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -15,15 +15,13 @@ import { makeErrorFile, makeSessionStateFile, makeUserAgentFile } from "./_utils
 
 export type SupportDocumentsGeneratorFormProps = {
     error: Error | null;
-    activeWorkbench: Workbench | null;
+    session: PrivateWorkbenchSession | null;
     componentStack: string | null | undefined;
-
-    children?: React.ReactNode;
     onFilesGenerated?: (success: boolean) => void;
 };
 
 export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFormProps): React.ReactNode {
-    const hasActiveSession = props.activeWorkbench?.getSessionManager().hasActiveSession() ?? false;
+    const hasActiveSession = !!props.session;
 
     const [isGenerating, setIsGenerating] = React.useState(false);
 
@@ -39,7 +37,7 @@ export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFo
 
         const errorFile = includeStackTrace ? await makeErrorFile(props.error, props.componentStack) : null;
         const userAgentFile = includeUserAgent ? await makeUserAgentFile() : null;
-        const sessionFile = includeSession ? await makeSessionStateFile(props.activeWorkbench) : null;
+        const sessionFile = includeSession ? await makeSessionStateFile(props.session) : null;
 
         const files = [errorFile, sessionFile, userAgentFile].filter((v) => v != null);
 

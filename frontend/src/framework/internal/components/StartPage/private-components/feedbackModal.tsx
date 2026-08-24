@@ -3,7 +3,7 @@ import React from "react";
 import { Icon } from "@equinor/eds-core-react";
 import { comment_discussion } from "@equinor/eds-icons";
 
-import { makeServiceNowErrorReportUrl } from "@framework/utils/makeServiceNowErrorReportUrl";
+import { GITHUB_HREF, SERVICE_NOW_HREF, SLACK_HREF, VIVA_ENGAGE_HREF } from "@framework/utils/externalUrls";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
@@ -13,11 +13,6 @@ import { Paragraph } from "@lib/components/Typography/compositions";
 import { SupportDocumentsGenerator } from "../../SupportDocumentsGenerator";
 
 Icon.add({ comment_discussion });
-
-const VIVA_ENGAGE_HREF = "https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiIxMzM5NzE0NyJ9/all";
-const SLACK_HREF = "https://app.slack.com/client/E086B9P9JM9/CB94AEYM9";
-const GITHUB_HREF = "https://github.com/equinor/webviz";
-const SERVICE_NOW_HREF = makeServiceNowErrorReportUrl().href;
 
 export function FeedbackDialog(props: { iconOnly?: boolean; workbench: Workbench }): React.ReactNode {
     const [open, setOpen] = React.useState(false);
@@ -29,7 +24,7 @@ export function FeedbackDialog(props: { iconOnly?: boolean; workbench: Workbench
                     tone="accent"
                     variant="ghost"
                     iconOnly={props.iconOnly}
-                    // The speech-bubble tail makes the icon look off-center. Margins slightly push it down to better align with text */}
+                    // The speech-bubble tail makes the icon look off-center. Margins slightly push it down to better align with text
                     icon={<Icon className="-mb-4xs mt-4xs" name="comment_discussion" />}
                     onClick={() => {
                         setOpen(true);
@@ -74,7 +69,11 @@ export function FeedbackDialog(props: { iconOnly?: boolean; workbench: Workbench
                 </Dialog.Body>
 
                 <Dialog.Actions>
-                    <SupportDocumentsGenerator error={null} activeWorkbench={props.workbench} componentStack={null} />
+                    <SupportDocumentsGenerator
+                        error={null}
+                        session={props.workbench.getSessionManager().getActiveSessionOrNull() ?? null}
+                        componentStack={null}
+                    />
                     <Button tone="accent" onClick={() => setOpen(false)}>
                         Close
                     </Button>
