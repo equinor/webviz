@@ -93,6 +93,10 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
         "1",
         "-c:a",
         "libopus",
+        // The seek index is written at the end of a WebM by default, which a streaming player never
+        // reaches unless it downloads the whole file; without it, seeking silently does nothing.
+        "-cues_to_front",
+        "1",
         outputPath,
     );
     return args;

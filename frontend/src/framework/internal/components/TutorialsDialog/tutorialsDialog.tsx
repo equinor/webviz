@@ -142,8 +142,6 @@ type TutorialStep = {
 
 function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
     const videoRef = React.useRef<HTMLVideoElement>(null);
-    // Seeks requested before the element has metadata are dropped by the browser, so park them here.
-    const pendingSeekRef = React.useRef<number | null>(null);
     const [steps, setSteps] = React.useState<TutorialStep[]>([]);
     const [currentTime, setCurrentTime] = React.useState(0);
 
@@ -156,7 +154,6 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
         const controller = new AbortController();
         setSteps([]);
         setCurrentTime(0);
-        pendingSeekRef.current = null;
         fetch(props.video.stepsUrl, { signal: controller.signal })
             .then((response) => (response.ok ? response.json() : null))
             .then((payload: unknown) => {
@@ -204,22 +201,9 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
             return;
         }
 
+        player.currentTime = startSeconds;
         setCurrentTime(startSeconds);
-        if (player.readyState >= HTMLMediaElement.HAVE_METADATA) {
-            player.currentTime = startSeconds;
-        } else {
-            pendingSeekRef.current = startSeconds;
-        }
-        player.play().catch(() => undefined);
-    }
-
-    function handleLoadedMetadata() {
-        const player = videoRef.current;
-        const pendingSeek = pendingSeekRef.current;
-        pendingSeekRef.current = null;
-        if (player && pendingSeek !== null) {
-            player.currentTime = pendingSeek;
-        }
+        void player.play();
     }
 
     return (
@@ -289,7 +273,6 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                     preload="metadata"
                     poster={props.video.thumbnailUrl}
                     src={props.video.videoUrl}
-                    onLoadedMetadata={handleLoadedMetadata}
                     onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
                     className="border-neutral-subtle shadow-elevation-overlay h-full max-h-full max-w-full rounded-md border-2 object-contain"
                     style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}
