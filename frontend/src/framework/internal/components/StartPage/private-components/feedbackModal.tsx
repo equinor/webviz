@@ -34,7 +34,7 @@ export function FeedbackDialog(props: { iconOnly?: boolean; workbench: Workbench
                 </Button>
             </Tooltip>
 
-            <Dialog.Popup open={open} onOpenChange={setOpen} modal stacked>
+            <Dialog.Popup open={open} modal width={600} onOpenChange={setOpen}>
                 <Dialog.Header>
                     <Dialog.Title>Let us know what you think!</Dialog.Title>
                     <Dialog.Close />
