@@ -12,6 +12,9 @@ import type { ColorEntry, GroupedTableData } from "./GroupedTableData";
 
 export type PlotFunction = (colorEntries: ColorEntry[]) => Partial<PlotData>[];
 
+// Plotly defaults to "B" for 1e9; "SI" gives k/M/G/T to match the statistics table.
+const SI_TICK_FORMAT_AXIS_OPTIONS: Partial<Axis> = { exponentformat: "SI" };
+
 export class PlotBuilder {
     private _groupedData: GroupedTableData;
     private _plotFunction: PlotFunction;
@@ -69,9 +72,9 @@ export class PlotBuilder {
 
                 figure.updateLayout({
                     // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
-                    [xAxisKey]: { ...oldLayout[xAxisKey], ...this._axesOptions.x },
+                    [xAxisKey]: { ...oldLayout[xAxisKey], ...SI_TICK_FORMAT_AXIS_OPTIONS, ...this._axesOptions.x },
                     // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
-                    [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
+                    [yAxisKey]: { ...oldLayout[yAxisKey], ...SI_TICK_FORMAT_AXIS_OPTIONS, ...this._axesOptions.y },
                 });
             }
         }

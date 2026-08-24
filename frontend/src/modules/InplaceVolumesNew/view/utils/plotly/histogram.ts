@@ -3,6 +3,7 @@ import type { Dash, PlotData } from "plotly.js";
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
+import { INPLACE_VOLUMES_NUMBER_FORMAT } from "../numberFormat";
 import { computeStatistics } from "../statistics";
 
 export type PlotlyHistogramTracesOptions = {
@@ -102,11 +103,11 @@ function createStatisticLinesForHistogram(
             showlegend: false,
             name: label,
             legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value) : ""}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value, INPLACE_VOLUMES_NUMBER_FORMAT) : ""}<extra></extra>`,
         };
 
         if (showLabels) {
-            trace.text = ["", `${label}: ${formatNumber(value)}`];
+            trace.text = ["", `${label}: ${formatNumber(value, INPLACE_VOLUMES_NUMBER_FORMAT)}`];
             trace.textposition = "top center";
             trace.textfont = { color: "black", size: 11 };
         }
