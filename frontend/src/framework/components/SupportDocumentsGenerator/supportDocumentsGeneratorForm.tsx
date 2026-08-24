@@ -25,13 +25,15 @@ export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFo
 
     const [isGenerating, setIsGenerating] = React.useState(false);
 
-    const [includeStackTrace, setIncludeStackTrace] = React.useState(true);
+    const [includeStackTrace, setIncludeStackTrace] = React.useState(!!props.error);
     const [includeUserAgent, setIncludeUserAgent] = React.useState(true);
     const [includeSession, setIncludeSession] = React.useState(hasActiveSession);
 
+    const noOptionSelected = !includeStackTrace && !includeSession && !includeUserAgent;
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!includeStackTrace && !includeSession && !includeUserAgent) return props.onFilesGenerated?.(false);
+        if (noOptionSelected || isGenerating) return props.onFilesGenerated?.(false);
 
         setIsGenerating(true);
 
@@ -102,7 +104,7 @@ export function SupportDocumentsGeneratorForm(props: SupportDocumentsGeneratorFo
                 iconPosition="end"
                 size="small"
                 icon={isGenerating ? <CircularProgress /> : <FileDownload fontSize="inherit" />}
-                disabled={!includeSession && !includeStackTrace && !includeUserAgent}
+                disabled={noOptionSelected || isGenerating}
             >
                 Generate
             </Button>
