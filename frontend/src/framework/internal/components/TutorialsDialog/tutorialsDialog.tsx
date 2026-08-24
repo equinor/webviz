@@ -274,7 +274,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                     poster={props.video.thumbnailUrl}
                     src={props.video.videoUrl}
                     onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-                    className="border-neutral-subtle shadow-elevation-overlay h-full max-h-full max-w-full rounded-md border-2 object-contain"
+                    className="border-neutral-subtle shadow-elevation-overlay aspect-video h-auto max-h-full w-auto max-w-full rounded-md border-2 object-contain"
                     style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}
                 />
             </div>
