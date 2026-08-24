@@ -20,6 +20,8 @@ import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/u
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import {
     InplaceVolumesStatisticEnumToStringMapping,
+    isFluidSpecificResultName,
+    TableOriginKey,
     TableType,
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumes/types";
@@ -106,9 +108,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedTableTypeChange(value as TableType);
     }
 
+    const isGroupedByFluid = selectedGroupByIndices.includes(TableOriginKey.FLUID);
     const resultNameOptions: SelectOption<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => {
+            const requiresFluidGrouping = isFluidSpecificResultName(name) && !isGroupedByFluid;
+            return {
+                label: name,
+                value: name,
+                hoverText: requiresFluidGrouping
+                    ? `${name} is only defined per fluid. Add FLUID to Grouping to select it.`
+                    : createHoverTextForVolume(name),
+                disabled: requiresFluidGrouping,
+            };
+        });
 
     const groupByIndicesOptions: ComboboxItem<string>[] = [];
     for (const indicesWithValues of tableDefinitionsAccessor.getCommonIndicesWithValues()) {
