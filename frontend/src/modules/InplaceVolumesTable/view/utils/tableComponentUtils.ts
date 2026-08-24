@@ -18,7 +18,6 @@ import type {
     InplaceVolumesTableData,
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
-import { createScaledNumberWithSuffix } from "@modules/_shared/utils/numberSuffixFormatting";
 
 import type { TableColumnsConfig, TableRow } from "../types";
 
@@ -145,29 +144,6 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 }
 export function isValidFluidType(type: string): type is keyof typeof PHASE_COLORS {
     return type in PHASE_COLORS;
-}
-export function formatResultValue(value: string | number | null): string {
-    // If properties cannot be calculated,
-    // e.g. due to a 0 denominator, the value returned from backend will be null
-    if (value === null) {
-        return "-";
-    }
-
-    if (typeof value === "string") {
-        return value;
-    }
-
-    const { scaledValue, suffix } = createScaledNumberWithSuffix(value);
-
-    // Determine the number of decimal places based on the value's magnitude
-    let decimalPlaces = 2;
-    if (Math.abs(scaledValue) < 0.01) {
-        decimalPlaces = 4;
-    } else if (Math.abs(scaledValue) < 0.1) {
-        decimalPlaces = 3;
-    }
-
-    return `${scaledValue.toFixed(decimalPlaces)} ${suffix}`;
 }
 export function formatEnsembleIdent(value: string | number | null, ensembleSet: EnsembleSet): string {
     if (value === null) {

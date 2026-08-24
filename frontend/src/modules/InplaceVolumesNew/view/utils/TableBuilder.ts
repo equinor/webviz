@@ -1,7 +1,6 @@
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 
 import type { GroupedTableData } from "./GroupedTableData";
-import { INPLACE_VOLUMES_NUMBER_FORMAT } from "./numberFormat";
 import { computeStatistics } from "./statistics";
 
 export type StatisticsTableRowData = {
@@ -46,13 +45,13 @@ export function buildStatisticsTableData(groupedData: GroupedTableData, resultNa
             subplotValue: entry.subplotLabel,
             colorByValue: entry.colorLabel,
             colorByKey: entry.colorKey,
-            mean: formatNumber(stats.mean, INPLACE_VOLUMES_NUMBER_FORMAT),
-            stdDev: formatNumber(stats.stdDev, INPLACE_VOLUMES_NUMBER_FORMAT),
-            min: formatNumber(stats.min, INPLACE_VOLUMES_NUMBER_FORMAT),
-            max: formatNumber(stats.max, INPLACE_VOLUMES_NUMBER_FORMAT),
-            p10: formatNumber(stats.p10, INPLACE_VOLUMES_NUMBER_FORMAT),
-            p50: formatNumber(stats.p50, INPLACE_VOLUMES_NUMBER_FORMAT),
-            p90: formatNumber(stats.p90, INPLACE_VOLUMES_NUMBER_FORMAT),
+            mean: formatInplaceVolumesValue(stats.mean),
+            stdDev: formatInplaceVolumesValue(stats.stdDev),
+            min: formatInplaceVolumesValue(stats.min),
+            max: formatInplaceVolumesValue(stats.max),
+            p10: formatInplaceVolumesValue(stats.p10),
+            p50: formatInplaceVolumesValue(stats.p50),
+            p90: formatInplaceVolumesValue(stats.p90),
         });
     }
 

@@ -8,6 +8,9 @@ import { CoordinateDomain, makeSubplots } from "../Figure";
 
 import type { Table } from "./Table";
 
+// Plotly defaults to "B" for 1e9; "SI" gives k/M/G/T to match the statistics tables.
+const SI_TICK_FORMAT_AXIS_OPTIONS: Partial<Axis> = { exponentformat: "SI" };
+
 export class PlotBuilder {
     private _table: Table;
     private _plotFunction: (table: Table) => Partial<PlotData>[];
@@ -77,9 +80,9 @@ export class PlotBuilder {
 
                 figure.updateLayout({
                     // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
-                    [xAxisKey]: { ...oldLayout[xAxisKey], ...this._axesOptions.x },
+                    [xAxisKey]: { ...oldLayout[xAxisKey], ...SI_TICK_FORMAT_AXIS_OPTIONS, ...this._axesOptions.x },
                     // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
-                    [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
+                    [yAxisKey]: { ...oldLayout[yAxisKey], ...SI_TICK_FORMAT_AXIS_OPTIONS, ...this._axesOptions.y },
                 });
             }
         }

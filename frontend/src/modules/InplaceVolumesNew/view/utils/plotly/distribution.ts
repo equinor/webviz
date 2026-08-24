@@ -1,8 +1,7 @@
 import type { PlotData } from "plotly.js";
 
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 
-import { INPLACE_VOLUMES_NUMBER_FORMAT } from "../numberFormat";
 import { computeStatistics } from "../statistics";
 
 export type PlotlyDensityTracesOptions = {
@@ -77,12 +76,12 @@ function createStatisticMarkersForDistribution(
         marker: { color, size: 10, symbol: "x" },
         showlegend: false,
         legendgroup: title,
-        text: labels.map((label, i) => `${label}: ${formatNumber(xValues[i], INPLACE_VOLUMES_NUMBER_FORMAT)}`),
+        text: labels.map((label, i) => `${label}: ${formatInplaceVolumesValue(xValues[i])}`),
         textposition: "top center",
         textfont: showLabels ? { color: "black", size: 11 } : undefined,
         hovertemplate: xValues.map(
             (_, i) =>
-                `<b>${title}</b><br><b>${labels[i]}</b><br>${resultName}: ${formatNumber(xValues[i], INPLACE_VOLUMES_NUMBER_FORMAT)}<extra></extra>`,
+                `<b>${title}</b><br><b>${labels[i]}</b><br>${resultName}: ${formatInplaceVolumesValue(xValues[i])}<extra></extra>`,
         ),
     };
 }
