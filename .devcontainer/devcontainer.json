@@ -16,7 +16,8 @@
     "VNC_RESOLUTION": "1920x1080",
     "VNC_DPI": "96"
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y ffmpeg && cd frontend && npx --yes playwright install --with-deps chromium",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "waitFor": "postCreateCommand",
   "forwardPorts": [6080],
   "hostRequirements": {
     "cpus": 4,
