@@ -7,6 +7,7 @@ import { Button } from "@lib/components/Button";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Heading } from "@lib/components/Typography/compositions";
 
+import { ChangelogDialog } from "./private-components/changelogModal";
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
 
@@ -80,6 +81,8 @@ export function StartPage(props: StartPageProps) {
                     <RecentSessions workbench={props.workbench} />
                     <section className="gap-y-sm flex flex-col">
                         <Heading as="h3">Resources</Heading>
+
+                        <ChangelogDialog />
 
                         <Button.AsLink
                             href="https://github.com/equinor/webviz"

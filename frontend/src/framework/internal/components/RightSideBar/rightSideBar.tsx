@@ -87,6 +87,7 @@ export const RightSideBar: React.FC<RightSideBarProps> = (props) => {
                 <Tabs.List indicatorPosition="start" size="small">
                     <Tab
                         value={RightDrawerContent.ModulesList}
+                        data-testid="modules-list-open-button"
                         tooltip="Show modules list"
                         icon={<WebAssetOutlined fontSize="small" />}
                         activeIcon={<WebAsset fontSize="small" />}
