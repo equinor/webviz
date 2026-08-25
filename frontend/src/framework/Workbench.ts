@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import { GuiMessageBroker } from "./GuiMessageBroker";
 import { HoverService } from "./HoverService";
+import { ModuleViewSlotRegistry } from "./internal/ModuleViewSlotRegistry";
 import { NavigationManager } from "./internal/NavigationManager";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSessionManager";
@@ -21,6 +22,7 @@ export class Workbench {
     private readonly _workbenchServices: PrivateWorkbenchServices;
     private readonly _hoverService: HoverService;
     private readonly _guiMessageBroker: GuiMessageBroker;
+    private readonly _moduleViewSlotRegistry: ModuleViewSlotRegistry;
     private readonly _queryClient: QueryClient;
     private readonly _sessionManager: WorkbenchSessionManager;
     private readonly _navigationManager: NavigationManager;
@@ -31,6 +33,7 @@ export class Workbench {
         this._workbenchServices = new PrivateWorkbenchServices(this);
         this._hoverService = new HoverService();
         this._guiMessageBroker = new GuiMessageBroker();
+        this._moduleViewSlotRegistry = new ModuleViewSlotRegistry();
         this._sessionManager = new WorkbenchSessionManager(this, queryClient, this._guiMessageBroker);
 
         // Create NavigationManager instance and register callbacks
@@ -57,6 +60,10 @@ export class Workbench {
 
     getGuiMessageBroker(): GuiMessageBroker {
         return this._guiMessageBroker;
+    }
+
+    getModuleViewSlotRegistry(): ModuleViewSlotRegistry {
+        return this._moduleViewSlotRegistry;
     }
 
     getNavigationManager(): NavigationManager {

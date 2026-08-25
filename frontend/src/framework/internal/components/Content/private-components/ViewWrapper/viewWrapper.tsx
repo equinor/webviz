@@ -15,7 +15,6 @@ import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
-import { ViewContent } from "./private-components/viewContent";
 
 type ViewWrapperProps = {
     isMaximized?: boolean;
@@ -186,7 +185,15 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         })}
                         onClick={handleModuleClick}
                     >
-                        <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
+                        {/* The module's actual view content is rendered elsewhere, continuously,
+                            by ModuleViewContentHost, and portaled into this slot - see
+                            ModuleViewSlotRegistry. Keeps a WebGL canvas/context (or any other
+                            expensive view-owned resource) alive across this chrome remounting when
+                            switching between the active dashboard and a hot-but-inactive one. */}
+                        <div
+                            ref={(el) => props.workbench.getModuleViewSlotRegistry().setSlot(props.moduleInstance.getId(), el)}
+                            className="h-full w-full"
+                        />
                         <ChannelReceiverNodesWrapper
                             forwardedRef={ref}
                             moduleInstance={props.moduleInstance}

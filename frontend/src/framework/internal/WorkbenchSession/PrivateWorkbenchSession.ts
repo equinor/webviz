@@ -22,6 +22,7 @@ import {
 } from "../EnsembleSetLoader";
 import { PrivateWorkbenchSettings, PrivateWorkbenchSettingsTopic } from "../PrivateWorkbenchSettings";
 
+import { DashboardHotCache } from "./DashboardHotCache";
 import type { SerializedWorkbenchSessionContentState } from "./PrivateWorkbenchSession.schema";
 import {
     isPersisted,
@@ -90,6 +91,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     private _queryClient: QueryClient;
     private _dashboards: Dashboard[] = [];
     private _activeDashboardId: string | null = null;
+    private _dashboardHotCache = new DashboardHotCache();
     private _ensembleSet: EnsembleSet = new EnsembleSet([]);
     private _realizationFilterSet = new RealizationFilterSet();
     private _wrappedRealizationFilterSet = {
@@ -337,6 +339,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return found ?? null;
     }
 
+    getDashboardHotCache(): DashboardHotCache {
+        return this._dashboardHotCache;
+    }
+
     setActiveDashboard(dashboardId: string): void {
         if (this._activeDashboardId === dashboardId) {
             return;
@@ -344,7 +350,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         const previouslyActiveDashboard = this.getActiveDashboard();
         if (previouslyActiveDashboard) {
-            previouslyActiveDashboard.unload();
+            // Deferred instead of unloading immediately: the dashboard stays fully mounted for a
+            // while in case the user switches back to it, instead of paying the full teardown/
+            // recreate cost on every switch. See DashboardHotCache.
+            this._dashboardHotCache.deferEviction(previouslyActiveDashboard);
         }
         const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
         if (dashboardId && !dashboard) {
@@ -353,7 +362,12 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         if (this._activeDashboardId === (dashboard ? dashboard.getId() : null)) {
             return;
         }
+        if (dashboard) {
+            this._dashboardHotCache.cancelEviction(dashboard.getId());
+        }
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
+        // A no-op if `dashboard` was still hot (its module instances were never torn down) - see
+        // Dashboard.load()'s own "nothing cached" early-return.
         dashboard?.load();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
         this.handleStateChange();
@@ -452,6 +466,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     private unregisterDashboard(dashboard: Dashboard): void {
+        // Stop tracking any pending hot-cache eviction for this dashboard before tearing it down
+        // directly below - otherwise a stale timer would later call unload() on a dashboard that's
+        // no longer part of the session.
+        this._dashboardHotCache.forget(dashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
         dashboard.beforeUnload();
         this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
@@ -565,6 +583,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     beforeDestroy(): void {
+        // clear() doesn't route through unregisterDashboard(), so any pending hot-cache evictions
+        // wouldn't otherwise be cancelled - cancel them explicitly here to avoid a stale timer
+        // referencing a dashboard whose atom stores etc. may already be gone.
+        this._dashboardHotCache.clear();
         this.clear();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
     }
