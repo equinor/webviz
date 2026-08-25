@@ -97,7 +97,11 @@ export class TableDefinitionsAccessor {
                     if (commonIndicesWithValuesMap.has(indexWithValues.indexColumn)) {
                         throw new Error(`Duplicate index ${indexWithValues.indexColumn}`);
                     }
-                    commonIndicesWithValuesMap.set(indexWithValues.indexColumn, indexWithValues);
+                    // Copy so that the map never aliases the cached table definitions
+                    commonIndicesWithValuesMap.set(indexWithValues.indexColumn, {
+                        indexColumn: indexWithValues.indexColumn,
+                        values: [...indexWithValues.values],
+                    });
                 }
 
                 isInitialized = true;
@@ -122,7 +126,9 @@ export class TableDefinitionsAccessor {
                     continue;
                 }
 
-                // Tables are not comparable when index values are not equal
+                // Tables are not comparable when index values are not equal. The equality check is
+                // order-insensitive, but runs on copies so the cached table definitions keep their
+                // original (e.g. stratigraphic) value order.
                 if (this._indexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION) {
                     const valuesIntersection = indexWithValues.values.filter((value) =>
                         currentIndexWithValues.values.includes(value),
@@ -133,7 +139,7 @@ export class TableDefinitionsAccessor {
                         indexColumn: index,
                         values: valuesIntersection,
                     });
-                } else if (!isEqual(indexWithValues.values.sort(), currentIndexWithValues.values.sort())) {
+                } else if (!isEqual([...indexWithValues.values].sort(), [...currentIndexWithValues.values].sort())) {
                     this._tablesNotComparable = true;
                     break;
                 }

@@ -253,14 +253,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 </Setting.Field>
                 <Setting.Field
                     help={{
-                        title: "Allow table source intersections",
+                        title: "Allow tables with differing filter values",
                         content: (
                             <>
-                                When active allows comparison of tables where available zones, regions, facies, fluids
-                                or responses differs.
+                                Filters missing from a table are always dropped. If one table has no facies, facies
+                                cannot be used for filtering.
                                 <br />
-                                Only the <b>intersection</b> of options will then be available for filtering. <br />
-                                Identifiers not present in all tables will be <b>filtered out</b>.
+                                This setting applies when tables share a filter but have different values, e.g.
+                                different zone names. When off, the tables cannot be compared. When on, only the zones,
+                                regions and facies found in <b>all</b> tables are kept.
                             </>
                         ),
                     }}
@@ -269,7 +270,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         checked={props.selectedAllowIndicesValuesIntersection}
                         onCheckedChange={handleAllowIndexValueIntersectionChange}
                     >
-                        Allow table source intersections
+                        Allow tables with differing filter values
                     </SwitchCompositions.WithLabel>
                 </Setting.Field>
             </Setting.Section>
