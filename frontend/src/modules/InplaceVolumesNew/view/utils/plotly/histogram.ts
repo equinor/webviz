@@ -102,7 +102,7 @@ function createStatisticLinesForHistogram(
             showlegend: false,
             name: label,
             legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatInplaceVolumesValue(value) : ""}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
 
         if (showLabels) {

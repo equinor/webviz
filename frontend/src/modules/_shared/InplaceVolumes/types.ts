@@ -49,6 +49,21 @@ export function isFluidSpecificResultName(resultName: string | null): boolean {
     return resultName !== null && resultName in FLUID_SPECIFIC_RESULT_NAMES;
 }
 
+// Ratios and fractions, i.e. the backend Property enum. Never large enough for SI prefixes.
+const DIMENSIONLESS_RESULT_NAMES: readonly string[] = [
+    "NTG",
+    "PORO",
+    "PORO_NET",
+    "SW",
+    "BO",
+    "BG",
+    "FACIES_FRACTION",
+];
+
+export function isDimensionlessResultName(resultName: string | null): boolean {
+    return resultName !== null && DIMENSIONLESS_RESULT_NAMES.includes(resultName);
+}
+
 export type StatisticalColumns = Partial<{
     [key in InplaceVolumesStatistic_api]: Column<number>;
 }>;
