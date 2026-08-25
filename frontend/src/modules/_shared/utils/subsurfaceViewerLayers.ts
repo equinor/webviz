@@ -261,8 +261,8 @@ export function getScaledCoordinate(coordinate: number[], verticalScale: number)
     return [coordinate[0], coordinate[1], coordinate[2] * verticalScale];
 }
 
-export function getUnscaledCoordinate(coordinate: number[], verticalScale: number): number[] {
-    if (coordinate.length !== 3) return coordinate;
+export function getUnscaledCoordinates(coordinates: number[], verticalScale: number): number[] {
+    if (coordinates.length !== 3) return coordinates;
 
-    return [coordinate[0], coordinate[1], coordinate[2] / verticalScale];
+    return [coordinates[0], coordinates[1], coordinates[2] / verticalScale];
 }

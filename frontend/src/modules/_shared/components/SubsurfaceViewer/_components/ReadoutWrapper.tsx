@@ -22,7 +22,7 @@ import {
 import type { ExtendedWellFeature, LayerPickInfoWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
 import {
     getScaledCoordinate,
-    getUnscaledCoordinate,
+    getUnscaledCoordinates,
     isPickWithReadout,
 } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
@@ -138,7 +138,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 // Transform picked coordinates back to normal space
                 for (const pick of picks) {
                     if (pick.coordinate) {
-                        pick.coordinate = getUnscaledCoordinate(pick.coordinate, props.verticalScale);
+                        pick.coordinate = getUnscaledCoordinates(pick.coordinate, props.verticalScale);
                     }
                 }
 
