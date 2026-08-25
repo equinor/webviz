@@ -10,12 +10,14 @@ import {
     GuiState,
     RightDrawerContent,
     useGuiState,
+    useGuiValue,
     type GuiEventPayloads,
 } from "@framework/GuiMessageBroker";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
@@ -64,6 +66,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const layoutBoxRef = React.useRef<LayoutBox | null>(null);
     const moduleInstances = usePublishSubscribeTopicValue(dashboard, DashboardTopic.MODULE_INSTANCES);
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
+    const isSwitchingDashboard = useGuiValue(guiMessageBroker, GuiState.IsSwitchingDashboard);
 
     // We use a temporary layout while dragging elements around
     const [tempLayout, setTempLayout] = React.useState<LayoutElement[] | null>(null);
@@ -464,8 +467,16 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     );
                 })}
                 {makeTempViewWrapperPlaceholder()}
-                {moduleInstances.length === 0 && draggedModuleInstanceId === null && (
+                {moduleInstances.length === 0 && draggedModuleInstanceId === null && !isSwitchingDashboard && (
                     <EmptyLayout workbench={props.workbench} />
+                )}
+                {isSwitchingDashboard && (
+                    // Covers the outgoing dashboard's content the instant a tab switch is
+                    // requested (before the still-synchronous switch itself runs and blocks the
+                    // main thread for a moment) - see dashboardPanel.tsx's handleActiveDashboardChange.
+                    <div className="bg-surface/80 z-overlay absolute inset-0 flex items-center justify-center backdrop-blur-xs">
+                        <CircularProgress size={40} />
+                    </div>
                 )}
             </div>
         </div>

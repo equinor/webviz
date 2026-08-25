@@ -672,6 +672,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     }
 
     private updateActiveDashboardUrl(): void {
+        if (!this._activeSession?.getIsPersisted()) {
+            return;
+        }
         const url = buildDashboardUrl(this._activeSession?.getActiveDashboard()?.getId() ?? null);
         this._workbench.getNavigationManager().replaceState(url);
     }

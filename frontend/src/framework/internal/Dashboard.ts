@@ -420,4 +420,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         return dashboard;
     }
+
+    static clone(source: Dashboard, atomStoreMaster: AtomStoreMaster, name?: string): Dashboard {
+        const adjustedName = name ?? `${source.getMetadata().name} (Copy)`;
+        const clonedDashboard = new Dashboard(atomStoreMaster, adjustedName);
+        const serializedState = source.serializeState();
+        serializedState.id = clonedDashboard.getId(); // Ensure the cloned dashboard has a unique ID
+        serializedState.name = adjustedName;
+        clonedDashboard.deserializeState(serializedState);
+        return clonedDashboard;
+    }
 }

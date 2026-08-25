@@ -364,6 +364,9 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), "Dashboard");
         const newDashboard = new Dashboard(this._atomStoreMaster, name);
         this.registerDashboard(newDashboard);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+        this.handleStateChange();
+
         this.setActiveDashboard(newDashboard.getId());
     }
 
@@ -373,20 +376,28 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         if (!dashboard) {
             throw new Error("Dashboard not registered in this session");
         }
+        if (this._dashboards.length <= 1) {
+            throw new Error("Cannot remove the last dashboard in a session");
+        }
         // Capture the index before removal, since the dashboard is no longer findable in the array afterwards
         const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
         this.unregisterDashboard(dashboard);
 
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+
         // If the removed dashboard was the active one, set the active dashboard to the previous one in the list, or null if there are no dashboards left
         if (this._activeDashboardId === dashboardId) {
+            let newActiveDashboardId: string | null = null;
             if (index > 0) {
-                this._activeDashboardId = this._dashboards[index - 1].getId();
+                newActiveDashboardId = this._dashboards[index - 1].getId();
             } else if (this._dashboards.length > 0) {
-                this._activeDashboardId = this._dashboards[0].getId();
+                newActiveDashboardId = this._dashboards[0].getId();
             } else {
-                this._activeDashboardId = null;
+                newActiveDashboardId = null;
             }
-            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
+            if (newActiveDashboardId) {
+                this.setActiveDashboard(newActiveDashboardId);
+            }
         }
     }
 
@@ -407,6 +418,20 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this.handleStateChange();
+    }
+
+    async cloneDashboard(dashboardId: string): Promise<void> {
+        this.assertIsNotSnapshot();
+        const dashboardToClone = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (!dashboardToClone) {
+            throw new Error("Dashboard not registered in this session");
+        }
+
+        const clonedDashboard = Dashboard.clone(dashboardToClone, this._atomStoreMaster);
+
+        this.registerDashboard(clonedDashboard);
+        this.moveDashboard(clonedDashboard.getId(), this._dashboards.indexOf(dashboardToClone) + 1);
+        this.setActiveDashboard(clonedDashboard.getId());
     }
 
     getDashboards(): Dashboard[] {
@@ -430,6 +455,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
         dashboard.beforeUnload();
         this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
+        this.handleStateChange();
     }
 
     private clearDashboards() {
