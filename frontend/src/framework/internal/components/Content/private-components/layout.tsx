@@ -434,7 +434,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
 
     return (
         <div ref={mainRef} className="flex h-full w-full max-w-full flex-col">
-            <div ref={ref} className="relative grow">
+            <div ref={ref} data-testid="module-layout" className="relative grow">
                 {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
                         active={draggedModuleInstanceId}
