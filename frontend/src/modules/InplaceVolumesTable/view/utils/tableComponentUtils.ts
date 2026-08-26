@@ -21,6 +21,10 @@ import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volume
 
 import type { TableColumnsConfig, TableRow } from "../types";
 
+/**
+ * Sorts rows by non-result columns in heading order. Index columns use the preferred category order;
+ * other columns retain their first-seen order, preserving higher-level table grouping.
+ */
 export function sortTableRowsByCategoryOrder<TColumns extends TableColumnsConfig>(
     rows: TableRow<TColumns>[],
     headings: TColumns,

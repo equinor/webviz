@@ -58,35 +58,35 @@ export type SettingFieldProps = {
     /** Additional CSS class applied to the content wrapper element. */
     contentClassName?: string;
 } & (
-    | {
-          /** Annotations rendered below the input. Mutually exclusive with the individual annotation string props. */
-          annotations?: SettingAnnotation[];
-          errorAnnotation?: never;
-          warningAnnotation?: never;
-          infoAnnotation?: never;
-      }
-    | PlainAnnotationStrings
-) &
+        | {
+            /** Annotations rendered below the input. Mutually exclusive with the individual annotation string props. */
+            annotations?: SettingAnnotation[];
+            errorAnnotation?: never;
+            warningAnnotation?: never;
+            infoAnnotation?: never;
+        }
+        | PlainAnnotationStrings
+    ) &
     (
         | {
-              /** Overlay displayed over the input. Mutually exclusive with individual overlay props. */
-              overlay?: Overlay;
-              errorOverlay?: never;
-              warningOverlay?: never;
-              loadingOverlay?: never;
-              infoOverlay?: never;
-          }
+            /** Overlay displayed over the input. Mutually exclusive with individual overlay props. */
+            overlay?: Overlay;
+            errorOverlay?: never;
+            warningOverlay?: never;
+            loadingOverlay?: never;
+            infoOverlay?: never;
+        }
         | {
-              /** Error message overlay. Mutually exclusive with `overlay`. */
-              errorOverlay?: string;
-              /** Warning message overlay. Mutually exclusive with `overlay`. */
-              warningOverlay?: string;
-              /** Info message overlay. Mutually exclusive with `overlay`. */
-              infoOverlay?: string;
-              /** When true, shows a loading spinner overlay. Mutually exclusive with `overlay`. */
-              loadingOverlay?: boolean;
-              overlay?: never;
-          }
+            /** Error message overlay. Mutually exclusive with `overlay`. */
+            errorOverlay?: string;
+            /** Warning message overlay. Mutually exclusive with `overlay`. */
+            warningOverlay?: string;
+            /** Info message overlay. Mutually exclusive with `overlay`. */
+            infoOverlay?: string;
+            /** When true, shows a loading spinner overlay. Mutually exclusive with `overlay`. */
+            loadingOverlay?: boolean;
+            overlay?: never;
+        }
     );
 
 function isNotAnnotationList(props: SettingFieldProps): props is SettingFieldProps & PlainAnnotationStrings {
@@ -109,20 +109,20 @@ export function Field(props: SettingFieldProps) {
 
     const annotations: SettingAnnotation[] = isNotAnnotationList(props)
         ? ([
-              props.errorAnnotation && { type: "error", message: props.errorAnnotation },
-              props.warningAnnotation && { type: "warning", message: props.warningAnnotation },
-              props.infoAnnotation && { type: "info", message: props.infoAnnotation },
-          ].filter(Boolean) as SettingAnnotation[])
+            props.errorAnnotation && { type: "error", message: props.errorAnnotation },
+            props.warningAnnotation && { type: "warning", message: props.warningAnnotation },
+            props.infoAnnotation && { type: "info", message: props.infoAnnotation },
+        ].filter(Boolean) as SettingAnnotation[])
         : (props.annotations ?? []);
 
     const overlay: Overlay | undefined =
         "overlay" in props
             ? props.overlay
             : (props.loadingOverlay && { type: "loading", message: "Loading..." }) ||
-              (props.errorOverlay && { type: "error", message: props.errorOverlay }) ||
-              (props.warningOverlay && { type: "warning", message: props.warningOverlay }) ||
-              (props.infoOverlay && { type: "info", message: props.infoOverlay }) ||
-              undefined;
+            (props.errorOverlay && { type: "error", message: props.errorOverlay }) ||
+            (props.warningOverlay && { type: "warning", message: props.warningOverlay }) ||
+            (props.infoOverlay && { type: "info", message: props.infoOverlay }) ||
+            undefined;
 
     const isInvalid = annotations.some((a) => a.type === "error");
     const isWarning = annotations.some((a) => a.type === "warning");

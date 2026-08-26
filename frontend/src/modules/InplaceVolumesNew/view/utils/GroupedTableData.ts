@@ -38,6 +38,10 @@ export interface GroupedTableDataOptions {
     categoryOrder?: ReadonlyMap<string, readonly string[]>;
 }
 
+/**
+ * Orders entries by their key's position in `preferredValues`. Entries absent from the preferred
+ * order remain at the end in their original relative order. With no preferred order, input order is preserved.
+ */
 export function orderEntriesByPreferredValues<TValue>(
     entries: [string | number, TValue][],
     preferredValues?: readonly string[],
