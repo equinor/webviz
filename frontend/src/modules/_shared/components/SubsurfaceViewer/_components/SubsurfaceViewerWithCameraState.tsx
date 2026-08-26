@@ -1,9 +1,14 @@
 import React from "react";
 
+import type { DeckGLRef } from "@deck.gl/react";
 import type { BoundingBox2D, SubsurfaceViewerProps, ViewStateType } from "@webviz/subsurface-viewer";
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { isEqual } from "lodash-es";
 
+import {
+    WebGlResourceBoundary,
+    type WebGlResourceAdapter,
+} from "@framework/components/WebGlResourceBoundary/webGlResourceBoundary";
 import * as bbox from "@lib/utils/bbox";
 
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
@@ -13,7 +18,13 @@ export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
 };
 
 export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCameraStateProps): React.ReactNode {
-    const { getCameraPosition, onCameraPositionApplied } = props;
+    const { getCameraPosition, onCameraPositionApplied, deckGlRef } = props;
+
+    const [deckGlInstance, setDeckGlInstance] = React.useState<DeckGLRef | null>(null);
+
+    React.useImperativeHandle(props.deckGlRef, () => deckGlInstance!, [deckGlInstance]);
+
+    const adapter = React.useMemo(() => createDeckGlAdapter(localDeckGlRef), []);
 
     const [prevTriggerHome, setPrevTriggerHome] = React.useState<number | undefined>(0);
     const [prevBounds, setPrevBounds] = React.useState<BoundingBox2D | undefined>(undefined);
@@ -75,5 +86,52 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
         [cameraPosition, props.cameraPosition, onCameraPositionApplied],
     );
 
-    return <SubsurfaceViewer {...props} cameraPosition={cameraPosition} getCameraPosition={handleCameraChange} />;
+    return (
+        <WebGlResourceBoundary adapter={adapter} recoveryStrategy="remount">
+            <SubsurfaceViewer
+                {...props}
+                deckGlRef={setDeckGlInstance}
+                cameraPosition={cameraPosition}
+                getCameraPosition={handleCameraChange}
+            />
+        </WebGlResourceBoundary>
+    );
+}
+
+export function createDeckGlAdapter(deckRef: React.RefObject<DeckGLRef | null>): WebGlResourceAdapter {
+    return {
+        connect({ onContextLost, onContextRestored }) {
+            const deck = deckRef.current?.deck;
+            const canvas = deck?.getCanvas();
+
+            if (!canvas) {
+                return () => {};
+            }
+
+            const handleContextLost = (event: Event) => {
+                // Required if you want the browser to attempt restoration.
+                event.preventDefault();
+
+                onContextLost();
+            };
+
+            const handleContextRestored = () => {
+                onContextRestored?.();
+            };
+
+            canvas.addEventListener("webglcontextlost", handleContextLost);
+
+            canvas.addEventListener("webglcontextrestored", handleContextRestored);
+
+            return () => {
+                canvas.removeEventListener("webglcontextlost", handleContextLost);
+
+                canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+            };
+        },
+
+        requestRender() {
+            deckRef.current?.deck?.redraw("context loss");
+        },
+    };
 }
