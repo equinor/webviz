@@ -13,6 +13,7 @@ import {
     useGuiValue,
     type GuiEventPayloads,
 } from "@framework/GuiMessageBroker";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
@@ -32,7 +33,6 @@ import {
     vec2FromPointerEvent,
 } from "@lib/utils/vec2";
 
-import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
@@ -55,7 +55,7 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 }
 
 export const Layout: React.FC<LayoutProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard, isActive: isActiveDashboard } = useDashboard();
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
     const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
@@ -74,6 +74,10 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const layout = tempLayout ?? trueLayout;
 
     React.useEffect(() => {
+        if (!isActiveDashboard) {
+            return;
+        }
+
         let pointerDownPoint: Vec2 | null = null;
         let pointerDownElementPosition: Vec2 | null = null;
         let pointerDownElementId: string | null = null;
@@ -347,7 +351,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 clearTimeout(delayTimer);
             }
         };
-    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard]);
+    }, [layoutDivSize, moduleInstances, guiMessageBroker, dashboard, isActiveDashboard]);
 
     function makeTempViewWrapperPlaceholder() {
         if (!tempLayoutBoxId) {

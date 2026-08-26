@@ -16,6 +16,7 @@ import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "@framework/internal/persistence/constants";
+import { DashboardHotCacheTopic } from "@framework/internal/WorkbenchSession/DashboardHotCache";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
 import { AlertDialog } from "@lib/components/AlertDialog";
@@ -46,6 +47,10 @@ export function DashboardPanel(props: DashboardPanelProps) {
     const activeDashboard = usePublishSubscribeTopicValue(
         workbenchSession,
         PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
+    );
+    const hotDashboardIds = usePublishSubscribeTopicValue(
+        workbenchSession.getDashboardHotCache(),
+        DashboardHotCacheTopic.HOT_DASHBOARD_IDS,
     );
     const [editingDashboard, setEditingDashboard] = React.useState<Dashboard | null>(null);
     const [dashboardPendingDeleteConfirmation, setDashboardPendingDeleteConfirmation] =
@@ -385,6 +390,10 @@ export function DashboardPanel(props: DashboardPanelProps) {
                                     key={dashboard.getId()}
                                     dashboard={dashboard}
                                     draggable={!isSnapshot}
+                                    isHot={
+                                        dashboard.getId() === activeDashboard?.getId() ||
+                                        hotDashboardIds.includes(dashboard.getId())
+                                    }
                                     isDragged={draggedDashboardId === dashboard.getId()}
                                     dropIndicatorSide={
                                         dropTarget?.dashboardId === dashboard.getId()
@@ -500,6 +509,7 @@ export function DashboardPanel(props: DashboardPanelProps) {
 type DashboardTabProps = {
     dashboard: Dashboard;
     draggable: boolean;
+    isHot: boolean;
     isDragged: boolean;
     dropIndicatorSide: "before" | "after" | null;
     onRequestDelete: (dashboardId: string) => void;
@@ -587,6 +597,21 @@ function DashboardTab(props: DashboardTabProps) {
                     >
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </span>
+                    <Tooltip
+                        content={
+                            props.isHot
+                                ? "Kept in memory - switching to this dashboard is instant"
+                                : "Not kept in memory - switching to this dashboard will reload it"
+                        }
+                        side="top"
+                    >
+                        <span
+                            className={resolveClassNames("h-1.5 w-1.5 shrink-0 rounded-full", {
+                                "bg-success-strong": props.isHot,
+                                "bg-neutral-subtle border-neutral-strong border": !props.isHot,
+                            })}
+                        />
+                    </Tooltip>
                     <span className="truncate">{metadata.name}</span>
                     <Menu.Root>
                         <Menu.Trigger>

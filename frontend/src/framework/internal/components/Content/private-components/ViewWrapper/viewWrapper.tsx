@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiEvent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -15,6 +15,7 @@ import { ViewWrapperPlaceholder } from "../viewWrapperPlaceholder";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
+import { ViewContent } from "./private-components/viewContent";
 
 type ViewWrapperProps = {
     isMaximized?: boolean;
@@ -31,7 +32,7 @@ type ViewWrapperProps = {
 };
 
 export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
     const [prevWidth, setPrevWidth] = React.useState<number>(props.width);
     const [prevHeight, setPrevHeight] = React.useState<number>(props.height);
     const [prevX, setPrevX] = React.useState<number>(props.x);
@@ -185,15 +186,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         })}
                         onClick={handleModuleClick}
                     >
-                        {/* The module's actual view content is rendered elsewhere, continuously,
-                            by ModuleViewContentHost, and portaled into this slot - see
-                            ModuleViewSlotRegistry. Keeps a WebGL canvas/context (or any other
-                            expensive view-owned resource) alive across this chrome remounting when
-                            switching between the active dashboard and a hot-but-inactive one. */}
-                        <div
-                            ref={(el) => props.workbench.getModuleViewSlotRegistry().setSlot(props.moduleInstance.getId(), el)}
-                            className="h-full w-full"
-                        />
+                        <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />
                         <ChannelReceiverNodesWrapper
                             forwardedRef={ref}
                             moduleInstance={props.moduleInstance}
