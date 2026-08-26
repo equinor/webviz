@@ -253,7 +253,6 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 </Setting.Field>
                 <Setting.Field
                     help={{
-                        title: "Compare using common filter values",
                         content: (
                             <>
                                 Tables with the same filters may contain different values, such as different zone

@@ -50,8 +50,8 @@ export type SettingFieldProps = {
     description?: React.ReactNode;
     /** Configuration for a context help popover shown next to the label. */
     help?: {
-        /** The title of the context help popover. */
-        title: React.ReactNode;
+        /** Optional title of the context help popover. */
+        title?: React.ReactNode;
         /** The content of the context help popover. */
         content: React.ReactNode;
     };
@@ -150,7 +150,7 @@ export function Field(props: SettingFieldProps) {
                     {props.help && (
                         <div className="self-center">
                             <FieldPrimitive.Info side="right">
-                                <Heading as="h6">{props.help.title}</Heading>
+                                {props.help.title && <Heading as="h6">{props.help.title}</Heading>}
                                 {props.help.content}
                             </FieldPrimitive.Info>
                         </div>
@@ -182,7 +182,7 @@ export function Field(props: SettingFieldProps) {
                         )}
                         {props.help && (
                             <FieldPrimitive.Info side="right">
-                                <Heading as="h6">{props.help.title}</Heading>
+                                {props.help.title && <Heading as="h6">{props.help.title}</Heading>}
                                 {props.help.content}
                             </FieldPrimitive.Info>
                         )}
@@ -234,7 +234,7 @@ export function Field(props: SettingFieldProps) {
                 {props.help && (
                     <div className="self-center">
                         <FieldPrimitive.Info side="right">
-                            <Heading as="h6">{props.help.title}</Heading>
+                            {props.help.title && <Heading as="h6">{props.help.title}</Heading>}
                             {props.help.content}
                         </FieldPrimitive.Info>
                     </div>

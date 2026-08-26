@@ -10,8 +10,6 @@ import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolum
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
-import type { SelectOption } from "@lib/components/Select";
-import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
@@ -109,14 +107,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     }
 
     const isGroupedByFluid = selectedGroupByIndices.includes(TableOriginKey.FLUID);
-    const resultNameOptions: SelectOption<string>[] = tableDefinitionsAccessor
+    const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
         .map((name) => {
             const requiresFluidGrouping = isFluidSpecificResultName(name) && !isGroupedByFluid;
             return {
                 label: name,
                 value: name,
-                hoverText: requiresFluidGrouping
+                description: requiresFluidGrouping
                     ? `${name} is only defined per fluid. Add FLUID to Grouping to select it.`
                     : createHoverTextForVolume(name),
                 disabled: requiresFluidGrouping,
@@ -141,7 +139,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         useMakePersistableFixableAtomAnnotations(selectedIndicesWithValuesAtom);
 
     const tableSettings = (
-        <Setting.Section title="Result and grouping" defaultOpen>
+        <Setting.Section title="Responses and grouping" defaultOpen>
             <Setting.Field label="Table type" stacked>
                 <Combobox
                     value={selectedTableType}
@@ -162,12 +160,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     />
                 </Setting.Field>
             )}
-            <Setting.Field label="Results" annotations={selectedResultNamesAnnotations}>
-                <Select
+            <Setting.Field label="Responses" annotations={selectedResultNamesAnnotations}>
+                <Combobox
                     value={selectedResultNames}
-                    options={resultNameOptions}
+                    items={resultNameOptions}
                     multiple
-                    size={5}
+                    selectionMode="count"
+                    showClearAllButton
+                    placeholder="Select responses..."
                     onValueChange={setSelectedResultNames}
                 />
             </Setting.Field>

@@ -93,7 +93,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             return {
                 label: name,
                 value: name,
-                hoverText: isFaciesFractionWithoutFaciesIndex
+                description: isFaciesFractionWithoutFaciesIndex
                     ? "FACIES_FRACTION requires a FACIES index column; not available for the selected table(s)."
                     : createHoverTextForVolume(name),
                 disabled: isFaciesFractionWithoutFaciesIndex,
@@ -243,13 +243,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     {[PlotType.HISTOGRAM, PlotType.BAR, PlotType.BOX, PlotType.DISTRIBUTION].includes(
                         selectedPlotType,
                     ) && (
-                        <SwitchCompositions.WithLabel
-                            label="Show statistical markers"
-                            checked={plotOptions.showStatisticalMarkers}
-                            onCheckedChange={handleOptionChange("showStatisticalMarkers")}
-                            size="small"
-                        />
-                    )}
+                            <SwitchCompositions.WithLabel
+                                label="Show statistical markers"
+                                checked={plotOptions.showStatisticalMarkers}
+                                onCheckedChange={handleOptionChange("showStatisticalMarkers")}
+                                size="small"
+                            />
+                        )}
                     {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION].includes(selectedPlotType) && (
                         <SwitchCompositions.WithLabel
                             label="Show statistical marker labels"
