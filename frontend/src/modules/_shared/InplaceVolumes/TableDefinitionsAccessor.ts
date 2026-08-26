@@ -97,11 +97,7 @@ export class TableDefinitionsAccessor {
                     if (commonIndicesWithValuesMap.has(indexWithValues.indexColumn)) {
                         throw new Error(`Duplicate index ${indexWithValues.indexColumn}`);
                     }
-                    // Copy so that the map never aliases the cached table definitions
-                    commonIndicesWithValuesMap.set(indexWithValues.indexColumn, {
-                        indexColumn: indexWithValues.indexColumn,
-                        values: [...indexWithValues.values],
-                    });
+                    commonIndicesWithValuesMap.set(indexWithValues.indexColumn, indexWithValues);
                 }
 
                 isInitialized = true;
@@ -126,9 +122,8 @@ export class TableDefinitionsAccessor {
                     continue;
                 }
 
-                // Tables are not comparable when index values are not equal. The equality check is
-                // order-insensitive, but runs on copies so the cached table definitions keep their
-                // original (e.g. stratigraphic) value order.
+                // Tables are not comparable when index values are not equal. Compare sorted copies so
+                // the backend-provided value order remains available to selectors and plots.
                 if (this._indexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION) {
                     const valuesIntersection = indexWithValues.values.filter((value) =>
                         currentIndexWithValues.values.includes(value),

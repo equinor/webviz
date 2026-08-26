@@ -8,7 +8,7 @@ import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumes/sortResultNames";
 import type { Row } from "@modules/_shared/InplaceVolumes/Table";
-import { Table } from "@modules/_shared/InplaceVolumes/Table";
+import { ColumnType, Table } from "@modules/_shared/InplaceVolumes/Table";
 import {
     makeStatisticalTableColumnDataFromApiData,
     makeTableFromApiData,
@@ -20,6 +20,35 @@ import type {
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { TableColumnsConfig, TableRow } from "../types";
+
+export function sortTableRowsByCategoryOrder<TColumns extends TableColumnsConfig>(
+    rows: TableRow<TColumns>[],
+    headings: TColumns,
+    categoryOrder: ReadonlyMap<string, readonly string[]>,
+): TableRow<TColumns>[] {
+    const categoryColumns = Object.entries(headings)
+        .filter(([, heading]) => heading.columnType !== undefined && heading.columnType !== ColumnType.RESULT)
+        .map(([columnName]) => columnName);
+
+    const positionsByColumn = new Map<string, Map<string, number>>();
+    for (const columnName of categoryColumns) {
+        const preferredValues = categoryOrder.get(columnName);
+        const values = preferredValues ?? Array.from(new Set(rows.map((row) => String(row[columnName]))));
+        positionsByColumn.set(columnName, new Map(values.map((value, index) => [value, index])));
+    }
+
+    return rows.toSorted((left, right) => {
+        for (const columnName of categoryColumns) {
+            const positions = positionsByColumn.get(columnName);
+            const leftPosition = positions?.get(String(left[columnName])) ?? Number.MAX_SAFE_INTEGER;
+            const rightPosition = positions?.get(String(right[columnName])) ?? Number.MAX_SAFE_INTEGER;
+            if (leftPosition !== rightPosition) {
+                return leftPosition - rightPosition;
+            }
+        }
+        return 0;
+    });
+}
 
 export function createTableHeadingsAndRowsFromTablesData(tablesData: InplaceVolumesTableData[]): {
     headings: TableColumnsConfig;
