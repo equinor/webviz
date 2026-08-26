@@ -18,6 +18,14 @@ function getFaviconLinkElement(): HTMLLinkElement | null {
 }
 
 function useDocumentTitleAndFaviconSync(sessionTitle: string, faviconHref: string): void {
+    // Captured once, synchronously during the first render (before any effect below can
+    // overwrite them), so unmounting restores whatever title/favicon was actually in place
+    // rather than a hard-coded value that can drift from index.html's real defaults.
+    const priorStateRef = React.useRef<{ title: string; faviconHref: string | null } | null>(null);
+    if (priorStateRef.current === null) {
+        priorStateRef.current = { title: document.title, faviconHref: getFaviconLinkElement()?.href ?? null };
+    }
+
     React.useEffect(
         function updateDocumentTitle() {
             document.title = `${sessionTitle} | Webviz`;
@@ -40,10 +48,11 @@ function useDocumentTitleAndFaviconSync(sessionTitle: string, faviconHref: strin
     // boundaries this component lives in unmount it rather than passing null props.
     React.useEffect(function resetOnUnmount() {
         return () => {
-            document.title = DEFAULT_DOCUMENT_TITLE;
+            const priorState = priorStateRef.current;
+            document.title = priorState?.title ?? DEFAULT_DOCUMENT_TITLE;
             const link = getFaviconLinkElement();
             if (link) {
-                link.href = FAVICON_HREF_DEFAULT;
+                link.href = priorState?.faviconHref ?? FAVICON_HREF_DEFAULT;
             }
         };
     }, []);
