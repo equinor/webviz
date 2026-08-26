@@ -253,15 +253,14 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 </Setting.Field>
                 <Setting.Field
                     help={{
-                        title: "Allow tables with differing filter values",
+                        title: "Compare using common filter values",
                         content: (
                             <>
-                                Filters missing from a table are always dropped. If one table has no facies, facies
-                                cannot be used for filtering.
+                                Tables with the same filters may contain different values, such as different zone
+                                names. Enable this setting to compare them using only the values available in every
+                                table. Values not shared by all tables are omitted.
                                 <br />
-                                This setting applies when tables share a filter but have different values, e.g.
-                                different zone names. When off, the tables cannot be compared. When on, only the zones,
-                                regions and facies found in <b>all</b> tables are kept.
+                                Filters that are not available in every selected table are always omitted.
                             </>
                         ),
                     }}
@@ -270,7 +269,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         checked={props.selectedAllowIndicesValuesIntersection}
                         onCheckedChange={handleAllowIndexValueIntersectionChange}
                     >
-                        Allow tables with differing filter values
+                        Compare using common filter values
                     </SwitchCompositions.WithLabel>
                 </Setting.Field>
             </Setting.Section>
@@ -279,7 +278,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 {!props.availableIndicesWithValues.length && (
                     // TODO - Waiting for section overlay. Temp workaround
                     <Banner layoutClassName="col-span-3" tone="danger">
-                        Selected tables are not comparable due to mismatching index columns
+                        Selected tables are not comparable because they have no filters in common
                     </Banner>
                 )}
 
@@ -309,7 +308,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                             stacked
                             errorOverlay={
                                 !props.areCurrentlySelectedTablesComparable
-                                    ? "Selected tables are not comparable due to mismatching index columns"
+                                    ? "Selected tables are not comparable because their filter values differ"
                                     : undefined
                             }
                         >
