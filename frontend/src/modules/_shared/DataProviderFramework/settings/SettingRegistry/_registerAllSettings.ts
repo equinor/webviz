@@ -1,7 +1,5 @@
-import {
-    defaultContinuousDivergingColorPalettes,
-    defaultContinuousSequentialColorPalettes,
-} from "@framework/utils/colorPalettes";
+import { InitialFluidContactType_api } from "@api";
+import { defaultContinuousDivergingColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { BooleanNumberSetting } from "../implementations/BooleanNumberSetting";
@@ -37,6 +35,14 @@ import { WellboreDepthFilterSetting } from "../implementations/WellboreDepthFilt
 import { Setting } from "../settingsDefinitions";
 
 import { SettingRegistry } from "./_SettingRegistry";
+
+const FLUID_CONTACT_LABELS: Record<InitialFluidContactType_api, string> = {
+    [InitialFluidContactType_api.FGL]: "Free gas level",
+    [InitialFluidContactType_api.FWL]: "Free water level",
+    [InitialFluidContactType_api.GOC]: "Gas-oil contact",
+    [InitialFluidContactType_api.GWC]: "Gas-water contact",
+    [InitialFluidContactType_api.OWC]: "Oil-water contact",
+};
 
 SettingRegistry.registerSetting(Setting.TRACK_WIDTH, "Track width", InputNumberSetting, {
     customConstructorParameters: [{ min: 1, max: 6 }],
@@ -104,7 +110,13 @@ SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetti
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", NumberRangeDropdownSetting);
 SettingRegistry.registerSetting(Setting.GRID_LAYER_RANGE, "Grid Ranges", GridLayerRangeSetting);
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.FLUID_CONTACT, "Fluid Contact", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.FLUID_CONTACT, "Fluid Contact", DropdownStringSetting, {
+    customConstructorParameters: [
+        {
+            valueLabel: (value) => FLUID_CONTACT_LABELS[value as InitialFluidContactType_api] ?? value,
+        },
+    ],
+});
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
     customConstructorParameters: [{ extensionLengthConfig: { min: 0, max: 5000, defaultValue: 500 } }],
 });
