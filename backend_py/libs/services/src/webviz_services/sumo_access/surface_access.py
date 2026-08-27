@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 import httpx
 import xtgeo
 
+from fmu.datamodels.fmu_results.enums import Content, FluidContactType
+from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 from fmu.sumo.explorer.objects import Surface
@@ -27,7 +29,7 @@ from webviz_services.service_exceptions import (
     ServiceTimeoutError,
 )
 
-from .surface_types import SurfaceMeta, SurfaceMetaSet
+from .surface_types import InitialFluidContactSurfaceMeta, SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
@@ -104,6 +106,96 @@ class SurfaceAccess:
             f"Got metadata for realization surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]"
         )
         return surf_meta_set
+
+    async def get_initial_fluid_contact_surfaces_metadata_async(self) -> list[InitialFluidContactSurfaceMeta]:
+        if not self._ensemble_name:
+            raise InvalidParameterError(
+                "Ensemble name must be set to get metadata for initial fluid contact surfaces", Service.SUMO
+            )
+
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
+            ensemble=self._ensemble_name,
+            stage="realization",
+            realization=True,
+            aggregation=False,
+            is_observation=False,
+            dataformat="irap_binary",
+            content=Content.fluid_contact.value,
+            standard_result=StandardResultName.fluid_contact_surface.value,
+            time=TimeFilter(TimeType.NONE),
+        )
+        buckets = await search_context.get_composite_buckets_async(
+            sources=[
+                {"name": {"terms": {"field": "data.name.keyword"}}},
+                {"contact": {"terms": {"field": "data.fluid_contact.contact.keyword"}}},
+            ],
+            sub_aggs={
+                "value_min": {"min": {"field": "data.spec.value_statistics.min"}},
+                "value_max": {"max": {"field": "data.spec.value_statistics.max"}},
+                "is_stratigraphic": {"min": {"field": "data.stratigraphic"}},
+            },
+        )
+
+        return [_initial_fluid_contact_surface_meta_from_bucket(bucket) for bucket in buckets]
+
+    @otel_span_decorator()
+    async def get_initial_fluid_contact_surface_data_async(
+        self, real_num: int, name: str, contact: FluidContactType
+    ) -> xtgeo.RegularSurface:
+        if not self._ensemble_name:
+            raise InvalidParameterError("Ensemble name must be set to get an initial fluid contact surface", Service.SUMO)
+
+        perf_metrics = PerfMetrics()
+        surface_description = (
+            f"R:{real_num}__N:{name}__CONTACT:{contact.value}__I:{self._ensemble_name}__C:{self._case_uuid}"
+        )
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
+            ensemble=self._ensemble_name,
+            stage="realization",
+            realization=real_num,
+            aggregation=False,
+            is_observation=False,
+            dataformat="irap_binary",
+            content=Content.fluid_contact.value,
+            standard_result=StandardResultName.fluid_contact_surface.value,
+            name=name,
+            time=TimeFilter(TimeType.NONE),
+            complex={"term": {"data.fluid_contact.contact.keyword": contact.value}},
+        )
+
+        surface_count = await search_context.length_async()
+        if surface_count > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple ({surface_count}) initial fluid contact surfaces found in Sumo for: {surface_description}",
+                Service.SUMO,
+            )
+        if surface_count == 0:
+            raise NoDataError(f"No initial fluid contact surface found in Sumo for: {surface_description}", Service.SUMO)
+
+        sumo_surface: Surface = await search_context.getitem_async(0)
+        perf_metrics.record_lap("locate")
+
+        async with start_otel_span_async("download-blob") as span:
+            byte_stream: BytesIO = await sumo_surface.blob_async
+            size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
+            span.set_attribute("webviz.data.size_mb", size_mb)
+            perf_metrics.record_lap("download")
+
+        with start_otel_span("xtgeo-read", {"webviz.data.size_mb": size_mb}):
+            xtgeo_surface = xtgeo.surface_from_file(byte_stream)
+            perf_metrics.record_lap("xtgeo-read")
+
+        if are_all_surface_values_undefined(xtgeo_surface):
+            raise InvalidDataError("Initial fluid contact surface contains only undefined values", Service.SUMO)
+
+        LOGGER.debug(
+            f"Got initial fluid contact surface from Sumo in: {perf_metrics.to_string()} "
+            f"[{xtgeo_surface.ncol}x{xtgeo_surface.nrow}, {size_mb:.2f}MB] ({surface_description})"
+        )
+
+        return xtgeo_surface
 
     async def get_observed_surfaces_metadata_async(self) -> SurfaceMetaSet:
         perf_metrics = PerfMetrics()
@@ -578,6 +670,16 @@ def filter_search_context_on_attribute(search_context: SearchContext, attribute:
         )
     return search_context.filter(
         tagname=attribute,
+    )
+
+
+def _initial_fluid_contact_surface_meta_from_bucket(bucket: dict) -> InitialFluidContactSurfaceMeta:
+    return InitialFluidContactSurfaceMeta(
+        name=bucket["key"]["name"],
+        contact=FluidContactType(bucket["key"]["contact"]),
+        is_stratigraphic=bucket["is_stratigraphic"]["value"] == 1,
+        global_min_val=bucket["value_min"]["value"],
+        global_max_val=bucket["value_max"]["value"],
     )
 
 

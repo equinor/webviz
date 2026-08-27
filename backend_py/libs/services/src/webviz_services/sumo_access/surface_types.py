@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from fmu.datamodels.fmu_results.enums import FluidContactType
+
 from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType
 
@@ -22,3 +24,12 @@ class SurfaceMetaSet:
     surfaces: list[SurfaceMeta]
     time_points_iso_str: list[str]
     time_intervals_iso_str: list[str]
+
+
+@dataclass(frozen=True, kw_only=True)
+class InitialFluidContactSurfaceMeta:
+    name: str
+    contact: FluidContactType
+    is_stratigraphic: bool
+    global_min_val: float | None
+    global_max_val: float | None
