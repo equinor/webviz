@@ -65,6 +65,7 @@ spec:
       variables:
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
+        WEBVIZ_DUMMY_OPERATION_GENERATION: 123
       environmentConfig:
         - environment: prod
           identity:
