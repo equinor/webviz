@@ -455,6 +455,31 @@ async def post_get_surface_intersection(
     return surface_intersection_response
 
 
+@router.post("/get_initial_fluid_contact_surface_intersection")
+async def post_get_initial_fluid_contact_surface_intersection(
+    contact: Annotated[schemas.InitialFluidContactType, Query(description="Initial fluid contact type")],
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    realization_num: int = Query(description="Realization number"),
+    name: str = Query(description="Surface name"),
+    cumulative_length_polyline: schemas.SurfaceIntersectionCumulativeLengthPolyline = Body(embed=True),
+) -> schemas.SurfaceIntersectionData:
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    surface = await access.get_initial_fluid_contact_surface_data_async(
+        real_num=realization_num,
+        name=name,
+        contact=FluidContactType(contact.value),
+    )
+    surface.name = name
+
+    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
+    surface_intersection = intersect_surface_with_polyline(surface, intersection_polyline)
+
+    return converters.to_api_surface_intersection(surface_intersection)
+
+
 @router.post("/get_sample_surface_in_points")
 async def post_get_sample_surface_in_points(
     case_uuid: str = Query(description="Sumo case uuid"),

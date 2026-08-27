@@ -689,6 +689,10 @@ def _build_surface_meta_arr(
     ret_arr: list[SurfaceMeta] = []
 
     for info in src_surf_info_arr:
+        # First step in migrating standard results out of the legacy generic surface metadata path.
+        if info.standard_result == StandardResultName.fluid_contact_surface.value:
+            continue
+
         content_str = info.content
         attribute_str: str | None = None
         if not info.tagname and not info.standard_result:

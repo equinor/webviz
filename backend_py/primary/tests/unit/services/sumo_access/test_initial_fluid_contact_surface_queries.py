@@ -5,7 +5,8 @@ from fmu.datamodels.fmu_results.enums import FluidContactType
 from fmu.sumo.explorer.explorer import SearchContext
 
 from webviz_services.service_exceptions import MultipleDataMatchesError
-from webviz_services.sumo_access.surface_access import SurfaceAccess
+from webviz_services.sumo_access.queries.surface_queries import SurfInfo, SurfTimeType
+from webviz_services.sumo_access.surface_access import SurfaceAccess, _build_surface_meta_arr
 
 
 async def test_get_initial_fluid_contact_surfaces_metadata_keeps_same_name_contacts_distinct_async(
@@ -80,3 +81,31 @@ async def test_get_initial_fluid_contact_surface_data_filters_on_contact_async(
     assert {"term": {"data.fluid_contact.contact.keyword": "goc"}} in captured["must"]
     assert {"term": {"fmu.realization.id": 3}} in captured["must"]
     assert {"bool": {"must_not": [{"exists": {"field": "data.time"}}]}} in captured["must"]
+
+
+def test_generic_surface_metadata_excludes_initial_fluid_contact_standard_result() -> None:
+    result = _build_surface_meta_arr(
+        [
+            SurfInfo(
+                name="Therys Fm.",
+                tagname="",
+                standard_result="fluid_contact_surface",
+                content="fluid_contact",
+                is_stratigraphic=True,
+                global_min_val=1660.0,
+                global_max_val=1677.0,
+            ),
+            SurfInfo(
+                name="Dynamic contact",
+                tagname="dynamic_contact",
+                content="fluid_contact",
+                is_stratigraphic=False,
+                global_min_val=1650.0,
+                global_max_val=1680.0,
+            ),
+        ],
+        SurfTimeType.NO_TIME,
+        False,
+    )
+
+    assert [item.name for item in result] == ["Dynamic contact"]
