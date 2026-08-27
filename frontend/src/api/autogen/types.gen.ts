@@ -82,6 +82,13 @@ export type BodyPostGetAggregatedStatisticalInplaceTableData_api = {
 };
 
 /**
+ * Body_post_get_initial_fluid_contact_surface_intersection
+ */
+export type BodyPostGetInitialFluidContactSurfaceIntersection_api = {
+    cumulative_length_polyline: SurfaceIntersectionCumulativeLengthPolyline_api;
+};
+
+/**
  * Body_post_get_polyline_intersection
  */
 export type BodyPostGetPolylineIntersection_api = {
@@ -4629,6 +4636,63 @@ export type PostGetSurfaceIntersectionResponses_api = {
 
 export type PostGetSurfaceIntersectionResponse_api =
     PostGetSurfaceIntersectionResponses_api[keyof PostGetSurfaceIntersectionResponses_api];
+
+export type PostGetInitialFluidContactSurfaceIntersectionData_api = {
+    body: BodyPostGetInitialFluidContactSurfaceIntersection_api;
+    path?: never;
+    query: {
+        /**
+         * Initial fluid contact type
+         */
+        contact: InitialFluidContactType_api;
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization Num
+         *
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Name
+         *
+         * Surface name
+         */
+        name: string;
+        zCacheBust?: string;
+    };
+    url: "/surface/get_initial_fluid_contact_surface_intersection";
+};
+
+export type PostGetInitialFluidContactSurfaceIntersectionErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostGetInitialFluidContactSurfaceIntersectionError_api =
+    PostGetInitialFluidContactSurfaceIntersectionErrors_api[keyof PostGetInitialFluidContactSurfaceIntersectionErrors_api];
+
+export type PostGetInitialFluidContactSurfaceIntersectionResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SurfaceIntersectionData_api;
+};
+
+export type PostGetInitialFluidContactSurfaceIntersectionResponse_api =
+    PostGetInitialFluidContactSurfaceIntersectionResponses_api[keyof PostGetInitialFluidContactSurfaceIntersectionResponses_api];
 
 export type PostGetSampleSurfaceInPointsData_api = {
     body: BodyPostGetSampleSurfaceInPoints_api;

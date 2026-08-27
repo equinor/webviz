@@ -88,6 +88,7 @@ import {
     type Options,
     postGetAggregatedPerRealizationInplaceTableData,
     postGetAggregatedStatisticalInplaceTableData,
+    postGetInitialFluidContactSurfaceIntersection,
     postGetPolylineIntersection,
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
@@ -317,6 +318,9 @@ import type {
     PostGetAggregatedStatisticalInplaceTableDataData_api,
     PostGetAggregatedStatisticalInplaceTableDataError_api,
     PostGetAggregatedStatisticalInplaceTableDataResponse_api,
+    PostGetInitialFluidContactSurfaceIntersectionData_api,
+    PostGetInitialFluidContactSurfaceIntersectionError_api,
+    PostGetInitialFluidContactSurfaceIntersectionResponse_api,
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
@@ -1258,6 +1262,61 @@ export const postGetSurfaceIntersectionMutation = (
     > = {
         mutationFn: async (fnOptions) => {
             const { data } = await postGetSurfaceIntersection({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
+
+export const postGetInitialFluidContactSurfaceIntersectionQueryKey = (
+    options: Options<PostGetInitialFluidContactSurfaceIntersectionData_api>,
+) => createQueryKey("postGetInitialFluidContactSurfaceIntersection", options);
+
+/**
+ * Post Get Initial Fluid Contact Surface Intersection
+ */
+export const postGetInitialFluidContactSurfaceIntersectionOptions = (
+    options: Options<PostGetInitialFluidContactSurfaceIntersectionData_api>,
+) =>
+    queryOptions<
+        PostGetInitialFluidContactSurfaceIntersectionResponse_api,
+        AxiosError<PostGetInitialFluidContactSurfaceIntersectionError_api>,
+        PostGetInitialFluidContactSurfaceIntersectionResponse_api,
+        ReturnType<typeof postGetInitialFluidContactSurfaceIntersectionQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postGetInitialFluidContactSurfaceIntersection({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postGetInitialFluidContactSurfaceIntersectionQueryKey(options),
+    });
+
+/**
+ * Post Get Initial Fluid Contact Surface Intersection
+ */
+export const postGetInitialFluidContactSurfaceIntersectionMutation = (
+    options?: Partial<Options<PostGetInitialFluidContactSurfaceIntersectionData_api>>,
+): UseMutationOptions<
+    PostGetInitialFluidContactSurfaceIntersectionResponse_api,
+    AxiosError<PostGetInitialFluidContactSurfaceIntersectionError_api>,
+    Options<PostGetInitialFluidContactSurfaceIntersectionData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostGetInitialFluidContactSurfaceIntersectionResponse_api,
+        AxiosError<PostGetInitialFluidContactSurfaceIntersectionError_api>,
+        Options<PostGetInitialFluidContactSurfaceIntersectionData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postGetInitialFluidContactSurfaceIntersection({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,

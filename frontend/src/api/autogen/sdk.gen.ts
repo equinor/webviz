@@ -226,6 +226,9 @@ import type {
     PostGetAggregatedStatisticalInplaceTableDataData_api,
     PostGetAggregatedStatisticalInplaceTableDataErrors_api,
     PostGetAggregatedStatisticalInplaceTableDataResponses_api,
+    PostGetInitialFluidContactSurfaceIntersectionData_api,
+    PostGetInitialFluidContactSurfaceIntersectionErrors_api,
+    PostGetInitialFluidContactSurfaceIntersectionResponses_api,
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionErrors_api,
     PostGetPolylineIntersectionResponses_api,
@@ -779,6 +782,30 @@ export const postGetSurfaceIntersection = <ThrowOnError extends boolean = false>
     >({
         responseType: "json",
         url: "/surface/get_surface_intersection",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+/**
+ * Post Get Initial Fluid Contact Surface Intersection
+ */
+export const postGetInitialFluidContactSurfaceIntersection = <ThrowOnError extends boolean = false>(
+    options: Options<PostGetInitialFluidContactSurfaceIntersectionData_api, ThrowOnError>,
+): RequestResult<
+    PostGetInitialFluidContactSurfaceIntersectionResponses_api,
+    PostGetInitialFluidContactSurfaceIntersectionErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        PostGetInitialFluidContactSurfaceIntersectionResponses_api,
+        PostGetInitialFluidContactSurfaceIntersectionErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/get_initial_fluid_contact_surface_intersection",
         ...options,
         headers: {
             "Content-Type": "application/json",
