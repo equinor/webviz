@@ -141,6 +141,8 @@ spec:
               cpu:
                 averageUtilization: 80
 
+
+    # -----------------------------------------------------------------
     - name: surface-query
       dockerFileName: ./backend_go/surface_query/Dockerfile.prod
       ports:
