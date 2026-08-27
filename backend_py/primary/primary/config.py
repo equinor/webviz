@@ -4,7 +4,9 @@ import httpx
 from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
-CLIENT_ID = "900ed417-a860-4970-bd37-73b059ca6f0d"
+
+# The default value for CLIENT_ID is for the webviz-local application registration
+CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "6e4f6e15-5b73-40e7-835e-f563fabd604a")
 CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 
 PSEUDONYM_HMAC_KEY = os.getenv("WEBVIZ_PSEUDONYM_HMAC_KEY")

@@ -13,11 +13,15 @@ spec:
     - name: review
       build:
         from: review
+    - name: review2
+      build:
+        from: review2
     - name: dev
       build:
         from: dev
 
   components:
+    # -----------------------------------------------------------------
     - name: frontend
       dockerFileName: frontend-prod.Dockerfile
       publicPort: http
@@ -29,49 +33,50 @@ spec:
           public:
             proxyReadTimeout: 120
 
+
+    # -----------------------------------------------------------------
     - name: backend-primary
       dockerFileName: ./backend_py/primary/Dockerfile
       ports:
         - name: http
           port: 5000
+      # Set non-prod clientId and client secret as default, prod overrides below
       identity:
         azure:
-          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
       secretRefs:
         azureKeyVaults:
-          - name: webviz
+          - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              - name: WEBVIZ-CLIENT-SECRET
-                envVar: WEBVIZ_CLIENT_SECRET
-              - name: WEBVIZ-SMDA-SUBSCRIPTION-KEY
-                envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY
-              - name: WEBVIZ-ENTERPRISE-SUBSCRIPTION-KEY
-                envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY
-              - name: WEBVIZ-PSEUDONYM-HMAC-KEY
-                envVar: WEBVIZ_PSEUDONYM_HMAC_KEY
-              - name: WEBVIZ-SESSION-STORE-FERNET-KEY
-                envVar: WEBVIZ_SESSION_STORE_FERNET_KEY
-              - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
-                envVar: WEBVIZ_REDIS_AUTH_STORE_PASSWORD
-              - name: WEBVIZ-REDIS-CACHE-PASSWORD
-                envVar: WEBVIZ_REDIS_CACHE_PASSWORD
-              # Inject all app insights connection strings as env vars.
-              # Our azure monitor setup code will pick the right one based on the radix environment
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PREPROD
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
-
+              - { name: webviz-client-secret-nonprod, envVar: WEBVIZ_CLIENT_SECRET }
+              - { name: webviz-smda-subscription-key, envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY }
+              - { name: webviz-enterprise-subscription-key, envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY }
+              - { name: webviz-pseudonym-hmac-key, envVar: WEBVIZ_PSEUDONYM_HMAC_KEY }
+              - { name: webviz-session-store-fernet-key, envVar: WEBVIZ_SESSION_STORE_FERNET_KEY }
+              - { name: webviz-redis-auth-store-password, envVar: WEBVIZ_REDIS_AUTH_STORE_PASSWORD }
+              - { name: webviz-redis-cache-password, envVar: WEBVIZ_REDIS_CACHE_PASSWORD }
+              # Inject all App Insights connection strings as env vars.
+              # Azure Monitor setup picks the right one based on the Radix environment.
+              - { name: webviz-insights-connectionstring-prod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD }
+              - { name: webviz-insights-connectionstring-preprod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD }
+              - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
+              - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
       variables:
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
       environmentConfig:
         - environment: prod
+          identity:
+            azure:
+              # Override with prod clientId
+              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          secretRefs:
+            azureKeyVaults:
+              - name: kv-webviz-shared
+                useAzureIdentity: true
+                items:
+                  - { name: webviz-client-secret-prod, envVar: WEBVIZ_CLIENT_SECRET }
           resources:
             requests:
               memory: 8Gi
@@ -165,18 +170,19 @@ spec:
             value: 20
 
 
+    # -----------------------------------------------------------------
     - name: redis-auth-store
       dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
-          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          # Set nonprod clientId as default, prod overrides below
+          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
       secretRefs:
         azureKeyVaults:
-          - name: webviz
+          - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              - name: WEBVIZ-REDIS-AUTH-STORE-PASSWORD
-                envVar: REDIS_REQUIREPASS
+              - { name: webviz-redis-auth-store-password, envVar: REDIS_REQUIREPASS }
       runAsUser: 999
       args: ["--maxmemory", "800mb",  "--maxmemory-policy", "noeviction", "--loglevel", "notice"]
       ports:
@@ -188,20 +194,27 @@ spec:
           cpu: 500m
         limits:
           memory: 1Gi
+      environmentConfig:
+        - environment: prod
+          identity:
+            azure:
+              # Override with prod clientId
+              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
 
+    # -----------------------------------------------------------------
     - name: redis-cache
       dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
-          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          # Set nonprod clientId as default, prod overrides below
+          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
       secretRefs:
         azureKeyVaults:
-          - name: webviz
+          - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              - name: WEBVIZ-REDIS-CACHE-PASSWORD
-                envVar: REDIS_REQUIREPASS
+              - { name: webviz-redis-auth-store-password, envVar: REDIS_REQUIREPASS }
       runAsUser: 999
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
@@ -215,9 +228,16 @@ spec:
           cpu: 1000m
         limits:
           memory: 4Gi
+      environmentConfig:
+        - environment: prod
+          identity:
+            azure:
+              # Override with prod clientId
+              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
 
   jobs:
+    # -----------------------------------------------------------------
     - name: user-mock
       dockerFileName: ./backend_py/user_mock/Dockerfile
       schedulerPort: 8001
@@ -227,6 +247,7 @@ spec:
       variables:
         UVICORN_PORT: 8001
 
+    # -----------------------------------------------------------------
     - name: user-grid3d-ri
       dockerFileName: ./backend_py/user_grid3d_ri/Dockerfile
       schedulerPort: 8002
@@ -235,26 +256,29 @@ spec:
           port: 8002
       identity:
         azure:
-          clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+          # Set nonprod clientId as default, prod overrides below
+          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
       secretRefs:
         azureKeyVaults:
-          - name: webviz
+          - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              # Inject all app insights connection strings as env vars.
-              # Our azure monitor setup code will pick the right one based on the radix environment
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PROD
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-PREPROD
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-DEV
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV
-              - name: WEBVIZ-INSIGHTS-CONNECTIONSTRING-REVIEW
-                envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW
+              # Inject all App Insights connection strings as env vars.
+              # Azure Monitor setup picks the right one based on the Radix environment.
+              - { name: webviz-insights-connectionstring-prod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD }
+              - { name: webviz-insights-connectionstring-preprod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD }
+              - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
+              - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
       variables:
         UVICORN_PORT: 8002
       payload:
         path: /compute/args
+      environmentConfig:
+        - environment: prod
+          identity:
+            azure:
+              # Override with prod clientId
+              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
   dnsAppAlias:
     environment: prod
