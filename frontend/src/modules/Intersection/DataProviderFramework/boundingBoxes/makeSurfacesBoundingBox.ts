@@ -30,6 +30,10 @@ export function makeSurfacesBoundingBox({
         return null;
     }
 
+    return makeSurfaceIntersectionBoundingBox(data);
+}
+
+export function makeSurfaceIntersectionBoundingBox(data: RealizationSurfacesData): BBox | null {
     // If no surfaces are selected
     if (data.length === 0) {
         return null;
