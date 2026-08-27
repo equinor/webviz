@@ -6,9 +6,9 @@ import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { isEqual } from "lodash-es";
 
 import {
-    WebGlResourceBoundary,
-    type WebGlResourceAdapter,
-} from "@framework/components/WebGlResourceBoundary/webGlResourceBoundary";
+    GpuResourceBoundary,
+    type GpuResourceAdapter,
+} from "@framework/components/GpuResourceBoundary/GpuResourceBoundary";
 import * as bbox from "@lib/utils/bbox";
 
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
@@ -24,7 +24,10 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlInstance!, [deckGlInstance]);
 
-    const adapter = React.useMemo(() => createDeckGlAdapter(localDeckGlRef), []);
+    const adapter = React.useMemo(
+        () => (deckGlInstance ? createDeckGlAdapter(deckGlInstance) : undefined),
+        [deckGlInstance],
+    );
 
     const [prevTriggerHome, setPrevTriggerHome] = React.useState<number | undefined>(0);
     const [prevBounds, setPrevBounds] = React.useState<BoundingBox2D | undefined>(undefined);
@@ -87,26 +90,23 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
     );
 
     return (
-        <WebGlResourceBoundary adapter={adapter} recoveryStrategy="remount">
+        <GpuResourceBoundary adapter={adapter} recoveryStrategy="remount">
             <SubsurfaceViewer
                 {...props}
                 deckGlRef={setDeckGlInstance}
                 cameraPosition={cameraPosition}
                 getCameraPosition={handleCameraChange}
             />
-        </WebGlResourceBoundary>
+        </GpuResourceBoundary>
     );
 }
 
-export function createDeckGlAdapter(deckRef: React.RefObject<DeckGLRef | null>): WebGlResourceAdapter {
+export function createDeckGlAdapter(deckGl: DeckGLRef): GpuResourceAdapter {
     return {
         connect({ onContextLost, onContextRestored }) {
-            const deck = deckRef.current?.deck;
-            const canvas = deck?.getCanvas();
-
-            if (!canvas) {
-                return () => {};
-            }
+            let cancelled = false;
+            let rafHandle: number | null = null;
+            let detachListeners: (() => void) | null = null;
 
             const handleContextLost = (event: Event) => {
                 // Required if you want the browser to attempt restoration.
@@ -119,19 +119,42 @@ export function createDeckGlAdapter(deckRef: React.RefObject<DeckGLRef | null>):
                 onContextRestored?.();
             };
 
-            canvas.addEventListener("webglcontextlost", handleContextLost);
+            // deckGl.deck is only populated once DeckGL's own effect has created the
+            // underlying Deck instance, which can happen after this effect first runs.
+            // Poll until the canvas is available instead of silently giving up.
+            const attachWhenReady = () => {
+                if (cancelled) {
+                    return;
+                }
 
-            canvas.addEventListener("webglcontextrestored", handleContextRestored);
+                const canvas = deckGl?.deck?.getCanvas();
+                if (!canvas) {
+                    rafHandle = requestAnimationFrame(attachWhenReady);
+                    return;
+                }
+
+                canvas.addEventListener("webglcontextlost", handleContextLost);
+                canvas.addEventListener("webglcontextrestored", handleContextRestored);
+
+                detachListeners = () => {
+                    canvas.removeEventListener("webglcontextlost", handleContextLost);
+                    canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+                };
+            };
+
+            attachWhenReady();
 
             return () => {
-                canvas.removeEventListener("webglcontextlost", handleContextLost);
-
-                canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+                cancelled = true;
+                if (rafHandle !== null) {
+                    cancelAnimationFrame(rafHandle);
+                }
+                detachListeners?.();
             };
         },
 
         requestRender() {
-            deckRef.current?.deck?.redraw("context loss");
+            deckGl?.deck?.redraw("context loss");
         },
     };
 }
