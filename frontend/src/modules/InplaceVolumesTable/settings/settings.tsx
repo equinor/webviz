@@ -165,7 +165,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     value={selectedResultNames}
                     items={resultNameOptions}
                     multiple
-                    selectionMode="count"
+                    selectionMode="chips"
                     showClearAllButton
                     placeholder="Select responses..."
                     onValueChange={setSelectedResultNames}

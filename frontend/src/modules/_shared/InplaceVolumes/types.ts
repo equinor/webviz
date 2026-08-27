@@ -49,7 +49,8 @@ export function isFluidSpecificResultName(resultName: string | null): boolean {
     return resultName !== null && resultName in FLUID_SPECIFIC_RESULT_NAMES;
 }
 
-// Ratios and fractions, i.e. the backend Property enum. Never large enough for SI prefixes.
+// Temporary fallback until the backend reports units per response. These known ratios and fractions
+// should be displayed without SI prefixes; unit metadata should eventually replace this name-based list.
 const DIMENSIONLESS_RESULT_NAMES: readonly string[] = [
     "NTG",
     "PORO",

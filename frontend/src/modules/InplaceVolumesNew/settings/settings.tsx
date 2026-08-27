@@ -18,6 +18,7 @@ import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
 import type { Interfaces } from "../interfaces";
@@ -120,6 +121,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         selectedFirstResultName.value === "FACIES_FRACTION" &&
         selectedSubplotBy.value !== "FACIES" &&
         selectedColorBy.value !== "FACIES";
+    const requiredFluid = selectedFirstResultName.value
+        ? FLUID_SPECIFIC_RESULT_NAMES[selectedFirstResultName.value]
+        : undefined;
+    const selectedFluids =
+        selectedIndicesWithValues.value
+            .find((index) => index.indexColumn === TableOriginKey.FLUID)
+            ?.values.map((value) => value.toLowerCase()) ?? [];
+    const isRequiredFluidSelected = requiredFluid !== undefined && selectedFluids.includes(requiredFluid);
 
     const selectedFirstResultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
     const selectedSelectorColumnAnnotations = useMakePersistableFixableAtomAnnotations(selectedSelectorColumnAtom);
@@ -133,10 +142,16 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const plotSettings = (
         <>
             <Setting.Section title="Data Visualization" defaultOpen>
+                {requiredFluid !== undefined && (
+                    <Banner layoutClassName="col-span-3" tone={isRequiredFluidSelected ? "info" : "warning"}>
+                        {selectedFirstResultName.value} is calculated per fluid. Data is automatically grouped by
+                        FLUID. {!isRequiredFluidSelected && `Include ${requiredFluid} in the FLUID filter to see data.`}
+                    </Banner>
+                )}
                 {showFaciesFractionGroupingWarning && (
-                    <Banner tone="warning">
-                        <strong>Note:</strong> FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or
-                        Color by; otherwise every fraction collapses to 1.
+                    <Banner layoutClassName="col-span-3" tone="warning">
+                        FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or Color by; otherwise
+                        every fraction collapses to 1.
                     </Banner>
                 )}
                 <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>
