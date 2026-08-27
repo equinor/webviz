@@ -2,6 +2,7 @@ import React from "react";
 
 import type { AxisOptions, IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
+import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary/GpuResourceBoundary";
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
@@ -9,7 +10,11 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { Bounds } from "./EsvIntersectionController";
-import { EsvIntersectionController, EsvIntersectionControllerTopic } from "./EsvIntersectionController";
+import {
+    EsvIntersectionController,
+    EsvIntersectionControllerTopic,
+    EsvIntersectionLifeCycleState,
+} from "./EsvIntersectionController";
 import type { EsvLayer } from "./EsvLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
 
@@ -59,6 +64,10 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     const [controller, setController] = React.useState<EsvIntersectionController | null>(null);
     const pubSubController = controller ?? nullControllerRef.current;
 
+    const lifeCycleState = usePublishSubscribeTopicValue(
+        pubSubController,
+        EsvIntersectionControllerTopic.LIFE_CYCLE_STATE_CHANGE,
+    );
     const readoutItems = usePublishSubscribeTopicValue(
         pubSubController,
         EsvIntersectionControllerTopic.READOUT_ITEMS_CHANGE,
@@ -161,13 +170,64 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         [controller],
     );
 
+    // Pixi's canvas (and its WebGL context) only exists once the controller has finished
+    // initializing, so gate adapter creation on that instead of racing the canvas into existence.
+    const adapter = React.useMemo<GpuResourceAdapter | undefined>(() => {
+        if (!controller || lifeCycleState !== EsvIntersectionLifeCycleState.INITIALIZED) {
+            return undefined;
+        }
+        return createPixiAdapter(controller);
+    }, [controller, lifeCycleState]);
+
     return (
-        <div
-            ref={containerRef}
-            className={resolveClassNames({ "w-full h-full": defaultedProps.size === undefined })}
-            style={{ ...defaultedProps.size }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-        />
+        <GpuResourceBoundary adapter={adapter} recoveryStrategy="redraw">
+            <div
+                ref={containerRef}
+                className={resolveClassNames({ "w-full h-full": defaultedProps.size === undefined })}
+                style={{ ...defaultedProps.size }}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+            />
+        </GpuResourceBoundary>
     );
+}
+
+// Pixi.js rebuilds its own GPU resources (textures, buffers, etc.) automatically once the
+// browser restores a lost context, so recovery only needs a redraw nudge - no remount required.
+export function createPixiAdapter(controller: EsvIntersectionController): GpuResourceAdapter {
+    return {
+        connect({ onContextLost, onContextRestored }) {
+            const canvas = controller.getCanvas();
+            if (!canvas) {
+                return () => {};
+            }
+
+            const handleContextLost = (event: Event) => {
+                // Required if you want the browser to attempt restoration.
+                event.preventDefault();
+
+                onContextLost();
+            };
+
+            const handleContextRestored = () => {
+                // Pixi's own context system already rebuilt GPU resources by this point (it
+                // listens on the same canvas), but nothing repaints on its own until something
+                // asks for a new frame.
+                controller.requestRender();
+                onContextRestored?.();
+            };
+
+            canvas.addEventListener("webglcontextlost", handleContextLost);
+            canvas.addEventListener("webglcontextrestored", handleContextRestored);
+
+            return () => {
+                canvas.removeEventListener("webglcontextlost", handleContextLost);
+                canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+            };
+        },
+
+        requestRender() {
+            controller.requestRender();
+        },
+    };
 }

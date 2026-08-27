@@ -66,6 +66,9 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
     private _esvController: Controller | null = null;
     private _pixiRenderApplication: PixiRenderApplication | null = null;
     private _interactionHandler: InteractionHandler | null = null;
+    // Must be captured while the context is alive - gl.getExtension() returns null for any
+    // extension once the context is already lost, so fetching this lazily on demand would fail.
+    private _loseContextExtension: WEBGL_lose_context | null = null;
 
     // Live ESV layer instances keyed by user-supplied layer ID
     private _esvLayerMap: Map<string, Layer<unknown>> = new Map();
@@ -154,6 +157,10 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
                 backgroundAlpha: 0,
             });
 
+            const canvas = pixiRenderApplication.canvas;
+            const gl = canvas?.getContext("webgl2") ?? canvas?.getContext("webgl");
+            this._loseContextExtension = gl?.getExtension("WEBGL_lose_context") ?? null;
+
             // Guard: destroy() was called while awaiting Pixi init. Return immediately
             // without touching the container — no DOM cleanup needed because we have not
             // created the ESV Controller yet.
@@ -227,6 +234,7 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
 
         this._interactionHandler = null;
         this._pixiRenderApplication = null;
+        this._loseContextExtension = null;
         this._esvController = null;
         this._container = null;
 
@@ -348,6 +356,26 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
     notifyMouseLeave(): void {
         this._latestMousePosition = null;
         this._pubSubDelegate.notifySubscribers(EsvIntersectionControllerTopic.MOUSE_POSITION_CHANGE);
+    }
+
+    getCanvas(): HTMLCanvasElement | null {
+        return this._pixiRenderApplication?.canvas ?? null;
+    }
+
+    requestRender(): void {
+        // A context lost via WEBGL_lose_context (e.g. simulated for testing, or a driver crash
+        // that the browser doesn't auto-recover) never fires "webglcontextrestored" on its own -
+        // the extension's restoreContext() must be called explicitly. This is a no-op if the
+        // context is already fine. Uses the extension reference cached at init time - fetching
+        // it fresh here would return null, since getExtension() only works while the context is
+        // still alive.
+        const canvas = this.getCanvas();
+        const gl = canvas?.getContext("webgl2") ?? canvas?.getContext("webgl");
+        if (gl?.isContextLost()) {
+            this._loseContextExtension?.restoreContext();
+        }
+
+        this._pixiRenderApplication?.render();
     }
 
     // --- Private helpers ---

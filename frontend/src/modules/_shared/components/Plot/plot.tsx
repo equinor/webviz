@@ -4,6 +4,8 @@ import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
+import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary/GpuResourceBoundary";
+
 export type PlotProps = {
     /**
      * Informs if data/layout changes are ready to be applied
@@ -18,7 +20,7 @@ export type PlotProps = {
     layout?: Partial<Plotly.Layout>;
     data?: Partial<Plotly.Data>[];
     config?: Partial<Plotly.Config>;
-} & Omit<PlotParams, "data" | "layout" | "config">;
+} & Omit<PlotParams, "data" | "layout" | "config" | "onWebGlContextLost">;
 
 const DOWNLOAD_ICON: Plotly.Icon = {
     width: 24,
@@ -88,6 +90,9 @@ export function Plot(props: PlotProps): React.ReactNode {
     const onDownloadClickRef = React.useRef(onDownloadClick);
     onDownloadClickRef.current = onDownloadClick;
 
+    const adapter = React.useMemo(() => createPlotlyAdapter(), []);
+    const handleWebGlContextLost = React.useCallback(() => adapter.notifyContextLost(), [adapter]);
+
     if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
         setStableLayout(cloneDeep(layout));
@@ -107,7 +112,7 @@ export function Plot(props: PlotProps): React.ReactNode {
         setStableOtherProps(otherProps);
     }
 
-    return React.useMemo(() => {
+    const plotElement = React.useMemo(() => {
         const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
 
         const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
@@ -122,7 +127,41 @@ export function Plot(props: PlotProps): React.ReactNode {
         const configWithDefaults = { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
 
         return (
-            <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />
+            <BasePlot
+                data={stableData}
+                layout={layoutWithDefaults}
+                config={configWithDefaults}
+                onWebGlContextLost={handleWebGlContextLost}
+                {...stableOtherProps}
+            />
         );
-    }, [stableConfig, stableData, stableLayout, stableOtherProps]);
+    }, [stableConfig, stableData, stableLayout, stableOtherProps, handleWebGlContextLost]);
+
+    return (
+        <GpuResourceBoundary adapter={adapter} recoveryStrategy="remount">
+            {plotElement}
+        </GpuResourceBoundary>
+    );
+}
+
+// Plotly's regl-backed WebGL traces (scattergl, heatmapgl, etc.) do not reliably rebuild their
+// GPU resources after a context loss, so recovery here always remounts (a fresh Plotly.newPlot)
+// rather than trying to redraw in place. Plotly only exposes a "context lost" signal
+// (onWebGlContextLost) - there is no restored counterpart - so GpuResourceBoundary's own
+// "remount" recovery path is what actually clears the lost state.
+function createPlotlyAdapter(): GpuResourceAdapter & { notifyContextLost(): void } {
+    let onContextLostCallback: (() => void) | null = null;
+
+    return {
+        connect({ onContextLost }) {
+            onContextLostCallback = onContextLost;
+            return () => {
+                onContextLostCallback = null;
+            };
+        },
+
+        notifyContextLost() {
+            onContextLostCallback?.();
+        },
+    };
 }
