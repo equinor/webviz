@@ -4,7 +4,7 @@ import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
-import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary/GpuResourceBoundary";
+import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary";
 
 export type PlotProps = {
     /**

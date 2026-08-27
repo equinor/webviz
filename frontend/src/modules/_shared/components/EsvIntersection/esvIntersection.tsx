@@ -2,7 +2,7 @@ import React from "react";
 
 import type { AxisOptions, IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
-import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary/GpuResourceBoundary";
+import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary";
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
@@ -183,7 +183,7 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         <GpuResourceBoundary adapter={adapter} recoveryStrategy="redraw">
             <div
                 ref={containerRef}
-                className={resolveClassNames({ "w-full h-full": defaultedProps.size === undefined })}
+                className={resolveClassNames({ "h-full w-full": defaultedProps.size === undefined })}
                 style={{ ...defaultedProps.size }}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}

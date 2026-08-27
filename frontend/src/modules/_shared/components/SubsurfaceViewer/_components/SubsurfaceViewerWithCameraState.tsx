@@ -5,10 +5,7 @@ import type { BoundingBox2D, SubsurfaceViewerProps, ViewStateType } from "@webvi
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { isEqual } from "lodash-es";
 
-import {
-    GpuResourceBoundary,
-    type GpuResourceAdapter,
-} from "@framework/components/GpuResourceBoundary/GpuResourceBoundary";
+import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary";
 import * as bbox from "@lib/utils/bbox";
 
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
