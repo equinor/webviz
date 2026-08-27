@@ -28,8 +28,8 @@ import { SurfaceDataFormat, type SurfaceData } from "./types";
 const initialFluidContactSurfaceSettings = [
     Setting.ENSEMBLE,
     Setting.REALIZATION,
-    Setting.INITIAL_FLUID_CONTACT,
     Setting.SURFACE_NAME,
+    Setting.FLUID_CONTACT,
     Setting.DEPTH_COLOR_SCALE,
     Setting.CONTOURS,
 ] as const;
@@ -37,9 +37,10 @@ const initialFluidContactSurfaceSettings = [
 export type InitialFluidContactSurfaceSettings = typeof initialFluidContactSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<InitialFluidContactSurfaceSettings>;
 
-export class InitialFluidContactSurfaceProvider
-    implements CustomDataProviderImplementation<InitialFluidContactSurfaceSettings, SurfaceData>
-{
+export class InitialFluidContactSurfaceProvider implements CustomDataProviderImplementation<
+    InitialFluidContactSurfaceSettings,
+    SurfaceData
+> {
     settings = initialFluidContactSurfaceSettings;
 
     getDefaultName(): string {
@@ -108,7 +109,7 @@ export class InitialFluidContactSurfaceProvider
             },
         });
 
-        setting(Setting.INITIAL_FLUID_CONTACT).bindValueConstraints({
+        setting(Setting.FLUID_CONTACT).bindValueConstraints({
             read(read) {
                 return { metadata: read.sharedResult(metadata) };
             },
@@ -120,7 +121,7 @@ export class InitialFluidContactSurfaceProvider
         setting(Setting.SURFACE_NAME).bindValueConstraints({
             read(read) {
                 return {
-                    contact: read.localSetting(Setting.INITIAL_FLUID_CONTACT),
+                    contact: read.localSetting(Setting.FLUID_CONTACT),
                     metadata: read.sharedResult(metadata),
                 };
             },
@@ -138,7 +139,7 @@ export class InitialFluidContactSurfaceProvider
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const realizationNum = assertNonNull(getSetting(Setting.REALIZATION), "No realization selected");
         const surfaceName = assertNonNull(getSetting(Setting.SURFACE_NAME), "No surface selected");
-        const contact = assertNonNull(getSetting(Setting.INITIAL_FLUID_CONTACT), "No fluid contact selected");
+        const contact = assertNonNull(getSetting(Setting.FLUID_CONTACT), "No fluid contact selected");
 
         const queryOptions = getInitialFluidContactSurfaceDataOptions({
             query: {

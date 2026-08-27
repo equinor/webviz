@@ -41,7 +41,7 @@ export enum Setting {
     GRID_LAYER_RANGE = "gridLayerRange",
     GRID_LAYER_K = "gridLayerK",
     GRID_NAME = "gridName",
-    INITIAL_FLUID_CONTACT = "initialFluidContact",
+    FLUID_CONTACT = "fluidContact",
     INTERSECTION = "intersection",
     MD_RANGE = "mdRange",
     OPACITY_PERCENT = "opacityPercent",
@@ -170,7 +170,7 @@ export type SettingTypeDefinitions = {
         externalValue: string | null;
         valueConstraints: string[];
     };
-    [Setting.INITIAL_FLUID_CONTACT]: {
+    [Setting.FLUID_CONTACT]: {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];

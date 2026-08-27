@@ -104,7 +104,7 @@ SettingRegistry.registerSetting(Setting.CONTOURS, "Contours", BooleanNumberSetti
 SettingRegistry.registerSetting(Setting.GRID_LAYER_K, "Grid Layer K", NumberRangeDropdownSetting);
 SettingRegistry.registerSetting(Setting.GRID_LAYER_RANGE, "Grid Ranges", GridLayerRangeSetting);
 SettingRegistry.registerSetting(Setting.GRID_NAME, "Grid Name", DropdownStringSetting);
-SettingRegistry.registerSetting(Setting.INITIAL_FLUID_CONTACT, "Fluid Contact", DropdownStringSetting);
+SettingRegistry.registerSetting(Setting.FLUID_CONTACT, "Fluid Contact", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.INTERSECTION, "Intersection", IntersectionSetting, {
     customConstructorParameters: [{ extensionLengthConfig: { min: 0, max: 5000, defaultValue: 500 } }],
 });
