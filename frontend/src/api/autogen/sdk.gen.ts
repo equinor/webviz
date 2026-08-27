@@ -67,6 +67,12 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataErrors_api,
     GetHistoricalVectorDataResponses_api,
+    GetInitialFluidContactSurfaceDataData_api,
+    GetInitialFluidContactSurfaceDataErrors_api,
+    GetInitialFluidContactSurfaceDataResponses_api,
+    GetInitialFluidContactSurfacesMetadataData_api,
+    GetInitialFluidContactSurfacesMetadataErrors_api,
+    GetInitialFluidContactSurfacesMetadataResponses_api,
     GetInjectionDataData_api,
     GetInjectionDataErrors_api,
     GetInjectionDataResponses_api,
@@ -602,6 +608,46 @@ export const getRealizationSurfacesMetadata = <ThrowOnError extends boolean = fa
     >({
         responseType: "json",
         url: "/surface/realization_surfaces_metadata/",
+        ...options,
+    });
+
+/**
+ * Get Initial Fluid Contact Surfaces Metadata
+ */
+export const getInitialFluidContactSurfacesMetadata = <ThrowOnError extends boolean = false>(
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api, ThrowOnError>,
+): RequestResult<
+    GetInitialFluidContactSurfacesMetadataResponses_api,
+    GetInitialFluidContactSurfacesMetadataErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetInitialFluidContactSurfacesMetadataResponses_api,
+        GetInitialFluidContactSurfacesMetadataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/initial_fluid_contact_surfaces_metadata/",
+        ...options,
+    });
+
+/**
+ * Get Initial Fluid Contact Surface Data
+ */
+export const getInitialFluidContactSurfaceData = <ThrowOnError extends boolean = false>(
+    options: Options<GetInitialFluidContactSurfaceDataData_api, ThrowOnError>,
+): RequestResult<
+    GetInitialFluidContactSurfaceDataResponses_api,
+    GetInitialFluidContactSurfaceDataErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetInitialFluidContactSurfaceDataResponses_api,
+        GetInitialFluidContactSurfaceDataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/initial_fluid_contact_surface_data",
         ...options,
     });
 

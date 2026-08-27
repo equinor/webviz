@@ -34,6 +34,8 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
+    getInitialFluidContactSurfaceData,
+    getInitialFluidContactSurfacesMetadata,
     getInjectionData,
     getInplaceTableDefinitions,
     getLogCurveData,
@@ -157,6 +159,12 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInitialFluidContactSurfaceDataData_api,
+    GetInitialFluidContactSurfaceDataError_api,
+    GetInitialFluidContactSurfaceDataResponse_api,
+    GetInitialFluidContactSurfacesMetadataData_api,
+    GetInitialFluidContactSurfacesMetadataError_api,
+    GetInitialFluidContactSurfacesMetadataResponse_api,
     GetInjectionDataData_api,
     GetInjectionDataError_api,
     GetInjectionDataResponse_api,
@@ -960,6 +968,60 @@ export const getRealizationSurfacesMetadataOptions = (options: Options<GetRealiz
             return data;
         },
         queryKey: getRealizationSurfacesMetadataQueryKey(options),
+    });
+
+export const getInitialFluidContactSurfacesMetadataQueryKey = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) => createQueryKey("getInitialFluidContactSurfacesMetadata", options);
+
+/**
+ * Get Initial Fluid Contact Surfaces Metadata
+ */
+export const getInitialFluidContactSurfacesMetadataOptions = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) =>
+    queryOptions<
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        AxiosError<GetInitialFluidContactSurfacesMetadataError_api>,
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        ReturnType<typeof getInitialFluidContactSurfacesMetadataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInitialFluidContactSurfacesMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInitialFluidContactSurfacesMetadataQueryKey(options),
+    });
+
+export const getInitialFluidContactSurfaceDataQueryKey = (
+    options: Options<GetInitialFluidContactSurfaceDataData_api>,
+) => createQueryKey("getInitialFluidContactSurfaceData", options);
+
+/**
+ * Get Initial Fluid Contact Surface Data
+ */
+export const getInitialFluidContactSurfaceDataOptions = (options: Options<GetInitialFluidContactSurfaceDataData_api>) =>
+    queryOptions<
+        GetInitialFluidContactSurfaceDataResponse_api,
+        AxiosError<GetInitialFluidContactSurfaceDataError_api>,
+        GetInitialFluidContactSurfaceDataResponse_api,
+        ReturnType<typeof getInitialFluidContactSurfaceDataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInitialFluidContactSurfaceData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInitialFluidContactSurfaceDataQueryKey(options),
     });
 
 export const getObservedSurfacesMetadataQueryKey = (options: Options<GetObservedSurfacesMetadataData_api>) =>

@@ -819,6 +819,40 @@ export type HTTPValidationError_api = {
 };
 
 /**
+ * InitialFluidContactSurfaceMeta
+ */
+export type InitialFluidContactSurfaceMeta_api = {
+    /**
+     * Name
+     */
+    name: string;
+    contact: InitialFluidContactType_api;
+    /**
+     * Name Is Stratigraphic Offical
+     */
+    name_is_stratigraphic_offical: boolean;
+    /**
+     * Value Min
+     */
+    value_min: number | null;
+    /**
+     * Value Max
+     */
+    value_max: number | null;
+};
+
+/**
+ * InitialFluidContactType
+ */
+export enum InitialFluidContactType_api {
+    FGL = "fgl",
+    FWL = "fwl",
+    GOC = "goc",
+    GWC = "gwc",
+    OWC = "owc",
+}
+
+/**
  * InplaceVolumesIndexWithValues
  *
  * Unique values for an index column in an inplace volumes table
@@ -4232,6 +4266,120 @@ export type GetRealizationSurfacesMetadataResponses_api = {
 
 export type GetRealizationSurfacesMetadataResponse_api =
     GetRealizationSurfacesMetadataResponses_api[keyof GetRealizationSurfacesMetadataResponses_api];
+
+export type GetInitialFluidContactSurfacesMetadataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        zCacheBust?: string;
+    };
+    url: "/surface/initial_fluid_contact_surfaces_metadata/";
+};
+
+export type GetInitialFluidContactSurfacesMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetInitialFluidContactSurfacesMetadataError_api =
+    GetInitialFluidContactSurfacesMetadataErrors_api[keyof GetInitialFluidContactSurfacesMetadataErrors_api];
+
+export type GetInitialFluidContactSurfacesMetadataResponses_api = {
+    /**
+     * Response Get Initial Fluid Contact Surfaces Metadata
+     *
+     * Successful Response
+     */
+    200: Array<InitialFluidContactSurfaceMeta_api>;
+};
+
+export type GetInitialFluidContactSurfacesMetadataResponse_api =
+    GetInitialFluidContactSurfacesMetadataResponses_api[keyof GetInitialFluidContactSurfacesMetadataResponses_api];
+
+export type GetInitialFluidContactSurfaceDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization Num
+         *
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Name
+         *
+         * Surface name
+         */
+        name: string;
+        /**
+         * Initial fluid contact type
+         */
+        contact: InitialFluidContactType_api;
+        /**
+         * Data Format
+         *
+         * Format of binary data in the response
+         */
+        data_format?: "float" | "png";
+        /**
+         * Resample To Def Str
+         *
+         * Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
+         */
+        resample_to_def_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/surface/initial_fluid_contact_surface_data";
+};
+
+export type GetInitialFluidContactSurfaceDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetInitialFluidContactSurfaceDataError_api =
+    GetInitialFluidContactSurfaceDataErrors_api[keyof GetInitialFluidContactSurfaceDataErrors_api];
+
+export type GetInitialFluidContactSurfaceDataResponses_api = {
+    /**
+     * Response Get Initial Fluid Contact Surface Data
+     *
+     * Successful Response
+     */
+    200: SurfaceDataFloat_api | SurfaceDataPng_api;
+};
+
+export type GetInitialFluidContactSurfaceDataResponse_api =
+    GetInitialFluidContactSurfaceDataResponses_api[keyof GetInitialFluidContactSurfaceDataResponses_api];
 
 export type GetObservedSurfacesMetadataData_api = {
     body?: never;
