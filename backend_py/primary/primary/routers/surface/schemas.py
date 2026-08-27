@@ -55,6 +55,24 @@ class SurfaceTimeType(str, Enum):
     INTERVAL = "INTERVAL"
 
 
+class InitialFluidContactType(str, Enum):
+    FGL = "fgl"
+    FWL = "fwl"
+    GOC = "goc"
+    GWC = "gwc"
+    OWC = "owc"
+
+
+class InitialFluidContactSurfaceMeta(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    contact: InitialFluidContactType
+    name_is_stratigraphic_offical: bool
+    value_min: float | None
+    value_max: float | None
+
+
 class SurfaceMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

@@ -4,6 +4,7 @@ from typing import Annotated, List, Optional, Literal
 
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
+from fmu.datamodels.fmu_results.enums import FluidContactType
 
 from webviz_core_utils.perf_metrics import PerfMetrics
 from webviz_core_utils.type_utils import expect_type
@@ -115,6 +116,56 @@ async def get_realization_surfaces_metadata(
     LOGGER.info(f"Got metadata for realization surfaces in: {perf_metrics.to_string()}")
 
     return api_surf_meta_set
+
+
+@router.get("/initial_fluid_contact_surfaces_metadata/")
+@cache_time(CacheTime.LONG)
+async def get_initial_fluid_contact_surfaces_metadata(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+) -> list[schemas.InitialFluidContactSurfaceMeta]:
+    access = SurfaceAccess.from_ensemble_name(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    metadata = await access.get_initial_fluid_contact_surfaces_metadata_async()
+    return converters.to_api_initial_fluid_contact_surface_meta(metadata)
+
+
+@router.get("/initial_fluid_contact_surface_data")
+@cache_time(CacheTime.LONG)
+async def get_initial_fluid_contact_surface_data(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    realization_num: Annotated[int, Query(description="Realization number")],
+    name: Annotated[str, Query(description="Surface name")],
+    contact: Annotated[schemas.InitialFluidContactType, Query(description="Initial fluid contact type")],
+    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    resample_to: Annotated[
+        schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)
+    ] = None,
+) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
+    perf_metrics = ResponsePerfMetrics(response)
+    access = SurfaceAccess.from_ensemble_name(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    xtgeo_surface = await access.get_initial_fluid_contact_surface_data_async(
+        real_num=realization_num,
+        name=name,
+        contact=FluidContactType(contact.value),
+    )
+    perf_metrics.record_lap("get-surf")
+
+    surface_data_response = _resample_and_convert_to_surface_data_response(
+        xtgeo_surf=xtgeo_surface,
+        resample_to=resample_to,
+        data_format=data_format,
+        perf_metrics=perf_metrics,
+    )
+    LOGGER.info(f"Got initial fluid contact surface in: {perf_metrics.to_string()}")
+    return surface_data_response
 
 
 @router.get("/observed_surfaces_metadata/")

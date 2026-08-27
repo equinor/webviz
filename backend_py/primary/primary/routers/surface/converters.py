@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
 
 from webviz_services.smda_access.types import StratigraphicSurface
-from webviz_services.sumo_access.surface_types import SurfaceMetaSet
+from webviz_services.sumo_access.surface_types import InitialFluidContactSurfaceMeta, SurfaceMetaSet
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from webviz_services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
 from webviz_services.utils.surface_helpers import (
@@ -159,6 +159,21 @@ def to_api_surface_meta_set(
         time_intervals_iso_str=sumo_surf_meta_set.time_intervals_iso_str,
         surface_names_in_strat_order=names_ordered_by_stratigraphy + remaining_names_sorted,
     )
+
+
+def to_api_initial_fluid_contact_surface_meta(
+    metadata: list[InitialFluidContactSurfaceMeta],
+) -> list[schemas.InitialFluidContactSurfaceMeta]:
+    return [
+        schemas.InitialFluidContactSurfaceMeta(
+            name=item.name,
+            contact=schemas.InitialFluidContactType(item.contact.value),
+            name_is_stratigraphic_offical=item.is_stratigraphic,
+            value_min=item.global_min_val,
+            value_max=item.global_max_val,
+        )
+        for item in metadata
+    ]
 
 
 def from_api_cumulative_length_polyline_to_xtgeo_polyline(
