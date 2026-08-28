@@ -215,7 +215,10 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
             {contextLost && (
                 <>
                     <div className="z-elevated bg-surface/80 absolute inset-0" />
-                    <div className="bg-surface z-overlay border-neutral-subtle text-body-sm p-xs gap-xs absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded border text-center">
+                    <div
+                        role="alert"
+                        className="bg-surface z-overlay border-neutral-subtle text-body-sm p-xs gap-xs absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded border text-center"
+                    >
                         <Paragraph size="sm">The browser has stopped this visualization.</Paragraph>
                         <div className="gap-3xs flex">
                             <Button tone="accent" size="small" onClick={restore}>
