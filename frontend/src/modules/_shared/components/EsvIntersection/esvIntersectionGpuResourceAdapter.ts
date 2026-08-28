@@ -8,8 +8,9 @@ import type { EsvIntersectionController } from "./EsvIntersectionController";
  *
  * Pixi rebuilds its own GPU resources (textures, buffers, ...) automatically once the context is
  * restored, so this is a thin wrapper around {@link createCanvasContextAdapter} that wires in the
- * controller's canvas, its explicit context restoration, and a redraw nudge - recovery only needs
- * the `"redraw"` strategy, no remount.
+ * controller's canvas, its explicit context restoration, and a redraw nudge - so it is used with
+ * the `"redraw"` strategy. (If `WEBGL_lose_context` is unavailable, `restoreContext` reports
+ * failure and the boundary falls back to a remount.)
  *
  * The controller only exposes its canvas once it has finished initializing, so callers should gate
  * adapter creation on the controller's life-cycle state rather than relying on canvas polling.

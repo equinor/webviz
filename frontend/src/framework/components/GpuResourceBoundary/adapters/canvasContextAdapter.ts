@@ -9,12 +9,12 @@ export type CanvasContextAdapterOptions = {
     getCanvas(): HTMLCanvasElement | null | undefined;
 
     /**
-     * Brings a *lost* context back in place (e.g. `WEBGL_lose_context.restoreContext()`), which
-     * should fire `webglcontextrestored`. Forwarded to {@link GpuResourceAdapter.restoreContext},
-     * i.e. used by the boundary's `"redraw"` strategy for the manual Restore action. Omit it if the
-     * renderer cannot self-restore - the boundary then falls back to a remount.
+     * Brings a *lost* context back in place (e.g. `WEBGL_lose_context.restoreContext()`). Return
+     * `true` if a restore was started (`webglcontextrestored` should follow), `false` if it could
+     * not be. Forwarded verbatim to {@link GpuResourceAdapter.restoreContext} - see there. Omit it
+     * if the renderer can never self-restore; the boundary then falls back to a remount.
      */
-    restoreContext?(): void;
+    restoreContext?(): boolean;
 
     /**
      * Repaints the renderer on the current, valid context. The boundary calls this for its

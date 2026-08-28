@@ -13,8 +13,8 @@ import { useIsDocumentActive } from "@lib/hooks/useIsDocumentActive";
  * - `"redraw"`: keep the existing canvas/DOM. On manual restore the boundary calls
  *   {@link GpuResourceAdapter.restoreContext} to bring the context back, then repaints via
  *   {@link GpuResourceAdapter.requestRender} once `webglcontextrestored` confirms it. Use this when
- *   the renderer can rebuild its GPU resources on the same context. If the adapter has no
- *   `restoreContext`, the boundary falls back to `"remount"`.
+ *   the renderer can rebuild its GPU resources on the same context. If `restoreContext` is missing
+ *   or reports that it could not start, the boundary falls back to `"remount"`.
  * - `"remount"`: throw away the current subtree and mount a fresh one, which creates a brand-new
  *   canvas and WebGL context. Use this for renderers that cannot reliably rebuild their GPU
  *   resources in place.
@@ -60,14 +60,16 @@ export type GpuResourceAdapter = {
     connect(callbacks: { onContextLost(): void; onContextRestored?(): void }): () => void;
 
     /**
-     * Attempt to bring a *lost* context back in place (e.g. `WEBGL_lose_context.restoreContext()`),
-     * which should result in a `webglcontextrestored` event.
+     * Attempt to bring a *lost* context back in place (e.g. `WEBGL_lose_context.restoreContext()`).
      *
-     * Only used by the `"redraw"` {@link GpuRecoveryStrategy}, for the manual Restore action. Omit
-     * it if the renderer cannot restore its own context - the boundary then falls back to a
-     * remount.
+     * Return `true` if a restoration was started - a `webglcontextrestored` event should follow,
+     * which the boundary answers with {@link requestRender}. Return `false` if it could not be
+     * attempted (no restore capability, wrong moment, ...); the boundary then falls back to a
+     * remount. Omit the method entirely for renderers that can never self-restore.
+     *
+     * Only used by the `"redraw"` {@link GpuRecoveryStrategy}, for the manual Restore action.
      */
-    restoreContext?(): void;
+    restoreContext?(): boolean;
 
     /**
      * Re-issue the renderer's draw calls on the *current, valid* context. Does not restore a lost
@@ -106,7 +108,7 @@ export type GpuResourceBoundaryProps = {
  *
  * - `"redraw"` - calls {@link GpuResourceAdapter.restoreContext} to bring the context back, then
  *   {@link GpuResourceAdapter.requestRender} once `webglcontextrestored` confirms it. Falls back to
- *   `"remount"` if the adapter has no `restoreContext`.
+ *   `"remount"` if `restoreContext` is missing or could not start a restore.
  * - `"remount"` (default) - bumps an internal `key` so the children unmount and remount with a
  *   fresh canvas and context. Because a remount creates a *new* context, no `webglcontextrestored`
  *   event fires for it, so the boundary clears its own "lost" state in this path.
@@ -148,14 +150,15 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
                 return;
             }
 
-            if (props.recoveryStrategy === "redraw" && props.adapter.restoreContext) {
-                // Bring the lost context back in place. The overlay stays up until the resulting
-                // "webglcontextrestored" reaches onContextRestored, which then repaints.
-                props.adapter.restoreContext();
-            } else {
-                // "remount" strategy, or "redraw" with no way to self-restore: replace the canvas
-                // (and its context) by remounting the children. A brand-new context never fires
-                // "webglcontextrestored", so clear the lost state here.
+            // For "redraw", try an in-place restore; the overlay then stays up until the resulting
+            // "webglcontextrestored" reaches onContextRestored, which repaints.
+            const restorationStarted =
+                props.recoveryStrategy === "redraw" && (props.adapter.restoreContext?.() ?? false);
+
+            if (!restorationStarted) {
+                // "remount" strategy, or "redraw" where restoration could not be started: replace
+                // the canvas (and its context) by remounting the children. A brand-new context
+                // never fires "webglcontextrestored", so clear the lost state here.
                 setContextLost(false);
                 bumpGeneration();
             }
