@@ -1,0 +1,14 @@
+<svg viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+  <line x1="75" y1="12" x2="75" y2="142" stroke="#626467" stroke-width="0.8"/>
+  <line x1="12" y1="142" x2="143" y2="142" stroke="#626467" stroke-width="0.5"/>
+  <rect x="22" y="16" width="53" height="20" fill="#fde8cc" stroke="#9b4900" stroke-width="0.5"/>
+  <rect x="75" y="16" width="60" height="20" fill="#d0e8f5" stroke="#006aa0" stroke-width="0.5"/>
+  <rect x="30" y="40" width="45" height="20" fill="#fde8cc" stroke="#9b4900" stroke-width="0.5"/>
+  <rect x="75" y="40" width="50" height="20" fill="#d0e8f5" stroke="#006aa0" stroke-width="0.5"/>
+  <rect x="38" y="64" width="37" height="20" fill="#fde8cc" stroke="#9b4900" stroke-width="0.5"/>
+  <rect x="75" y="64" width="42" height="20" fill="#d0e8f5" stroke="#006aa0" stroke-width="0.5"/>
+  <rect x="45" y="88" width="30" height="20" fill="#fde8cc" stroke="#9b4900" stroke-width="0.5"/>
+  <rect x="75" y="88" width="30" height="20" fill="#d0e8f5" stroke="#006aa0" stroke-width="0.5"/>
+  <rect x="52" y="112" width="23" height="20" fill="#fde8cc" stroke="#9b4900" stroke-width="0.5"/>
+  <rect x="75" y="112" width="22" height="20" fill="#d0e8f5" stroke="#006aa0" stroke-width="0.5"/>
+</svg>

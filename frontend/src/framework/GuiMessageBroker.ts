@@ -4,7 +4,7 @@ import { isDevMode } from "@lib/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 
-import type { EnsembleLoadingErrorInfoMap } from "./internal/EnsembleSetLoader";
+import type { EnsembleLoadingErrorInfoMap, EnsembleLoadingWarningInfoMap } from "./internal/EnsembleSetLoader";
 import type { SessionPersistenceAction } from "./internal/WorkbenchSession/WorkbenchSessionManager";
 import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
@@ -43,6 +43,9 @@ export enum GuiState {
     SessionSnapshotOverviewDialogMode = "sessionSnapshotOverviewDialogMode",
     EnsemblesLoadingErrorInfoMap = "ensemblesLoadingErrorInfoMap",
     EnsembleLoadingErrorInfoDialogOpen = "ensembleLoadingErrorInfoDialogOpen",
+    EnsemblesLoadingWarningInfoMap = "ensemblesLoadingWarningInfoMap",
+    EnsembleLoadingWarningInfoDialogOpen = "ensembleLoadingWarningInfoDialogOpen",
+    IsActionBarVisible = "isActionBarVisible",
 }
 
 export enum GuiEvent {
@@ -136,6 +139,9 @@ type GuiStateValueTypes = {
     [GuiState.SessionSnapshotOverviewDialogMode]: "sessions" | "snapshots";
     [GuiState.EnsemblesLoadingErrorInfoMap]: EnsembleLoadingErrorInfoMap;
     [GuiState.EnsembleLoadingErrorInfoDialogOpen]: boolean;
+    [GuiState.EnsemblesLoadingWarningInfoMap]: EnsembleLoadingWarningInfoMap;
+    [GuiState.EnsembleLoadingWarningInfoDialogOpen]: boolean;
+    [GuiState.IsActionBarVisible]: boolean;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -164,6 +170,9 @@ defaultStates.set(GuiState.SessionSnapshotOverviewDialogOpen, false);
 defaultStates.set(GuiState.SessionSnapshotOverviewDialogMode, "sessions");
 defaultStates.set(GuiState.EnsemblesLoadingErrorInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
+defaultStates.set(GuiState.EnsemblesLoadingWarningInfoMap, {});
+defaultStates.set(GuiState.EnsembleLoadingWarningInfoDialogOpen, false);
+defaultStates.set(GuiState.IsActionBarVisible, true);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelIsCollapsed,
@@ -172,6 +181,7 @@ const persistentStates: GuiState[] = [
     GuiState.RightSettingsPanelIsCollapsed,
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
+    GuiState.IsActionBarVisible,
 ];
 
 export class GuiMessageBroker {
@@ -367,6 +377,16 @@ export function useSetGuiState<T extends GuiState>(
     guiMessageBroker: GuiMessageBroker,
     state: T,
 ): (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void {
-    const [, stateSetter] = useGuiState(guiMessageBroker, state);
-    return stateSetter;
+    return React.useCallback(
+        function stateSetter(
+            valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T]),
+        ): void {
+            if (valueOrFunc instanceof Function) {
+                guiMessageBroker.setState(state, valueOrFunc(guiMessageBroker.getState(state)));
+                return;
+            }
+            guiMessageBroker.setState(state, valueOrFunc);
+        },
+        [guiMessageBroker, state],
+    );
 }

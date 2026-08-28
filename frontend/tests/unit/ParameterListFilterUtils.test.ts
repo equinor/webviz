@@ -10,7 +10,6 @@ import type { ContinuousParameter, DiscreteParameter } from "@framework/Ensemble
 import { ParameterType } from "@framework/EnsembleParameters";
 import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
-
 const CONTINUOUS_PARAMETER: ContinuousParameter = {
     type: ParameterType.CONTINUOUS,
     name: "continuous parameter",

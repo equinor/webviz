@@ -2,92 +2,88 @@ import React from "react";
 
 import { ExpandMore } from "@mui/icons-material";
 
-import { Button } from "@lib/components/Button";
-import { ColorTile } from "@lib/components/ColorTile";
-import { Dropdown } from "@lib/components/Dropdown";
+import { withDefaults } from "@lib/components/_shared/utils/defaultProps";
 
-import { DenseIconButton } from "../DenseIconButton";
+import { Button, type ButtonProps } from "../Button";
+import { ColorTile } from "../ColorTile";
 
-export type ColorSelectProps = {
-    id?: string;
+export type ColorSelectProps = Omit<
+    ButtonProps,
+    "onClick" | "onChange" | "children" | "iconOnly" | "round" | "tone" | "pressed" | "variant"
+> & {
+    /** The current hex color value. */
     value: string;
-    onChange: (value: string) => void;
-    colors?: string[];
-    dense?: boolean;
-    disabled?: boolean;
+    /** Called when the user picks a new color. */
+    onValueChange?: (value: string) => void;
+    /** Called when the user commits the color change (e.g., on blur or enter). */
+    onValueCommit?: (value: string) => void;
+    /** Visual style of the button trigger. @default "outlined" */
+    variant?: Exclude<ButtonProps["variant"], "contained">;
 };
 
-export function ColorSelect(props: ColorSelectProps): JSX.Element {
-    const [selectedColor, setSelectedColor] = React.useState(props.value);
-    const [prevSelectedColor, setPrevSelectedColor] = React.useState(props.value);
+const DEFAULT_PROPS = {
+    variant: "outlined",
+} satisfies Partial<ColorSelectProps>;
+
+export const ColorSelect = React.forwardRef<HTMLButtonElement, ColorSelectProps>(function ColorSelect(props, ref) {
+    const defaultedProps = withDefaults(props, DEFAULT_PROPS);
+    const { value, onValueChange, onValueCommit, ...buttonProps } = defaultedProps;
+    const [selectedColor, setSelectedColor] = React.useState(value);
+    const [prevSelectedColor, setPrevSelectedColor] = React.useState(value);
 
     const inputRef = React.useRef<HTMLInputElement>(null);
 
-    if (props.value !== prevSelectedColor) {
-        setSelectedColor(props.value);
-        setPrevSelectedColor(props.value);
+    if (value !== prevSelectedColor) {
+        setSelectedColor(value);
+        setPrevSelectedColor(value);
     }
 
-    function handleButtonClick() {
+    const handleButtonClick = React.useCallback(function handleButtonClick() {
         inputRef.current?.click();
-    }
+    }, []);
 
-    function handleInputColorChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const newColor = e.target.value;
-        setSelectedColor(newColor);
-        props.onChange(newColor);
-    }
+    const handleInputColorChange = React.useCallback(
+        function handleInputColorChange(e: React.ChangeEvent<HTMLInputElement>) {
+            const newColor = e.target.value;
+            setSelectedColor(newColor);
+            onValueChange?.(newColor);
+        },
+        [onValueChange],
+    );
 
-    function handleDropdownColorChange(color: string) {
-        setSelectedColor(color);
-        props.onChange(color);
-    }
+    React.useEffect(
+        function attachNativeChangeListener() {
+            const el = inputRef.current;
+            if (!el) return;
+            const handleChange = () => onValueCommit?.(el.value);
+            el.addEventListener("change", handleChange);
+            return () => el.removeEventListener("change", handleChange);
+        },
+        [onValueCommit],
+    );
 
-    function makeSelectComponent() {
-        if (props.colors === undefined) {
-            return (
-                <>
-                    {props.dense ? (
-                        <DenseIconButton disabled={props.disabled} onClick={handleButtonClick}>
-                            <ColorTile color={selectedColor} />
-                        </DenseIconButton>
-                    ) : (
-                        <Button
-                            disabled={props.disabled}
-                            endIcon={<ExpandMore fontSize="inherit" />}
-                            onClick={handleButtonClick}
-                        >
-                            <ColorTile color={selectedColor} />
-                        </Button>
-                    )}
-                    <input
-                        id={props.id}
-                        disabled={props.disabled}
-                        ref={inputRef}
-                        type="color"
-                        value={selectedColor}
-                        onChange={handleInputColorChange}
-                        className="absolute w-px h-px inset-0 invisible"
-                    />
-                </>
-            );
-        }
-
-        const options = props.colors.map((color) => ({
-            value: color,
-            label: color,
-            adornment: <ColorTile color={color} />,
-        }));
-
-        return (
-            <Dropdown
-                disabled={props.disabled}
-                options={options}
+    return (
+        <>
+            <Button
+                {...buttonProps}
+                ref={ref}
+                onClick={handleButtonClick}
+                tone="neutral"
+                compact
+                iconOnly={defaultedProps.size === "small"}
+            >
+                <ColorTile.Tile color={selectedColor} size={defaultedProps.size} />
+                {defaultedProps.size !== "small" && <ExpandMore fontSize="inherit" />}
+            </Button>
+            <input
+                id={defaultedProps.id}
+                disabled={defaultedProps.disabled}
+                ref={inputRef}
+                type="color"
                 value={selectedColor}
-                onChange={handleDropdownColorChange}
+                onChange={handleInputColorChange}
+                className="invisible absolute inset-0 h-px w-px"
             />
-        );
-    }
-
-    return <div className="relative">{makeSelectComponent()}</div>;
-}
+        </>
+    );
+});

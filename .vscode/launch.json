@@ -28,6 +28,13 @@
       "args": ["--suffix", "'__api'", "--dir", "'src/api/'"]
     },
     {
+      "name": "Storybook: Launch Chrome and Attach",
+      "request": "launch",
+      "type": "chrome",
+      "webRoot": "${workspaceFolder}/frontend",
+      "url": "http://localhost:6006"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Debug Current Test File",

@@ -1,0 +1,13 @@
+@layer base {
+    /*
+     * When a Section panel is fully closed, base-ui adds [hidden]. Tailwind's preflight
+     * maps [hidden] to display:none !important (in @layer base with specificity 0,1,0).
+     * We override that here with higher specificity (0,3,0: class + attribute + pseudo-class)
+     * to keep the panel as a display:grid subgrid container at height:0, so its children
+     * still participate in the parent grid's auto-column sizing and prevent layout shifts.
+     */
+    .setting-section-panel[hidden]:not([hidden="until-found"]) {
+        display: grid !important;
+        height: 0 !important;
+    }
+}

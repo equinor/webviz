@@ -1,6 +1,6 @@
 import React from "react";
 
-import { throttle } from "lodash";
+import { throttle } from "lodash-es";
 
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -194,4 +194,40 @@ export function useHover<T extends keyof HoverData>(
     const updateValue = usePublishHoverValue(topic, hoverService, moduleInstanceId);
 
     return [latestValue, updateValue];
+}
+
+/**
+ * Hook for publishing multiple hover topic values at once. Topics not included in the update object will be set to null.
+ * @param hoverService The hover service instance to use
+ * @param moduleInstanceId The id of the module using this hook
+ * @returns A stable callback function that updates multiple topics at once
+ */
+export function usePublishHoverValues(
+    hoverService: HoverService,
+    moduleInstanceId: string,
+): (updates: Partial<HoverData>) => void {
+    // Store previous payload for comparison
+    const previousUpdatesRef = React.useRef<Partial<HoverData>>({});
+
+    return React.useCallback(
+        function updateHoverValues(updates: Partial<HoverData>) {
+            const previousTopics = Object.keys(previousUpdatesRef.current) as HoverTopic[];
+            const currentTopics = Object.keys(updates) as HoverTopic[];
+
+            // Update topics with new values
+            for (const topic of currentTopics) {
+                hoverService.updateHoverValue(topic, updates[topic] as HoverData[typeof topic], moduleInstanceId);
+            }
+
+            // Set topics that were in previous update but not in current to null
+            for (const topic of previousTopics) {
+                if (!(topic in updates)) {
+                    hoverService.updateHoverValue(topic, null as HoverData[typeof topic], moduleInstanceId);
+                }
+            }
+
+            previousUpdatesRef.current = updates;
+        },
+        [hoverService, moduleInstanceId],
+    );
 }

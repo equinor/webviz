@@ -3,7 +3,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import type { PvtDataAccessor } from "./utils/PvtDataAccessor";
 
-export enum ColorBy {
+export enum GroupBy {
     ENSEMBLE = "ensemble",
     PVT_NUM = "pvtNum",
 }

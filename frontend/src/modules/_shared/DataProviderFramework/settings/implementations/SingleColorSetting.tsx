@@ -77,7 +77,9 @@ export class SingleColorSetting implements StaticSettingImplementation<ValueType
                 props.onValueChange(color);
             }
 
-            return <ColorSelect onChange={handleColorChange} value={color!} dense />;
+            return (
+                <ColorSelect onValueChange={handleColorChange} value={color!} size="small" disabled={props.disabled} />
+            );
         };
     }
 

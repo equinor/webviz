@@ -1,6 +1,6 @@
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import { Edit, Remove } from "@mui/icons-material";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
 import addPathIcon from "@assets/add_path.cur?url";
@@ -145,6 +145,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     setEditingMode(mode: PolylineEditingMode): void {
         this._editingMode = mode;
+        this.setReadoutSuppressed(mode !== PolylineEditingMode.DISABLED);
         this._hoverPoint = null;
         if (this._polylineHoverData !== null) {
             this._polylineHoverData = null;

@@ -1,4 +1,4 @@
-import { chain, inRange, range } from "lodash";
+import { inRange, range, sortBy, uniq } from "lodash-es";
 
 import { getNumbersAndRanges } from "@framework/utils/numberUtils";
 
@@ -62,7 +62,8 @@ export function textToRealizationSelection(pasteText: string, limits: Realizatio
     }
 
     // Sort them to keep the order, and remove possible duplicates
-    const sortedUniqueRealizationNumbers = chain(realizationNumbers).sortBy().uniq().value();
+    const sortedRealizationNumbers = sortBy(realizationNumbers);
+    const sortedUniqueRealizationNumbers = uniq(sortedRealizationNumbers);
     const numbersAndRanges = getNumbersAndRanges(sortedUniqueRealizationNumbers, skippedNumbers);
 
     const rangesAsValueStrings = numbersAndRanges.map((numberOrRange) => {
@@ -191,4 +192,34 @@ export function computeTagValidityInfo(value: string, limits: RealizationNumberL
         numMatchedRealizations: 1,
         numMatchedValidRealizations: 1,
     };
+}
+
+function getRangeOfTag(rangeTag: string): [start: number, end: number] {
+    const [start, possibleEnd] = rangeTag.split("-");
+
+    return [parseFloat(start), parseFloat(possibleEnd ?? start)];
+}
+
+export function calcNumberOfUniqueRealizations(
+    selectedRangeTags: readonly string[],
+    limits: RealizationNumberLimits,
+): number {
+    const uniqueRealizations = new Set<number>();
+    for (const rangeTag of selectedRangeTags) {
+        let [start, end] = getRangeOfTag(rangeTag);
+
+        if (!inRange(start, limits.min, limits.max + 1) && !inRange(end, limits.min, limits.max)) continue;
+
+        // Clamp range computations to only worry about valid numbers
+        start = Math.max(start, limits.min);
+        end = Math.min(end, limits.max);
+
+        for (const realization of range(start, end + 1)) {
+            if (!limits.invalid.has(realization)) {
+                uniqueRealizations.add(realization);
+            }
+        }
+    }
+
+    return uniqueRealizations.size;
 }

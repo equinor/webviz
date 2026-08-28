@@ -1,29 +1,30 @@
-import type React from "react";
+import React from "react";
+
+import { orderBy } from "lodash";
 
 import { Table } from "@lib/components/Table";
-import type { TableColumns } from "@lib/components/Table/types";
+import type { TableSortState } from "@lib/components/Table/typesAndEnums";
+import { SortDirection } from "@lib/components/Table/typesAndEnums";
 import type { SensitivityResponseDataset } from "@modules/_shared/SensitivityProcessing";
-import type { SelectedSensitivity } from "@modules/SensitivityPlot/typesAndEnums";
 
 import type { SensitivityDataScaler } from "../utils/sensitivityDataScaler";
 
 export interface SensitivityTableProps {
     sensitivityResponseDataset: SensitivityResponseDataset;
     sensitivityDataScaler: SensitivityDataScaler;
-    onSelectedSensitivity?: (selectedSensitivity: SelectedSensitivity) => void;
 }
 
 type TableRowData = {
     response: string;
     sensitivity: string;
-    deltaLow: string;
-    deltaHigh: string;
-    mean: string;
-    trueLow: string;
-    trueHigh: string;
+    deltaLow: number;
+    deltaHigh: number;
+    mean: number | null;
+    trueLow: number;
+    trueHigh: number;
     lowReals: number;
     highReals: number;
-    reference: string;
+    reference: number;
 };
 const numFormat = (number: number, isPercentage = false): string => {
     return (
@@ -36,74 +37,9 @@ const numFormat = (number: number, isPercentage = false): string => {
     );
 };
 
-const tableColumns: TableColumns<TableRowData> = [
-    {
-        _type: "data",
-        columnId: "response",
-        label: "Response",
-        sizeInPercent: 14,
-    },
-    {
-        _type: "data",
-        columnId: "sensitivity",
-        label: "Sensitivity",
-        sizeInPercent: 14,
-    },
-    {
-        _type: "data",
-        columnId: "deltaLow",
-        label: "Delta low",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "deltaHigh",
-        label: "Delta high",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "mean",
-        label: "Mean",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "trueLow",
-        label: "True low",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "trueHigh",
-        label: "True high",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "lowReals",
-        label: "Low #reals",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "highReals",
-        label: "High #reals",
-        sizeInPercent: 9,
-    },
-    {
-        _type: "data",
-        columnId: "reference",
-        label: "Reference",
-        sizeInPercent: 9,
-    },
-];
+const SensitivityTable: React.FC<SensitivityTableProps> = ({ sensitivityResponseDataset, sensitivityDataScaler }) => {
+    const [columnSorting, setColumnSorting] = React.useState<TableSortState | null>(null);
 
-const SensitivityTable: React.FC<SensitivityTableProps> = ({
-    sensitivityResponseDataset,
-    sensitivityDataScaler,
-    onSelectedSensitivity,
-}) => {
     const isPercentage = sensitivityDataScaler.isRelativePercentage;
     const tableRows: TableRowData[] = sensitivityResponseDataset.sensitivityResponses
         .slice()
@@ -111,31 +47,88 @@ const SensitivityTable: React.FC<SensitivityTableProps> = ({
         .map((sensitivityResponse) => ({
             response: sensitivityResponseDataset.responseName || "",
             sensitivity: sensitivityResponse.sensitivityName,
-            deltaLow: numFormat(sensitivityDataScaler.calculateLowLabelValue(sensitivityResponse), isPercentage),
-            deltaHigh: numFormat(sensitivityDataScaler.calculateHighLabelValue(sensitivityResponse), isPercentage),
-            mean:
-                sensitivityResponse.sensitivityAverage !== undefined
-                    ? numFormat(sensitivityResponse.sensitivityAverage)
-                    : "",
-            trueLow: numFormat(sensitivityResponse.lowCaseAverage),
-            trueHigh: numFormat(sensitivityResponse.highCaseAverage),
+            deltaLow: sensitivityDataScaler.calculateLowLabelValue(sensitivityResponse),
+            deltaHigh: sensitivityDataScaler.calculateHighLabelValue(sensitivityResponse),
+            mean: sensitivityResponse.sensitivityAverage ?? null,
+            trueLow: sensitivityResponse.lowCaseAverage,
+            trueHigh: sensitivityResponse.highCaseAverage,
             lowReals: sensitivityResponse.lowCaseRealizations.length,
             highReals: sensitivityResponse.highCaseRealizations.length,
-            reference: numFormat(sensitivityResponseDataset.referenceAverage),
+            reference: sensitivityResponseDataset.referenceAverage,
         }));
 
-    const handleClick = (id: string, row: TableRowData) => {
-        if (onSelectedSensitivity) {
-            const selectedSensitivity: SelectedSensitivity = {
-                selectedSensitivity: row.sensitivity,
-                selectedSensitivityCase: null,
-            };
+    const sortedRows = React.useMemo(
+        function sortRows() {
+            if (!columnSorting || columnSorting.direction === SortDirection.NONE) {
+                return tableRows;
+            }
+            return orderBy(tableRows, [columnSorting.columnKey], [columnSorting.direction]);
+        },
+        // tableRows is recomputed every render; depend on the underlying inputs instead
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [sensitivityResponseDataset, sensitivityDataScaler, isPercentage, columnSorting],
+    );
 
-            onSelectedSensitivity(selectedSensitivity);
-        }
-    };
-
-    return <Table columns={tableColumns} rows={tableRows} rowIdentifier="sensitivity" onRowClick={handleClick} />;
+    return (
+        <div className="h-full">
+            <Table.Root
+                size="small"
+                sortable
+                columnSorting={columnSorting}
+                onChangeColumnSort={setColumnSorting}
+                compact
+            >
+                <Table.Head>
+                    <Table.Column colKey="response" widthInPercent={14}>
+                        Response
+                    </Table.Column>
+                    <Table.Column colKey="sensitivity" widthInPercent={14}>
+                        Sensitivity
+                    </Table.Column>
+                    <Table.Column colKey="deltaLow" widthInPercent={9}>
+                        Delta low
+                    </Table.Column>
+                    <Table.Column colKey="deltaHigh" widthInPercent={9}>
+                        Delta high
+                    </Table.Column>
+                    <Table.Column colKey="mean" widthInPercent={9}>
+                        Mean
+                    </Table.Column>
+                    <Table.Column colKey="trueLow" widthInPercent={9}>
+                        True low
+                    </Table.Column>
+                    <Table.Column colKey="trueHigh" widthInPercent={9}>
+                        True high
+                    </Table.Column>
+                    <Table.Column colKey="lowReals" widthInPercent={9}>
+                        Low #reals
+                    </Table.Column>
+                    <Table.Column colKey="highReals" widthInPercent={9}>
+                        High #reals
+                    </Table.Column>
+                    <Table.Column colKey="reference" widthInPercent={9}>
+                        Reference
+                    </Table.Column>
+                </Table.Head>
+                <Table.Body>
+                    {sortedRows.map((row) => (
+                        <Table.Row key={row.sensitivity} rowKey={row.sensitivity}>
+                            <Table.Cell>{row.response}</Table.Cell>
+                            <Table.Cell>{row.sensitivity}</Table.Cell>
+                            <Table.Cell>{numFormat(row.deltaLow, isPercentage)}</Table.Cell>
+                            <Table.Cell>{numFormat(row.deltaHigh, isPercentage)}</Table.Cell>
+                            <Table.Cell>{row.mean !== null ? numFormat(row.mean) : ""}</Table.Cell>
+                            <Table.Cell>{numFormat(row.trueLow)}</Table.Cell>
+                            <Table.Cell>{numFormat(row.trueHigh)}</Table.Cell>
+                            <Table.Cell>{row.lowReals}</Table.Cell>
+                            <Table.Cell>{row.highReals}</Table.Cell>
+                            <Table.Cell>{numFormat(row.reference)}</Table.Cell>
+                        </Table.Row>
+                    ))}
+                </Table.Body>
+            </Table.Root>
+        </div>
+    );
 };
 
 export default SensitivityTable;

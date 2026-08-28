@@ -2,65 +2,55 @@ import { useAtom } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Label } from "@lib/components/Label";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 
 import type { Interfaces } from "../interfaces";
 
-import { corrCutOffAtom, numParamsAtom, showLabelsAtom } from "./atoms/baseAtoms";
+import { corrCutOffAtom, numParamsAtom } from "./atoms/baseAtoms";
 
 //-----------------------------------------------------------------------------------------------------------
 export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
     const [numParams, setNumParams] = useAtom(numParamsAtom);
     const [corrCutOff, setCorrCutOff] = useAtom(corrCutOffAtom);
-    const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
 
     useApplyInitialSettingsToState(initialSettings, "numParams", "number", setNumParams);
-    useApplyInitialSettingsToState(initialSettings, "showLabels", "boolean", setShowLabels);
     useApplyInitialSettingsToState(initialSettings, "corrCutOff", "number", setCorrCutOff);
 
-    function handleNumParamsChange(_: Event, value: number | number[]) {
-        if (Array.isArray(value)) {
-            return;
-        }
-        setNumParams(value);
+    function handleNumParamsChange(value: number | readonly number[]) {
+        const newValue = Array.isArray(value) ? value[0] : (value as number);
+        setNumParams(newValue);
     }
-    function handleCorrCutOffChange(_: Event, value: number | number[]) {
-        if (Array.isArray(value)) {
-            return;
-        }
-        setCorrCutOff(value);
+    function handleCorrCutOffChange(value: number | readonly number[]) {
+        const newValue = Array.isArray(value) ? value[0] : (value as number);
+        setCorrCutOff(newValue);
     }
     return (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Plot settings" expanded>
-                <Label text="Max number of parameters" key="number-of-params">
-                    <Slider
-                        value={numParams}
-                        onChange={handleNumParamsChange}
-                        min={2}
-                        step={1}
-                        max={500}
-                        valueLabelDisplay="auto"
-                    />
-                </Label>
-                <Label text="Correlation cut-off (abs)" key="correlation-cut-off">
-                    <Slider
-                        value={corrCutOff}
-                        onChange={handleCorrCutOffChange}
-                        min={0}
-                        step={0.01}
-                        max={1}
-                        valueLabelDisplay="auto"
-                    />
-                </Label>
-                <Label text="Show parameter labels" position="left" key="show-labels">
-                    <Checkbox checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
-                </Label>
-            </CollapsibleGroup>
-            ,
-        </div>
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Plot settings" defaultOpen>
+                    <Setting.Field label="Max number of parameters">
+                        <Slider
+                            value={numParams}
+                            onValueChange={handleNumParamsChange}
+                            min={2}
+                            step={1}
+                            max={500}
+                            valueLabelDisplay="auto"
+                        />
+                    </Setting.Field>
+                    <Setting.Field label={`Correlation cutoff (absolute): ${corrCutOff}`}>
+                        <Slider
+                            value={corrCutOff}
+                            onValueChange={handleCorrCutOffChange}
+                            min={0}
+                            step={0.01}
+                            max={1}
+                            valueLabelDisplay="auto"
+                        />
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

@@ -1,71 +1,89 @@
 import { atom } from "jotai";
 
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import type { RftTableDefinition_api } from "@api";
+import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
+import { selectedEnsembleIdentsAtom, selectedWellNameAtom } from "./persistableFixableAtoms";
+import { rftTableDefinitionQueriesAtom } from "./queryAtoms";
 
-import {
-    userSelectedEnsembleIdentAtom,
-    userSelectedResponseNameAtom,
-    userSelectedRftTimestampsUtcMsAtom,
-    userSelectedWellNameAtom,
-} from "./baseAtoms";
-import { rftTableDefinitionAtom } from "./queryAtoms";
+type RftEnsembleTableDefinition = {
+    ensembleIdent: RegularEnsembleIdent;
+    tableDefinition: RftTableDefinition_api;
+};
 
-function fixupSelectedOrFirstValue<T extends string | number>(selectedValue: T | null, values: T[]): T | null {
-    const includes = (value: T | null): value is T => {
-        return value !== null && values.includes(value);
-    };
+export const validRealizationNumbersAtom = atom<number[]>((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
-    if (includes(selectedValue)) {
-        return selectedValue;
+    const realizationSet = new Set<number>();
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        for (const realization of validEnsembleRealizationsFunction(ensembleIdent)) {
+            realizationSet.add(realization);
+        }
     }
-    if (values.length) {
-        return values[0];
+    return Array.from(realizationSet).sort((a, b) => a - b);
+});
+
+function intersectArrays<T>(arrays: T[][]): T[] {
+    if (arrays.length === 0) {
+        return [];
     }
-    return null;
+
+    return arrays.slice(1).reduce<T[]>((intersection, currentArray) => {
+        const currentSet = new Set(currentArray);
+        return intersection.filter((value) => currentSet.has(value));
+    }, [...arrays[0]]);
 }
 
-export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
+export const ensembleTableDefinitionsAtom = atom<RftEnsembleTableDefinition[]>((get) => {
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
+    const tableDefinitionQueries = get(rftTableDefinitionQueriesAtom);
 
-    const validEnsembleIdent = fixupRegularEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
-    return validEnsembleIdent;
+    return tableDefinitionQueries.flatMap((queryResult, index) => {
+        if (!queryResult.data) {
+            return [];
+        }
+
+        const ensembleIdent = selectedEnsembleIdents[index];
+        if (!ensembleIdent) {
+            return [];
+        }
+
+        return [{ ensembleIdent, tableDefinition: queryResult.data }];
+    });
 });
 
-export const availableRftResponseNamesAtom = atom<string[]>((get) => {
-    const rftTableDefinition = get(rftTableDefinitionAtom);
-    return rftTableDefinition.data?.response_names.map((item) => item) ?? [];
+export const availableResponseNamesAtom = atom<string[]>((get) => {
+    const tableDefinitions = get(ensembleTableDefinitionsAtom);
+    const responseNamesPerDefinition = tableDefinitions.map((definition) => definition.tableDefinition.response_names);
+
+    return intersectArrays(responseNamesPerDefinition);
 });
 
-export const selectedRftResponseNameAtom = atom<string | null>((get) => {
-    const availableRftResponseNames = get(availableRftResponseNamesAtom);
-    const userSelectedResponseName = get(userSelectedResponseNameAtom);
-    return fixupSelectedOrFirstValue(userSelectedResponseName, availableRftResponseNames);
+export const availableWellNamesAtom = atom<string[]>((get) => {
+    const tableDefinitions = get(ensembleTableDefinitionsAtom);
+    const wellNamesPerDefinition = tableDefinitions.map((definition) =>
+        definition.tableDefinition.well_infos.map((wellInfo) => wellInfo.well_name),
+    );
+
+    return intersectArrays(wellNamesPerDefinition).sort((left, right) => left.localeCompare(right));
 });
 
-export const availableRftWellNamesAtom = atom<string[]>((get) => {
-    const rftTableDefinition = get(rftTableDefinitionAtom);
-    return rftTableDefinition.data?.well_infos.map((item) => item.well_name) ?? [];
-});
+export const availableTimestampsUtcMsAtom = atom<number[]>((get) => {
+    const tableDefinitions = get(ensembleTableDefinitionsAtom);
+    const selectedWellName = get(selectedWellNameAtom).value;
 
-export const selectedRftWellNameAtom = atom<string | null>((get) => {
-    const availableRftWellNames = get(availableRftWellNamesAtom);
-    const userSelectedWellName = get(userSelectedWellNameAtom);
-    return fixupSelectedOrFirstValue(userSelectedWellName, availableRftWellNames);
-});
+    if (!selectedWellName) {
+        return [];
+    }
 
-export const availableRftTimestampsUtcMsAtom = atom<number[]>((get) => {
-    const rftTableDefinition = get(rftTableDefinitionAtom);
-    const selectedWellName = get(selectedRftWellNameAtom);
-    const wellInfo = rftTableDefinition.data?.well_infos.find((item) => item.well_name === selectedWellName);
-    return wellInfo?.timestamps_utc_ms ?? [];
-});
+    const timestampsPerDefinition = tableDefinitions.map((definition) => {
+        const wellInfo = definition.tableDefinition.well_infos.find(
+            (candidate) => candidate.well_name === selectedWellName,
+        );
+        return wellInfo?.timestamps_utc_ms ?? [];
+    });
 
-export const selectedRftTimestampsUtcMsAtom = atom<number | null>((get) => {
-    const availableRftTimestampsUtcMs = get(availableRftTimestampsUtcMsAtom);
-    const userSelectedRftTimestampsUtcMs = get(userSelectedRftTimestampsUtcMsAtom);
-    return fixupSelectedOrFirstValue(userSelectedRftTimestampsUtcMs, availableRftTimestampsUtcMs);
+    return intersectArrays(timestampsPerDefinition).sort((left, right) => left - right);
 });

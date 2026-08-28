@@ -12,7 +12,7 @@ type TreeNodeSelectionCache = {
     containsWildcard: boolean | null;
     numberOfExactlyMatchedNodes: number | null;
     colors: string[] | null;
-    icons: string[] | null;
+    icons: React.ReactNode[] | null;
 };
 
 function createEmptyCache(): TreeNodeSelectionCache {
@@ -233,13 +233,13 @@ export class TreeNodeSelection {
         return this._cache.colors;
     }
 
-    icons(): Array<string> {
+    icons(): Array<React.ReactNode> {
         if (this._focussedLevel === 0) {
             return [];
         }
         this.ensureCacheValid();
         if (this._cache.icons === null) {
-            const icons: string[] = [];
+            const icons: React.ReactNode[] = [];
             const level = this.countLevel() - 1;
             const allMetaData = this._treeData.findNodes(this.getNodePath(level), MatchType.partialMatch).metaData;
             for (const metaData of allMetaData) {
@@ -248,7 +248,13 @@ export class TreeNodeSelection {
                         break;
                     }
                     const icon = metaData[i].icon;
-                    if (icon && !icons.some((el) => el === icon)) {
+                    if (icon === undefined) continue;
+                    const isDuplicate = icons.some((el) =>
+                        React.isValidElement(el) && React.isValidElement(icon)
+                            ? el.type === icon.type
+                            : el === icon,
+                    );
+                    if (!isDuplicate) {
                         icons.push(icon);
                     }
                 }

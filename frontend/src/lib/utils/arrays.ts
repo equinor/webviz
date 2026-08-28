@@ -6,11 +6,11 @@
  * @param moveAmt The amount of items (from the start-index) that should be moved
  * @returns A shallow copy of the original array, with its items moved accordingly
  */
-export function arrayMove<T>(array: T[], from: number, to: number, moveAmt = 1): T[] {
-    const newArrray = [...array];
-    const movedItems = newArrray.splice(from, moveAmt);
+export function arrayMove<T>(array: readonly T[], from: number, to: number, moveAmt = 1): T[] {
+    const newArray = [...array];
+    const movedItems = newArray.splice(from, moveAmt);
 
-    return newArrray.toSpliced(to, 0, ...movedItems);
+    return newArray.toSpliced(to, 0, ...movedItems);
 }
 
 /**

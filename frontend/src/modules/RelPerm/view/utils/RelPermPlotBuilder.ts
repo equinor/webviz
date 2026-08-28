@@ -290,8 +290,8 @@ export class RelPermPlotBuilder {
         const axisType = curveType === CurveType.RELPERM && yAxisScale === YAxisScale.LOG ? "log" : "linear";
 
         if (subplotDefinitions.length === 1) {
-            layout.xaxis = { title: saturationAxisName ?? "Saturation", range: [0, 1] };
-            layout.yaxis = { title: yAxisTitle, type: axisType };
+            layout.xaxis = { title: { text: saturationAxisName ?? "Saturation" }, range: [0, 1] };
+            layout.yaxis = { title: { text: yAxisTitle }, type: axisType };
             return layout;
         }
 
@@ -307,13 +307,15 @@ export class RelPermPlotBuilder {
             const domainBottom = domainTop - subplotHeight;
 
             layoutWithDynamicAxes[`xaxis${suffix}`] = {
-                title: index === subplotDefinitions.length - 1 ? (saturationAxisName ?? "Saturation") : undefined,
+                title: {
+                    text: index === subplotDefinitions.length - 1 ? (saturationAxisName ?? "Saturation") : undefined,
+                },
                 range: [0, 1],
                 domain: [0, 1],
                 anchor: makeYAxisAnchor(axisReferenceSuffix),
             };
             layoutWithDynamicAxes[`yaxis${suffix}`] = {
-                title: yAxisTitle,
+                title: { text: yAxisTitle },
                 type: axisType,
                 domain: [domainBottom, domainTop],
                 anchor: makeXAxisAnchor(axisReferenceSuffix),

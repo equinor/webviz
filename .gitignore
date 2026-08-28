@@ -95,6 +95,9 @@ dist
 # vuepress build output
 .vuepress/dist
 
+# Storybook build output
+storybook-static
+
 # Serverless directories
 .serverless/
 
@@ -113,10 +116,18 @@ dist
 !.vscode/launch.json
 !backend_py/primary/.vscode/launch.json
 
+frontend/docs/
+
 # playwright results
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Cached narration audio (content-hash keyed)
+frontend/.narration-cache/
+
+# Seeded auth state for e2e tests
+frontend/tests/e2e/setup/storageState.json
 
 # Ignore Jupyter Notebook files
 *.ipynb

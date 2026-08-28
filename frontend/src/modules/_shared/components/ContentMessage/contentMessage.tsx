@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Typography } from "@lib/components/Typography";
 
 export enum ContentMessageType {
     INFO = "info",
@@ -14,15 +14,22 @@ export type ContentMessageProps = {
 };
 
 export const ContentMessage: React.FC<ContentMessageProps> = (props) => {
+    const tone =
+        props.type === ContentMessageType.ERROR
+            ? "danger"
+            : props.type === ContentMessageType.WARNING
+              ? "warning"
+              : "info";
+
     return (
-        <div
-            className={resolveClassNames("w-full h-full flex items-center justify-center flex-col", {
-                "text-red-700": props.type === "error",
-                "text-yellow-600": props.type === "warning",
-            })}
+        <Typography
+            as="div"
+            layoutClassName="flex h-full w-full flex-col items-center justify-center text-center"
+            size="md"
+            tone={tone}
         >
             {props.children}
-        </div>
+        </Typography>
     );
 };
 

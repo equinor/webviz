@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useSetAtom } from "jotai";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { viewStateMapAtom } from "../atoms/baseAtoms";
 

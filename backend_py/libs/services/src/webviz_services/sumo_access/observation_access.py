@@ -2,6 +2,7 @@ import pyarrow as pa
 
 from fmu.datamodels import __version__ as datamodels_version
 from fmu.datamodels.standard_results.ert_observations_summary import ErtObservationsSummaryResult
+from fmu.datamodels.standard_results.ert_observations_rft import ErtObservationsRftResult
 from fmu.datamodels.standard_results.enums import StandardResultName
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from fmu.sumo.explorer.objects import Table
@@ -11,6 +12,8 @@ from webviz_services.service_exceptions import InvalidDataError, MultipleDataMat
 
 from .sumo_client_factory import create_sumo_client
 from .observation_types import (
+    RftObservation,
+    RftObservations,
     SummaryVectorDateObservation,
     SummaryVectorObservations,
 )
@@ -45,6 +48,24 @@ class ObservationAccess:
         obs_table = await obs_handle.to_arrow_async()
         return _create_summary_observations_from_table(obs_table)
 
+    async def get_rft_observations_async(self) -> list[RftObservations]:
+        """Retrieve RFT observations found in sumo case"""
+
+        context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, ensemble=self._ensemble_name, standard_result=StandardResultName.observations_rft
+        )
+        docs_len = await context.length_async()
+        if docs_len == 0:
+            return []
+        if docs_len > 1:
+            raise MultipleDataMatchesError(
+                f"More than one RFT observations found for case {self._case_uuid} and ensemble {self._ensemble_name}",
+                Service.SUMO,
+            )
+        obs_handle: Table = await context.getitem_async(0)
+        obs_table = await obs_handle.to_arrow_async()
+        return _create_rft_observations_from_table(obs_table)
+
 
 def _create_summary_observations_from_table(obs_table: pa.Table) -> list[SummaryVectorObservations]:
 
@@ -76,4 +97,39 @@ def _create_summary_observations_from_table(obs_table: pa.Table) -> list[Summary
     return [
         SummaryVectorObservations(vector_name=vector_name, observations=observations)
         for vector_name, observations in observations_by_vector.items()
+    ]
+
+
+def _create_rft_observations_from_table(obs_table: pa.Table) -> list[RftObservations]:
+
+    try:
+        ert_observations = ErtObservationsRftResult.model_validate(obs_table.to_pylist())
+    except ValidationError as exc:
+        raise InvalidDataError(
+            f"RFT observations does not validate against fmu.datamodels version {datamodels_version}",
+            Service.SUMO,
+        ) from exc
+
+    observations_by_well_and_date: dict[tuple[str, str], list[RftObservation]] = {}
+    for row in ert_observations.root:
+        key = (row.well, row.date)
+        if key not in observations_by_well_and_date:
+            observations_by_well_and_date[key] = []
+
+        observations_by_well_and_date[key].append(
+            RftObservation(
+                value=row.observation_value,
+                error=row.observation_error,
+                property=row.property,
+                east=row.east,
+                north=row.north,
+                tvd=row.tvd,
+                md=row.md,
+                zone=row.zone,
+            )
+        )
+
+    return [
+        RftObservations(well=well, date=date, observations=observations)
+        for (well, date), observations in observations_by_well_and_date.items()
     ]

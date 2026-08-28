@@ -2,18 +2,17 @@ import React from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
-import { Frequency_api, NodeType_api } from "@api";
+import { NodeType_api, Frequency_api } from "@api";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { DiscreteSlider } from "@lib/components/DiscreteSlider";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
+import { Combobox } from "@lib/components/Combobox";
 import { Select } from "@lib/components/Select";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Setting } from "@lib/components/Setting";
+import { Slider } from "@lib/components/Slider";
+import { TextInput } from "@lib/components/TextInput";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -63,7 +62,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     usePropagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
-
     const timeStepSliderDebounceTimeMs = 10;
     const timeStepSliderDebounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -73,29 +71,11 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }
     });
 
-    function handleSelectedNodeKeyChange(value: string) {
-        setSelectedNodeKey(value);
-    }
-
-    function handleSelectedEdgeKeyChange(value: string) {
-        setSelectedEdgeKey(value);
-    }
-
     function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setSelectedEnsembleIdent(ensembleIdent);
     }
 
-    function handleFrequencySelectionChange(newFrequencyStr: string) {
-        const newFreq = newFrequencyStr as Frequency_api;
-        setSelectedResamplingFrequency(newFreq);
-    }
-
-    function handleRealizationNumberChange(value: string) {
-        const realizationNumber = parseInt(value);
-        setSelectedRealization(realizationNumber);
-    }
-
-    function handleSelectedTimeStepIndexChange(value: number | number[]) {
+    function handleSelectedTimeStepIndexChange(value: number | readonly number[]) {
         const singleValue = typeof value === "number" ? value : value.length > 0 ? value[0] : 0;
         const validIndex = singleValue >= 0 && singleValue < availableDateTimes.length ? singleValue : null;
         const newDateTime = validIndex !== null ? availableDateTimes[validIndex] : null;
@@ -109,11 +89,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         }, timeStepSliderDebounceTimeMs);
     }
 
-    function handleSelectedNodeTypesChange(values: string[]) {
-        const newNodeTypes = new Set(values.map((val) => val as NodeType_api));
-        setSelectedNodeTypes(newNodeTypes);
-    }
-
     const createValueLabelFormat = React.useCallback(
         function createValueLabelFormat(value: number): string {
             if (!availableDateTimes || availableDateTimes.length === 0 || value >= availableDateTimes.length) return "";
@@ -125,130 +100,141 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const selectedDateTimeIndex = selectedDateTime.value ? availableDateTimes.indexOf(selectedDateTime.value) : -1;
 
-    const selectedEnsembleIdentAnnotation = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
-    const selectedTreeTypeAnnotation = useMakePersistableFixableAtomAnnotations(selectedTreeTypeAtom);
-    const selectedRealizationAnnotation = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
-    const selectedEdgeKeyAnnotation = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
-    const selectedNodeKeyAnnotation = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
-    const selectedDateTimeAnnotation = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
+    const selectedEnsembleIdentAnnotations = useMakePersistableFixableAtomAnnotations(selectedEnsembleIdentAtom);
+    const selectedTreeTypeAnnotations = useMakePersistableFixableAtomAnnotations(selectedTreeTypeAtom);
+    const selectedRealizationAnnotations = useMakePersistableFixableAtomAnnotations(selectedRealizationAtom);
+    const selectedEdgeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedEdgeKeyAtom);
+    const selectedNodeKeyAnnotations = useMakePersistableFixableAtomAnnotations(selectedNodeKeyAtom);
+    const selectedDateTimeAnnotations = useMakePersistableFixableAtomAnnotations(selectedDateTimeAtom);
 
     return (
-        <div className="flex flex-col gap-2 overflow-y-auto">
-            <CollapsibleGroup expanded={true} title="Ensemble">
-                <SettingWrapper annotations={selectedEnsembleIdentAnnotation}>
-                    <EnsembleDropdown
-                        ensembles={ensembleSet.getRegularEnsembleArray()}
-                        ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                        value={selectedEnsembleIdent.value}
-                        onChange={handleEnsembleSelectionChange}
-                    />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={false} title="Frequency">
-                <Dropdown
-                    options={Object.values(Frequency_api).map((val: Frequency_api) => {
-                        return { value: val, label: FrequencyEnumToStringMapping[val] };
-                    })}
-                    value={selectedResamplingFrequency}
-                    onChange={handleFrequencySelectionChange}
-                />
-            </CollapsibleGroup>
-            <CollapsibleGroup expanded={true} title="Data Fetching Options">
-                <div className="flex flex-col gap-2">
-                    <SettingWrapper label="Realization Number" annotations={selectedRealizationAnnotation}>
-                        <Dropdown
-                            options={
-                                availableRealizations?.map((real) => {
-                                    return { value: real.toString(), label: real.toString() };
-                                }) ?? []
-                            }
-                            value={selectedRealization.value?.toString() ?? undefined}
-                            onChange={handleRealizationNumberChange}
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <Setting.Section title="Data" defaultOpen>
+                    <Setting.Field label="Ensembles" annotations={selectedEnsembleIdentAnnotations}>
+                        <EnsembleDropdown
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
+                            value={selectedEnsembleIdent.value}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={handleEnsembleSelectionChange}
                         />
-                    </SettingWrapper>
-                    <Label text="Node Types">
+                    </Setting.Field>
+                    <Setting.Field label="Realization" annotations={selectedRealizationAnnotations}>
+                        <Combobox
+                            items={availableRealizations.map((real) => {
+                                return { value: real, label: real.toString() };
+                            })}
+                            value={selectedRealization.value}
+                            onValueChange={setSelectedRealization}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Frequency">
+                        <Combobox
+                            items={Object.values(Frequency_api).map((val: Frequency_api) => {
+                                return { value: val, label: FrequencyEnumToStringMapping[val] };
+                            })}
+                            value={selectedResamplingFrequency}
+                            onValueChange={(v) => v && setSelectedResamplingFrequency(v)}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Node Types">
                         <Select
                             options={Object.values(NodeType_api).map((val: NodeType_api) => {
                                 return { value: val, label: NodeTypeEnumToStringMapping[val] };
                             })}
-                            multiple={true}
-                            value={Array.from(selectedNodeTypes).map((val: string) => val)}
-                            onChange={handleSelectedNodeTypesChange}
+                            value={Array.from(selectedNodeTypes)}
+                            onValueChange={(v) => setSelectedNodeTypes(new Set(v))}
                             size={3}
+                            multiple
                         />
-                    </Label>
-                </div>
-            </CollapsibleGroup>
-            <CollapsibleGroup
-                expanded={true}
-                title="Network selections"
-                hasError={
-                    selectedDateTime.depsHaveError || selectedEdgeKey.depsHaveError || selectedNodeKey.depsHaveError
-                }
-            >
-                <div className="flex flex-col gap-2">
-                    <SettingWrapper
+                    </Setting.Field>
+                </Setting.Section>
+                <Setting.Section title="Network" defaultOpen>
+                    <Setting.Field
                         label="Tree Type"
                         loadingOverlay={selectedTreeType.isLoading}
                         errorOverlay={selectedTreeType.depsHaveError ? "Could not load tree types." : undefined}
-                        annotations={selectedTreeTypeAnnotation}
+                        annotations={selectedTreeTypeAnnotations}
                     >
-                        <Dropdown
-                            options={availableTreeTypes.map((type) => {
+                        <Combobox
+                            items={availableTreeTypes.map((type) => {
                                 return { value: type, label: type };
                             })}
-                            value={selectedTreeType.value}
-                            onChange={setSelectedTreeType}
+                            value={selectedTreeType.value ?? null}
+                            onValueChange={(v) => v && setSelectedTreeType(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Edge options"
-                        annotations={selectedEdgeKeyAnnotation}
+                        annotations={selectedEdgeKeyAnnotations}
                         loadingOverlay={selectedEdgeKey.isLoading}
                         errorOverlay={selectedEdgeKey.depsHaveError ? "Could not load edges." : undefined}
                     >
-                        <Dropdown
+                        <Combobox
                             placeholder={!edgeMetadataList.length ? "No edge data available" : ""}
                             disabled={!edgeMetadataList.length}
-                            options={edgeMetadataList.map((item) => {
+                            items={edgeMetadataList.map((item) => {
                                 return { label: item.label, value: item.key };
                             })}
-                            value={selectedEdgeKey.value ?? ""}
-                            onChange={handleSelectedEdgeKeyChange}
+                            value={selectedEdgeKey.value ?? null}
+                            onValueChange={(v) => v && setSelectedEdgeKey(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
+                    </Setting.Field>
+                    <Setting.Field
                         label="Node options"
-                        annotations={selectedNodeKeyAnnotation}
+                        annotations={selectedNodeKeyAnnotations}
                         loadingOverlay={selectedNodeKey.isLoading}
                         errorOverlay={selectedNodeKey.depsHaveError ? "Could not load nodes." : undefined}
                     >
-                        <Dropdown
-                            options={nodeMetadataList.map((item) => {
+                        <Combobox
+                            placeholder={!nodeMetadataList.length ? "No node data available" : ""}
+                            disabled={!nodeMetadataList.length}
+                            items={nodeMetadataList.map((item) => {
                                 return { label: item.label, value: item.key };
                             })}
-                            value={selectedNodeKey.value ?? ""}
-                            onChange={handleSelectedNodeKeyChange}
+                            value={selectedNodeKey.value ?? null}
+                            onValueChange={(v) => v && setSelectedNodeKey(v)}
                         />
-                    </SettingWrapper>
-                    <SettingWrapper
-                        label="Time steps"
+                    </Setting.Field>
+                    <Setting.Field
+                        label="Time step"
                         loadingOverlay={selectedDateTime.isLoading}
-                        annotations={selectedDateTimeAnnotation}
+                        annotations={selectedDateTimeAnnotations}
                         errorOverlay={selectedDateTime.depsHaveError ? "Could not load time steps." : undefined}
                     >
-                        <DiscreteSlider
-                            valueLabelDisplay="auto"
-                            value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : undefined}
-                            values={availableDateTimes.map((_, index) => {
-                                return index;
-                            })}
-                            valueLabelFormat={createValueLabelFormat}
-                            onChange={(_, value) => handleSelectedTimeStepIndexChange(value)}
-                        />
-                    </SettingWrapper>
-                </div>
-            </CollapsibleGroup>
-        </div>
+                        <div className="gap-sm flex">
+                            <Slider
+                                layoutClassName="grow w-full"
+                                valueLabelDisplay="auto"
+                                disabled={!availableDateTimes.length}
+                                min={0}
+                                max={availableDateTimes.length ? availableDateTimes.length - 1 : 0}
+                                markers={availableDateTimes.map((_, index) => index)}
+                                markerLabels={(v, i) => {
+                                    if (i === 0 || i === availableDateTimes.length - 1) {
+                                        return createValueLabelFormat(v);
+                                    }
+                                }}
+                                value={selectedDateTimeIndex !== -1 ? selectedDateTimeIndex : 0}
+                                valueLabelFormat={createValueLabelFormat}
+                                onValueChange={handleSelectedTimeStepIndexChange}
+                            />
+                            <div className="relative flex shrink">
+                                <span className="px-sm pointer-events-none invisible whitespace-nowrap">
+                                    {selectedDateTime.value ?? "No time step selected"}
+                                </span>
+                                <TextInput
+                                    layoutClassName="absolute! inset-0"
+                                    value={selectedDateTime.value ?? ""}
+                                    placeholder="No time step selected"
+                                    size="small"
+                                    readOnly
+                                />
+                            </div>
+                        </div>
+                    </Setting.Field>
+                </Setting.Section>
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

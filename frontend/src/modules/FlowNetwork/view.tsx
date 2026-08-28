@@ -51,7 +51,7 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     }, [nodeMetadataList]);
 
     return (
-        <div className="w-full h-full">
+        <div className="h-full w-full">
             {queryStatus === QueryStatus.Loading ? (
                 <ContentInfo>
                     <CircularProgress />

@@ -6,12 +6,13 @@ import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Checkbox } from "@lib/components/Checkbox";
-import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import type { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown } from "@lib/components/Dropdown";
-import { SettingWrapper } from "@lib/components/SettingWrapper";
+import { Banner } from "@lib/components/Banner";
+import { Combobox } from "@lib/components/Combobox";
+import type { ComboboxItem } from "@lib/components/Combobox/types";
+import { Hidden } from "@lib/components/Hidden";
+import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
+import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -42,6 +43,8 @@ import {
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { HistogramTypeInfoContent } from "./components/HistogramTypeInfoContent";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
+
+const DEBOUNCE_TIME_MS = 1500;
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -81,7 +84,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         );
     }
 
-    const resultNameOptions: DropdownOption<string>[] = tableDefinitionsAccessor
+    const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
         .map((name) => {
             const isFaciesFractionWithoutFaciesIndex =
@@ -98,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         });
 
     // Create selector options
-    const selectorOptions: DropdownOption<string>[] = [
+    const selectorOptions: ComboboxItem<string>[] = [
         ...tableDefinitionsAccessor.getCommonSelectorColumns().map((name) => ({ label: name, value: name })),
     ];
 
@@ -108,7 +111,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         selectedSubplotBy.value,
         selectedTableNames.value,
     );
-    const plotTypeOptions: DropdownOption<PlotType>[] = [];
+    const plotTypeOptions: ComboboxItem<PlotType>[] = [];
     for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
         plotTypeOptions.push({ label, value: type as PlotType });
     }
@@ -123,216 +126,198 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const selectedSubplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
     const selectedColorByAnnotations = useMakePersistableFixableAtomAnnotations(selectedColorByAtom);
 
-    const handleOptionChange = <K extends keyof InplaceVolumesPlotOptions>(
-        key: K,
-        value: InplaceVolumesPlotOptions[K],
-    ) => {
-        setPlotOptions({
-            ...plotOptions,
-            [key]: value,
-        });
-    };
-
-    // Individual handlers
-    const handleHistogramTypeChange = (value: string | number) => {
-        handleOptionChange("histogramType", value as HistogramType);
-    };
-    const handleHistogramBinsChange = (_: Event, value: number | number[]) => {
-        if (Array.isArray(value)) {
-            return;
-        }
-        handleOptionChange("histogramBins", value);
-    };
-    const handleBarSortByChange = (value: string | number) => {
-        handleOptionChange("barSortBy", value as BarSortBy);
-    };
-
-    const handleSharedXAxisChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("sharedXAxis", checked);
-    };
-
-    const handleSharedYAxisChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("sharedYAxis", checked);
-    };
-
-    const handleShowStatisticalMarkersChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("showStatisticalMarkers", checked);
-    };
-    const handleShowRealizationPointsChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("showRealizationPoints", checked);
-    };
-    const handleHideConstantsChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("hideConstants", checked);
-    };
-    const handleShowPercentageInHistogramChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("showPercentageInHistogram", checked);
-    };
-    const handleShowStatisticalLabelsChange = (_: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
-        handleOptionChange("showStatisticalLabels", checked);
-    };
+    function handleOptionChange<K extends keyof InplaceVolumesPlotOptions>(key: K) {
+        return (value: InplaceVolumesPlotOptions[K]) => setPlotOptions({ ...plotOptions, [key]: value });
+    }
 
     const plotSettings = (
-        <div className="flex flex-col gap-2">
-            <CollapsibleGroup title="Data selection" expanded contentClassName="flex flex-col gap-2">
-                <SettingWrapper label="Response" annotations={selectedFirstResultNameAnnotations}>
-                    <Dropdown
-                        value={selectedFirstResultName.value}
-                        options={resultNameOptions}
-                        onChange={setSelectedFirstResultName}
-                    />
-                </SettingWrapper>
+        <>
+            <Setting.Section title="Data Visualization" defaultOpen>
                 {showFaciesFractionGroupingWarning && (
-                    <div className="py-2 px-3 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded text-sm">
+                    <Banner tone="warning">
                         <strong>Note:</strong> FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or
                         Color by; otherwise every fraction collapses to 1.
-                    </div>
+                    </Banner>
                 )}
-                <SettingWrapper label="Subplot by" annotations={selectedSubplotByAnnotations}>
-                    <Dropdown
+                <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>
+                    <Combobox
+                        value={selectedFirstResultName.value}
+                        items={resultNameOptions}
+                        onValueChange={setSelectedFirstResultName}
+                    />
+                </Setting.Field>
+
+                <Setting.Field label="Subplot by" annotations={selectedSubplotByAnnotations}>
+                    <Combobox
                         value={selectedSubplotBy.value}
-                        options={subplotOptions}
-                        onChange={setSelectedSubplotBy}
+                        items={subplotOptions}
+                        onValueChange={(v) => v && setSelectedSubplotBy(v)}
                     />
-                </SettingWrapper>
-                <SettingWrapper label="Color by" annotations={selectedColorByAnnotations}>
-                    <Dropdown value={selectedColorBy.value} options={colorByOptions} onChange={setSelectedColorBy} />
-                </SettingWrapper>
-            </CollapsibleGroup>
-            <CollapsibleGroup title="Plot settings" expanded contentClassName="flex flex-col gap-2">
-                <SettingWrapper label="Plot Type">
-                    <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
-                </SettingWrapper>
-                <Checkbox
-                    label="Show statistics table below plot"
-                    checked={showTable}
-                    onChange={(_e, checked) => setShowTable(checked)}
-                />
-                <Checkbox
-                    label="Hide plots where all values are equal"
-                    checked={plotOptions.hideConstants}
-                    onChange={handleHideConstantsChange}
-                />
-                <Checkbox label="Shared x axis" checked={plotOptions.sharedXAxis} onChange={handleSharedXAxisChange} />
-                <Checkbox label="Shared y axis" checked={plotOptions.sharedYAxis} onChange={handleSharedYAxisChange} />
-                {selectedPlotType === PlotType.HISTOGRAM ||
-                selectedPlotType === PlotType.BAR ||
-                selectedPlotType === PlotType.BOX ||
-                selectedPlotType === PlotType.DISTRIBUTION ? (
-                    <Checkbox
-                        label="Show statistical markers"
-                        checked={plotOptions.showStatisticalMarkers}
-                        onChange={handleShowStatisticalMarkersChange}
+                </Setting.Field>
+
+                <Setting.Field label="Color by" annotations={selectedColorByAnnotations}>
+                    <Combobox
+                        value={selectedColorBy.value}
+                        items={colorByOptions}
+                        onValueChange={(v) => v && setSelectedColorBy(v)}
                     />
-                ) : null}
-                {(selectedPlotType === PlotType.HISTOGRAM || selectedPlotType === PlotType.DISTRIBUTION) && (
-                    <Checkbox
-                        label="Show statistical marker labels"
-                        checked={plotOptions.showStatisticalLabels}
-                        onChange={handleShowStatisticalLabelsChange}
-                        disabled={!plotOptions.showStatisticalMarkers}
+                </Setting.Field>
+
+                <Setting.Field stacked>
+                    <SwitchCompositions.WithLabel
+                        label="Show statistics table below plot"
+                        checked={showTable}
+                        onCheckedChange={setShowTable}
+                        size="small"
                     />
-                )}
-                {selectedPlotType === PlotType.HISTOGRAM ||
-                selectedPlotType === PlotType.DISTRIBUTION ||
-                selectedPlotType === PlotType.BOX ? (
-                    <Checkbox
-                        label="Show realization points"
-                        checked={plotOptions.showRealizationPoints}
-                        onChange={handleShowRealizationPointsChange}
+                </Setting.Field>
+            </Setting.Section>
+
+            <Setting.Section title="Plot Settings" defaultOpen>
+                <Setting.Field label="Plot Type">
+                    <Combobox
+                        value={selectedPlotType}
+                        items={plotTypeOptions}
+                        onValueChange={(v) => v && setSelectedPlotType(v)}
                     />
-                ) : null}
-                {selectedPlotType === PlotType.HISTOGRAM && (
-                    <Checkbox
-                        label="Show labels"
-                        checked={plotOptions.showPercentageInHistogram}
-                        onChange={handleShowPercentageInHistogramChange}
+                </Setting.Field>
+
+                <Hidden hidden={selectedPlotType !== PlotType.HISTOGRAM}>
+                    <Setting.Field
+                        label="Histogram Type"
+                        help={{ title: "Histogram Type", content: <HistogramTypeInfoContent /> }}
+                    >
+                        <Combobox
+                            value={plotOptions.histogramType}
+                            items={[
+                                { label: "Stacked", value: HistogramType.Stack },
+                                { label: "Grouped", value: HistogramType.Group },
+                                { label: "Overlayed", value: HistogramType.Overlay },
+                                { label: "Relative", value: HistogramType.Relative },
+                            ]}
+                            onValueChange={(v: HistogramType | null) => v && handleOptionChange("histogramType")(v)}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Max bins">
+                        <Slider
+                            value={plotOptions.histogramBins}
+                            min={5}
+                            step={1}
+                            max={30}
+                            markerLabels
+                            markers={[10, 15, 20, 25]}
+                            valueLabelDisplay="auto"
+                            disabled={selectedPlotType !== PlotType.HISTOGRAM}
+                            onValueChange={(v) => handleOptionChange("histogramBins")(v)}
+                        />
+                    </Setting.Field>
+                </Hidden>
+                <Hidden hidden={selectedPlotType !== PlotType.BAR}>
+                    <Setting.Field label="Create bar for each" annotations={selectedSelectorColumnAnnotations}>
+                        <Combobox
+                            value={selectedSelectorColumn.value}
+                            items={selectorOptions}
+                            onValueChange={setSelectedSelectorColumn}
+                            disabled={selectedPlotType !== PlotType.BAR}
+                        />
+                    </Setting.Field>
+                    <Setting.Field label="Sort bars by">
+                        <Combobox
+                            value={plotOptions.barSortBy}
+                            items={[
+                                { label: "X values (Category)", value: BarSortBy.Xvalues },
+                                { label: "Y values (Response)", value: BarSortBy.Yvalues },
+                            ]}
+                            onValueChange={(v) => v && handleOptionChange("barSortBy")(v)}
+                        />
+                    </Setting.Field>
+                </Hidden>
+
+                <Setting.Field stacked label="Visuals">
+                    <SwitchCompositions.WithLabel
+                        label="Hide plots where all values are equal"
+                        checked={plotOptions.hideConstants}
+                        onCheckedChange={handleOptionChange("hideConstants")}
+                        size="small"
                     />
-                )}
-                {selectedPlotType === PlotType.HISTOGRAM && (
-                    <div>
-                        <div className="mb-2">
-                            <SettingWrapper
-                                label="Histogram Type"
-                                help={{ title: "Histogram Type", content: <HistogramTypeInfoContent /> }}
-                            >
-                                <Dropdown
-                                    options={[
-                                        { label: "Stacked", value: HistogramType.Stack },
-                                        { label: "Grouped", value: HistogramType.Group },
-                                        { label: "Overlayed", value: HistogramType.Overlay },
-                                        { label: "Relative", value: HistogramType.Relative },
-                                    ]}
-                                    value={plotOptions.histogramType}
-                                    onChange={handleHistogramTypeChange}
-                                    disabled={selectedPlotType !== PlotType.HISTOGRAM}
-                                />
-                            </SettingWrapper>
-                        </div>
-                        <div className="mb-2">
-                            <SettingWrapper label="Max number of histogram bins">
-                                <Slider
-                                    value={plotOptions.histogramBins}
-                                    onChange={handleHistogramBinsChange}
-                                    min={5}
-                                    step={1}
-                                    max={30}
-                                    valueLabelDisplay="auto"
-                                    disabled={selectedPlotType !== PlotType.HISTOGRAM}
-                                />
-                            </SettingWrapper>
-                        </div>
-                    </div>
-                )}
-                {selectedPlotType === PlotType.BAR && (
-                    <div>
-                        <div className="mb-2">
-                            <SettingWrapper label="Create bar for each" annotations={selectedSelectorColumnAnnotations}>
-                                <Dropdown
-                                    value={selectedSelectorColumn.value}
-                                    options={selectorOptions}
-                                    onChange={setSelectedSelectorColumn}
-                                    disabled={selectedPlotType !== PlotType.BAR}
-                                />
-                            </SettingWrapper>
-                        </div>
-                        <div className="mb-2">
-                            <SettingWrapper label="Sort bars by">
-                                <Dropdown
-                                    options={[
-                                        { label: "X values (Category)", value: BarSortBy.Xvalues },
-                                        { label: "Y values (Response)", value: BarSortBy.Yvalues },
-                                    ]}
-                                    value={plotOptions.barSortBy}
-                                    onChange={handleBarSortByChange}
-                                    disabled={selectedPlotType !== PlotType.BAR}
-                                />
-                            </SettingWrapper>
-                        </div>
-                    </div>
-                )}
-            </CollapsibleGroup>
-        </div>
+                    {[PlotType.HISTOGRAM, PlotType.BAR, PlotType.BOX, PlotType.DISTRIBUTION].includes(
+                        selectedPlotType,
+                    ) && (
+                        <SwitchCompositions.WithLabel
+                            label="Show statistical markers"
+                            checked={plotOptions.showStatisticalMarkers}
+                            onCheckedChange={handleOptionChange("showStatisticalMarkers")}
+                            size="small"
+                        />
+                    )}
+                    {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION].includes(selectedPlotType) && (
+                        <SwitchCompositions.WithLabel
+                            label="Show statistical marker labels"
+                            checked={plotOptions.showStatisticalLabels}
+                            disabled={!plotOptions.showStatisticalMarkers}
+                            size="small"
+                            onCheckedChange={handleOptionChange("showStatisticalLabels")}
+                        />
+                    )}
+                    {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION, PlotType.BOX].includes(selectedPlotType) && (
+                        <SwitchCompositions.WithLabel
+                            label="Show realization points"
+                            checked={plotOptions.showRealizationPoints}
+                            onCheckedChange={handleOptionChange("showRealizationPoints")}
+                            size="small"
+                        />
+                    )}
+                    {selectedPlotType === PlotType.HISTOGRAM && (
+                        <SwitchCompositions.WithLabel
+                            label="Show percentage"
+                            checked={plotOptions.showPercentageInHistogram}
+                            onCheckedChange={handleOptionChange("showPercentageInHistogram")}
+                            size="small"
+                        />
+                    )}
+                </Setting.Field>
+
+                <Setting.Field label="Axes" stacked>
+                    <SwitchCompositions.WithLabel
+                        label="Shared x axis"
+                        checked={plotOptions.sharedXAxis}
+                        onCheckedChange={handleOptionChange("sharedXAxis")}
+                        size="small"
+                    />
+                    <SwitchCompositions.WithLabel
+                        label="Shared y axis"
+                        checked={plotOptions.sharedYAxis}
+                        onCheckedChange={handleOptionChange("sharedYAxis")}
+                        size="small"
+                    />
+                </Setting.Field>
+            </Setting.Section>
+        </>
     );
 
     return (
-        <InplaceVolumesFilterComponent
-            ensembleSet={ensembleSet}
-            settingsContext={props.settingsContext}
-            workbenchSession={props.workbenchSession}
-            workbenchServices={props.workbenchServices}
-            isPending={tableDefinitionsQueryResult.isLoading}
-            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
-            selectedEnsembleIdents={selectedEnsembleIdents.value}
-            selectedIndicesWithValues={selectedIndicesWithValues.value}
-            selectedTableNames={selectedTableNames.value}
-            selectedAllowIndicesValuesIntersection={
-                selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
-            }
-            onChange={handleFilterChange}
-            additionalSettings={plotSettings}
-            areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
-            debounceMs={1500}
-        />
+        <Setting.ScrollArea>
+            <Setting.Panel>
+                <InplaceVolumesFilterComponent
+                    debounceMs={DEBOUNCE_TIME_MS}
+                    ensembleSet={ensembleSet}
+                    settingsContext={props.settingsContext}
+                    workbenchSession={props.workbenchSession}
+                    workbenchServices={props.workbenchServices}
+                    isPending={tableDefinitionsQueryResult.isLoading}
+                    availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+                    availableIndicesWithValues={tableDefinitionsAccessor.getCommonIndicesWithValues()}
+                    selectedEnsembleIdents={selectedEnsembleIdents.value}
+                    selectedIndicesWithValues={selectedIndicesWithValues.value}
+                    selectedTableNames={selectedTableNames.value}
+                    selectedAllowIndicesValuesIntersection={
+                        selectedIndexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION
+                    }
+                    additionalSettings={plotSettings}
+                    areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+                    onChange={handleFilterChange}
+                />
+            </Setting.Panel>
+        </Setting.ScrollArea>
     );
 }

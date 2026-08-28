@@ -1,13 +1,14 @@
+import { v4 } from "uuid";
+
 import type { InplaceVolumesStatistic_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { TableHeading, TableRow } from "@lib/components/TableDeprecated/table";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumes/sortResultNames";
-import type { Column, Row } from "@modules/_shared/InplaceVolumes/Table";
-import { ColumnType, Table } from "@modules/_shared/InplaceVolumes/Table";
+import type { Row } from "@modules/_shared/InplaceVolumes/Table";
+import { Table } from "@modules/_shared/InplaceVolumes/Table";
 import {
     makeStatisticalTableColumnDataFromApiData,
     makeTableFromApiData,
@@ -19,29 +20,27 @@ import type {
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 import { createScaledNumberWithSuffix } from "@modules/_shared/utils/numberSuffixFormatting";
 
-export function createTableHeadingsAndRowsFromTablesData(
-    tablesData: InplaceVolumesTableData[],
-    ensembleSet: EnsembleSet,
-): {
-    headings: TableHeading;
+import type { TableColumnsConfig, TableRow } from "../types";
+
+export function createTableHeadingsAndRowsFromTablesData(tablesData: InplaceVolumesTableData[]): {
+    headings: TableColumnsConfig;
     rows: TableRow<any>[];
 } {
-    const tableHeadings: TableHeading = {};
+    const tableHeadings: TableColumnsConfig = {};
     const tableRows: TableRow<any>[] = [];
 
     const dataTable = makeTableFromApiData(tablesData);
     for (const column of dataTable.getColumns()) {
         tableHeadings[column.getName()] = {
+            columnType: column.getType(),
             label: column.getName(),
             hoverText: createHoverTextForVolume(column.getName()),
             sizeInPercent: 100 / dataTable.getNumColumns(),
-            formatValue: makeValueFormattingFunc(column, ensembleSet),
-            formatStyle: makeStyleFormattingFunc(column),
         };
     }
 
     for (const row of dataTable.getRows()) {
-        tableRows.push(row);
+        tableRows.push({ __id: v4(), ...row });
     }
 
     return { headings: tableHeadings, rows: tableRows };
@@ -50,12 +49,11 @@ export function createTableHeadingsAndRowsFromTablesData(
 export function createStatisticalTableHeadingsAndRowsFromTablesData(
     tablesData: InplaceVolumesStatisticalTableData[],
     statisticOptions: InplaceVolumesStatistic_api[],
-    ensembleSet: EnsembleSet,
 ): {
-    headings: TableHeading;
+    headings: TableColumnsConfig;
     rows: TableRow<any>[];
 } {
-    const tableHeadings: TableHeading = {};
+    const tableHeadings: TableColumnsConfig = {};
     const tableRows: TableRow<any>[] = [];
 
     const columnData = makeStatisticalTableColumnDataFromApiData(tablesData, statisticOptions);
@@ -75,9 +73,8 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
     for (const column of nonStatisticalColumns) {
         tableHeadings[column.getName()] = {
             label: column.getName(),
+            columnType: column.getType(),
             sizeInPercent: nonStatisticalColumnSizePercentage / numNonStatisticalColumns,
-            formatValue: makeValueFormattingFunc(column, ensembleSet),
-            formatStyle: makeStyleFormattingFunc(column),
         };
     }
 
@@ -103,16 +100,15 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
         const resultHoverText = createHoverTextForVolume(resultName);
 
-        const subHeading: TableHeading = {};
+        const subHeading: TableColumnsConfig = {};
         resultStatisticalTable.getColumns().forEach((column) => {
             const columnSize = 100 / numStatisticOptions; // Size relative to parent heading (i.e. resultName)
             const columnId = `${resultName}-${column.getName()}`;
             subHeading[columnId] = {
                 label: column.getName(),
+                columnType: column.getType(),
                 hoverText: `${column.getName()} - ${resultHoverText}`,
                 sizeInPercent: columnSize,
-                formatValue: makeValueFormattingFunc(column, ensembleSet),
-                formatStyle: makeStyleFormattingFunc(column),
             };
         });
 
@@ -142,67 +138,15 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
     // Add rows to tableRows
     for (const row of rows) {
-        tableRows.push(row);
+        tableRows.push({ __id: v4(), ...row });
     }
 
     return { headings: tableHeadings, rows: tableRows };
 }
-
-function makeStyleFormattingFunc(column: Column): ((value: number | string | null) => React.CSSProperties) | undefined {
-    if (column.getType() === ColumnType.FLUID) {
-        return (value: number | string | null) => {
-            const style: React.CSSProperties = { textAlign: "right", fontWeight: "bold" };
-
-            if (value?.toString().toLowerCase() === "oil") {
-                style.color = PHASE_COLORS.oil;
-            }
-            if (value?.toString().toLowerCase() === "water") {
-                style.color = PHASE_COLORS.water;
-            }
-            if (value?.toString().toLowerCase() === "gas") {
-                style.color = PHASE_COLORS.gas;
-            }
-
-            return style;
-        };
-    }
-
-    if (column.getType() === ColumnType.ENSEMBLE) {
-        return undefined;
-    }
-
-    return () => ({ textAlign: "right" });
+export function isValidFluidType(type: string): type is keyof typeof PHASE_COLORS {
+    return type in PHASE_COLORS;
 }
-
-function makeValueFormattingFunc(
-    column: Column,
-    ensembleSet: EnsembleSet,
-): ((value: number | string | null) => string) | undefined {
-    if (column.getType() === ColumnType.ENSEMBLE) {
-        return (value: number | string | null) => formatEnsembleIdent(value, ensembleSet);
-    }
-    if (column.getType() === ColumnType.RESULT) {
-        return formatResultValue;
-    }
-
-    return undefined;
-}
-
-function formatEnsembleIdent(value: string | number | null, ensembleSet: EnsembleSet): string {
-    if (value === null) {
-        return "-";
-    }
-    const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
-    if (ensemble && ensemble instanceof RegularEnsemble) {
-        return makeDistinguishableEnsembleDisplayName(
-            RegularEnsembleIdent.fromString(value.toString()),
-            ensembleSet.getRegularEnsembleArray(),
-        );
-    }
-    return value.toString();
-}
-
-function formatResultValue(value: string | number | null): string {
+export function formatResultValue(value: string | number | null): string {
     // If properties cannot be calculated,
     // e.g. due to a 0 denominator, the value returned from backend will be null
     if (value === null) {
@@ -224,4 +168,17 @@ function formatResultValue(value: string | number | null): string {
     }
 
     return `${scaledValue.toFixed(decimalPlaces)} ${suffix}`;
+}
+export function formatEnsembleIdent(value: string | number | null, ensembleSet: EnsembleSet): string {
+    if (value === null) {
+        return "-";
+    }
+    const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
+    if (ensemble && ensemble instanceof RegularEnsemble) {
+        return makeDistinguishableEnsembleDisplayName(
+            RegularEnsembleIdent.fromString(value.toString()),
+            ensembleSet.getRegularEnsembleArray(),
+        );
+    }
+    return value.toString();
 }

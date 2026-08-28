@@ -382,6 +382,9 @@ async def _get_headers_from_ssdl_well_log_async(
 async def _get_headers_from_smda_geology_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
+        return []
+
     geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token())
 
     try:
@@ -395,6 +398,9 @@ async def _get_headers_from_smda_geology_async(
 async def _get_headers_from_smda_stratigraghpy_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
+        return []
+
     strat_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     try:
@@ -408,6 +414,9 @@ async def _get_headers_from_smda_stratigraghpy_async(
 async def _get_headers_from_smda_survey_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
+        return []
+
     survey_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     try:

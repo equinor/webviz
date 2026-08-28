@@ -5,7 +5,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { useColorSet } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { useElementSize } from "@lib/hooks/useElementSize";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -17,7 +17,7 @@ import { RelPermPlotBuilder } from "./utils/RelPermPlotBuilder";
 
 export function View({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
-    const wrapperDivSize = useElementSize(wrapperDivRef);
+    const wrapperDivSize = useElementBoundingRect(wrapperDivRef);
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
     const colorSet = useColorSet(workbenchSettings);
@@ -129,8 +129,8 @@ export function View({ viewContext, workbenchSession, workbenchSettings }: Modul
     }
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
-            {makeContent()}
+        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+            <div style={{ height: wrapperDivSize.height }}>{makeContent()}</div>
         </div>
     );
 }

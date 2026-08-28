@@ -1,0 +1,22 @@
+@layer components {
+    .floating__arrow {
+        background-color: inherit;
+        width: 0.75rem /* 12px */;
+        height: 0.75rem /* 12px */;
+
+        &[data-side="bottom"] {
+            @apply -top-1.5 rotate-45;
+        }
+        &[data-side="left"] {
+            @apply -right-1.5 rotate-135;
+        }
+
+        &[data-side="top"] {
+            @apply -bottom-1.5 rotate-225;
+        }
+
+        &[data-side="right"] {
+            @apply -left-1.5 rotate-315;
+        }
+    }
+}

@@ -1,17 +1,22 @@
 import React from "react";
 
-import { Close } from "@mui/icons-material";
+import { Error } from "@mui/icons-material";
 import { Key } from "ts-key-enum";
 
-import { Direction, type TagProps } from "@lib/components/TagInput";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { getTextWidthWithFont } from "@lib/utils/textSize";
+import { Chip } from "@lib/components/Chip";
+import type { FocusableListItem } from "@lib/hooks/useListFocus";
+import { Direction } from "@lib/hooks/useListFocus";
 
 import type { RealizationNumberLimits, SelectionValidityInfo } from "./_utils";
 import { computeTagValidityInfo, sanitizeRangeInput, SelectionValidity } from "./_utils";
+import { AutoFitInput } from "./autoFitInput";
 
-type RealizationRangeTagProps = TagProps & {
+type RealizationRangeTagProps = FocusableListItem & {
+    disabled?: boolean;
     realizationNumberLimits: RealizationNumberLimits;
+    value: string;
+    onChange: (newValue: string) => void;
+    onRemove: () => void;
 };
 
 export function RealizationRangeTag(props: RealizationRangeTagProps): React.ReactNode {
@@ -19,20 +24,30 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
 
     // We only want to emit the changed value once we're done editing, to avoid re-renders as we type
     const [editingValue, setEditingValue] = React.useState<string | null>(null);
-    const activeValue = editingValue ?? props.tag;
+    const activeValue = editingValue ?? props.value;
 
     // If focus moved to this tag, move the focus into it's input field.
     React.useEffect(() => {
-        if (props.focused) {
+        if (!props.selected && props.focused && inputRef.current !== document.activeElement) {
             inputRef.current?.focus();
-            const cursorPos = props.focusMovementDirection === Direction.Backwards ? props.tag.length : 0;
+            const cursorPos = props.focusMovementDirection === Direction.Backwards ? props.value.length : 0;
             inputRef.current?.setSelectionRange(cursorPos, cursorPos);
         }
-    }, [props.focusMovementDirection, props.focused, props.tag.length]);
+    }, [props.focusMovementDirection, props.focused, props.selected, props.value.length]);
 
     const validityInfo = React.useMemo<SelectionValidityInfo>(() => {
-        return computeTagValidityInfo(props.tag, props.realizationNumberLimits);
-    }, [props.tag, props.realizationNumberLimits]);
+        return computeTagValidityInfo(props.value, props.realizationNumberLimits);
+    }, [props.value, props.realizationNumberLimits]);
+
+    const colorTone = React.useMemo<"danger" | "warning" | "neutral">(() => {
+        if (validityInfo.validity === SelectionValidity.InputError) {
+            return "danger";
+        }
+        if (validityInfo.validity === SelectionValidity.Invalid) {
+            return "warning";
+        }
+        return "neutral";
+    }, [validityInfo.validity]);
 
     function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
         const value = event.target.value;
@@ -42,10 +57,8 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
         setEditingValue(sanitizedValue);
     }
 
-    function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
-        setEditingValue(props.tag);
-
-        e.stopPropagation();
+    function handleFocus() {
+        setEditingValue(props.value);
 
         if (!props.focused) {
             props.onFocus?.();
@@ -62,36 +75,34 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
         if (editingValue === "") {
             props.onRemove?.();
         } else {
-            props.onChange?.(editingValue ?? "");
+            if (editingValue !== props.value) props.onChange?.(editingValue ?? "");
             setEditingValue(null);
         }
     }
 
     function handleKeyDown(evt: React.KeyboardEvent<HTMLInputElement>) {
-        evt.stopPropagation();
-
         const target = evt.target as HTMLInputElement;
 
         const isSelecting = target.selectionStart !== target.selectionEnd;
 
-        if (evt.key === Key.Enter || evt.key === props.separator || evt.key === Key.Tab) {
+        if (evt.key === Key.Enter || evt.key === ",") {
             commitEditValue();
             props.onMoveFocus?.(Direction.Forwards);
+            evt.stopPropagation();
             evt.preventDefault();
         } else if (evt.key === Key.Backspace && editingValue === "") {
             props.onRemove?.();
         }
 
         // ? Used both here and in base picker comp. Should we move it to a utility function?
-        else if (evt.key === Key.ArrowLeft && target.selectionStart === 0 && !isSelecting) {
-            props.onMoveFocus?.(Direction.Backwards, evt.shiftKey);
-            evt.preventDefault();
-        } else if (evt.key === Key.ArrowRight && target.selectionEnd === target.value.length && !isSelecting) {
-            props.onMoveFocus?.(Direction.Forwards, evt.shiftKey);
-            evt.preventDefault();
-        } else if (evt.key === Key.Backspace && props.tag === "") {
+        else if (evt.key === Key.ArrowLeft && (target.selectionStart !== 0 || isSelecting)) {
+            evt.stopPropagation();
+        } else if (evt.key === Key.ArrowRight && (target.selectionEnd !== target.value.length || isSelecting)) {
+            evt.stopPropagation();
+        } else if (evt.key === Key.Backspace && props.value === "") {
             props.onRemove?.();
             evt.preventDefault();
+            evt.stopPropagation();
         }
     }
 
@@ -105,72 +116,60 @@ export function RealizationRangeTag(props: RealizationRangeTagProps): React.Reac
     }, [validityInfo.validity]);
 
     function makeMatchCounter(): React.ReactNode {
+        if (validityInfo.validity === SelectionValidity.InputError) {
+            return <Error style={{ fontSize: 16 }} />;
+        }
+
         if (validityInfo.numMatchedRealizations <= 1) {
             return null;
         }
 
-        if (validityInfo.numMatchedValidRealizations === validityInfo.numMatchedRealizations) {
-            return (
-                <span
-                    className="rounded-lg bg-white text-xs mr-2 p-1 font-semibold"
-                    title={`Matches ${validityInfo.numMatchedRealizations} realizations.`}
-                >
-                    {validityInfo.numMatchedRealizations}
-                </span>
-            );
-        }
+        const allRealsMatched = validityInfo.numMatchedValidRealizations === validityInfo.numMatchedRealizations;
+
+        const content = allRealsMatched
+            ? validityInfo.numMatchedRealizations
+            : `${validityInfo.numMatchedValidRealizations}/${validityInfo.numMatchedRealizations}`;
+
+        const title = allRealsMatched
+            ? `Matches ${validityInfo.numMatchedRealizations} realizations.`
+            : `Matches ${validityInfo.numMatchedRealizations} realizations, but only ${validityInfo.numMatchedValidRealizations} are valid.`;
 
         return (
             <span
-                className="rounded-lg bg-white text-xs mr-2 p-0.5 font-semibold"
-                title={`Matches ${validityInfo.numMatchedRealizations} realizations, but only ${validityInfo.numMatchedValidRealizations} are valid.`}
+                className="text-info-strong-on-emphasis data-[tone=warning]:text-warning-strong bg-info-strong data-[tone=warning]:bg-warning-active px-xs rounded-lg font-light"
+                title={title}
+                data-tone={colorTone}
             >
-                {validityInfo.numMatchedValidRealizations}/{validityInfo.numMatchedRealizations}
+                {content}
             </span>
         );
     }
 
     return (
-        <li
-            className={resolveClassNames("flex items-center rounded-sm px-2 py-0.5 relative", {
-                "bg-blue-200": !props.focused || props.selected,
-                "bg-red-300": validityInfo.validity === SelectionValidity.InputError && !props.focused,
-                "bg-orange-300": validityInfo.validity === SelectionValidity.Invalid && !props.focused,
-                "outline outline-blue-600": props.focused || props.selected,
-            })}
+        <Chip
+            as="li"
+            tone={colorTone}
+            onRemove={props.onRemove}
+            disabled={props.disabled}
             title={tagTitle}
-            onClick={() => inputRef.current?.focus()}
+            selected={props.selected}
+            startAdornment={makeMatchCounter()}
+            onClick={props.onFocus}
         >
-            {makeMatchCounter()}
-            <input
+            <AutoFitInput
                 ref={inputRef}
                 value={activeValue}
+                aria-label="Range"
                 type="text"
-                disabled={props.selected}
-                className="bg-transparent outline-hidden"
-                style={{ width: getTextWidthWithFont(activeValue, "Equinor", 1.25) }}
+                disabled={props.selected || props.disabled}
+                wrapperClassName="mx-3xs"
+                className="focus:border-neutral-strong -mb-px border-b border-dashed border-transparent bg-transparent outline-hidden"
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={handleFocus}
                 onKeyDown={handleKeyDown}
             />
-            <div
-                tabIndex={-1}
-                className={resolveClassNames(
-                    "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
-                    {
-                        invisible: props.focused && !props.selected,
-                    },
-                )}
-                onClick={props.onRemove}
-            >
-                <Close fontSize="inherit" />
-            </div>
-
-            {props.selected && (
-                <div className="bg-blue-800 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded-sm" />
-            )}
-        </li>
+        </Chip>
     );
 }
 

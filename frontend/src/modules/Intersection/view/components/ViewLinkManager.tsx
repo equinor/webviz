@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 import { v4 } from "uuid";
 
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";

@@ -41,27 +41,33 @@ import {
 
 export function makeIntersectionCalculatorFromIntersectionItem(
     intersectionItem: IntersectionItem,
-    options: IntersectionHandlerOptions,
+    options: Required<IntersectionHandlerOptions>,
     controller: Controller,
 ): IntersectionCalculator {
+    const getThreshold = () => {
+        const { xScale, yScale } = controller.currentStateAsEvent;
+        const dataMarginX = Math.abs(xScale.invert(options.threshold) - xScale.invert(0));
+        const dataMarginY = Math.abs(yScale.invert(options.threshold) - yScale.invert(0));
+        return Math.max(dataMarginX, dataMarginY);
+    };
     switch (intersectionItem.shape) {
         case IntersectionItemShape.POINT:
-            return new PointIntersectionCalculator(intersectionItem.data, options.threshold);
+            return new PointIntersectionCalculator(intersectionItem.data, getThreshold);
         case IntersectionItemShape.LINE:
-            return new LineIntersectionCalculator(intersectionItem.data, options.threshold);
+            return new LineIntersectionCalculator(intersectionItem.data, getThreshold);
         case IntersectionItemShape.LINE_SET:
-            return new LineSetIntersectionCalculator(intersectionItem.data, options.threshold);
+            return new LineSetIntersectionCalculator(intersectionItem.data, getThreshold);
         case IntersectionItemShape.POLYGON:
             return new PolygonIntersectionCalculator(intersectionItem.data);
         case IntersectionItemShape.POLYGONS:
             return new PolygonsIntersectionCalculator(intersectionItem.data);
         case IntersectionItemShape.WELLBORE_PATH:
-            return new WellborePathIntersectionCalculator(controller, options.threshold);
+            return new WellborePathIntersectionCalculator(controller, getThreshold);
         case IntersectionItemShape.FANCHART:
             return new FanchartIntersectionCalculator(
                 intersectionItem.data.lines,
                 intersectionItem.data.hull,
-                options.threshold,
+                getThreshold,
             );
         case IntersectionItemShape.RECTANGLE:
             return new RectangleIntersectionCalculator(intersectionItem.data);

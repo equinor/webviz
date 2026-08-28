@@ -1,4 +1,4 @@
-import { range } from "lodash";
+import { range } from "lodash-es";
 
 export type NumberRange = { start: number; end: number };
 export type NumberOrRange = number | NumberRange;

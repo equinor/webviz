@@ -1,6 +1,6 @@
 import React from "react";
 
-import _ from "lodash";
+import { isEqual } from "lodash-es";
 
 /**
  * Deeply compares a variable with it's previous state, and returns a stable refference if the object is equivalent.
@@ -11,7 +11,7 @@ import _ from "lodash";
 export function useStableProp<T>(value: T): [prop: T, propDidChange: boolean] {
     const [prevInternalValue, setPrevInternalValue] = React.useState<T>(value);
 
-    if (_.isEqual(value, prevInternalValue)) {
+    if (isEqual(value, prevInternalValue)) {
         return [prevInternalValue, false];
     }
 

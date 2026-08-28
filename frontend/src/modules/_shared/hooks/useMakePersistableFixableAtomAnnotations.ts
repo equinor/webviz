@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 
 import { Source, type persistableFixableAtom } from "@framework/utils/atomUtils";
-import type { SettingAnnotation } from "@lib/components/SettingWrapper";
+import type { SettingAnnotation } from "@lib/components/Setting";
 
 type PersistableFixableAtom<T> = ReturnType<typeof persistableFixableAtom<T>>;
 

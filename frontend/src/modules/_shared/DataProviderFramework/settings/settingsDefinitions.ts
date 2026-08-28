@@ -348,9 +348,11 @@ export type SettingTypeDefinitions = {
     // XYZ range settings (XYZ_RANGE category) - demonstrates all three types being different
     [Setting.GRID_LAYER_RANGE]: {
         internalValue: {
-            i: [number, number];
-            j: [number, number];
-            k: { type: "range"; range: [number, number] } | { type: "zone"; range: [number, number]; name: string };
+            i: [number | "min", number | "max"];
+            j: [number | "min", number | "max"];
+            k:
+                | { type: "range"; range: [number | "min", number | "max"] }
+                | { type: "zone"; range: [number, number]; name: string };
         } | null;
         externalValue: [[number, number], [number, number], [number, number]] | null;
         valueConstraints: {

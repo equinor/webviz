@@ -5,7 +5,7 @@ import type { HoverData, HoverTopic } from "@framework/HoverService";
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import * as bbox from "@lib/utils/bbox";
 import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorScaleWithId";
-import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { EsvLayer } from "@modules/_shared/components/EsvIntersection";
 import type { HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
 import type { TemplatePlot } from "@modules/_shared/types/wellLogTemplates";
 import type { WellPickDataCollection } from "@modules/_shared/types/wellpicks";
@@ -41,8 +41,7 @@ export enum VisualizationTarget {
 }
 
 export interface EsvLayerItemsMaker {
-    // Each layer has to be made inside EsvIntersection with the same pixiApplication, therefore the return type is LayerItem and not EsvLayer<any>
-    makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null) => LayerItem[];
+    makeLayerItems: (intersectionReferenceSystem: IntersectionReferenceSystem | null, order: number) => EsvLayer[];
 }
 
 export type DataProviderVisualizationTargetTypes = {

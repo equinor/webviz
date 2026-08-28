@@ -208,7 +208,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
 
     if (intersectionViews.length === 0) {
         return (
-            <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
+            <div className="-mt-sm absolute top-1/2 left-1/2 h-10 -translate-1/2 transform text-center">
                 Please add views and layers in the settings panel.
             </div>
         );

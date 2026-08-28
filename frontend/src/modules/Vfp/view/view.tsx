@@ -41,7 +41,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     }
 
     return (
-        <div ref={wrapperDivRef} className="w-full h-full">
+        <div ref={wrapperDivRef} className="h-full w-full">
             {content}
         </div>
     );

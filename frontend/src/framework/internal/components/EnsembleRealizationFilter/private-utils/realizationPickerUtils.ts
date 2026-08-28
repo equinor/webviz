@@ -43,6 +43,8 @@ export function makeRealizationNumberSelectionFromRealizationPickerTag(tag: stri
 /**
  * Convert string tags from a realization picker to realization number selections.
  */
-export function makeRealizationNumberSelectionsFromRealizationPickerTags(tags: string[]): RealizationNumberSelection[] {
+export function makeRealizationNumberSelectionsFromRealizationPickerTags(
+    tags: readonly string[],
+): RealizationNumberSelection[] {
     return tags.map(makeRealizationNumberSelectionFromRealizationPickerTag);
 }

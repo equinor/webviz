@@ -1,4 +1,4 @@
-import { filter, groupBy, isEqual, keys, map } from "lodash";
+import { filter, groupBy, isEqual, keys, map } from "lodash-es";
 
 import type { WellborePick_api } from "@api";
 import { getWellborePicksInStratColumnOptions, getWellboreStratigraphicColumnsOptions } from "@api";

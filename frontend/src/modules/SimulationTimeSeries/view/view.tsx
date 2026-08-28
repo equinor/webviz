@@ -150,7 +150,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     // "overflow-hidden" in order to avoid flickering when zooming in browser (chrome)
     return (
-        <div className="w-full h-full overflow-hidden" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-hidden" ref={wrapperDivRef}>
             {viewContent}
         </div>
     );

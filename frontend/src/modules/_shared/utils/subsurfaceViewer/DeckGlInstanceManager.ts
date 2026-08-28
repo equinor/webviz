@@ -1,7 +1,7 @@
 /*
 This manager is responsible for managing plugins for DeckGL, forwarding events to them, and adding/adjusting layers based on the plugins' responses.
 */
-import type { Layer, PickingInfo, View } from "@deck.gl/core";
+import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { v4 } from "uuid";
@@ -34,11 +34,11 @@ export class DeckGlPlugin {
     }
 
     protected requestDisablePanning() {
-        this._manager.disablePanning();
+        this._manager.disableDragInteraction();
     }
 
     protected requestEnablePanning() {
-        this._manager.enablePanning();
+        this._manager.enableDragInteraction();
     }
 
     protected getFirstLayerUnderCursorInfo(x: number, y: number): PickingInfo | undefined {
@@ -51,6 +51,10 @@ export class DeckGlPlugin {
 
     protected setDragEnd() {
         this._manager.setDragEnd();
+    }
+
+    protected setReadoutSuppressed(suppressed: boolean) {
+        this._manager.setReadoutSuppressed(this, suppressed);
     }
 
     protected makeLayerId(layerId: string): string {
@@ -77,11 +81,13 @@ export class DeckGlPlugin {
 export enum DeckGlInstanceManagerTopic {
     REDRAW = "REDRAW",
     CONTEXT_MENU = "CONTEXT_MENU",
+    IS_READOUT_SUPPRESSED = "IS_READOUT_SUPPRESSED",
 }
 
 export type DeckGlInstanceManagerPayloads = {
     [DeckGlInstanceManagerTopic.REDRAW]: number;
     [DeckGlInstanceManagerTopic.CONTEXT_MENU]: ContextMenu | null;
+    [DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED]: boolean;
 };
 
 type KeyboardEventListener = (event: KeyboardEvent) => void;
@@ -98,10 +104,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _eventListeners: KeyboardEventListener[] = [];
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
+    private _suppressingReadoutPlugins = new Set<DeckGlPlugin>();
 
-    private _hiddenViews: View[] = []; // plugin registered
-    private _hiddenViewStatePatch: Record<string, any> = {};
-    private _layerFilterWrappers: ((prev?: any) => any)[] = [];
+    private _dragInteractionEnabled: boolean = true;
 
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
@@ -144,35 +149,41 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         this._plugins.push(plugin);
     }
 
+    isReadoutSuppressed(): boolean {
+        return this._suppressingReadoutPlugins.size > 0;
+    }
+
+    setReadoutSuppressed(plugin: DeckGlPlugin, suppressed: boolean): void {
+        const wasSuppressed = this.isReadoutSuppressed();
+
+        if (suppressed) {
+            this._suppressingReadoutPlugins.add(plugin);
+        } else {
+            this._suppressingReadoutPlugins.delete(plugin);
+        }
+
+        if (wasSuppressed !== this.isReadoutSuppressed()) {
+            this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED);
+        }
+    }
+
     redraw() {
         this._redrawCycle++;
         this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
     }
 
-    disablePanning() {
-        if (!this._ref) {
-            return;
-        }
+    disableDragInteraction() {
+        if (!this._dragInteractionEnabled) return;
 
-        this._ref.deck?.setProps({
-            controller: {
-                dragPan: false,
-                dragRotate: false,
-            },
-        });
+        this._dragInteractionEnabled = false;
+        this.redraw();
     }
 
-    enablePanning() {
-        if (!this._ref) {
-            return;
-        }
+    enableDragInteraction() {
+        if (this._dragInteractionEnabled) return;
 
-        this._ref.deck?.setProps({
-            controller: {
-                dragRotate: true,
-                dragPan: true,
-            },
-        });
+        this._dragInteractionEnabled = true;
+        this.redraw();
     }
 
     getDeck() {
@@ -212,6 +223,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             }
             if (topic === DeckGlInstanceManagerTopic.CONTEXT_MENU) {
                 return this._contextMenu;
+            }
+            if (topic === DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED) {
+                return this.isReadoutSuppressed();
             }
 
             throw new Error(`Unknown topic ${topic}`);
@@ -383,6 +397,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 viewports: (props.views?.viewports ?? []).map((viewport) => ({
                     ...viewport,
                     layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
+                    controller: {
+                        ...viewport.controller,
+                        dragRotate: this._dragInteractionEnabled,
+                        dragPan: this._dragInteractionEnabled,
+                    },
                 })),
                 layout: props.views?.layout ?? [1, 1],
             },
@@ -390,7 +409,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     beforeDestroy() {
-        this.enablePanning();
+        this.enableDragInteraction();
         this.maybeRemoveKeyboardEventListeners();
     }
 }

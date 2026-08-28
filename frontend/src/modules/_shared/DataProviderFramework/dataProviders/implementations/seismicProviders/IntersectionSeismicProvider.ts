@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { getSeismicCubeMetaListOptions, postGetSeismicFenceOptions } from "@api";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
@@ -115,6 +115,11 @@ export class IntersectionSeismicProvider implements CustomDataProviderImplementa
         const maxValue = data.fenceTracesFloat32Arr
             .filter((value) => !Number.isNaN(value))
             .reduce((acc, value) => Math.max(acc, value), -Infinity);
+
+        // Discard infinite scales
+        if (minValue === Infinity || maxValue === -Infinity) {
+            return null;
+        }
 
         return [minValue, maxValue];
     }

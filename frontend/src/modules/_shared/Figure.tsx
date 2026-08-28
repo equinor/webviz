@@ -1,4 +1,4 @@
-import { merge } from "lodash";
+import { merge } from "lodash-es";
 import type { Annotations, AxisType, Data, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 
 /**
@@ -437,7 +437,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 text: title,
                 showarrow: false,
                 font: {
-                    size: 14,
+                    size: 12,
                 },
             });
 

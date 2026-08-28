@@ -430,6 +430,10 @@ export type EnsembleParametersAndSensitivities_api = {
      * Sensitivities
      */
     sensitivities: Array<EnsembleSensitivity_api>;
+    /**
+     * Nonstandardparameterswarning
+     */
+    nonStandardParametersWarning?: string | null;
 };
 
 /**
@@ -937,13 +941,21 @@ export type InplaceVolumesTableDefinition_api = {
 };
 
 /**
- * LroErrorInfo
+ * LroCommandResp
  */
-export type LroErrorInfo_api = {
+export type LroCommandResp_api = {
+    /**
+     * Response Type
+     */
+    response_type: "LroCommandResp";
+    /**
+     * Command Ok
+     */
+    command_ok: boolean;
     /**
      * Message
      */
-    message: string;
+    message: string | null;
 };
 
 /**
@@ -951,10 +963,17 @@ export type LroErrorInfo_api = {
  */
 export type LroFailureResp_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "failure";
-    error: LroErrorInfo_api;
+    response_type: "LroFailureResp";
+    /**
+     * Task Id
+     */
+    task_id: string | null;
+    /**
+     * Error Message
+     */
+    error_message: string | null;
 };
 
 /**
@@ -962,9 +981,9 @@ export type LroFailureResp_api = {
  */
 export type LroInProgressResp_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "in_progress";
+    response_type: "LroInProgressResp";
     /**
      * Task Id
      */
@@ -972,11 +991,15 @@ export type LroInProgressResp_api = {
     /**
      * Poll Url
      */
-    poll_url?: string | null;
+    poll_url: string | null;
+    /**
+     * Status Str
+     */
+    status_str: "pending" | "running" | string;
     /**
      * Progress Message
      */
-    progress_message?: string | null;
+    progress_message: string | null;
 };
 
 /**
@@ -984,9 +1007,9 @@ export type LroInProgressResp_api = {
  */
 export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
     /**
-     * Status
+     * Response Type
      */
-    status: "success";
+    response_type: "LroSuccessResp";
     /**
      * Result
      */
@@ -1409,6 +1432,62 @@ export type RepeatedTableColumnData_api = {
      * Indices
      */
     indices: Array<number>;
+};
+
+/**
+ * RftObservation
+ */
+export type RftObservation_api = {
+    /**
+     * Value
+     */
+    value: number;
+    /**
+     * Error
+     */
+    error: number;
+    /**
+     * Property
+     */
+    property: string;
+    /**
+     * East
+     */
+    east: number;
+    /**
+     * North
+     */
+    north: number;
+    /**
+     * Tvd
+     */
+    tvd: number;
+    /**
+     * Md
+     */
+    md?: number | null;
+    /**
+     * Zone
+     */
+    zone?: string | null;
+};
+
+/**
+ * RftObservations
+ */
+export type RftObservations_api = {
+    /**
+     * Well Name
+     */
+    well_name: string;
+    /**
+     * Date
+     */
+    date: string;
+    /**
+     * Observations
+     */
+    observations: Array<RftObservation_api>;
 };
 
 /**
@@ -4296,6 +4375,12 @@ export type GetStatisticalSurfaceDataHybridData_api = {
          */
         data_format?: "float" | "png";
         /**
+         * Delete Task
+         *
+         * If true, deletes the server-side task metadata for this surface address
+         */
+        delete_task?: boolean;
+        /**
          * Resample To Def Str
          *
          * Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
@@ -4303,7 +4388,7 @@ export type GetStatisticalSurfaceDataHybridData_api = {
         resample_to_def_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/statistical_surface_data/hybrid";
+    url: "/surface/statistical_surface_data_hybrid";
 };
 
 export type GetStatisticalSurfaceDataHybridErrors_api = {
@@ -4322,7 +4407,11 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
      *
      * Successful Response
      */
-    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api;
+    200:
+        | LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api
+        | LroInProgressResp_api
+        | LroFailureResp_api
+        | LroCommandResp_api;
 };
 
 export type GetStatisticalSurfaceDataHybridResponse_api =
@@ -6406,6 +6495,47 @@ export type GetRftRealizationDataResponses_api = {
 
 export type GetRftRealizationDataResponse_api =
     GetRftRealizationDataResponses_api[keyof GetRftRealizationDataResponses_api];
+
+export type GetRftObservationsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        zCacheBust?: string;
+    };
+    url: "/rft/rft_observations";
+};
+
+export type GetRftObservationsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetRftObservationsError_api = GetRftObservationsErrors_api[keyof GetRftObservationsErrors_api];
+
+export type GetRftObservationsResponses_api = {
+    /**
+     * Response Get Rft Observations
+     *
+     * Successful Response
+     */
+    200: Array<RftObservations_api>;
+};
+
+export type GetRftObservationsResponse_api = GetRftObservationsResponses_api[keyof GetRftObservationsResponses_api];
 
 export type GetVfpTableNamesData_api = {
     body?: never;
