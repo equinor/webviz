@@ -5,7 +5,7 @@ import { Info } from "@mui/icons-material";
 import { Button } from "@lib/components/Button";
 import { Popover } from "@lib/components/Popover";
 import { Paragraph } from "@lib/components/Typography/compositions";
-import { useIsDocumentActive } from "@lib/hooks/useIsDocumentActive";
+import { useIsDocumentVisible } from "@lib/hooks/useIsDocumentVisible";
 
 /**
  * How a lost GPU context should be recovered once the boundary decides to restore it.
@@ -96,6 +96,15 @@ export type GpuResourceBoundaryProps = {
 };
 
 /**
+ * How long the `"redraw"` strategy waits for `webglcontextrestored` after
+ * {@link GpuResourceAdapter.restoreContext} reports a restore started, before giving up and falling
+ * back to a remount. `WEBGL_lose_context.restoreContext()` is only guaranteed to work for a context
+ * lost through the extension itself - a real browser eviction may never emit the event, which would
+ * otherwise leave the overlay stuck forever.
+ */
+const REDRAW_RESTORE_TIMEOUT_MS = 2000;
+
+/**
  * Wraps a GPU-backed visualization (WebGL/WebGPU) and handles browser-initiated context loss.
  *
  * Browsers cap the number of live GPU contexts a page may hold. When that budget is exceeded -
@@ -108,15 +117,18 @@ export type GpuResourceBoundaryProps = {
  *
  * - `"redraw"` - calls {@link GpuResourceAdapter.restoreContext} to bring the context back, then
  *   {@link GpuResourceAdapter.requestRender} once `webglcontextrestored` confirms it. Falls back to
- *   `"remount"` if `restoreContext` is missing or could not start a restore.
+ *   `"remount"` if `restoreContext` is missing, could not start a restore, or the
+ *   `webglcontextrestored` event does not arrive within {@link REDRAW_RESTORE_TIMEOUT_MS} (a real
+ *   browser eviction is not always restorable in place, and then no event ever fires).
  * - `"remount"` (default) - bumps an internal `key` so the children unmount and remount with a
  *   fresh canvas and context. Because a remount creates a *new* context, no `webglcontextrestored`
  *   event fires for it, so the boundary clears its own "lost" state in this path.
  *
  * In addition to the manual "Restore" button, recovery is attempted automatically when the browser
- * document/tab becomes active again after the context was lost while it was hidden or unfocused
- * ({@link useIsDocumentActive}) - the common case where the browser reclaimed the context while the
- * user was looking at something else.
+ * tab becomes visible again after the context was lost while it was in the background
+ * ({@link useIsDocumentVisible}) - the common case where the browser reclaimed the context while the
+ * user was looking at something else. This is deliberately keyed on visibility, not window focus,
+ * so two visible windows do not fight over a scarce GPU context.
  *
  * The wrapped renderer must still be able to survive a context loss without throwing; this
  * component only manages the *recovery UX and lifecycle*, not the renderer's internal GPU state.
@@ -137,12 +149,31 @@ export type GpuResourceBoundaryProps = {
  * ```
  */
 export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Element {
-    const isDocumentActive = useIsDocumentActive();
+    const isDocumentVisible = useIsDocumentVisible();
 
     const [contextLost, setContextLost] = React.useState(false);
     const [generation, bumpGeneration] = React.useReducer((x) => x + 1, 0);
 
-    const previousDocumentActive = React.useRef(isDocumentActive);
+    const wasDocumentVisible = React.useRef(isDocumentVisible);
+    const redrawFallbackTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const clearRedrawFallback = React.useCallback(function clearRedrawFallback() {
+        if (redrawFallbackTimeout.current !== null) {
+            clearTimeout(redrawFallbackTimeout.current);
+            redrawFallbackTimeout.current = null;
+        }
+    }, []);
+
+    const remount = React.useCallback(
+        function remount() {
+            // Replace the canvas (and its context) by remounting the children. A brand-new context
+            // never fires "webglcontextrestored", so clear the lost state here.
+            clearRedrawFallback();
+            setContextLost(false);
+            bumpGeneration();
+        },
+        [clearRedrawFallback],
+    );
 
     const restore = React.useCallback(
         function restore() {
@@ -156,14 +187,17 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
                 props.recoveryStrategy === "redraw" && (props.adapter.restoreContext?.() ?? false);
 
             if (!restorationStarted) {
-                // "remount" strategy, or "redraw" where restoration could not be started: replace
-                // the canvas (and its context) by remounting the children. A brand-new context
-                // never fires "webglcontextrestored", so clear the lost state here.
-                setContextLost(false);
-                bumpGeneration();
+                // "remount" strategy, or "redraw" where restoration could not be started.
+                remount();
+                return;
             }
+
+            // "redraw" restore is under way. It can silently never complete (see
+            // REDRAW_RESTORE_TIMEOUT_MS), so arm a fallback remount in case the event never arrives.
+            clearRedrawFallback();
+            redrawFallbackTimeout.current = setTimeout(remount, REDRAW_RESTORE_TIMEOUT_MS);
         },
-        [contextLost, props.adapter, props.recoveryStrategy],
+        [contextLost, props.adapter, props.recoveryStrategy, remount, clearRedrawFallback],
     );
 
     React.useEffect(
@@ -175,12 +209,12 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
 
             return props.adapter.connect({
                 onContextLost() {
-                    console.debug("GPU context lost");
+                    clearRedrawFallback();
                     setContextLost(true);
                 },
 
                 onContextRestored() {
-                    console.debug("GPU context restored");
+                    clearRedrawFallback();
                     setContextLost(false);
                     if (props.recoveryStrategy === "redraw") {
                         // Context is back in place - nudge the renderer to repaint on it.
@@ -194,31 +228,41 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
                 },
             });
         },
-        [props.adapter, props.recoveryStrategy],
+        [props.adapter, props.recoveryStrategy, clearRedrawFallback],
+    );
+
+    // Drop any pending fallback timer when the boundary unmounts.
+    React.useEffect(
+        function clearRedrawFallbackOnUnmountEffect() {
+            return clearRedrawFallback;
+        },
+        [clearRedrawFallback],
     );
 
     React.useEffect(
-        function onActivationChangeEffect() {
-            const documentBecameActive = !previousDocumentActive.current && isDocumentActive;
-            previousDocumentActive.current = isDocumentActive;
+        function onVisibilityChangeEffect() {
+            const documentBecameVisible = !wasDocumentVisible.current && isDocumentVisible;
+            wasDocumentVisible.current = isDocumentVisible;
 
-            if (contextLost && documentBecameActive) {
+            if (contextLost && documentBecameVisible) {
                 restore();
             }
         },
-        [contextLost, isDocumentActive, restore],
+        [contextLost, isDocumentVisible, restore],
     );
 
     return (
-        <div className="relative h-full w-full">
+        // While the context is healthy this wrapper is `display: contents` - it adds no box of its
+        // own, so the children lay out exactly as if the boundary were not in the tree. Only when
+        // the overlay is shown does it become a sized, positioned box for the overlay to anchor to.
+        // It stays the same element in the same place, so toggling this does not remount the
+        // children (the "redraw" strategy keeps its canvas).
+        <div className={contextLost ? "relative h-full w-full" : "contents"}>
             <React.Fragment key={generation}>{props.children}</React.Fragment>
             {contextLost && (
                 <>
                     <div className="z-elevated bg-surface/80 absolute inset-0" />
-                    <div
-                        role="alert"
-                        className="bg-surface z-overlay border-neutral-subtle text-body-sm p-xs gap-xs absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded border text-center"
-                    >
+                    <div className="bg-surface z-overlay border-neutral-subtle text-body-sm p-xs gap-xs absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded border text-center">
                         <Paragraph size="sm">The browser has stopped this visualization.</Paragraph>
                         <div className="gap-3xs flex">
                             <Button tone="accent" size="small" onClick={restore}>
