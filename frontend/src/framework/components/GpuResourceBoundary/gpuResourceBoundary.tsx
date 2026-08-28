@@ -148,7 +148,8 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
     );
 
     React.useEffect(
-        function onAdapterChangeEffect() {
+        // Depends on recoveryStrategy so onContextRestored below always sees the current one.
+        function onAdapterConnectEffect() {
             if (!props.adapter) {
                 return;
             }
@@ -162,10 +163,16 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
                 onContextRestored() {
                     console.debug("GPU context restored");
                     setContextLost(false);
+                    if (props.recoveryStrategy !== "redraw") {
+                        // An in-place restore is not trusted for the "remount" strategy - renderers
+                        // routed here (e.g. deck.gl) do not reliably rebuild GPU resources on a
+                        // restored context, so swap in a fresh renderer instead.
+                        bumpGeneration();
+                    }
                 },
             });
         },
-        [props.adapter],
+        [props.adapter, props.recoveryStrategy],
     );
 
     React.useEffect(
