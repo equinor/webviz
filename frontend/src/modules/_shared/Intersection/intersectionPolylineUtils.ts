@@ -80,6 +80,10 @@ export function makeIntersectionPolylineWithSectionLengthsPromise(
             ...trajectoriesQueryOptions,
         })
         .then((wellTrajectoryData) => {
+            if (wellTrajectoryData.length === 0) {
+                throw new Error(`No trajectory found for wellbore ${wellboreUuid}`);
+            }
+
             const wellTrajectoryPath: number[][] = [];
             for (const [index, northing] of wellTrajectoryData[0].northingArr.entries()) {
                 const easting = wellTrajectoryData[0].eastingArr[index];
