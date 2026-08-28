@@ -144,7 +144,9 @@ class SurfaceAccess:
         self, real_num: int, name: str, contact: FluidContactType
     ) -> xtgeo.RegularSurface:
         if not self._ensemble_name:
-            raise InvalidParameterError("Ensemble name must be set to get an initial fluid contact surface", Service.SUMO)
+            raise InvalidParameterError(
+                "Ensemble name must be set to get an initial fluid contact surface", Service.SUMO
+            )
 
         perf_metrics = PerfMetrics()
         surface_description = (
@@ -172,7 +174,9 @@ class SurfaceAccess:
                 Service.SUMO,
             )
         if surface_count == 0:
-            raise NoDataError(f"No initial fluid contact surface found in Sumo for: {surface_description}", Service.SUMO)
+            raise NoDataError(
+                f"No initial fluid contact surface found in Sumo for: {surface_description}", Service.SUMO
+            )
 
         sumo_surface: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
@@ -479,9 +483,7 @@ class SurfaceAccess:
         if realizations is not None and len(realizations) == 0:
             raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
 
-        surface_description = (
-            f"N:{name}__CONTACT:{contact.value}__I:{self._ensemble_name}__C:{self._case_uuid}"
-        )
+        surface_description = f"N:{name}__CONTACT:{contact.value}__I:{self._ensemble_name}__C:{self._case_uuid}"
         search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             ensemble=self._ensemble_name,

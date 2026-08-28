@@ -190,9 +190,7 @@ async def get_initial_fluid_contact_surfaces_metadata(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> list[schemas.InitialFluidContactSurfaceMeta]:
-    access = SurfaceAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     metadata = await access.get_initial_fluid_contact_surfaces_metadata_async()
     return converters.to_api_initial_fluid_contact_surface_meta(metadata)
 
@@ -207,15 +205,15 @@ async def get_initial_fluid_contact_surface_data(
     realization_num: Annotated[int, Query(description="Realization number")],
     name: Annotated[str, Query(description="Surface name")],
     contact: Annotated[schemas.InitialFluidContactType, Query(description="Initial fluid contact type")],
-    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    data_format: Annotated[
+        Literal["float", "png"], Query(description="Format of binary data in the response")
+    ] = "float",
     resample_to: Annotated[
         schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)
     ] = None,
 ) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
     perf_metrics = ResponsePerfMetrics(response)
-    access = SurfaceAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     xtgeo_surface = await access.get_initial_fluid_contact_surface_data_async(
         real_num=realization_num,
         name=name,
@@ -478,9 +476,7 @@ async def get_initial_fluid_contact_statistical_surface_data_hybrid(
     | LroCommandResp
 ):
     perf_metrics = ResponsePerfMetrics(response)
-    access = SurfaceAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     task_identity = _make_initial_fluid_contact_statistical_task_identity(
         case_uuid, ensemble_name, name, contact, statistic_function, realizations
     )
@@ -526,9 +522,7 @@ async def post_initial_fluid_contact_statistical_surface_intersection_hybrid(
     delete_task: Annotated[bool, Query(description="Delete matching server-side task metadata")] = False,
 ) -> LroSuccessResp[schemas.SurfaceIntersectionData] | LroInProgressResp | LroFailureResp | LroCommandResp:
     perf_metrics = ResponsePerfMetrics(response)
-    access = SurfaceAccess.from_ensemble_name(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = SurfaceAccess.from_ensemble_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     task_identity = _make_initial_fluid_contact_statistical_task_identity(
         case_uuid, ensemble_name, name, contact, statistic_function, realizations
     )
@@ -553,9 +547,7 @@ async def post_initial_fluid_contact_statistical_surface_intersection_hybrid(
         return lro_result
 
     lro_result.name = name
-    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(
-        cumulative_length_polyline
-    )
+    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(cumulative_length_polyline)
     surface_intersection = intersect_surface_with_polyline(lro_result, intersection_polyline)
     set_cache_time(CacheTime.NORMAL)
     return LroSuccessResp(result=converters.to_api_surface_intersection(surface_intersection))
