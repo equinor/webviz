@@ -1,11 +1,15 @@
 <!--::metadata
-  changelog_counter: 1
+  changelog_counter: 2
   date: 20.08.2026
 -->
 
 # Changelog
 
 ## August 2026
+
+### Added
+
+- **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
 
 ### Fixed
 
