@@ -969,7 +969,7 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
  */
 export const getPlannedWellboreHeaders = <ThrowOnError extends boolean = false>(
     options: Options<GetPlannedWellboreHeadersData_api, ThrowOnError>,
-) =>
+): RequestResult<GetPlannedWellboreHeadersResponses_api, GetPlannedWellboreHeadersErrors_api, ThrowOnError> =>
     (options.client ?? client).get<
         GetPlannedWellboreHeadersResponses_api,
         GetPlannedWellboreHeadersErrors_api,
@@ -1030,7 +1030,7 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
  */
 export const getPlannedWellTrajectories = <ThrowOnError extends boolean = false>(
     options: Options<GetPlannedWellTrajectoriesData_api, ThrowOnError>,
-) =>
+): RequestResult<GetPlannedWellTrajectoriesResponses_api, GetPlannedWellTrajectoriesErrors_api, ThrowOnError> =>
     (options.client ?? client).get<
         GetPlannedWellTrajectoriesResponses_api,
         GetPlannedWellTrajectoriesErrors_api,
