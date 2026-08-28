@@ -26,17 +26,30 @@ export type ManualContextLossAdapter = GpuResourceAdapter & {
  */
 export function createManualContextLossAdapter(): ManualContextLossAdapter {
     let onContextLostCallback: (() => void) | null = null;
+    // The renderer can lose its context before the boundary's passive effect runs `connect` (e.g.
+    // Plotly creates its WebGL context during BasePlot's mount). Buffer such a notification and
+    // flush it on connect, otherwise the only signal Plotly gives us is lost and the plot stays
+    // blank with no overlay.
+    let hasPendingNotification = false;
 
     return {
         connect({ onContextLost }) {
             onContextLostCallback = onContextLost;
+            if (hasPendingNotification) {
+                hasPendingNotification = false;
+                onContextLost();
+            }
             return function disconnect() {
                 onContextLostCallback = null;
             };
         },
 
         notifyContextLost() {
-            onContextLostCallback?.();
+            if (onContextLostCallback) {
+                onContextLostCallback();
+            } else {
+                hasPendingNotification = true;
+            }
         },
     };
 }

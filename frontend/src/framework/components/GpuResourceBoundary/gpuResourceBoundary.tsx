@@ -42,7 +42,10 @@ export type GpuResourceAdapter = {
      *
      * Note that the underlying canvas may not exist yet when `connect` is first called (the
      * renderer can create it in a later effect / async), so adapters may need to poll or wait for
-     * it to become available.
+     * it to become available. `connect` also runs *after* the renderer has mounted, so a context
+     * can be lost before listeners are attached - an implementation should probe for an
+     * already-lost context on connect (and buffer any notification received before it) rather than
+     * relying solely on the event.
      *
      * @param callbacks.onContextLost - Invoke when the GPU context is lost. Implementations that
      *   listen for the DOM `webglcontextlost` event must also call `event.preventDefault()` on it,

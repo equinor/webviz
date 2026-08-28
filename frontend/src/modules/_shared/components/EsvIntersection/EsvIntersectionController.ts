@@ -362,16 +362,21 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
         return this._pixiRenderApplication?.canvas ?? null;
     }
 
+    isContextLost(): boolean {
+        // Peek the context Pixi already created (safe once the render application exists) - never
+        // creates one.
+        const canvas = this.getCanvas();
+        const gl = canvas?.getContext("webgl2") ?? canvas?.getContext("webgl");
+        return gl?.isContextLost() ?? false;
+    }
+
     requestRender(): void {
         // A context lost via WEBGL_lose_context (e.g. simulated for testing, or a driver crash
         // that the browser doesn't auto-recover) never fires "webglcontextrestored" on its own -
-        // the extension's restoreContext() must be called explicitly. This is a no-op if the
-        // context is already fine. Uses the extension reference cached at init time - fetching
-        // it fresh here would return null, since getExtension() only works while the context is
-        // still alive.
-        const canvas = this.getCanvas();
-        const gl = canvas?.getContext("webgl2") ?? canvas?.getContext("webgl");
-        if (gl?.isContextLost()) {
+        // the extension's restoreContext() must be called explicitly. Uses the extension reference
+        // cached at init time - fetching it fresh here would return null, since getExtension() only
+        // works while the context is still alive.
+        if (this.isContextLost()) {
             this._loseContextExtension?.restoreContext();
         }
 

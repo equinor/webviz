@@ -22,6 +22,19 @@ export type CanvasContextAdapterOptions = {
      * adapter stays inert until it reconnects.
      */
     waitForCanvas?: boolean;
+
+    /**
+     * Reports whether the renderer's GPU context is *already* lost - **without creating a context**
+     * (peek an existing one, e.g. `gl.isContextLost()`; never call `getContext()` on a canvas that
+     * has none).
+     *
+     * The renderer creates its context during child mount, but this adapter only attaches its
+     * listeners later (the boundary connects in a passive effect, and {@link waitForCanvas} may add
+     * another animation frame). A `webglcontextlost` that fires in that gap is neither replayed nor
+     * bubbled, so without this probe the overlay would never appear. Checked once, right after the
+     * listeners attach.
+     */
+    isContextLost?(): boolean;
 };
 
 /**
@@ -75,6 +88,14 @@ export function createCanvasContextAdapter(options: CanvasContextAdapterOptions)
                     canvas.removeEventListener("webglcontextlost", handleContextLost);
                     canvas.removeEventListener("webglcontextrestored", handleContextRestored);
                 };
+
+                // Catch a context loss that fired before these listeners were attached - that
+                // event does not replay, so probe the current state instead. No preventDefault is
+                // possible here; recovery falls to the boundary's strategy (remount, or a redraw
+                // that force-restores).
+                if (options.isContextLost?.()) {
+                    onContextLost();
+                }
             }
 
             attachWhenReady();

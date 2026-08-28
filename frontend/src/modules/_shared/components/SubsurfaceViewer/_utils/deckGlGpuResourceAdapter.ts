@@ -21,5 +21,14 @@ export function createDeckGlGpuResourceAdapter(deckGl: DeckGLRef): GpuResourceAd
         getCanvas: () => deckGl?.deck?.getCanvas() ?? null,
         requestRender: () => deckGl?.deck?.redraw("context loss"),
         waitForCanvas: true,
+        isContextLost: () => {
+            const deck = deckGl?.deck;
+            // Guard on isInitialized so the context is known to exist - getContext() then returns
+            // the live WebGL2 context deck.gl (luma.gl v9) created, never a fresh one.
+            if (!deck?.isInitialized) {
+                return false;
+            }
+            return deck.getCanvas()?.getContext("webgl2")?.isContextLost() ?? false;
+        },
     });
 }

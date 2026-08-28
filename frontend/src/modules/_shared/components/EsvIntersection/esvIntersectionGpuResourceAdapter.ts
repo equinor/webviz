@@ -18,5 +18,6 @@ export function createEsvIntersectionGpuResourceAdapter(controller: EsvIntersect
     return createCanvasContextAdapter({
         getCanvas: () => controller.getCanvas(),
         requestRender: () => controller.requestRender(),
+        isContextLost: () => controller.isContextLost(),
     });
 }
