@@ -159,14 +159,18 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
 
             const canvas = pixiRenderApplication.canvas;
             const gl = canvas?.getContext("webgl2") ?? canvas?.getContext("webgl");
-            this._loseContextExtension = gl?.getExtension("WEBGL_lose_context") ?? null;
+            const loseContextExtension = gl?.getExtension("WEBGL_lose_context") ?? null;
 
-            // Guard: destroy() was called while awaiting Pixi init. Return immediately
-            // without touching the container — no DOM cleanup needed because we have not
-            // created the ESV Controller yet.
+            // Guard: destroy() was called while awaiting Pixi init. Return without touching the
+            // container (no ESV Controller yet, so no DOM cleanup) - but tear down the Pixi app we
+            // just created so its WebGL context is released now instead of lingering until GC.
             if (this._lifeCycleState === EsvIntersectionLifeCycleState.DESTROYED) {
+                pixiRenderApplication.stage?.destroy({ children: true });
+                pixiRenderApplication.renderer?.destroy({ removeView: true });
                 return;
             }
+
+            this._loseContextExtension = loseContextExtension;
 
             // Only reach here when the controller is still alive. Create the ESV Controller
             // now (DOM mutations happen here) so the container is only touched once.
@@ -231,6 +235,13 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
 
         this._interactionHandler?.destroy();
         this._esvController?.destroy();
+
+        // PixiRenderApplication has no destroy() of its own - tear down the scene graph and the
+        // renderer explicitly. renderer.destroy() releases the WebGL context immediately (it calls
+        // WEBGL_lose_context.loseContext()); without this the context would linger until GC, which
+        // is exactly wrong when recovery was triggered by the browser's context limit.
+        this._pixiRenderApplication?.stage?.destroy({ children: true });
+        this._pixiRenderApplication?.renderer?.destroy({ removeView: true });
 
         this._interactionHandler = null;
         this._pixiRenderApplication = null;
