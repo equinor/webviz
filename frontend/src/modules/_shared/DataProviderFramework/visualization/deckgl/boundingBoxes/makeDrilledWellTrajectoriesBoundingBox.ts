@@ -6,7 +6,7 @@ export function makeDrilledWellTrajectoriesBoundingBox({
     getData,
 }: TransformerArgs<any, WellboreTrajectory_api[], any>): BBox | null {
     const data = getData();
-    if (!data) {
+    if (!data || data.length === 0) {
         return null;
     }
 
