@@ -62,6 +62,7 @@ const ALLOWED_SURFACE_TYPES_FROM_API = [
     SurfaceAttributeType_api.PROPERTY,
     SurfaceAttributeType_api.THICKNESS,
     SurfaceAttributeType_api.VOLUMES,
+    SurfaceAttributeType_api.FLUID_CONTACT,
     SurfaceAttributeType_api.FACIES_THICKNESS,
     SurfaceAttributeType_api.PINCHOUT,
     SurfaceAttributeType_api.SUBCROP,

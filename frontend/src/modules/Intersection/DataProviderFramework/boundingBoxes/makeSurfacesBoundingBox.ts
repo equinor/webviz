@@ -62,5 +62,9 @@ export function makeSurfaceIntersectionBoundingBox(data: RealizationSurfacesData
         }
     }
 
+    if (minX === Number.MAX_VALUE) {
+        return null;
+    }
+
     return fromNumArray([minX, minY, 0, maxX, maxY, 0]);
 }

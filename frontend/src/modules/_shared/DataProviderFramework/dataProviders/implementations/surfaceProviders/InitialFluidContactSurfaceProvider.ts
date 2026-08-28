@@ -66,7 +66,15 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return (
+            !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
+            !isEqual(prevSettings.representation, newSettings.representation) ||
+            !isEqual(prevSettings.realization, newSettings.realization) ||
+            !isEqual(prevSettings.statisticFunction, newSettings.statisticFunction) ||
+            !isEqual(prevSettings.sensitivity, newSettings.sensitivity) ||
+            !isEqual(prevSettings.surfaceName, newSettings.surfaceName) ||
+            !isEqual(prevSettings.fluidContact, newSettings.fluidContact)
+        );
     }
 
     makeValueRange({

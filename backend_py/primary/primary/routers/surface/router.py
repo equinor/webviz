@@ -552,6 +552,7 @@ async def post_initial_fluid_contact_statistical_surface_intersection_hybrid(
     if not isinstance(lro_result, xtgeo.RegularSurface):
         return lro_result
 
+    lro_result.name = name
     intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(
         cumulative_length_polyline
     )
