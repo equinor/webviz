@@ -9,9 +9,10 @@ export type CanvasContextAdapterOptions = {
     getCanvas(): HTMLCanvasElement | null | undefined;
 
     /**
-     * Repaints the renderer on the current context. Wired both to the boundary's `"redraw"`
-     * recovery strategy and to the internal `webglcontextrestored` handler (the browser rebuilds
-     * the GPU context, but most renderers do not repaint until a new frame is requested).
+     * Repaints the renderer on the current context. The boundary calls this for its `"redraw"`
+     * recovery strategy only (the manual Restore action and an in-place `webglcontextrestored`);
+     * this adapter never calls it itself, since it does not know which strategy is in effect.
+     * Renderers that always recover via `"remount"` can omit it.
      */
     requestRender?(): void;
 
@@ -62,9 +63,8 @@ export function createCanvasContextAdapter(options: CanvasContextAdapterOptions)
             }
 
             function handleContextRestored() {
-                // The browser (and the renderer's own context handler) has rebuilt the GPU
-                // resources by this point, but nothing repaints until a new frame is requested.
-                options.requestRender?.();
+                // Forward the signal only. Whether to repaint is the boundary's call - it depends
+                // on the recovery strategy, which this adapter does not know.
                 onContextRestored?.();
             }
 

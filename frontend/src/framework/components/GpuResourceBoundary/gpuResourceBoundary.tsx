@@ -163,7 +163,10 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
                 onContextRestored() {
                     console.debug("GPU context restored");
                     setContextLost(false);
-                    if (props.recoveryStrategy !== "redraw") {
+                    if (props.recoveryStrategy === "redraw") {
+                        // Context is back in place - nudge the renderer to repaint on it.
+                        props.adapter?.requestRender?.();
+                    } else {
                         // An in-place restore is not trusted for the "remount" strategy - renderers
                         // routed here (e.g. deck.gl) do not reliably rebuild GPU resources on a
                         // restored context, so swap in a fresh renderer instead.
