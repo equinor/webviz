@@ -370,16 +370,19 @@ export class EsvIntersectionController implements PublishSubscribe<EsvIntersecti
         return gl?.isContextLost() ?? false;
     }
 
-    requestRender(): void {
+    restoreContext(): void {
         // A context lost via WEBGL_lose_context (e.g. simulated for testing, or a driver crash
-        // that the browser doesn't auto-recover) never fires "webglcontextrestored" on its own -
-        // the extension's restoreContext() must be called explicitly. Uses the extension reference
-        // cached at init time - fetching it fresh here would return null, since getExtension() only
-        // works while the context is still alive.
+        // that the browser doesn't auto-recover) never comes back on its own - the extension's
+        // restoreContext() must be called explicitly, which then fires "webglcontextrestored".
+        // Uses the extension reference cached at init time - fetching it fresh here would return
+        // null, since getExtension() only works while the context is still alive.
         if (this.isContextLost()) {
             this._loseContextExtension?.restoreContext();
         }
+    }
 
+    requestRender(): void {
+        // Repaint on the current (valid) context. Restoring a lost context is restoreContext().
         this._pixiRenderApplication?.render();
     }
 
