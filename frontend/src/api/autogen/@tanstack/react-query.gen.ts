@@ -34,6 +34,7 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
+    getInitialFluidContactStatisticalSurfaceDataHybrid,
     getInitialFluidContactSurfaceData,
     getInitialFluidContactSurfacesMetadata,
     getInjectionData,
@@ -94,6 +95,7 @@ import {
     postGetSeismicFence,
     postGetSurfaceIntersection,
     postGetWellTrajectoriesFormationSegments,
+    postInitialFluidContactStatisticalSurfaceIntersectionHybrid,
     postLogout,
     postRefreshFingerprintsForEnsembles,
     root,
@@ -160,6 +162,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridData_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridError_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api,
     GetInitialFluidContactSurfaceDataData_api,
     GetInitialFluidContactSurfaceDataError_api,
     GetInitialFluidContactSurfaceDataResponse_api,
@@ -336,6 +341,9 @@ import type {
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -1209,6 +1217,89 @@ export const getStatisticalSurfaceDataHybridOptions = (options: Options<GetStati
         },
         queryKey: getStatisticalSurfaceDataHybridQueryKey(options),
     });
+
+export const getInitialFluidContactStatisticalSurfaceDataHybridQueryKey = (
+    options: Options<GetInitialFluidContactStatisticalSurfaceDataHybridData_api>,
+) => createQueryKey("getInitialFluidContactStatisticalSurfaceDataHybrid", options);
+
+/**
+ * Get Initial Fluid Contact Statistical Surface Data Hybrid
+ */
+export const getInitialFluidContactStatisticalSurfaceDataHybridOptions = (
+    options: Options<GetInitialFluidContactStatisticalSurfaceDataHybridData_api>,
+) =>
+    queryOptions<
+        GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api,
+        AxiosError<GetInitialFluidContactStatisticalSurfaceDataHybridError_api>,
+        GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api,
+        ReturnType<typeof getInitialFluidContactStatisticalSurfaceDataHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInitialFluidContactStatisticalSurfaceDataHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInitialFluidContactStatisticalSurfaceDataHybridQueryKey(options),
+    });
+
+export const postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey = (
+    options: Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>,
+) => createQueryKey("postInitialFluidContactStatisticalSurfaceIntersectionHybrid", options);
+
+/**
+ * Post Initial Fluid Contact Statistical Surface Intersection Hybrid
+ */
+export const postInitialFluidContactStatisticalSurfaceIntersectionHybridOptions = (
+    options: Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>,
+) =>
+    queryOptions<
+        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
+        AxiosError<PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api>,
+        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
+        ReturnType<typeof postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await postInitialFluidContactStatisticalSurfaceIntersectionHybrid({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey(options),
+    });
+
+/**
+ * Post Initial Fluid Contact Statistical Surface Intersection Hybrid
+ */
+export const postInitialFluidContactStatisticalSurfaceIntersectionHybridMutation = (
+    options?: Partial<Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>>,
+): UseMutationOptions<
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
+    AxiosError<PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api>,
+    Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>
+> => {
+    const mutationOptions: UseMutationOptions<
+        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
+        AxiosError<PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api>,
+        Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>
+    > = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await postInitialFluidContactStatisticalSurfaceIntersectionHybrid({
+                ...options,
+                ...fnOptions,
+                throwOnError: true,
+            });
+            return data;
+        },
+    };
+    return mutationOptions;
+};
 
 export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfaceIntersectionData_api>) =>
     createQueryKey("postGetSurfaceIntersection", options);

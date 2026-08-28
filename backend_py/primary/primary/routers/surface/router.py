@@ -1,5 +1,7 @@
 import asyncio
+import json
 import logging
+from collections.abc import Awaitable, Callable
 from typing import Annotated, List, Optional, Literal
 
 import xtgeo
@@ -71,6 +73,69 @@ The `<stat_realizations>` component in a *STAT* address contains the list of rea
 encoded as a `UintListStr` or "*" to include all realizations.
 
 """
+
+
+async def _run_statistical_surface_lro_async(
+    response: Response,
+    authenticated_user: AuthenticatedUser,
+    access: SurfaceAccess,
+    case_uuid: str,
+    ensemble_name: str,
+    task_identity: str,
+    delete_task: bool,
+    submit_task: Callable[[], Awaitable[str]],
+    perf_metrics: ResponsePerfMetrics,
+) -> xtgeo.RegularSurface | LroInProgressResp | LroFailureResp | LroCommandResp:
+    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
+    task_fp = await task_helpers.determine_statistical_task_fingerprint_async(
+        authenticated_user=authenticated_user,
+        case_uuid=case_uuid,
+        ensemble_name=ensemble_name,
+        task_identity=task_identity,
+    )
+    perf_metrics.record_lap("fingerprint")
+
+    if delete_task:
+        task_was_deleted = await task_tracker.delete_task_by_fingerprint_async(task_fp)
+        if not task_was_deleted:
+            LOGGER.warning(f"No task found to delete for: {task_identity}")
+            return LroCommandResp(command_ok=False, message="No task found to delete")
+
+        LOGGER.info(f"Deleted statistical surface calculation task for: {task_identity}")
+        return LroCommandResp(command_ok=True, message="Task deleted")
+
+    task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
+    perf_metrics.record_lap("task-meta")
+
+    task_just_submitted = False
+    if not task_meta:
+        task_meta = await task_helpers.submit_and_track_statistical_task_async(
+            submit_task=submit_task,
+            task_tracker=task_tracker,
+            task_fingerprint=task_fp,
+        )
+        LOGGER.info(f"Submitted new statistical surface calculation task for: {task_identity}")
+        task_just_submitted = True
+        perf_metrics.record_lap("submit")
+
+    try:
+        maybe_xtgeo_surf = await access.poll_statistical_surface_calculation_task_async(
+            sumo_task_id=task_meta.task_id, timeout_s=0
+        )
+        perf_metrics.record_lap("poll")
+
+        if isinstance(maybe_xtgeo_surf, ExpectedError):
+            await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
+            return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf)
+
+        if isinstance(maybe_xtgeo_surf, InProgress):
+            response.status_code = status.HTTP_202_ACCEPTED
+            return task_helpers.make_lro_in_progress_resp(task_meta, task_just_submitted, maybe_xtgeo_surf)
+
+        return expect_type(maybe_xtgeo_surf, xtgeo.RegularSurface)
+    except Exception:
+        await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
+        raise
 
 
 @router.get("/realization_surfaces_metadata/")
@@ -360,66 +425,162 @@ async def get_statistical_surface_data_hybrid(
 
     access_token = authenticated_user.get_sumo_access_token()
     access = SurfaceAccess.from_ensemble_name(access_token, addr.case_uuid, addr.ensemble_name)
-    task_tracker = get_task_meta_tracker_for_user(authenticated_user)
     perf_metrics.record_lap("init")
 
-    # !!!!!!!!!!!!!
-    # Todo!
-    # We need to come up with a way to bust the task tracker cache in cases where tasks get "stuck".
-    # One way of achieving this may be to have a separate endpoint to clear the task tracker cache for the user.
-    task_fp = await task_helpers.determine_surf_task_fingerprint_async(authenticated_user, addr)
-    perf_metrics.record_lap("fingerprint")
+    lro_result = await _run_statistical_surface_lro_async(
+        response=response,
+        authenticated_user=authenticated_user,
+        access=access,
+        case_uuid=addr.case_uuid,
+        ensemble_name=addr.ensemble_name,
+        task_identity=addr.to_addr_str(),
+        delete_task=delete_task,
+        submit_task=lambda: access.submit_statistical_surface_calculation_task_async(
+            statistic_function=StatisticFunction.from_string_value(addr.stat_function),
+            name=addr.name,
+            attribute=addr.attribute,
+            realizations=addr.stat_realizations,
+            time_or_interval_str=addr.iso_time_or_interval,
+        ),
+        perf_metrics=perf_metrics,
+    )
+    if not isinstance(lro_result, xtgeo.RegularSurface):
+        return lro_result
 
-    if delete_task:
-        task_was_deleted = await task_tracker.delete_task_by_fingerprint_async(task_fp)
-        if not task_was_deleted:
-            LOGGER.warning(f"No task found to delete for address: {surf_addr_str}")
-            return LroCommandResp(command_ok=False, message="No task found to delete")
+    api_surf_data = _resample_and_convert_to_surface_data_response(
+        xtgeo_surf=lro_result, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
+    )
+    LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
+    set_cache_time(CacheTime.NORMAL)
+    return LroSuccessResp(result=api_surf_data)
 
-        LOGGER.info(f"Deleted statistical surface calculation task for address: {surf_addr_str}")
-        return LroCommandResp(command_ok=True, message="Task deleted")
 
-    task_meta = await task_tracker.get_task_meta_by_fingerprint_async(task_fp)
-    perf_metrics.record_lap("task-meta")
+@router.get("/initial_fluid_contact_statistical_surface_data_hybrid")
+# pylint: disable-next=too-many-arguments
+async def get_initial_fluid_contact_statistical_surface_data_hybrid(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    name: Annotated[str, Query(description="Surface name")],
+    contact: Annotated[schemas.InitialFluidContactType, Query(description="Fluid contact type")],
+    statistic_function: Annotated[schemas.SurfaceStatisticFunction, Query(description="Statistic to calculate")],
+    realizations: Annotated[list[int] | None, Query(description="Realizations to include")] = None,
+    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data")] = "float",
+    resample_to: Annotated[
+        schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)
+    ] = None,
+    delete_task: Annotated[bool, Query(description="Delete matching server-side task metadata")] = False,
+) -> (
+    LroSuccessResp[schemas.SurfaceDataFloat | schemas.SurfaceDataPng]
+    | LroInProgressResp
+    | LroFailureResp
+    | LroCommandResp
+):
+    perf_metrics = ResponsePerfMetrics(response)
+    access = SurfaceAccess.from_ensemble_name(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    task_identity = _make_initial_fluid_contact_statistical_task_identity(
+        case_uuid, ensemble_name, name, contact, statistic_function, realizations
+    )
 
-    new_sumo_task_was_submitted = False
-    if not task_meta:
-        task_meta = await task_helpers.submit_and_track_stat_surf_task_async(access, addr, task_tracker, task_fp)
-        LOGGER.info(f"Submitted new statistical surface calculation task for address: {surf_addr_str}")
-        new_sumo_task_was_submitted = True
-        perf_metrics.record_lap("submit")
+    lro_result = await _run_statistical_surface_lro_async(
+        response=response,
+        authenticated_user=authenticated_user,
+        access=access,
+        case_uuid=case_uuid,
+        ensemble_name=ensemble_name,
+        task_identity=task_identity,
+        delete_task=delete_task,
+        submit_task=lambda: access.submit_initial_fluid_contact_statistical_surface_calculation_task_async(
+            statistic_function=StatisticFunction(statistic_function.value),
+            name=name,
+            contact=FluidContactType(contact.value),
+            realizations=realizations,
+        ),
+        perf_metrics=perf_metrics,
+    )
+    if not isinstance(lro_result, xtgeo.RegularSurface):
+        return lro_result
 
-    try:
-        maybe_xtgeo_surf = await access.poll_statistical_surface_calculation_task_async(
-            sumo_task_id=task_meta.task_id, timeout_s=0
-        )
-        perf_metrics.record_lap("poll")
+    api_surf_data = _resample_and_convert_to_surface_data_response(
+        xtgeo_surf=lro_result, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
+    )
+    set_cache_time(CacheTime.NORMAL)
+    return LroSuccessResp(result=api_surf_data)
 
-        if isinstance(maybe_xtgeo_surf, ExpectedError):
-            await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-            return task_helpers.make_lro_failure_resp(maybe_xtgeo_surf)
 
-        if isinstance(maybe_xtgeo_surf, InProgress):
-            LOGGER.info(f"Returning in-progress for statistical surface task (hybrid) in: {perf_metrics.to_string()}")
-            response.status_code = status.HTTP_202_ACCEPTED
-            return task_helpers.make_lro_in_progress_resp(task_meta, new_sumo_task_was_submitted, maybe_xtgeo_surf)
+@router.post("/initial_fluid_contact_statistical_surface_intersection_hybrid")
+# pylint: disable-next=too-many-arguments
+async def post_initial_fluid_contact_statistical_surface_intersection_hybrid(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    name: Annotated[str, Query(description="Surface name")],
+    contact: Annotated[schemas.InitialFluidContactType, Query(description="Fluid contact type")],
+    statistic_function: Annotated[schemas.SurfaceStatisticFunction, Query(description="Statistic to calculate")],
+    cumulative_length_polyline: Annotated[schemas.SurfaceIntersectionCumulativeLengthPolyline, Body(embed=True)],
+    realizations: Annotated[list[int] | None, Query(description="Realizations to include")] = None,
+    delete_task: Annotated[bool, Query(description="Delete matching server-side task metadata")] = False,
+) -> LroSuccessResp[schemas.SurfaceIntersectionData] | LroInProgressResp | LroFailureResp | LroCommandResp:
+    perf_metrics = ResponsePerfMetrics(response)
+    access = SurfaceAccess.from_ensemble_name(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    task_identity = _make_initial_fluid_contact_statistical_task_identity(
+        case_uuid, ensemble_name, name, contact, statistic_function, realizations
+    )
 
-        # We should now be left with a xtgeo RegularSurface
-        xtgeo_surf: xtgeo.RegularSurface = expect_type(maybe_xtgeo_surf, xtgeo.RegularSurface)
-        api_surf_data = _resample_and_convert_to_surface_data_response(
-            xtgeo_surf=xtgeo_surf, resample_to=resample_to, data_format=data_format, perf_metrics=perf_metrics
-        )
+    lro_result = await _run_statistical_surface_lro_async(
+        response=response,
+        authenticated_user=authenticated_user,
+        access=access,
+        case_uuid=case_uuid,
+        ensemble_name=ensemble_name,
+        task_identity=task_identity,
+        delete_task=delete_task,
+        submit_task=lambda: access.submit_initial_fluid_contact_statistical_surface_calculation_task_async(
+            statistic_function=StatisticFunction(statistic_function.value),
+            name=name,
+            contact=FluidContactType(contact.value),
+            realizations=realizations,
+        ),
+        perf_metrics=perf_metrics,
+    )
+    if not isinstance(lro_result, xtgeo.RegularSurface):
+        return lro_result
 
-        LOGGER.info(f"Got statistical surface data (hybrid) in: {perf_metrics.to_string()}")
+    intersection_polyline = converters.from_api_cumulative_length_polyline_to_xtgeo_polyline(
+        cumulative_length_polyline
+    )
+    surface_intersection = intersect_surface_with_polyline(lro_result, intersection_polyline)
+    set_cache_time(CacheTime.NORMAL)
+    return LroSuccessResp(result=converters.to_api_surface_intersection(surface_intersection))
 
-        set_cache_time(CacheTime.NORMAL)
-        return LroSuccessResp(result=api_surf_data)
 
-    except Exception as _exc:
-        # Must delete the fingerprint mapping so that the next call to this endpoint starts fresh.
-        # Then just re-raise the exception and let our middleware handle it
-        await task_tracker.delete_fingerprint_to_task_mapping_async(task_fp)
-        raise
+def _make_initial_fluid_contact_statistical_task_identity(
+    case_uuid: str,
+    ensemble_name: str,
+    name: str,
+    contact: schemas.InitialFluidContactType,
+    statistic_function: schemas.SurfaceStatisticFunction,
+    realizations: list[int] | None,
+) -> str:
+    return json.dumps(
+        {
+            "kind": "initial-fluid-contact-statistical-surface",
+            "case_uuid": case_uuid,
+            "ensemble_name": ensemble_name,
+            "name": name,
+            "contact": contact.value,
+            "statistic_function": statistic_function.value,
+            "realizations": sorted(realizations) if realizations is not None else None,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
 
 
 @router.post("/get_surface_intersection")

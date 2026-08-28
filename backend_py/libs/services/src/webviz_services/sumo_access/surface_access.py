@@ -445,8 +445,6 @@ class SurfaceAccess:
             if len(realizations) == 0:
                 raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
 
-        perf_metrics = PerfMetrics()
-
         surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
         search_context = SearchContext(self._sumo_client).surfaces.filter(
@@ -460,16 +458,74 @@ class SurfaceAccess:
         )
         search_context = filter_search_context_on_attribute(search_context, attribute)
 
+        return await self._submit_statistical_surface_calculation_task_for_context_async(
+            search_context=search_context,
+            statistic_function=statistic_function,
+            realizations=realizations,
+            surface_description=surf_str,
+        )
+
+    @otel_span_decorator()
+    async def submit_initial_fluid_contact_statistical_surface_calculation_task_async(
+        self,
+        statistic_function: StatisticFunction,
+        name: str,
+        contact: FluidContactType,
+        realizations: Sequence[int] | None = None,
+    ) -> str:
+        if not self._ensemble_name:
+            raise InvalidParameterError("Ensemble name must be set to calculate statistical surface", Service.SUMO)
+
+        if realizations is not None and len(realizations) == 0:
+            raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
+
+        surface_description = (
+            f"N:{name}__CONTACT:{contact.value}__I:{self._ensemble_name}__C:{self._case_uuid}"
+        )
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
+            ensemble=self._ensemble_name,
+            stage="realization",
+            realization=realizations if realizations is not None else True,
+            aggregation=False,
+            is_observation=False,
+            dataformat="irap_binary",
+            content=Content.fluid_contact.value,
+            standard_result=StandardResultName.fluid_contact_surface.value,
+            name=name,
+            time=TimeFilter(TimeType.NONE),
+            complex={"term": {"data.fluid_contact.contact.keyword": contact.value}},
+        )
+
+        return await self._submit_statistical_surface_calculation_task_for_context_async(
+            search_context=search_context,
+            statistic_function=statistic_function,
+            realizations=realizations,
+            surface_description=surface_description,
+        )
+
+    async def _submit_statistical_surface_calculation_task_for_context_async(
+        self,
+        search_context: SearchContext,
+        statistic_function: StatisticFunction,
+        realizations: Sequence[int] | None,
+        surface_description: str,
+    ) -> str:
+        perf_metrics = PerfMetrics()
+
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
 
         if surf_count == 0:
-            raise InvalidParameterError(f"No statistical source surfaces found in Sumo for: {surf_str}", Service.SUMO)
+            raise InvalidParameterError(
+                f"No statistical source surfaces found in Sumo for: {surface_description}", Service.SUMO
+            )
         if surf_count == 1:
             # As of now, the Sumo aggregation service does not support single realization aggregation.
             # For now throw an error. Alternatively we could fetch the single realization surface
             raise InvalidParameterError(
-                f"Could not calculate statistical surface, only one source surface found for: {surf_str}", Service.SUMO
+                f"Could not calculate statistical surface, only one source surface found for: {surface_description}",
+                Service.SUMO,
             )
 
         # Ensure that we got data for all the requested realizations
@@ -479,7 +535,7 @@ class SurfaceAccess:
             missing_reals = list(set(realizations) - set(realizations_found))
             if len(missing_reals) > 0:
                 raise InvalidParameterError(
-                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for: {surf_str}",
+                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for: {surface_description}",
                     Service.SUMO,
                 )
 
@@ -489,7 +545,7 @@ class SurfaceAccess:
 
         LOGGER.debug(
             f"Submitted statistical surface aggregation job in: {perf_metrics.to_string()} "
-            f"[stat: {sumo_stat_op_str}, real count: {len(realizations_found)}] ({surf_str})"
+            f"[stat: {sumo_stat_op_str}, real count: {len(realizations_found)}] ({surface_description})"
         )
 
         return sumo_task_uuid

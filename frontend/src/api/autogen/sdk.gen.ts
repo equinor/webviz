@@ -67,6 +67,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataErrors_api,
     GetHistoricalVectorDataResponses_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridData_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridErrors_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridResponses_api,
     GetInitialFluidContactSurfaceDataData_api,
     GetInitialFluidContactSurfaceDataErrors_api,
     GetInitialFluidContactSurfaceDataResponses_api,
@@ -244,6 +247,9 @@ import type {
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsErrors_api,
     PostGetWellTrajectoriesFormationSegmentsResponses_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridErrors_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponses_api,
     PostLogoutData_api,
     PostLogoutResponses_api,
     PostRefreshFingerprintsForEnsemblesData_api,
@@ -762,6 +768,50 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
         responseType: "json",
         url: "/surface/statistical_surface_data_hybrid",
         ...options,
+    });
+
+/**
+ * Get Initial Fluid Contact Statistical Surface Data Hybrid
+ */
+export const getInitialFluidContactStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<GetInitialFluidContactStatisticalSurfaceDataHybridData_api, ThrowOnError>,
+): RequestResult<
+    GetInitialFluidContactStatisticalSurfaceDataHybridResponses_api,
+    GetInitialFluidContactStatisticalSurfaceDataHybridErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetInitialFluidContactStatisticalSurfaceDataHybridResponses_api,
+        GetInitialFluidContactStatisticalSurfaceDataHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/initial_fluid_contact_statistical_surface_data_hybrid",
+        ...options,
+    });
+
+/**
+ * Post Initial Fluid Contact Statistical Surface Intersection Hybrid
+ */
+export const postInitialFluidContactStatisticalSurfaceIntersectionHybrid = <ThrowOnError extends boolean = false>(
+    options: Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api, ThrowOnError>,
+): RequestResult<
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponses_api,
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponses_api,
+        PostInitialFluidContactStatisticalSurfaceIntersectionHybridErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/initial_fluid_contact_statistical_surface_intersection_hybrid",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
 /**

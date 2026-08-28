@@ -130,6 +130,13 @@ export type BodyPostGetWellTrajectoriesFormationSegments_api = {
 };
 
 /**
+ * Body_post_initial_fluid_contact_statistical_surface_intersection_hybrid
+ */
+export type BodyPostInitialFluidContactStatisticalSurfaceIntersectionHybrid_api = {
+    cumulative_length_polyline: SurfaceIntersectionCumulativeLengthPolyline_api;
+};
+
+/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -1041,6 +1048,17 @@ export type LroInProgressResp_api = {
      * Progress Message
      */
     progress_message: string | null;
+};
+
+/**
+ * LroSuccessResp[SurfaceIntersectionData]
+ */
+export type LroSuccessRespSurfaceIntersectionData_api = {
+    /**
+     * Response Type
+     */
+    response_type: "LroSuccessResp";
+    result: SurfaceIntersectionData_api;
 };
 
 /**
@@ -4571,6 +4589,160 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
 
 export type GetStatisticalSurfaceDataHybridResponse_api =
     GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
+
+export type GetInitialFluidContactStatisticalSurfaceDataHybridData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Name
+         *
+         * Surface name
+         */
+        name: string;
+        /**
+         * Fluid contact type
+         */
+        contact: InitialFluidContactType_api;
+        /**
+         * Statistic to calculate
+         */
+        statistic_function: SurfaceStatisticFunction_api;
+        /**
+         * Realizations
+         *
+         * Realizations to include
+         */
+        realizations?: Array<number> | null;
+        /**
+         * Data Format
+         *
+         * Format of binary data
+         */
+        data_format?: "float" | "png";
+        /**
+         * Delete Task
+         *
+         * Delete matching server-side task metadata
+         */
+        delete_task?: boolean;
+        /**
+         * Resample To Def Str
+         *
+         * Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
+         */
+        resample_to_def_str?: string | null;
+        zCacheBust?: string;
+    };
+    url: "/surface/initial_fluid_contact_statistical_surface_data_hybrid";
+};
+
+export type GetInitialFluidContactStatisticalSurfaceDataHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetInitialFluidContactStatisticalSurfaceDataHybridError_api =
+    GetInitialFluidContactStatisticalSurfaceDataHybridErrors_api[keyof GetInitialFluidContactStatisticalSurfaceDataHybridErrors_api];
+
+export type GetInitialFluidContactStatisticalSurfaceDataHybridResponses_api = {
+    /**
+     * Response Get Initial Fluid Contact Statistical Surface Data Hybrid
+     *
+     * Successful Response
+     */
+    200:
+        | LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api
+        | LroInProgressResp_api
+        | LroFailureResp_api
+        | LroCommandResp_api;
+};
+
+export type GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api =
+    GetInitialFluidContactStatisticalSurfaceDataHybridResponses_api[keyof GetInitialFluidContactStatisticalSurfaceDataHybridResponses_api];
+
+export type PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api = {
+    body: BodyPostInitialFluidContactStatisticalSurfaceIntersectionHybrid_api;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Name
+         *
+         * Surface name
+         */
+        name: string;
+        /**
+         * Fluid contact type
+         */
+        contact: InitialFluidContactType_api;
+        /**
+         * Statistic to calculate
+         */
+        statistic_function: SurfaceStatisticFunction_api;
+        /**
+         * Realizations
+         *
+         * Realizations to include
+         */
+        realizations?: Array<number> | null;
+        /**
+         * Delete Task
+         *
+         * Delete matching server-side task metadata
+         */
+        delete_task?: boolean;
+        zCacheBust?: string;
+    };
+    url: "/surface/initial_fluid_contact_statistical_surface_intersection_hybrid";
+};
+
+export type PostInitialFluidContactStatisticalSurfaceIntersectionHybridErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api =
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridErrors_api[keyof PostInitialFluidContactStatisticalSurfaceIntersectionHybridErrors_api];
+
+export type PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponses_api = {
+    /**
+     * Response Post Initial Fluid Contact Statistical Surface Intersection Hybrid
+     *
+     * Successful Response
+     */
+    200: LroSuccessRespSurfaceIntersectionData_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
+};
+
+export type PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api =
+    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponses_api[keyof PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponses_api];
 
 export type PostGetSurfaceIntersectionData_api = {
     body: BodyPostGetSurfaceIntersection_api;

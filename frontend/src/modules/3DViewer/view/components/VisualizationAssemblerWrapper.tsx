@@ -71,7 +71,11 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, S
         transformToAnnotations: makeDepthColorScaleAnnotation,
     },
 );
-VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<InitialFluidContactSurfaceSettings, SurfaceData>(
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<
+    InitialFluidContactSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+>(
     DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
     InitialFluidContactSurfaceProvider,
     {

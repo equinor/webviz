@@ -4,9 +4,11 @@ import pytest
 from fmu.datamodels.fmu_results.enums import FluidContactType
 from fmu.sumo.explorer.explorer import SearchContext
 
+from webviz_services.sumo_access import surface_access
 from webviz_services.service_exceptions import MultipleDataMatchesError
 from webviz_services.sumo_access.queries.surface_queries import SurfInfo, SurfTimeType
 from webviz_services.sumo_access.surface_access import SurfaceAccess, _build_surface_meta_arr
+from webviz_services.utils.statistic_function import StatisticFunction
 
 
 async def test_get_initial_fluid_contact_surfaces_metadata_keeps_same_name_contacts_distinct_async(
@@ -81,6 +83,47 @@ async def test_get_initial_fluid_contact_surface_data_filters_on_contact_async(
     assert {"term": {"data.fluid_contact.contact.keyword": "goc"}} in captured["must"]
     assert {"term": {"fmu.realization.id": 3}} in captured["must"]
     assert {"bool": {"must_not": [{"exists": {"field": "data.time"}}]}} in captured["must"]
+
+
+async def test_submit_initial_fluid_contact_statistical_surface_scopes_sources_async(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict = {}
+
+    async def mock_length_async(search_context: SearchContext) -> int:
+        captured["must"] = search_context._must  # pylint: disable=protected-access
+        captured["must_not"] = search_context._must_not  # pylint: disable=protected-access
+        return 2
+
+    async def mock_get_field_values_async(search_context: SearchContext, field: str) -> list[int]:
+        captured["realization_field"] = field
+        return [1, 3]
+
+    async def mock_start_task(search_context: SearchContext, operation: str) -> str:
+        captured["operation"] = operation
+        return "task-id"
+
+    monkeypatch.setattr(SearchContext, "length_async", mock_length_async)
+    monkeypatch.setattr(SearchContext, "get_field_values_async", mock_get_field_values_async)
+    monkeypatch.setattr(surface_access, "_start_sumo_aggregation_task_async", mock_start_task)
+
+    access = SurfaceAccess(MagicMock(), "case-uuid", "ensemble-name")
+    result = await access.submit_initial_fluid_contact_statistical_surface_calculation_task_async(
+        statistic_function=StatisticFunction.MEAN,
+        name="VOLANTIS GP. Top",
+        contact=FluidContactType.goc,
+        realizations=[1, 3],
+    )
+
+    assert result == "task-id"
+    assert {"term": {"data.standard_result.name.keyword": "fluid_contact_surface"}} in captured["must"]
+    assert {"term": {"data.content.keyword": "fluid_contact"}} in captured["must"]
+    assert {"term": {"data.fluid_contact.contact.keyword": "goc"}} in captured["must"]
+    assert {"terms": {"fmu.realization.id": [1, 3]}} in captured["must"]
+    assert {"bool": {"must_not": [{"exists": {"field": "data.time"}}]}} in captured["must"]
+    assert {"exists": {"field": "fmu.aggregation.operation.keyword"}} in captured["must_not"]
+    assert captured["realization_field"] == "fmu.realization.id"
+    assert captured["operation"] == "mean"
 
 
 def test_generic_surface_metadata_excludes_initial_fluid_contact_standard_result() -> None:
