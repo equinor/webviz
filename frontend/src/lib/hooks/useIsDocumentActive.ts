@@ -1,17 +1,28 @@
 import React from "react";
 
-export function useIsDocumentActive() {
-    const [active, setActive] = React.useState(!document.hidden);
+function getIsDocumentActive(): boolean {
+    return !document.hidden && document.hasFocus();
+}
 
-    React.useEffect(function onVisibilityChangeEffect() {
-        function onVisibilityChange() {
-            setActive(!document.hidden);
+export function useIsDocumentActive() {
+    const [active, setActive] = React.useState(getIsDocumentActive);
+
+    React.useEffect(function subscribeToDocumentActivityEffect() {
+        function onActivityChange() {
+            setActive(getIsDocumentActive());
         }
 
-        document.addEventListener("visibilitychange", onVisibilityChange);
+        document.addEventListener("visibilitychange", onActivityChange);
+        window.addEventListener("focus", onActivityChange);
+        window.addEventListener("blur", onActivityChange);
 
-        return () => {
-            document.removeEventListener("visibilitychange", onVisibilityChange);
+        // Catch any transition missed between the initial render and this effect running.
+        onActivityChange();
+
+        return function unsubscribe() {
+            document.removeEventListener("visibilitychange", onActivityChange);
+            window.removeEventListener("focus", onActivityChange);
+            window.removeEventListener("blur", onActivityChange);
         };
     }, []);
 

@@ -2,7 +2,6 @@ import React from "react";
 
 import { Info } from "@mui/icons-material";
 
-import { ActiveDashboardContext } from "@framework/internal/components/ActiveDashboardBoundary";
 import { Button } from "@lib/components/Button";
 import { Popover } from "@lib/components/Popover";
 import { Paragraph } from "@lib/components/Typography/compositions";
@@ -95,11 +94,10 @@ export type GpuResourceBoundaryProps = {
  *   fresh canvas and context. Because a remount creates a *new* context, no `webglcontextrestored`
  *   event fires for it, so the boundary clears its own "lost" state in this path.
  *
- * In addition to the manual "Restore" button, recovery is attempted automatically when the view
- * becomes relevant again after having been lost while hidden: i.e. when its dashboard becomes the
- * active one ({@link ActiveDashboardContext}) or when the browser document/tab regains focus
- * ({@link useIsDocumentActive}). This covers the common case where the context was dropped while
- * the user was looking at something else.
+ * In addition to the manual "Restore" button, recovery is attempted automatically when the browser
+ * document/tab becomes active again after the context was lost while it was hidden or unfocused
+ * ({@link useIsDocumentActive}) - the common case where the browser reclaimed the context while the
+ * user was looking at something else.
  *
  * The wrapped renderer must still be able to survive a context loss without throwing; this
  * component only manages the *recovery UX and lifecycle*, not the renderer's internal GPU state.
@@ -122,14 +120,10 @@ export type GpuResourceBoundaryProps = {
 export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Element {
     const isDocumentActive = useIsDocumentActive();
 
-    const activeDashboard = React.useContext(ActiveDashboardContext);
-    const isDashboardActive = activeDashboard !== null;
-
     const [contextLost, setContextLost] = React.useState(false);
     const [generation, bumpGeneration] = React.useReducer((x) => x + 1, 0);
 
     const previousDocumentActive = React.useRef(isDocumentActive);
-    const previousDashboardActive = React.useRef(isDashboardActive);
 
     const restore = React.useCallback(
         function restore() {
@@ -173,18 +167,14 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
 
     React.useEffect(
         function onActivationChangeEffect() {
-            const dashboardBecameActive = !previousDashboardActive.current && isDashboardActive;
-
             const documentBecameActive = !previousDocumentActive.current && isDocumentActive;
-
-            previousDashboardActive.current = isDashboardActive;
             previousDocumentActive.current = isDocumentActive;
 
-            if (contextLost && (dashboardBecameActive || documentBecameActive)) {
+            if (contextLost && documentBecameActive) {
                 restore();
             }
         },
-        [contextLost, isDashboardActive, isDocumentActive, restore],
+        [contextLost, isDocumentActive, restore],
     );
 
     return (
@@ -200,7 +190,7 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
                                 Restore
                             </Button>
                             <Popover.Root>
-                                <Popover.Trigger iconOnly tone="neutral" size="small">
+                                <Popover.Trigger iconOnly tone="neutral" size="small" aria-label="Why did this happen?">
                                     <Info fontSize="small" />
                                 </Popover.Trigger>
                                 <Popover.Popup>

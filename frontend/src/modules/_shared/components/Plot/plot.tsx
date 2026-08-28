@@ -134,11 +134,11 @@ export function Plot(props: PlotProps): React.ReactNode {
 
         return (
             <BasePlot
+                {...stableOtherProps}
                 data={stableData}
                 layout={layoutWithDefaults}
                 config={configWithDefaults}
                 onWebGlContextLost={handleWebGlContextLost}
-                {...stableOtherProps}
             />
         );
     }, [stableConfig, stableData, stableLayout, stableOtherProps, handleWebGlContextLost]);

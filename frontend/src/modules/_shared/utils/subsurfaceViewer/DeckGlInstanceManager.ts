@@ -114,7 +114,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     setRef(ref: DeckGLRef | null) {
+        if (this._ref === ref) {
+            return;
+        }
         this._ref = ref;
+        // The DeckGL instance is replaced (e.g. after a GPU-context-loss remount). Repaint so
+        // subscribers rebuild their deck props against the new instance instead of the dead one.
+        this.redraw();
     }
 
     private addKeyboardEventListeners() {

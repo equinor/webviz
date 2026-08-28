@@ -14,14 +14,28 @@ export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
     initialCameraPosition?: ViewStateType;
     userCameraInteractionActive?: boolean;
     onCameraPositionApplied?: () => void;
+    /**
+     * Called whenever the underlying DeckGL instance changes identity - most importantly after the
+     * `GpuResourceBoundary` remounts the viewer to recover from a lost GPU context, which replaces
+     * the `Deck` instance. Consumers that captured the previous instance (e.g. `DeckGlInstanceManager`
+     * and its plugins) must re-point at the new one.
+     */
+    onDeckGlInstanceChange?: (deckGlInstance: DeckGLRef | null) => void;
 };
 
 export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCameraStateProps): React.ReactNode {
-    const { getCameraPosition, onCameraPositionApplied } = props;
+    const { getCameraPosition, onCameraPositionApplied, onDeckGlInstanceChange } = props;
 
     const [deckGlInstance, setDeckGlInstance] = React.useState<DeckGLRef | null>(null);
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlInstance!, [deckGlInstance]);
+
+    React.useEffect(
+        function propagateDeckGlInstanceChange() {
+            onDeckGlInstanceChange?.(deckGlInstance);
+        },
+        [deckGlInstance, onDeckGlInstanceChange],
+    );
 
     const adapter = React.useMemo(
         () => (deckGlInstance ? createDeckGlGpuResourceAdapter(deckGlInstance) : undefined),
