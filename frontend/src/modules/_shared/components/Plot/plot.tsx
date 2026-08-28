@@ -4,7 +4,8 @@ import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
-import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary";
+import { GpuResourceBoundary } from "@framework/components/GpuResourceBoundary";
+import { createManualContextLossAdapter } from "@framework/components/GpuResourceBoundary/adapters/manualContextLossAdapter";
 
 export type PlotProps = {
     /**
@@ -90,7 +91,12 @@ export function Plot(props: PlotProps): React.ReactNode {
     const onDownloadClickRef = React.useRef(onDownloadClick);
     onDownloadClickRef.current = onDownloadClick;
 
-    const adapter = React.useMemo(() => createPlotlyAdapter(), []);
+    // Plotly's regl-backed WebGL traces (scattergl, heatmapgl, etc.) do not reliably rebuild their
+    // GPU resources after a context loss, and Plotly only exposes a "context lost" signal
+    // (onWebGlContextLost) with no restored counterpart - so we feed that single signal into a
+    // manual adapter and let GpuResourceBoundary's "remount" strategy (a fresh Plotly.newPlot)
+    // clear the lost state.
+    const adapter = React.useMemo(() => createManualContextLossAdapter(), []);
     const handleWebGlContextLost = React.useCallback(() => adapter.notifyContextLost(), [adapter]);
 
     if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
@@ -142,26 +148,4 @@ export function Plot(props: PlotProps): React.ReactNode {
             {plotElement}
         </GpuResourceBoundary>
     );
-}
-
-// Plotly's regl-backed WebGL traces (scattergl, heatmapgl, etc.) do not reliably rebuild their
-// GPU resources after a context loss, so recovery here always remounts (a fresh Plotly.newPlot)
-// rather than trying to redraw in place. Plotly only exposes a "context lost" signal
-// (onWebGlContextLost) - there is no restored counterpart - so GpuResourceBoundary's own
-// "remount" recovery path is what actually clears the lost state.
-function createPlotlyAdapter(): GpuResourceAdapter & { notifyContextLost(): void } {
-    let onContextLostCallback: (() => void) | null = null;
-
-    return {
-        connect({ onContextLost }) {
-            onContextLostCallback = onContextLost;
-            return () => {
-                onContextLostCallback = null;
-            };
-        },
-
-        notifyContextLost() {
-            onContextLostCallback?.();
-        },
-    };
 }

@@ -1,26 +1,124 @@
 import React from "react";
 
-import { ActiveDashboardContext } from "@framework/internal/components/ActiveDashboardBoundary";
-import { useIsDocumentActive } from "@lib/hooks/useIsDocumentActive";
-import { Button } from "@lib/components/Button";
-import { Heading, Paragraph } from "@lib/components/Typography/compositions";
-import { Popover } from "@lib/components/Popover";
 import { Info } from "@mui/icons-material";
 
+import { ActiveDashboardContext } from "@framework/internal/components/ActiveDashboardBoundary";
+import { Button } from "@lib/components/Button";
+import { Popover } from "@lib/components/Popover";
+import { Paragraph } from "@lib/components/Typography/compositions";
+import { useIsDocumentActive } from "@lib/hooks/useIsDocumentActive";
+
+/**
+ * How a lost GPU context should be recovered once the boundary decides to restore it.
+ *
+ * - `"redraw"`: keep the existing canvas/DOM and ask the underlying renderer to re-issue its draw
+ *   calls (via {@link GpuResourceAdapter.requestRender}). Use this when the renderer is able to
+ *   rebuild its GPU resources on the same context after a `webglcontextrestored` event.
+ * - `"remount"`: throw away the current subtree and mount a fresh one, which creates a brand-new
+ *   canvas and WebGL context. Use this for renderers that cannot reliably rebuild their GPU
+ *   resources in place.
+ */
 export type GpuRecoveryStrategy = "redraw" | "remount";
 
+/**
+ * Bridge between {@link GpuResourceBoundary} and a concrete WebGL/WebGPU renderer.
+ *
+ * The boundary itself knows nothing about any specific rendering library. Each renderer provides an
+ * adapter that translates renderer-specific events ("the context was lost/restored") into the
+ * callbacks the boundary understands, and optionally exposes a way to trigger a redraw.
+ *
+ * Adapters are typically created with `React.useMemo` in the component that owns the renderer and
+ * passed to the boundary via {@link GpuResourceBoundaryProps.adapter}. A new adapter identity causes
+ * the boundary to tear down the previous connection and re-`connect`, so keep the identity stable
+ * for as long as the underlying renderer instance is stable.
+ */
 export type GpuResourceAdapter = {
+    /**
+     * Subscribe to GPU context lifecycle events for the underlying renderer.
+     *
+     * Called by the boundary in an effect whenever the adapter identity changes. Implementations
+     * should attach their listeners (e.g. `canvas.addEventListener("webglcontextlost", ...)`) and
+     * return a cleanup function that detaches them again. The cleanup runs before the next
+     * `connect` and on unmount.
+     *
+     * Note that the underlying canvas may not exist yet when `connect` is first called (the
+     * renderer can create it in a later effect / async), so adapters may need to poll or wait for
+     * it to become available.
+     *
+     * @param callbacks.onContextLost - Invoke when the GPU context is lost. Implementations that
+     *   listen for the DOM `webglcontextlost` event must also call `event.preventDefault()` on it,
+     *   otherwise the browser will not attempt to restore the context.
+     * @param callbacks.onContextRestored - Invoke when the browser has restored the *existing*
+     *   context (the DOM `webglcontextrestored` event). Optional: some renderers never emit a
+     *   restored signal, in which case recovery must go through the `"remount"` strategy.
+     * @returns A cleanup function that detaches all listeners registered by this call.
+     */
     connect(callbacks: { onContextLost(): void; onContextRestored?(): void }): () => void;
 
+    /**
+     * Ask the underlying renderer to re-issue its draw calls on the current context.
+     *
+     * Only used by the `"redraw"` {@link GpuRecoveryStrategy}. Renderers that always recover via
+     * `"remount"` can omit this.
+     */
     requestRender?(): void;
 };
 
 export type GpuResourceBoundaryProps = {
+    /**
+     * Adapter for the renderer wrapped by this boundary. While `undefined` (e.g. before the
+     * renderer instance exists) the boundary is inert and simply renders its children.
+     */
     adapter?: GpuResourceAdapter;
+    /**
+     * Strategy used when recovering a lost context. Defaults to `"remount"`.
+     * @see GpuRecoveryStrategy
+     */
     recoveryStrategy?: GpuRecoveryStrategy;
     children?: React.ReactNode;
 };
 
+/**
+ * Wraps a GPU-backed visualization (WebGL/WebGPU) and handles browser-initiated context loss.
+ *
+ * Browsers cap the number of live GPU contexts a page may hold. When that budget is exceeded -
+ * typically because many graphics-intensive views or tabs are open - the browser drops the context
+ * of some canvas, leaving it frozen or blank. This component detects that situation (via the
+ * supplied {@link GpuResourceAdapter}), shows an overlay explaining what happened, and offers the
+ * user a "Restore" action.
+ *
+ * Recovery happens in one of two ways, chosen via {@link GpuResourceBoundaryProps.recoveryStrategy}:
+ *
+ * - `"redraw"` - calls {@link GpuResourceAdapter.requestRender} so the renderer repaints on the
+ *   (now restored) context.
+ * - `"remount"` (default) - bumps an internal `key` so the children unmount and remount with a
+ *   fresh canvas and context. Because a remount creates a *new* context, no `webglcontextrestored`
+ *   event fires for it, so the boundary clears its own "lost" state in this path.
+ *
+ * In addition to the manual "Restore" button, recovery is attempted automatically when the view
+ * becomes relevant again after having been lost while hidden: i.e. when its dashboard becomes the
+ * active one ({@link ActiveDashboardContext}) or when the browser document/tab regains focus
+ * ({@link useIsDocumentActive}). This covers the common case where the context was dropped while
+ * the user was looking at something else.
+ *
+ * The wrapped renderer must still be able to survive a context loss without throwing; this
+ * component only manages the *recovery UX and lifecycle*, not the renderer's internal GPU state.
+ *
+ * @example
+ * ```tsx
+ * // `createRendererAdapter` wraps a concrete renderer instance in a GpuResourceAdapter.
+ * const adapter = React.useMemo(
+ *     () => (renderer ? createRendererAdapter(renderer) : undefined),
+ *     [renderer],
+ * );
+ *
+ * return (
+ *     <GpuResourceBoundary adapter={adapter} recoveryStrategy="remount">
+ *         <Renderer ... />
+ *     </GpuResourceBoundary>
+ * );
+ * ```
+ */
 export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Element {
     const isDocumentActive = useIsDocumentActive();
 
@@ -33,21 +131,24 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
     const previousDocumentActive = React.useRef(isDocumentActive);
     const previousDashboardActive = React.useRef(isDashboardActive);
 
-    const restore = React.useCallback(() => {
-        if (!contextLost || !props.adapter) {
-            return;
-        }
+    const restore = React.useCallback(
+        function restore() {
+            if (!contextLost || !props.adapter) {
+                return;
+            }
 
-        if (props.recoveryStrategy === "redraw") {
-            props.adapter.requestRender?.();
-        } else {
-            // Remounting replaces the canvas with a brand-new WebGL context, which never
-            // fires "webglcontextrestored" (that event only applies to a restored, existing
-            // context) - so we must clear the lost state ourselves.
-            setContextLost(false);
-            bumpGeneration();
-        }
-    }, [contextLost, props.adapter, props.recoveryStrategy]);
+            if (props.recoveryStrategy === "redraw") {
+                props.adapter.requestRender?.();
+            } else {
+                // Remounting replaces the canvas with a brand-new WebGL context, which never
+                // fires "webglcontextrestored" (that event only applies to a restored, existing
+                // context) - so we must clear the lost state ourselves.
+                setContextLost(false);
+                bumpGeneration();
+            }
+        },
+        [contextLost, props.adapter, props.recoveryStrategy],
+    );
 
     React.useEffect(
         function onAdapterChangeEffect() {

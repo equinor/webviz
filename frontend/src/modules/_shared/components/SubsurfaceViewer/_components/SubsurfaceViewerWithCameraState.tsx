@@ -5,8 +5,10 @@ import type { BoundingBox2D, SubsurfaceViewerProps, ViewStateType } from "@webvi
 import SubsurfaceViewer from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { isEqual } from "lodash-es";
 
-import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary";
+import { GpuResourceBoundary } from "@framework/components/GpuResourceBoundary";
 import * as bbox from "@lib/utils/bbox";
+
+import { createDeckGlGpuResourceAdapter } from "../_utils/deckGlGpuResourceAdapter";
 
 export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
     initialCameraPosition?: ViewStateType;
@@ -15,14 +17,14 @@ export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
 };
 
 export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCameraStateProps): React.ReactNode {
-    const { getCameraPosition, onCameraPositionApplied, deckGlRef } = props;
+    const { getCameraPosition, onCameraPositionApplied } = props;
 
     const [deckGlInstance, setDeckGlInstance] = React.useState<DeckGLRef | null>(null);
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlInstance!, [deckGlInstance]);
 
     const adapter = React.useMemo(
-        () => (deckGlInstance ? createDeckGlAdapter(deckGlInstance) : undefined),
+        () => (deckGlInstance ? createDeckGlGpuResourceAdapter(deckGlInstance) : undefined),
         [deckGlInstance],
     );
 
@@ -96,62 +98,4 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
             />
         </GpuResourceBoundary>
     );
-}
-
-export function createDeckGlAdapter(deckGl: DeckGLRef): GpuResourceAdapter {
-    return {
-        connect({ onContextLost, onContextRestored }) {
-            let cancelled = false;
-            let rafHandle: number | null = null;
-            let detachListeners: (() => void) | null = null;
-
-            const handleContextLost = (event: Event) => {
-                // Required if you want the browser to attempt restoration.
-                event.preventDefault();
-
-                onContextLost();
-            };
-
-            const handleContextRestored = () => {
-                onContextRestored?.();
-            };
-
-            // deckGl.deck is only populated once DeckGL's own effect has created the
-            // underlying Deck instance, which can happen after this effect first runs.
-            // Poll until the canvas is available instead of silently giving up.
-            const attachWhenReady = () => {
-                if (cancelled) {
-                    return;
-                }
-
-                const canvas = deckGl?.deck?.getCanvas();
-                if (!canvas) {
-                    rafHandle = requestAnimationFrame(attachWhenReady);
-                    return;
-                }
-
-                canvas.addEventListener("webglcontextlost", handleContextLost);
-                canvas.addEventListener("webglcontextrestored", handleContextRestored);
-
-                detachListeners = () => {
-                    canvas.removeEventListener("webglcontextlost", handleContextLost);
-                    canvas.removeEventListener("webglcontextrestored", handleContextRestored);
-                };
-            };
-
-            attachWhenReady();
-
-            return () => {
-                cancelled = true;
-                if (rafHandle !== null) {
-                    cancelAnimationFrame(rafHandle);
-                }
-                detachListeners?.();
-            };
-        },
-
-        requestRender() {
-            deckGl?.deck?.redraw("context loss");
-        },
-    };
 }
