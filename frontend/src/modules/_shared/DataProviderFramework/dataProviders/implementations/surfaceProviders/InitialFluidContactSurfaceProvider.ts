@@ -65,8 +65,12 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
         return "Initial Fluid Contact Surface";
     }
 
-    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: SettingsWithTypes | null,
+        newSettings: SettingsWithTypes,
+    ): boolean {
         return (
+            !prevSettings ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.representation, newSettings.representation) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
