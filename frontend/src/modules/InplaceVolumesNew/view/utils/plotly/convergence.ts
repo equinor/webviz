@@ -1,8 +1,8 @@
 import { formatRgb, parse } from "culori";
 import type { PlotData } from "plotly.js";
 
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeReservesP10, computeReservesP90 } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 export type PlotlyConvergenceTracesOptions = {
     title: string;
@@ -45,7 +45,7 @@ export function makePlotlyConvergenceTraces({
             mode: "lines",
             hovertemplate: convergenceArr.map(
                 (p) =>
-                    `${title}</br>Realization: ${p.realization}<br>P90: ${formatNumber(Number(p.p90))}<extra></extra>`,
+                    `${title}</br>Realization: ${p.realization}<br>P90: ${formatInplaceVolumesValue(Number(p.p90))}<extra></extra>`,
             ),
         },
         {
@@ -60,7 +60,7 @@ export function makePlotlyConvergenceTraces({
             fillcolor: lightColor,
             hovertemplate: convergenceArr.map(
                 (p) =>
-                    `${title}</br>Realization: ${p.realization}<br>Mean: ${formatNumber(Number(p.mean))}<extra></extra>`,
+                    `${title}</br>Realization: ${p.realization}<br>Mean: ${formatInplaceVolumesValue(Number(p.mean))}<extra></extra>`,
             ),
         },
         {
@@ -75,7 +75,7 @@ export function makePlotlyConvergenceTraces({
             fillcolor: lightColor,
             hovertemplate: convergenceArr.map(
                 (p) =>
-                    `${title}</br>Realization: ${p.realization}<br>P10: ${formatNumber(Number(p.p10))}<extra></extra>`,
+                    `${title}</br>Realization: ${p.realization}<br>P10: ${formatInplaceVolumesValue(Number(p.p10))}<extra></extra>`,
             ),
         },
     );
