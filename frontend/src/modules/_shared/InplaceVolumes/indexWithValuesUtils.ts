@@ -2,7 +2,7 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import type { FixupSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 
-export function orderSelectedIndexValues(selectedValues: string[], availableValues: string[]): string[] {
+export function filterAndOrderSelectedIndexValues(selectedValues: string[], availableValues: string[]): string[] {
     const selectedValueSet = new Set(selectedValues);
     return availableValues.filter((value) => selectedValueSet.has(value));
 }
@@ -56,7 +56,7 @@ export function fixupUserSelectedIndexValues(
         }
         fixedUpIndexValues.push({
             indexColumn: entry.indexColumn,
-            values: orderSelectedIndexValues(
+            values: filterAndOrderSelectedIndexValues(
                 fixupUserSelection(
                     entry.values,
                     uniqueIndexValues.find((el) => el.indexColumn === entry.indexColumn)?.values ?? [],

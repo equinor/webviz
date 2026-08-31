@@ -17,7 +17,7 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
-import { orderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
+import { filterAndOrderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -128,7 +128,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         (item) => item.indexColumn === index.indexColumn,
                     );
                     const orderedValues = availableIndex
-                        ? orderSelectedIndexValues(index.values, availableIndex.values)
+                        ? filterAndOrderSelectedIndexValues(index.values, availableIndex.values)
                         : [...index.values];
                     const indexValues = newIndicesValues.find((filter) => filter.indexColumn === index.indexColumn);
                     if (!indexValues) {
@@ -210,7 +210,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     function handleIndexValuesChange(indexColumn: string, values: string[], publish = true): void {
         const availableValues =
             props.availableIndicesWithValues.find((item) => item.indexColumn === indexColumn)?.values ?? [];
-        const orderedValues = orderSelectedIndexValues(values, availableValues);
+        const orderedValues = filterAndOrderSelectedIndexValues(values, availableValues);
         const newIndicesWithValues = cloneDeep(indicesWithValues);
         const indexValues = newIndicesWithValues.find((filter) => filter.indexColumn === indexColumn);
         if (!indexValues) {

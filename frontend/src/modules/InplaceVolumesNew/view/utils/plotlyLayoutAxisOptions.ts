@@ -24,17 +24,22 @@ export interface PlotConfigurerOptions {
 export function configurePlotlyLayoutAxisByPlotType(plotBuilder: PlotBuilder, options: PlotConfigurerOptions): void {
     const { plotType, resultName, barSelectorColumn, colorBy, histogramType, barSelectorLength } = options;
 
-    plotBuilder.setNumberFormatAxisOptions(makeInplaceVolumesAxisFormat(resultName));
+    const responseAxisFormat = makeInplaceVolumesAxisFormat(resultName);
 
     if (plotType === PlotType.CONVERGENCE) {
+        plotBuilder.setYAxisNumberFormatOptions(responseAxisFormat);
         configureConvergencePlot(plotBuilder, resultName);
     } else if (plotType === PlotType.BOX) {
+        plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
         configureBoxPlot(plotBuilder);
     } else if (plotType === PlotType.HISTOGRAM) {
+        plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
         configureHistogramPlot(plotBuilder, histogramType);
     } else if (plotType === PlotType.BAR) {
+        plotBuilder.setYAxisNumberFormatOptions(responseAxisFormat);
         configureBarPlot(plotBuilder, barSelectorColumn, colorBy, barSelectorLength);
     } else if (plotType === PlotType.DISTRIBUTION) {
+        plotBuilder.setXAxisNumberFormatOptions(responseAxisFormat);
         configureDistributionPlot(plotBuilder);
     }
 }

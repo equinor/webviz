@@ -2,19 +2,24 @@ import { describe, expect, test } from "vitest";
 
 import { FixupSelection } from "@lib/utils/fixupUserSelection";
 import {
+    filterAndOrderSelectedIndexValues,
     fixupUserSelectedIndexValues,
-    orderSelectedIndexValues,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 
-describe("orderSelectedIndexValues", () => {
+describe("filterAndOrderSelectedIndexValues", () => {
     test("orders selected values according to the backend-provided order", () => {
         const availableValues = ["Valysar", "Therys", "Volon"];
 
-        expect(orderSelectedIndexValues(["Volon", "Valysar"], availableValues)).toEqual(["Valysar", "Volon"]);
+        expect(filterAndOrderSelectedIndexValues(["Volon", "Valysar"], availableValues)).toEqual([
+            "Valysar",
+            "Volon",
+        ]);
     });
 
     test("drops values that are no longer available", () => {
-        expect(orderSelectedIndexValues(["Volon", "Unknown"], ["Valysar", "Volon"])).toEqual(["Volon"]);
+        expect(filterAndOrderSelectedIndexValues(["Volon", "Unknown"], ["Valysar", "Volon"])).toEqual([
+            "Volon",
+        ]);
     });
 
     test("orders persisted selections according to available values during fixup", () => {

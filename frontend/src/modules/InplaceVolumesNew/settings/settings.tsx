@@ -150,8 +150,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                 )}
                 {showFaciesFractionGroupingWarning && (
                     <Banner layoutClassName="col-span-3" tone="warning">
-                        FACIES_FRACTION is only meaningful when FACIES is used as Subplot by or Color by; otherwise
-                        every fraction collapses to 1.
+                        FACIES_FRACTION is only meaningful when FACIES is used as &quot;Subplot by&quot; or
+                        &quot;Color by&quot;; otherwise every fraction collapses to 1.
                     </Banner>
                 )}
                 <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>

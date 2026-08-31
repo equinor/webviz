@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { orderEntriesByPreferredValues } from "@modules/InplaceVolumesNew/view/utils/GroupedTableData";
+import {
+    orderColorValues,
+    orderEntriesByPreferredValues,
+} from "@modules/InplaceVolumesNew/view/utils/GroupedTableData";
 
 describe("orderEntriesByPreferredValues", () => {
     test("orders API groups according to the selected backend order", () => {
@@ -24,5 +27,19 @@ describe("orderEntriesByPreferredValues", () => {
         ];
 
         expect(orderEntriesByPreferredValues(apiEntries)).toEqual(apiEntries);
+    });
+});
+
+describe("orderColorValues", () => {
+    test("matches the preferred display order", () => {
+        expect(orderColorValues(["Volon", "Valysar", "Therys"], ["Valysar", "Therys", "Volon"])).toEqual([
+            "Valysar",
+            "Therys",
+            "Volon",
+        ]);
+    });
+
+    test("uses stable alphabetical assignment without a preferred order", () => {
+        expect(orderColorValues(["Volon", "Valysar", "Therys"])).toEqual(["Therys", "Valysar", "Volon"]);
     });
 });

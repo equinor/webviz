@@ -58,6 +58,20 @@ export function orderEntriesByPreferredValues<TValue>(
     });
 }
 
+export function orderColorValues(
+    values: (string | number)[],
+    preferredValues?: readonly string[],
+): (string | number)[] {
+    if (preferredValues) {
+        return orderEntriesByPreferredValues(
+            values.map((value) => [value, value]),
+            preferredValues,
+        ).map(([value]) => value);
+    }
+
+    return values.toSorted((left, right) => left.toString().localeCompare(right.toString()));
+}
+
 /**
  * Groups a table by subplotBy and colorBy columns, providing consistent
  * color assignment and label formatting for both plot and table builders.
@@ -89,12 +103,13 @@ export class GroupedTableData {
             return;
         }
 
-        const uniqueValues = colorByColumn.getUniqueValues();
-        // Create a copy before sorting for consistent color assignment
-        const sortedValues = uniqueValues.toSorted((a, b) => a.toString().localeCompare(b.toString()));
+        const orderedValues = orderColorValues(
+            colorByColumn.getUniqueValues(),
+            this._categoryOrder?.get(this._colorBy),
+        );
         let color = this._colorSet.getFirstColor();
 
-        for (const value of sortedValues) {
+        for (const value of orderedValues) {
             const key = value.toString();
 
             if (this._colorBy === TableOriginKey.ENSEMBLE) {
