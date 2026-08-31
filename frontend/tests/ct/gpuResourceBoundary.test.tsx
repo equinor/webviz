@@ -11,12 +11,12 @@ test.describe("GpuResourceBoundary", () => {
         const cmp = await mount(<GpuResourceBoundaryHarness recoveryStrategy="remount" />);
         const before = await cmp.getByTestId("renderer").textContent();
 
-        await expect(cmp.getByRole("button", { name: "Restore" })).toBeHidden();
+        await expect(cmp.getByRole("button", { name: "Restore", exact: true })).toBeHidden();
 
         await cmp.getByTestId("lose").click();
         await expect(cmp.getByText(MSG, { exact: true })).toBeVisible();
 
-        await cmp.getByRole("button", { name: "Restore" }).click();
+        await cmp.getByRole("button", { name: "Restore", exact: true }).click();
         await expect(cmp.getByText(MSG, { exact: true })).toBeHidden();
         await expect(cmp.getByTestId("renderer")).not.toHaveText(before ?? ""); // remounted
     });
@@ -30,7 +30,7 @@ test.describe("GpuResourceBoundary", () => {
         const before = await cmp.getByTestId("renderer").textContent();
 
         await cmp.getByTestId("lose").click();
-        await cmp.getByRole("button", { name: "Restore" }).click();
+        await cmp.getByRole("button", { name: "Restore", exact: true }).click();
 
         await expect(cmp.getByText(MSG, { exact: true })).toBeVisible(); // still up, no remount
         await expect(cmp.getByTestId("renderer")).toHaveText(before ?? "");
@@ -49,7 +49,7 @@ test.describe("GpuResourceBoundary", () => {
         const before = await cmp.getByTestId("renderer").textContent();
 
         await cmp.getByTestId("lose").click();
-        await cmp.getByRole("button", { name: "Restore" }).click();
+        await cmp.getByRole("button", { name: "Restore", exact: true }).click();
         await expect(cmp.getByText(MSG, { exact: true })).toBeVisible();
 
         await expect(cmp.getByText(MSG, { exact: true })).toBeHidden({ timeout: 5000 });
