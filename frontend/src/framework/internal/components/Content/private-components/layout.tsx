@@ -477,7 +477,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 {isSwitchingDashboard && (
                     // Covers the outgoing dashboard's content the instant a tab switch is
                     // requested (before the still-synchronous switch itself runs and blocks the
-                    // main thread for a moment) - see dashboardPanel.tsx's handleActiveDashboardChange.
+                    // main thread for a moment)
                     <div className="bg-surface/80 z-overlay absolute inset-0 flex items-center justify-center backdrop-blur-xs">
                         <CircularProgress size={40} />
                     </div>

@@ -246,11 +246,6 @@ function Title(props: TitleProps): React.ReactNode {
         WorkbenchSessionManagerTopic.ACTIVE_SESSION,
     );
 
-    const activeDashboard = usePublishSubscribeTopicValue(
-        activeSession!,
-        PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD,
-    );
-
     const isSnapshot = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     let content = <SessionTitle workbench={props.workbench} />;
@@ -259,16 +254,7 @@ function Title(props: TitleProps): React.ReactNode {
         content = <SnapshotTitle workbench={props.workbench} />;
     }
 
-    return (
-        <div className="gap-x-sm flex grow items-center overflow-hidden">
-            {content}
-            {activeDashboard && (
-                <>
-                    <DashboardTitle dashboard={activeDashboard} />
-                </>
-            )}
-        </div>
-    );
+    return <div className="gap-x-sm flex grow items-center overflow-hidden">{content}</div>;
 }
 
 type SnapshotTitleProps = {

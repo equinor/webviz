@@ -4,7 +4,7 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 
-import { DashboardPanel } from "./_panels/dashboardPanel";
+import { DashboardsPanel } from "./_panels/Dashboards/dashboardsPanel";
 
 export type BottomBarProps = {
     workbench: Workbench;
@@ -20,7 +20,7 @@ export function BottomBar(props: BottomBarProps) {
 
     return (
         <div className="border-t-neutral-subtle bg-surface/30 shadow-elevation-raised flex border-t-2">
-            <DashboardPanel workbench={props.workbench} />
+            <DashboardsPanel workbench={props.workbench} />
         </div>
     );
 }
