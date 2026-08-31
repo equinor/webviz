@@ -299,6 +299,8 @@ function SnapshotTable(props: SnapshotTableProps) {
         enabled: props.active,
     });
 
+    const { fetchNextPage: fetchNextSnapshotPage } = snapshotsQuery;
+
     const queryRefreshAction = useRefreshQuery(snapshotsQuery);
     React.useImperativeHandle(props.refreshActionRef, () => queryRefreshAction, [queryRefreshAction]);
 
@@ -324,10 +326,16 @@ function SnapshotTable(props: SnapshotTableProps) {
             if (!snapshotsQuery.hasNextPage) return;
             if (snapshotsQuery.isFetchingNextPage) return;
             if (tableData.length - visibleRowRange?.end <= NEXT_PAGE_THRESHOLD) {
-                snapshotsQuery.fetchNextPage();
+                fetchNextSnapshotPage();
             }
         },
-        [snapshotsQuery, tableData.length, visibleRowRange],
+        [
+            snapshotsQuery.isFetchingNextPage,
+            snapshotsQuery.hasNextPage,
+            tableData.length,
+            visibleRowRange,
+            fetchNextSnapshotPage,
+        ],
     );
 
     React.useEffect(
