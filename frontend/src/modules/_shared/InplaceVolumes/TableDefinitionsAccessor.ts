@@ -56,6 +56,7 @@ export class TableDefinitionsAccessor {
     private _resultNamesIntersection: string[] = [];
 
     private _commonIndicesWithValues: InplaceVolumesIndexWithValues_api[] = [];
+    private _indexColumnsWithDifferingValues: string[] = [];
     private _indexValueCriteria: IndexValueCriteria;
 
     private _tablesNotComparable: boolean = false;
@@ -82,6 +83,7 @@ export class TableDefinitionsAccessor {
 
         const resultNames: Set<string> = new Set();
         const commonIndicesWithValuesMap: Map<string, InplaceVolumesIndexWithValues_api> = new Map();
+        const indexColumnsWithDifferingValues: Set<string> = new Set();
 
         let isInitialized = false;
         for (const tableDefinition of this._tableDefinitions) {
@@ -122,7 +124,14 @@ export class TableDefinitionsAccessor {
                     continue;
                 }
 
-                // Tables are not comparable when index values are not equal
+                const areValuesEqual = isEqual(
+                    [...indexWithValues.values].sort(),
+                    [...currentIndexWithValues.values].sort(),
+                );
+                if (!areValuesEqual) {
+                    indexColumnsWithDifferingValues.add(index);
+                }
+
                 if (this._indexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION) {
                     const valuesIntersection = indexWithValues.values.filter((value) =>
                         currentIndexWithValues.values.includes(value),
@@ -133,9 +142,9 @@ export class TableDefinitionsAccessor {
                         indexColumn: index,
                         values: valuesIntersection,
                     });
-                } else if (!isEqual(indexWithValues.values.sort(), currentIndexWithValues.values.sort())) {
+                } else if (!areValuesEqual) {
+                    // Tables are not comparable when index values are not equal
                     this._tablesNotComparable = true;
-                    break;
                 }
             }
 
@@ -147,6 +156,9 @@ export class TableDefinitionsAccessor {
 
         this._resultNamesIntersection = sortResultNameStrings(Array.from(resultNames));
         this._commonIndicesWithValues = Array.from(commonIndicesWithValuesMap.values());
+        this._indexColumnsWithDifferingValues = Array.from(indexColumnsWithDifferingValues).filter((indexColumn) =>
+            commonIndicesWithValuesMap.has(indexColumn),
+        );
 
         // Not comparable if there are no common indices
         if (this._commonIndicesWithValues.length === 0) {
@@ -168,6 +180,11 @@ export class TableDefinitionsAccessor {
 
     getCommonIndicesWithValues(): InplaceVolumesIndexWithValues_api[] {
         return this._commonIndicesWithValues;
+    }
+
+    /** Common index columns whose value sets are not identical across the table definitions. */
+    getIndexColumnsWithDifferingValues(): string[] {
+        return this._indexColumnsWithDifferingValues;
     }
 
     getCommonSelectorColumns(): string[] {
