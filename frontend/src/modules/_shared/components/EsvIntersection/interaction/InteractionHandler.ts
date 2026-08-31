@@ -113,13 +113,33 @@ export class InteractionHandler {
         this._highlightOverlay.destroy();
     }
 
-    private handleIntersection(payload: { intersections: Intersection[] }) {
+    /**
+     * Computes readout and highlight items for an externally-supplied reference-system point (e.g.
+     * a position synced from another, same-fence view via hover). Pure/read-only - unlike
+     * handleIntersection, it does not touch the highlight overlay or publish READOUT_ITEMS_CHANGE,
+     * since that topic represents this view's own local mouse-driven readout state. Callers are
+     * expected to feed the returned highlightItems into setStaticHighlightItems themselves.
+     */
+    calcReadoutAndHighlightItemsAtReferenceSystemPoint(referenceSystemCoordinates: number[]): {
+        readoutItems: ReadoutItem[];
+        highlightItems: HighlightItem[];
+    } {
+        const intersections = this._intersectionHandler.calcIntersectionsAtReferenceSystemPoint(
+            referenceSystemCoordinates,
+        );
+        return this.makeReadoutAndHighlightItems(intersections);
+    }
+
+    private makeReadoutAndHighlightItems(intersections: Intersection[]): {
+        highlightItems: HighlightItem[];
+        readoutItems: ReadoutItem[];
+    } {
         const highlightItems: HighlightItem[] = [];
         const readoutItems: ReadoutItem[] = [];
 
         let md: number | undefined;
 
-        for (const intersection of payload.intersections) {
+        for (const intersection of intersections) {
             const layerDataObject = this._layerDataItems.find(
                 (layerDataObject) => layerDataObject.id === intersection.id,
             );
@@ -168,6 +188,12 @@ export class InteractionHandler {
                 }
             }
         }
+
+        return { highlightItems, readoutItems };
+    }
+
+    private handleIntersection(payload: { intersections: Intersection[] }) {
+        const { highlightItems, readoutItems } = this.makeReadoutAndHighlightItems(payload.intersections);
 
         this._dynamicHighlightItems = highlightItems;
 

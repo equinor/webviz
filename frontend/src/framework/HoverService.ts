@@ -2,6 +2,7 @@ import React from "react";
 
 import { throttle } from "lodash-es";
 
+import type { Intersection } from "@framework/types/intersection";
 import { PublishSubscribeDelegate } from "@lib/utils/PublishSubscribeDelegate";
 
 const HOVER_UPDATE_THROTTLE_MS = 100;
@@ -16,6 +17,7 @@ export enum HoverTopic {
     FACIES = "hover.facies",
     WORLD_POS_UTM = "hover.world_pos_utm",
     POLYLINE_LENGTH_ALONG = "hover.polyline_length_along",
+    INTERSECTION_FENCE_POSITION = "hover.intersection_fence_position",
 }
 
 export type HoverData = {
@@ -28,6 +30,12 @@ export type HoverData = {
     [HoverTopic.FACIES]: string | null;
     [HoverTopic.WORLD_POS_UTM]: { x?: number; y?: number; z?: number } | null;
     [HoverTopic.POLYLINE_LENGTH_ALONG]: { polylineId: string; lengthAlong: number } | null;
+    // fence identifies the wellbore or custom polyline the position was hovered in, mirroring
+    // wellboreUuid/polylineId above. A receiving view only uses this position when its own fence
+    // (type + uuid) matches - a length-along/depth pair is only meaningful relative to one
+    // specific fence's axes, and type is included so a wellbore and a polyline can never collide
+    // even if they happened to share a uuid.
+    [HoverTopic.INTERSECTION_FENCE_POSITION]: { fence: Intersection; x: number; y: number } | null;
 };
 
 type ThrottledPublishFunc = _.DebouncedFunc<<T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void>;
