@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isEqual, orderBy } from "lodash";
+import { orderBy } from "lodash";
 
 import type { CaseInfo_api } from "@api";
 import type { UserEnsembleSetting } from "@framework/internal/EnsembleSetLoader";
@@ -29,8 +29,8 @@ export type CaseTableProps = {
     caseData: CaseInfo_api[] | undefined;
 
     disabledColumnFilters?: string[];
-    showOnlyMyCases?: boolean;
-    showOnlyOfficialCases?: boolean;
+    showOnlyMyCases: boolean;
+    showOnlyOfficialCases: boolean;
 
     onCaseSelected?: (selectedCase: string | null) => void;
     onDataCollated?: (collatedData: CaseInfo_api[]) => void;
@@ -48,7 +48,7 @@ type EnsembleCounts = {
 type CaseDataWithEnsembleCount = CaseInfo_api & EnsembleCounts;
 
 export function CaseTable(props: CaseTableProps): React.ReactNode {
-    const { onDataCollated } = props;
+    const { onDataCollated, showOnlyMyCases, showOnlyOfficialCases } = props;
     const tableOverflowWrapperRef = React.useRef<HTMLDivElement>(null);
 
     const { userInfo } = useAuthProvider();
@@ -64,24 +64,28 @@ export function CaseTable(props: CaseTableProps): React.ReactNode {
         },
     ]);
 
-    const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState(props.showOnlyMyCases);
-    const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState(props.showOnlyOfficialCases);
+    // Initialized to null so the filter state also gets synced on the initial render
+    const [prevShowOnlyMyCases, setPrevShowOnlyMyCases] = React.useState<boolean | null>(null);
+    const [prevShowOnlyOfficialCases, setPrevShowOnlyOfficialCases] = React.useState<boolean | null>(null);
+    // The username resolves asynchronously, so the author filter must be re-synced when it arrives
+    const [prevUserName, setPrevUserName] = React.useState<string | null>(null);
 
-    if (!isEqual(props.showOnlyOfficialCases, prevShowOnlyOfficialCases)) {
-        setPrevShowOnlyOfficialCases(props.showOnlyOfficialCases);
+    if (showOnlyOfficialCases !== prevShowOnlyOfficialCases) {
+        setPrevShowOnlyOfficialCases(showOnlyOfficialCases);
 
         setTableFilterState((prev) => ({
             ...prev,
-            status: props.showOnlyOfficialCases ? ["official"] : [],
+            status: showOnlyOfficialCases ? ["official"] : [],
         }));
     }
 
-    if (!isEqual(props.showOnlyMyCases, prevShowOnlyMyCases)) {
-        setPrevShowOnlyMyCases(props.showOnlyMyCases);
+    if (showOnlyMyCases !== prevShowOnlyMyCases || userName !== prevUserName) {
+        setPrevShowOnlyMyCases(showOnlyMyCases);
+        setPrevUserName(userName);
 
         setTableFilterState((prev) => ({
             ...prev,
-            author: props.showOnlyMyCases ? userName : "",
+            author: showOnlyMyCases ? userName : "",
         }));
     }
 
