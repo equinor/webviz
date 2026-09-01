@@ -368,23 +368,6 @@ function SessionTitle(props: SessionTitleProps): React.ReactNode {
     );
 }
 
-type DashboardTitleProps = {
-    dashboard: Dashboard;
-};
-
-function DashboardTitle(props: DashboardTitleProps): React.ReactNode {
-    const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
-
-    return (
-        <>
-            <ChevronRight className="text-neutral-subtle" />
-            <Typography family="header" size="sm" tone="neutral" weight="bolder" layoutClassName="truncate">
-                {metadata.name}
-            </Typography>
-        </>
-    );
-}
-
 type SessionFromSnapshotButtonProps = {
     workbench: Workbench;
 };
