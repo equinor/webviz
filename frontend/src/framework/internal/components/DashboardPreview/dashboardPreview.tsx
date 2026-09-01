@@ -76,7 +76,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                                     y={y + headerHeight / 2 + strokeWidth / 2}
                                     dominantBaseline="middle"
                                     textAnchor="start"
-                                    fontSize="8"
+                                    fontSize="4"
                                     fill="currentColor"
                                     clipPath={`url(#${titleClipId})`}
                                 >
