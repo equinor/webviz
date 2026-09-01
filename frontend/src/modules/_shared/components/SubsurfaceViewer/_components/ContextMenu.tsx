@@ -2,6 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash-es";
 
+import { ContextMenu as ContextMenuComponent } from "@lib/components/ContextMenu";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import {
     type ContextMenu as ContextMenuType,
@@ -9,7 +10,6 @@ import {
     DeckGlInstanceManagerTopic,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 
-import { ContextMenu as ContextMenuComponent } from "@lib/components/ContextMenu";
 
 export type ContextMenuProps = {
     deckGlManager: DeckGlInstanceManager;
