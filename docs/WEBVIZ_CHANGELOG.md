@@ -7,6 +7,10 @@
 
 ## August 2026
 
+### Added
+
+- **Visualizations**: When the browser stops a graphics-intensive view to free up GPU resources (e.g. with many 2D/3D views or browser tabs open), the view now shows an explanation and a "Restore" button instead of going silently blank. It also recovers automatically when you return to the tab.
+
 ### Fixed
 
 - **In-place volumes**: Zone and region order is now preserved in filters, plots, and tables. Fluid-specific responses such as oil and gas formation volume factors are now grouped correctly and provide clearer guidance when the required fluid is not selected.
