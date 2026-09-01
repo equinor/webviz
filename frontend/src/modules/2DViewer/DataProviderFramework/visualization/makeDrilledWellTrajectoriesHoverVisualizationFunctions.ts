@@ -1,5 +1,5 @@
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { GL } from "@luma.gl/constants";
+import { GL } from "@luma.gl/webgl/constants";
 import type { Point3D } from "@webviz/subsurface-viewer";
 
 import type { WellboreTrajectory_api } from "@api";

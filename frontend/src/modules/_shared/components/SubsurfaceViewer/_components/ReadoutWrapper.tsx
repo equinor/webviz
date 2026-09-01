@@ -20,7 +20,11 @@ import {
     type DeckGlInstanceManager,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 import type { ExtendedWellFeature, LayerPickInfoWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
-import { isPickWithReadout } from "@modules/_shared/utils/subsurfaceViewerLayers";
+import {
+    getScaledCoordinate,
+    getUnscaledCoordinates,
+    isPickWithReadout,
+} from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
@@ -45,7 +49,7 @@ export type ReadoutWrapperProps = {
     children?: React.ReactNode;
     onViewerHover?: (mouseEvent: MapMouseEvent | null) => void;
     onViewportHover?: (viewport: ViewportType | null) => void;
-    onPickingInfoChange?: (pickingInfoPerView: PickingInfoPerView) => void;
+    onPickingInfoChange?: (pickingInfoPerView: PickingInfoPerView, activeViewport?: string) => void;
 };
 
 // These are settings that impact performance - make them configurable later if needed
@@ -79,6 +83,10 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
     usePublishSubscribeTopicValue(props.deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
+    const isReadoutSuppressed = usePublishSubscribeTopicValue(
+        props.deckGlManager,
+        DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED,
+    );
 
     React.useEffect(function onMountEffect() {
         return function onUnmountEffect() {
@@ -96,19 +104,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             maxPickingDepth: number,
             initialPickingInfo: PickingInfoPerView,
         ): PickingInfoPerView {
-            const [x, y, z] = worldCoordinates;
-
             if (!deckGlRef.current?.deck?.isInitialized) return {};
 
             const deck = deckGlRef.current?.deck;
             const viewports = deck?.getViewports();
+            const [x, y] = worldCoordinates;
 
             if (!deck || !viewports?.length || x === undefined || y === undefined) return {};
 
             const pickingInfo: PickingInfoPerView = { ...initialPickingInfo };
 
-            // Prepare coordinate for picking by applying vertical scale if z is defined
-            const coord = z !== undefined ? [x, y, z * props.verticalScale] : [x, y];
+            // The SubsurfaceViewer will normally manage vertical-scale transformations for us,
+            // but here we're picking directly with deck.gl, so we need to transform the
+            // coordinate to the scaled number
+            const coord = getScaledCoordinate(worldCoordinates, props.verticalScale);
 
             for (const viewport of viewports) {
                 // If we already have picks for this viewport (e.g. from initial hover), skip it if
@@ -125,6 +134,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     depth: maxPickingDepth,
                     unproject3D: true,
                 });
+
+                // Transform picked coordinates back to normal space
+                for (const pick of picks) {
+                    if (pick.coordinate) {
+                        pick.coordinate = getUnscaledCoordinates(pick.coordinate, props.verticalScale);
+                    }
+                }
 
                 // WellsLayer has multiple pick-able sub layers, and each pick shows up a distinct info object.
                 const mergedPicks = consolidateWellsLayerReadouts(picks);
@@ -155,15 +171,41 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         DEBOUNCED_HOVER_DELAY_MS,
     );
 
-    const clearReadout = React.useCallback(
-        function clearReadout() {
+    // Clears the deep-pick readout (box + related callbacks) without touching the plain x/y/z coordinate
+    // readout, so callers that only want to suppress the pick information can keep the coordinate visible.
+    const clearPicks = React.useCallback(
+        function clearPicks() {
             setPickingInfoPerView({});
-            setPickingCoordinate(null);
             onViewerHover?.(null);
             onViewportHover?.(null);
             onPickingInfoChange?.({});
         },
         [onViewerHover, onViewportHover, onPickingInfoChange],
+    );
+
+    const clearReadout = React.useCallback(
+        function clearReadout() {
+            clearPicks();
+            setPickingCoordinate(null);
+        },
+        [clearPicks],
+    );
+
+    // A plugin (e.g. polyline editing) may request suppression outside of a mouse event (e.g. via a
+    // toolbar toggle). Reacting to it here ensures we always drop any pinned/click state and pending
+    // debounced picks, instead of relying solely on the next hover/click event to notice.
+    // Note: only the deep-pick readout is suppressed - the plain x/y/z coordinate readout stays as-is
+    // (it will keep updating live via hover events while suppression is active).
+    React.useEffect(
+        function resetOnReadoutSuppressed() {
+            if (!isReadoutSuppressed) {
+                return;
+            }
+            debouncedMultiViewPicking.cancel();
+            setReadoutMode("hover");
+            clearPicks();
+        },
+        [isReadoutSuppressed, debouncedMultiViewPicking, clearPicks],
     );
 
     const handleHoverEvent = React.useCallback(
@@ -194,6 +236,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             // Cancel any pending debounced picking
             debouncedMultiViewPicking.cancel();
 
+            // A plugin (e.g. polyline editing) has requested that the deep-pick readout be suppressed.
+            // The plain x/y/z coordinate readout above still tracks the cursor.
+            if (props.deckGlManager.isReadoutSuppressed()) {
+                clearPicks();
+                return;
+            }
+
             // Hover events should be cheap - we keep it simple as long as the mouse is moving
             // and do multi-view picking only when the mouse stops moving (debounced).
             // Deep picks must be confirmed by user (e.g. click) to avoid performance issues.
@@ -205,6 +254,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
             setPickingInfoPerView(function updatePickingInfoPerView(prev) {
                 const newPickingInfoPerView: Record<string, PickingInfoWithStaleInfo[]> = {};
+
                 for (const [viewId, picks] of Object.entries(prev)) {
                     if (viewId === hoveredViewPort.id) {
                         // Update current viewport picks - this happens anyways when returning from setState
@@ -217,11 +267,13 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                         }));
                     }
                 }
+
                 return { ...newPickingInfoPerView, ...updatedPickingInfoPerView };
             });
 
             onViewerHover?.(event);
             onViewportHover?.(hoveredViewPort);
+            onPickingInfoChange?.(updatedPickingInfoPerView, hoveredViewPort.id);
 
             // Now, initiate debounce for picking across all viewports
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
@@ -234,13 +286,20 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 );
             }
         },
-        [onViewerHover, onViewportHover, debouncedMultiViewPicking, clearReadout, readoutMode],
+        [
+            props.deckGlManager,
+            debouncedMultiViewPicking,
+            readoutMode,
+            clearPicks,
+            clearReadout,
+            onPickingInfoChange,
+            onViewerHover,
+            onViewportHover,
+        ],
     );
 
     const processClickEvent = React.useCallback(
         function processClickEvent(event: MapMouseEvent): void {
-            setReadoutMode("click");
-
             // Deep picking on click - cancel any pending debounced picking
             debouncedMultiViewPicking.cancel();
 
@@ -252,12 +311,21 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
-            onViewerHover?.(event);
-            onViewportHover?.(null);
-
             const coordinate = event.infos[0]?.coordinate ?? undefined;
             const pickingCoordinate = coordinate ? { x: coordinate[0], y: coordinate[1], z: coordinate[2] } : null;
             setPickingCoordinate(pickingCoordinate);
+
+            // A plugin (e.g. polyline editing) has requested that the deep-pick readout be suppressed.
+            // The plain x/y/z coordinate readout above still tracks the click position.
+            if (props.deckGlManager.isReadoutSuppressed()) {
+                setReadoutMode("hover");
+                clearPicks();
+                return;
+            }
+
+            setReadoutMode("click");
+            onViewerHover?.(event);
+            onViewportHover?.(null);
 
             const pickingInfoWithCoordinates = event.infos.find((pick) => pick.coordinate?.length);
             if (!pickingInfoWithCoordinates?.coordinate) {
@@ -278,16 +346,18 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 return;
             }
 
-            onPickingInfoChange?.(newPickInfoDict);
+            onPickingInfoChange?.(newPickInfoDict, hoveredViewPort.id);
         },
         [
             collectReadoutInformationFromAllViewports,
             debouncedMultiViewPicking,
             clearReadout,
+            clearPicks,
             onViewerHover,
             onViewportHover,
             onPickingInfoChange,
             userPickingDepth,
+            props.deckGlManager,
         ],
     );
 
@@ -344,9 +414,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             viewports: props.views.viewports,
             layout: props.views?.layout ?? [1, 1],
         },
-        lights: {
-            ...(ctx.visualizationMode === "2D" ? LIGHTS_2D : LIGHTS_3D),
-        },
+        lights: LIGHTS,
         verticalScale: props.verticalScale,
         scale: {
             visible: true,
@@ -414,6 +482,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 views={storedDeckGlViews}
                 getCameraPosition={ctx.onViewStateChange}
                 initialCameraPosition={ctx.viewState}
+                onRenderingProgress={() => {}} // No-op; only here to suppress the render progress indicator
             >
                 {props.views.viewports.map((viewport) => (
                     // @ts-expect-error -- This class is marked as abstract, but seems to just work as is
@@ -464,32 +533,23 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 }
 
-const LIGHTS_2D: LightsType = {
-    pointLights: [
-        {
-            position: [0, 0, 1],
-            intensity: 0.0,
-        },
-    ],
-    headLight: {
-        intensity: 0.0,
-        color: [255, 255, 255],
-    },
-    ambientLight: { intensity: 2.9, color: [255, 255, 255] },
-} as const;
-
-const LIGHTS_3D: LightsType = {
-    pointLights: [
-        {
-            position: [0, 0, 1],
-            intensity: 0.0,
-        },
-    ],
-    headLight: {
-        intensity: 1.0,
-        color: [255, 255, 255],
-    },
+const LIGHTS: LightsType = {
     ambientLight: { intensity: 1.5, color: [255, 255, 255] },
+    directionalLights: [
+        {
+            direction: [0, -1, -1],
+            intensity: 0.3,
+        },
+        {
+            direction: [0, 1, -1],
+            intensity: 0.3,
+        },
+
+        {
+            direction: [1, 0, -1],
+            intensity: 0.3,
+        },
+    ],
 } as const;
 
 /**

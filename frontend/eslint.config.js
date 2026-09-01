@@ -1,4 +1,5 @@
 import eslintCore from "@eslint/js";
+import pluginQuery from "@tanstack/eslint-plugin-query";
 import configPrettier from "eslint-config-prettier";
 import * as importPlugin from "eslint-plugin-import";
 import reactPlugin from "eslint-plugin-react";
@@ -14,6 +15,7 @@ export default eslintTypescript.config(
     reactPlugin.configs.flat["jsx-runtime"],
     importPlugin.flatConfigs.recommended,
     reactHooksPlugin.configs.flat.recommended,
+    pluginQuery.configs["flat/recommended"],
     // Configure typescript resolver
     // ! Make sure "eslint-import-resolver-typescript" is installed
     {
@@ -121,7 +123,9 @@ export default eslintTypescript.config(
                         { pattern: "@core/**", group: "internal", position: "before" },
                         { pattern: "@components/**", group: "internal", position: "before" },
                         { pattern: "@shared-types/**", group: "internal", position: "before" },
+
                         { pattern: "@assets/**", group: "internal", position: "before" },
+                        { pattern: "@docs/**", group: "internal", position: "after" },
                         { pattern: "@/**", group: "internal" }, // fallback for anything else under @
                     ],
                     pathGroupsExcludedImportTypes: ["react"],
@@ -129,6 +133,19 @@ export default eslintTypescript.config(
                     "newlines-between": "always",
                 },
             ],
+        },
+    },
+
+    // Playwright test fixtures use conventions that trip up React/lint rules ------------
+    {
+        files: ["tests/e2e/**/*.ts"],
+        rules: {
+            // Playwright's `use` fixture callback is not a React hook.
+            "react-hooks/rules-of-hooks": "off",
+            // Fixtures that don't consume other fixtures use `async ({}, use) => {}`.
+            "no-empty-pattern": "off",
+            // Allow `_`-prefixed fixture dependencies that are requested only for setup ordering.
+            "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
         },
     },
 );
