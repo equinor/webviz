@@ -20,8 +20,12 @@ type DashboardStackProps = {
  * PrivateWorkbenchSession.setActiveDashboard) own full Layout - chrome, ViewWrapper, view content,
  * all of it - simultaneously, each in a fixed position in the tree for as long as it stays
  * keep-alive. Only the active one is visible and interactive; the rest are toggled to
- * visibility:hidden + pointer-events:none. Switching dashboards is then a pure CSS visibility swap
- * with no mount/unmount, avoiding the WebGL/canvas reinitialization that both a separate
+ * display:none + pointer-events:none. display:none is used instead of visibility:hidden because
+ * module content can set an explicit inline visibility on its own descendant nodes (e.g. canvas/SVG
+ * elements), which would otherwise override an inherited visibility:hidden and paint through on top
+ * of the active dashboard. display:none cannot be overridden this way. Switching dashboards is then
+ * a pure CSS display swap with no mount/unmount, avoiding the WebGL/canvas reinitialization that both
+ * a separate
  * "active vs hidden" tree branch and a portal-retargeting approach caused.
  */
 export function DashboardStack(props: DashboardStackProps): React.ReactNode {
@@ -69,7 +73,7 @@ function DashboardStackItem(props: DashboardStackItemProps): React.ReactNode {
             <div
                 aria-hidden={!props.isActive}
                 className={resolveClassNames("absolute inset-0 h-full w-full", {
-                    invisible: !props.isActive,
+                    hidden: !props.isActive,
                     "pointer-events-none": !props.isActive,
                 })}
             >
