@@ -38,7 +38,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                         const x = element.relX * width;
                         const y = element.relY * height;
                         const strokeWidth = 2;
-                        const headerHeight = 6;
+                        const headerHeight = 9;
                         const module = ModuleRegistry.getModule(element.moduleName);
                         const drawFunc = module.getDrawPreviewFunc();
                         const titleClipId = `${clipIdPrefix}-title-clip-${idx}`;
@@ -76,7 +76,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                                     y={y + headerHeight / 2 + strokeWidth / 2}
                                     dominantBaseline="middle"
                                     textAnchor="start"
-                                    fontSize="3"
+                                    fontSize="8"
                                     fill="currentColor"
                                     clipPath={`url(#${titleClipId})`}
                                 >

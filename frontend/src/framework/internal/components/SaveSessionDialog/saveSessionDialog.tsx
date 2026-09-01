@@ -95,6 +95,7 @@ export function SaveSessionDialog(props: SaveSessionDialogProps): React.ReactNod
         .map((dashboard) => ({
             id: dashboard.getId(),
             name: dashboard.getMetadata().name,
+            description: dashboard.getMetadata().description,
             layout: dashboard.getLayout(),
         }));
 

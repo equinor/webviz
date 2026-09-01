@@ -77,6 +77,7 @@ export function extractLayouts(session: WorkbenchSessionDataContainer): Extracte
     return session.content.dashboards.map((dashboard) => ({
         id: dashboard.id,
         name: dashboard.name,
+        description: dashboard.description,
         layout: extractLayoutFromSerializedDashboard(dashboard),
     }));
 }
