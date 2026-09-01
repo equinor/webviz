@@ -24,7 +24,7 @@ export const ContextMenu = {
 
 export type { RootProps as ContextMenuRootProps } from "./_components/root";
 export type { TriggerProps as ContextMenuTriggerProps } from "./_components/trigger";
-export type { MenuProps as ContextMenuMenuProps } from "./_components/menu";
+export type { MenuProps as ContextMenuMenuProps, ContextMenuPoint } from "./_components/menu";
 export type { SubmenuProps as ContextMenuSubmenuProps } from "./_components/subMenu";
 export type { ItemProps as ContextMenuItemProps } from "./_components/item";
 export type { RadioItemProps as ContextMenuRadioItemProps } from "./_components/radioItem";
