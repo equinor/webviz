@@ -6,7 +6,7 @@ import {
     AddLink,
     Apps,
     ArrowDropDown,
-    Close,
+    ChevronRight,
     Edit,
     Fullscreen,
     FullscreenExit,
@@ -71,10 +71,12 @@ export function TopBar(props: TopBarProps): React.ReactNode {
             >
                 <FmuAppsButton />
                 <LogoWithText />
+                <Separator orientation="vertical" />
                 <div className="gap-x-xs flex min-w-0 grow items-center">
+                    <ReturnToStartPageButton workbench={props.workbench} />
                     {hasActiveSession ? (
                         <>
-                            <Separator orientation="vertical" />
+                            <ChevronRight />
                             <Title workbench={props.workbench} />
                             <TopBarButtons workbench={props.workbench} />
                         </>
@@ -167,11 +169,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
 
-    function handleCloseSessionClick() {
-        props.workbench.getSessionManager().maybeCloseCurrentSession();
-    }
-    const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
-
     return (
         <>
             {isSnapshot ? (
@@ -185,11 +182,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
                     <SnapshotButton workbench={props.workbench} />
                 </>
             )}
-            <Tooltip content={closeButtonTitle} side="bottom">
-                <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
-                    <Close fontSize="small" />
-                </TopBarButton>
-            </Tooltip>
         </>
     );
 }
@@ -231,6 +223,37 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
                 onClose={() => setEditSessionDialogOpen(false)}
             />
         </>
+    );
+}
+
+type ReturnToStartPageButtonProps = {
+    workbench: Workbench;
+};
+
+function ReturnToStartPageButton(props: ReturnToStartPageButtonProps): React.ReactNode {
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+
+    if (!activeSession) {
+        return (
+            <Typography size="md" layoutClassName="px-md">
+                Start
+            </Typography>
+        );
+    }
+
+    function handleReturnToStartPageClick() {
+        props.workbench.getSessionManager().maybeCloseCurrentSession();
+    }
+
+    return (
+        <Tooltip content="Return to start page" side="bottom">
+            <Button size="default" variant="ghost" tone="neutral" onClick={handleReturnToStartPageClick}>
+                Start
+            </Button>
+        </Tooltip>
     );
 }
 
