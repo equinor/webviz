@@ -79,6 +79,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
     const clickTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // In 3D, the multi-picking picks in a ray behind the cursor, which causes
+    // unintuitive picking points for layers with different topology (i.e clicking
+    // a well would hit the map behind the trajectory). Therefore we limit it to 1
     const userPickingDepth = ctx.visualizationMode === "3D" ? 1 : USER_PICKING_DEPTH;
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
@@ -113,6 +116,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             if (!deck || !viewports?.length || x === undefined || y === undefined) return {};
 
             const pickingInfo: PickingInfoPerView = { ...initialPickingInfo };
+            const activeViewportId = Object.keys(initialPickingInfo)?.[0];
 
             // The SubsurfaceViewer will normally manage vertical-scale transformations for us,
             // but here we're picking directly with deck.gl, so we need to transform the
@@ -120,6 +124,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const coord = getScaledCoordinate(worldCoordinates, props.verticalScale);
 
             for (const viewport of viewports) {
+                // As mentioned above, since 3D picking across different topologies is un-intuitive,
+                // we only allow picks from the active viewport here
+                if (ctx.visualizationMode === "3D" && viewport.id !== activeViewportId) {
+                    continue;
+                }
+
                 // If we already have picks for this viewport (e.g. from initial hover), skip it if
                 // picks are already at max depth
                 if (initialPickingInfo[viewport.id] && initialPickingInfo[viewport.id].length >= maxPickingDepth) {
@@ -149,7 +159,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
             return pickingInfo;
         },
-        [props.verticalScale],
+        [ctx.visualizationMode, props.verticalScale],
     );
 
     const collectReadoutInformationFromAllViewports = React.useCallback(
@@ -335,7 +345,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const newPickInfoDict = collectReadoutInformationFromAllViewports(
                 pickingInfoWithCoordinates.coordinate,
                 userPickingDepth,
-                {},
+                { [hoveredViewPort.id]: event.infos },
             );
 
             const yieldedPicks = Object.values(newPickInfoDict).some((picks) => picks.length > 0);

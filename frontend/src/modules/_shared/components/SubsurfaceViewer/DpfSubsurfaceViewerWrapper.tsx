@@ -11,7 +11,6 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { SeismicFenceMeshLayer } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
@@ -28,7 +27,6 @@ import type { LayerTransformationLookupMap } from "../../utils/subsurfaceViewer/
 import {
     makeHoverTransformationLookup,
     transformPolylineToFenceHoverData,
-    transformToFenceHoverData,
     transformToWellboreHoverData,
     transformToWorldPosHoverData,
 } from "../../utils/subsurfaceViewer/hoverTransformations";
@@ -84,7 +82,6 @@ const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
     [AdjustedWellsLayer, transformToWellboreHoverData],
     [MapLayer, transformToWorldPosHoverData],
     [Grid3DLayer, transformToWorldPosHoverData],
-    [SeismicFenceMeshLayer, transformToFenceHoverData],
     [PolylinesLayer, transformPolylineToFenceHoverData],
 );
 

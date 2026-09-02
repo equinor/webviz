@@ -13,8 +13,6 @@ import { isNaN } from "lodash-es";
 
 import type { FlowDataColors } from "@framework/types/wellbore";
 import { InjectionPhase, ProductionPhase } from "@framework/types/wellbore";
-import type { SeismicFenceMeshLayerPickingInfo } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
-import { SeismicFenceMeshLayer } from "@modules/3DViewer/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 
 import type { CategoricalReadout, ReadoutProperty } from "../components/Readout/types";
 import type { DrilledWellboreTrajectoryData } from "../DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
