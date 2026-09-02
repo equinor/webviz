@@ -111,7 +111,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(computedEnsembleIdent);
             addrBuilder.withName(computedSurfaceName);
-            addrBuilder.withAttribute(computedSurfaceAttribute);
+            addrBuilder.withTagNameAttribute(computedSurfaceAttribute);
             if (computedTimeOrInterval) {
                 addrBuilder.withTimeOrInterval(computedTimeOrInterval);
             }

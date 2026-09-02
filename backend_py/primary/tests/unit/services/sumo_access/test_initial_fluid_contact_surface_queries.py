@@ -5,9 +5,11 @@ from fmu.datamodels.fmu_results.enums import FluidContactType
 from fmu.sumo.explorer.explorer import SearchContext
 
 from webviz_services.sumo_access import surface_access
-from webviz_services.service_exceptions import MultipleDataMatchesError
+from webviz_services.service_exceptions import InvalidParameterError, MultipleDataMatchesError
 from webviz_services.sumo_access.queries.surface_queries import SurfInfo, SurfTimeType
 from webviz_services.sumo_access.surface_access import SurfaceAccess, _build_surface_meta_arr
+from webviz_services.sumo_access.surface_search_context import apply_attribute_filter
+from webviz_services.sumo_access.surface_types import StdResAttribute, SurfaceStandardResult, TagNameAttribute
 from webviz_services.utils.statistic_function import StatisticFunction
 
 
@@ -60,7 +62,76 @@ async def test_get_initial_fluid_contact_surfaces_metadata_keeps_same_name_conta
     ]
 
 
-async def test_get_initial_fluid_contact_surface_data_filters_on_contact_async(
+def test_apply_attribute_filter_uses_tagname_for_tag_attribute() -> None:
+    search_context = MagicMock()
+
+    apply_attribute_filter(search_context, TagNameAttribute(tag_name="my attr name"))
+
+    search_context.filter.assert_called_once_with(tagname="my attr name")
+
+
+def test_apply_attribute_filter_resolves_legacy_standard_result_attribute_string() -> None:
+    # Surface metadata still reports standard results through the attribute field
+    search_context = MagicMock()
+
+    apply_attribute_filter(search_context, TagNameAttribute(tag_name="structure_depth_surface (standard result)"))
+
+    search_context.filter.assert_called_once_with(standard_result="structure_depth_surface")
+
+
+def test_generic_surface_metadata_emits_attribute_string_that_filter_can_resolve() -> None:
+    meta_arr = _build_surface_meta_arr(
+        [
+            SurfInfo(
+                name="TopVolantis",
+                tagname="",
+                standard_result="structure_depth_surface",
+                content="depth",
+                is_stratigraphic=True,
+                global_min_val=1000.0,
+                global_max_val=2000.0,
+            )
+        ],
+        SurfTimeType.NO_TIME,
+        False,
+    )
+
+    search_context = MagicMock()
+    apply_attribute_filter(search_context, TagNameAttribute(tag_name=meta_arr[0].attribute_name))
+
+    search_context.filter.assert_called_once_with(standard_result="structure_depth_surface")
+
+
+def test_apply_attribute_filter_adds_sub_name_term_for_std_res_attribute() -> None:
+    search_context = MagicMock()
+    attribute = StdResAttribute(std_res_name=SurfaceStandardResult.FLUID_CONTACT_SURFACE, sub_name="goc")
+
+    apply_attribute_filter(search_context, attribute)
+
+    assert search_context.filter.call_args.kwargs == {"standard_result": "fluid_contact_surface"}
+    assert search_context.filter.return_value.filter.call_args.kwargs == {
+        "complex": {"term": {"data.fluid_contact.contact.keyword": "goc"}}
+    }
+
+
+def test_apply_attribute_filter_skips_sub_name_term_when_not_set() -> None:
+    search_context = MagicMock()
+    attribute = StdResAttribute(std_res_name=SurfaceStandardResult.STRUCTURE_DEPTH_SURFACE, sub_name=None)
+
+    apply_attribute_filter(search_context, attribute)
+
+    assert search_context.filter.call_args.kwargs == {"standard_result": "structure_depth_surface"}
+    search_context.filter.return_value.filter.assert_not_called()
+
+
+def test_apply_attribute_filter_rejects_sub_name_for_unsupported_standard_result() -> None:
+    attribute = StdResAttribute(std_res_name=SurfaceStandardResult.STRUCTURE_DEPTH_SURFACE, sub_name="nope")
+
+    with pytest.raises(InvalidParameterError, match="does not support a sub name"):
+        apply_attribute_filter(MagicMock(), attribute)
+
+
+async def test_get_realization_surface_data_filters_on_std_res_sub_name_async(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict = {}
@@ -72,11 +143,11 @@ async def test_get_initial_fluid_contact_surface_data_filters_on_contact_async(
     monkeypatch.setattr(SearchContext, "length_async", mock_length_async)
 
     access = SurfaceAccess(MagicMock(), "case-uuid", "ensemble-name")
-    with pytest.raises(MultipleDataMatchesError, match="Multiple \\(2\\) initial fluid contact surfaces"):
-        await access.get_initial_fluid_contact_surface_data_async(
+    with pytest.raises(MultipleDataMatchesError, match="Multiple \\(2\\) surfaces"):
+        await access.get_realization_surface_data_async(
             real_num=3,
             name="VOLANTIS GP. Top",
-            contact=FluidContactType.goc,
+            attribute=StdResAttribute(std_res_name=SurfaceStandardResult.FLUID_CONTACT_SURFACE, sub_name="goc"),
         )
 
     assert {"term": {"data.standard_result.name.keyword": "fluid_contact_surface"}} in captured["must"]
@@ -85,7 +156,7 @@ async def test_get_initial_fluid_contact_surface_data_filters_on_contact_async(
     assert {"bool": {"must_not": [{"exists": {"field": "data.time"}}]}} in captured["must"]
 
 
-async def test_submit_initial_fluid_contact_statistical_surface_scopes_sources_async(
+async def test_submit_statistical_surface_task_scopes_std_res_sources_async(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured: dict = {}
@@ -108,16 +179,15 @@ async def test_submit_initial_fluid_contact_statistical_surface_scopes_sources_a
     monkeypatch.setattr(surface_access, "_start_sumo_aggregation_task_async", mock_start_task)
 
     access = SurfaceAccess(MagicMock(), "case-uuid", "ensemble-name")
-    result = await access.submit_initial_fluid_contact_statistical_surface_calculation_task_async(
+    result = await access.submit_statistical_surface_calculation_task_async(
         statistic_function=StatisticFunction.MEAN,
         name="VOLANTIS GP. Top",
-        contact=FluidContactType.goc,
+        attribute=StdResAttribute(std_res_name=SurfaceStandardResult.FLUID_CONTACT_SURFACE, sub_name="goc"),
         realizations=[1, 3],
     )
 
     assert result == "task-id"
     assert {"term": {"data.standard_result.name.keyword": "fluid_contact_surface"}} in captured["must"]
-    assert {"term": {"data.content.keyword": "fluid_contact"}} in captured["must"]
     assert {"term": {"data.fluid_contact.contact.keyword": "goc"}} in captured["must"]
     assert {"terms": {"fmu.realization.id": [1, 3]}} in captured["must"]
     assert {"bool": {"must_not": [{"exists": {"field": "data.time"}}]}} in captured["must"]

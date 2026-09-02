@@ -1,18 +1,14 @@
 import { hashKey } from "@tanstack/query-core";
 import { isEqual } from "lodash-es";
 
-import type {
-    InitialFluidContactType_api,
-    Options,
-    PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api,
-    SurfaceIntersectionData_api,
-} from "@api";
+import type { Options, PostStatisticalSurfaceIntersectionHybridData_api, SurfaceIntersectionData_api } from "@api";
 import {
+    SurfaceStandardResult_api,
     SurfaceStatisticFunction_api,
     getInitialFluidContactSurfacesMetadataOptions,
-    postInitialFluidContactStatisticalSurfaceIntersectionHybrid,
-    postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey,
-    postGetInitialFluidContactSurfaceIntersectionOptions,
+    postStatisticalSurfaceIntersectionHybrid,
+    postStatisticalSurfaceIntersectionHybridQueryKey,
+    postGetSurfaceIntersectionOptions,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
 import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
@@ -43,6 +39,7 @@ import { Representation } from "@modules/_shared/DataProviderFramework/settings/
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
+import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
@@ -355,15 +352,16 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
             },
         };
 
+        const addrBuilder = new SurfaceAddressBuilder()
+            .withEnsembleIdent(ensembleIdent)
+            .withName(surfaceName)
+            .withStdResAttribute(SurfaceStandardResult_api.FLUID_CONTACT_SURFACE, contact);
+
         if (getSetting(Setting.REPRESENTATION) === Representation.REALIZATION) {
             const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization selected");
-            const queryOptions = postGetInitialFluidContactSurfaceIntersectionOptions({
+            const queryOptions = postGetSurfaceIntersectionOptions({
                 query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                    realization_num: realization,
-                    name: surfaceName,
-                    contact: contact as InitialFluidContactType_api,
+                    surf_addr_str: addrBuilder.withRealization(realization).buildRealizationAddrStr(),
                 },
                 body: requestBody,
             });
@@ -386,21 +384,23 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
                 (sensitivity?.realizations ?? []).includes(realization),
             );
         }
+
+        addrBuilder.withStatisticFunction(statisticFunction);
+
         const allRealizations = currentEnsemble?.getRealizations() ?? [];
-        const apiFunctionArgs: Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api, false> = {
+        if (!isEqual([...allRealizations], filteredRealizations)) {
+            addrBuilder.withStatisticRealizations(filteredRealizations);
+        }
+
+        const apiFunctionArgs: Options<PostStatisticalSurfaceIntersectionHybridData_api, false> = {
             query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                name: surfaceName,
-                contact: contact as InitialFluidContactType_api,
-                statistic_function: statisticFunction,
-                realizations: isEqual([...allRealizations], filteredRealizations) ? undefined : filteredRealizations,
+                surf_addr_str: addrBuilder.buildStatisticalAddrStr(),
             },
             body: requestBody,
         };
-        const queryKey = postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey(apiFunctionArgs);
+        const queryKey = postStatisticalSurfaceIntersectionHybridQueryKey(apiFunctionArgs);
         const queryOptions = wrapLongRunningQuery({
-            queryFn: postInitialFluidContactStatisticalSurfaceIntersectionHybrid,
+            queryFn: postStatisticalSurfaceIntersectionHybrid,
             queryFnArgs: apiFunctionArgs,
             queryKey,
             delayBetweenPollsSecs: 1,

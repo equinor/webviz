@@ -277,7 +277,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(surfaceName);
-            addrBuilder.withAttribute(attribute);
+            addrBuilder.withTagNameAttribute(attribute);
 
             const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
 

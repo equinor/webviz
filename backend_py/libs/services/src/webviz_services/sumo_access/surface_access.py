@@ -29,7 +29,13 @@ from webviz_services.service_exceptions import (
     ServiceTimeoutError,
 )
 
-from .surface_types import InitialFluidContactSurfaceMeta, SurfaceMeta, SurfaceMetaSet
+from .surface_types import InitialFluidContactSurfaceMeta, SurfaceAttribute, SurfaceMeta, SurfaceMetaSet
+from .surface_search_context import (
+    LEGACY_STD_RES_ATTRIBUTE_SUFFIX,
+    attribute_to_log_str,
+    make_observed_surface_search_context,
+    make_realization_surface_search_context,
+)
 from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
@@ -139,68 +145,6 @@ class SurfaceAccess:
 
         return [_initial_fluid_contact_surface_meta_from_bucket(bucket) for bucket in buckets]
 
-    @otel_span_decorator()
-    async def get_initial_fluid_contact_surface_data_async(
-        self, real_num: int, name: str, contact: FluidContactType
-    ) -> xtgeo.RegularSurface:
-        if not self._ensemble_name:
-            raise InvalidParameterError(
-                "Ensemble name must be set to get an initial fluid contact surface", Service.SUMO
-            )
-
-        perf_metrics = PerfMetrics()
-        surface_description = (
-            f"R:{real_num}__N:{name}__CONTACT:{contact.value}__I:{self._ensemble_name}__C:{self._case_uuid}"
-        )
-        search_context = SearchContext(self._sumo_client).surfaces.filter(
-            uuid=self._case_uuid,
-            ensemble=self._ensemble_name,
-            stage="realization",
-            realization=real_num,
-            aggregation=False,
-            is_observation=False,
-            dataformat="irap_binary",
-            content=Content.fluid_contact.value,
-            standard_result=StandardResultName.fluid_contact_surface.value,
-            name=name,
-            time=TimeFilter(TimeType.NONE),
-            complex={"term": {"data.fluid_contact.contact.keyword": contact.value}},
-        )
-
-        surface_count = await search_context.length_async()
-        if surface_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple ({surface_count}) initial fluid contact surfaces found in Sumo for: {surface_description}",
-                Service.SUMO,
-            )
-        if surface_count == 0:
-            raise NoDataError(
-                f"No initial fluid contact surface found in Sumo for: {surface_description}", Service.SUMO
-            )
-
-        sumo_surface: Surface = await search_context.getitem_async(0)
-        perf_metrics.record_lap("locate")
-
-        async with start_otel_span_async("download-blob") as span:
-            byte_stream: BytesIO = await sumo_surface.blob_async
-            size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
-            span.set_attribute("webviz.data.size_mb", size_mb)
-            perf_metrics.record_lap("download")
-
-        with start_otel_span("xtgeo-read", {"webviz.data.size_mb": size_mb}):
-            xtgeo_surface = xtgeo.surface_from_file(byte_stream)
-            perf_metrics.record_lap("xtgeo-read")
-
-        if are_all_surface_values_undefined(xtgeo_surface):
-            raise InvalidDataError("Initial fluid contact surface contains only undefined values", Service.SUMO)
-
-        LOGGER.debug(
-            f"Got initial fluid contact surface from Sumo in: {perf_metrics.to_string()} "
-            f"[{xtgeo_surface.ncol}x{xtgeo_surface.nrow}, {size_mb:.2f}MB] ({surface_description})"
-        )
-
-        return xtgeo_surface
-
     async def get_observed_surfaces_metadata_async(self) -> SurfaceMetaSet:
         perf_metrics = PerfMetrics()
 
@@ -239,7 +183,7 @@ class SurfaceAccess:
 
     @otel_span_decorator()
     async def get_realization_surface_data_async(
-        self, real_num: int, name: str, attribute: str, time_or_interval_str: str | None = None
+        self, real_num: int, name: str, attribute: SurfaceAttribute, time_or_interval_str: str | None = None
     ) -> xtgeo.RegularSurface:
         """
         Get surface data for a realization surface
@@ -252,17 +196,15 @@ class SurfaceAccess:
 
         surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
-        search_context = SearchContext(self._sumo_client).surfaces.filter(
-            uuid=self._case_uuid,
-            is_observation=False,
-            aggregation=False,
-            ensemble=self._ensemble_name,
-            realization=real_num,
+        search_context = make_realization_surface_search_context(
+            sumo_client=self._sumo_client,
+            case_uuid=self._case_uuid,
+            ensemble_name=self._ensemble_name,
             name=name,
-            time=time_filter,
+            attribute=attribute,
+            realization=real_num,
+            time_or_interval_str=time_or_interval_str,
         )
-        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
@@ -297,7 +239,7 @@ class SurfaceAccess:
 
     @otel_span_decorator()
     async def get_observed_surface_data_async(
-        self, name: str, attribute: str, time_or_interval_str: str
+        self, name: str, attribute: SurfaceAttribute, time_or_interval_str: str
     ) -> xtgeo.RegularSurface:
         """
         Get surface data for an observed surface
@@ -306,15 +248,13 @@ class SurfaceAccess:
 
         surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
-        search_context = SearchContext(self._sumo_client).surfaces.filter(
-            uuid=self._case_uuid,
-            stage="case",
-            is_observation=True,
+        search_context = make_observed_surface_search_context(
+            sumo_client=self._sumo_client,
+            case_uuid=self._case_uuid,
             name=name,
-            time=time_filter,
+            attribute=attribute,
+            time_or_interval_str=time_or_interval_str,
         )
-        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         if surf_count > 1:
@@ -349,7 +289,7 @@ class SurfaceAccess:
         self,
         statistic_function: StatisticFunction,
         name: str,
-        attribute: str,
+        attribute: SurfaceAttribute,
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
     ) -> xtgeo.RegularSurface:
@@ -370,18 +310,15 @@ class SurfaceAccess:
 
         surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
-
-        search_context = SearchContext(self._sumo_client).surfaces.filter(
-            uuid=self._case_uuid,
-            is_observation=False,
-            aggregation=False,
-            ensemble=self._ensemble_name,
+        search_context = make_realization_surface_search_context(
+            sumo_client=self._sumo_client,
+            case_uuid=self._case_uuid,
+            ensemble_name=self._ensemble_name,
             name=name,
+            attribute=attribute,
             realization=realizations if realizations is not None else True,
-            time=time_filter,
+            time_or_interval_str=time_or_interval_str,
         )
-        search_context = filter_search_context_on_attribute(search_context, attribute)
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
@@ -431,7 +368,7 @@ class SurfaceAccess:
         self,
         statistic_function: StatisticFunction,
         name: str,
-        attribute: str,
+        attribute: SurfaceAttribute,
         realizations: Sequence[int] | None = None,
         time_or_interval_str: str | None = None,
     ) -> str:
@@ -449,85 +386,30 @@ class SurfaceAccess:
             if len(realizations) == 0:
                 raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
 
+        perf_metrics = PerfMetrics()
+
         surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
-        search_context = SearchContext(self._sumo_client).surfaces.filter(
-            uuid=self._case_uuid,
-            is_observation=False,
-            aggregation=False,
-            ensemble=self._ensemble_name,
+        search_context = make_realization_surface_search_context(
+            sumo_client=self._sumo_client,
+            case_uuid=self._case_uuid,
+            ensemble_name=self._ensemble_name,
             name=name,
+            attribute=attribute,
             realization=realizations if realizations is not None else True,
-            time=_time_or_interval_str_to_sumo_time_filter(time_or_interval_str),
+            time_or_interval_str=time_or_interval_str,
         )
-        search_context = filter_search_context_on_attribute(search_context, attribute)
-
-        return await self._submit_statistical_surface_calculation_task_for_context_async(
-            search_context=search_context,
-            statistic_function=statistic_function,
-            realizations=realizations,
-            surface_description=surf_str,
-        )
-
-    @otel_span_decorator()
-    async def submit_initial_fluid_contact_statistical_surface_calculation_task_async(
-        self,
-        statistic_function: StatisticFunction,
-        name: str,
-        contact: FluidContactType,
-        realizations: Sequence[int] | None = None,
-    ) -> str:
-        if not self._ensemble_name:
-            raise InvalidParameterError("Ensemble name must be set to calculate statistical surface", Service.SUMO)
-
-        if realizations is not None and len(realizations) == 0:
-            raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
-
-        surface_description = f"N:{name}__CONTACT:{contact.value}__I:{self._ensemble_name}__C:{self._case_uuid}"
-        search_context = SearchContext(self._sumo_client).surfaces.filter(
-            uuid=self._case_uuid,
-            ensemble=self._ensemble_name,
-            stage="realization",
-            realization=realizations if realizations is not None else True,
-            aggregation=False,
-            is_observation=False,
-            dataformat="irap_binary",
-            content=Content.fluid_contact.value,
-            standard_result=StandardResultName.fluid_contact_surface.value,
-            name=name,
-            time=TimeFilter(TimeType.NONE),
-            complex={"term": {"data.fluid_contact.contact.keyword": contact.value}},
-        )
-
-        return await self._submit_statistical_surface_calculation_task_for_context_async(
-            search_context=search_context,
-            statistic_function=statistic_function,
-            realizations=realizations,
-            surface_description=surface_description,
-        )
-
-    async def _submit_statistical_surface_calculation_task_for_context_async(
-        self,
-        search_context: SearchContext,
-        statistic_function: StatisticFunction,
-        realizations: Sequence[int] | None,
-        surface_description: str,
-    ) -> str:
-        perf_metrics = PerfMetrics()
 
         surf_count = await search_context.length_async()
         perf_metrics.record_lap("locate")
 
         if surf_count == 0:
-            raise InvalidParameterError(
-                f"No statistical source surfaces found in Sumo for: {surface_description}", Service.SUMO
-            )
+            raise InvalidParameterError(f"No statistical source surfaces found in Sumo for: {surf_str}", Service.SUMO)
         if surf_count == 1:
             # As of now, the Sumo aggregation service does not support single realization aggregation.
             # For now throw an error. Alternatively we could fetch the single realization surface
             raise InvalidParameterError(
-                f"Could not calculate statistical surface, only one source surface found for: {surface_description}",
-                Service.SUMO,
+                f"Could not calculate statistical surface, only one source surface found for: {surf_str}", Service.SUMO
             )
 
         # Ensure that we got data for all the requested realizations
@@ -537,7 +419,7 @@ class SurfaceAccess:
             missing_reals = list(set(realizations) - set(realizations_found))
             if len(missing_reals) > 0:
                 raise InvalidParameterError(
-                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for: {surface_description}",
+                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for: {surf_str}",
                     Service.SUMO,
                 )
 
@@ -547,7 +429,7 @@ class SurfaceAccess:
 
         LOGGER.debug(
             f"Submitted statistical surface aggregation job in: {perf_metrics.to_string()} "
-            f"[stat: {sumo_stat_op_str}, real count: {len(realizations_found)}] ({surface_description})"
+            f"[stat: {sumo_stat_op_str}, real count: {len(realizations_found)}] ({surf_str})"
         )
 
         return sumo_task_uuid
@@ -625,16 +507,24 @@ class SurfaceAccess:
         LOGGER.debug(f"Polled surface job ({task_state.status=}) took: {perf_metrics.to_string()} ({sumo_task_id=})")
         return InProgress(progress_message=f"{task_state.status}")
 
-    def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
+    def _make_real_surf_log_str(
+        self, real_num: int, name: str, attribute: SurfaceAttribute, date_str: str | None
+    ) -> str:
+        addr_str = (
+            f"N={name}, A={attribute_to_log_str(attribute)}, R={real_num}, D={date_str}, "
+            f"C={self._case_uuid}, E={self._ensemble_name}"
+        )
         return addr_str
 
-    def _make_obs_surf_log_str(self, name: str, attribute: str, date_str: str) -> str:
-        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}"
+    def _make_obs_surf_log_str(self, name: str, attribute: SurfaceAttribute, date_str: str) -> str:
+        addr_str = f"N={name}, A={attribute_to_log_str(attribute)}, D={date_str}, C={self._case_uuid}"
         return addr_str
 
-    def _make_stat_surf_log_str(self, name: str, attribute: str, date_str: str | None) -> str:
-        addr_str = f"N={name}, A={attribute}, D={date_str}, C={self._case_uuid}, E={self._ensemble_name}"
+    def _make_stat_surf_log_str(self, name: str, attribute: SurfaceAttribute, date_str: str | None) -> str:
+        addr_str = (
+            f"N={name}, A={attribute_to_log_str(attribute)}, D={date_str}, "
+            f"C={self._case_uuid}, E={self._ensemble_name}"
+        )
         return addr_str
 
 
@@ -718,19 +608,6 @@ def _should_treat_httpx_exception_as_timeout(httpx_exception: httpx.HTTPError) -
     return False
 
 
-def filter_search_context_on_attribute(search_context: SearchContext, attribute: str) -> SearchContext:
-    """Adds "attribute" filter to an existing search context. Attribute can be either a tagname or a standard result."""
-
-    if attribute.endswith(" (standard result)"):
-        standard_result = attribute.removesuffix(" (standard result)")
-        return search_context.filter(
-            standard_result=standard_result,
-        )
-    return search_context.filter(
-        tagname=attribute,
-    )
-
-
 def _initial_fluid_contact_surface_meta_from_bucket(bucket: dict) -> InitialFluidContactSurfaceMeta:
     return InitialFluidContactSurfaceMeta(
         name=bucket["key"]["name"],
@@ -747,7 +624,7 @@ def _build_surface_meta_arr(
     ret_arr: list[SurfaceMeta] = []
 
     for info in src_surf_info_arr:
-        # First step in migrating standard results out of the legacy generic surface metadata path.
+        # Standard results that have their own metadata endpoint are not part of the generic listing.
         if info.standard_result == StandardResultName.fluid_contact_surface.value:
             continue
 
@@ -765,7 +642,7 @@ def _build_surface_meta_arr(
             continue
 
         if info.standard_result:
-            attribute_str = f"{info.standard_result} (standard result)"
+            attribute_str = f"{info.standard_result}{LEGACY_STD_RES_ATTRIBUTE_SUFFIX}"
 
         else:
             attribute_str = info.tagname
@@ -800,29 +677,6 @@ def _build_surface_meta_arr(
         )
 
     return ret_arr
-
-
-def _time_or_interval_str_to_sumo_time_filter(time_or_interval_str: str | None) -> TimeFilter:
-    if time_or_interval_str is None:
-        return TimeFilter(TimeType.NONE)
-
-    timestamp_arr = time_or_interval_str.split("/", 1)
-    if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
-        raise ValueError("time_or_interval_str must contain a single timestamp or interval")
-
-    if len(timestamp_arr) == 1:
-        return TimeFilter(
-            TimeType.TIMESTAMP,
-            start=timestamp_arr[0],
-            end=timestamp_arr[0],
-            exact=True,
-        )
-    return TimeFilter(
-        TimeType.INTERVAL,
-        start=timestamp_arr[0],
-        end=timestamp_arr[1],
-        exact=True,
-    )
 
 
 def _map_to_sumo_aggregation_operation(statistic_function: StatisticFunction) -> str:

@@ -28,6 +28,7 @@ def test_to_api_initial_fluid_contact_surface_meta_keeps_same_name_contacts_dist
         {
             "name": "VOLANTIS GP. Top",
             "contact": schemas.InitialFluidContactType.FWL,
+            "standard_result": schemas.SurfaceStandardResult.FLUID_CONTACT_SURFACE,
             "name_is_stratigraphic_offical": True,
             "value_min": 1700.0,
             "value_max": 1700.0,
@@ -35,6 +36,7 @@ def test_to_api_initial_fluid_contact_surface_meta_keeps_same_name_contacts_dist
         {
             "name": "VOLANTIS GP. Top",
             "contact": schemas.InitialFluidContactType.GOC,
+            "standard_result": schemas.SurfaceStandardResult.FLUID_CONTACT_SURFACE,
             "name_is_stratigraphic_offical": True,
             "value_min": 1600.0,
             "value_max": 1600.0,

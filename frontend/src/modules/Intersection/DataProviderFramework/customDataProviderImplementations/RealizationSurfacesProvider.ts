@@ -28,6 +28,7 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
+import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 
 import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 
@@ -289,13 +290,16 @@ export class RealizationSurfacesProvider implements CustomDataProviderImplementa
 
         const surfacesIntersectionPromises = Promise.all(
             surfaceNames.map((surfaceName) => {
+                const surfAddrStr = new SurfaceAddressBuilder()
+                    .withEnsembleIdent(ensembleIdent)
+                    .withName(surfaceName)
+                    .withTagNameAttribute(attribute)
+                    .withRealization(realization)
+                    .buildRealizationAddrStr();
+
                 const queryOptions = postGetSurfaceIntersectionOptions({
                     query: {
-                        case_uuid: ensembleIdent.getCaseUuid(),
-                        ensemble_name: ensembleIdent.getEnsembleName(),
-                        realization_num: realization,
-                        name: surfaceName,
-                        attribute: attribute,
+                        surf_addr_str: surfAddrStr,
                     },
                     body: {
                         cumulative_length_polyline: {

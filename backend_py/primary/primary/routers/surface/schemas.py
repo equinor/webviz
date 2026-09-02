@@ -63,11 +63,23 @@ class InitialFluidContactType(str, Enum):
     OWC = "owc"
 
 
+class SurfaceStandardResult(str, Enum):
+    """The FMU standard results that are surfaces. Used when building standard result surface addresses."""
+
+    FLUID_CONTACT_SURFACE = "fluid_contact_surface"
+    GRID_EXTRACTED_DEPTH_SURFACE = "grid_extracted_depth_surface"
+    STRUCTURE_DEPTH_FAULT_SURFACE = "structure_depth_fault_surface"
+    STRUCTURE_DEPTH_ISOCHORE = "structure_depth_isochore"
+    STRUCTURE_DEPTH_SURFACE = "structure_depth_surface"
+    STRUCTURE_TIME_SURFACE = "structure_time_surface"
+
+
 class InitialFluidContactSurfaceMeta(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
     contact: InitialFluidContactType
+    standard_result: SurfaceStandardResult
     name_is_stratigraphic_offical: bool
     value_min: float | None
     value_max: float | None

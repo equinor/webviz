@@ -392,7 +392,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(formationName);
-            addrBuilder.withAttribute(attribute);
+            addrBuilder.withTagNameAttribute(attribute);
             if (this.isTimePointSurface()) {
                 const timeOrInterval = getSetting(Setting.TIME_POINT);
                 addrBuilder.withTimeOrInterval(timeOrInterval);

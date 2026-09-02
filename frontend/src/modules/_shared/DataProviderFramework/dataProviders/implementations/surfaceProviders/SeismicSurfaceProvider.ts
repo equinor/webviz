@@ -398,7 +398,7 @@ export class SeismicSurfaceProvider implements CustomDataProviderImplementation<
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(surfaceName);
-            addrBuilder.withAttribute(attribute);
+            addrBuilder.withTagNameAttribute(attribute);
             if (this.isTimePointSurface()) {
                 const timeOrInterval = getSetting(Setting.TIME_POINT);
                 addrBuilder.withTimeOrInterval(timeOrInterval);

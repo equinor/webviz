@@ -168,6 +168,7 @@ def to_api_initial_fluid_contact_surface_meta(
         schemas.InitialFluidContactSurfaceMeta(
             name=item.name,
             contact=schemas.InitialFluidContactType(item.contact.value),
+            standard_result=schemas.SurfaceStandardResult.FLUID_CONTACT_SURFACE,
             name_is_stratigraphic_offical=item.is_stratigraphic,
             value_min=item.global_min_val,
             value_max=item.global_max_val,

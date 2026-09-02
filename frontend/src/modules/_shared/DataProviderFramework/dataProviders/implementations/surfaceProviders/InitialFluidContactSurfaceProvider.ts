@@ -2,13 +2,13 @@ import { hashKey } from "@tanstack/query-core";
 import { isEqual } from "lodash-es";
 
 import {
+    SurfaceStandardResult_api,
     SurfaceStatisticFunction_api,
-    getInitialFluidContactStatisticalSurfaceDataHybrid,
-    getInitialFluidContactStatisticalSurfaceDataHybridQueryKey,
-    getInitialFluidContactSurfaceDataOptions,
+    getStatisticalSurfaceDataHybrid,
+    getStatisticalSurfaceDataHybridQueryKey,
+    getSurfaceDataOptions,
     getInitialFluidContactSurfacesMetadataOptions,
-    type GetInitialFluidContactStatisticalSurfaceDataHybridData_api,
-    type InitialFluidContactType_api,
+    type GetStatisticalSurfaceDataHybridData_api,
     type Options,
 } from "@api";
 import { lroProgressBus } from "@framework/LroProgressBus";
@@ -24,6 +24,7 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
@@ -83,11 +84,9 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
 
     makeValueRange({
         getData,
-    }: DataProviderAccessors<
-        InitialFluidContactSurfaceSettings,
-        SurfaceData,
-        SurfaceStoredData
-    >): [number, number] | null {
+    }: DataProviderAccessors<InitialFluidContactSurfaceSettings, SurfaceData, SurfaceStoredData>):
+        | [number, number]
+        | null {
         const surfaceData = getData()?.surfaceData;
         return surfaceData ? [surfaceData.value_min, surfaceData.value_max] : null;
     }
@@ -232,23 +231,34 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
         });
     }
 
-    fetchData(params: FetchDataParams<InitialFluidContactSurfaceSettings, SurfaceData, SurfaceStoredData>): Promise<SurfaceData> {
-        const { getSetting, getStoredData, getWorkbenchSession, fetchQuery, setProgressMessage, onFetchCancelOrFinish } =
-            params;
+    fetchData(
+        params: FetchDataParams<InitialFluidContactSurfaceSettings, SurfaceData, SurfaceStoredData>,
+    ): Promise<SurfaceData> {
+        const {
+            getSetting,
+            getStoredData,
+            getWorkbenchSession,
+            fetchQuery,
+            setProgressMessage,
+            onFetchCancelOrFinish,
+        } = params;
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const surfaceName = assertNonNull(getSetting(Setting.SURFACE_NAME), "No surface selected");
         const contact = assertNonNull(getSetting(Setting.FLUID_CONTACT), "No fluid contact selected");
         const representation = getSetting(Setting.REPRESENTATION);
 
+        const addrBuilder = new SurfaceAddressBuilder()
+            .withEnsembleIdent(ensembleIdent)
+            .withName(surfaceName)
+            .withStdResAttribute(SurfaceStandardResult_api.FLUID_CONTACT_SURFACE, contact);
+
         if (representation === Representation.REALIZATION) {
             const realizationNum = assertNonNull(getSetting(Setting.REALIZATION), "No realization selected");
-            const queryOptions = getInitialFluidContactSurfaceDataOptions({
+            const surfAddrStr = addrBuilder.withRealization(realizationNum).buildRealizationAddrStr();
+
+            const queryOptions = getSurfaceDataOptions({
                 query: {
-                    case_uuid: ensembleIdent.getCaseUuid(),
-                    ensemble_name: ensembleIdent.getEnsembleName(),
-                    realization_num: realizationNum,
-                    name: surfaceName,
-                    contact: contact as InitialFluidContactType_api,
+                    surf_addr_str: surfAddrStr,
                     data_format: SurfaceDataFormat.FLOAT,
                     resample_to_def_str: null,
                     ...makeCacheBustingQueryParam(ensembleIdent),
@@ -277,25 +287,23 @@ export class InitialFluidContactSurfaceProvider implements CustomDataProviderImp
             );
         }
 
+        addrBuilder.withStatisticFunction(statisticFunction);
+
         const allRealizations = currentEnsemble?.getRealizations() ?? [];
-        const requestedRealizations = isEqual([...allRealizations], filteredRealizations)
-            ? undefined
-            : filteredRealizations;
-        const apiFunctionArgs: Options<GetInitialFluidContactStatisticalSurfaceDataHybridData_api, false> = {
+        if (!isEqual([...allRealizations], filteredRealizations)) {
+            addrBuilder.withStatisticRealizations(filteredRealizations);
+        }
+
+        const apiFunctionArgs: Options<GetStatisticalSurfaceDataHybridData_api, false> = {
             query: {
-                case_uuid: ensembleIdent.getCaseUuid(),
-                ensemble_name: ensembleIdent.getEnsembleName(),
-                name: surfaceName,
-                contact: contact as InitialFluidContactType_api,
-                statistic_function: statisticFunction,
-                realizations: requestedRealizations,
+                surf_addr_str: addrBuilder.buildStatisticalAddrStr(),
                 data_format: SurfaceDataFormat.FLOAT,
                 resample_to_def_str: null,
             },
         };
-        const queryKey = getInitialFluidContactStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
+        const queryKey = getStatisticalSurfaceDataHybridQueryKey(apiFunctionArgs);
         const queryOptions = wrapLongRunningQuery({
-            queryFn: getInitialFluidContactStatisticalSurfaceDataHybrid,
+            queryFn: getStatisticalSurfaceDataHybrid,
             queryFnArgs: apiFunctionArgs,
             queryKey,
             delayBetweenPollsSecs: 1,

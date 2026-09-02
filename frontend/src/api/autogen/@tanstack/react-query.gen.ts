@@ -34,8 +34,6 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
-    getInitialFluidContactStatisticalSurfaceDataHybrid,
-    getInitialFluidContactSurfaceData,
     getInitialFluidContactSurfacesMetadata,
     getInjectionData,
     getInplaceTableDefinitions,
@@ -89,15 +87,14 @@ import {
     type Options,
     postGetAggregatedPerRealizationInplaceTableData,
     postGetAggregatedStatisticalInplaceTableData,
-    postGetInitialFluidContactSurfaceIntersection,
     postGetPolylineIntersection,
     postGetSampleSurfaceInPoints,
     postGetSeismicFence,
     postGetSurfaceIntersection,
     postGetWellTrajectoriesFormationSegments,
-    postInitialFluidContactStatisticalSurfaceIntersectionHybrid,
     postLogout,
     postRefreshFingerprintsForEnsembles,
+    postStatisticalSurfaceIntersectionHybrid,
     root,
     updateSession,
 } from "../sdk.gen";
@@ -162,12 +159,6 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
-    GetInitialFluidContactStatisticalSurfaceDataHybridData_api,
-    GetInitialFluidContactStatisticalSurfaceDataHybridError_api,
-    GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api,
-    GetInitialFluidContactSurfaceDataData_api,
-    GetInitialFluidContactSurfaceDataError_api,
-    GetInitialFluidContactSurfaceDataResponse_api,
     GetInitialFluidContactSurfacesMetadataData_api,
     GetInitialFluidContactSurfacesMetadataError_api,
     GetInitialFluidContactSurfacesMetadataResponse_api,
@@ -323,9 +314,6 @@ import type {
     PostGetAggregatedStatisticalInplaceTableDataData_api,
     PostGetAggregatedStatisticalInplaceTableDataError_api,
     PostGetAggregatedStatisticalInplaceTableDataResponse_api,
-    PostGetInitialFluidContactSurfaceIntersectionData_api,
-    PostGetInitialFluidContactSurfaceIntersectionError_api,
-    PostGetInitialFluidContactSurfaceIntersectionResponse_api,
     PostGetPolylineIntersectionData_api,
     PostGetPolylineIntersectionError_api,
     PostGetPolylineIntersectionResponse_api,
@@ -341,14 +329,14 @@ import type {
     PostGetWellTrajectoriesFormationSegmentsData_api,
     PostGetWellTrajectoriesFormationSegmentsError_api,
     PostGetWellTrajectoriesFormationSegmentsResponse_api,
-    PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api,
-    PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api,
-    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
     PostLogoutData_api,
     PostLogoutResponse_api,
     PostRefreshFingerprintsForEnsemblesData_api,
     PostRefreshFingerprintsForEnsemblesError_api,
     PostRefreshFingerprintsForEnsemblesResponse_api,
+    PostStatisticalSurfaceIntersectionHybridData_api,
+    PostStatisticalSurfaceIntersectionHybridError_api,
+    PostStatisticalSurfaceIntersectionHybridResponse_api,
     RootData_api,
     RootResponse_api,
     UpdateSessionData_api,
@@ -1010,32 +998,6 @@ export const getInitialFluidContactSurfacesMetadataOptions = (
         queryKey: getInitialFluidContactSurfacesMetadataQueryKey(options),
     });
 
-export const getInitialFluidContactSurfaceDataQueryKey = (
-    options: Options<GetInitialFluidContactSurfaceDataData_api>,
-) => createQueryKey("getInitialFluidContactSurfaceData", options);
-
-/**
- * Get Initial Fluid Contact Surface Data
- */
-export const getInitialFluidContactSurfaceDataOptions = (options: Options<GetInitialFluidContactSurfaceDataData_api>) =>
-    queryOptions<
-        GetInitialFluidContactSurfaceDataResponse_api,
-        AxiosError<GetInitialFluidContactSurfaceDataError_api>,
-        GetInitialFluidContactSurfaceDataResponse_api,
-        ReturnType<typeof getInitialFluidContactSurfaceDataQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getInitialFluidContactSurfaceData({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getInitialFluidContactSurfaceDataQueryKey(options),
-    });
-
 export const getObservedSurfacesMetadataQueryKey = (options: Options<GetObservedSurfacesMetadataData_api>) =>
     createQueryKey("getObservedSurfacesMetadata", options);
 
@@ -1077,7 +1039,9 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
+ * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
+ * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
+ * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1085,11 +1049,16 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
+ * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
+ * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
+ *
+ * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
+ * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) =>
     queryOptions<
@@ -1198,6 +1167,35 @@ export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStat
 
 /**
  * Get Statistical Surface Data Hybrid
+ *
+ * Get data for a statistical surface, calculated by Sumo as a long running operation.
+ *
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
+ * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
+ * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
+ * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
+ *
+ * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
+ * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const getStatisticalSurfaceDataHybridOptions = (options: Options<GetStatisticalSurfaceDataHybridData_api>) =>
     queryOptions<
@@ -1218,24 +1216,53 @@ export const getStatisticalSurfaceDataHybridOptions = (options: Options<GetStati
         queryKey: getStatisticalSurfaceDataHybridQueryKey(options),
     });
 
-export const getInitialFluidContactStatisticalSurfaceDataHybridQueryKey = (
-    options: Options<GetInitialFluidContactStatisticalSurfaceDataHybridData_api>,
-) => createQueryKey("getInitialFluidContactStatisticalSurfaceDataHybrid", options);
+export const postStatisticalSurfaceIntersectionHybridQueryKey = (
+    options: Options<PostStatisticalSurfaceIntersectionHybridData_api>,
+) => createQueryKey("postStatisticalSurfaceIntersectionHybrid", options);
 
 /**
- * Get Initial Fluid Contact Statistical Surface Data Hybrid
+ * Post Statistical Surface Intersection Hybrid
+ *
+ * Get an intersection through a statistical surface, calculated by Sumo as a long running operation.
+ *
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
+ * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
+ * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
+ * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
+ *
+ * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
+ * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
-export const getInitialFluidContactStatisticalSurfaceDataHybridOptions = (
-    options: Options<GetInitialFluidContactStatisticalSurfaceDataHybridData_api>,
+export const postStatisticalSurfaceIntersectionHybridOptions = (
+    options: Options<PostStatisticalSurfaceIntersectionHybridData_api>,
 ) =>
     queryOptions<
-        GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api,
-        AxiosError<GetInitialFluidContactStatisticalSurfaceDataHybridError_api>,
-        GetInitialFluidContactStatisticalSurfaceDataHybridResponse_api,
-        ReturnType<typeof getInitialFluidContactStatisticalSurfaceDataHybridQueryKey>
+        PostStatisticalSurfaceIntersectionHybridResponse_api,
+        AxiosError<PostStatisticalSurfaceIntersectionHybridError_api>,
+        PostStatisticalSurfaceIntersectionHybridResponse_api,
+        ReturnType<typeof postStatisticalSurfaceIntersectionHybridQueryKey>
     >({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getInitialFluidContactStatisticalSurfaceDataHybrid({
+            const { data } = await postStatisticalSurfaceIntersectionHybrid({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1243,54 +1270,55 @@ export const getInitialFluidContactStatisticalSurfaceDataHybridOptions = (
             });
             return data;
         },
-        queryKey: getInitialFluidContactStatisticalSurfaceDataHybridQueryKey(options),
-    });
-
-export const postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey = (
-    options: Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>,
-) => createQueryKey("postInitialFluidContactStatisticalSurfaceIntersectionHybrid", options);
-
-/**
- * Post Initial Fluid Contact Statistical Surface Intersection Hybrid
- */
-export const postInitialFluidContactStatisticalSurfaceIntersectionHybridOptions = (
-    options: Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>,
-) =>
-    queryOptions<
-        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
-        AxiosError<PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api>,
-        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
-        ReturnType<typeof postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postInitialFluidContactStatisticalSurfaceIntersectionHybrid({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: postInitialFluidContactStatisticalSurfaceIntersectionHybridQueryKey(options),
+        queryKey: postStatisticalSurfaceIntersectionHybridQueryKey(options),
     });
 
 /**
- * Post Initial Fluid Contact Statistical Surface Intersection Hybrid
+ * Post Statistical Surface Intersection Hybrid
+ *
+ * Get an intersection through a statistical surface, calculated by Sumo as a long running operation.
+ *
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
+ * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
+ * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
+ * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
+ *
+ * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
+ * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
-export const postInitialFluidContactStatisticalSurfaceIntersectionHybridMutation = (
-    options?: Partial<Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>>,
+export const postStatisticalSurfaceIntersectionHybridMutation = (
+    options?: Partial<Options<PostStatisticalSurfaceIntersectionHybridData_api>>,
 ): UseMutationOptions<
-    PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
-    AxiosError<PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api>,
-    Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>
+    PostStatisticalSurfaceIntersectionHybridResponse_api,
+    AxiosError<PostStatisticalSurfaceIntersectionHybridError_api>,
+    Options<PostStatisticalSurfaceIntersectionHybridData_api>
 > => {
     const mutationOptions: UseMutationOptions<
-        PostInitialFluidContactStatisticalSurfaceIntersectionHybridResponse_api,
-        AxiosError<PostInitialFluidContactStatisticalSurfaceIntersectionHybridError_api>,
-        Options<PostInitialFluidContactStatisticalSurfaceIntersectionHybridData_api>
+        PostStatisticalSurfaceIntersectionHybridResponse_api,
+        AxiosError<PostStatisticalSurfaceIntersectionHybridError_api>,
+        Options<PostStatisticalSurfaceIntersectionHybridData_api>
     > = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postInitialFluidContactStatisticalSurfaceIntersectionHybrid({
+            const { data } = await postStatisticalSurfaceIntersectionHybrid({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,
@@ -1307,10 +1335,34 @@ export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfa
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
+ * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
+ * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
+ * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
+ *
+ * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
+ * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfaceIntersectionData_api>) =>
     queryOptions<
@@ -1334,10 +1386,34 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
+ * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
+ * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
+ * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
+ *
+ * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
+ * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const postGetSurfaceIntersectionMutation = (
     options?: Partial<Options<PostGetSurfaceIntersectionData_api>>,
@@ -1353,61 +1429,6 @@ export const postGetSurfaceIntersectionMutation = (
     > = {
         mutationFn: async (fnOptions) => {
             const { data } = await postGetSurfaceIntersection({
-                ...options,
-                ...fnOptions,
-                throwOnError: true,
-            });
-            return data;
-        },
-    };
-    return mutationOptions;
-};
-
-export const postGetInitialFluidContactSurfaceIntersectionQueryKey = (
-    options: Options<PostGetInitialFluidContactSurfaceIntersectionData_api>,
-) => createQueryKey("postGetInitialFluidContactSurfaceIntersection", options);
-
-/**
- * Post Get Initial Fluid Contact Surface Intersection
- */
-export const postGetInitialFluidContactSurfaceIntersectionOptions = (
-    options: Options<PostGetInitialFluidContactSurfaceIntersectionData_api>,
-) =>
-    queryOptions<
-        PostGetInitialFluidContactSurfaceIntersectionResponse_api,
-        AxiosError<PostGetInitialFluidContactSurfaceIntersectionError_api>,
-        PostGetInitialFluidContactSurfaceIntersectionResponse_api,
-        ReturnType<typeof postGetInitialFluidContactSurfaceIntersectionQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await postGetInitialFluidContactSurfaceIntersection({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: postGetInitialFluidContactSurfaceIntersectionQueryKey(options),
-    });
-
-/**
- * Post Get Initial Fluid Contact Surface Intersection
- */
-export const postGetInitialFluidContactSurfaceIntersectionMutation = (
-    options?: Partial<Options<PostGetInitialFluidContactSurfaceIntersectionData_api>>,
-): UseMutationOptions<
-    PostGetInitialFluidContactSurfaceIntersectionResponse_api,
-    AxiosError<PostGetInitialFluidContactSurfaceIntersectionError_api>,
-    Options<PostGetInitialFluidContactSurfaceIntersectionData_api>
-> => {
-    const mutationOptions: UseMutationOptions<
-        PostGetInitialFluidContactSurfaceIntersectionResponse_api,
-        AxiosError<PostGetInitialFluidContactSurfaceIntersectionError_api>,
-        Options<PostGetInitialFluidContactSurfaceIntersectionData_api>
-    > = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postGetInitialFluidContactSurfaceIntersection({
                 ...options,
                 ...fnOptions,
                 throwOnError: true,
