@@ -16,6 +16,7 @@ import { chunk, isEqual, isNaN } from "lodash-es";
 import { transformPickToNormalSpace } from "@framework/utils/deckgl";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
+import type { UtmFence } from "@modules/_shared/utils/fence";
 import { lengthAlongAtXyPosition } from "@modules/_shared/utils/polylineHoverUtils";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
@@ -37,11 +38,7 @@ export type SeismicFence = {
     properties: Float32Array;
     traceXYZPointsArray: Float32Array;
     vVector: [number, number, number];
-    sourceFence?: {
-        id: string;
-        utmXY: number[];
-        offset: number;
-    };
+    sourceFence?: UtmFence;
 };
 
 export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {

@@ -169,28 +169,10 @@ export function usePublishHoverValue<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,
     moduleInstanceId: string,
-): (v: HoverData[T], caller?: string) => void {
-    // In some cases, a publisher can have separate system that wants to emit hover data. This can
-    // sometimes cause conflicts when one system emits an object while the other does not. To
-    // we only want to emit "null" when none of our potential systems see a hover value.
-    const callerPayloadsRef = React.useRef<Record<string, HoverData[T]>>({});
-
+): (v: HoverData[T]) => void {
     return React.useCallback(
-        function updateHoverValue(newValue: HoverData[T], caller = "generic") {
-            if (import.meta.env.DEV) {
-                console.debug(`[HoverService] ${moduleInstanceId} published to ${topic}`, newValue);
-            }
-
-            callerPayloadsRef.current[caller] = newValue;
-
-            if (newValue === null) {
-                // Only emit a null value if all sources are null
-                if (Object.values(callerPayloadsRef.current).every((v) => v === null)) {
-                    hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
-                }
-            } else {
-                hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
-            }
+        function updateHoverValue(newValue: HoverData[T]) {
+            hoverService.updateHoverValue(topic, newValue, moduleInstanceId);
         },
         [hoverService, moduleInstanceId, topic],
     );

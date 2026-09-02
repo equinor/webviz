@@ -3,7 +3,7 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
+import type { BoundingBox2D, LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { isEqual } from "lodash-es";
 import { Key } from "ts-key-enum";
@@ -408,7 +408,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
-        bounds: ctx.bounds,
+        bounds: ctx.visualizationMode === "2D" ? (ctx.bounds as BoundingBox2D) : undefined,
         views: {
             ...props.views,
             viewports: props.views.viewports,

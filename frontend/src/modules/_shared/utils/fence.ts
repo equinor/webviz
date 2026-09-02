@@ -1,5 +1,11 @@
 import { IntersectionType } from "@framework/types/intersection";
 
+export type UtmFence = {
+    id: string;
+    utmXY: number[];
+    offset: number;
+};
+
 export type FenceSource = {
     type: IntersectionType;
     uuid: string;

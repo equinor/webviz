@@ -1,6 +1,7 @@
 import type { Color, Position } from "@deck.gl/core";
 import type { ColumnLayerProps } from "@deck.gl/layers";
-import { LineLayer, ColumnLayer } from "@deck.gl/layers";
+import { ColumnLayer } from "@deck.gl/layers";
+import { WellMarkersLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { chunk } from "lodash-es";
 
 import { HoverTopic } from "@framework/HoverService";
@@ -19,7 +20,7 @@ import type {
 import { makeFenceSourceId } from "@modules/_shared/utils/fence";
 import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 
-const HIGHLIGHT_COLOR = [255, 0, 0, 180] as Color;
+const HIGHLIGHT_COLOR = [255, 0, 0] as Color;
 const FENCE_HIGHLIGHT_LAYER_PROPS: Partial<ColumnLayerProps> = {
     diskResolution: 20,
     radiusUnits: "pixels",
@@ -49,8 +50,6 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
             if (!sourcePolylineWithSectionLengths) return [];
             if (hoverInfo.fenceId !== makeFenceSourceId(intersectionSetting)) return [];
 
-            const data = [];
-
             // For well-bores, the path-along get's offset by the extension length
             let lengthAlong = hoverInfo.lengthAlong;
             if (intersectionSetting.type === IntersectionType.WELLBORE) {
@@ -68,51 +67,42 @@ export function makeIntersectionSeismicHoverVisualizationFunction(
                 throw new Error("Expected valid path position for hover length along polyline");
             }
 
-            data.push(hoverPos.toSpliced(-1, 1, -fenceDepthPos));
+            const data: Position = [hoverPos[0], hoverPos[1], -fenceDepthPos];
 
             const depthMarkerVisible =
                 hoverInfo.depth !== null &&
                 inBounds(hoverInfo.depth, fenceData.min_fence_depth, fenceData.max_fence_depth);
 
             return [
-                new ColumnLayer({
-                    ...FENCE_HIGHLIGHT_LAYER_PROPS,
+                // Making use of this subsurface layer, as it gives a nice scalable disc with a slight thickness
+                new WellMarkersLayer({
+                    name: "markers",
                     id: `${id}-hovered-fence-column-depth`,
-                    data: data,
-                    radius: 46,
-                    getPosition: (d) => d,
-                    getElevation: 1,
+                    // Using a "dummy" object for data stability, all properties are computed
+                    data: ["DUMMY"],
+                    getPosition: () => data,
+                    getSize: 6,
+                    getAzimuth: 90,
+                    getInclination: 0,
+                    shape: "circle",
+                    sizeUnits: "pixels",
+                    ZIncreasingDownwards: false,
+                    getColor: HIGHLIGHT_COLOR,
+                    // The outline adds a little extra thickness. This makes the marker easier to see when viewing it head on
+                    getOutlineColor: HIGHLIGHT_COLOR,
                     visible: depthMarkerVisible,
                 }),
 
                 new ColumnLayer({
                     ...FENCE_HIGHLIGHT_LAYER_PROPS,
                     id: `${id}-hovered-fence-pos-along`,
-                    data: data,
-                    radius: 16,
-
+                    // Using a "dummy" object for data stability, all properties are computed
+                    data: ["DUMMY"],
                     // The column should go along the entire fence, forming a line through it
-                    getPosition: (d) => d.toSpliced(-1, 1, -fenceData.max_fence_depth) as Position,
+                    getPosition: () => [hoverPos[0], hoverPos[1], -fenceData.max_fence_depth] as Position,
+                    radius: 2,
                     getElevation: Math.abs(fenceData.max_fence_depth - fenceData.min_fence_depth),
-                }),
-
-                // On large zoom levels, the column gets hard to see (there is no "min-radius"). This line layer is
-                // obscured by the position column when zoomed in, but as we zoom out, the line layer remains visible
-                // thanks to the min-pixels, making it appear as if the column keeps a min-radius
-                // ! Note that the ordering matters. By having the line layer last, the column layer hides it fully
-                new LineLayer({
-                    id: `${id}-hovered-fence-line-along`,
-                    data: data,
-                    getSourcePosition: (d: number[]) => d.toSpliced(-1, 1, -fenceData.min_fence_depth) as Position,
-                    getTargetPosition: (d: number[]) => d.toSpliced(-1, 1, -fenceData.max_fence_depth) as Position,
-                    getColor: HIGHLIGHT_COLOR,
-
-                    getWidth: 1,
-                    widthMinPixels: 3,
-                    widthMaxPixels: 3,
-
-                    billboard: true,
-                    pickable: false,
+                    material: { ambient: 0.5 },
                 }),
             ];
         },
