@@ -1,7 +1,7 @@
 import React from "react";
 
-import { isDevMode } from "@lib/utils/devMode";
 import { createPortal } from "@lib/utils/createPortal";
+import { isDevMode } from "@lib/utils/devMode";
 
 import { useComposedRefs } from "../utils/useComposedRefs";
 import { assertSafeId } from "../utils/validateId";
