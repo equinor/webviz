@@ -1,3 +1,5 @@
+import { GridView } from "@mui/icons-material";
+
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import type { Workbench } from "@framework/Workbench";
@@ -7,9 +9,8 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
-import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { WindowListIcon } from "@lib/icons";
-import { GridView } from "@mui/icons-material";
+import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type StartPanelProps = {
     workbench: Workbench;

@@ -1,6 +1,7 @@
 import type React from "react";
 
 import { Tune } from "@mui/icons-material";
+
 import { Paragraph } from "@lib/components/Typography/compositions";
 
 type EmptySettingsPlaceholderProps = {

@@ -137,15 +137,16 @@ function LogoWithText(): React.ReactNode {
     return (
         <div className="gap-x-sm flex flex-nowrap items-center">
             <Tooltip content="Reload and go to start page" side="bottom" delay="long">
-                <div
+                <a
+                    href="/"
+                    aria-label="Reload and go to start page"
                     className="gap-x-sm flex cursor-pointer flex-nowrap items-center"
-                    onClick={() => (window.location.href = "/")}
                 >
                     <FmuLogo className="h-8 w-8" />
                     <Heading as="h6" weight="bolder" layoutClassName="whitespace-nowrap hidden lg:block">
                         FMU Analysis
                     </Heading>
-                </div>
+                </a>
             </Tooltip>
         </div>
     );
@@ -213,6 +214,7 @@ function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
             id: "fullscreen",
             label: "Fullscreen",
             icon: <Fullscreen />,
+            checked: isFullscreen,
         },
         { type: "divider" },
         {
