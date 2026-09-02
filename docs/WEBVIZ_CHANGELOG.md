@@ -1,8 +1,3 @@
-<!--::metadata
-  changelog_counter: 1
-  date: 20.08.2026
--->
-
 # Changelog
 
 ## August 2026
