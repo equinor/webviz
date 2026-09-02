@@ -13,15 +13,6 @@ export type TutorialVideo = {
 
 export const TUTORIAL_VIDEOS: TutorialVideo[] = [
     {
-        slug: "session-and-ensemble-selection",
-        category: "Framework",
-        title: "Create a session and select an ensemble",
-        description: "Start a new session and add a Drogon ensemble to it.",
-        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.webm",
-        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.png",
-        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.steps.json",
-    },
-    {
         slug: "landing-page-overview",
         category: "Framework",
         title: "Explore the landing page",
@@ -29,6 +20,15 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.webm",
         thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.png",
         stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.steps.json",
+    },
+    {
+        slug: "session-and-ensemble-selection",
+        category: "Framework",
+        title: "Create a session and select an ensemble",
+        description: "Start a new session and add a Drogon ensemble to it.",
+        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.webm",
+        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.png",
+        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.steps.json",
     },
     {
         slug: "grid3d-viewer-3d-grid-model",
