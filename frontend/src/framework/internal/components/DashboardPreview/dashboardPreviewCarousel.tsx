@@ -95,7 +95,7 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                                 <button
                                     key={dashboard.id}
                                     data-carousel-indicator
-                                    className={`focusable text-body-xs block h-4 w-4 shrink-0 cursor-pointer rounded-full ${i === currentIndex ? "bg-accent-strong- bg-accent-strong-active text-accent-strong-on-emphasis" : "bg-accent hover:bg-accent-hover text-accent-on-emphasis"}`}
+                                    className={`focusable text-body-xs flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full ${i === currentIndex ? "bg-accent-strong- bg-accent-strong-active text-accent-strong-on-emphasis" : "bg-accent hover:bg-accent-hover text-accent-on-emphasis"}`}
                                     onClick={(e) => handleIndicatorClick(e, i)}
                                 >
                                     {i + 1}

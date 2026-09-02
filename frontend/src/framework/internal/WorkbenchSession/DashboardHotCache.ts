@@ -91,6 +91,20 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
         this.notify();
     }
 
+    /**
+     * Dev-mode helper: evict a hot dashboard right now instead of waiting for its timer (or the max
+     * count) to expire, so the teardown/recreate path can be exercised on demand. No-op if the
+     * dashboard isn't currently hot.
+     */
+    evictNow(dashboardId: string): void {
+        const isHot = this._pending.some((entry) => entry.dashboard.getId() === dashboardId);
+        if (!isHot) {
+            return;
+        }
+        this.evictInternal(dashboardId);
+        this.notify();
+    }
+
     /** Cancels every pending eviction. Call on session teardown. */
     clear(): void {
         for (const entry of this._pending) {

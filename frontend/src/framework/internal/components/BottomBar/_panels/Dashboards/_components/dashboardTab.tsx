@@ -1,21 +1,25 @@
 import React from "react";
 
-import { Close, ContentCopy, DragIndicator, Edit, MoreVert } from "@mui/icons-material";
+import { Close, ContentCopy, DragIndicator, Edit, Eject, MoreVert } from "@mui/icons-material";
 
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
 import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
 import { Tabs } from "@lib/components/Tabs";
-import { Tooltip } from "@lib/components/Tooltip";
+import { Typography } from "@lib/components/Typography";
+import { isDevMode } from "@lib/utils/devMode";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
+import { DashboardTabPreview } from "./dashboardTabPreview";
 
 export type DashboardTabProps = {
     dashboard: Dashboard;
     draggable: boolean;
     isHot: boolean;
     isDragged: boolean;
+    previewDisabled: boolean;
     dropIndicatorSide: "before" | "after" | null;
     onRequestDelete: (dashboardId: string) => void;
     onEdit: (dashboardId: string) => void;
@@ -24,10 +28,11 @@ export type DashboardTabProps = {
     onDrop: (event: React.DragEvent, dashboardId: string) => void;
     onDragEnd: () => void;
     onClone: (dashboardId: string) => void;
+    onForceEviction: (dashboardId: string) => void;
 };
 
 export function DashboardTab(props: DashboardTabProps) {
-    const { onRequestDelete, onEdit, onClone, onDragStart, onDragOver, onDrop } = props;
+    const { onRequestDelete, onEdit, onClone, onForceEviction, onDragStart, onDragOver, onDrop } = props;
     const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
 
     const handleDeleteClick = React.useCallback(
@@ -75,6 +80,14 @@ export function DashboardTab(props: DashboardTabProps) {
         [onDrop, props.dashboard],
     );
 
+    const handleForceEviction = React.useCallback(
+        function handleForceEviction(event: React.MouseEvent) {
+            event.stopPropagation();
+            onForceEviction(props.dashboard.getId());
+        },
+        [onForceEviction, props.dashboard],
+    );
+
     return (
         <>
             <div className="relative w-0">
@@ -82,7 +95,7 @@ export function DashboardTab(props: DashboardTabProps) {
                     <div className="bg-accent-strong absolute top-0 -left-0.5 h-full w-1" />
                 )}
             </div>
-            <Tooltip content={props.dashboard.getMetadata().name} side="bottom">
+            <DashboardTabPreview dashboard={props.dashboard} disabled={props.previewDisabled}>
                 <Tabs.Tab
                     as="div"
                     value={props.dashboard.getId()}
@@ -102,22 +115,14 @@ export function DashboardTab(props: DashboardTabProps) {
                     >
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </span>
-                    <Tooltip
-                        content={
-                            props.isHot
-                                ? "Kept in memory - switching to this dashboard is instant"
-                                : "Not kept in memory - switching to this dashboard will reload it"
-                        }
-                        side="top"
+                    <Typography
+                        size="md"
+                        tone={props.isHot ? "accent" : "neutral"}
+                        layoutClassName="truncate"
+                        weight="bolder"
                     >
-                        <span
-                            className={resolveClassNames("h-1.5 w-1.5 shrink-0 rounded-full", {
-                                "bg-success-strong": props.isHot,
-                                "bg-neutral-subtle border-neutral-strong border": !props.isHot,
-                            })}
-                        />
-                    </Tooltip>
-                    <span className="truncate">{metadata.name}</span>
+                        {metadata.name}
+                    </Typography>
                     <Menu.Root>
                         <Menu.Trigger>
                             <Button iconOnly variant="ghost" size="small" onClick={(e) => e.stopPropagation()}>
@@ -137,11 +142,23 @@ export function DashboardTab(props: DashboardTabProps) {
                                 <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
                                     Delete
                                 </Menu.Item>
+                                {isDevMode() && (
+                                    <>
+                                        <Menu.Separator />
+                                        <Menu.Item
+                                            onClick={handleForceEviction}
+                                            icon={<Eject />}
+                                            disabled={!props.isHot}
+                                        >
+                                            Force eviction
+                                        </Menu.Item>
+                                    </>
+                                )}
                             </Menu.Group>
                         </Menu.Popup>
                     </Menu.Root>
                 </Tabs.Tab>
-            </Tooltip>
+            </DashboardTabPreview>
             <div className="relative w-0">
                 {props.dropIndicatorSide === "after" && (
                     <div className="bg-accent-strong absolute top-0 -left-0.5 h-full w-1" />

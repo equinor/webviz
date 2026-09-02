@@ -100,6 +100,13 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         [workbenchSession],
     );
 
+    const handleForceEvictionClick = React.useCallback(
+        function handleForceEvictionClick(dashboardId: string) {
+            workbenchSession.getDashboardHotCache().evictNow(dashboardId);
+        },
+        [workbenchSession],
+    );
+
     return (
         <div className="gap-xs -mt-[2px] flex w-full items-center">
             <div className="gap-3xs flex min-w-0 items-center">
@@ -148,6 +155,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                         hotDashboardIds.includes(dashboard.getId())
                                     }
                                     isDragged={reorder.draggedDashboardId === dashboard.getId()}
+                                    previewDisabled={reorder.draggedDashboardId !== null}
                                     dropIndicatorSide={
                                         reorder.dropTarget?.dashboardId === dashboard.getId()
                                             ? reorder.dropTarget.insertAfter
@@ -162,6 +170,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                     onDrop={(e) => reorder.handleDrop(dashboard.getId(), e)}
                                     onDragEnd={reorder.handleDragEnd}
                                     onClone={handleCloneDashboardClick}
+                                    onForceEviction={handleForceEvictionClick}
                                 />
                             ))}
                         </Tabs.List>

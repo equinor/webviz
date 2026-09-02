@@ -109,6 +109,29 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._layout;
     }
 
+    /**
+     * Layout to render a read-only preview from. Returns the live layout when the dashboard is
+     * loaded, and otherwise reconstructs it from the cached serialized state - an unloaded
+     * dashboard (never activated, or evicted from the hot cache) keeps `_layout` empty until
+     * `load()`, so a plain `getLayout()` would make every inactive dashboard preview as empty.
+     */
+    getLayoutForPreview(): LayoutElement[] {
+        if (this._layout.length > 0 || !this._cachedState) {
+            return this._layout;
+        }
+
+        return this._cachedState.moduleInstances.map((serializedInstance) => ({
+            moduleInstanceId: serializedInstance.moduleInstanceState.id,
+            moduleName: serializedInstance.moduleInstanceState.name,
+            relX: serializedInstance.layoutState.relX,
+            relY: serializedInstance.layoutState.relY,
+            relHeight: serializedInstance.layoutState.relHeight,
+            relWidth: serializedInstance.layoutState.relWidth,
+            minimized: serializedInstance.layoutState.minimized,
+            maximized: serializedInstance.layoutState.maximized,
+        }));
+    }
+
     setLayout(layout: LayoutElement[]): void {
         this._layout = layout;
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
