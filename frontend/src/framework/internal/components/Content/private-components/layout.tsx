@@ -1,6 +1,6 @@
 import React from "react";
 
-import { WebAsset } from "@mui/icons-material";
+import { WebAssetOff } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
@@ -38,6 +38,7 @@ import {
 
 import { ViewWrapper } from "./ViewWrapper";
 import { ViewWrapperPlaceholder } from "./viewWrapperPlaceholder";
+import { Paragraph } from "@lib/components/Typography/compositions";
 
 type LayoutProps = {
     workbench: Workbench;
@@ -493,12 +494,13 @@ function EmptyLayout(props: EmptyLayoutProps) {
 
     return (
         <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
-            <WebAsset fontSize="large" />
-            <span className="text-center">
-                <strong>No modules added.</strong>
-                <br />
+            <WebAssetOff fontSize="large" />
+            <Paragraph size="md" weight="bolder" tone="neutral">
+                No modules added
+            </Paragraph>
+            <Paragraph size="sm" tone="neutral">
                 Drag modules here from the modules list.
-            </span>
+            </Paragraph>
             {rightDrawerContent !== RightDrawerContent.ModulesList && (
                 <Button onClick={openModulesList}>Open Modules List</Button>
             )}
