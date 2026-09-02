@@ -290,7 +290,7 @@ export async function hideDevOverlays(page: Page): Promise<void> {
  * subsequent action waits for/locates the element on its own. Best-effort: any failure here is
  * swallowed so a purely-cosmetic cursor animation can never fail a test.
  */
-async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
+export async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
     if (!RECORDING) {
         return;
     }

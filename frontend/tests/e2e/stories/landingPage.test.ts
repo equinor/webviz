@@ -6,7 +6,7 @@ import { expect } from "@playwright/test";
 
 import { test } from "../support/recordingFixtures";
 import { tutorialMeta } from "../support/tutorialMeta";
-import { captureThumbnail, hideDevOverlays, installFakeCursor, pace, smoothClick } from "../support/walkthroughHelpers";
+import { captureThumbnail, hideDevOverlays, installFakeCursor, pace, smoothClick, smoothMoveToLocator } from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
     slug: "landing-page-overview",
@@ -79,14 +79,18 @@ test.describe("Landing page", () => {
         markStep("Topbar section");
 
         await smoothClick(page, page.getByRole("button").first());
-        await narrate(
-            "The top bar holds a handful of important buttons. On the far left are links to Sumo, the results management tool that Webviz fetches most of its data from, and to the FMU Hub, with general information about the Fast Model Update ecosystem.",
-        );
-        await smoothClick(page, page.getByRole("button").nth(1));
-        await narrate("You can also jump into fullscreen mode...");
+        await narrate("The top bar holds a handful of important buttons.");
 
-        await smoothClick(page, page.getByRole("button").nth(1));
-        await narrate("...and step right back out again.");
+        await smoothMoveToLocator(page, page.getByRole("link", { name: "Sumo" }));
+        await narrate(
+            "On the far left is a link to Sumo, the results management tool that Webviz fetches most of its data from...",
+        );
+
+        await smoothMoveToLocator(page, page.getByRole("link", { name: "FMU Hub" }));
+        await narrate("...and next to it, a link to the FMU Hub, with general information about Fast Model Update.");
+
+        await smoothMoveToLocator(page, page.getByRole("button").nth(1));
+        await narrate("You can also switch to fullscreen mode from here whenever you want more room to work.");
         await narrate("If you prefer dark mode...");
         await smoothClick(page, page.getByRole("button").nth(2));
         await narrate("...you can toggle it on here, and switch back to light mode just as easily.");
