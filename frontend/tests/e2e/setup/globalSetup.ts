@@ -106,6 +106,8 @@ function writeStorageState(seedResult: SeedResult): void {
                 localStorage: [
                     // Hide dev tools in playwright tests.
                     { name: "devToolsVisible", value: "false" },
+                    // Force dev mode off so the dev server behaves like a production build.
+                    { name: "webvizDebug_forceDevMode", value: "false" },
                 ],
             },
         ],

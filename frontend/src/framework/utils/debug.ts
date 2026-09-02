@@ -6,6 +6,11 @@ const DEBUG_FLAG_PREFIX = "webvizDebug_";
 export const SHOW_DEBUG_MODULES_FLAG = "showDebugModules";
 
 /**
+ * Flag to force dev mode on or off, overriding the build-time `NODE_ENV` check.
+ */
+export const FORCE_DEV_MODE_FLAG = "forceDevMode";
+
+/**
  * Checks if a stored debug flag is true (as in, "true" or "1", case insensitive)
  * @param flag a debug flag key
  * @returns true if the debug flag is enabled
@@ -49,4 +54,14 @@ export function setDebugSetting(setting: string, value: string | null): void {
 export function tanstackDebugTimeOverride(time: number): number {
     if (debugFlagIsEnabled("disableTanstackCache")) return 0;
     return time;
+}
+
+/**
+ * Reads the `forceDevMode` debug flag, used to override the build-time dev mode detection.
+ * @returns `true`/`false` when the flag explicitly forces dev mode on/off, or `null` when it is not set
+ */
+export function getDevModeOverride(): boolean | null {
+    const storedFlag = getDebugSetting(FORCE_DEV_MODE_FLAG);
+    if (storedFlag === null) return null;
+    return ["true", "1"].includes(storedFlag.toLowerCase());
 }
