@@ -56,6 +56,44 @@ npx playwright codegen http://localhost:8080
 
 Read more: https://playwright.dev/docs/codegen-intro
 
+### Recording new stories with codegen
+
+Stories live in `tests/e2e/stories/`. To create a new story using Playwright Codegen:
+
+1. Start the full docker development stack:
+   ```bash
+   docker-compose -f docker-compose.yml -f docker-compose-cosmos-db.yml up
+   ```
+2. Give the backend access to Drogon Sumo data using the test user. You can do this by first ensuring
+   the environment variable `SHARED_KEY_DROGON_READ_PROD` is set and then run
+   ```bash
+   npm run test:e2e:sumo-key --prefix ./frontend
+   ```
+   Re-run this whenever the docker stack is recreated (the key lives inside the container).
+4. Launch codegen
+   ```bash
+   npm run test:e2e:codegen --prefix ./frontend
+   ```
+   If you are in GitHub codespace you can view the application on port 6080.
+   Captured actions are stored to `tests/e2e/stories/_recorded.gen.ts`
+5. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
+   selectors/actions into it, wrapping interactions in `smoothClick`/`smoothFill` and adding
+   `narrate(...)` lines.
+6. Add named step markers at the meaningful points in a walkthrough with `markStep("Step title")`.
+7. Verify with
+   ```bash
+   npm run test:e2e:record --prefix ./frontend
+   ```
+
+#### Running a single story
+
+While working on one story you usually don't want to run the whole suite. Pass a filter through to
+Playwright with `--` (from the `frontend/` folder):
+
+```bash
+npm run --prefix ./frontend test:e2e:record -- tests/e2e/stories/landingPage.test.ts
+```
+
 ## Component tests
 
 Component tests are performed using `Playwright`. Each author of a generic component (i.e. placed in the `src/lib/components/` folder) is encouraged to write one or more component tests for their respective component.

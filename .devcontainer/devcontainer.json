@@ -9,11 +9,20 @@
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
-    }
+    },
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
+  "containerEnv": {
+    "VNC_RESOLUTION": "1920x1080",
+    "VNC_DPI": "96"
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "waitFor": "postCreateCommand",
+  "forwardPorts": [6080],
   "hostRequirements": {
     "cpus": 4,
-    "memory": "8gb"
+    "memory": "8gb",
+    "storage": "64gb"
   },
   "otherPortsAttributes": {
     "onAutoForward": "silent"
@@ -28,6 +37,9 @@
   "portsAttributes": {
     "8080": {
       "label": "Development server"
+    },
+    "6080": {
+      "label": "noVNC desktop"
     }
   }
 }

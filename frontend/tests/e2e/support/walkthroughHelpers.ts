@@ -1,5 +1,9 @@
+import path from "path";
+
 import type { Locator, Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { DROGON_AHM } from "./drogonTestData";
 
 /**
  * Helpers for the recorded UI walkthrough tests.
@@ -11,6 +15,18 @@ import { expect } from "@playwright/test";
 
 /** True when the run is capturing video (set via RECORD=1, see tests/e2e/_playwright.config.ts). */
 export const RECORDING = !!process.env.RECORD;
+
+/**
+ * Save a still frame of the page as the tutorial's preview thumbnail (used as the poster image in
+ * the in-app Tutorials dialog). Call this at the moment that best represents the finished result.
+ * No-op unless RECORD=1.
+ */
+export async function captureThumbnail(page: Page): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await page.screenshot({ path: path.join(test.info().outputDir, "thumbnail.png") });
+}
 
 /** Pause lengths (ms) used only while recording, to give the viewer time to follow along. */
 const PACING_MS = {
@@ -274,7 +290,7 @@ export async function hideDevOverlays(page: Page): Promise<void> {
  * subsequent action waits for/locates the element on its own. Best-effort: any failure here is
  * swallowed so a purely-cosmetic cursor animation can never fail a test.
  */
-async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
+export async function smoothMoveToLocator(page: Page, locator: Locator): Promise<void> {
     if (!RECORDING) {
         return;
     }
@@ -398,4 +414,69 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
 
         await expect(droppedModule).toBeVisible({ timeout: 5_000 });
     }).toPass({ timeout: 60_000, intervals: [1_000] });
+}
+
+/** Optional narration hooks for {@link createSessionAndSelectEnsemble}; default to no-ops. */
+export type SessionAndEnsembleNarrationHooks = {
+    narrate?: (text: string) => Promise<void>;
+    markStep?: (title: string) => void;
+};
+
+/**
+ * Create a new session, then add and apply the Drogon AHM ensemble to it — the common setup shared
+ * by every story that needs an ensemble loaded before it can show off its own module.
+ *
+ * `narrate`/`markStep` are opt-in: callers that want this flow narrated as its own part of a
+ * recorded walkthrough (see the "Session and ensemble selection" story) pass the fixtures through;
+ * callers that only need the setup done (e.g. other stories reusing this as a precondition) omit
+ * them so no narration/step is recorded for these actions.
+ */
+export async function createSessionAndSelectEnsemble(
+    page: Page,
+    { narrate = async () => undefined, markStep = () => undefined }: SessionAndEnsembleNarrationHooks = {},
+): Promise<void> {
+    const newSessionNarration = narrate("Let's start by creating a new session...");
+    markStep("Create a session");
+    await smoothClick(page, page.getByRole("button", { name: "New session" }));
+    await newSessionNarration;
+
+    const ensembleNarration = narrate(
+        "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
+    );
+    markStep("Add the Drogon ensemble");
+    await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
+    await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
+    await pace(page);
+
+    await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
+    await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
+    await pace(page);
+
+    // Filter the case table by the test case UUID.
+    await smoothFill(page, page.getByPlaceholder("Filter ...").first(), DROGON_AHM.caseUuid);
+    await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 60_000 });
+    await pace(page);
+
+    await smoothClick(
+        page,
+        page
+            .locator("tbody")
+            .getByRole("row", { name: new RegExp(DROGON_AHM.caseUuid) })
+            .first(),
+    );
+
+    await expect(page.getByText(DROGON_AHM.ensembleName).first()).toBeVisible({ timeout: 60_000 });
+    await ensembleNarration;
+    await pace(page);
+
+    const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
+    markStep("Apply the ensemble");
+    await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
+
+    await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
+    await pace(page);
+
+    await smoothClick(page, page.getByRole("button", { name: "Apply" }));
+    await expect(page.getByText("Ensembles used in this session")).not.toBeVisible({ timeout: 120_000 });
+    await applyNarration;
 }

@@ -106,6 +106,7 @@ function writeStorageState(seedResult: SeedResult): void {
                 localStorage: [
                     // Hide dev tools in playwright tests.
                     { name: "devToolsVisible", value: "false" },
+                    { name: "lastSeenChangelog", value: "99" },
                 ],
             },
         ],

@@ -28,6 +28,7 @@ import { SaveSessionDialog } from "../SaveSessionDialog";
 import { SessionErrorDialog } from "../SessionErrorDialog";
 import { StartPage } from "../StartPage/StartPage";
 import { TemplatesDialog } from "../TemplatesDialog/templatesDialog";
+import { TutorialsDialog } from "../TutorialsDialog/tutorialsDialog";
 
 export function WorkbenchWrapper() {
     // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
@@ -91,6 +92,7 @@ export function WorkbenchWrapper() {
             </ActiveSessionBoundary>
             {content}
             <TemplatesDialog workbench={workbench} />
+            <TutorialsDialog workbench={workbench} />
             <MultiSessionsRecoveryDialog workbench={workbench} />
             <PersistenceManagementDialog workbench={workbench} />
             <SessionErrorDialog workbench={workbench} />

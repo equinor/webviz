@@ -9,7 +9,7 @@
 //   node tests/e2e/support/add-narration.mjs [testResultsDir]
 
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +17,7 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_RESULTS_DIR = resolve(scriptDir, "../../../test-results");
 const MANIFEST_NAME = "narration.json";
 const NARRATED_SUFFIX = ".narrated.webm";
+const STEPS_SUFFIX = ".steps.json";
 
 function ffmpegAvailable() {
     const result = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" });
@@ -92,16 +93,39 @@ function buildFfmpegArgs(videoPath, clips, outputPath) {
         "1",
         "-c:a",
         "libopus",
+        // The seek index is written at the end of a WebM by default, which a streaming player never
+        // reaches unless it downloads the whole file; without it, seeking silently does nothing.
+        "-cues_to_front",
+        "1",
         outputPath,
     );
     return args;
 }
 
+function writeSteps(videoPath, steps, trimStartMs) {
+    const stepsPath = videoPath.replace(/\.webm$/, STEPS_SUFFIX);
+    if (!steps || steps.length === 0) {
+        rmSync(stepsPath, { force: true });
+        return;
+    }
+    const normalized = steps.map((step) => ({
+        title: step.title,
+        startSeconds: Math.max(0, step.startMs - trimStartMs) / 1000,
+    }));
+    writeFileSync(stepsPath, JSON.stringify({ steps: normalized }, null, 2));
+}
+
 /** Mux one folder's clips into its video. Returns true on success, false on any failure. */
 function narrateFolder(dir) {
     const manifestPath = join(dir, MANIFEST_NAME);
-    const clips = JSON.parse(readFileSync(manifestPath, "utf-8")).clips ?? [];
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+    const clips = manifest.clips ?? [];
+    const steps = manifest.steps ?? [];
     if (clips.length === 0) {
+        const videoPath = findSourceVideo(dir);
+        if (videoPath) {
+            writeSteps(videoPath, steps, 0);
+        }
         return true;
     }
 
@@ -118,6 +142,8 @@ function narrateFolder(dir) {
         console.error(`  [narration] ffmpeg failed for ${videoPath}:\n${result.stderr ?? result.error}`);
         return false;
     }
+    const trimStartMs = Math.max(0, Math.min(...clips.map((clip) => clip.startMs)));
+    writeSteps(videoPath, steps, trimStartMs);
     console.log(`  [narration] Wrote ${outputPath} (${clips.length} clip(s)).`);
     return true;
 }
