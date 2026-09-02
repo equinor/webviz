@@ -495,10 +495,10 @@ function EmptyLayout(props: EmptyLayoutProps) {
     return (
         <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
             <WebAssetOff fontSize="large" />
-            <Paragraph size="md" weight="bolder" tone="neutral">
+            <Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
                 No modules added
             </Paragraph>
-            <Paragraph size="sm" tone="neutral">
+            <Paragraph size="sm" tone="neutral" layoutClassName="text-center">
                 Drag modules here from the modules list.
             </Paragraph>
             {rightDrawerContent !== RightDrawerContent.ModulesList && (
