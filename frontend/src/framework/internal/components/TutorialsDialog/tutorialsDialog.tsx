@@ -67,11 +67,11 @@ type TutorialCollectionProps = {
 
 function TutorialCollection(props: TutorialCollectionProps): React.ReactNode {
     return (
-        <div className="gap-y-sm p-2xs flex h-full min-h-0 flex-col overflow-y-auto">
+        <div className="gap-y-lg p-2xs flex h-full min-h-0 flex-col overflow-y-auto">
             {groupByCategory(TUTORIAL_VIDEOS).map(([category, videos]) => (
-                <div key={category} className="gap-y-2xs flex flex-col">
+                <div key={category} className="gap-y-xs flex flex-col">
                     <Heading as="h6">{category}</Heading>
-                    <div className="gap-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+                    <div className="gap-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
                         {videos.map((video) => (
                             <TutorialCard key={video.slug} video={video} onClick={() => props.onSelect(video)} />
                         ))}
@@ -122,8 +122,8 @@ function TutorialCard(props: TutorialCardProps): React.ReactNode {
                 <img src={props.video.thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
                 <Icon name="play_circle" className="absolute inset-0 m-auto text-4xl text-white drop-shadow" />
             </div>
-            <div className="font-bolder text-body-sm line-clamp-1">{props.video.title}</div>
-            <div className="text-body-xs line-clamp-2" title={props.video.description}>
+            <div className="font-bolder text-body-md line-clamp-1">{props.video.title}</div>
+            <div className="text-body-sm line-clamp-2" title={props.video.description}>
                 {props.video.description}
             </div>
         </div>
