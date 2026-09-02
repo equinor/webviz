@@ -16,6 +16,7 @@ export type ContextMenuItem = {
 };
 
 export type ContextMenu = {
+    /** Position in viewport (client) coordinates, ready to anchor a fixed-positioned menu. */
     position: { x: number; y: number };
     items: ContextMenuItem[];
 };
@@ -67,9 +68,15 @@ export class DeckGlPlugin {
 
     handleDrag?(pickingInfo: PickingInfo): void;
     handleLayerHover?(pickingInfo: PickingInfo): void;
-    handleLayerClick?(pickingInfo: PickingInfo): void;
-    handleClickAway?(): void;
+    /** Return `true` to consume the click and prevent the host's `onMouseEvent` from handling it. */
+    handleLayerClick?(pickingInfo: PickingInfo): boolean | void;
+    /** Return `true` to consume the click and prevent the host's `onMouseEvent` from handling it. */
+    handleClickAway?(): boolean | void;
     handleGlobalMouseHover?(pickingInfo: PickingInfo): void;
+    /**
+     * Return `true` when the click was handled. A handled click is also consumed, i.e. the host's
+     * `onMouseEvent` is not invoked for it and no `handleClickAway` is dispatched.
+     */
     handleGlobalMouseClick?(pickingInfo: PickingInfo): boolean;
     handleKeyUpEvent?(key: string): void;
     handleKeyDownEvent?(key: string): void;
@@ -266,9 +273,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         plugin.handleDrag?.(pickingInfo);
     }
 
-    handleMouseEvent(event: MapMouseEvent) {
+    /**
+     * Dispatches the event to the plugins. Returns `true` if a plugin consumed the event, in which
+     * case the host's `onMouseEvent` handler should not be invoked for it.
+     */
+    handleMouseEvent(event: MapMouseEvent): boolean {
         if (this._isDragging) {
-            return;
+            return false;
         }
 
         if (event.type !== "hover") {
@@ -278,7 +289,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         const firstLayerInfo = this.getFirstLayerUnderCursorInfo(event);
         if (!firstLayerInfo || !firstLayerInfo.coordinate) {
-            return;
+            return false;
         }
 
         const layerId = this.getLayerIdFromPickingInfo(firstLayerInfo);
@@ -290,20 +301,27 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             }
 
             if (event.type === "click") {
-                plugin.handleLayerClick?.(firstLayerInfo);
+                return plugin.handleLayerClick?.(firstLayerInfo) ?? false;
             }
 
             if (event.type === "contextmenu") {
                 const contextMenuItems = plugin.getContextMenuItems?.(firstLayerInfo) ?? [];
+                // firstLayerInfo.x/y are CSS pixels relative to the deck.gl canvas; convert to
+                // viewport coordinates so the menu can be positioned with `position: fixed`.
+                const canvasRect = this.getDeck()?.getCanvas()?.getBoundingClientRect();
                 this._contextMenu = {
-                    position: { x: firstLayerInfo.x, y: firstLayerInfo.y },
+                    position: {
+                        x: firstLayerInfo.x + (canvasRect?.left ?? 0),
+                        y: firstLayerInfo.y + (canvasRect?.top ?? 0),
+                    },
                     items: contextMenuItems,
                 };
                 this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.CONTEXT_MENU);
             }
-            return;
+            return false;
         }
 
+        let consumed = false;
         const pluginsThatDidNotAcceptEvent: DeckGlPlugin[] = [];
         for (const plugin of this._plugins) {
             if (event.type === "hover") {
@@ -311,7 +329,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 this._cursor = "auto";
             } else if (event.type === "click") {
                 const accepted = plugin.handleGlobalMouseClick?.(firstLayerInfo);
-                if (!accepted) {
+                if (accepted) {
+                    consumed = true;
+                } else {
                     pluginsThatDidNotAcceptEvent.push(plugin);
                 }
             }
@@ -319,9 +339,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         if (event.type === "click") {
             for (const plugin of pluginsThatDidNotAcceptEvent) {
-                plugin.handleClickAway?.();
+                if (plugin.handleClickAway?.()) {
+                    consumed = true;
+                }
             }
         }
+
+        return consumed;
     }
 
     pickFirstLayerUnderCursorInfo(x: number, y: number): PickingInfo | undefined {
@@ -393,8 +417,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             ...props,
             onDrag: this.handleDrag.bind(this),
             onMouseEvent: (event) => {
-                this.handleMouseEvent(event);
-                props.onMouseEvent?.(event);
+                const consumed = this.handleMouseEvent(event);
+                if (!consumed) {
+                    props.onMouseEvent?.(event);
+                }
             },
             getCursor: (state) => this.getCursor(state),
             layers,
