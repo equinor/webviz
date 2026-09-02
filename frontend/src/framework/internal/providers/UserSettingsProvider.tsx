@@ -8,7 +8,7 @@ export type Density = "comfortable" | "spacious";
 export type UserSettings = {
     colorScheme: ColorScheme;
     density: Density;
-    lastSeenChangelog: number;
+    lastSeenChangelogHash: string | null;
     disableChangelogPopup: boolean;
 };
 
@@ -16,13 +16,13 @@ type UserSettingsContextValue = {
     settings: UserSettings;
     setColorScheme: (value: ColorScheme) => void;
     setDensity: (value: Density) => void;
-    setLastSeenChangelog: (value: number) => void;
+    setLastSeenChangelogHash: (value: string) => void;
     setDisableChangelogPopup: (value: boolean) => void;
 };
 
 const COLOR_SCHEME_KEY = "colorScheme";
 const DENSITY_KEY = "density";
-const CHANGELOG_LAST_SEEN_KEY = "lastSeenChangelog";
+const CHANGELOG_LAST_SEEN_HASH_KEY = "lastSeenChangelogHash";
 const CHANGELOG_DISABLE_POPUP_KEY = "disableChangelogPopup";
 
 function resolveInitialColorScheme(): ColorScheme {
@@ -36,12 +36,8 @@ function resolveInitialDensity(): Density {
     return localStorage.getItem(DENSITY_KEY) === "comfortable" ? "comfortable" : "spacious";
 }
 
-function resolveInitialLastSeenChangelog(): number {
-    const stored = localStorage.getItem(CHANGELOG_LAST_SEEN_KEY);
-    const parsed = Number(stored);
-
-    if (Number.isFinite(parsed)) return parsed;
-    return 0;
+function resolveInitialLastSeenChangelogHash(): string | null {
+    return localStorage.getItem(CHANGELOG_LAST_SEEN_HASH_KEY);
 }
 
 function resolveInitialDisableChangelogPopup(): boolean {
@@ -54,21 +50,21 @@ const UserSettingsContext = React.createContext<UserSettingsContextValue>({
     settings: {
         colorScheme: "light",
         density: "spacious",
-        lastSeenChangelog: 0,
+        lastSeenChangelogHash: null,
         disableChangelogPopup: false,
     },
     setColorScheme: () => undefined,
     setDensity: () => undefined,
-    setLastSeenChangelog: () => undefined,
+    setLastSeenChangelogHash: () => undefined,
     setDisableChangelogPopup: () => undefined,
 });
 
 export function UserSettingsProvider({ children }: { children: React.ReactNode }) {
     const [colorScheme, setColorScheme] = useStoredState(COLOR_SCHEME_KEY, resolveInitialColorScheme);
     const [density, setDensity] = useStoredState(DENSITY_KEY, resolveInitialDensity);
-    const [lastSeenChangelog, setLastSeenChangelog] = useStoredState(
-        CHANGELOG_LAST_SEEN_KEY,
-        resolveInitialLastSeenChangelog,
+    const [lastSeenChangelogHash, setLastSeenChangelogHash] = useStoredState(
+        CHANGELOG_LAST_SEEN_HASH_KEY,
+        resolveInitialLastSeenChangelogHash,
     );
     const [disableChangelogPopup, setDisableChangelogPopup] = useStoredState(
         CHANGELOG_DISABLE_POPUP_KEY,
@@ -85,21 +81,21 @@ export function UserSettingsProvider({ children }: { children: React.ReactNode }
 
     const value = React.useMemo<UserSettingsContextValue>(
         () => ({
-            settings: { colorScheme, density, disableChangelogPopup, lastSeenChangelog },
+            settings: { colorScheme, density, disableChangelogPopup, lastSeenChangelogHash },
             setColorScheme,
             setDensity,
             setDisableChangelogPopup,
-            setLastSeenChangelog,
+            setLastSeenChangelogHash,
         }),
         [
             colorScheme,
             density,
             disableChangelogPopup,
-            lastSeenChangelog,
+            lastSeenChangelogHash,
             setColorScheme,
             setDensity,
             setDisableChangelogPopup,
-            setLastSeenChangelog,
+            setLastSeenChangelogHash,
         ],
     );
 
