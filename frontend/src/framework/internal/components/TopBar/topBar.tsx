@@ -94,6 +94,8 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                     <Separator orientation="vertical" />
                     <DisplayOptions workbench={props.workbench} />
                     <Separator orientation="vertical" />
+                    <FullscreenToggleButton />
+                    <Separator orientation="vertical" />
                     <LoginButton showText={false} />
                 </div>
             </div>
@@ -152,18 +154,15 @@ function LogoWithText(): React.ReactNode {
     );
 }
 
-type FullscreenToggleButtonProps = {
-    isFullscreen: boolean;
-    onToggle: () => void;
-};
+function FullscreenToggleButton(): React.ReactNode {
+    const [isFullscreen, toggleFullscreen] = useBrowserFullscreen();
 
-function FullscreenToggleButton(props: FullscreenToggleButtonProps): React.ReactNode {
-    const fullscreenButtonTitle = props.isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
+    const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
 
     return (
         <Tooltip content={fullscreenButtonTitle} side="bottom">
-            <TopBarButton title={fullscreenButtonTitle} onClick={props.onToggle}>
-                {props.isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+            <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullscreen}>
+                {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
             </TopBarButton>
         </Tooltip>
     );
@@ -174,11 +173,10 @@ type DisplayOptionsProps = {
 };
 
 /**
- * Fullscreen, dark mode and dense mode controls. On wide viewports they are shown as individual
- * buttons; below the `xl` breakpoint they collapse into a single dropdown menu.
+ * Dark mode, dense mode and (in dev builds) the dev tools toggle. Shown as individual buttons on wide
+ * viewports; below the `xl` breakpoint they collapse into a single dropdown menu.
  */
 function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
-    const [isFullscreen, toggleFullscreen] = useBrowserFullscreen();
     const { settings, setColorScheme, setDensity } = useUserSettings();
     const [devToolsVisible, setDevToolsVisible] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -198,9 +196,7 @@ function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
     }
 
     function handleMenuAction(actionId: string) {
-        if (actionId === "fullscreen") {
-            toggleFullscreen();
-        } else if (actionId === "dark-mode") {
+        if (actionId === "dark-mode") {
             toggleDarkMode();
         } else if (actionId === "dense-mode") {
             toggleDenseMode();
@@ -210,13 +206,6 @@ function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
     }
 
     const menuItems: MenuItem[] = [
-        {
-            id: "fullscreen",
-            label: "Fullscreen",
-            icon: <Fullscreen />,
-            checked: isFullscreen,
-        },
-        { type: "divider" },
         {
             id: "dark-mode",
             label: "Dark mode",
@@ -246,7 +235,6 @@ function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
     return (
         <>
             <div className="gap-x-xs hidden items-center xl:flex">
-                <FullscreenToggleButton isFullscreen={isFullscreen} onToggle={toggleFullscreen} />
                 <DarkModeButton />
                 <DensityModeToggle />
                 <ToggleDevToolsButton guiMessageBroker={props.workbench.getGuiMessageBroker()} />
