@@ -42,7 +42,12 @@ export async function generateTutorialsManifest() {
         process.exit(1);
     }
 
-    entries.sort((a, b) => a.category.localeCompare(b.category) || a.title.localeCompare(b.title));
+    entries.sort(
+        (a, b) =>
+            a.category.localeCompare(b.category) ||
+            (a.order ?? Infinity) - (b.order ?? Infinity) ||
+            a.title.localeCompare(b.title),
+    );
 
     const entryLines = entries.map(
         (entry) =>

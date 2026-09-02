@@ -55,6 +55,15 @@ export function parseTutorialMeta(filePath) {
         if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) {
             continue;
         }
+        if (prop.name.text === "order") {
+            if (!ts.isNumericLiteral(prop.initializer)) {
+                throw new Error(
+                    `${filePath}: property "order" must be a numeric literal (found ${ts.SyntaxKind[prop.initializer.kind]}).`,
+                );
+            }
+            result.order = Number(prop.initializer.text);
+            continue;
+        }
         if (!ts.isStringLiteralLike(prop.initializer)) {
             throw new Error(
                 `${filePath}: property "${prop.name.text}" must be a plain string literal (found ${ts.SyntaxKind[prop.initializer.kind]}).`,
@@ -79,6 +88,7 @@ export function parseTutorialMeta(filePath) {
         category: result.category,
         title: result.title,
         description: result.description,
+        order: result.order,
         sourceFile: filePath,
     };
 }

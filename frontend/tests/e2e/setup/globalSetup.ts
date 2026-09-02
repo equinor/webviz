@@ -104,9 +104,10 @@ function writeStorageState(seedResult: SeedResult): void {
                 origin: APP_ORIGIN,
                 localStorage: [
                     // Hide dev tools in playwright tests.
-                    { name: "devToolsVisible", value: "false" },
+                    // { name: "devToolsVisible", value: "false" },
                     // Force Webviz dev-mode checks off so Playwright runs don't depend on NODE_ENV=development.
                     { name: "webvizDebug_forceDevMode", value: "false" },
+                    { name: "lastSeenChangelog", value: "99" },
                 ],
             },
         ],

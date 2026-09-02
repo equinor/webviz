@@ -13,6 +13,7 @@ export const meta = tutorialMeta({
     category: "Framework",
     title: "Explore the landing page",
     description: "A tour of the Webviz landing page and how to start working from it.",
+    order: 1,
 });
 
 test.describe("Landing page", () => {
@@ -28,7 +29,7 @@ test.describe("Landing page", () => {
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
         markStep("Introduction");
-        await narrate("This is the landing page, your starting point every time you open the app.");
+        await narrate("This is the landing page, which is the starting point every time you open the app.");
         await pace(page);
 
         markStep("Open a session or snapshot");
@@ -68,35 +69,36 @@ test.describe("Landing page", () => {
         await smoothClick(page, page.getByRole("button").filter({ hasText: /^$/ }));
 
         markStep("Watch tutorials");
-        await narrate(
+        const tutorialsNarration = narrate(
             "In the tutorials section, you have in-app access to short videos on selected topics \u2014 like this one \u2014 that walk you through the app step by step.",
         );
         await smoothClick(page, page.getByRole("button", { name: "Watch tutorials" }));
-        await pace(page);
-        await page.getByRole("button").click();
+        await tutorialsNarration;
+        await smoothClick(page, page.getByRole("button"));
 
         markStep("Topbar section");
 
-        await page.getByRole("button").first().click();
+        await smoothClick(page, page.getByRole("button").first());
         await narrate(
-            "The top bar holds a number of buttons. On the far left are shortcuts to Sumo, the FMU results management tool that Webviz fetches most of its data from, and to the FMU Hub, with general information about FMU.",
+            "The top bar holds a handful of important buttons. On the far left are links to Sumo, the results management tool that Webviz fetches most of its data from, and to the FMU Hub, with general information about the Fast Model Update ecosystem.",
         );
-        await page.getByRole("button").nth(1).click();
-        await narrate("You can also switch to fullscreen mode with this button...");
+        await smoothClick(page, page.getByRole("button").nth(1));
+        await narrate("You can also jump into fullscreen mode...");
 
-        await page.getByRole("button").nth(1).click();
-        await narrate("...and back again with the same button.");
+        await smoothClick(page, page.getByRole("button").nth(1));
+        await narrate("...and step right back out again.");
         await narrate("If you prefer dark mode...");
-        await page.getByRole("button").nth(2).click();
-        await narrate("...you can enable it with this button, and use the same button to switch back to light mode.");
-        await page.getByRole("button").nth(2).click();
+        await smoothClick(page, page.getByRole("button").nth(2));
+        await narrate("...you can toggle it on here, and switch back to light mode just as easily.");
+        await smoothClick(page, page.getByRole("button").nth(2));
         await narrate("Finally, you can choose how compact the layout should be.");
-        await page.getByRole("button").nth(3).click();
+        await smoothClick(page, page.getByRole("button").nth(3));
         await narrate(
             "Switching to the compact density mode makes the fonts and spacing smaller, freeing up more screen space for data visualization.",
         );
-        await page.getByRole("button").nth(3).click();
-        await narrate("You can switch back to the regular layout with the same button.");
+        await smoothClick(page, page.getByRole("button").nth(3));
+        await narrate("The same control brings you back to the regular, roomier layout.");
+        await pace(page);
         await narrate("That completes our tour of the landing page.");
     });
 });

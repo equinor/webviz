@@ -11,6 +11,8 @@ export type TutorialMeta = {
     category: string;
     title: string;
     description: string;
+    /** Optional sort weight within a category (ascending); unset tutorials sort after ordered ones. */
+    order?: number;
 };
 
 /**
