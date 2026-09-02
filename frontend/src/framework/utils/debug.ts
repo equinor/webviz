@@ -58,10 +58,25 @@ export function tanstackDebugTimeOverride(time: number): number {
 
 /**
  * Reads the `forceDevMode` debug flag, used to override the build-time dev mode detection.
- * @returns `true`/`false` when the flag explicitly forces dev mode on/off, or `null` when it is not set
+ *
+ * Only the exact tokens `true`/`1` and `false`/`0` (case-insensitive) count as an explicit
+ * override. Anything else - an unset flag, an unrecognized value, or a browser/storage
+ * configuration where reading `localStorage` throws - returns `null` so callers fall back to
+ * the normal `NODE_ENV` check instead of silently flipping dev mode.
+ *
+ * @returns `true`/`false` when the flag explicitly forces dev mode on/off, otherwise `null`
  */
 export function getDevModeOverride(): boolean | null {
-    const storedFlag = getDebugSetting(FORCE_DEV_MODE_FLAG);
+    let storedFlag: string | null;
+    try {
+        storedFlag = getDebugSetting(FORCE_DEV_MODE_FLAG);
+    } catch {
+        return null;
+    }
     if (storedFlag === null) return null;
-    return ["true", "1"].includes(storedFlag.toLowerCase());
+
+    const normalized = storedFlag.trim().toLowerCase();
+    if (["true", "1"].includes(normalized)) return true;
+    if (["false", "0"].includes(normalized)) return false;
+    return null;
 }

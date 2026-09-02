@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isDevMode } from "@lib/utils/devMode";
+import { isDevMode } from "@framework/utils/devMode";
 import type { Size2D } from "@lib/utils/geometry";
 import type { Vec2 } from "@lib/utils/vec2";
 
