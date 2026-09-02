@@ -65,7 +65,7 @@ export function StartPanel(props: StartPanelProps) {
             </Tooltip>
             <Separator orientation="vertical" />
             <Tooltip
-                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Show templates dialog"}
+                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Open templates dialog"}
                 side="bottom"
             >
                 {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
