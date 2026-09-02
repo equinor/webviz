@@ -85,6 +85,15 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    npm run test:e2e:record --prefix ./frontend
    ```
 
+#### Running a single story
+
+While working on one story you usually don't want to run the whole suite. Pass a filter through to
+Playwright with `--` (from the `frontend/` folder):
+
+```bash
+npm run --prefix ./frontend test:e2e:record -- tests/e2e/stories/landingPage.test.ts
+```
+
 ## Component tests
 
 Component tests are performed using `Playwright`. Each author of a generic component (i.e. placed in the `src/lib/components/` folder) is encouraged to write one or more component tests for their respective component.

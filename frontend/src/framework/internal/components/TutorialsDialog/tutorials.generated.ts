@@ -22,6 +22,15 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.steps.json",
     },
     {
+        slug: "landing-page-overview",
+        category: "Framework",
+        title: "Explore the landing page",
+        description: "A tour of the Webviz landing page and how to start working from it.",
+        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.webm",
+        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.png",
+        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.steps.json",
+    },
+    {
         slug: "grid3d-viewer-3d-grid-model",
         category: "Modules",
         title: "3D Viewer",
