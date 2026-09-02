@@ -5,7 +5,7 @@ import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import type { ModuleInstanceStatusControllerInternal } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { isDevMode } from "@framework/utils/devMode";
+import { isDevMode } from "@lib/utils/devMode";
 
 type DebugProfilerRenderInfoProps = {
     children: React.ReactNode | React.ReactNode[];

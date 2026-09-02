@@ -1,6 +1,6 @@
 import React from "react";
 
-import { isDevMode } from "@framework/utils/devMode";
+import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { SortableListContext } from "../sortableList";
