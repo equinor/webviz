@@ -95,8 +95,8 @@ def time_or_interval_str_to_sumo_time_filter(time_or_interval_str: str | None) -
     if time_or_interval_str is None:
         return TimeFilter(TimeType.NONE)
 
-    timestamp_arr = time_or_interval_str.split("/", 1)
-    if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+    timestamp_arr = time_or_interval_str.split("/")
+    if len(timestamp_arr) not in (1, 2):
         raise ValueError("time_or_interval_str must contain a single timestamp or interval")
 
     if len(timestamp_arr) == 1:

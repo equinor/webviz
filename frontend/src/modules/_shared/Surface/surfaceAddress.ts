@@ -77,6 +77,11 @@ function encodeAttributeComponents(attr: SurfaceAttribute): string[] {
         return ["TAGNAME", attr.tagName, EMPTY_COMP];
     }
 
+    // Encoding the placeholder would decode back as "no sub name" and silently address another surface
+    if (attr.subName === EMPTY_COMP) {
+        throw new Error(`Standard result sub name cannot be '${EMPTY_COMP}', it is a reserved placeholder`);
+    }
+
     return ["STDRES", attr.stdResName, attr.subName ?? EMPTY_COMP];
 }
 

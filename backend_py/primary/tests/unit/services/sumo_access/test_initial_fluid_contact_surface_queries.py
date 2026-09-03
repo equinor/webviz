@@ -8,7 +8,10 @@ from webviz_services.sumo_access import surface_access
 from webviz_services.service_exceptions import InvalidParameterError, MultipleDataMatchesError
 from webviz_services.sumo_access.queries.surface_queries import SurfInfo, SurfTimeType
 from webviz_services.sumo_access.surface_access import SurfaceAccess, _build_surface_meta_arr
-from webviz_services.sumo_access.surface_search_context import apply_attribute_filter
+from webviz_services.sumo_access.surface_search_context import (
+    apply_attribute_filter,
+    time_or_interval_str_to_sumo_time_filter,
+)
 from webviz_services.sumo_access.surface_types import StdResAttribute, SurfaceStandardResult, TagNameAttribute
 from webviz_services.utils.statistic_function import StatisticFunction
 
@@ -68,6 +71,15 @@ def test_apply_attribute_filter_uses_tagname_for_tag_attribute() -> None:
     apply_attribute_filter(search_context, TagNameAttribute(tag_name="my attr name"))
 
     search_context.filter.assert_called_once_with(tagname="my attr name")
+
+
+@pytest.mark.parametrize(
+    "time_or_interval_str",
+    ["2024-01-31T00:00:00Z/2024-06-30T00:00:00Z/extra", "a/b/c/d"],
+)
+def test_time_filter_rejects_more_than_two_components(time_or_interval_str: str) -> None:
+    with pytest.raises(ValueError, match="single timestamp or interval"):
+        time_or_interval_str_to_sumo_time_filter(time_or_interval_str)
 
 
 def test_apply_attribute_filter_resolves_legacy_standard_result_attribute_string() -> None:

@@ -95,6 +95,21 @@ describe("SurfaceAddressBuilder address strings", () => {
         expect(() => baseBuilder().withRealization(3).buildRealizationAddrStr()).toThrow("Surface attribute not set");
     });
 
+    test("throws when sub name is the reserved placeholder", () => {
+        expect(() =>
+            baseBuilder()
+                .withStdResAttribute(SurfaceStandardResult_api.FLUID_CONTACT_SURFACE, "-")
+                .withRealization(3)
+                .buildRealizationAddrStr(),
+        ).toThrow("reserved placeholder");
+    });
+
+    test("tag name may be the reserved placeholder", () => {
+        const addrStr = baseBuilder().withTagNameAttribute("-").withRealization(3).buildRealizationAddrStr();
+
+        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~-~~-~~3`);
+    });
+
     test("throws when statistic function is missing", () => {
         expect(() => baseBuilder().withTagNameAttribute("amplitude").buildStatisticalAddrStr()).toThrow(
             "Statistic function not set",

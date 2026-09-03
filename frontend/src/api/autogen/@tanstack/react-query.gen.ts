@@ -970,34 +970,6 @@ export const getRealizationSurfacesMetadataOptions = (options: Options<GetRealiz
         queryKey: getRealizationSurfacesMetadataQueryKey(options),
     });
 
-export const getInitialFluidContactSurfacesMetadataQueryKey = (
-    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
-) => createQueryKey("getInitialFluidContactSurfacesMetadata", options);
-
-/**
- * Get Initial Fluid Contact Surfaces Metadata
- */
-export const getInitialFluidContactSurfacesMetadataOptions = (
-    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
-) =>
-    queryOptions<
-        GetInitialFluidContactSurfacesMetadataResponse_api,
-        AxiosError<GetInitialFluidContactSurfacesMetadataError_api>,
-        GetInitialFluidContactSurfacesMetadataResponse_api,
-        ReturnType<typeof getInitialFluidContactSurfacesMetadataQueryKey>
-    >({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getInitialFluidContactSurfacesMetadata({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getInitialFluidContactSurfacesMetadataQueryKey(options),
-    });
-
 export const getObservedSurfacesMetadataQueryKey = (options: Options<GetObservedSurfacesMetadataData_api>) =>
     createQueryKey("getObservedSurfacesMetadata", options);
 
@@ -1025,6 +997,36 @@ export const getObservedSurfacesMetadataOptions = (options: Options<GetObservedS
         queryKey: getObservedSurfacesMetadataQueryKey(options),
     });
 
+export const getInitialFluidContactSurfacesMetadataQueryKey = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) => createQueryKey("getInitialFluidContactSurfacesMetadata", options);
+
+/**
+ * Get Initial Fluid Contact Surfaces Metadata
+ *
+ * Get metadata for the initial fluid contact surfaces in a Sumo ensemble
+ */
+export const getInitialFluidContactSurfacesMetadataOptions = (
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api>,
+) =>
+    queryOptions<
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        AxiosError<GetInitialFluidContactSurfacesMetadataError_api>,
+        GetInitialFluidContactSurfacesMetadataResponse_api,
+        ReturnType<typeof getInitialFluidContactSurfacesMetadataQueryKey>
+    >({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInitialFluidContactSurfacesMetadata({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInitialFluidContactSurfacesMetadataQueryKey(options),
+    });
+
 export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>) =>
     createQueryKey("getSurfaceData", options);
 
@@ -1039,9 +1041,6 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
- * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
- * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1049,16 +1048,21 @@ export const getSurfaceDataQueryKey = (options: Options<GetSurfaceDataData_api>)
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
- * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
- * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
- *
- * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
- * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const getSurfaceDataOptions = (options: Options<GetSurfaceDataData_api>) =>
     queryOptions<
@@ -1176,9 +1180,6 @@ export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStat
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
- * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
- * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1186,16 +1187,21 @@ export const getStatisticalSurfaceDataHybridQueryKey = (options: Options<GetStat
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
- * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
- * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
- *
- * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
- * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const getStatisticalSurfaceDataHybridOptions = (options: Options<GetStatisticalSurfaceDataHybridData_api>) =>
     queryOptions<
@@ -1231,9 +1237,6 @@ export const postStatisticalSurfaceIntersectionHybridQueryKey = (
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
- * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
- * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1241,16 +1244,21 @@ export const postStatisticalSurfaceIntersectionHybridQueryKey = (
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
- * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
- * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
- *
- * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
- * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const postStatisticalSurfaceIntersectionHybridOptions = (
     options: Options<PostStatisticalSurfaceIntersectionHybridData_api>,
@@ -1284,9 +1292,6 @@ export const postStatisticalSurfaceIntersectionHybridOptions = (
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
- * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
- * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1294,16 +1299,21 @@ export const postStatisticalSurfaceIntersectionHybridOptions = (
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
- * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
- * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
- *
- * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
- * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const postStatisticalSurfaceIntersectionHybridMutation = (
     options?: Partial<Options<PostStatisticalSurfaceIntersectionHybridData_api>>,
@@ -1343,9 +1353,6 @@ export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfa
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
- * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
- * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1353,16 +1360,21 @@ export const postGetSurfaceIntersectionQueryKey = (options: Options<PostGetSurfa
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
- * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
- * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
- *
- * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
- * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfaceIntersectionData_api>) =>
     queryOptions<
@@ -1394,9 +1406,6 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *SR_REAL* - Same as *REAL*, but addresses a surface belonging to an FMU standard result instead of a tagname attribute.
- * - *SR_OBS* - Same as *OBS*, but for an FMU standard result.
- * - *SR_STAT* - Same as *STAT*, but for an FMU standard result.
  *
  * Structure of the different types of address strings:
  *
@@ -1404,16 +1413,21 @@ export const postGetSurfaceIntersectionOptions = (options: Options<PostGetSurfac
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * SR_REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<realization>[~~<iso_date_or_interval>]
- * SR_STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
- * SR_OBS~~<case_uuid>~~<surface_name>~~<standard_result>~~<standard_result_value>~~<iso_date_or_interval>
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
- *
- * The `<standard_result_value>` component discriminates between surfaces within a standard result, for example the contact
- * type for `fluid_contact_surface`. It is "-" for standard results that do not need it.
  */
 export const postGetSurfaceIntersectionMutation = (
     options?: Partial<Options<PostGetSurfaceIntersectionData_api>>,
