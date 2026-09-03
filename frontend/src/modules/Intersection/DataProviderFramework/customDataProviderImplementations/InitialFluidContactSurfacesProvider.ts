@@ -1,17 +1,11 @@
-import { hashKey } from "@tanstack/query-core";
 import { isEqual } from "lodash-es";
 
-import type { Options, PostStatisticalSurfaceIntersectionHybridData_api, SurfaceIntersectionData_api } from "@api";
+import type { SurfaceIntersectionData_api } from "@api";
 import {
     SurfaceStandardResult_api,
-    SurfaceStatisticFunction_api,
     getInitialFluidContactSurfacesMetadataOptions,
-    postStatisticalSurfaceIntersectionHybrid,
-    postStatisticalSurfaceIntersectionHybridQueryKey,
     postGetSurfaceIntersectionOptions,
 } from "@api";
-import { lroProgressBus } from "@framework/LroProgressBus";
-import { wrapLongRunningQuery } from "@framework/utils/lro/longRunningApiCalls";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 import { sortStringArray } from "@lib/utils/arrays";
 import { assertNonNull } from "@lib/utils/assertNonNull";
@@ -24,10 +18,6 @@ import {
     getAvailableIntersectionOptions,
     getAvailableRealizationsForEnsembleIdent,
 } from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
-import {
-    resolveSensitivityConstraints,
-    resolveStatisticFunctionConstraints,
-} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/_commonSettingsUpdaters";
 import type {
     CustomDataProviderImplementation,
     DataProviderAccessors,
@@ -35,7 +25,6 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
-import { Representation } from "@modules/_shared/DataProviderFramework/settings/implementations/RepresentationSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { createValidExtensionLength } from "@modules/_shared/DataProviderFramework/settings/utils/extensionLengthUtils";
 import type { PolylineWithSectionLengths } from "@modules/_shared/Intersection/intersectionPolylineTypes";
@@ -46,10 +35,7 @@ import { createResampledPolylinePointsAndCumulatedLengthArray } from "./utils";
 const initialFluidContactSurfacesSettings = [
     Setting.INTERSECTION,
     Setting.ENSEMBLE,
-    Setting.REPRESENTATION,
     Setting.REALIZATION,
-    Setting.STATISTIC_FUNCTION,
-    Setting.SENSITIVITY,
     Setting.SURFACE_NAME,
     Setting.FLUID_CONTACT,
     Setting.COLOR_SET,
@@ -60,8 +46,6 @@ type SettingsWithTypes = MakeSettingTypesMap<InitialFluidContactSurfacesSettings
 
 export type InitialFluidContactSurfacesStoredData = {
     polylineWithSectionLengths: PolylineWithSectionLengths;
-    realizations: readonly number[];
-    realizationMode: string;
 };
 
 export type InitialFluidContactSurfacesData = SurfaceIntersectionData_api[];
@@ -72,10 +56,6 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
     InitialFluidContactSurfacesStoredData
 > {
     settings = initialFluidContactSurfacesSettings;
-
-    getDefaultSettingsValues() {
-        return { [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api.MEAN };
-    }
 
     getDefaultName(): string {
         return "Initial Fluid Contact Surface";
@@ -89,10 +69,7 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
             !prevSettings ||
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
-            !isEqual(prevSettings.representation, newSettings.representation) ||
             !isEqual(prevSettings.realization, newSettings.realization) ||
-            !isEqual(prevSettings.statisticFunction, newSettings.statisticFunction) ||
-            !isEqual(prevSettings.sensitivity, newSettings.sensitivity) ||
             !isEqual(prevSettings.fluidContact, newSettings.fluidContact) ||
             !isEqual(prevSettings.surfaceName, newSettings.surfaceName)
         );
@@ -108,9 +85,7 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
         return (
             getSetting(Setting.INTERSECTION) !== null &&
             getSetting(Setting.ENSEMBLE) !== null &&
-            (getSetting(Setting.REPRESENTATION) === Representation.REALIZATION
-                ? getSetting(Setting.REALIZATION) !== null
-                : getSetting(Setting.STATISTIC_FUNCTION) !== null) &&
+            getSetting(Setting.REALIZATION) !== null &&
             getSetting(Setting.FLUID_CONTACT) !== null &&
             getSetting(Setting.SURFACE_NAME) !== null
         );
@@ -123,49 +98,6 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
         queryClient,
         workbenchSession,
     }: SetupBindingsContext<InitialFluidContactSurfacesSettings, InitialFluidContactSurfacesStoredData>): void {
-        setting(Setting.REALIZATION).bindAttributes({
-            read(read) {
-                return { representation: read.localSetting(Setting.REPRESENTATION) };
-            },
-            resolve({ representation }) {
-                const enabled = representation === Representation.REALIZATION;
-                return { enabled, visible: enabled };
-            },
-        });
-
-        for (const statisticalSetting of [Setting.STATISTIC_FUNCTION, Setting.SENSITIVITY] as const) {
-            setting(statisticalSetting).bindAttributes({
-                read(read) {
-                    return { representation: read.localSetting(Setting.REPRESENTATION) };
-                },
-                resolve({ representation }) {
-                    const enabled = representation === Representation.ENSEMBLE_STATISTICS;
-                    return { enabled, visible: enabled };
-                },
-            });
-        }
-
-        setting(Setting.REPRESENTATION).bindValueConstraints({
-            resolve() {
-                return [Representation.REALIZATION, Representation.ENSEMBLE_STATISTICS];
-            },
-        });
-
-        setting(Setting.STATISTIC_FUNCTION).bindValueConstraints({
-            resolve() {
-                return resolveStatisticFunctionConstraints();
-            },
-        });
-
-        setting(Setting.SENSITIVITY).bindValueConstraints({
-            read(read) {
-                return { ensembleIdent: read.localSetting(Setting.ENSEMBLE) };
-            },
-            resolve({ ensembleIdent }) {
-                return resolveSensitivityConstraints(ensembleIdent, workbenchSession);
-            },
-        });
-
         setting(Setting.ENSEMBLE).bindValueConstraints({
             read(read) {
                 return {
@@ -291,36 +223,12 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
                 return polyline;
             },
         });
-
-        storedData("realizations").bindValue({
-            read(read) {
-                return {
-                    filterFunction: read.globalSetting("realizationFilterFunction"),
-                    ensembleIdent: read.localSetting(Setting.ENSEMBLE),
-                };
-            },
-            resolve({ filterFunction, ensembleIdent }) {
-                return ensembleIdent ? [...filterFunction(ensembleIdent)] : [];
-            },
-        });
-
-        storedData("realizationMode").bindValue({
-            read(read) {
-                return { representation: read.localSetting(Setting.REPRESENTATION) };
-            },
-            resolve({ representation }) {
-                return representation ?? Representation.REALIZATION;
-            },
-        });
     }
 
     fetchData({
         getSetting,
         getStoredData,
-        getWorkbenchSession,
         fetchQuery,
-        setProgressMessage,
-        onFetchCancelOrFinish,
     }: FetchDataParams<
         InitialFluidContactSurfacesSettings,
         InitialFluidContactSurfacesData,
@@ -329,6 +237,7 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const contact = assertNonNull(getSetting(Setting.FLUID_CONTACT), "No fluid contact selected");
         const surfaceName = assertNonNull(getSetting(Setting.SURFACE_NAME), "No surface selected");
+        const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization selected");
         const polyline = assertNonNull(
             getStoredData("polylineWithSectionLengths"),
             "No polyline and actual section lengths found in stored data",
@@ -344,71 +253,25 @@ export class InitialFluidContactSurfacesProvider implements CustomDataProviderIm
             -createValidExtensionLength(getSetting(Setting.INTERSECTION)),
             25,
         );
-        const requestBody = {
-            cumulative_length_polyline: {
-                x_points: resampledPolyline.xPoints,
-                y_points: resampledPolyline.yPoints,
-                cum_lengths: resampledPolyline.cumulatedHorizontalPolylineLengthArr,
-            },
-        };
 
-        const addrBuilder = new SurfaceAddressBuilder()
+        const surfAddrStr = new SurfaceAddressBuilder()
             .withEnsembleIdent(ensembleIdent)
             .withName(surfaceName)
-            .withStdResAttribute(SurfaceStandardResult_api.FLUID_CONTACT_SURFACE, contact);
+            .withStdResAttribute(SurfaceStandardResult_api.FLUID_CONTACT_SURFACE, contact)
+            .withRealization(realization)
+            .buildRealizationAddrStr();
 
-        if (getSetting(Setting.REPRESENTATION) === Representation.REALIZATION) {
-            const realization = assertNonNull(getSetting(Setting.REALIZATION), "No realization selected");
-            const queryOptions = postGetSurfaceIntersectionOptions({
-                query: {
-                    surf_addr_str: addrBuilder.withRealization(realization).buildRealizationAddrStr(),
+        const queryOptions = postGetSurfaceIntersectionOptions({
+            query: { surf_addr_str: surfAddrStr },
+            body: {
+                cumulative_length_polyline: {
+                    x_points: resampledPolyline.xPoints,
+                    y_points: resampledPolyline.yPoints,
+                    cum_lengths: resampledPolyline.cumulatedHorizontalPolylineLengthArr,
                 },
-                body: requestBody,
-            });
-
-            return fetchQuery(queryOptions).then((data) => [data]);
-        }
-
-        const statisticFunction = assertNonNull(
-            getSetting(Setting.STATISTIC_FUNCTION),
-            "No statistic function selected",
-        );
-        let filteredRealizations = [...(getStoredData("realizations") ?? [])];
-        const currentEnsemble = getWorkbenchSession().getEnsembleSet().findEnsemble(ensembleIdent);
-        const sensitivityNameCasePair = getSetting(Setting.SENSITIVITY);
-        if (sensitivityNameCasePair) {
-            const sensitivity = currentEnsemble
-                ?.getSensitivities()
-                ?.getCaseByName(sensitivityNameCasePair.sensitivityName, sensitivityNameCasePair.sensitivityCase);
-            filteredRealizations = filteredRealizations.filter((realization) =>
-                (sensitivity?.realizations ?? []).includes(realization),
-            );
-        }
-
-        addrBuilder.withStatisticFunction(statisticFunction);
-
-        const allRealizations = currentEnsemble?.getRealizations() ?? [];
-        if (!isEqual([...allRealizations], filteredRealizations)) {
-            addrBuilder.withStatisticRealizations(filteredRealizations);
-        }
-
-        const apiFunctionArgs: Options<PostStatisticalSurfaceIntersectionHybridData_api, false> = {
-            query: {
-                surf_addr_str: addrBuilder.buildStatisticalAddrStr(),
             },
-            body: requestBody,
-        };
-        const queryKey = postStatisticalSurfaceIntersectionHybridQueryKey(apiFunctionArgs);
-        const queryOptions = wrapLongRunningQuery({
-            queryFn: postStatisticalSurfaceIntersectionHybrid,
-            queryFnArgs: apiFunctionArgs,
-            queryKey,
-            delayBetweenPollsSecs: 1,
-            maxTotalDurationSecs: 120,
         });
-        const unsubscribe = lroProgressBus.subscribe(hashKey(queryKey), setProgressMessage);
-        onFetchCancelOrFinish(unsubscribe);
 
-        return fetchQuery({ ...queryOptions }).then((data) => [data]);
+        return fetchQuery(queryOptions).then((data) => [data]);
     }
 }

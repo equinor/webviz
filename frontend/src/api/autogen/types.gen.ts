@@ -123,13 +123,6 @@ export type BodyPostGetWellTrajectoriesFormationSegments_api = {
 };
 
 /**
- * Body_post_statistical_surface_intersection_hybrid
- */
-export type BodyPostStatisticalSurfaceIntersectionHybrid_api = {
-    cumulative_length_polyline: SurfaceIntersectionCumulativeLengthPolyline_api;
-};
-
-/**
  * BoundingBox2d
  */
 export type BoundingBox2d_api = {
@@ -1042,17 +1035,6 @@ export type LroInProgressResp_api = {
      * Progress Message
      */
     progress_message: string | null;
-};
-
-/**
- * LroSuccessResp[SurfaceIntersectionData]
- */
-export type LroSuccessRespSurfaceIntersectionData_api = {
-    /**
-     * Response Type
-     */
-    response_type: "LroSuccessResp";
-    result: SurfaceIntersectionData_api;
 };
 
 /**
@@ -4526,49 +4508,6 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
 
 export type GetStatisticalSurfaceDataHybridResponse_api =
     GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
-
-export type PostStatisticalSurfaceIntersectionHybridData_api = {
-    body: BodyPostStatisticalSurfaceIntersectionHybrid_api;
-    path?: never;
-    query: {
-        /**
-         * Surf Addr Str
-         *
-         * Surface address string, supported address type is *STAT*
-         */
-        surf_addr_str: string;
-        /**
-         * Delete Task
-         *
-         * If true, deletes the server-side task metadata for this surface address
-         */
-        delete_task?: boolean;
-        zCacheBust?: string;
-    };
-    url: "/surface/statistical_surface_intersection_hybrid";
-};
-
-export type PostStatisticalSurfaceIntersectionHybridErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HTTPValidationError_api;
-};
-
-export type PostStatisticalSurfaceIntersectionHybridError_api =
-    PostStatisticalSurfaceIntersectionHybridErrors_api[keyof PostStatisticalSurfaceIntersectionHybridErrors_api];
-
-export type PostStatisticalSurfaceIntersectionHybridResponses_api = {
-    /**
-     * Response Post Statistical Surface Intersection Hybrid
-     *
-     * Successful Response
-     */
-    200: LroSuccessRespSurfaceIntersectionData_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
-};
-
-export type PostStatisticalSurfaceIntersectionHybridResponse_api =
-    PostStatisticalSurfaceIntersectionHybridResponses_api[keyof PostStatisticalSurfaceIntersectionHybridResponses_api];
 
 export type PostGetSurfaceIntersectionData_api = {
     body: BodyPostGetSurfaceIntersection_api;
