@@ -13,7 +13,8 @@ from primary.utils.query_string_utils import encode_as_uint_list_str, decode_uin
 _ADDR_COMP_DELIMITER = "~~"
 
 # The attribute always spans three components so the fields after it sit at fixed positions.
-_EMPTY_COMP = "-"
+# Unused attribute components are left empty.
+_ATTR_COMP_COUNT = 3
 
 StatFunction: TypeAlias = Literal["MEAN", "STD", "MIN", "MAX", "P10", "P90", "P50"]
 
@@ -41,20 +42,21 @@ class RealizationSurfaceAddress:
 
     @classmethod
     def from_addr_str(cls, addr_str: str) -> "RealizationSurfaceAddress":
+        # REAL~~case_uuid~~ensemble~~name~~<3 attribute components>~~realization[~~iso_time_or_interval]
         component_arr = _split_addr_str(addr_str, "REAL", 8)
 
         return cls(
             case_uuid=component_arr[1],
             ensemble_name=component_arr[2],
             name=component_arr[3],
-            attribute=_decode_attribute(component_arr, 4),
+            attribute=_attribute_from_components(component_arr, 4),
             realization=int(component_arr[7]),
-            iso_time_or_interval=_optional_component(component_arr, 8),
+            iso_time_or_interval=_optional_trailing_component(component_arr, 8),
         )
 
     def to_addr_str(self) -> str:
         component_arr = ["REAL", self.case_uuid, self.ensemble_name, self.name]
-        component_arr += _encode_attribute(self.attribute)
+        component_arr += _attribute_to_components(self.attribute)
         component_arr.append(str(self.realization))
         if self.iso_time_or_interval:
             component_arr.append(self.iso_time_or_interval)
@@ -78,18 +80,19 @@ class ObservedSurfaceAddress:
 
     @classmethod
     def from_addr_str(cls, addr_str: str) -> "ObservedSurfaceAddress":
+        # OBS~~case_uuid~~name~~<3 attribute components>~~iso_time_or_interval
         component_arr = _split_addr_str(addr_str, "OBS", 7)
 
         return cls(
             case_uuid=component_arr[1],
             name=component_arr[2],
-            attribute=_decode_attribute(component_arr, 3),
+            attribute=_attribute_from_components(component_arr, 3),
             iso_time_or_interval=component_arr[6],
         )
 
     def to_addr_str(self) -> str:
         component_arr = ["OBS", self.case_uuid, self.name]
-        component_arr += _encode_attribute(self.attribute)
+        component_arr += _attribute_to_components(self.attribute)
         component_arr.append(self.iso_time_or_interval)
 
         return _join_addr_components(component_arr)
@@ -118,26 +121,31 @@ class StatisticalSurfaceAddress:
 
     @classmethod
     def from_addr_str(cls, addr_str: str) -> "StatisticalSurfaceAddress":
+        # STAT~~case_uuid~~ensemble~~name~~<3 attribute components>~~stat_function~~stat_realizations[~~iso_time_or_interval]
         component_arr = _split_addr_str(addr_str, "STAT", 9)
 
         stat_function = component_arr[7]
         if not _is_valid_statistic_function(stat_function):
             raise ValueError("Invalid statistic function")
 
+        realizations_str = component_arr[8]
+
         return cls(
             case_uuid=component_arr[1],
             ensemble_name=component_arr[2],
             name=component_arr[3],
-            attribute=_decode_attribute(component_arr, 4),
+            attribute=_attribute_from_components(component_arr, 4),
             stat_function=stat_function,
-            stat_realizations=_decode_stat_realizations(component_arr[8]),
-            iso_time_or_interval=_optional_component(component_arr, 9),
+            stat_realizations=None if realizations_str == "*" else decode_uint_list_str(realizations_str),
+            iso_time_or_interval=_optional_trailing_component(component_arr, 9),
         )
 
     def to_addr_str(self) -> str:
+        realizations_str = "*" if self.stat_realizations is None else encode_as_uint_list_str(self.stat_realizations)
+
         component_arr = ["STAT", self.case_uuid, self.ensemble_name, self.name]
-        component_arr += _encode_attribute(self.attribute)
-        component_arr += [self.stat_function, _encode_stat_realizations(self.stat_realizations)]
+        component_arr += _attribute_to_components(self.attribute)
+        component_arr += [self.stat_function, realizations_str]
         if self.iso_time_or_interval:
             component_arr.append(self.iso_time_or_interval)
 
@@ -147,9 +155,9 @@ class StatisticalSurfaceAddress:
 AnySurfaceAddress: TypeAlias = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress
 
 _ADDRESS_CLASS_BY_TYPE: dict[str, type[AnySurfaceAddress]] = {
-    "REAL": RealizationSurfaceAddress,
-    "OBS": ObservedSurfaceAddress,
-    "STAT": StatisticalSurfaceAddress,
+    RealizationSurfaceAddress.address_type: RealizationSurfaceAddress,
+    ObservedSurfaceAddress.address_type: ObservedSurfaceAddress,
+    StatisticalSurfaceAddress.address_type: StatisticalSurfaceAddress,
 }
 
 
@@ -169,37 +177,26 @@ def decode_surf_addr_str(addr_str: str) -> AnySurfaceAddress:
     return _ADDRESS_CLASS_BY_TYPE[addr_type].from_addr_str(addr_str)
 
 
-def _encode_attribute(attribute: SurfaceAttribute) -> list[str]:
+def _attribute_to_components(attribute: SurfaceAttribute) -> list[str]:
     if isinstance(attribute, TagNameAttribute):
-        return [TagNameAttribute.attribute_type, attribute.tag_name, _EMPTY_COMP]
+        return [TagNameAttribute.attribute_type, attribute.tag_name, ""]
 
-    return [
-        StdResAttribute.attribute_type,
-        attribute.std_res_name.value,
-        attribute.sub_name if attribute.sub_name else _EMPTY_COMP,
-    ]
+    return [StdResAttribute.attribute_type, attribute.std_res_name.value, attribute.sub_name or ""]
 
 
-def _decode_attribute(component_arr: list[str], start_index: int) -> SurfaceAttribute:
-    attr_type_str = component_arr[start_index]
-    comp_a = component_arr[start_index + 1]
-    comp_b = component_arr[start_index + 2]
+def _attribute_from_components(component_arr: list[str], start_index: int) -> SurfaceAttribute:
+    attr_type_str, comp_a, comp_b = component_arr[start_index : start_index + _ATTR_COMP_COUNT]
 
     if attr_type_str == TagNameAttribute.attribute_type:
         return TagNameAttribute(tag_name=comp_a)
     if attr_type_str == StdResAttribute.attribute_type:
-        return StdResAttribute(
-            std_res_name=SurfaceStandardResult(comp_a),
-            sub_name=None if comp_b == _EMPTY_COMP else comp_b,
-        )
+        return StdResAttribute(std_res_name=SurfaceStandardResult(comp_a), sub_name=comp_b or None)
 
     raise ValueError(f"Unknown surface attribute type {attr_type_str}")
 
 
 def _split_addr_str(addr_str: str, expected_addr_type: str, min_component_count: int) -> list[str]:
     component_arr = addr_str.split(_ADDR_COMP_DELIMITER)
-    if len(component_arr) == 1:
-        raise ValueError("Could not parse string as a surface address")
     if component_arr[0] != expected_addr_type:
         raise ValueError("Wrong surface address type")
     if len(component_arr) < min_component_count:
@@ -216,19 +213,11 @@ def _join_addr_components(component_arr: list[str]) -> str:
     return _ADDR_COMP_DELIMITER.join(component_arr)
 
 
-def _optional_component(component_arr: list[str], index: int) -> str | None:
+def _optional_trailing_component(component_arr: list[str], index: int) -> str | None:
     if len(component_arr) > index and len(component_arr[index]) > 0:
         return component_arr[index]
 
     return None
-
-
-def _encode_stat_realizations(realizations: list[int] | None) -> str:
-    return "*" if realizations is None else encode_as_uint_list_str(realizations)
-
-
-def _decode_stat_realizations(realizations_str: str) -> list[int] | None:
-    return None if realizations_str == "*" else decode_uint_list_str(realizations_str)
 
 
 def _require_non_empty(value: str, field_description: str) -> None:
@@ -244,12 +233,8 @@ def _require_none_or_non_empty(value: str | None, field_description: str) -> Non
 def _require_valid_attribute(attribute: SurfaceAttribute, field_description: str) -> None:
     if isinstance(attribute, TagNameAttribute):
         _require_non_empty(attribute.tag_name, f"{field_description}.tag_name")
-        return
-
-    # Only sub_name collides with the placeholder, a tag name of "-" round trips fine
-    _require_none_or_non_empty(attribute.sub_name, f"{field_description}.sub_name")
-    if attribute.sub_name == _EMPTY_COMP:
-        raise ValueError(f"{field_description}.sub_name cannot be '{_EMPTY_COMP}', it is a reserved placeholder")
+    else:
+        _require_none_or_non_empty(attribute.sub_name, f"{field_description}.sub_name")
 
 
 def _is_valid_surface_address_type(addr_type_str: str) -> TypeGuard[SurfaceAddressType]:

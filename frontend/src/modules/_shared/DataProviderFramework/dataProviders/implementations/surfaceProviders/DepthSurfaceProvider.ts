@@ -22,7 +22,7 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { SurfaceAddressBuilder, type FullSurfaceAddress } from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder, type AnySurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -272,7 +272,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
         const representation = getSetting(Setting.REPRESENTATION);
         const workbenchSession = getWorkbenchSession();
 
-        let surfaceAddress: FullSurfaceAddress | null = null;
+        let surfaceAddress: AnySurfaceAddress | null = null;
         if (ensembleIdent && surfaceName && attribute) {
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);

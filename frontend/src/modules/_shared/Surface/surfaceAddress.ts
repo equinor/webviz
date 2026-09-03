@@ -49,17 +49,12 @@ export interface StatisticalSurfaceAddress {
     isoTimeOrInterval: string | null;
 }
 
-export type FullSurfaceAddress = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress;
-
-export type AnySurfaceAddress = FullSurfaceAddress;
+export type AnySurfaceAddress = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress;
 
 const SurfaceAddressTypeValues = ["REAL", "OBS", "STAT"] as const;
 export type SurfaceAddressType = (typeof SurfaceAddressTypeValues)[number];
 
 const ADDR_COMP_DELIMITER = "~~";
-
-// The attribute always occupies this many components, so unused slots get a placeholder.
-const EMPTY_COMP = "-";
 
 export function makeTagNameAttribute(tagName: string): TagNameAttribute {
     return { attributeType: "TAGNAME", tagName };
@@ -72,17 +67,13 @@ export function makeStdResAttribute(
     return { attributeType: "STDRES", stdResName, subName };
 }
 
-function encodeAttributeComponents(attr: SurfaceAttribute): string[] {
+// The attribute always spans three components so the fields after it sit at fixed positions
+function attributeToComponents(attr: SurfaceAttribute): string[] {
     if (attr.attributeType === "TAGNAME") {
-        return ["TAGNAME", attr.tagName, EMPTY_COMP];
+        return ["TAGNAME", attr.tagName, ""];
     }
 
-    // Encoding the placeholder would decode back as "no sub name" and silently address another surface
-    if (attr.subName === EMPTY_COMP) {
-        throw new Error(`Standard result sub name cannot be '${EMPTY_COMP}', it is a reserved placeholder`);
-    }
-
-    return ["STDRES", attr.stdResName, attr.subName ?? EMPTY_COMP];
+    return ["STDRES", attr.stdResName, attr.subName ?? ""];
 }
 
 export function encodeRealizationSurfAddrStr(addr: Omit<RealizationSurfaceAddress, "addressType">): string {
@@ -91,7 +82,7 @@ export function encodeRealizationSurfAddrStr(addr: Omit<RealizationSurfaceAddres
         addr.caseUuid,
         addr.ensemble,
         addr.name,
-        ...encodeAttributeComponents(addr.attribute),
+        ...attributeToComponents(addr.attribute),
         addr.realizationNum,
     ];
     if (addr.isoTimeOrInterval !== null) {
@@ -108,7 +99,7 @@ export function encodeObservedSurfAddrStr(addr: Omit<ObservedSurfaceAddress, "ad
         "OBS",
         addr.caseUuid,
         addr.name,
-        ...encodeAttributeComponents(addr.attribute),
+        ...attributeToComponents(addr.attribute),
         addr.isoTimeOrInterval,
     ];
 
@@ -128,7 +119,7 @@ export function encodeStatisticalSurfAddrStr(addr: Omit<StatisticalSurfaceAddres
         addr.caseUuid,
         addr.ensemble,
         addr.name,
-        ...encodeAttributeComponents(addr.attribute),
+        ...attributeToComponents(addr.attribute),
         addr.statFunction,
         realStr,
     ];

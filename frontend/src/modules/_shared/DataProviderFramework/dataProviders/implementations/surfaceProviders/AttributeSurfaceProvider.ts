@@ -25,7 +25,7 @@ import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
-import { encodeSurfAddrStr, type FullSurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
+import { encodeSurfAddrStr, type AnySurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
 
 import { Representation } from "../../../settings/implementations/RepresentationSetting";
 import {
@@ -387,7 +387,7 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
         const representation = getSetting(Setting.REPRESENTATION);
         const workbenchSession = getWorkbenchSession();
 
-        let surfaceAddress: FullSurfaceAddress | null = null;
+        let surfaceAddress: AnySurfaceAddress | null = null;
         if (ensembleIdent && formationName && attribute) {
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);

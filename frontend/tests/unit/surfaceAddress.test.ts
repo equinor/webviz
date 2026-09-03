@@ -18,7 +18,7 @@ describe("SurfaceAddressBuilder address strings", () => {
             .withRealization(3)
             .buildRealizationAddrStr();
 
-        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~ds_extract_geogrid~~-~~3`);
+        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~ds_extract_geogrid~~~~3`);
     });
 
     test("realization address with standard result attribute and sub name", () => {
@@ -30,13 +30,13 @@ describe("SurfaceAddressBuilder address strings", () => {
         expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~STDRES~~fluid_contact_surface~~owc~~3`);
     });
 
-    test("standard result attribute without sub name uses placeholder", () => {
+    test("standard result attribute without sub name leaves the slot empty", () => {
         const addrStr = baseBuilder()
             .withStdResAttribute(SurfaceStandardResult_api.STRUCTURE_DEPTH_SURFACE)
             .withRealization(3)
             .buildRealizationAddrStr();
 
-        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~STDRES~~structure_depth_surface~~-~~3`);
+        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~STDRES~~structure_depth_surface~~~~3`);
     });
 
     test("realization address appends time when set", () => {
@@ -47,7 +47,7 @@ describe("SurfaceAddressBuilder address strings", () => {
             .buildRealizationAddrStr();
 
         expect(addrStr).toBe(
-            `REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~amplitude~~-~~3~~2024-01-31T00:00:00Z`,
+            `REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~amplitude~~~~3~~2024-01-31T00:00:00Z`,
         );
     });
 
@@ -69,9 +69,7 @@ describe("SurfaceAddressBuilder address strings", () => {
             .withStatisticRealizations([1, 2, 3, 5])
             .buildStatisticalAddrStr();
 
-        expect(addrStr).toBe(
-            `STAT~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~ds_extract_geogrid~~-~~P10~~1-3!5`,
-        );
+        expect(addrStr).toBe(`STAT~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~ds_extract_geogrid~~~~P10~~1-3!5`);
     });
 
     test("observed address omits ensemble", () => {
@@ -82,7 +80,7 @@ describe("SurfaceAddressBuilder address strings", () => {
             .withTimeOrInterval("2024-01-31T00:00:00Z")
             .buildObservedAddrStr();
 
-        expect(addrStr).toBe(`OBS~~${CASE_UUID}~~VOLANTIS GP. Top~~TAGNAME~~amplitude~~-~~2024-01-31T00:00:00Z`);
+        expect(addrStr).toBe(`OBS~~${CASE_UUID}~~VOLANTIS GP. Top~~TAGNAME~~amplitude~~~~2024-01-31T00:00:00Z`);
     });
 
     test("throws when realization is missing", () => {
@@ -95,19 +93,10 @@ describe("SurfaceAddressBuilder address strings", () => {
         expect(() => baseBuilder().withRealization(3).buildRealizationAddrStr()).toThrow("Surface attribute not set");
     });
 
-    test("throws when sub name is the reserved placeholder", () => {
-        expect(() =>
-            baseBuilder()
-                .withStdResAttribute(SurfaceStandardResult_api.FLUID_CONTACT_SURFACE, "-")
-                .withRealization(3)
-                .buildRealizationAddrStr(),
-        ).toThrow("reserved placeholder");
-    });
-
-    test("tag name may be the reserved placeholder", () => {
+    test("a tag name of '-' has no special meaning", () => {
         const addrStr = baseBuilder().withTagNameAttribute("-").withRealization(3).buildRealizationAddrStr();
 
-        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~-~~-~~3`);
+        expect(addrStr).toBe(`REAL~~${CASE_UUID}~~iter-0~~VOLANTIS GP. Top~~TAGNAME~~-~~~~3`);
     });
 
     test("throws when statistic function is missing", () => {
