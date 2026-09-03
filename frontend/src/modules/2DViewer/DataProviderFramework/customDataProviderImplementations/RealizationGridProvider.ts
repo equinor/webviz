@@ -1,8 +1,16 @@
 import { isEqual } from "lodash-es";
 
-import { getGridModelsInfoOptions, getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import {
+    getGridModelsInfoOptions,
+    getGridParameterOptions,
+    getGridParameterTimeDiffOptions,
+    getGridSurfaceOptions,
+} from "@api";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
-import { sortTimeOrIntervalArray } from "@lib/utils/arrays";
+import {
+    getAvailableTimeTypes,
+    makeGridPropertyTimeInfo,
+} from "@modules/_shared/DataProviderFramework/dataProviders/dependencyFunctions/gridPropertyTimeFunctions";
 import {
     getAvailableEnsembleIdentsForField,
     getAvailableRealizationsForEnsembleIdent,
@@ -14,6 +22,7 @@ import type {
 } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customDataProviderImplementation";
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
+import { TimeType } from "@modules/_shared/DataProviderFramework/settings/implementations/TimeTypeSetting";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { RealizationGridData } from "@modules/_shared/DataProviderFramework/visualization/utils/types";
 import {
@@ -29,7 +38,10 @@ const realizationGridSettings = [
     Setting.ATTRIBUTE,
     Setting.GRID_NAME,
     Setting.GRID_LAYER_K,
-    Setting.TIME_OR_INTERVAL,
+    Setting.TIME_TYPE,
+    Setting.TIME_POINT,
+    Setting.TIME_INTERVAL,
+    Setting.TIME_POINT_PAIR,
     Setting.SHOW_GRID_LINES,
     Setting.COLOR_SCALE,
     Setting.OPACITY_PERCENT,
@@ -90,10 +102,7 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
         const realizationNum = getSetting(Setting.REALIZATION);
         const gridName = getSetting(Setting.GRID_NAME);
         const attribute = getSetting(Setting.ATTRIBUTE);
-        let timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
-        if (timeOrInterval === "NO_TIME") {
-            timeOrInterval = null;
-        }
+        const timeType = getSetting(Setting.TIME_TYPE);
         const availableDimensions = getStoredData("availableGridDimensions");
         const layerIndex = getSetting(Setting.GRID_LAYER_K);
         const iMin = 0;
@@ -103,41 +112,59 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
         const kMin = layerIndex || 0;
         const kMax = layerIndex || 0;
 
-        const gridParameterOptions = getGridParameterOptions({
-            query: {
-                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                grid_name: gridName ?? "",
-                parameter_name: attribute ?? "",
-                parameter_time_or_interval_str: timeOrInterval,
-                realization_num: realizationNum ?? 0,
-                i_min: iMin,
-                i_max: iMax - 1,
-                j_min: jMin,
-                j_max: jMax - 1,
-                k_min: kMin,
-                k_max: kMax,
-                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
-            },
-        });
+        const commonQuery = {
+            case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+            ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+            grid_name: gridName ?? "",
+            realization_num: realizationNum ?? 0,
+            i_min: iMin,
+            i_max: iMax - 1,
+            j_min: jMin,
+            j_max: jMax - 1,
+            k_min: kMin,
+            k_max: kMax,
+            ...makeCacheBustingQueryParam(ensembleIdent ?? null),
+        };
+
+        let gridParameterPromise: Promise<GridMappedProperty_trans>;
+        if (timeType === TimeType.COMPUTED_INTERVAL) {
+            const timePointPair = getSetting(Setting.TIME_POINT_PAIR);
+            if (timePointPair === null) {
+                throw new Error("Time steps to calculate the difference between are not set");
+            }
+
+            gridParameterPromise = fetchQuery(
+                getGridParameterTimeDiffOptions({
+                    query: {
+                        ...commonQuery,
+                        parameter_name: attribute ?? "",
+                        base_time_str: timePointPair[0],
+                        monitor_time_str: timePointPair[1],
+                    },
+                }),
+            ).then(transformGridMappedProperty);
+        } else {
+            let timeOrIntervalStr: string | null = null;
+            if (timeType === TimeType.TIME_POINT) {
+                timeOrIntervalStr = getSetting(Setting.TIME_POINT);
+            } else if (timeType === TimeType.INTERVAL) {
+                timeOrIntervalStr = getSetting(Setting.TIME_INTERVAL);
+            }
+
+            gridParameterPromise = fetchQuery(
+                getGridParameterOptions({
+                    query: {
+                        ...commonQuery,
+                        parameter_name: attribute ?? "",
+                        parameter_time_or_interval_str: timeOrIntervalStr,
+                    },
+                }),
+            ).then(transformGridMappedProperty);
+        }
 
         const gridSurfaceOptions = getGridSurfaceOptions({
-            query: {
-                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                grid_name: gridName ?? "",
-                realization_num: realizationNum ?? 0,
-                i_min: iMin,
-                i_max: iMax - 1,
-                j_min: jMin,
-                j_max: jMax - 1,
-                k_min: kMin,
-                k_max: kMax,
-                ...makeCacheBustingQueryParam(ensembleIdent ?? null),
-            },
+            query: commonQuery,
         });
-
-        const gridParameterPromise = fetchQuery(gridParameterOptions).then(transformGridMappedProperty);
 
         const gridSurfacePromise = fetchQuery(gridSurfaceOptions).then(transformGridSurface);
 
@@ -150,14 +177,28 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderAccessors<RealizationGridSettings, RealizationGridData, StoredData>): boolean {
-        return (
-            getSetting(Setting.ENSEMBLE) !== null &&
-            getSetting(Setting.REALIZATION) !== null &&
-            getSetting(Setting.GRID_NAME) !== null &&
-            getSetting(Setting.ATTRIBUTE) !== null &&
-            getSetting(Setting.GRID_LAYER_K) !== null &&
-            getSetting(Setting.TIME_OR_INTERVAL) !== null
-        );
+        if (
+            getSetting(Setting.ENSEMBLE) === null ||
+            getSetting(Setting.REALIZATION) === null ||
+            getSetting(Setting.GRID_NAME) === null ||
+            getSetting(Setting.ATTRIBUTE) === null ||
+            getSetting(Setting.GRID_LAYER_K) === null
+        ) {
+            return false;
+        }
+
+        switch (getSetting(Setting.TIME_TYPE)) {
+            case TimeType.NO_TIME:
+                return true;
+            case TimeType.TIME_POINT:
+                return getSetting(Setting.TIME_POINT) !== null;
+            case TimeType.INTERVAL:
+                return getSetting(Setting.TIME_INTERVAL) !== null;
+            case TimeType.COMPUTED_INTERVAL:
+                return getSetting(Setting.TIME_POINT_PAIR) !== null;
+            default:
+                return false;
+        }
     }
 
     setupBindings({
@@ -278,7 +319,8 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
             },
         });
 
-        setting(Setting.TIME_OR_INTERVAL).bindValueConstraints({
+        const timeInfo = makeSharedResult({
+            debugName: "RealizationGridPropertyTimeInfo",
             read(read) {
                 return {
                     gridName: read.localSetting(Setting.GRID_NAME),
@@ -287,24 +329,61 @@ export class RealizationGridProvider implements CustomDataProviderImplementation
                 };
             },
             resolve({ gridName, gridAttribute, gridData }) {
-                if (!gridName || !gridAttribute || !gridData) {
-                    return [];
-                }
-
-                const gridAttributeArr =
-                    gridData.find((gridModel) => gridModel.grid_name === gridName)?.property_info_arr ?? [];
-
-                return sortTimeOrIntervalArray(
-                    Array.from(
-                        new Set(
-                            gridAttributeArr
-                                .filter((attr) => attr.property_name === gridAttribute)
-                                .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
-                        ),
-                    ),
-                );
+                return makeGridPropertyTimeInfo(gridData, gridName, gridAttribute);
             },
         });
+
+        setting(Setting.TIME_TYPE).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfo) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo ? getAvailableTimeTypes(timeInfo, { allowComputedInterval: true }) : [];
+            },
+        });
+
+        setting(Setting.TIME_POINT).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfo) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo?.timePoints ?? [];
+            },
+        });
+
+        setting(Setting.TIME_INTERVAL).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfo) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo?.intervals ?? [];
+            },
+        });
+
+        setting(Setting.TIME_POINT_PAIR).bindValueConstraints({
+            read(read) {
+                return { timeInfo: read.sharedResult(timeInfo) };
+            },
+            resolve({ timeInfo }) {
+                return timeInfo?.timePoints ?? [];
+            },
+        });
+
+        for (const [timeSetting, requiredTimeType] of [
+            [Setting.TIME_POINT, TimeType.TIME_POINT],
+            [Setting.TIME_INTERVAL, TimeType.INTERVAL],
+            [Setting.TIME_POINT_PAIR, TimeType.COMPUTED_INTERVAL],
+        ] as const) {
+            setting(timeSetting).bindAttributes({
+                read(read) {
+                    return { timeType: read.localSetting(Setting.TIME_TYPE) };
+                },
+                resolve({ timeType }) {
+                    const visible = timeType === requiredTimeType;
+                    return { enabled: visible, visible };
+                },
+            });
+        }
 
         storedData("availableGridDimensions").bindValue({
             read(read) {

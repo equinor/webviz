@@ -16,6 +16,7 @@ import type { IntersectionSettingOption, IntersectionSettingValue } from "./impl
 import type { PolygonVisualizationSpec } from "./implementations/PolygonVisualizationSetting";
 import type { Representation } from "./implementations/RepresentationSetting";
 import type { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
+import type { TimeType } from "./implementations/TimeTypeSetting";
 
 export enum Setting {
     // Assorted styling visual settings
@@ -60,9 +61,11 @@ export enum Setting {
     SURFACE_NAME = "surfaceName",
     FORMATION_NAME = "formationName",
     SURFACE_NAMES = "surfaceNames",
+    TIME_TYPE = "timeType",
     TIME_OR_INTERVAL = "timeOrInterval",
     TIME_POINT = "timePoint",
     TIME_INTERVAL = "timeInterval",
+    TIME_POINT_PAIR = "timePointPair",
     TIME_RANGE_WITH_POINTS = "timeRangeWithPoints",
     TVD_RANGE = "tvdRange",
     WELLBORE_DEPTH_FORMATION_FILTER = "wellboreDepthFormationFilter",
@@ -213,6 +216,16 @@ export type SettingTypeDefinitions = {
         internalValue: string | null;
         externalValue: string | null;
         valueConstraints: string[];
+    };
+    [Setting.TIME_POINT_PAIR]: {
+        internalValue: [string, string] | null;
+        externalValue: [string, string] | null;
+        valueConstraints: string[];
+    };
+    [Setting.TIME_TYPE]: {
+        internalValue: TimeType | null;
+        externalValue: TimeType | null;
+        valueConstraints: TimeType[];
     };
     [Setting.TIME_RANGE_WITH_POINTS]: {
         internalValue: string[] | null;

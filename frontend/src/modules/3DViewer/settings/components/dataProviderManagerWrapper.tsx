@@ -152,6 +152,18 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
             case "Date":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
                 return;
+            case "time-type":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_TYPE, null, props.dataProviderManager));
+                return;
+            case "time-point":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT, null, props.dataProviderManager));
+                return;
+            case "time-interval":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_INTERVAL, null, props.dataProviderManager));
+                return;
+            case "time-point-pair":
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_POINT_PAIR, null, props.dataProviderManager));
+                return;
         }
     }
 
@@ -356,6 +368,26 @@ const ACTIONS: ActionGroup[] = [
                 identifier: "Date",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Date",
+            },
+            {
+                identifier: "time-type",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time type",
+            },
+            {
+                identifier: "time-point",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time step",
+            },
+            {
+                identifier: "time-interval",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time interval",
+            },
+            {
+                identifier: "time-point-pair",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Time steps (difference)",
             },
             {
                 identifier: "color-scale",

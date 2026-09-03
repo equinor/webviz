@@ -92,6 +92,16 @@ export type BodyPostGetPolylineIntersection_api = {
 };
 
 /**
+ * Body_post_get_polyline_intersection_time_diff
+ */
+export type BodyPostGetPolylineIntersectionTimeDiff_api = {
+    /**
+     * Polyline Utm Xy
+     */
+    polyline_utm_xy: Array<number>;
+};
+
+/**
  * Body_post_get_sample_surface_in_points
  */
 export type BodyPostGetSampleSurfaceInPoints_api = {
@@ -4936,6 +4946,113 @@ export type GetGridParameterResponses_api = {
 
 export type GetGridParameterResponse_api = GetGridParameterResponses_api[keyof GetGridParameterResponses_api];
 
+export type GetGridParameterTimeDiffData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Grid Name
+         *
+         * Grid name
+         */
+        grid_name: string;
+        /**
+         * Parameter Name
+         *
+         * Grid parameter
+         */
+        parameter_name: string;
+        /**
+         * Realization Num
+         *
+         * Realization
+         */
+        realization_num: number;
+        /**
+         * Base Time Str
+         *
+         * Time point string of the base time step
+         */
+        base_time_str: string;
+        /**
+         * Monitor Time Str
+         *
+         * Time point string of the monitor time step
+         */
+        monitor_time_str: string;
+        /**
+         * I Min
+         *
+         * Min i index
+         */
+        i_min?: number;
+        /**
+         * I Max
+         *
+         * Max i index
+         */
+        i_max?: number;
+        /**
+         * J Min
+         *
+         * Min j index
+         */
+        j_min?: number;
+        /**
+         * J Max
+         *
+         * Max j index
+         */
+        j_max?: number;
+        /**
+         * K Min
+         *
+         * Min k index
+         */
+        k_min?: number;
+        /**
+         * K Max
+         *
+         * Max k index
+         */
+        k_max?: number;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/grid_parameter_time_diff";
+};
+
+export type GetGridParameterTimeDiffErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetGridParameterTimeDiffError_api =
+    GetGridParameterTimeDiffErrors_api[keyof GetGridParameterTimeDiffErrors_api];
+
+export type GetGridParameterTimeDiffResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Grid3dMappedProperty_api;
+};
+
+export type GetGridParameterTimeDiffResponse_api =
+    GetGridParameterTimeDiffResponses_api[keyof GetGridParameterTimeDiffResponses_api];
+
 export type PostGetPolylineIntersectionData_api = {
     body: BodyPostGetPolylineIntersection_api;
     path?: never;
@@ -5000,6 +5117,77 @@ export type PostGetPolylineIntersectionResponses_api = {
 
 export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
+
+export type PostGetPolylineIntersectionTimeDiffData_api = {
+    body: BodyPostGetPolylineIntersectionTimeDiff_api;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Grid Name
+         *
+         * Grid name
+         */
+        grid_name: string;
+        /**
+         * Parameter Name
+         *
+         * Grid parameter
+         */
+        parameter_name: string;
+        /**
+         * Realization Num
+         *
+         * Realization
+         */
+        realization_num: number;
+        /**
+         * Base Time Str
+         *
+         * Time point string of the base time step
+         */
+        base_time_str: string;
+        /**
+         * Monitor Time Str
+         *
+         * Time point string of the monitor time step
+         */
+        monitor_time_str: string;
+        zCacheBust?: string;
+    };
+    url: "/grid3d/get_polyline_intersection_time_diff";
+};
+
+export type PostGetPolylineIntersectionTimeDiffErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type PostGetPolylineIntersectionTimeDiffError_api =
+    PostGetPolylineIntersectionTimeDiffErrors_api[keyof PostGetPolylineIntersectionTimeDiffErrors_api];
+
+export type PostGetPolylineIntersectionTimeDiffResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: PolylineIntersection_api;
+};
+
+export type PostGetPolylineIntersectionTimeDiffResponse_api =
+    PostGetPolylineIntersectionTimeDiffResponses_api[keyof PostGetPolylineIntersectionTimeDiffResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
     body?: never;
