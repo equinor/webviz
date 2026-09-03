@@ -6,13 +6,18 @@ import {
     AddLink,
     Apps,
     ArrowDropDown,
-    Close,
+    ChevronRight,
+    DarkMode,
+    DensitySmall,
+    DeveloperMode,
     Edit,
     Fullscreen,
     FullscreenExit,
+    Home,
     Info,
     Link,
     Lock,
+    MoreVert,
     OpenInNew,
     Refresh,
     Save,
@@ -22,9 +27,10 @@ import {
 import { FmuLogo } from "@assets/FmuLogo";
 import SumoLogo from "@assets/sumo.svg";
 
-import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { useBrowserFullscreen } from "@framework/internal/hooks/useBrowserFullscreen";
 import { PersistenceOrchestratorTopic } from "@framework/internal/persistence/core/PersistenceOrchestrator";
+import { useUserSettings } from "@framework/internal/providers/UserSettingsProvider";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
 import { WorkbenchSessionManagerTopic } from "@framework/internal/WorkbenchSession/WorkbenchSessionManager";
 import { type Workbench } from "@framework/Workbench";
@@ -32,11 +38,13 @@ import { Button, type ButtonProps } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { HasChangesIndicator } from "@lib/components/HasChangesIndicator";
 import { MenuCompositions } from "@lib/components/Menu/compositions";
+import type { MenuItem } from "@lib/components/Menu/compositions/types";
 import { Popover } from "@lib/components/Popover";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { Heading, Paragraph } from "@lib/components/Typography/compositions";
+import { isDevMode } from "@lib/utils/devMode";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
@@ -72,10 +80,12 @@ export function TopBar(props: TopBarProps): React.ReactNode {
             >
                 <FmuAppsButton />
                 <LogoWithText />
+                <Separator orientation="vertical" />
                 <div className="gap-x-xs flex min-w-0 grow items-center">
+                    <ReturnToStartPageButton workbench={props.workbench} />
                     {hasActiveSession ? (
                         <>
-                            <Separator orientation="vertical" />
+                            <ChevronRight />
                             <Title workbench={props.workbench} />
                             <TopBarButtons workbench={props.workbench} />
                         </>
@@ -83,10 +93,9 @@ export function TopBar(props: TopBarProps): React.ReactNode {
                         <div className="grow" />
                     )}
                     <Separator orientation="vertical" />
+                    <DisplayOptions workbench={props.workbench} />
+                    <Separator orientation="vertical" />
                     <FullscreenToggleButton />
-                    <DarkModeButton />
-                    <DensityModeToggle />
-                    <ToggleDevToolsButton guiMessageBroker={props.workbench.getGuiMessageBroker()} />
                     <Separator orientation="vertical" />
                     <FeedbackDialog iconOnly workbench={props.workbench} />
                     <LoginButton showText={false} />
@@ -130,32 +139,116 @@ function FmuAppsButton(): React.ReactNode {
 
 function LogoWithText(): React.ReactNode {
     return (
-        <div className="gap-x-sm flex flex-row items-center">
-            <FmuLogo className="h-8 w-8" />
-            <Heading as="h6" weight="bolder">
-                FMU Analysis
-            </Heading>
-            <div
-                className="bg-warning-strong text-neutral-strong-on-emphasis text-body-sm px-xs py-3xs cursor-help rounded-sm text-center"
-                title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
-            >
-                BETA
-            </div>
+        <div className="gap-x-sm flex flex-nowrap items-center">
+            <Tooltip content="Reload and go to start page" side="bottom" delay="long">
+                <a
+                    href="/"
+                    aria-label="Reload and go to start page"
+                    className="gap-x-sm flex cursor-pointer flex-nowrap items-center"
+                >
+                    <FmuLogo className="h-8 w-8" />
+                    <Heading as="h6" weight="bolder" layoutClassName="whitespace-nowrap hidden lg:block">
+                        FMU Analysis
+                    </Heading>
+                </a>
+            </Tooltip>
         </div>
     );
 }
 
 function FullscreenToggleButton(): React.ReactNode {
-    const [isFullscreen, toggleFullScreen] = useBrowserFullscreen();
+    const [isFullscreen, toggleFullscreen] = useBrowserFullscreen();
 
     const fullscreenButtonTitle = isFullscreen ? "Exit fullscreen (F11)" : "Enter fullscreen (F11)";
 
     return (
         <Tooltip content={fullscreenButtonTitle} side="bottom">
-            <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullScreen}>
+            <TopBarButton title={fullscreenButtonTitle} onClick={toggleFullscreen}>
                 {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
             </TopBarButton>
         </Tooltip>
+    );
+}
+
+type DisplayOptionsProps = {
+    workbench: Workbench;
+};
+
+/**
+ * Dark mode, dense mode and (in dev builds) the dev tools toggle. Shown as individual buttons on wide
+ * viewports; below the `xl` breakpoint they collapse into a single dropdown menu.
+ */
+function DisplayOptions(props: DisplayOptionsProps): React.ReactNode {
+    const { settings, setColorScheme, setDensity } = useUserSettings();
+    const [devToolsVisible, setDevToolsVisible] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.DevToolsVisible,
+    );
+
+    const isDarkMode = settings.colorScheme === "dark";
+    const isDenseMode = settings.density === "comfortable";
+    const showDevTools = isDevMode();
+
+    function toggleDarkMode() {
+        setColorScheme(isDarkMode ? "light" : "dark");
+    }
+
+    function toggleDenseMode() {
+        setDensity(isDenseMode ? "spacious" : "comfortable");
+    }
+
+    function handleMenuAction(actionId: string) {
+        if (actionId === "dark-mode") {
+            toggleDarkMode();
+        } else if (actionId === "dense-mode") {
+            toggleDenseMode();
+        } else if (actionId === "dev-tools") {
+            setDevToolsVisible(!devToolsVisible);
+        }
+    }
+
+    const menuItems: MenuItem[] = [
+        {
+            id: "dark-mode",
+            label: "Dark mode",
+            icon: <DarkMode />,
+            checked: isDarkMode,
+        },
+        {
+            id: "dense-mode",
+            label: "Dense mode",
+            icon: <DensitySmall />,
+            checked: isDenseMode,
+        },
+    ];
+
+    if (showDevTools) {
+        menuItems.push(
+            { type: "divider" },
+            {
+                id: "dev-tools",
+                label: "Dev tools",
+                icon: <DeveloperMode />,
+                checked: devToolsVisible,
+            },
+        );
+    }
+
+    return (
+        <>
+            <div className="gap-x-xs hidden items-center xl:flex">
+                <DarkModeButton />
+                <DensityModeToggle />
+                <ToggleDevToolsButton guiMessageBroker={props.workbench.getGuiMessageBroker()} />
+            </div>
+            <div className="xl:hidden">
+                <MenuCompositions.Default onActionClicked={handleMenuAction} items={menuItems}>
+                    <Button variant="ghost" tone="accent" iconOnly title="Display options">
+                        <MoreVert fontSize="small" />
+                    </Button>
+                </MenuCompositions.Default>
+            </div>
+        </>
     );
 }
 
@@ -168,11 +261,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
     );
-
-    function handleCloseSessionClick() {
-        props.workbench.getSessionManager().maybeCloseCurrentSession();
-    }
-    const closeButtonTitle = isSnapshot ? "Close snapshot" : "Close session";
 
     return (
         <>
@@ -187,11 +275,6 @@ function TopBarButtons(props: TopBarButtonsProps): React.ReactNode {
                     <SnapshotButton workbench={props.workbench} />
                 </>
             )}
-            <Tooltip content={closeButtonTitle} side="bottom">
-                <TopBarButton onClick={handleCloseSessionClick} title={closeButtonTitle}>
-                    <Close fontSize="small" />
-                </TopBarButton>
-            </Tooltip>
         </>
     );
 }
@@ -233,6 +316,39 @@ function EditSessionButton(props: EditSessionButtonProps): React.ReactNode {
                 onClose={() => setEditSessionDialogOpen(false)}
             />
         </>
+    );
+}
+
+type ReturnToStartPageButtonProps = {
+    workbench: Workbench;
+};
+
+function ReturnToStartPageButton(props: ReturnToStartPageButtonProps): React.ReactNode {
+    const activeSession = usePublishSubscribeTopicValue(
+        props.workbench.getSessionManager(),
+        WorkbenchSessionManagerTopic.ACTIVE_SESSION,
+    );
+
+    if (!activeSession) {
+        return (
+            <Typography size="md" layoutClassName="px-md inline-flex gap-x-2xs items-center">
+                <Home style={{ fontSize: 16 }} />
+                Start
+            </Typography>
+        );
+    }
+
+    function handleReturnToStartPageClick() {
+        props.workbench.getSessionManager().maybeCloseCurrentSession();
+    }
+
+    return (
+        <Tooltip content="Return to start page" side="bottom">
+            <Button size="default" variant="ghost" tone="neutral" onClick={handleReturnToStartPageClick}>
+                <Home style={{ fontSize: 16 }} />
+                Start
+            </Button>
+        </Tooltip>
     );
 }
 
