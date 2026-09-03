@@ -31,6 +31,10 @@ import {
     DepthSurfaceProvider,
     type DepthSurfaceSettings,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
+import {
+    InitialFluidContactSurfaceProvider,
+    type InitialFluidContactSurfaceSettings,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/InitialFluidContactSurfaceProvider";
 import type {
     SurfaceData,
     SurfaceStoredData,
@@ -46,6 +50,7 @@ import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProvid
 import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
+import { makeInitialFluidContactSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeInitialFluidContactSurfaceLayer";
 import { makePlannedWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePlannedWellTrajectoriesLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
@@ -64,6 +69,19 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, S
     DepthSurfaceProvider,
     {
         transformToVisualization: makeDepthSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeDepthColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<
+    InitialFluidContactSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+>(
+    DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+    InitialFluidContactSurfaceProvider,
+    {
+        transformToVisualization: makeInitialFluidContactSurfaceLayer,
         transformToBoundingBox: makeSurfaceLayerBoundingBox,
         transformToAnnotations: makeDepthColorScaleAnnotation,
     },

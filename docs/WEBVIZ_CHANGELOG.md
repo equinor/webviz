@@ -21,6 +21,7 @@
 
 ### Added
 
+- **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
 - **Visualizations**: When the browser stops a graphics-intensive view to free up GPU resources (e.g. with many 2D/3D views or browser tabs open), the view now shows an explanation and a "Restore" button instead of going silently blank. It also recovers automatically when you return to the tab.
 
 ### Fixed
