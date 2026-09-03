@@ -330,6 +330,38 @@ export const DynamicItems: Story = {
     },
 };
 
+export const ProgrammaticPosition: Story = {
+    parameters: {
+        docs: {
+            description: {
+                story: "Pass `anchor={{ x, y }}` on `ContextMenu.Menu` to place the menu at a fixed viewport point instead of the pointer. Combine it with a controlled `open` / `onOpenChange` on `ContextMenu.Root` when there is no right-click trigger — e.g. opening a menu from a canvas / WebGL event that carries its own coordinates.",
+            },
+        },
+    },
+    render: function ProgrammaticPosition() {
+        const [menu, setMenu] = React.useState<{ x: number; y: number } | null>(null);
+
+        return (
+            <ContextMenu.Root open={menu !== null} onOpenChange={(open) => !open && setMenu(null)}>
+                <div
+                    className="border-neutral-subtle text-neutral-subtle text-body-sm flex h-40 w-80 items-center justify-center rounded border-2 border-dashed select-none"
+                    onClick={(e) => setMenu({ x: e.clientX, y: e.clientY })}
+                >
+                    Left-click anywhere to open a menu there
+                </div>
+                {menu && (
+                    <ContextMenu.Menu anchor={menu}>
+                        <ContextMenu.Item onClick={() => alert("Action A")}>Action A</ContextMenu.Item>
+                        <ContextMenu.Item onClick={() => alert("Action B")}>Action B</ContextMenu.Item>
+                        <ContextMenu.Separator />
+                        <ContextMenu.Item onClick={() => setMenu(null)}>Close</ContextMenu.Item>
+                    </ContextMenu.Menu>
+                )}
+            </ContextMenu.Root>
+        );
+    },
+};
+
 export const FileExplorer: Story = {
     parameters: {
         docs: {
