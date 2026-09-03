@@ -2,12 +2,13 @@ import { useAtomValue } from "jotai";
 
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 
-import { statisticOptionsAtom, tableTypeAtom } from "../atoms/baseAtoms";
+import { filterAtom, statisticOptionsAtom, tableTypeAtom } from "../atoms/baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "../atoms/queryAtoms";
 import type { TableColumnsConfig, TableRow } from "../types";
 import {
     createStatisticalTableHeadingsAndRowsFromTablesData,
     createTableHeadingsAndRowsFromTablesData,
+    sortTableRowsByCategoryOrder,
 } from "../utils/tableComponentUtils";
 
 export function useTableBuilder(): {
@@ -19,6 +20,7 @@ export function useTableBuilder(): {
 
     const tableType = useAtomValue(tableTypeAtom);
     const statisticOptions = useAtomValue(statisticOptionsAtom);
+    const filter = useAtomValue(filterAtom);
     const perRealizationTableDataResults = useAtomValue(perRealizationTableDataResultsAtom);
     const statisticalTableDataResults = useAtomValue(statisticalTableDataResultsAtom);
 
@@ -27,7 +29,11 @@ export function useTableBuilder(): {
             perRealizationTableDataResults.tablesData,
         );
         headings = tableHeadingsAndRows.headings;
-        tableRows = tableHeadingsAndRows.rows;
+        tableRows = sortTableRowsByCategoryOrder(
+            tableHeadingsAndRows.rows,
+            headings,
+            new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
+        );
 
         return { headings, tableRows };
     } else if (tableType === TableType.STATISTICAL) {
@@ -37,7 +43,11 @@ export function useTableBuilder(): {
         );
 
         headings = tableHeadingsAndRows.headings;
-        tableRows = tableHeadingsAndRows.rows;
+        tableRows = sortTableRowsByCategoryOrder(
+            tableHeadingsAndRows.rows,
+            headings,
+            new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
+        );
 
         return { headings, tableRows };
     }
