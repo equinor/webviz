@@ -16,8 +16,8 @@ const HOVER_OPEN_DELAY_MS = 600;
 // neighbouring tab or a small gap doesn't make it flicker.
 const HOVER_CLOSE_DELAY_MS = 300;
 
-const PREVIEW_WIDTH = 300;
-const PREVIEW_HEIGHT = 170;
+const PREVIEW_WIDTH = 200;
+const PREVIEW_HEIGHT = 120;
 
 export type DashboardTabPreviewProps = {
     dashboard: Dashboard;
@@ -51,11 +51,11 @@ export function DashboardTabPreview(props: DashboardTabPreviewProps): React.Reac
                 <TooltipBase.Positioner className="z-tooltip" side="top" align="center" sideOffset={8}>
                     <TooltipBase.Popup className="bg-floating border-neutral gap-y-xs p-sm flex flex-col rounded-sm border shadow-md">
                         <div className="gap-y-3xs flex flex-col" style={{ maxWidth: PREVIEW_WIDTH }}>
-                            <Typography size="md" weight="bolder" layoutClassName="break-words">
+                            <Typography size="md" weight="bolder" layoutClassName="wrap-break-word">
                                 {metadata.name}
                             </Typography>
                             {metadata.description && (
-                                <Typography size="sm" tone="neutral" layoutClassName="break-words">
+                                <Typography size="sm" tone="neutral" layoutClassName="wrap-break-word">
                                     {metadata.description}
                                 </Typography>
                             )}

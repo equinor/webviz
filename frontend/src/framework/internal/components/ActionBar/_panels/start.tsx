@@ -33,7 +33,7 @@ export function StartPanel(props: StartPanelProps) {
             <EnsembleSettingsButton workbench={props.workbench} />
             <Separator orientation="vertical" />
             <Button disabled={isSnapshot} iconOnly onClick={handleTemplatesListClick} tone="accent" variant="ghost">
-                <GridView fontSize="inherit" />
+                <GridView />
             </Button>
         </>
     );
@@ -78,7 +78,7 @@ function EnsembleSettingsButton(props: EnsembleSettingsButtonProps): React.React
                         )
                     }
                 >
-                    <List />
+                    <WindowListIcon />
                 </Badge>
             </Button>
         </Tooltip>

@@ -9,7 +9,7 @@ const DASHBOARD_HOT_CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 // timeout above - keeps memory and, more importantly, simultaneous WebGL contexts bounded even if
 // the user cycles through many dashboards within the timeout window. Oldest hot dashboard is
 // evicted first once this is exceeded.
-const DASHBOARD_HOT_CACHE_MAX_COUNT = 4;
+const DASHBOARD_HOT_CACHE_MAX_COUNT = 1;
 
 export enum DashboardHotCacheTopic {
     HOT_DASHBOARD_IDS = "HotDashboardIds",

@@ -80,7 +80,7 @@ export function View(): React.ReactNode {
     return (
         <div className="flex h-full w-full flex-col gap-2 p-4">
             <AtomStoreAllocator />
-            <div className="font-semibold">Memory Leak Test</div>
+            <div className="font-semibold">Debug Performance Test</div>
             <div className="text-sm">Size per enabled location: {sizeMb} MB</div>
             <ul className="text-sm">
                 <li>Atom store: {storeInAtomStore ? "allocated" : "off"}</li>
@@ -88,6 +88,9 @@ export function View(): React.ReactNode {
                 <li>React state (settings): {storeInSettingsState ? "allocated (see settings panel)" : "off"}</li>
                 <ViewStateAllocator />
             </ul>
+            <div className="text-xs text-gray-500">
+                Use the settings panel to allocate dummy data or trigger a long-running backend request.
+            </div>
         </div>
     );
 }
