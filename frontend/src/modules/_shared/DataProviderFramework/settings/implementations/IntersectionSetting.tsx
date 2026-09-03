@@ -1,10 +1,10 @@
 import React from "react";
 
 import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
+import { Combobox } from "@lib/components/Combobox";
 import { ComboboxCompositions } from "@lib/components/Combobox/compositions";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
 import { NumberInput } from "@lib/components/NumberInput";
-import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 
 import type {
@@ -48,6 +48,24 @@ type ExtensionLengthConfig = {
 
 type ValueType = IntersectionSettingValue | null;
 type ValueConstraintsType = IntersectionSettingOption[];
+
+const INTERSECTION_TYPE_OPTIONS: ComboboxItem<IntersectionType>[] = [
+    {
+        label: "Drilled well trajectory (SMDA)",
+        value: IntersectionType.WELLBORE,
+        description: "Official drilled well trajectories from SMDA",
+    },
+    {
+        label: "Planned well trajectory (SMDA)",
+        value: IntersectionType.PLANNED_WELLBORE,
+        description: "Planned well trajectories from SMDA",
+    },
+    {
+        label: "User-defined polyline",
+        value: IntersectionType.CUSTOM_POLYLINE,
+        description: "Custom intersection path created in Webviz",
+    },
+];
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _activeIntersectionType = IntersectionType.WELLBORE;
@@ -228,7 +246,11 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(newValue);
             }
 
-            function handleCategoryChange(value: IntersectionSettingValue["type"]) {
+            function handleCategoryChange(value: IntersectionSettingValue["type"] | null) {
+                if (value === null) {
+                    return;
+                }
+
                 extensionLengthController.cancel();
                 setType(value);
 
@@ -277,22 +299,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             return (
                 <div className="gap-x-3xs gap-y-2xs grid grid-cols-[max-content_minmax(0,1fr)] items-center">
                     <span>Type</span>
-                    <RadioCompositions.GroupWithLabels
-                        layout="horizontal"
-                        options={[
-                            {
-                                label: "Drilled (SMDA)",
-                                value: IntersectionType.WELLBORE,
-                            },
-                            {
-                                label: "Planned (SMDA)",
-                                value: IntersectionType.PLANNED_WELLBORE,
-                            },
-                            {
-                                label: "Polyline",
-                                value: IntersectionType.CUSTOM_POLYLINE,
-                            },
-                        ]}
+                    <Combobox
+                        items={INTERSECTION_TYPE_OPTIONS}
                         value={type}
                         onValueChange={handleCategoryChange}
                         size="small"
