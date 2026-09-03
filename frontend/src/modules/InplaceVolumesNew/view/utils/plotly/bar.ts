@@ -1,9 +1,9 @@
 import { sortBy } from "lodash-es";
 import type { Dash, PlotData } from "plotly.js";
 
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
 import { computeStatistics } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 export { BarSortBy };
 export const MAX_LABELS_FOR_BARS = 20;
@@ -54,7 +54,8 @@ export function makePlotlyBarTraces({
 
     // Custom hover text
     const hoverText = sortedPoints.map(
-        (p) => `<b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatNumber(Number(p.y))}<extra></extra>`,
+        (p) =>
+            `<b>${selectorName}:</b> ${p.x}<br><b>${resultName}:</b> ${formatInplaceVolumesValue(Number(p.y))}<extra></extra>`,
     );
 
     const showText = sortedXValues.length <= MAX_LABELS_FOR_BARS;
@@ -68,7 +69,7 @@ export function makePlotlyBarTraces({
             color,
             opacity: 0.8,
         },
-        text: showText ? sortedYValues.map((v) => formatNumber(v)) : undefined,
+        text: showText ? sortedYValues.map((v) => formatInplaceVolumesValue(v)) : undefined,
         textposition: showText ? "inside" : undefined,
         textfont: showText ? { color: "black", size: 12 } : undefined,
         hovertemplate: hoverText,
@@ -108,7 +109,7 @@ function createStatisticLinesForBarPlot(
             showlegend: false,
             name: label,
             legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
     }
 

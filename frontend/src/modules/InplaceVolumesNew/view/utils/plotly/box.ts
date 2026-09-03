@@ -1,7 +1,7 @@
 import type { PlotData } from "plotly.js";
 
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeStatistics } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 export type PlotlyBoxPlotTracesOptions = {
     title: string;
@@ -54,7 +54,7 @@ function createQuantileAndMeanMarkerTracesForBoxPlot(
         hovertext: label,
         showlegend: false,
         marker: { color: ensembleColor, symbol: "x", size: 10 },
-        hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatNumber(value)}<extra></extra>`,
+        hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
     });
 
     return [createMarker(p10, "P10"), createMarker(mean, "Mean"), createMarker(p90, "P90")];

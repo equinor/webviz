@@ -1,3 +1,5 @@
+import type { Getter } from "jotai";
+
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
@@ -10,6 +12,7 @@ import {
     isSelectedIndicesWithValuesValidSubset,
 } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 import { makeUniqueTableNamesIntersection } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
+import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
 import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
@@ -47,13 +50,42 @@ export const selectedTableNamesAtom = persistableFixableAtom<string[], string[]>
     },
 });
 
+export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
+    initialValue: [],
+    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
+    precomputeFunction: ({ get }) => {
+        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+        return tableDefinitionsAccessor.getCommonIndicesWithValues().map((el) => el.indexColumn);
+    },
+    isValidFunction: ({ value, precomputedValue }) => {
+        return value.every((index) => precomputedValue.includes(index));
+    },
+    fixupFunction: ({ value, precomputedValue }) => {
+        return fixupUserSelection(value ?? [], precomputedValue);
+    },
+});
+
+/**
+ * Result names that can be requested given the current grouping.
+ *
+ * The backend only computes BO/BG per fluid and discards them when the fluids are summed, so they
+ * are unavailable unless FLUID is part of the grouping.
+ */
+export function getSelectableResultNames(get: Getter): string[] {
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    const isGroupedByFluid = get(selectedGroupByIndicesAtom).value.includes(TableOriginKey.FLUID);
+
+    return tableDefinitionsAccessor
+        .getResultNamesIntersection()
+        .filter((name) => isGroupedByFluid || !isFluidSpecificResultName(name));
+}
+
 export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
     initialValue: [],
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     isValidFunction: ({ value, get }) => {
         const tableDefinitions = get(tableDefinitionsQueryAtom);
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-        const validResultNames = tableDefinitionsAccessor.getResultNamesIntersection();
+        const validResultNames = getSelectableResultNames(get);
 
         // Do not perform fixup during loading of new table definitions
         if (tableDefinitions.isLoading) {
@@ -69,25 +101,8 @@ export const selectedResultNamesAtom = persistableFixableAtom<string[]>({
         return value?.every((name) => validResultNames.includes(name)) ?? false;
     },
     fixupFunction: ({ value, get }) => {
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-
-        const fixedSelection = fixupUserSelection(value ?? [], tableDefinitionsAccessor.getResultNamesIntersection());
+        const fixedSelection = fixupUserSelection(value ?? [], getSelectableResultNames(get));
         return fixedSelection.length > 0 ? fixedSelection : [];
-    },
-});
-
-export const selectedGroupByIndicesAtom = persistableFixableAtom<string[], string[]>({
-    initialValue: [],
-    computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
-    precomputeFunction: ({ get }) => {
-        const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
-        return tableDefinitionsAccessor.getCommonIndicesWithValues().map((el) => el.indexColumn);
-    },
-    isValidFunction: ({ value, precomputedValue }) => {
-        return value.every((index) => precomputedValue.includes(index));
-    },
-    fixupFunction: ({ value, precomputedValue }) => {
-        return fixupUserSelection(value ?? [], precomputedValue);
     },
 });
 

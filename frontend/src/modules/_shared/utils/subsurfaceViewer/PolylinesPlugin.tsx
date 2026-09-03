@@ -92,6 +92,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         if (shouldRedraw) {
             this.requireRedraw();
         }
+        this.setReadoutSuppressed(this._currentEditingPolylineId !== null);
     }
 
     constructor(manager: DeckGlInstanceManager, colorGenerator?: Generator<[number, number, number]>) {
@@ -145,7 +146,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     setEditingMode(mode: PolylineEditingMode): void {
         this._editingMode = mode;
-        this.setReadoutSuppressed(mode !== PolylineEditingMode.DISABLED);
+        this.setReadoutSuppressed(this._currentEditingPolylineId !== null);
         this._hoverPoint = null;
         if (this._polylineHoverData !== null) {
             this._polylineHoverData = null;
@@ -320,17 +321,21 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
     }
 
-    handleClickAway(): void {
+    handleClickAway(): boolean {
         if (this._editingMode === PolylineEditingMode.DISABLED) {
-            return;
+            return false;
         }
         this._selectedPolylineId = null;
         if (this._editingMode !== PolylineEditingMode.DRAW) {
+            // The click terminated an active editing session. Consume it so it does not also
+            // register as a pick/readout on whatever was under the cursor.
+            const wasEditing = this._currentEditingPolylineId !== null;
             this.setCurrentEditingPolylineId(null);
             this.setEditingMode(PolylineEditingMode.IDLE);
-        } else {
-            this.requireRedraw();
+            return wasEditing;
         }
+        this.requireRedraw();
+        return false;
     }
 
     handleLayerHover(pickingInfo: PickingInfo): void {

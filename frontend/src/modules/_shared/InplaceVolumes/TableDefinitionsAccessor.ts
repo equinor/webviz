@@ -124,7 +124,6 @@ export class TableDefinitionsAccessor {
                     continue;
                 }
 
-                // Tables are not comparable when index values are not equal
                 if (this._indexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION) {
                     const valuesIntersection = indexWithValues.values.filter((value) =>
                         currentIndexWithValues.values.includes(value),
@@ -135,7 +134,9 @@ export class TableDefinitionsAccessor {
                         indexColumn: index,
                         values: valuesIntersection,
                     });
-                } else if (!isEqual(indexWithValues.values.sort(), currentIndexWithValues.values.sort())) {
+                } else if (!isEqual([...indexWithValues.values].sort(), [...currentIndexWithValues.values].sort())) {
+                    // Compare sorted copies so equality is order-insensitive without changing the
+                    // backend-provided order used by selectors and plots.
                     this._tablesNotComparable = true;
                     break;
                 }

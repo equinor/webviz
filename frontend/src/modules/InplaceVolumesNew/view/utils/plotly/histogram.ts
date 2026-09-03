@@ -1,8 +1,8 @@
 import type { Dash, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { computeStatistics } from "@modules/_shared/utils/math/statistics";
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
@@ -101,11 +101,11 @@ function createStatisticLinesForHistogram(
             showlegend: false,
             name: label,
             legendgroup: title,
-            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${value ? formatNumber(value) : ""}<extra></extra>`,
+            hovertemplate: `<b>${title}</b><br><b>${label}</b><br>${resultName}: ${formatInplaceVolumesValue(value)}<extra></extra>`,
         };
 
         if (showLabels) {
-            trace.text = ["", `${label}: ${formatNumber(value)}`];
+            trace.text = ["", `${label}: ${formatInplaceVolumesValue(value)}`];
             trace.textposition = "top center";
             trace.textfont = { color: "black", size: 11 };
         }
