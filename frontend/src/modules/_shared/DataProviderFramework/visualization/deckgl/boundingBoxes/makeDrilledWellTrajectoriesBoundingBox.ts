@@ -2,7 +2,7 @@ import type { WellboreTrajectory_api } from "@api";
 import type { BBox } from "@lib/utils/bbox";
 import type { TransformerArgs } from "@modules/_shared/DataProviderFramework/visualization/VisualizationAssembler";
 
-export function makeDrilledWellTrajectoriesBoundingBox({
+export function makeWellTrajectoriesBoundingBox({
     getData,
 }: TransformerArgs<any, WellboreTrajectory_api[], any>): BBox | null {
     const data = getData();

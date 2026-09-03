@@ -9,7 +9,7 @@ import { makeIntersectionSeismicBoundingBox } from "@modules/3DViewer/DataProvid
 import { makeSeismicSlicesBoundingBox } from "@modules/3DViewer/DataProviderFramework/boundingBoxes/makeSeismicSlicesBoundingBox";
 import { RealizationGridProvider } from "@modules/3DViewer/DataProviderFramework/customDataProviderImplementations/RealizationGridProvider";
 import { CustomDataProviderType } from "@modules/3DViewer/DataProviderFramework/customDataProviderTypes";
-import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
+import { makeWellTrajectoriesHoverVisualizationFunctions } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makeDrilledWellTrajectoriesLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesLayer";
 import { makeIntersectionRealizationGridLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeIntersectionRealizationGridLayer";
 import { makeSeismicIntersectionMeshLayer } from "@modules/3DViewer/DataProviderFramework/visualization/makeSeismicIntersectionMeshLayer";
@@ -43,7 +43,7 @@ import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramewo
 import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
-import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { makePlannedWellTrajectoriesLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePlannedWellTrajectoriesLayer";
@@ -102,8 +102,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DrilledWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeDrilledWellTrajectoriesLayer,
-        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
-        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+        transformToBoundingBox: makeWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -111,8 +111,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     PlannedWellboreTrajectoriesProvider,
     {
         transformToVisualization: makePlannedWellTrajectoriesLayer,
-        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
-        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+        transformToBoundingBox: makeWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(CustomDataProviderType.SEISMIC_SLICES, SeismicSlicesProvider, {

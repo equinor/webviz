@@ -4,6 +4,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import type { WellboreCasing_api, WellboreHeader_api } from "@api";
 import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import type { EsvLayer } from "@modules/_shared/components/EsvIntersection";
+import { PLANNED_WELL_COLOR_CSS } from "@modules/_shared/constants/wellsLayer";
 import type { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import {
     VisualizationItemType,
@@ -73,7 +74,10 @@ export function createLayerItemsForIntersectionType(
             !isPlanned && wellboreCasingsQuery.data && wellboreCasingsQuery.data.length > 0
                 ? wellboreCasingsQuery.data
                 : null;
-        layerItems.push(...createWellboreLayerItems(wellboreCasingsData, intersectionReferenceSystem, layerOrder));
+        const pathStroke = isPlanned ? PLANNED_WELL_COLOR_CSS : undefined;
+        layerItems.push(
+            ...createWellboreLayerItems(wellboreCasingsData, intersectionReferenceSystem, layerOrder, pathStroke),
+        );
         return layerItems;
     }
 

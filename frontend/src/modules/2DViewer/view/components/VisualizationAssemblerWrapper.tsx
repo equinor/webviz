@@ -1,6 +1,6 @@
 import type React from "react";
 
-import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
+import { makeWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
 import { makePlannedWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makePlannedWellTrajectoriesLayer2D";
 import { makeRichWellTrajectoriesLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRichWellTrajectoriesLayer";
 import {
@@ -38,7 +38,7 @@ import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramewo
 import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
-import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeAttributeSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeAttributeSurfaceLayer";
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
@@ -147,8 +147,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DrilledWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeRichWellTrajectoriesLayer,
-        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
-        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+        transformToBoundingBox: makeWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
@@ -156,8 +156,8 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     PlannedWellboreTrajectoriesProvider,
     {
         transformToVisualization: makePlannedWellTrajectoriesLayer2D,
-        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
-        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+        transformToBoundingBox: makeWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 

@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import type { WellboreTrajectory_api } from "@api";
 import { getPlannedWellboreHeadersOptions, getPlannedWellTrajectoriesOptions } from "@api";

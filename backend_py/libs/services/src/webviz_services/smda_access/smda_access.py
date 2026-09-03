@@ -241,27 +241,10 @@ class SmdaAccess:
         survey_status "planned". The other status value is "principal", which are wellbores that have
         already been drilled and are therefore returned by get_wellbore_headers_async instead.
         """
-        projection = [
-            "wellbore_uuid",
-            "unique_wellbore_identifier",
-            "well_uuid",
-            "unique_well_identifier",
-            "well_easting",
-            "well_northing",
-            "depth_reference_point",
-            "depth_reference_elevation",
-            "tvd_min",
-            "tvd_max",
-            "tvd_unit",
-            "md_min",
-            "md_max",
-            "md_unit",
-            "wellbore_status",
-            "kickoff_depth_md",
-            "kickoff_depth_tvd",
-        ]
         params = {
-            "_projection": ",".join(projection),
+            "_projection": data_model_to_projection_param(
+                WellboreHeader, exclude=["wellbore_purpose", "parent_wellbore"]
+            ),
             "_sort": "unique_wellbore_identifier",
             "field_identifier": field_identifier,
             "survey_status": "planned",

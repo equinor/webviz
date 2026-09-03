@@ -40,6 +40,12 @@ export type WellboreIntersectionSettingValue = IntersectionSettingOption & {
 
 export type IntersectionSettingValue = PolylineIntersectionSettingValue | WellboreIntersectionSettingValue;
 
+function isWellboreIntersectionSettingValue(
+    value: IntersectionSettingValue | null,
+): value is WellboreIntersectionSettingValue {
+    return isWellboreIntersectionType(value?.type);
+}
+
 type ExtensionLengthConfig = {
     min: number;
     max: number;
@@ -269,9 +275,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                               name: base.name,
                               uuid: base.uuid,
                               extensionLength:
-                                  validCandidate &&
-                                  (validCandidate.type === IntersectionType.WELLBORE ||
-                                      validCandidate.type === IntersectionType.PLANNED_WELLBORE)
+                                  isWellboreIntersectionSettingValue(validCandidate)
                                       ? validCandidate.extensionLength
                                       : defaultExtensionLength,
                           }

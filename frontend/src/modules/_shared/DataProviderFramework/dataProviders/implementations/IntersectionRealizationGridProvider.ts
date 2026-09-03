@@ -251,6 +251,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
             },
             resolve({ wellboreHeaders, plannedWellboreHeaders, intersectionPolylines, fieldIdentifier }) {
                 const headers = wellboreHeaders ?? [];
+                const plannedHeaders = plannedWellboreHeaders ?? [];
 
                 const fieldIntersectionPolylines = intersectionPolylines.filter(
                     (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
@@ -259,7 +260,7 @@ export class IntersectionRealizationGridProvider implements CustomDataProviderIm
                 return getAvailableIntersectionOptions(
                     headers,
                     fieldIntersectionPolylines,
-                    plannedWellboreHeaders ?? [],
+                    plannedHeaders,
                 );
             },
         });
