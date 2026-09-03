@@ -76,6 +76,15 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 );
                 return;
 
+            case "initial-fluid-contact-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+
             case "seismic-3d-surface":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -312,6 +321,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "depth-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Depth",
+                    },
+                    {
+                        identifier: "initial-fluid-contact-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Initial Fluid Contact",
                     },
                     {
                         identifier: "seismic-3d-surface",

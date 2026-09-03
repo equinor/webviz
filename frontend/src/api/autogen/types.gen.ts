@@ -819,6 +819,41 @@ export type HTTPValidationError_api = {
 };
 
 /**
+ * InitialFluidContactSurfaceMeta
+ */
+export type InitialFluidContactSurfaceMeta_api = {
+    /**
+     * Name
+     */
+    name: string;
+    contact: InitialFluidContactType_api;
+    standard_result: SurfaceStandardResult_api;
+    /**
+     * Name Is Stratigraphic Offical
+     */
+    name_is_stratigraphic_offical: boolean;
+    /**
+     * Value Min
+     */
+    value_min: number | null;
+    /**
+     * Value Max
+     */
+    value_max: number | null;
+};
+
+/**
+ * InitialFluidContactType
+ */
+export enum InitialFluidContactType_api {
+    FGL = "fgl",
+    FWL = "fwl",
+    GOC = "goc",
+    GWC = "gwc",
+    OWC = "owc",
+}
+
+/**
  * InplaceVolumesIndexWithValues
  *
  * Unique values for an index column in an inplace volumes table
@@ -2295,6 +2330,20 @@ export type SurfaceRealizationSampleValues_api = {
      */
     sampled_values: Array<number>;
 };
+
+/**
+ * SurfaceStandardResult
+ *
+ * The FMU standard results that are surfaces. Used when building standard result surface addresses.
+ */
+export enum SurfaceStandardResult_api {
+    FLUID_CONTACT_SURFACE = "fluid_contact_surface",
+    GRID_EXTRACTED_DEPTH_SURFACE = "grid_extracted_depth_surface",
+    STRUCTURE_DEPTH_FAULT_SURFACE = "structure_depth_fault_surface",
+    STRUCTURE_DEPTH_ISOCHORE = "structure_depth_isochore",
+    STRUCTURE_DEPTH_SURFACE = "structure_depth_surface",
+    STRUCTURE_TIME_SURFACE = "structure_time_surface",
+}
 
 /**
  * SurfaceStatisticFunction
@@ -4268,6 +4317,49 @@ export type GetObservedSurfacesMetadataResponses_api = {
 export type GetObservedSurfacesMetadataResponse_api =
     GetObservedSurfacesMetadataResponses_api[keyof GetObservedSurfacesMetadataResponses_api];
 
+export type GetInitialFluidContactSurfacesMetadataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Case Uuid
+         *
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble Name
+         *
+         * Ensemble name
+         */
+        ensemble_name: string;
+        zCacheBust?: string;
+    };
+    url: "/surface/initial_fluid_contact_surfaces_metadata/";
+};
+
+export type GetInitialFluidContactSurfacesMetadataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HTTPValidationError_api;
+};
+
+export type GetInitialFluidContactSurfacesMetadataError_api =
+    GetInitialFluidContactSurfacesMetadataErrors_api[keyof GetInitialFluidContactSurfacesMetadataErrors_api];
+
+export type GetInitialFluidContactSurfacesMetadataResponses_api = {
+    /**
+     * Response Get Initial Fluid Contact Surfaces Metadata
+     *
+     * Successful Response
+     */
+    200: Array<InitialFluidContactSurfaceMeta_api>;
+};
+
+export type GetInitialFluidContactSurfacesMetadataResponse_api =
+    GetInitialFluidContactSurfacesMetadataResponses_api[keyof GetInitialFluidContactSurfacesMetadataResponses_api];
+
 export type GetSurfaceDataData_api = {
     body?: never;
     path?: never;
@@ -4422,41 +4514,11 @@ export type PostGetSurfaceIntersectionData_api = {
     path?: never;
     query: {
         /**
-         * Case Uuid
+         * Surf Addr Str
          *
-         * Sumo case uuid
+         * Surface address string, supported address types are *REAL*, *OBS* and *STAT*
          */
-        case_uuid: string;
-        /**
-         * Ensemble Name
-         *
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Realization Num
-         *
-         * Realization number
-         */
-        realization_num: number;
-        /**
-         * Name
-         *
-         * Surface name
-         */
-        name: string;
-        /**
-         * Attribute
-         *
-         * Surface attribute
-         */
-        attribute: string;
-        /**
-         * Time Or Interval Str
-         *
-         * Time point or time interval string
-         */
-        time_or_interval_str?: string | null;
+        surf_addr_str: string;
         zCacheBust?: string;
     };
     url: "/surface/get_surface_intersection";
@@ -4609,7 +4671,7 @@ export type GetMisfitSurfaceDataData_api = {
         /**
          * Sim Surf Addr Str
          *
-         * Address of simulated surface, supported type is *PARTIAL*
+         * Address of simulated surface, only supported address type is *REAL*
          */
         sim_surf_addr_str: string;
         /**
