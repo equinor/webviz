@@ -1,6 +1,6 @@
 import React from "react";
 
-import { WebAsset } from "@mui/icons-material";
+import { WebAssetOff } from "@mui/icons-material";
 import { v4 } from "uuid";
 
 import type { LayoutBox } from "@framework/components/LayoutBox";
@@ -18,6 +18,7 @@ import { DashboardTopic, type LayoutElement } from "@framework/internal/Dashboar
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import { type Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
+import { Paragraph } from "@lib/components/Typography/compositions";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Rect2D, Size2D } from "@lib/utils/geometry";
@@ -508,12 +509,13 @@ function EmptyLayout(props: EmptyLayoutProps) {
 
     return (
         <div className="text-neutral-subtle gap-y-sm absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center select-none">
-            <WebAsset fontSize="large" />
-            <span className="text-center">
-                <strong>No modules added.</strong>
-                <br />
+            <WebAssetOff fontSize="large" />
+            <Paragraph size="md" weight="bolder" tone="neutral" layoutClassName="text-center">
+                No modules added
+            </Paragraph>
+            <Paragraph size="sm" tone="neutral" layoutClassName="text-center">
                 Drag modules here from the modules list.
-            </span>
+            </Paragraph>
             {rightDrawerContent !== RightDrawerContent.ModulesList && (
                 <Button onClick={openModulesList}>Open Modules List</Button>
             )}

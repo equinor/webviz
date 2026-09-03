@@ -1,4 +1,4 @@
-import { GridView, List } from "@mui/icons-material";
+import { GridView } from "@mui/icons-material";
 
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
+import { WindowListIcon } from "@lib/icons";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 import { useActiveSession } from "../../ActiveSessionBoundary";
