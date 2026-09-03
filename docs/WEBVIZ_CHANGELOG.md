@@ -10,9 +10,6 @@
 ### Changed
 
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
-- **Top bar**: On narrower windows the light/dark mode and density toggles now collapse into a single menu, so the top bar no longer runs out of space.
-- **Start page**: The start page now scrolls when its content does not fit and reflows into a single column on smaller screens, instead of being clipped.
-- **Empty states**: Clearer icons and wording when a dashboard has no modules added yet or a module has no settings.
 
 ### Added
 
