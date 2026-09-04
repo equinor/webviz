@@ -2,8 +2,7 @@ import { v4 } from "uuid";
 
 import type { InplaceVolumesStatistic_api } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumes/sortResultNames";
@@ -182,12 +181,9 @@ export function formatEnsembleIdent(value: string | number | null, ensembleSet: 
     if (value === null) {
         return "-";
     }
-    const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
-    if (ensemble && ensemble instanceof RegularEnsemble) {
-        return makeDistinguishableEnsembleDisplayName(
-            RegularEnsembleIdent.fromString(value.toString()),
-            ensembleSet.getRegularEnsembleArray(),
-        );
+    const ensembleIdent = getEnsembleIdentFromString(value.toString());
+    if (ensembleIdent && ensembleSet.findEnsemble(ensembleIdent)) {
+        return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArray());
     }
     return value.toString();
 }

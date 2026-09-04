@@ -13,7 +13,7 @@ import { isDimensionlessResultName } from "./types";
  * use upward-only SI scaling to avoid displaying ratios and fractions with sub-unit prefixes.
  */
 export function formatInplaceVolumesValue(value: string | number | null): string {
-    if (value === null) {
+    if (value === null || (typeof value === "number" && !Number.isFinite(value))) {
         return "-";
     }
     if (typeof value === "string") {

@@ -2,8 +2,7 @@ import type { Dash, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
-
-import { computeStatistics } from "../statistics";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;

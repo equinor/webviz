@@ -2,8 +2,10 @@ import type { QueryObserverResult } from "@tanstack/query-core";
 
 import type { InplaceVolumesTableDefinition_api } from "@api";
 import { getInplaceTableDefinitionsOptions } from "@api";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { makeCacheBustingQueryParam } from "@framework/utils/queryUtils";
 
 import { selectedEnsembleIdentsAtom } from "./persistableFixableAtoms";
@@ -20,7 +22,21 @@ export type TableDefinitionsQueryResult = {
 export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).value;
 
-    const queries = selectedEnsembleIdents.map((ensembleIdent) => {
+    // Table definitions are per regular ensemble, so a delta ensemble is validated through both of
+    // its constituents.
+    const regularEnsembleIdents: RegularEnsembleIdent[] = [];
+    for (const ensembleIdent of selectedEnsembleIdents) {
+        const constituents = isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)
+            ? [ensembleIdent.getComparisonEnsembleIdent(), ensembleIdent.getReferenceEnsembleIdent()]
+            : [ensembleIdent];
+        for (const constituent of constituents) {
+            if (!regularEnsembleIdents.some((existing) => existing.equals(constituent))) {
+                regularEnsembleIdents.push(constituent);
+            }
+        }
+    }
+
+    const queries = regularEnsembleIdents.map((ensembleIdent) => {
         const options = getInplaceTableDefinitionsOptions({
             query: {
                 case_uuid: ensembleIdent.getCaseUuid(),
@@ -38,7 +54,7 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
         ): TableDefinitionsQueryResult => {
             const tableDefinitionsPerEnsembleIdent: TableDefinitionsQueryResult["data"] = results.map(
                 (result, index) => ({
-                    ensembleIdent: selectedEnsembleIdents[index],
+                    ensembleIdent: regularEnsembleIdents[index],
                     tableDefinitions: result.data ?? [],
                 }),
             );
