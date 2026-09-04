@@ -7,6 +7,7 @@ import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/u
 import {
     makeDeltaRealizationCountWarnings,
     makeDroppedFluidSelectionWarnings,
+    makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 
 import { filterAtom, resultNamesAtom } from "../atoms/baseAtoms";
@@ -45,6 +46,10 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter, 
     }
 
     for (const warning of makeDroppedFluidSelectionWarnings(activeQueriesResult.droppedFluidSelections)) {
+        statusWriter.addWarning(warning);
+    }
+
+    for (const warning of makeUnmatchedDeltaRowWarnings(activeQueriesResult.unmatchedRows)) {
         statusWriter.addWarning(warning);
     }
 

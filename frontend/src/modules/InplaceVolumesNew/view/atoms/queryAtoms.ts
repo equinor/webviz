@@ -87,5 +87,6 @@ export const aggregatedTableDataQueriesAtom = atom((get) => {
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
         droppedFluidSelections: delta.droppedFluidSelections,
+        unmatchedRows: delta.unmatchedRows,
     };
 });

@@ -80,6 +80,7 @@ export const perRealizationTableDataResultsAtom = atom((get) => {
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
         droppedFluidSelections: delta.droppedFluidSelections,
+        unmatchedRows: delta.unmatchedRows,
     };
 });
 
@@ -129,5 +130,6 @@ export const statisticalTableDataResultsAtom = atom((get) => {
         allQueriesFailed: (regular.allQueriesFailed || delta.allQueriesFailed) && tablesData.length === 0,
         errors: [...regular.errors, ...delta.errors],
         droppedFluidSelections: delta.droppedFluidSelections,
+        unmatchedRows: delta.unmatchedRows,
     };
 });

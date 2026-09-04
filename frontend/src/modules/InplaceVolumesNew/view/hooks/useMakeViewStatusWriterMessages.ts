@@ -6,6 +6,7 @@ import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/u
 import {
     makeDeltaRealizationCountWarnings,
     makeDroppedFluidSelectionWarnings,
+    makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 
@@ -40,6 +41,10 @@ export function useMakeViewStatusWriterMessages(
     }
 
     for (const warning of makeDroppedFluidSelectionWarnings(queriesResult.droppedFluidSelections)) {
+        statusWriter.addWarning(warning);
+    }
+
+    for (const warning of makeUnmatchedDeltaRowWarnings(queriesResult.unmatchedRows)) {
         statusWriter.addWarning(warning);
     }
 

@@ -3,7 +3,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 
-import type { DeltaDroppedFluidSelections } from "./types";
+import type { DeltaDroppedFluidSelections, DeltaUnmatchedRows } from "./types";
 
 /**
  * Warnings for delta ensembles whose constituents do not share all realizations.
@@ -63,4 +63,14 @@ export function makeDroppedFluidSelectionWarnings(droppedFluidSelections: DeltaD
     }
 
     return warnings;
+}
+
+export function makeUnmatchedDeltaRowWarnings(unmatchedRows: DeltaUnmatchedRows[]): string[] {
+    return unmatchedRows.flatMap((unmatched) =>
+        unmatched.rows.map(
+            (rows) =>
+                `Delta ensemble "${unmatched.ensembleIdent.getEnsembleName()}" (${unmatched.tableName}, ${rows.fluidSelection}): ` +
+                `${rows.comparisonOnlyRowCount} comparison and ${rows.referenceOnlyRowCount} reference rows had no matching selector tuple and were excluded.`,
+        ),
+    );
 }

@@ -17,7 +17,7 @@ import { encodeSelectorColumn, expandSelectorColumn, makeRowKey } from "./select
 function subtractFluidSelectionTableData(
     comparison: InplaceVolumesTableData_api,
     reference: InplaceVolumesTableData_api,
-): InplaceVolumesTableData_api {
+): { data: InplaceVolumesTableData_api; unmatchedRows: UnmatchedDeltaRows | null } {
     // Intersection of selector column names, preserving comparison order.
     const referenceSelectorNames = new Set(reference.selectorColumns.map((column) => column.columnName));
     const selectorColumnNames = comparison.selectorColumns
@@ -54,11 +54,13 @@ function subtractFluidSelectionTableData(
     // Determine matched comparison rows (present in reference) and their reference row index.
     const comparisonRowCount = comparison.resultColumns[0]?.columnValues.length ?? 0;
     const matchedRows: { comparisonRow: number; referenceRow: number }[] = [];
+    const matchedReferenceRows = new Set<number>();
     for (let row = 0; row < comparisonRowCount; row++) {
         const key = makeRowKey(comparisonSelectorRowValues, selectorColumnNames, row);
         const referenceRow = referenceRowIndexByKey.get(key);
         if (referenceRow !== undefined) {
             matchedRows.push({ comparisonRow: row, referenceRow });
+            matchedReferenceRows.add(referenceRow);
         }
     }
 
@@ -83,10 +85,19 @@ function subtractFluidSelectionTableData(
         return { columnName: name, columnValues };
     });
 
+    const comparisonOnlyRowCount = comparisonRowCount - matchedRows.length;
+    const referenceOnlyRowCount = referenceRowCount - matchedReferenceRows.size;
+
     return {
-        fluidSelection: comparison.fluidSelection,
-        selectorColumns: deltaSelectorColumns,
-        resultColumns: deltaResultColumns,
+        data: {
+            fluidSelection: comparison.fluidSelection,
+            selectorColumns: deltaSelectorColumns,
+            resultColumns: deltaResultColumns,
+        },
+        unmatchedRows:
+            comparisonOnlyRowCount > 0 || referenceOnlyRowCount > 0
+                ? { fluidSelection: comparison.fluidSelection, comparisonOnlyRowCount, referenceOnlyRowCount }
+                : null,
     };
 }
 
@@ -96,10 +107,18 @@ export type DroppedFluidSelection = {
     missingFrom: "comparison" | "reference";
 };
 
+export type UnmatchedDeltaRows = {
+    fluidSelection: string;
+    comparisonOnlyRowCount: number;
+    referenceOnlyRowCount: number;
+};
+
 export type DeltaTableResult = {
     data: InplaceVolumesTableDataPerFluidSelection_api;
     /** Fluid selections excluded because only one side has them. */
     droppedFluidSelections: DroppedFluidSelection[];
+    /** Selector tuples excluded because they occur on only one side of the difference. */
+    unmatchedRows: UnmatchedDeltaRows[];
 };
 
 /**
@@ -119,6 +138,7 @@ export function subtractPerRealizationTables(
 
     const tableDataPerFluidSelection: InplaceVolumesTableData_api[] = [];
     const droppedFluidSelections: DroppedFluidSelection[] = [];
+    const unmatchedRows: UnmatchedDeltaRows[] = [];
     const comparisonFluidSelections = new Set<string>();
     for (const comparisonFluidTableData of comparisonData.tableDataPerFluidSelection) {
         comparisonFluidSelections.add(comparisonFluidTableData.fluidSelection);
@@ -131,9 +151,11 @@ export function subtractPerRealizationTables(
             });
             continue;
         }
-        tableDataPerFluidSelection.push(
-            subtractFluidSelectionTableData(comparisonFluidTableData, referenceFluidTableData),
-        );
+        const subtractionResult = subtractFluidSelectionTableData(comparisonFluidTableData, referenceFluidTableData);
+        tableDataPerFluidSelection.push(subtractionResult.data);
+        if (subtractionResult.unmatchedRows) {
+            unmatchedRows.push(subtractionResult.unmatchedRows);
+        }
     }
 
     // The inner join also drops reference-only fluid selections, which the loop above never visits.
@@ -146,7 +168,7 @@ export function subtractPerRealizationTables(
         }
     }
 
-    return { data: { tableDataPerFluidSelection }, droppedFluidSelections };
+    return { data: { tableDataPerFluidSelection }, droppedFluidSelections, unmatchedRows };
 }
 
 const subtractionResultByInputs = new WeakMap<

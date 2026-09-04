@@ -58,7 +58,8 @@ describe("subtractPerRealizationTables", () => {
             makeFluidData("Oil", [makeRealColumn([0, 1, 2])], [makeResultColumn("STOIIP", [90, 210, 280])]),
         ]);
 
-        const delta = subtractPerRealizationTables(comparison, reference).data;
+        const result = subtractPerRealizationTables(comparison, reference);
+        const delta = result.data;
 
         expect(delta.tableDataPerFluidSelection).toHaveLength(1);
         const oil = delta.tableDataPerFluidSelection[0];
@@ -75,7 +76,8 @@ describe("subtractPerRealizationTables", () => {
             makeFluidData("Oil", [makeRealColumn([1, 2, 3])], [makeResultColumn("STOIIP", [210, 280, 400])]),
         ]);
 
-        const delta = subtractPerRealizationTables(comparison, reference).data;
+        const result = subtractPerRealizationTables(comparison, reference);
+        const delta = result.data;
 
         const oil = delta.tableDataPerFluidSelection[0];
         // Only realizations 1 and 2 are common.
@@ -83,6 +85,33 @@ describe("subtractPerRealizationTables", () => {
         const realValues = oil.selectorColumns[0].indices.map((i) => oil.selectorColumns[0].uniqueValues[i]);
         expect(realValues).toEqual([1, 2]);
         expect(oil.resultColumns[0].columnValues).toEqual([200 - 210, 300 - 280]);
+        expect(result.unmatchedRows).toEqual([
+            { fluidSelection: "Oil", comparisonOnlyRowCount: 1, referenceOnlyRowCount: 1 },
+        ]);
+    });
+
+    test("reports unmatched selector tuples on both sides", () => {
+        const comparison = makePerFluidSelection([
+            makeFluidData(
+                "Oil",
+                [makeRealColumn([0, 0, 1]), makeIndexColumn("REGION", ["A", "B", "A"])],
+                [makeResultColumn("STOIIP", [10, 20, 30])],
+            ),
+        ]);
+        const reference = makePerFluidSelection([
+            makeFluidData(
+                "Oil",
+                [makeRealColumn([0, 1, 1]), makeIndexColumn("REGION", ["A", "A", "C"])],
+                [makeResultColumn("STOIIP", [1, 3, 4])],
+            ),
+        ]);
+
+        const result = subtractPerRealizationTables(comparison, reference);
+
+        expect(result.data.tableDataPerFluidSelection[0].resultColumns[0].columnValues).toEqual([9, 27]);
+        expect(result.unmatchedRows).toEqual([
+            { fluidSelection: "Oil", comparisonOnlyRowCount: 1, referenceOnlyRowCount: 1 },
+        ]);
     });
 
     test("matches on multiple selector columns regardless of row order", () => {

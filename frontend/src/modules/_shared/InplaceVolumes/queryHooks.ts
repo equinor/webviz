@@ -15,6 +15,7 @@ import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { subtractPerRealizationTablesMemoized } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
 import type {
     DeltaDroppedFluidSelections,
+    DeltaUnmatchedRows,
     InplaceVolumesStatisticalTableData,
     InplaceVolumesTableData,
 } from "@modules/_shared/InplaceVolumes/types";
@@ -45,6 +46,7 @@ export type AggregatedStatisticalTableDataResults = {
 
 export type AggregatedDeltaTableDataResults = AggregatedTableDataResults & {
     droppedFluidSelections: DeltaDroppedFluidSelections[];
+    unmatchedRows: DeltaUnmatchedRows[];
 };
 
 export function makeAggregatedStatisticalTableDataQueryOptions(
@@ -315,6 +317,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
         const tablesData: InplaceVolumesTableData[] = [];
         const errors: Error[] = [];
         const droppedFluidSelections: DeltaDroppedFluidSelections[] = [];
+        const unmatchedRows: DeltaUnmatchedRows[] = [];
 
         for (const queryPair of queryPairs) {
             const comparisonResult = results[queryPair.comparisonQueryIndex];
@@ -341,6 +344,13 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
                         fluidSelections: deltaResult.droppedFluidSelections,
                     });
                 }
+                if (deltaResult.unmatchedRows.length > 0) {
+                    unmatchedRows.push({
+                        ensembleIdent: queryPair.deltaEnsembleIdent,
+                        tableName: queryPair.tableName,
+                        rows: deltaResult.unmatchedRows,
+                    });
+                }
             }
         }
 
@@ -356,6 +366,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
                 ),
             errors: errors,
             droppedFluidSelections,
+            unmatchedRows,
         };
     }
 

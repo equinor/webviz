@@ -6,7 +6,7 @@ import { InplaceVolumesStatistic_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import type { DroppedFluidSelection } from "./deltaTableUtils";
+import type { DroppedFluidSelection, UnmatchedDeltaRows } from "./deltaTableUtils";
 import type { Column } from "./Table";
 
 export type InplaceVolumesTableData = {
@@ -26,6 +26,13 @@ export type DeltaDroppedFluidSelections = {
     ensembleIdent: DeltaEnsembleIdent;
     tableName: string;
     fluidSelections: DroppedFluidSelection[];
+};
+
+/** Selector tuples excluded from a delta inner join, per source table. */
+export type DeltaUnmatchedRows = {
+    ensembleIdent: DeltaEnsembleIdent;
+    tableName: string;
+    rows: UnmatchedDeltaRows[];
 };
 
 export enum TableType {
