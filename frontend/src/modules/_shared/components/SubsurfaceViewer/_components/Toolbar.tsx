@@ -10,6 +10,7 @@ import {
     Remove,
 } from "@mui/icons-material";
 
+import { type ConfirmAction, ConfirmationService } from "@framework/ConfirmationService";
 import { Button } from "@lib/components/Button";
 import { Separator } from "@lib/components/Separator";
 import { TextInput } from "@lib/components/TextInput";
@@ -31,7 +32,6 @@ export type ToolbarProps = {
     polylinesPlugin: PolylinesPlugin;
     onGridVisibilityChange: (visible: boolean) => void;
     onVerticalScaleChange(value: number): void;
-    onPolylineNameChange(name: string): void;
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
@@ -44,14 +44,23 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         props.polylinesPlugin,
         PolylinesPluginTopic.EDITING_POLYLINE_ID,
     );
+    // Re-renders whenever the active draft's path changes, e.g. as points are added/removed,
+    // so canSaveActivePolyline below stays in sync.
+    const activePolyline = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.ACTIVE_POLYLINE);
 
     if (editingPolylineId !== prevEditingPolylineId) {
         setPrevEditingPolylineId(editingPolylineId);
-        const activePolyline = props.polylinesPlugin.getActivePolyline();
-        if (activePolyline) {
-            setPolylineName(activePolyline.name);
+        // Read straight from the plugin rather than the ACTIVE_POLYLINE hook value above: the
+        // plugin always mutates its draft before notifying either topic, so this is guaranteed
+        // current, whereas ACTIVE_POLYLINE and EDITING_POLYLINE_ID are notified separately and
+        // aren't guaranteed to land in the same render.
+        const currentActivePolyline = props.polylinesPlugin.getActivePolyline();
+        if (currentActivePolyline) {
+            setPolylineName(currentActivePolyline.name);
         }
     }
+
+    const canSaveActivePolyline = (activePolyline?.path.length ?? 0) >= 2;
 
     function handleFitInViewClick() {
         props.onFitInView();
@@ -70,11 +79,45 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         props.onVerticalScaleChange(props.verticalScale - 1);
     }
 
-    function handleTogglePolylineEditing() {
-        if (polylineEditingMode !== PolylineEditingMode.DISABLED) {
+    async function handleTogglePolylineEditing() {
+        if (polylineEditingMode === PolylineEditingMode.DISABLED) {
+            props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
+            return;
+        }
+
+        if (!editingPolylineId) {
             props.polylinesPlugin.setEditingMode(PolylineEditingMode.DISABLED);
             return;
         }
+
+        const activeName = activePolyline?.name ?? "This polyline";
+        const actions: ConfirmAction[] = canSaveActivePolyline
+            ? [
+                  { id: "keep-editing", label: "Keep editing" },
+                  { id: "discard", label: "Discard", color: "danger" },
+                  { id: "save", label: "Save", color: "primary" },
+              ]
+            : [
+                  { id: "keep-editing", label: "Keep editing" },
+                  { id: "discard", label: "Discard", color: "danger" },
+              ];
+
+        const result = await ConfirmationService.confirm({
+            title: "Unsaved polyline",
+            message: canSaveActivePolyline
+                ? `"${activeName}" has not been saved. Do you want to save it before closing, or discard your changes?`
+                : `"${activeName}" needs at least two points before it can be saved. Do you want to discard it?`,
+            actions,
+        });
+
+        if (result === "save" && canSaveActivePolyline) {
+            props.polylinesPlugin.saveActivePolyline(polylineName || activeName);
+        } else if (result === "discard") {
+            props.polylinesPlugin.discardActivePolyline();
+        } else {
+            return;
+        }
+
         props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
     }
 
@@ -87,12 +130,10 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     function handleSavePolylineClick() {
-        if (!polylineName) {
+        if (!polylineName || !canSaveActivePolyline) {
             return;
         }
-        props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
-        props.onPolylineNameChange(polylineName);
-        props.polylinesPlugin.handleClickAway();
+        props.polylinesPlugin.saveActivePolyline(polylineName);
     }
 
     return (
@@ -239,9 +280,13 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 size="small"
                             />
                             <Button
-                                title={"Save polyline"}
+                                title={
+                                    editingPolylineId && !canSaveActivePolyline
+                                        ? "A polyline needs at least two points before it can be saved"
+                                        : "Save polyline"
+                                }
                                 onClick={handleSavePolylineClick}
-                                disabled={!editingPolylineId}
+                                disabled={!editingPolylineId || !canSaveActivePolyline}
                                 iconOnly
                                 size="small"
                                 variant="ghost"
