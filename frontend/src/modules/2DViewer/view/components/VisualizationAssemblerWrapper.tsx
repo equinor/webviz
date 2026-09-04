@@ -20,6 +20,10 @@ import {
     type DepthSurfaceSettings,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/DepthSurfaceProvider";
 import {
+    InitialFluidContactSurfaceProvider,
+    type InitialFluidContactSurfaceSettings,
+} from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/InitialFluidContactSurfaceProvider";
+import {
     SeismicSurfaceProvider,
     type SeismicSurfaceSettings,
 } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/surfaceProviders/SeismicSurfaceProvider";
@@ -39,6 +43,7 @@ import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProvid
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeAttributeSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeAttributeSurfaceLayer";
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
+import { makeInitialFluidContactSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeInitialFluidContactSurfaceLayer";
 import { makePolygonsLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makePolygonsLayer";
 import { makeRealizationGridLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeRealizationGridLayer";
 import { makeSeismicSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeSeismicSurfaceLayer";
@@ -60,6 +65,19 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<DepthSurfaceSettings, S
     DepthSurfaceProvider,
     {
         transformToVisualization: makeDepthSurfaceLayer,
+        transformToBoundingBox: makeSurfaceLayerBoundingBox,
+        transformToAnnotations: makeDepthColorScaleAnnotation,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers<
+    InitialFluidContactSurfaceSettings,
+    SurfaceData,
+    SurfaceStoredData
+>(
+    DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+    InitialFluidContactSurfaceProvider,
+    {
+        transformToVisualization: makeInitialFluidContactSurfaceLayer,
         transformToBoundingBox: makeSurfaceLayerBoundingBox,
         transformToAnnotations: makeDepthColorScaleAnnotation,
     },

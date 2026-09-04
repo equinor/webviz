@@ -74,6 +74,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager),
                 );
                 return;
+            case "initial-fluid-contact-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
             case "fault-polygons":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(DataProviderType.FAULT_POLYGONS, props.dataProviderManager),
@@ -278,6 +286,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "depth-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Depth Surface",
+                    },
+                    {
+                        identifier: "initial-fluid-contact-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Initial Fluid Contact",
                     },
                 ],
             },
