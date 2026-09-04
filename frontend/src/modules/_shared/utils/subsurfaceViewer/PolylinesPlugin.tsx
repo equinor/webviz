@@ -171,6 +171,21 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     }
 
     /**
+     * Ends the in-progress edit/draft the way clicking away from it should: saves it if it
+     * has enough points to be a valid polyline, otherwise discards it. Unlike
+     * `discardActivePolyline()`, this never silently throws away a completed edit.
+     */
+    private finishActivePolylineEditing(): void {
+        const draft = this._editingPolylineDraft;
+        if (draft && draft.path.length >= 2) {
+            this.saveActivePolyline(draft.name);
+        } else {
+            this.discardActivePolyline();
+            this.setEditingMode(PolylineEditingMode.IDLE);
+        }
+    }
+
+    /**
      * Commits the in-progress edit/draft into the committed `_polylines` set and requests
      * persistence. Requires at least two points - otherwise this is a no-op (the caller
      * should disable the save action in that case rather than relying on this guard alone).
@@ -358,8 +373,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             // The click terminated an active editing session. Consume it so it does not also
             // register as a pick/readout on whatever was under the cursor.
             const wasEditing = this._currentEditingPolylineId !== null;
-            this.discardActivePolyline();
-            this.setEditingMode(PolylineEditingMode.IDLE);
+            this.finishActivePolylineEditing();
             return wasEditing;
         }
         this.requireRedraw();
@@ -443,8 +457,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
         } else if (activePolyline) {
             if (this._currentEditingPolylinePathReferencePointIndex === null) {
-                this.discardActivePolyline();
-                this.setEditingMode(PolylineEditingMode.IDLE);
+                this.finishActivePolylineEditing();
                 return true;
             }
 

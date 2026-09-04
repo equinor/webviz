@@ -81,7 +81,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     async function handleTogglePolylineEditing() {
         if (polylineEditingMode === PolylineEditingMode.DISABLED) {
-            props.polylinesPlugin.setEditingMode(PolylineEditingMode.DRAW);
+            props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
             return;
         }
 
