@@ -1,4 +1,4 @@
-import { getDrilledWellboreHeadersOptions } from "@api";
+import { getDrilledWellboreHeadersOptions, getPlannedWellboreHeadersOptions } from "@api";
 
 import { Setting } from "../..//settings/settingsDefinitions";
 import { getAvailableIntersectionOptions } from "../../dataProviders/dependencyFunctions/sharedSettingUpdaterFunctions";
@@ -43,20 +43,46 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<I
             },
         });
 
+        const plannedWellboreHeaders = makeSharedResult({
+            debugName: "plannedWellboreHeaders",
+            read(read) {
+                return {
+                    fieldIdentifier: read.globalSetting("fieldId"),
+                };
+            },
+            async resolve({ fieldIdentifier }, { abortSignal }) {
+                if (!fieldIdentifier) {
+                    return null;
+                }
+
+                return await queryClient.fetchQuery({
+                    ...getPlannedWellboreHeadersOptions({
+                        query: { field_identifier: fieldIdentifier },
+                        signal: abortSignal,
+                    }),
+                });
+            },
+        });
+
         setting(Setting.INTERSECTION).bindValueConstraints({
             read(read) {
                 return {
                     fieldIdentifier: read.globalSetting("fieldId"),
                     intersectionPolylines: read.globalSetting("intersectionPolylines"),
                     wellboreHeaders: read.sharedResult(wellboreHeaders),
+                    plannedWellboreHeaders: read.sharedResult(plannedWellboreHeaders),
                 };
             },
-            resolve({ fieldIdentifier, intersectionPolylines, wellboreHeaders }) {
+            resolve({ fieldIdentifier, intersectionPolylines, wellboreHeaders, plannedWellboreHeaders }) {
                 const fieldIntersectionPolylines = intersectionPolylines.filter(
                     (intersectionPolyline) => intersectionPolyline.fieldId === fieldIdentifier,
                 );
 
-                return getAvailableIntersectionOptions(wellboreHeaders ?? [], fieldIntersectionPolylines);
+                return getAvailableIntersectionOptions(
+                    wellboreHeaders ?? [],
+                    fieldIntersectionPolylines,
+                    plannedWellboreHeaders ?? [],
+                );
             },
         });
     }
