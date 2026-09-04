@@ -59,8 +59,7 @@ function seedSession(): SeedResult {
 
     if (result.error) {
         throw new Error(
-            `Failed to run the e2e session seed command "${command}".` +
-            `\nUnderlying error: ${result.error.message}`,
+            `Failed to run the e2e session seed command "${command}".` + `\nUnderlying error: ${result.error.message}`,
         );
     }
 
@@ -106,6 +105,8 @@ function writeStorageState(seedResult: SeedResult): void {
                 localStorage: [
                     // Hide dev tools in playwright tests.
                     { name: "devToolsVisible", value: "false" },
+                    // Force Webviz dev-mode checks off so Playwright runs don't depend on NODE_ENV=development.
+                    { name: "webvizDebug_forceDevMode", value: "false" },
                 ],
             },
         ],
