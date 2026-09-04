@@ -4,6 +4,7 @@ import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
+    makeDeltaRealizationAlignmentWarnings,
     makeDeltaRealizationCountWarnings,
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
@@ -37,6 +38,10 @@ export function useMakeViewStatusWriterMessages(
     }
 
     for (const warning of makeDeltaRealizationCountWarnings(filter?.ensembleIdents ?? [], ensembleSet)) {
+        statusWriter.addWarning(warning);
+    }
+
+    for (const warning of makeDeltaRealizationAlignmentWarnings(filter?.ensembleIdents ?? [])) {
         statusWriter.addWarning(warning);
     }
 

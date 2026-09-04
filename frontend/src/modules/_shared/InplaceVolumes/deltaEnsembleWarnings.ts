@@ -6,6 +6,20 @@ import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils"
 import type { DeltaDroppedFluidSelections, DeltaUnmatchedRows } from "./types";
 
 /**
+ * Delta values pair comparison and reference rows by realization number. Equal realization numbers
+ * do not by themselves prove that the underlying samples are semantically aligned.
+ */
+export function makeDeltaRealizationAlignmentWarnings(
+    ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+): string[] {
+    return filterEnsembleIdentsByType(ensembleIdents, DeltaEnsembleIdent).map(
+        (deltaEnsembleIdent) =>
+            `Delta ensemble "${deltaEnsembleIdent.getEnsembleName()}" pairs comparison and reference by realization number. ` +
+            "Distribution statistics are only meaningful when those realizations represent aligned samples.",
+    );
+}
+
+/**
  * Warnings for delta ensembles whose constituents do not share all realizations.
  *
  * The per-realization difference keeps only the shared realizations, which reduces the sample size

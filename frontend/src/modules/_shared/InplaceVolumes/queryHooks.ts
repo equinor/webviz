@@ -220,7 +220,8 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
  * shape as regular per-realization table data.
  *
  * Assumes the delta ensemble's constituents are realization-aligned, i.e. realization N is the same
- * sample in both. That is validated where the delta ensemble is defined, not here.
+ * sample in both. The application can match realization numbers but cannot validate this semantic
+ * relationship, so callers must communicate that requirement to users.
  */
 export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     deltaEnsembleIdentsWithRealizations: DeltaEnsembleIdentWithRealizations[],
