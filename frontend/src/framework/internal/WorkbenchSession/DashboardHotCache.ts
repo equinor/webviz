@@ -55,10 +55,10 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
      * whichever comes first.
      */
     deferEviction(dashboard: Dashboard): void {
-        // Already hot: keep the existing timer and queue position.
-        if (this._pending.some((entry) => entry.dashboard.getId() === dashboard.getId())) {
-            return;
-        }
+        // A dashboard should never already have a pending eviction when this is called (it would
+        // have to be the active dashboard to be switched away from), but guard against a duplicate
+        // timer regardless.
+        this.forgetInternal(dashboard.getId());
 
         const timer = setTimeout(() => {
             this.evictInternal(dashboard.getId());

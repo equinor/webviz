@@ -151,8 +151,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                     dashboard={dashboard}
                                     draggable={!isSnapshot}
                                     isHot={
-                                        dashboard.getId() ===
-                                            (optimisticActiveDashboardId ?? activeDashboard?.getId()) ||
+                                        dashboard.getId() === activeDashboard?.getId() ||
                                         hotDashboardIds.includes(dashboard.getId())
                                     }
                                     isDragged={reorder.draggedDashboardId === dashboard.getId()}
