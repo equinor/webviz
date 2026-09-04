@@ -11,10 +11,11 @@ import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
-import { formatEnsembleIdent, formatResultValue, isValidFluidType } from "../utils/tableComponentUtils";
+import { formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
 
 export type InplaceVolumesTableProps = {
     ensembleSet: EnsembleSet;
@@ -279,7 +280,7 @@ function TableCellComp(props: { value: string | number | null; columnType?: Colu
     }
 
     if (props.columnType === ColumnType.RESULT) {
-        return <Table.Cell layoutClassName="text-right">{formatResultValue(props.value)}</Table.Cell>;
+        return <Table.Cell layoutClassName="text-right">{formatInplaceVolumesValue(props.value)}</Table.Cell>;
     }
 
     if (props.columnType === ColumnType.ENSEMBLE) {

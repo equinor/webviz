@@ -118,7 +118,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
             return;
         }
 
-        props.polylinesPlugin.setEditingMode(PolylineEditingMode.DISABLED);
+        props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
     }
 
     function handlePolylineEditingModeChange(mode: PolylineEditingMode) {

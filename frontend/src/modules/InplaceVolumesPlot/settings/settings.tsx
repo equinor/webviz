@@ -82,7 +82,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => ({ label: name, value: name, description: createHoverTextForVolume(name) }));
 
     // Create selector options
     const selectorOptions: ComboboxItem<string>[] = [
@@ -115,7 +115,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     onValueChange={(v) => v && setSelectedPlotType(v)}
                 />
             </Setting.Field>
-            <Setting.Field label="First Result" annotations={selectedFirstResultNameAnnotations}>
+            <Setting.Field label="First response" annotations={selectedFirstResultNameAnnotations}>
                 <Combobox
                     value={selectedFirstResultName.value}
                     items={resultNameOptions}
@@ -135,7 +135,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             )}
 
             {selectedPlotType === PlotType.SCATTER && (
-                <Setting.Field label="Second Result" annotations={selectedSecondResultNameAnnotations}>
+                <Setting.Field label="Second response" annotations={selectedSecondResultNameAnnotations}>
                     <Combobox
                         value={selectedSecondResultName.value}
                         items={resultNameOptions}
