@@ -119,6 +119,40 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
         ).toEqual([15]);
     });
 
+    test("returns undefined statistics when no finite values remain", () => {
+        const perRealization = makePerFluidSelection([
+            {
+                fluidSelection: "oil",
+                selectorColumns: [makeSelectorColumn("REAL", [0, 1])],
+                resultColumns: [makeResultColumn("STOIIP", [NaN, Infinity])],
+            },
+        ]);
+
+        const statistics =
+            computeStatisticalTableFromPerRealizationTable(perRealization).tableDataPerFluidSelection[0]
+                .resultColumnStatistics[0].statisticValues;
+
+        expect(statistics[InplaceVolumesStatistic_api.MEAN]![0]).toBeNaN();
+        expect(statistics[InplaceVolumesStatistic_api.STDDEV]![0]).toBeNaN();
+    });
+
+    test("returns undefined sample standard deviation for a single finite value", () => {
+        const perRealization = makePerFluidSelection([
+            {
+                fluidSelection: "oil",
+                selectorColumns: [makeSelectorColumn("REAL", [0])],
+                resultColumns: [makeResultColumn("STOIIP", [10])],
+            },
+        ]);
+
+        const statistics =
+            computeStatisticalTableFromPerRealizationTable(perRealization).tableDataPerFluidSelection[0]
+                .resultColumnStatistics[0].statisticValues;
+
+        expect(statistics[InplaceVolumesStatistic_api.MEAN]).toEqual([10]);
+        expect(statistics[InplaceVolumesStatistic_api.STDDEV]![0]).toBeNaN();
+    });
+
     test("keeps every fluid selection", () => {
         const perRealization = makePerFluidSelection([
             {

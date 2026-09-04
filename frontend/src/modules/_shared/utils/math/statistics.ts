@@ -82,8 +82,10 @@ export function computeStatistics(values: number[]): Statistics {
     const count = values.length;
     const mean = values.reduce((a, b) => a + b, 0) / count;
 
-    const variance = count > 1 ? values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (count - 1) : 0;
-    const stdDev = Math.sqrt(variance);
+    const stdDev =
+        count > 1
+            ? Math.sqrt(values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (count - 1))
+            : Number.NaN;
 
     const min = values.reduce((acc, val) => Math.min(acc, val), Infinity);
     const max = values.reduce((acc, val) => Math.max(acc, val), -Infinity);
