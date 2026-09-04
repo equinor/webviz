@@ -320,6 +320,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         return instance;
     }
 
+    removeInstance(id: string): void {
+        this._moduleInstances = this._moduleInstances.filter((instance) => instance.getId() !== id);
+    }
+
     onInstanceUnload(instanceId: string) {
         this._onInstanceUnloadFunc?.(instanceId);
     }

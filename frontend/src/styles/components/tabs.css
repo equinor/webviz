@@ -41,8 +41,20 @@
         }
     }
     .tabs__indicator {
-        @apply bg-accent-strong absolute top-0 left-0 rounded transition-all duration-150;
-        transition-property: translate, width, height;
+        @apply bg-accent-strong absolute top-0 left-0;
+        /* Kept small: the ends sit on the non-scaled axis, so this stays a subtle
+         * rounding rather than being stretched by the size animation below. */
+        border-radius: 1px;
+        transform-origin: left top;
+        /*
+         * Position and size are both animated with compositor-only transforms
+         * (`translate` + `scale`) rather than `translate` + `width`/`height`.
+         * Animating `width`/`height` drives layout on the main thread every frame,
+         * so under load it stutters and lags behind the smooth, compositor-driven
+         * `translate` - the indicator appeared to move to the new tab first and
+         * only then resize. Scaling a 1px base keeps move and resize in lockstep.
+         */
+        transition-property: translate, scale;
         transition-duration: 200ms;
         transition-timing-function: ease-in-out;
 
@@ -51,8 +63,9 @@
         }
 
         &[data-orientation="horizontal"] {
-            width: var(--active-tab-width);
+            width: 1px;
             height: 2px;
+            scale: calc(var(--active-tab-width) / 1px) 1;
             [data-position="start"] & {
                 translate: var(--active-tab-left) -2px;
             }
@@ -62,8 +75,9 @@
         }
 
         &[data-orientation="vertical"] {
-            height: var(--active-tab-height);
             width: 2px;
+            height: 1px;
+            scale: 1 calc(var(--active-tab-height) / 1px);
             [data-position="start"] & {
                 translate: -2px var(--active-tab-top);
             }

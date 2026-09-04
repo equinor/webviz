@@ -41,16 +41,12 @@ export function isSnapshot(
     return session.isSnapshot === true;
 }
 
-export function extractLayout(session: WorkbenchSessionDataContainer): LayoutElement[] {
-    const activeDashboard = session.content.dashboards.find((d) => d.id === session.content.activeDashboardId);
-
-    if (!activeDashboard) {
-        return [];
-    }
-
+function extractLayoutFromSerializedDashboard(
+    dashboard: SerializedWorkbenchSessionState["content"]["dashboards"][number],
+): LayoutElement[] {
     const layout: LayoutElement[] = [];
 
-    for (const serializedInstance of activeDashboard.moduleInstances) {
+    for (const serializedInstance of dashboard.moduleInstances) {
         const {
             moduleInstanceState: { id, name },
             layoutState,
@@ -69,4 +65,19 @@ export function extractLayout(session: WorkbenchSessionDataContainer): LayoutEle
     }
 
     return layout;
+}
+
+export type ExtractedDashboardPreview = {
+    id: string;
+    name: string;
+    layout: LayoutElement[];
+};
+
+export function extractLayouts(session: WorkbenchSessionDataContainer): ExtractedDashboardPreview[] {
+    return session.content.dashboards.map((dashboard) => ({
+        id: dashboard.id,
+        name: dashboard.name,
+        description: dashboard.description,
+        layout: extractLayoutFromSerializedDashboard(dashboard),
+    }));
 }

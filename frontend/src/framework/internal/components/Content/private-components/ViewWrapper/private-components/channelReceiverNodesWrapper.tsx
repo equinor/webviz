@@ -2,7 +2,7 @@ import React from "react";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -22,7 +22,7 @@ export type ChannelReceiverNodesWrapperProps = {
 };
 
 export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard, isActive: isActiveDashboard } = useDashboard();
 
     const [visible, setVisible] = React.useState<boolean>(false);
     const [currentReceiver, setCurrentReceiver] = React.useState<ChannelReceiver | null>(null);
@@ -42,6 +42,10 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     );
 
     React.useEffect(() => {
+        if (!isActiveDashboard) {
+            return;
+        }
+
         let localVisible = false;
 
         function handleDataChannelOriginPointerDown() {
@@ -108,6 +112,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         channelSelectorCenterPoint,
         editDataChannelConnections,
         setEditDataChannelConnections,
+        isActiveDashboard,
     ]);
 
     const handleChannelConnect = React.useCallback(

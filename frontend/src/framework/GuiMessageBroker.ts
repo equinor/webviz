@@ -33,6 +33,7 @@ export enum GuiState {
     IsSavingSession = "isSavingSession",
     IsLoadingSession = "isLoadingSession",
     IsLoadingSnapshot = "isLoadingSnapshot",
+    IsSwitchingDashboard = "isSwitchingDashboard",
     IsMakingSnapshot = "isMakingSnapshot",
     EnsembleDialogOpen = "ensembleDialogOpen",
     MultiSessionsRecoveryDialogOpen = "multiSessionsRecoveryDialogOpen",
@@ -127,6 +128,7 @@ type GuiStateValueTypes = {
     [GuiState.IsLoadingEnsembleSet]: boolean;
     [GuiState.IsLoadingSession]: boolean;
     [GuiState.IsLoadingSnapshot]: boolean;
+    [GuiState.IsSwitchingDashboard]: boolean;
     [GuiState.IsSavingSession]: boolean;
     [GuiState.EnsembleDialogOpen]: boolean;
     [GuiState.MultiSessionsRecoveryDialogOpen]: boolean;

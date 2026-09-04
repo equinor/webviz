@@ -361,6 +361,7 @@ function Title(props: TitleProps): React.ReactNode {
         props.workbench.getSessionManager(),
         WorkbenchSessionManagerTopic.ACTIVE_SESSION,
     );
+
     const isSnapshot = usePublishSubscribeTopicValue(activeSession!, PrivateWorkbenchSessionTopic.IS_SNAPSHOT);
 
     let content = <SessionTitle workbench={props.workbench} />;

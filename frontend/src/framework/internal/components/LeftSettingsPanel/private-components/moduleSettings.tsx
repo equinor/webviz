@@ -18,9 +18,9 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useActiveDashboard } from "../../ActiveDashboardBoundary";
 import { useActiveSession } from "../../ActiveSessionBoundary";
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
+import { useDashboard } from "../../DashboardContext";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
@@ -32,9 +32,10 @@ type ModuleSettingsProps = {
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const workbenchSession = useActiveSession();
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATUS);
-    const dashboard = useActiveDashboard();
+    const { dashboard, isActive: isActiveDashboard } = useDashboard();
 
     const activeModuleInstanceId = usePublishSubscribeTopicValue(dashboard, DashboardTopic.ACTIVE_MODULE_INSTANCE_ID);
+    const isVisible = isActiveDashboard && activeModuleInstanceId === props.moduleInstance.getId();
 
     const moduleInstanceLifecycleState = useModuleInstanceTopicValue(
         props.moduleInstance,
@@ -59,7 +60,10 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 ? "Initializing..."
                 : "Resetting...";
         return (
-            <div className="mx-2xs my-2xs flex h-full w-full flex-col items-center justify-center">
+            <div
+                className="mx-2xs my-2xs h-full w-full flex-col items-center justify-center"
+                style={{ display: isVisible ? "flex" : "none" }}
+            >
                 <CircularProgress />
                 <div className="mt-xs">{text}</div>
             </div>
@@ -73,7 +77,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                 <div
                     className="mx-2xs my-2xs text-danger-subtle"
                     style={{
-                        display: activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "none",
+                        display: isVisible ? "flex" : "none",
                     }}
                 >
                     This module instance has encountered an error. Please see its view for more details.
@@ -137,10 +141,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     return (
         <div
             key={props.moduleInstance.getId()}
-            className={resolveClassNames(
-                activeModuleInstanceId === props.moduleInstance.getId() ? "flex flex-col" : "hidden",
-                "relative h-full min-h-0 w-full grow",
-            )}
+            className={resolveClassNames(isVisible ? "flex flex-col" : "hidden", "relative h-full min-h-0 w-full grow")}
             style={{ contain: "content" }}
         >
             <ErrorBoundary moduleInstance={props.moduleInstance}>

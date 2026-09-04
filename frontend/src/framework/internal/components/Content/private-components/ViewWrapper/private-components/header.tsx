@@ -15,7 +15,7 @@ import {
 } from "@mui/icons-material";
 
 import { GuiEvent, GuiState, RightDrawerContent, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import {
     SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT,
     SETTINGS_PANEL_MIN_VISIBLE_WIDTH_PERCENT,
@@ -53,7 +53,7 @@ export type HeaderProps = {
 const COMPACT_WIDTH_THRESHOLD_PX = 320;
 
 export const Header: React.FC<HeaderProps> = (props) => {
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
     const isSnapshot = usePublishSubscribeTopicValue(
         props.workbench.getSessionManager().getActiveSession(),
         PrivateWorkbenchSessionTopic.IS_SNAPSHOT,
@@ -672,7 +672,7 @@ function StatusIndicator(props: StatusIndicatorProps): React.ReactNode {
     const popoverActionRef = React.useRef<PopoverRootActions | null>(null);
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
 
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(

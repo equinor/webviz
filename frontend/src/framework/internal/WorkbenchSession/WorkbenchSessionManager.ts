@@ -17,13 +17,14 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type { Workbench } from "@framework/Workbench";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { truncateString } from "@lib/utils/strings";
+import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import { Dashboard } from "../Dashboard";
 import { EnsembleUpdateMonitor } from "../EnsembleUpdateMonitor";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../persistence/constants";
 import { PersistenceOrchestrator, PersistFailureReason } from "../persistence/core/PersistenceOrchestrator";
 
-import { PrivateWorkbenchSession } from "./PrivateWorkbenchSession";
+import { PrivateWorkbenchSession, PrivateWorkbenchSessionTopic } from "./PrivateWorkbenchSession";
 import { removeSessionQueryData, removeSnapshotQueryData, replaceSessionQueryData } from "./utils/crudHelpers";
 import { SessionValidationError } from "./utils/deserialization";
 import {
@@ -35,10 +36,12 @@ import {
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
 import {
+    buildDashboardUrl,
     buildSessionUrl,
     buildSnapshotUrl,
     removeSessionIdFromUrl,
     removeSnapshotIdFromUrl,
+    readDashboardIdFromUrl,
     readSessionIdFromUrl,
     readSnapshotIdFromUrl,
     UrlError,
@@ -87,6 +90,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
     private _activeSession: PrivateWorkbenchSession | null = null;
     private _persistenceOrchestrator: PersistenceOrchestrator | null = null;
+    private _unsubscribeFunctionsManagerDelegate: UnsubscribeFunctionsManagerDelegate =
+        new UnsubscribeFunctionsManagerDelegate();
     private _activeToasts: Map<string, string> = new Map(); // Map of operation name -> toast ID
 
     constructor(workbench: Workbench, queryClient: QueryClient, guiMessageBroker: GuiMessageBroker) {
@@ -444,6 +449,10 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      * @returns True if a session or snapshot was opened, false otherwise.
      */
     async maybeOpenFromUrl(): Promise<boolean> {
+        // openSession/openSnapshot below rewrite the URL's whole path via buildSessionUrl/buildSnapshotUrl,
+        // wiping any dashboard segment - so it must be captured before either of them runs, not after.
+        const dashboardId = readDashboardIdFromUrl();
+
         let snapshotId: string | null = null;
 
         // Check if a snapshot/session id is in the URL
@@ -459,7 +468,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         if (snapshotId) {
-            return await this.openSnapshot(snapshotId);
+            const result = await this.openSnapshot(snapshotId);
+            if (result) {
+                this.applyActiveDashboardId(dashboardId);
+            }
+            return result;
         }
 
         let sessionId: string | null = null;
@@ -486,6 +499,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         if (sessionId) {
             const result = await this.openSession(sessionId);
+            if (result) {
+                this.applyActiveDashboardId(dashboardId);
+            }
             if (storedSessions.find((el) => el.id === sessionId)) {
                 this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
             }
@@ -598,6 +614,19 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
             this._activeSession = session;
 
+            // Keep the dashboard segment of the URL in sync with whichever dashboard is active,
+            // for the lifetime of this session (covers tab clicks, addDashboard, removeDashboard -
+            // anything that publishes ACTIVE_DASHBOARD - without each call site needing to know about URLs).
+            this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
+                "activeDashboardUrl",
+                session
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD)(
+                    this.updateActiveDashboardUrl.bind(this),
+                ),
+            );
+            this.updateActiveDashboardUrl();
+
             // Setup persistence for non-snapshot sessions
             if (!session.isSnapshot()) {
                 this._persistenceOrchestrator = new PersistenceOrchestrator(this._workbench, session);
@@ -633,11 +662,37 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._persistenceOrchestrator = null;
         }
 
+        this._unsubscribeFunctionsManagerDelegate.unsubscribe("activeDashboardUrl");
+
         this._ensembleUpdateMonitor.stopPolling();
 
         this._activeSession = null;
 
         this.resetGuiStates();
+    }
+
+    private updateActiveDashboardUrl(): void {
+        if (!this._activeSession?.getIsPersisted()) {
+            return;
+        }
+        const url = buildDashboardUrl(this._activeSession?.getActiveDashboard()?.getId() ?? null);
+        this._workbench.getNavigationManager().replaceState(url);
+    }
+
+    // Applies a dashboard id captured from the URL (on boot or browser back/forward) to the
+    // just-opened active session. Silently ignored if the id is missing or not one of the session's
+    // dashboards (e.g. stale link) - the session's own default active dashboard stays in place.
+    private applyActiveDashboardId(dashboardId: string | null): void {
+        if (!dashboardId || !this._activeSession) {
+            return;
+        }
+
+        const dashboardExists = this._activeSession
+            .getDashboards()
+            .some((dashboard) => dashboard.getId() === dashboardId);
+        if (dashboardExists) {
+            this._activeSession.setActiveDashboard(dashboardId);
+        }
     }
 
     private resetGuiStates(): void {
@@ -808,31 +863,37 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
     async applyTemplate(template: Template): Promise<boolean> {
         if (!this.hasActiveSession()) {
             await this.startNewSession();
-        } else {
-            const activeSession = this.getActiveSession();
-            const activeDashboard = activeSession.getActiveDashboard();
-            const confirmationRequired = activeDashboard && activeDashboard.getModuleInstances().length > 0;
-
-            if (confirmationRequired) {
-                const result = await ConfirmationService.confirm({
-                    title: "Replace current dashboard with template?",
-                    message:
-                        "By applying this template, your current dashboard will be replaced and loose its state. Do you want to proceed?",
-                    actions: [
-                        { id: "cancel", label: "No, cancel" },
-                        { id: "delete", label: "Yes, proceed", color: "danger" },
-                    ],
-                });
-
-                if (result === "cancel") {
-                    return false;
-                }
-            }
         }
 
         const activeSession = this.getActiveSession();
+        const activeDashboard = activeSession.getActiveDashboard();
+        const confirmationRequired = activeDashboard && activeDashboard.getModuleInstances().length > 0;
+
+        if (confirmationRequired) {
+            const result = await ConfirmationService.confirm({
+                title: "Replace current dashboard with template?",
+                message:
+                    "By applying this template, your current dashboard will be replaced and lose its state. Do you want to proceed?",
+                actions: [
+                    { id: "cancel", label: "No, cancel" },
+                    { id: "delete", label: "Yes, proceed", color: "danger" },
+                ],
+            });
+
+            if (result === "cancel") {
+                return false;
+            }
+        }
+
         const dashboard = await Dashboard.fromTemplate(template, activeSession.getAtomStoreMaster());
-        activeSession.setDashboards([dashboard]);
+        if (activeDashboard) {
+            // Applying a template only replaces the dashboard's layout/content; the dashboard's
+            // own name and description should be kept as-is.
+            dashboard.updateMetadata(activeDashboard.getMetadata());
+            activeSession.replaceDashboard(activeDashboard.getId(), dashboard);
+        } else {
+            activeSession.setDashboards([dashboard]);
+        }
         return true;
     }
 
@@ -929,6 +990,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         // When the user navigates with forward/backward buttons, they might want to load a snapshot/session
         const snapshotId = readSnapshotIdFromUrl();
         const sessionId = readSessionIdFromUrl();
+        // Must be read before openSession/openSnapshot below, which rewrite the URL's whole path.
+        const dashboardId = readDashboardIdFromUrl();
 
         const result = await this.maybeCloseCurrentSession();
         if (!result) {
@@ -940,11 +1003,15 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             const result = await this.openSnapshot(snapshotId);
             if (!result) {
                 removeSnapshotIdFromUrl();
+            } else {
+                this.applyActiveDashboardId(dashboardId);
             }
         } else if (sessionId) {
             const result = await this.openSession(sessionId);
             if (!result) {
                 removeSessionIdFromUrl();
+            } else {
+                this.applyActiveDashboardId(dashboardId);
             }
         }
 

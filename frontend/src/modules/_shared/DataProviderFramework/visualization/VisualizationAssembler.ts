@@ -250,13 +250,16 @@ export class VisualizationAssembler<
         GroupCustomPropsCollector<any, any, TCustomGroupProps>
     > = new Map();
 
-    private _cachedDataProviderVisualizationsMap: Map<
-        string,
+    // Keyed by the DataProvider instance itself (not its ID string) so that entries for destroyed data
+    // providers are reclaimed by ordinary GC once nothing else references the provider, instead of
+    // living forever in this assembler (which is a long-lived, module-scope singleton).
+    private _cachedDataProviderVisualizationsMap: WeakMap<
+        DataProvider<any, any, any>,
         {
             revisionNumber: number;
             objects: DataProviderObjects<TTarget, TAccumulatedData>;
         }
-    > = new Map();
+    > = new WeakMap();
 
     registerDataProviderTransformers<
         TSettings extends Settings,
@@ -488,8 +491,8 @@ export class VisualizationAssembler<
     ): DataProviderObjects<TTarget, TAccumulatedData> {
         // ! Cache logic returns the wrong accumulated data for WellLogViewer in some cases. As a hot-fix, we'll allow
         // ! the cache to be disabled here, but this should be reverted once the issue has been resolved. See #1272
-        if (!disableCache && this._cachedDataProviderVisualizationsMap.has(dataProvider.getItemDelegate().getId())) {
-            const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider.getItemDelegate().getId());
+        if (!disableCache && this._cachedDataProviderVisualizationsMap.has(dataProvider)) {
+            const cached = this._cachedDataProviderVisualizationsMap.get(dataProvider);
             if (cached && cached.revisionNumber === dataProvider.getRevisionNumber()) {
                 return cached.objects;
             }
@@ -512,7 +515,7 @@ export class VisualizationAssembler<
             accumulatedData,
         };
 
-        this._cachedDataProviderVisualizationsMap.set(dataProvider.getItemDelegate().getId(), {
+        this._cachedDataProviderVisualizationsMap.set(dataProvider, {
             revisionNumber: dataProvider.getRevisionNumber(),
             objects,
         });
