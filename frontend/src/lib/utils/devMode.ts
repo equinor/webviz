@@ -7,7 +7,7 @@
  * this module lives in `@lib` (which must stay free of `@framework`/`@modules` deps), so the
  * value is read directly here instead of through that helper.
  */
-const FORCE_DEV_MODE_STORAGE_KEY = "webvizDebug_forceDevMode";
+const FORCE_DEV_MODE_STORAGE_KEY = "webvizDebug_forceToggleDevModeTo";
 
 /**
  * Reads the force-dev-mode override from `localStorage`.
