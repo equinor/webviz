@@ -1,7 +1,7 @@
 /*
 This manager is responsible for managing plugins for DeckGL, forwarding events to them, and adding/adjusting layers based on the plugins' responses.
 */
-import type { Layer, PickingInfo, View } from "@deck.gl/core";
+import type { Layer, PickingInfo } from "@deck.gl/core";
 import type { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import type { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { v4 } from "uuid";
@@ -16,6 +16,7 @@ export type ContextMenuItem = {
 };
 
 export type ContextMenu = {
+    /** Position in viewport (client) coordinates, ready to anchor a fixed-positioned menu. */
     position: { x: number; y: number };
     items: ContextMenuItem[];
 };
@@ -34,11 +35,11 @@ export class DeckGlPlugin {
     }
 
     protected requestDisablePanning() {
-        this._manager.disablePanning();
+        this._manager.disableDragInteraction();
     }
 
     protected requestEnablePanning() {
-        this._manager.enablePanning();
+        this._manager.enableDragInteraction();
     }
 
     protected getFirstLayerUnderCursorInfo(x: number, y: number): PickingInfo | undefined {
@@ -53,6 +54,10 @@ export class DeckGlPlugin {
         this._manager.setDragEnd();
     }
 
+    protected setReadoutSuppressed(suppressed: boolean) {
+        this._manager.setReadoutSuppressed(this, suppressed);
+    }
+
     protected makeLayerId(layerId: string): string {
         return `${this._id}-${layerId}`;
     }
@@ -63,9 +68,15 @@ export class DeckGlPlugin {
 
     handleDrag?(pickingInfo: PickingInfo): void;
     handleLayerHover?(pickingInfo: PickingInfo): void;
-    handleLayerClick?(pickingInfo: PickingInfo): void;
-    handleClickAway?(): void;
+    /** Return `true` to consume the click and prevent the host's `onMouseEvent` from handling it. */
+    handleLayerClick?(pickingInfo: PickingInfo): boolean | void;
+    /** Return `true` to consume the click and prevent the host's `onMouseEvent` from handling it. */
+    handleClickAway?(): boolean | void;
     handleGlobalMouseHover?(pickingInfo: PickingInfo): void;
+    /**
+     * Return `true` when the click was handled. A handled click is also consumed, i.e. the host's
+     * `onMouseEvent` is not invoked for it and no `handleClickAway` is dispatched.
+     */
     handleGlobalMouseClick?(pickingInfo: PickingInfo): boolean;
     handleKeyUpEvent?(key: string): void;
     handleKeyDownEvent?(key: string): void;
@@ -77,11 +88,13 @@ export class DeckGlPlugin {
 export enum DeckGlInstanceManagerTopic {
     REDRAW = "REDRAW",
     CONTEXT_MENU = "CONTEXT_MENU",
+    IS_READOUT_SUPPRESSED = "IS_READOUT_SUPPRESSED",
 }
 
 export type DeckGlInstanceManagerPayloads = {
     [DeckGlInstanceManagerTopic.REDRAW]: number;
     [DeckGlInstanceManagerTopic.CONTEXT_MENU]: ContextMenu | null;
+    [DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED]: boolean;
 };
 
 type KeyboardEventListener = (event: KeyboardEvent) => void;
@@ -98,10 +111,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     private _eventListeners: KeyboardEventListener[] = [];
     private _contextMenu: ContextMenu | null = null;
     private _verticalScale: number = 1;
+    private _suppressingReadoutPlugins = new Set<DeckGlPlugin>();
 
-    private _hiddenViews: View[] = []; // plugin registered
-    private _hiddenViewStatePatch: Record<string, any> = {};
-    private _layerFilterWrappers: ((prev?: any) => any)[] = [];
+    private _dragInteractionEnabled: boolean = true;
 
     constructor(ref: DeckGLRef | null) {
         this._ref = ref;
@@ -109,7 +121,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     setRef(ref: DeckGLRef | null) {
+        if (this._ref === ref) {
+            return;
+        }
         this._ref = ref;
+        // The DeckGL instance is replaced (e.g. after a GPU-context-loss remount). Repaint so
+        // subscribers rebuild their deck props against the new instance instead of the dead one.
+        this.redraw();
     }
 
     private addKeyboardEventListeners() {
@@ -144,35 +162,41 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         this._plugins.push(plugin);
     }
 
+    isReadoutSuppressed(): boolean {
+        return this._suppressingReadoutPlugins.size > 0;
+    }
+
+    setReadoutSuppressed(plugin: DeckGlPlugin, suppressed: boolean): void {
+        const wasSuppressed = this.isReadoutSuppressed();
+
+        if (suppressed) {
+            this._suppressingReadoutPlugins.add(plugin);
+        } else {
+            this._suppressingReadoutPlugins.delete(plugin);
+        }
+
+        if (wasSuppressed !== this.isReadoutSuppressed()) {
+            this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED);
+        }
+    }
+
     redraw() {
         this._redrawCycle++;
         this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
     }
 
-    disablePanning() {
-        if (!this._ref) {
-            return;
-        }
+    disableDragInteraction() {
+        if (!this._dragInteractionEnabled) return;
 
-        this._ref.deck?.setProps({
-            controller: {
-                dragPan: false,
-                dragRotate: false,
-            },
-        });
+        this._dragInteractionEnabled = false;
+        this.redraw();
     }
 
-    enablePanning() {
-        if (!this._ref) {
-            return;
-        }
+    enableDragInteraction() {
+        if (this._dragInteractionEnabled) return;
 
-        this._ref.deck?.setProps({
-            controller: {
-                dragRotate: true,
-                dragPan: true,
-            },
-        });
+        this._dragInteractionEnabled = true;
+        this.redraw();
     }
 
     getDeck() {
@@ -213,6 +237,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             if (topic === DeckGlInstanceManagerTopic.CONTEXT_MENU) {
                 return this._contextMenu;
             }
+            if (topic === DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED) {
+                return this.isReadoutSuppressed();
+            }
 
             throw new Error(`Unknown topic ${topic}`);
         };
@@ -246,9 +273,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         plugin.handleDrag?.(pickingInfo);
     }
 
-    handleMouseEvent(event: MapMouseEvent) {
+    /**
+     * Dispatches the event to the plugins. Returns `true` if a plugin consumed the event, in which
+     * case the host's `onMouseEvent` handler should not be invoked for it.
+     */
+    handleMouseEvent(event: MapMouseEvent): boolean {
         if (this._isDragging) {
-            return;
+            return false;
         }
 
         if (event.type !== "hover") {
@@ -258,7 +289,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         const firstLayerInfo = this.getFirstLayerUnderCursorInfo(event);
         if (!firstLayerInfo || !firstLayerInfo.coordinate) {
-            return;
+            return false;
         }
 
         const layerId = this.getLayerIdFromPickingInfo(firstLayerInfo);
@@ -270,20 +301,27 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             }
 
             if (event.type === "click") {
-                plugin.handleLayerClick?.(firstLayerInfo);
+                return plugin.handleLayerClick?.(firstLayerInfo) ?? false;
             }
 
             if (event.type === "contextmenu") {
                 const contextMenuItems = plugin.getContextMenuItems?.(firstLayerInfo) ?? [];
+                // firstLayerInfo.x/y are CSS pixels relative to the deck.gl canvas; convert to
+                // viewport coordinates so the menu can be positioned with `position: fixed`.
+                const canvasRect = this.getDeck()?.getCanvas()?.getBoundingClientRect();
                 this._contextMenu = {
-                    position: { x: firstLayerInfo.x, y: firstLayerInfo.y },
+                    position: {
+                        x: firstLayerInfo.x + (canvasRect?.left ?? 0),
+                        y: firstLayerInfo.y + (canvasRect?.top ?? 0),
+                    },
                     items: contextMenuItems,
                 };
                 this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.CONTEXT_MENU);
             }
-            return;
+            return false;
         }
 
+        let consumed = false;
         const pluginsThatDidNotAcceptEvent: DeckGlPlugin[] = [];
         for (const plugin of this._plugins) {
             if (event.type === "hover") {
@@ -291,7 +329,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 this._cursor = "auto";
             } else if (event.type === "click") {
                 const accepted = plugin.handleGlobalMouseClick?.(firstLayerInfo);
-                if (!accepted) {
+                if (accepted) {
+                    consumed = true;
+                } else {
                     pluginsThatDidNotAcceptEvent.push(plugin);
                 }
             }
@@ -299,9 +339,13 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
 
         if (event.type === "click") {
             for (const plugin of pluginsThatDidNotAcceptEvent) {
-                plugin.handleClickAway?.();
+                if (plugin.handleClickAway?.()) {
+                    consumed = true;
+                }
             }
         }
+
+        return consumed;
     }
 
     pickFirstLayerUnderCursorInfo(x: number, y: number): PickingInfo | undefined {
@@ -373,8 +417,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             ...props,
             onDrag: this.handleDrag.bind(this),
             onMouseEvent: (event) => {
-                this.handleMouseEvent(event);
-                props.onMouseEvent?.(event);
+                const consumed = this.handleMouseEvent(event);
+                if (!consumed) {
+                    props.onMouseEvent?.(event);
+                }
             },
             getCursor: (state) => this.getCursor(state),
             layers,
@@ -383,6 +429,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
                 viewports: (props.views?.viewports ?? []).map((viewport) => ({
                     ...viewport,
                     layerIds: [...(viewport.layerIds ?? []), ...pluginLayerIds],
+                    controller: {
+                        ...viewport.controller,
+                        dragRotate: this._dragInteractionEnabled,
+                        dragPan: this._dragInteractionEnabled,
+                    },
                 })),
                 layout: props.views?.layout ?? [1, 1],
             },
@@ -390,7 +441,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     beforeDestroy() {
-        this.enablePanning();
+        this.enableDragInteraction();
         this.maybeRemoveKeyboardEventListeners();
     }
 }

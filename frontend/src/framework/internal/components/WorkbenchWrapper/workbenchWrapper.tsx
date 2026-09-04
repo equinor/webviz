@@ -14,11 +14,14 @@ import "../../../../modules/registerAllModules";
 import "../../../../templates/registerAllTemplates";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
+import { useGlobalErrorBoundaryContext } from "../../../../GlobalErrorBoundary";
 import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
+import { DocumentTitleSync } from "../DocumentTitleSync";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
+import { InitialEnsemblesLoadingWarningInfoDialog } from "../InitialEnsemblesLoadingWarningInfoDialog";
 import { MultiSessionsRecoveryDialog } from "../MultiSessionsRecoveryDialog";
 import { PersistenceManagementDialog } from "../PersistenceManagementDialog";
 import { RightSideBar } from "../RightSideBar";
@@ -32,6 +35,8 @@ export function WorkbenchWrapper() {
     // Otherwise, the workbench will be reset on every code change. This would cause it to lose its state and will
     // cause the app to crash.
     const queryClient = useQueryClient();
+    const { registerActiveWorkbench } = useGlobalErrorBoundaryContext();
+
     const [workbench] = React.useState(new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
@@ -44,11 +49,17 @@ export function WorkbenchWrapper() {
 
     React.useEffect(
         function initApp() {
+            registerActiveWorkbench(workbench);
+
             workbench.initialize().then(() => {
                 setIsInitialized(true);
             });
+
+            return () => {
+                registerActiveWorkbench(null);
+            };
         },
-        [workbench],
+        [registerActiveWorkbench, workbench],
     );
 
     let content: React.ReactNode;
@@ -71,9 +82,11 @@ export function WorkbenchWrapper() {
             <TopBar workbench={workbench} />
             <ActiveSessionBoundary workbench={workbench}>
                 <ActiveDashboardBoundary>
+                    <DocumentTitleSync workbench={workbench} />
                     <ActionBar workbench={workbench} />
                     <SelectEnsemblesDialog workbench={workbench} />
                     <InitialEnsemblesLoadingErrorInfoDialog workbench={workbench} />
+                    <InitialEnsemblesLoadingWarningInfoDialog workbench={workbench} />
                     <SaveSessionDialog workbench={workbench} saveAsNew />
                     <CreateSnapshotDialog workbench={workbench} />
                     <ActiveSessionRecoveryDialog workbench={workbench} />

@@ -1,5 +1,5 @@
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { GL } from "@luma.gl/constants";
+import { GL } from "@luma.gl/webgl/constants";
 import type { Point3D } from "@webviz/subsurface-viewer";
 
 import type { WellboreTrajectory_api } from "@api";
@@ -17,7 +17,7 @@ function findWellboreTrajectory(uuid: string | null | undefined, trajectories: W
     return trajectories.find(({ wellboreUuid }) => wellboreUuid === uuid);
 }
 
-export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
+export function makeWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
 ): HoverVisualizationFunctions<VisualizationTarget.DECK_GL> {
     const { id, getData } = args;

@@ -17,6 +17,7 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
+import { filterAndOrderSelectedIndexValues } from "@modules/_shared/InplaceVolumes/indexWithValuesUtils";
 
 export type InplaceVolumesFilterComponentProps = {
     ensembleSet: EnsembleSet;
@@ -123,11 +124,17 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 const newIndicesValues = cloneDeep(indicesWithValues);
 
                 for (const index of syncedFilter.indicesWithValues) {
+                    const availableIndex = props.availableIndicesWithValues.find(
+                        (item) => item.indexColumn === index.indexColumn,
+                    );
+                    const orderedValues = availableIndex
+                        ? filterAndOrderSelectedIndexValues(index.values, availableIndex.values)
+                        : [...index.values];
                     const indexValues = newIndicesValues.find((filter) => filter.indexColumn === index.indexColumn);
                     if (!indexValues) {
-                        newIndicesValues.push({ ...index });
+                        newIndicesValues.push({ ...index, values: orderedValues });
                     } else {
-                        indexValues.values = [...index.values];
+                        indexValues.values = orderedValues;
                     }
                 }
                 setIndicesWithValues(newIndicesValues);
@@ -201,12 +208,15 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
     }
 
     function handleIndexValuesChange(indexColumn: string, values: string[], publish = true): void {
+        const availableValues =
+            props.availableIndicesWithValues.find((item) => item.indexColumn === indexColumn)?.values ?? [];
+        const orderedValues = filterAndOrderSelectedIndexValues(values, availableValues);
         const newIndicesWithValues = cloneDeep(indicesWithValues);
         const indexValues = newIndicesWithValues.find((filter) => filter.indexColumn === indexColumn);
         if (!indexValues) {
-            newIndicesWithValues.push({ indexColumn: indexColumn, values });
+            newIndicesWithValues.push({ indexColumn: indexColumn, values: orderedValues });
         } else {
-            indexValues.values = [...values];
+            indexValues.values = orderedValues;
         }
         setIndicesWithValues(newIndicesWithValues);
         const filter = {
@@ -253,14 +263,13 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 </Setting.Field>
                 <Setting.Field
                     help={{
-                        title: "Allow table source intersections",
                         content: (
                             <>
-                                When active allows comparison of tables where available zones, regions, facies, fluids
-                                or responses differs.
+                                Tables with the same filters may contain different values, such as different zone
+                                names. Enable this setting to compare them using only the values available in every
+                                table. Values not shared by all tables are omitted.
                                 <br />
-                                Only the <b>intersection</b> of options will then be available for filtering. <br />
-                                Identifiers not present in all tables will be <b>filtered out</b>.
+                                Filters that are not available in every selected table are always omitted.
                             </>
                         ),
                     }}
@@ -269,7 +278,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                         checked={props.selectedAllowIndicesValuesIntersection}
                         onCheckedChange={handleAllowIndexValueIntersectionChange}
                     >
-                        Allow table source intersections
+                        Compare using common filter values
                     </SwitchCompositions.WithLabel>
                 </Setting.Field>
             </Setting.Section>
@@ -278,7 +287,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                 {!props.availableIndicesWithValues.length && (
                     // TODO - Waiting for section overlay. Temp workaround
                     <Banner layoutClassName="col-span-3" tone="danger">
-                        Selected tables are not comparable due to mismatching index columns
+                        Selected tables are not comparable because they have no filters in common
                     </Banner>
                 )}
 
@@ -308,7 +317,7 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                             stacked
                             errorOverlay={
                                 !props.areCurrentlySelectedTablesComparable
-                                    ? "Selected tables are not comparable due to mismatching index columns"
+                                    ? "Selected tables are not comparable because their filter values differ"
                                     : undefined
                             }
                         >

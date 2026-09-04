@@ -1,8 +1,9 @@
 import React from "react";
 
-import { OrbitView, OrthographicView, type Layer } from "@deck.gl/core";
+import type { Layer } from "@deck.gl/core";
+import { OrbitView, OrthographicView } from "@deck.gl/core";
 import type { BoundingBox2D, BoundingBox3D, ViewStateType } from "@webviz/subsurface-viewer";
-import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { AxesLayer, Grid3DLayer, MapLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
@@ -10,6 +11,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     AssemblerProduct,
@@ -20,6 +22,12 @@ import { ViewLayout } from "@modules/_shared/enums/viewLayout";
 import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
+import type { LayerTransformationLookupMap } from "../../utils/subsurfaceViewer/hoverTransformations";
+import {
+    transformToWellboreHoverData,
+    transformToWorldPosHoverData,
+    makeHoverTransformationLookup,
+} from "../../utils/subsurfaceViewer/hoverTransformations";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
 
@@ -37,6 +45,7 @@ export type DpfSubsurfaceViewerContextType = {
     workbenchServices: WorkbenchServices;
     hoverService: HoverService;
     moduleInstanceId: string;
+    hoverDataTransformationLookup: LayerTransformationLookupMap;
 };
 
 export const DpfSubsurfaceViewerContext = React.createContext<DpfSubsurfaceViewerContextType | null>(null);
@@ -64,7 +73,14 @@ export type DpfSubsurfaceViewerWrapperProps = {
     preferredViewLayout: ViewLayout;
     hoverService: HoverService;
     moduleInstanceId: string;
+    customHoverDataTransformations?: LayerTransformationLookupMap;
 };
+
+const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
+    [AdjustedWellsLayer, transformToWellboreHoverData],
+    [MapLayer, transformToWorldPosHoverData],
+    [Grid3DLayer, transformToWorldPosHoverData],
+);
 
 export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
     const { onViewStateChange } = props;
@@ -74,6 +90,12 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
     const [viewState, setViewState] = React.useState<ViewStateType | undefined>(
         props.getInitialViewState?.() ?? undefined,
     );
+
+    const hoverDataTransformationsLookup = React.useMemo<LayerTransformationLookupMap>(() => {
+        const customTransforms = props.customHoverDataTransformations ?? new Map();
+
+        return new Map([...HOVER_TRANSFORMATIONS, ...customTransforms]);
+    }, [props.customHoverDataTransformations]);
 
     const statusWriter = useViewStatusWriter(props.viewContext);
 
@@ -220,6 +242,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
                 bounds: props.visualizationMode === "2D" ? bounds2D : undefined,
                 moduleInstanceId: props.moduleInstanceId,
                 hoverService: props.hoverService,
+                hoverDataTransformationLookup: hoverDataTransformationsLookup,
             }}
         >
             <InteractionWrapper

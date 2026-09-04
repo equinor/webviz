@@ -74,6 +74,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                     DataProviderRegistry.makeDataProvider(DataProviderType.DEPTH_SURFACE, props.dataProviderManager),
                 );
                 return;
+            case "initial-fluid-contact-surface":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.INITIAL_FLUID_CONTACT_SURFACE,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
             case "fault-polygons":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(DataProviderType.FAULT_POLYGONS, props.dataProviderManager),
@@ -91,6 +99,14 @@ export function DataProviderManagerWrapper(props: LayerManagerComponentWrapperPr
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
                         DataProviderType.DRILLED_WELL_TRAJECTORIES,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
+            case "planned-wellbore-trajectories":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        DataProviderType.PLANNED_WELL_TRAJECTORIES,
                         props.dataProviderManager,
                     ),
                 );
@@ -279,6 +295,11 @@ const ACTIONS: ActionGroup[] = [
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Depth Surface",
                     },
+                    {
+                        identifier: "initial-fluid-contact-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Initial Fluid Contact",
+                    },
                 ],
             },
             {
@@ -303,6 +324,11 @@ const ACTIONS: ActionGroup[] = [
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Trajectories (Official)",
+                    },
+                    {
+                        identifier: "planned-wellbore-trajectories",
+                        icon: <Icon data={wellbore} fontSize="small" />,
+                        label: "Trajectories (Planned)",
                     },
                     {
                         identifier: "drilled-wellbore-picks",
