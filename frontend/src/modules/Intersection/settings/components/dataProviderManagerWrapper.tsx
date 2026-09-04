@@ -78,6 +78,14 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
                     ),
                 );
                 return;
+            case "initial-fluid-contact-surfaces":
+                groupDelegate.prependChild(
+                    DataProviderRegistry.makeDataProvider(
+                        CustomDataProviderType.INITIAL_FLUID_CONTACT_SURFACES,
+                        props.dataProviderManager,
+                    ),
+                );
+                return;
             case "surfaces-realizations-uncertainty":
                 groupDelegate.prependChild(
                     DataProviderRegistry.makeDataProvider(
@@ -297,6 +305,11 @@ const VIEW_ACTIONS: ActionGroup[] = [
                         identifier: "realization-surfaces",
                         icon: <Icon data={surface_layer} size={16} />,
                         label: "Realization Surfaces",
+                    },
+                    {
+                        identifier: "initial-fluid-contact-surfaces",
+                        icon: <Icon data={surface_layer} size={16} />,
+                        label: "Initial Fluid Contact Surface",
                     },
                     {
                         identifier: "surfaces-realizations-uncertainty",

@@ -45,6 +45,27 @@ async def get_drilled_wellbore_headers(
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
 
+@router.get("/planned_wellbore_headers/")
+@cache_time(CacheTime.NORMAL)
+async def get_planned_wellbore_headers(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    field_identifier: str = Query(description="Official field identifier"),
+    # fmt:on
+) -> List[schemas.WellboreHeader]:
+    """Get planned wellbore headers for all planned wells in a given field"""
+
+    if is_drogon_identifier(field_identifier=field_identifier):
+        return []
+
+    well_access = SmdaAccess(authenticated_user.get_smda_access_token())
+    planned_wellbore_headers = await well_access.get_planned_wellbore_headers_async(field_identifier)
+
+    return [
+        converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in planned_wellbore_headers
+    ]
+
+
 @router.get("/field_perforations")
 @cache_time(CacheTime.NORMAL)
 async def get_field_perforations(
@@ -117,6 +138,32 @@ async def get_well_trajectories(
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
         for wellbore_trajectory in wellbore_trajectories
+    ]
+
+
+@router.get("/planned_well_trajectories/")
+@custom_cache_time(max_age_s=3600 * 24 * 7, stale_while_revalidate_s=3600 * 24 * 7 * 10)
+async def get_planned_well_trajectories(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    field_identifier: str = Query(description="Official field identifier"),
+    wellbore_uuids: List[str] | None = Query(None, description="Optional subset of planned wellbore uuids")
+    # fmt:on
+) -> List[schemas.WellboreTrajectory]:
+    """Get planned trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given"""
+
+    if is_drogon_identifier(field_identifier=field_identifier):
+        return []
+
+    well_access = SmdaAccess(authenticated_user.get_smda_access_token())
+    planned_wellbore_trajectories = await well_access.get_planned_wellbore_trajectories_async(
+        field_identifier=field_identifier,
+        wellbore_uuids=wellbore_uuids,
+    )
+
+    return [
+        converters.convert_well_trajectory_to_schema(wellbore_trajectory)
+        for wellbore_trajectory in planned_wellbore_trajectories
     ]
 
 

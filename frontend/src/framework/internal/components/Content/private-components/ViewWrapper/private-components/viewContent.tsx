@@ -130,6 +130,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         if (errorObject) {
             return (
                 <CrashView
+                    workbench={props.workbench}
                     moduleName={props.moduleInstance.getModule().getName()}
                     error={errorObject.err}
                     errorInfo={errorObject.errInfo}

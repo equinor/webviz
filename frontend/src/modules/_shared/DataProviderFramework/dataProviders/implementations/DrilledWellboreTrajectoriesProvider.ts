@@ -184,7 +184,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
             const topSurfaceAddress = addrBuilder
                 .withEnsembleIdent(ensembleIdent)
                 .withName(formationFilter.topSurfaceName)
-                .withAttribute(surfaceAttribute)
+                .withTagNameAttribute(surfaceAttribute)
                 .withRealization(formationFilter.realizationNum)
                 .buildRealizationAddress();
 
