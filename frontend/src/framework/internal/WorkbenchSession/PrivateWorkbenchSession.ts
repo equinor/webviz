@@ -343,28 +343,48 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._dashboardHotCache;
     }
 
-    setActiveDashboard(dashboardId: string): void {
-        if (this._activeDashboardId === dashboardId) {
-            return;
-        }
+    /**
+     * The cheap half of {@link setActiveDashboard}: moves the outgoing dashboard into the hot cache
+     * (evicting the oldest hot entry right away if that puts the cache over its limit) and cancels
+     * any pending eviction for the incoming dashboard. Does NOT run the incoming dashboard's
+     * (potentially expensive, if it's cold) `load()`, and does not change the active dashboard id.
+     *
+     * The GUI switch path calls this synchronously from the click handler - so the dashboard-tab
+     * hot indicators repaint on the same frame as the optimistic tab highlight - and then lets the
+     * deferred `setActiveDashboard` repeat these (now idempotent) calls before doing the load.
+     */
+    prepareActiveDashboardSwitch(dashboardId: string): void {
+        // Cancel the incoming dashboard's pending eviction FIRST: otherwise deferring the outgoing
+        // dashboard below can transiently take the cache one entry over its limit and evict (fully
+        // tear down) the very dashboard we're switching to, if that one happened to be the oldest
+        // hot entry. Also keeps a dashboard from ever sitting in the hot cache while it's the
+        // active one (its eviction timer would later tear the active dashboard down).
+        this._dashboardHotCache.cancelEviction(dashboardId);
 
         const previouslyActiveDashboard = this.getActiveDashboard();
-        if (previouslyActiveDashboard) {
+        if (previouslyActiveDashboard && previouslyActiveDashboard.getId() !== dashboardId) {
             // Deferred instead of unloading immediately: the dashboard stays fully mounted for a
             // while in case the user switches back to it, instead of paying the full teardown/
             // recreate cost on every switch. See DashboardHotCache.
             this._dashboardHotCache.deferEviction(previouslyActiveDashboard);
         }
+    }
+
+    setActiveDashboard(dashboardId: string): void {
         const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
         if (dashboardId && !dashboard) {
             throw new Error("Dashboard not registered in this session");
         }
+
+        // Always run, even when the id is unchanged: a rapid click-away-and-back can leave the
+        // now-active dashboard with a stale hot-cache entry from the eager GUI call, and the
+        // cancelEviction inside here clears it.
+        this.prepareActiveDashboardSwitch(dashboardId);
+
         if (this._activeDashboardId === (dashboard ? dashboard.getId() : null)) {
             return;
         }
-        if (dashboard) {
-            this._dashboardHotCache.cancelEviction(dashboard.getId());
-        }
+
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
         // A no-op if `dashboard` was still hot (its module instances were never torn down) - see
         // Dashboard.load()'s own "nothing cached" early-return.

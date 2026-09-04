@@ -27,6 +27,12 @@ export function useOptimisticActiveDashboard(
         function selectDashboard(dashboardId: string) {
             latestRequestedDashboardIdRef.current = dashboardId;
             setOptimisticActiveDashboardId(dashboardId);
+            // Update the hot cache synchronously, now, rather than letting it wait for the deferred
+            // setActiveDashboard below: evicting the oldest hot dashboard and moving the outgoing
+            // one in is cheap, and doing it here lets the dashboard-tab hot indicators repaint on
+            // this same frame, together with the optimistic tab highlight. setActiveDashboard
+            // repeats these calls when it runs, but they're idempotent.
+            workbenchSession.prepareActiveDashboardSwitch(dashboardId);
             // Set alongside the optimistic tab selection so both paint on this same frame, giving
             // the content area a chance to show a loading state covering the whole (unavoidably
             // blocking) switch that happens after the double rAF below.

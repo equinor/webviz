@@ -1,14 +1,14 @@
 import React from "react";
 
-import { ChevronLeft, ChevronRight, Info } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 
 import type { LayoutElement } from "@framework/internal/Dashboard";
 import { Button } from "@lib/components/Button";
-import { Popover } from "@lib/components/Popover";
 import { Typography } from "@lib/components/Typography";
 import { useHorizontalStepScroll } from "@lib/hooks/useHorizontalStepScroll";
 
 import { DashboardPreview } from "./dashboardPreview";
+import { Tooltip } from "@lib/components/Tooltip";
 
 export type DashboardPreviewCarouselItem = {
     id: string;
@@ -53,24 +53,18 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
         controlsHeight = 60;
     }
 
+    const tooltipContent = `${current?.name ?? ""}\n${current.description ? `⎯⎯⎯⎯⎯\n${current.description}` : ""}`;
+
     return (
         <div className="bg-neutral gap-y-2xs flex flex-col" style={{ width, height }}>
             <DashboardPreview width={width} height={height - controlsHeight} layout={current?.layout ?? []} />
             {current && (
                 <div className="px-2xs gap-x-2xs flex items-center justify-center">
-                    <Typography size="sm" tone="neutral" layoutClassName="truncate" title={current.name}>
-                        {current.name}
-                    </Typography>
-                    {current.description && (
-                        <Popover.Root>
-                            <Popover.Trigger tone="accent" iconOnly size="small" variant="ghost">
-                                <Info style={{ fontSize: 16 }} />
-                            </Popover.Trigger>
-                            <Popover.Popup>
-                                <Popover.Content>{current.description}</Popover.Content>
-                            </Popover.Popup>
-                        </Popover.Root>
-                    )}
+                    <Tooltip content={tooltipContent}>
+                        <Typography size="sm" tone="neutral" layoutClassName="truncate" title={current.name}>
+                            {current.name}
+                        </Typography>
+                    </Tooltip>
                 </div>
             )}
             {dashboards.length > 1 && (

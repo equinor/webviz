@@ -7,7 +7,6 @@ import { DashboardTopic } from "@framework/internal/Dashboard";
 import { Button } from "@lib/components/Button";
 import { Menu } from "@lib/components/Menu";
 import { Tabs } from "@lib/components/Tabs";
-import { Typography } from "@lib/components/Typography";
 import { isDevMode } from "@lib/utils/devMode";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -115,14 +114,12 @@ export function DashboardTab(props: DashboardTabProps) {
                     >
                         <DragIndicator fontSize="inherit" className="pointer-events-none" />
                     </span>
-                    <Typography
-                        size="md"
-                        tone={props.isHot ? "accent" : "neutral"}
-                        layoutClassName="truncate"
-                        weight="bolder"
-                    >
-                        {metadata.name}
-                    </Typography>
+                    <span
+                        className={resolveClassNames("bg-neutral border-neutral h-1.5 w-1.5 rounded-full border", {
+                            "bg-accent-strong! border-accent-strong!": props.isHot,
+                        })}
+                    ></span>
+                    {metadata.name}
                     <Menu.Root>
                         <Menu.Trigger>
                             <Button iconOnly variant="ghost" size="small" onClick={(e) => e.stopPropagation()}>

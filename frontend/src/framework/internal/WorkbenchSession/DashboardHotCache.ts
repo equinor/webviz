@@ -9,7 +9,7 @@ const DASHBOARD_HOT_CACHE_TIMEOUT_MS = 5 * 60 * 1000;
 // timeout above - keeps memory and, more importantly, simultaneous WebGL contexts bounded even if
 // the user cycles through many dashboards within the timeout window. Oldest hot dashboard is
 // evicted first once this is exceeded.
-const DASHBOARD_HOT_CACHE_MAX_COUNT = 1;
+const DASHBOARD_HOT_CACHE_MAX_COUNT = 4;
 
 export enum DashboardHotCacheTopic {
     HOT_DASHBOARD_IDS = "HotDashboardIds",
@@ -55,10 +55,10 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
      * whichever comes first.
      */
     deferEviction(dashboard: Dashboard): void {
-        // A dashboard should never already have a pending eviction when this is called (it would
-        // have to be the active dashboard to be switched away from), but guard against a duplicate
-        // timer regardless.
-        this.forgetInternal(dashboard.getId());
+        // Already hot: keep the existing timer and queue position.
+        if (this._pending.some((entry) => entry.dashboard.getId() === dashboard.getId())) {
+            return;
+        }
 
         const timer = setTimeout(() => {
             this.evictInternal(dashboard.getId());
