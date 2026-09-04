@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeWellTrajectoriesBoundingBox";
 
 describe("makeDrilledWellTrajectoriesBoundingBox", () => {
     test("returns null for an empty trajectory array", () => {
