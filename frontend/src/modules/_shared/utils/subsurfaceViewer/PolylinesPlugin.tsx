@@ -42,11 +42,13 @@ export enum PolylinesPluginTopic {
     POLYLINE_HOVER = "polyline_hover",
 }
 
+export type PolylineHoverData = { polylineId: string; lengthAlong: number; path: number[][] };
+
 export type PolylinesPluginTopicPayloads = {
     [PolylinesPluginTopic.EDITING_MODE]: PolylineEditingMode;
     [PolylinesPluginTopic.EDITING_POLYLINE_ID]: string | null;
     [PolylinesPluginTopic.POLYLINES]: Polyline[];
-    [PolylinesPluginTopic.POLYLINE_HOVER]: { polylineId: string; lengthAlong: number } | null;
+    [PolylinesPluginTopic.POLYLINE_HOVER]: PolylineHoverData | null;
 };
 
 enum AppendToPathLocation {
@@ -80,7 +82,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     private _appendToPathLocation: AppendToPathLocation = AppendToPathLocation.END;
     private _selectedPolylineId: string | null = null;
     private _hoverPoint: number[] | null = null;
-    private _polylineHoverData: { polylineId: string; lengthAlong: number } | null = null;
+    private _polylineHoverData: PolylineHoverData | null = null;
     private _visiblePolylineIds: string[] = [];
     private _colorGenerator: Generator<[number, number, number]>;
 
@@ -167,7 +169,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         return this._editingMode;
     }
 
-    getPolylineHoverData(): { polylineId: string; lengthAlong: number } | null {
+    getPolylineHoverData(): PolylineHoverData | null {
         return this._polylineHoverData;
     }
 
@@ -351,7 +353,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
             const [x, y] = pickingInfo.coordinate;
             const lengthAlong = lengthAlongAtXyPosition(polyline.path, x, y);
-            const newHoverData = { polylineId: polyline.id, lengthAlong };
+            const newHoverData = { polylineId: polyline.id, lengthAlong, path: polyline.path };
             if (!isEqual(this._polylineHoverData, newHoverData)) {
                 this._polylineHoverData = newHoverData;
                 this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINE_HOVER);

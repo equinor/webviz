@@ -15,7 +15,7 @@ export enum HoverTopic {
     REGION = "hover.region",
     FACIES = "hover.facies",
     WORLD_POS_UTM = "hover.world_pos_utm",
-    POLYLINE_LENGTH_ALONG = "hover.polyline_length_along",
+    FENCE = "hover.fence",
 }
 
 export type HoverData = {
@@ -27,7 +27,7 @@ export type HoverData = {
     [HoverTopic.REGION]: string | null;
     [HoverTopic.FACIES]: string | null;
     [HoverTopic.WORLD_POS_UTM]: { x?: number; y?: number; z?: number } | null;
-    [HoverTopic.POLYLINE_LENGTH_ALONG]: { polylineId: string; lengthAlong: number } | null;
+    [HoverTopic.FENCE]: { fenceId: string; lengthAlong: number; depth: number | null } | null;
 };
 
 type ThrottledPublishFunc = _.DebouncedFunc<<T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void>;
