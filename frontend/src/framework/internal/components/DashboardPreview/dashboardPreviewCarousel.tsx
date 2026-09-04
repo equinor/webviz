@@ -4,11 +4,11 @@ import { ChevronLeft, ChevronRight } from "@mui/icons-material";
 
 import type { LayoutElement } from "@framework/internal/Dashboard";
 import { Button } from "@lib/components/Button";
+import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { useHorizontalStepScroll } from "@lib/hooks/useHorizontalStepScroll";
 
 import { DashboardPreview } from "./dashboardPreview";
-import { Tooltip } from "@lib/components/Tooltip";
 
 export type DashboardPreviewCarouselItem = {
     id: string;
