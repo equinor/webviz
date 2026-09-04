@@ -68,12 +68,12 @@ describe("isDevMode", () => {
         });
     });
 
-    test("reads the flag from the webvizDebug_forceDevMode key", () => {
+    test("reads the flag from the webvizDebug_forceToggleDevModeTo key", () => {
         const getItem = vi.fn(() => "false");
         vi.stubGlobal("localStorage", { getItem });
 
         isDevMode();
 
-        expect(getItem).toHaveBeenCalledWith("webvizDebug_forceDevMode");
+        expect(getItem).toHaveBeenCalledWith("webvizDebug_forceToggleDevModeTo");
     });
 });
