@@ -298,6 +298,7 @@ export class Dependency<
 
         // If there are no dependencies, we can call the update function
         if (!this._hasParentDependencies) {
+            this.setLoadingState(true);
             await this.resolve();
         }
 
