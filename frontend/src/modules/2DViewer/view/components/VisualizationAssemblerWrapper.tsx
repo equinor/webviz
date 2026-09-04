@@ -1,7 +1,8 @@
 import type React from "react";
 
-import { makeDrilledWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeDrilledWellTrajectoriesHoverVisualizationFunctions";
+import { makePlannedWellTrajectoriesLayer2D } from "@modules/2DViewer/DataProviderFramework/visualization/makePlannedWellTrajectoriesLayer2D";
 import { makeRichWellTrajectoriesLayer } from "@modules/2DViewer/DataProviderFramework/visualization/makeRichWellTrajectoriesLayer";
+import { makeWellTrajectoriesHoverVisualizationFunctions } from "@modules/2DViewer/DataProviderFramework/visualization/makeWellTrajectoriesHoverVisualizationFunctions";
 import {
     DpfSubsurfaceViewerWrapper,
     type DpfSubsurfaceViewerWrapperProps,
@@ -10,6 +11,7 @@ import { DataProviderType } from "@modules/_shared/DataProviderFramework/dataPro
 import { DrilledWellborePicksProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellborePicksProvider";
 import { DrilledWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 import { FaultPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/FaultPolygonsProvider";
+import { PlannedWellboreTrajectoriesProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/PlannedWellboreTrajectoriesProvider";
 import { RealizationPolygonsProvider } from "@modules/_shared/DataProviderFramework/dataProviders/implementations/RealizationPolygonsProvider";
 import {
     AttributeSurfaceProvider,
@@ -40,7 +42,7 @@ import { makePolygonDataBoundingBox } from "@modules/_shared/DataProviderFramewo
 import { makeRealizationGridBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeRealizationGridBoundingBox";
 import { makeSurfaceLayerBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
-import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeWellTrajectoriesBoundingBox } from "@modules/_shared/DataProviderFramework/visualization/deckgl/boundingBoxes/makeWellTrajectoriesBoundingBox";
 import { makeAttributeSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeAttributeSurfaceLayer";
 import { makeDepthSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeDepthSurfaceLayer";
 import { makeInitialFluidContactSurfaceLayer } from "@modules/_shared/DataProviderFramework/visualization/deckgl/makeInitialFluidContactSurfaceLayer";
@@ -163,8 +165,17 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     DrilledWellboreTrajectoriesProvider,
     {
         transformToVisualization: makeRichWellTrajectoriesLayer,
-        transformToBoundingBox: makeDrilledWellTrajectoriesBoundingBox,
-        transformToHoverVisualization: makeDrilledWellTrajectoriesHoverVisualizationFunctions,
+        transformToBoundingBox: makeWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
+    },
+);
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    DataProviderType.PLANNED_WELL_TRAJECTORIES,
+    PlannedWellboreTrajectoriesProvider,
+    {
+        transformToVisualization: makePlannedWellTrajectoriesLayer2D,
+        transformToBoundingBox: makeWellTrajectoriesBoundingBox,
+        transformToHoverVisualization: makeWellTrajectoriesHoverVisualizationFunctions,
     },
 );
 

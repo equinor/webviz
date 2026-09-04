@@ -91,6 +91,12 @@ import type {
     GetParametersAndSensitivitiesData_api,
     GetParametersAndSensitivitiesErrors_api,
     GetParametersAndSensitivitiesResponses_api,
+    GetPlannedWellboreHeadersData_api,
+    GetPlannedWellboreHeadersErrors_api,
+    GetPlannedWellboreHeadersResponses_api,
+    GetPlannedWellTrajectoriesData_api,
+    GetPlannedWellTrajectoriesErrors_api,
+    GetPlannedWellTrajectoriesResponses_api,
     GetPolygonsDataData_api,
     GetPolygonsDataErrors_api,
     GetPolygonsDataResponses_api,
@@ -1017,6 +1023,24 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     });
 
 /**
+ * Get Planned Wellbore Headers
+ *
+ * Get planned wellbore headers for all planned wells in a given field
+ */
+export const getPlannedWellboreHeaders = <ThrowOnError extends boolean = false>(
+    options: Options<GetPlannedWellboreHeadersData_api, ThrowOnError>,
+): RequestResult<GetPlannedWellboreHeadersResponses_api, GetPlannedWellboreHeadersErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetPlannedWellboreHeadersResponses_api,
+        GetPlannedWellboreHeadersErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/well/planned_wellbore_headers/",
+        ...options,
+    });
+
+/**
  * Get Field Perforations
  *
  * Get field perforations for all wellbores in a given field.
@@ -1056,6 +1080,24 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GetWellTrajectoriesResponses_api, GetWellTrajectoriesErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/well/well_trajectories/",
+        ...options,
+    });
+
+/**
+ * Get Planned Well Trajectories
+ *
+ * Get planned trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
+ */
+export const getPlannedWellTrajectories = <ThrowOnError extends boolean = false>(
+    options: Options<GetPlannedWellTrajectoriesData_api, ThrowOnError>,
+): RequestResult<GetPlannedWellTrajectoriesResponses_api, GetPlannedWellTrajectoriesErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetPlannedWellTrajectoriesResponses_api,
+        GetPlannedWellTrajectoriesErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/well/planned_well_trajectories/",
         ...options,
     });
 
