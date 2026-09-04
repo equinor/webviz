@@ -29,15 +29,18 @@ import {
     makeSeismicColorScaleAnnotation,
 } from "@modules/Intersection/DataProviderFramework/annotations/makeColorScaleAnnotation";
 import { makeGridBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeGridBoundingBox";
+import { makeInitialFluidContactSurfacesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeInitialFluidContactSurfacesBoundingBox";
 import { makeSeismicBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSeismicBoundingBox";
 import { makeSurfacesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesBoundingBox";
 import { makeSurfacesUncertaintiesBoundingBox } from "@modules/Intersection/DataProviderFramework/boundingBoxes/makeSurfacesUncertaintiesBoundingBox";
 import { CustomDataProviderType } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/dataProviderTypes";
 import { EnsembleWellborePicksProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/EnsembleWellborePicksProvider";
+import { InitialFluidContactSurfacesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/InitialFluidContactSurfacesProvider";
 import { RealizationSurfacesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/RealizationSurfacesProvider";
 import { SurfacesPerRealizationValuesProvider } from "@modules/Intersection/DataProviderFramework/customDataProviderImplementations/SurfacesPerRealizationValuesProvider";
 import type { IntersectionInjectedData } from "@modules/Intersection/DataProviderFramework/injectedDataType";
 import { createGridLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createGridLayerItemsMaker";
+import { createInitialFluidContactSurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createInitialFluidContactSurfacesLayerItemsMaker";
 import { createSeismicLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSeismicLayerItemsMaker";
 import { createSurfacesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesLayerItemsMaker";
 import { createSurfacesUncertaintiesLayerItemsMaker } from "@modules/Intersection/DataProviderFramework/visualization/createSurfacesUncertaintiesLayerItemsMaker";
@@ -128,6 +131,15 @@ VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
     {
         transformToVisualization: createSurfacesLayerItemsMaker,
         transformToBoundingBox: makeSurfacesBoundingBox,
+    },
+);
+
+VISUALIZATION_ASSEMBLER.registerDataProviderTransformers(
+    CustomDataProviderType.INITIAL_FLUID_CONTACT_SURFACES,
+    InitialFluidContactSurfacesProvider,
+    {
+        transformToVisualization: createInitialFluidContactSurfacesLayerItemsMaker,
+        transformToBoundingBox: makeInitialFluidContactSurfacesBoundingBox,
     },
 );
 

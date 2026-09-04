@@ -1,9 +1,21 @@
 <!--::metadata
-  changelog_counter: 1
-  date: 20.08.2026
+  changelog_counter: 2
+  date: 02.09.2026
 -->
 
 # Changelog
+
+## September 2026
+
+### Changed
+
+- **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
+
+### Added
+
+- **Planned well trajectories**: Planned well trajectories from SMDA can now be displayed in the 2D and 3D viewers and used as the path for Intersection views.
+- **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
+- **Top bar**: Clicking the FMU logo or the "FMU Analysis" title reloads the application and returns you to the start page.
 
 ## August 2026
 
