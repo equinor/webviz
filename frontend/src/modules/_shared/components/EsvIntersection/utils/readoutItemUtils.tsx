@@ -8,6 +8,7 @@ import type {
     Perforation,
     SchematicData,
 } from "@equinor/esv-intersection";
+import { clamp } from "lodash-es";
 
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
 
@@ -407,24 +408,43 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 
                 const imageX = transformedPoint.x;
                 const imageY = transformedPoint.y;
-                const imageData = ctx.getImageData(imageX, imageY, 1, 1);
+
+                const x0 = Math.floor(imageX);
+                const y0 = Math.floor(imageY);
+                const fracX = imageX - x0;
+                const fracY = imageY - y0;
+
+                // Sample the 2x2 pixel neighborhood so R/G/B can be bilinearly interpolated
+                // (in both the trace and the depth direction) instead of snapping to a pixel.
+                const imageData = ctx.getImageData(x0, y0, 2, 2);
+
+                const interpolateChannel = (channelOffset: number): number => {
+                    const topLeft = imageData.data[channelOffset];
+                    const topRight = imageData.data[4 + channelOffset];
+                    const bottomLeft = imageData.data[8 + channelOffset];
+                    const bottomRight = imageData.data[12 + channelOffset];
+
+                    const top = topLeft + (topRight - topLeft) * fracX;
+                    const bottom = bottomLeft + (bottomRight - bottomLeft) * fracX;
+                    return top + (bottom - top) * fracY;
+                };
 
                 items.push({
                     label: "R",
                     type: AdditionalInformationType.R,
-                    value: imageData.data[0],
+                    value: interpolateChannel(0),
                 });
 
                 items.push({
                     label: "G",
                     type: AdditionalInformationType.G,
-                    value: imageData.data[1],
+                    value: interpolateChannel(1),
                 });
 
                 items.push({
                     label: "B",
                     type: AdditionalInformationType.B,
-                    value: imageData.data[2],
+                    value: interpolateChannel(2),
                 });
             }
         }
@@ -442,11 +462,29 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
             const rowHeight = height / seismicData.numSamplesPerTrace;
             const columnWidth = width / seismicData.numTraces;
 
-            const sampleNum = Math.floor((y - seismicData.minFenceDepth) / rowHeight);
-            const traceNum = Math.floor((x - seismicInfo.minX) / columnWidth);
+            const sampleGridPos = (y - seismicData.minFenceDepth) / rowHeight;
+            const traceGridPos = (x - seismicInfo.minX) / columnWidth;
 
-            const index = traceNum * seismicData.numSamplesPerTrace + sampleNum;
-            const value = seismicData.fenceTracesArray[index];
+            // Position within the sample/trace grid, offset by half a cell so that integer
+            // positions line up with sample/trace centers.
+            const samplePos = clamp(sampleGridPos - 0.5, 0, seismicData.numSamplesPerTrace - 1);
+            const tracePos = clamp(traceGridPos - 0.5, 0, seismicData.numTraces - 1);
+
+            const sample0 = Math.floor(samplePos);
+            const trace0 = Math.floor(tracePos);
+            const sample1 = Math.min(sample0 + 1, seismicData.numSamplesPerTrace - 1);
+            const trace1 = Math.min(trace0 + 1, seismicData.numTraces - 1);
+
+            const sampleFrac = samplePos - sample0;
+            const traceFrac = tracePos - trace0;
+
+            const valueAt = (traceNum: number, sampleNum: number) =>
+                seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum];
+
+            // Bilinear interpolation between the four surrounding samples.
+            const top = valueAt(trace0, sample0) + (valueAt(trace1, sample0) - valueAt(trace0, sample0)) * traceFrac;
+            const bottom = valueAt(trace0, sample1) + (valueAt(trace1, sample1) - valueAt(trace0, sample1)) * traceFrac;
+            const value = top + (bottom - top) * sampleFrac;
 
             items.push({
                 label: seismicData.propertyName,
