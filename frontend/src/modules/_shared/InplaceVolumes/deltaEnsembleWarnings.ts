@@ -6,8 +6,7 @@ import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils"
 import type { DeltaDroppedFluidSelections, DeltaUnmatchedRows } from "./types";
 
 /**
- * Delta values pair comparison and reference rows by realization number. Equal realization numbers
- * do not by themselves prove that the underlying samples are semantically aligned.
+ * Matching realization numbers do not guarantee that both ensembles represent the same samples.
  */
 export function makeDeltaRealizationAlignmentWarnings(
     ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
@@ -20,10 +19,8 @@ export function makeDeltaRealizationAlignmentWarnings(
 }
 
 /**
- * Warnings for delta ensembles whose constituents do not share all realizations.
- *
- * The per-realization difference keeps only the shared realizations, which reduces the sample size
- * behind every statistic derived from it.
+ * Warn when some realizations are missing from either source ensemble.
+ * Only shared realizations contribute to the delta and its statistics.
  */
 export function makeDeltaRealizationCountWarnings(
     ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
@@ -55,8 +52,7 @@ export function makeDeltaRealizationCountWarnings(
 }
 
 /**
- * Warnings for fluid selections excluded from a delta because only one side has them. Without this
- * the affected volumes simply disappear from the table.
+ * Warn about fluid selections left out because only one ensemble has them.
  */
 export function makeDroppedFluidSelectionWarnings(droppedFluidSelections: DeltaDroppedFluidSelections[]): string[] {
     const warnings: string[] = [];

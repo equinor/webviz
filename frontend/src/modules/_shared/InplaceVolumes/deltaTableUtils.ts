@@ -7,24 +7,28 @@ import type {
 
 import { encodeSelectorColumn, expandSelectorColumn, makeRowKey } from "./selectorColumnUtils";
 
-/**
- * Compute the per-realization difference (comparison − reference) for a single fluid selection.
- *
- * Rows are matched on the intersection of their selector columns (including REAL), so only rows
- * present in BOTH ensembles for the same (realization, selectors) tuple are kept (inner join).
- * Result columns are limited to those present in both ensembles.
- */
-function subtractFluidSelectionTableData(
+type MatchedRow = {
+    comparisonRow: number;
+    referenceRow: number;
+};
+
+type RowMatchResult = {
+    matchedRows: MatchedRow[];
+    selectorColumns: RepeatedTableColumnData_api[];
+    comparisonOnlyRowCount: number;
+    referenceOnlyRowCount: number;
+};
+
+/** Match rows by REAL and the other selector columns shared by both tables. Keep comparison order. */
+function matchTableRows(
     comparison: InplaceVolumesTableData_api,
     reference: InplaceVolumesTableData_api,
-): { data: InplaceVolumesTableData_api; unmatchedRows: UnmatchedDeltaRows | null } {
-    // Intersection of selector column names, preserving comparison order.
+): RowMatchResult {
     const referenceSelectorNames = new Set(reference.selectorColumns.map((column) => column.columnName));
     const selectorColumnNames = comparison.selectorColumns
         .map((column) => column.columnName)
         .filter((name) => referenceSelectorNames.has(name));
 
-    // Expand selector columns to per-row values for both ensembles.
     const comparisonSelectorRowValues = new Map<string, (string | number)[]>();
     for (const column of comparison.selectorColumns) {
         comparisonSelectorRowValues.set(column.columnName, expandSelectorColumn(column));
@@ -34,26 +38,14 @@ function subtractFluidSelectionTableData(
         referenceSelectorRowValues.set(column.columnName, expandSelectorColumn(column));
     }
 
-    // Build a lookup from row key -> reference row index.
     const referenceRowCount = reference.resultColumns[0]?.columnValues.length ?? 0;
     const referenceRowIndexByKey = new Map<string, number>();
     for (let row = 0; row < referenceRowCount; row++) {
         referenceRowIndexByKey.set(makeRowKey(referenceSelectorRowValues, selectorColumnNames, row), row);
     }
 
-    const referenceResultColumnByName = new Map<string, TableColumnData_api>();
-    for (const column of reference.resultColumns) {
-        referenceResultColumnByName.set(column.columnName, column);
-    }
-
-    // Result columns present in both ensembles, preserving comparison order.
-    const resultColumnNames = comparison.resultColumns
-        .map((column) => column.columnName)
-        .filter((name) => referenceResultColumnByName.has(name));
-
-    // Determine matched comparison rows (present in reference) and their reference row index.
     const comparisonRowCount = comparison.resultColumns[0]?.columnValues.length ?? 0;
-    const matchedRows: { comparisonRow: number; referenceRow: number }[] = [];
+    const matchedRows: MatchedRow[] = [];
     const matchedReferenceRows = new Set<number>();
     for (let row = 0; row < comparisonRowCount; row++) {
         const key = makeRowKey(comparisonSelectorRowValues, selectorColumnNames, row);
@@ -64,42 +56,64 @@ function subtractFluidSelectionTableData(
         }
     }
 
-    // Rebuild selector columns for the matched rows.
-    const deltaSelectorColumns: RepeatedTableColumnData_api[] = selectorColumnNames.map(
-        function encodeMatchedSelector(name) {
-            const comparisonRowValues = comparisonSelectorRowValues.get(name)!;
-            const rowValues = matchedRows.map(({ comparisonRow }) => comparisonRowValues[comparisonRow]);
-            return encodeSelectorColumn(name, rowValues);
-        },
-    );
+    const selectorColumns = selectorColumnNames.map(function encodeMatchedSelector(name) {
+        const comparisonRowValues = comparisonSelectorRowValues.get(name)!;
+        const rowValues = matchedRows.map(({ comparisonRow }) => comparisonRowValues[comparisonRow]);
+        return encodeSelectorColumn(name, rowValues);
+    });
 
-    // Compute delta result columns for the matched rows.
-    const comparisonResultColumnByName = new Map<string, TableColumnData_api>();
-    for (const column of comparison.resultColumns) {
-        comparisonResultColumnByName.set(column.columnName, column);
+    return {
+        matchedRows,
+        selectorColumns,
+        comparisonOnlyRowCount: comparisonRowCount - matchedRows.length,
+        referenceOnlyRowCount: referenceRowCount - matchedReferenceRows.size,
+    };
+}
+
+/** Subtract shared result columns. Missing values stay missing, rather than becoming zeros. */
+function subtractResultColumns(
+    comparisonColumns: TableColumnData_api[],
+    referenceColumns: TableColumnData_api[],
+    matchedRows: MatchedRow[],
+): TableColumnData_api[] {
+    const referenceColumnByName = new Map<string, TableColumnData_api>();
+    for (const column of referenceColumns) {
+        referenceColumnByName.set(column.columnName, column);
     }
-    const deltaResultColumns: TableColumnData_api[] = resultColumnNames.map(function subtractResultColumn(name) {
-        const comparisonValues = comparisonResultColumnByName.get(name)!.columnValues;
-        const referenceValues = referenceResultColumnByName.get(name)!.columnValues;
+
+    const resultColumns: TableColumnData_api[] = [];
+    for (const comparisonColumn of comparisonColumns) {
+        const referenceColumn = referenceColumnByName.get(comparisonColumn.columnName);
+        if (!referenceColumn) {
+            continue;
+        }
         const columnValues = matchedRows.map(function subtractMatchedRow({ comparisonRow, referenceRow }) {
-            const comparisonValue = comparisonValues[comparisonRow];
-            const referenceValue = referenceValues[referenceRow];
+            const comparisonValue = comparisonColumn.columnValues[comparisonRow];
+            const referenceValue = referenceColumn.columnValues[referenceRow];
 
             return Number.isFinite(comparisonValue) && Number.isFinite(referenceValue)
                 ? comparisonValue - referenceValue
                 : Number.NaN;
         });
-        return { columnName: name, columnValues };
-    });
+        resultColumns.push({ columnName: comparisonColumn.columnName, columnValues });
+    }
+    return resultColumns;
+}
 
-    const comparisonOnlyRowCount = comparisonRowCount - matchedRows.length;
-    const referenceOnlyRowCount = referenceRowCount - matchedReferenceRows.size;
+function subtractFluidSelectionTableData(
+    comparison: InplaceVolumesTableData_api,
+    reference: InplaceVolumesTableData_api,
+): { data: InplaceVolumesTableData_api; unmatchedRows: UnmatchedDeltaRows | null } {
+    const { matchedRows, selectorColumns, comparisonOnlyRowCount, referenceOnlyRowCount } = matchTableRows(
+        comparison,
+        reference,
+    );
 
     return {
         data: {
             fluidSelection: comparison.fluidSelection,
-            selectorColumns: deltaSelectorColumns,
-            resultColumns: deltaResultColumns,
+            selectorColumns,
+            resultColumns: subtractResultColumns(comparison.resultColumns, reference.resultColumns, matchedRows),
         },
         unmatchedRows:
             comparisonOnlyRowCount > 0 || referenceOnlyRowCount > 0
@@ -110,7 +124,7 @@ function subtractFluidSelectionTableData(
 
 export type DroppedFluidSelection = {
     fluidSelection: string;
-    /** The side lacking the fluid selection, so the other side's rows cannot be differenced. */
+    /** Which ensemble is missing this fluid selection. */
     missingFrom: "comparison" | "reference";
 };
 
@@ -124,15 +138,14 @@ export type DeltaTableResult = {
     data: InplaceVolumesTableDataPerFluidSelection_api;
     /** Fluid selections excluded because only one side has them. */
     droppedFluidSelections: DroppedFluidSelection[];
-    /** Selector tuples excluded because they occur on only one side of the difference. */
+    /** Rows excluded because no matching row exists in the other table. */
     unmatchedRows: UnmatchedDeltaRows[];
 };
 
 /**
- * Compute the per-realization difference (comparison − reference) for inplace volumes table data.
+ * Compute comparison - reference for each realization.
  *
- * The subtraction is performed per fluid selection and matched per (realization, selector) tuple.
- * Only fluid selections present in both ensembles are included.
+ * Keep only shared fluid selections, matching rows, and shared result columns.
  */
 export function subtractPerRealizationTables(
     comparisonData: InplaceVolumesTableDataPerFluidSelection_api,
@@ -165,7 +178,6 @@ export function subtractPerRealizationTables(
         }
     }
 
-    // The inner join also drops reference-only fluid selections, which the loop above never visits.
     for (const referenceFluidTableData of referenceData.tableDataPerFluidSelection) {
         if (!comparisonFluidSelections.has(referenceFluidTableData.fluidSelection)) {
             droppedFluidSelections.push({
@@ -184,11 +196,8 @@ const subtractionResultByInputs = new WeakMap<
 >();
 
 /**
- * `subtractPerRealizationTables` memoized on the identity of both inputs.
- *
- * React Query keeps `data` references stable while the underlying data is unchanged, so this skips
- * the subtraction when a query result object is rebuilt for an unrelated reason such as a fetch
- * state transition. Entries are dropped with their inputs, since the cache is weakly held.
+ * Reuse the result while both input objects are unchanged. React Query keeps these objects stable
+ * between data updates. WeakMaps let the cache be cleared when the inputs are no longer used.
  */
 export function subtractPerRealizationTablesMemoized(
     comparisonData: InplaceVolumesTableDataPerFluidSelection_api,

@@ -212,16 +212,11 @@ export function makeAggregatedPerRealizationTableDataQueryOptions(
 }
 
 /**
- * Fetch per-realization inplace volumes data for delta ensembles.
+ * Fetch both source tables for each delta, using the same shared realizations.
+ * Subtract matching rows in the browser and return the usual per-realization table format.
  *
- * For each delta ensemble a query is issued for both its comparison and reference ensembles (using
- * the delta's intersection realizations). The per-realization difference (comparison − reference) is
- * then computed client-side, matched per (realization, selector) tuple, and returned in the same
- * shape as regular per-realization table data.
- *
- * Assumes the delta ensemble's constituents are realization-aligned, i.e. realization N is the same
- * sample in both. The application can match realization numbers but cannot validate this semantic
- * relationship, so callers must communicate that requirement to users.
+ * The same realization number must represent the same sample in both ensembles.
+ * The app cannot check this, so callers must explain this requirement to users.
  */
 export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     deltaEnsembleIdentsWithRealizations: DeltaEnsembleIdentWithRealizations[],
@@ -238,7 +233,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
         realizations: readonly number[];
     };
 
-    /** Which two queries make up one delta, so `combine` does not depend on their ordering. */
+    /** Track the two source queries for each delta table. */
     type DeltaQueryPair = {
         deltaEnsembleIdent: DeltaEnsembleIdent;
         tableName: string;

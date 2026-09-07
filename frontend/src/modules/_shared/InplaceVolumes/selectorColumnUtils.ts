@@ -1,11 +1,11 @@
 import type { RepeatedTableColumnData_api } from "@api";
 
-/** Extract the per-row values of a repeated (run-length encoded) selector column. */
+/** Look up the selector value for each row. */
 export function expandSelectorColumn(selectorColumn: RepeatedTableColumnData_api): (string | number)[] {
     return selectorColumn.indices.map((index) => selectorColumn.uniqueValues[index]);
 }
 
-/** Re-encode a list of per-row values into the repeated selector column format. */
+/** Store each distinct value once, with an index for each row. */
 export function encodeSelectorColumn(columnName: string, rowValues: (string | number)[]): RepeatedTableColumnData_api {
     const uniqueValues: (string | number)[] = [];
     const uniqueValueToIndex = new Map<string | number, number>();
@@ -25,8 +25,7 @@ export function encodeSelectorColumn(columnName: string, rowValues: (string | nu
 }
 
 /**
- * Build a composite row key from the selector column values at a given row index.
- * Uses JSON encoding to avoid delimiter collisions between selector values.
+ * Build a row key from its selector values. JSON keeps values separate even if they contain punctuation.
  */
 export function makeRowKey(
     selectorRowValues: Map<string, (string | number)[]>,

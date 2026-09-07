@@ -23,13 +23,13 @@ const STATISTIC_TO_FIELD: Record<InplaceVolumesStatistic_api, keyof Statistics> 
     [InplaceVolumesStatistic_api.P90]: "p90",
 };
 
-/** The backend always returns every statistic and lets the view filter, so match that. */
+/** Return all statistics, like the backend. The view chooses which ones to show. */
 const ALL_STATISTICS = Object.values(InplaceVolumesStatistic_api);
 
 function computeStatisticalFluidSelectionTableData(
     perRealizationData: InplaceVolumesTableData_api,
 ): InplaceVolumesStatisticalTableData_api {
-    // Statistics are computed across realizations, so REAL is what the rows collapse over.
+    // Group by the other selectors, then compute statistics across realizations.
     const groupSelectorColumns = perRealizationData.selectorColumns.filter(
         (column) => column.columnName !== REAL_COLUMN_NAME,
     );
@@ -42,18 +42,16 @@ function computeStatisticalFluidSelectionTableData(
 
     const rowCount = perRealizationData.resultColumns[0]?.columnValues.length ?? 0;
     const rowIndicesByGroupKey = new Map<string, number[]>();
-    const groupKeysInOrder: string[] = [];
     for (let row = 0; row < rowCount; row++) {
         const groupKey = makeRowKey(selectorRowValues, groupSelectorColumnNames, row);
         let rowIndices = rowIndicesByGroupKey.get(groupKey);
         if (!rowIndices) {
             rowIndices = [];
             rowIndicesByGroupKey.set(groupKey, rowIndices);
-            groupKeysInOrder.push(groupKey);
         }
         rowIndices.push(row);
     }
-    const rowIndicesPerGroup = groupKeysInOrder.map((groupKey) => rowIndicesByGroupKey.get(groupKey)!);
+    const rowIndicesPerGroup = Array.from(rowIndicesByGroupKey.values());
 
     const selectorColumns: RepeatedTableColumnData_api[] = groupSelectorColumns.map(
         function encodeGroupSelector(column) {
@@ -93,11 +91,9 @@ function computeStatisticalFluidSelectionTableData(
 }
 
 /**
- * Aggregate per-realization inplace volumes data into statistics, grouped by every selector column
- * except REAL.
+ * Compute statistics across realizations, keeping a separate group for each set of selector values.
  *
- * Needed for delta ensembles: the backend cannot aggregate a difference, so the difference is
- * computed per realization client-side and reduced to statistics here.
+ * Delta tables use this because the backend cannot compute statistics for a client-side difference.
  */
 export function computeStatisticalTableFromPerRealizationTable(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,
@@ -115,8 +111,7 @@ const resultByData = new WeakMap<
 >();
 
 /**
- * `computeStatisticalTableFromPerRealizationTable` memoized on the input identity, so it is not
- * redone when a query result object is rebuilt for an unrelated reason.
+ * Reuse the statistics while the input object is unchanged.
  */
 export function computeStatisticalTableFromPerRealizationTableMemoized(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,

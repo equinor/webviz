@@ -65,15 +65,15 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
         );
     });
 
-    test("groups by the remaining selector columns", () => {
+    test("groups interleaved rows in first-seen selector order", function groupsInterleavedRows() {
         const perRealization = makePerFluidSelection([
             {
                 fluidSelection: "oil",
                 selectorColumns: [
-                    makeSelectorColumn("REAL", [0, 1, 0, 1]),
-                    makeSelectorColumn("ZONE", ["A", "A", "B", "B"]),
+                    makeSelectorColumn("REAL", [0, 0, 1, 1]),
+                    makeSelectorColumn("ZONE", ["B", "A", "B", "A"]),
                 ],
-                resultColumns: [makeResultColumn("STOIIP", [10, 20, 100, 300])],
+                resultColumns: [makeResultColumn("STOIIP", [100, 10, 300, 20])],
             },
         ]);
 
@@ -81,8 +81,8 @@ describe("computeStatisticalTableFromPerRealizationTable", () => {
         const oil = statistical.tableDataPerFluidSelection[0];
 
         const zoneColumn = oil.selectorColumns.find((column) => column.columnName === "ZONE")!;
-        expect(zoneColumn.indices.map((index) => zoneColumn.uniqueValues[index])).toEqual(["A", "B"]);
-        expect(oil.resultColumnStatistics[0].statisticValues[InplaceVolumesStatistic_api.MEAN]).toEqual([15, 200]);
+        expect(zoneColumn.indices.map((index) => zoneColumn.uniqueValues[index])).toEqual(["B", "A"]);
+        expect(oil.resultColumnStatistics[0].statisticValues[InplaceVolumesStatistic_api.MEAN]).toEqual([200, 15]);
     });
 
     test("emits every statistic, as the backend does", () => {
