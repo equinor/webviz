@@ -77,7 +77,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     }, [props.referenceSystem, props.intersectionSource]);
 
     const extensionLength = React.useMemo(() => {
-        if (props.intersectionSource?.type !== IntersectionType.WELLBORE) return 0;
+        if (!isWellboreIntersectionType(props.intersectionSource?.type)) return 0;
+
         return props.intersectionSource.extensionLength;
     }, [props.intersectionSource]);
 
@@ -146,34 +147,31 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             // ! some layers (like Seismic Fence). Additionally, ESV does not seem to
             // ! handle strictly vertical trajectories, so we'll use our own logic here
 
-            // Get a MD position along the well track.
-            const lengthAlong = props.referenceSystem.unproject(position.x) ?? position.x;
-
             // This to if cases only happens if the intersection is an extended well track
-            if (lengthAlong < 0) {
-                const shiftedLengthAlong = lengthAlong + extensionLength;
+            if (position.x < 0) {
+                const positionAlongSegment = position.x + extensionLength;
 
                 // We're in the *one* extension segment at the *start* of the simplified
                 // track, which is always of 'extensionLength' length
                 const segmentStart = simplifiedExtendedPath![0];
                 const segmentEnd = simplifiedExtendedPath![1];
 
-                const ratio = shiftedLengthAlong / extensionLength;
+                const ratio = positionAlongSegment / extensionLength;
 
                 setMouseCursorUtmCoordinate({
                     x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
                     y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
                     z: position.y,
                 });
-            } else if (lengthAlong > props.referenceSystem.length) {
-                const shiftedLengthAlong = lengthAlong - props.referenceSystem.length;
+            } else if (position.x > props.referenceSystem.displacement) {
+                const positionAlongSegment = position.x - props.referenceSystem.displacement;
 
                 // We're in the *one* extension segment at the *end* of the simplified
                 // track, which is always of 'extensionLength' length
                 const segmentStart = simplifiedExtendedPath!.at(-2)!;
                 const segmentEnd = simplifiedExtendedPath!.at(-1)!;
 
-                const ratio = shiftedLengthAlong / extensionLength;
+                const ratio = positionAlongSegment / extensionLength;
 
                 setMouseCursorUtmCoordinate({
                     x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
@@ -181,6 +179,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                     z: position.y,
                 });
             } else {
+                // Get a MD position along the well track.
+                const lengthAlong = props.referenceSystem.unproject(position.x) ?? position.x;
                 const utmPos = props.referenceSystem.getPosition(lengthAlong);
 
                 setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
