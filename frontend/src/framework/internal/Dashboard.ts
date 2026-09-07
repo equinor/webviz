@@ -144,7 +144,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     serializeState(): SerializedDashboardState {
         if (this._cachedState) {
-            return this._cachedState;
+            // Destructuring the cached state and overriding the id, name, and description with the current values.
+            return {
+                ...this._cachedState,
+                id: this._id,
+                name: this._metadata.name,
+                description: this._metadata.description,
+            };
         }
 
         const moduleInstances = this._moduleInstances.map((moduleInstance) => {
