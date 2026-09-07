@@ -454,7 +454,18 @@ class SmdaAccess:
                 Service.SMDA,
             )
 
-        return [WellborePick(**result) for result in results]
+        picks: List[WellborePick] = []
+
+        for result in results:
+            # Drop any picks with missing data
+            if all(result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]):
+                picks.append(WellborePick(**result))
+            else:
+                LOGGER.warning(
+                    f"Invalid pick found for {strat_column_identifier=}, {result.get('unique_wellbore_identifier')}::{result.get('pick_identifier')}. This will be ignored."
+                )
+
+        return picks
 
     async def get_wellbore_pick_identifiers_in_stratigraphic_column_async(
         self, strat_column_identifier: str
