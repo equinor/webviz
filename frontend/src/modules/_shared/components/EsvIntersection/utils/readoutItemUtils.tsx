@@ -408,43 +408,24 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 
                 const imageX = transformedPoint.x;
                 const imageY = transformedPoint.y;
-
-                const x0 = Math.floor(imageX);
-                const y0 = Math.floor(imageY);
-                const fracX = imageX - x0;
-                const fracY = imageY - y0;
-
-                // Sample the 2x2 pixel neighborhood so R/G/B can be bilinearly interpolated
-                // (in both the trace and the depth direction) instead of snapping to a pixel.
-                const imageData = ctx.getImageData(x0, y0, 2, 2);
-
-                const interpolateChannel = (channelOffset: number): number => {
-                    const topLeft = imageData.data[channelOffset];
-                    const topRight = imageData.data[4 + channelOffset];
-                    const bottomLeft = imageData.data[8 + channelOffset];
-                    const bottomRight = imageData.data[12 + channelOffset];
-
-                    const top = topLeft + (topRight - topLeft) * fracX;
-                    const bottom = bottomLeft + (bottomRight - bottomLeft) * fracX;
-                    return top + (bottom - top) * fracY;
-                };
+                const imageData = ctx.getImageData(imageX, imageY, 1, 1);
 
                 items.push({
                     label: "R",
                     type: AdditionalInformationType.R,
-                    value: interpolateChannel(0),
+                    value: imageData.data[0],
                 });
 
                 items.push({
                     label: "G",
                     type: AdditionalInformationType.G,
-                    value: interpolateChannel(1),
+                    value: imageData.data[1],
                 });
 
                 items.push({
                     label: "B",
                     type: AdditionalInformationType.B,
-                    value: interpolateChannel(2),
+                    value: imageData.data[2],
                 });
             }
         }
