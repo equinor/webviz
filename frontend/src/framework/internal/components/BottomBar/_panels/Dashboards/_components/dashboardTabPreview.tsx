@@ -5,7 +5,6 @@ import { Tooltip as TooltipBase } from "@base-ui/react/tooltip";
 import { DashboardPreview } from "@framework/internal/components/DashboardPreview/dashboardPreview";
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
-import { PortalContainerContext } from "@lib/components/_shared/contexts/portalContainerContext";
 import { Typography } from "@lib/components/Typography";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
@@ -34,7 +33,6 @@ export type DashboardTabPreviewProps = {
  */
 export function DashboardTabPreview(props: DashboardTabPreviewProps): React.ReactNode {
     const { dashboard, disabled } = props;
-    const portalContainer = React.useContext(PortalContainerContext);
 
     const metadata = usePublishSubscribeTopicValue(dashboard, DashboardTopic.METADATA);
     // Re-render on layout changes so an open preview of the active dashboard stays current.
@@ -47,7 +45,7 @@ export function DashboardTabPreview(props: DashboardTabPreviewProps): React.Reac
                 closeDelay={HOVER_CLOSE_DELAY_MS}
                 render={props.children}
             />
-            <TooltipBase.Portal container={portalContainer}>
+            <TooltipBase.Portal>
                 <TooltipBase.Positioner className="z-tooltip" side="top" align="center" sideOffset={8}>
                     <TooltipBase.Popup className="bg-floating border-neutral gap-y-xs p-sm flex flex-col rounded-sm border shadow-md">
                         <div className="gap-y-3xs flex flex-col" style={{ maxWidth: PREVIEW_WIDTH }}>
