@@ -1,5 +1,5 @@
 import { Icon } from "@equinor/eds-core-react";
-import { category, dashboard, folder_open, github, external_link, add } from "@equinor/eds-icons";
+import { category, dashboard, folder_open } from "@equinor/eds-icons";
 
 import { GuiState, useSetGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
@@ -9,10 +9,11 @@ import { Tooltip } from "@lib/components/Tooltip";
 import { Heading } from "@lib/components/Typography/compositions";
 
 import { ChangelogDialog } from "./private-components/changelogModal";
+import { FeedbackDialog } from "./private-components/feedbackModal";
 import { RecentSessions } from "./private-components/recentSessions";
 import { RecentSnapshots } from "./private-components/recentSnapshots";
 
-Icon.add({ dashboard, category, folder_open, github, external_link, add });
+Icon.add({ dashboard, category, folder_open });
 
 export type StartPageProps = {
     workbench: Workbench;
@@ -101,17 +102,7 @@ export function StartPage(props: StartPageProps) {
 
                             <ChangelogDialog />
 
-                            <Button.AsLink
-                                href="https://github.com/equinor/webviz"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                variant="ghost"
-                                tone="accent"
-                                external
-                            >
-                                <Icon name="github" fontSize="inherit" />
-                                Webviz on GitHub
-                            </Button.AsLink>
+                            <FeedbackDialog workbench={props.workbench} />
                         </section>
                     </div>
                 </div>

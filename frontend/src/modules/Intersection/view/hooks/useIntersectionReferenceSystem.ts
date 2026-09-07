@@ -2,7 +2,7 @@ import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
-import { IntersectionType } from "@framework/types/intersection";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
@@ -24,17 +24,19 @@ export function useCreateIntersectionReferenceSystem(
 ): IntersectionReferenceSystem | null {
     // Always call hooks unconditionally
     const isCustomPolyline = intersectionSetting?.type === IntersectionType.CUSTOM_POLYLINE;
-    const isWellbore = intersectionSetting?.type === IntersectionType.WELLBORE;
+    const isWellbore = isWellboreIntersectionType(intersectionSetting?.type);
+    const isPlanned = intersectionSetting?.type === IntersectionType.PLANNED_WELLBORE;
 
     // Polyline intersection
     const availableIntersectionPolylines = useIntersectionPolylines(workbenchSession);
 
-    // Wellbore intersection
+    // Wellbore intersection (drilled or planned)
     const wellboreUuid = isWellbore ? intersectionSetting?.uuid : "";
     const wellTrajectoriesQuery = useWellboreTrajectoriesQuery(
         fieldIdentifier,
         isWellbore ? [wellboreUuid] : [],
         isWellbore,
+        isPlanned,
     );
 
     // Memoize the reference system to prevent creating a new instance on every render

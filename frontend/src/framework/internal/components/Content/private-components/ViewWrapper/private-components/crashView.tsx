@@ -1,17 +1,19 @@
 import React from "react";
 
-import { BugReport, Info, Refresh } from "@mui/icons-material";
+import { Info, Refresh } from "@mui/icons-material";
 
 import crashIllustration from "@assets/moduleCrash.svg";
 
+import { ReportIssueButton } from "@framework/internal/components/ReportIssueButton";
+import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Code } from "@lib/components/Code";
 import { Dialog } from "@lib/components/Dialog";
 import { Separator } from "@lib/components/Separator";
 import { Heading, Paragraph } from "@lib/components/Typography/compositions";
-import { shouldSymbolicate, symbolicateStackTrace } from "@lib/utils/stackTraceSymbolication";
 
 export type FormattedErrorProps = {
+    workbench: Workbench;
     moduleName: string;
     error: Error;
     errorInfo: React.ErrorInfo;
@@ -54,7 +56,6 @@ function formatStack(stack: string): React.ReactNode {
 
 export function CrashView(props: FormattedErrorProps): React.ReactNode {
     const [showDetails, setShowDetails] = React.useState<boolean>(false);
-    const [symbolicatingStack, setSymbolicatingStack] = React.useState<boolean>(false);
 
     const handleReload = () => {
         if (!props.onReload) {
@@ -66,39 +67,6 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
 
     const handleShowDetails = () => {
         setShowDetails(true);
-    };
-
-    const handleReportError = async () => {
-        setSymbolicatingStack(true);
-
-        let stackToReport = props.error.stack || "";
-
-        // Symbolicate the stack if in production and source maps are available
-        if (shouldSymbolicate() && props.error) {
-            try {
-                stackToReport = await symbolicateStackTrace(props.error);
-            } catch (err) {
-                console.error("Failed to symbolicate stack trace:", err);
-                // Fall back to original stack
-                stackToReport = props.error.stack || "";
-            }
-        }
-
-        setSymbolicatingStack(false);
-
-        const title = encodeURIComponent(`[USER REPORTED ERROR] (${props.moduleName}) ${props.error.message}`);
-        const body = encodeURIComponent(
-            `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
-**How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
-**Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
-**Error stack**\n\`\`\`\n${stackToReport}\n\`\`\`\n\n\
-**Component stack**\n\`\`\`${props.errorInfo.componentStack}\n\`\`\``,
-        );
-        const label = encodeURIComponent("user reported error");
-        window.open(
-            `https://github.com/equinor/webviz/issues/new?title=${title}&body=${body}&labels=${label}`,
-            "_blank",
-        );
     };
 
     return (
@@ -131,18 +99,24 @@ export function CrashView(props: FormattedErrorProps): React.ReactNode {
                     <Button onClick={handleShowDetails} size="small" variant="ghost" tone="neutral">
                         <Info fontSize="inherit" /> Show details
                     </Button>
-                    <Button
-                        onClick={handleReportError}
-                        disabled={symbolicatingStack}
-                        size="small"
-                        variant="ghost"
-                        tone="neutral"
-                    >
-                        <BugReport fontSize="inherit" />{" "}
-                        {symbolicatingStack ? "Symbolicating stack..." : "Report error"}
-                    </Button>
+
+                    <ReportIssueButton
+                        buttonSize="small"
+                        error={props.error}
+                        session={props.workbench.getSessionManager().getActiveSessionOrNull()}
+                        componentStack={props.errorInfo.componentStack}
+                        details={
+                            <>
+                                <Heading as="h6" weight="bolder">
+                                    {props.moduleName} crashed with the following error:
+                                </Heading>
+                                <Code layoutClassName="mt-xs">{props.error.message}</Code>
+                            </>
+                        }
+                    />
                 </div>
             </div>
+
             {showDetails && (
                 <Dialog.Popup onOpenChange={() => setShowDetails(false)} open modal>
                     <Dialog.Header closeIconVisible>

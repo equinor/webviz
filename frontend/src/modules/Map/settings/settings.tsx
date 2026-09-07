@@ -18,7 +18,7 @@ import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import type { FullSurfaceAddress } from "@modules/_shared/Surface";
+import type { AnySurfaceAddress } from "@modules/_shared/Surface";
 import {
     SurfaceAddressBuilder,
     SurfaceDirectory,
@@ -106,12 +106,12 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
-        let surfaceAddress: FullSurfaceAddress | null = null;
+        let surfaceAddress: AnySurfaceAddress | null = null;
         if (computedEnsembleIdent && computedSurfaceName && computedSurfaceAttribute) {
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(computedEnsembleIdent);
             addrBuilder.withName(computedSurfaceName);
-            addrBuilder.withAttribute(computedSurfaceAttribute);
+            addrBuilder.withTagNameAttribute(computedSurfaceAttribute);
             if (computedTimeOrInterval) {
                 addrBuilder.withTimeOrInterval(computedTimeOrInterval);
             }
