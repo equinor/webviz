@@ -55,32 +55,35 @@ function computeStatisticalFluidSelectionTableData(
     }
     const rowIndicesPerGroup = groupKeysInOrder.map((groupKey) => rowIndicesByGroupKey.get(groupKey)!);
 
-    const selectorColumns: RepeatedTableColumnData_api[] = groupSelectorColumns.map((column) => {
-        const rowValues = selectorRowValues.get(column.columnName)!;
-        return encodeSelectorColumn(
-            column.columnName,
-            rowIndicesPerGroup.map((rowIndices) => rowValues[rowIndices[0]]),
-        );
-    });
+    const selectorColumns: RepeatedTableColumnData_api[] = groupSelectorColumns.map(
+        function encodeGroupSelector(column) {
+            const rowValues = selectorRowValues.get(column.columnName)!;
+            return encodeSelectorColumn(
+                column.columnName,
+                rowIndicesPerGroup.map((rowIndices) => rowValues[rowIndices[0]]),
+            );
+        },
+    );
 
-    const resultColumnStatistics: TableColumnStatisticalData_api[] = perRealizationData.resultColumns.map((column) => {
-        const statisticValues: TableColumnStatisticalData_api["statisticValues"] = {};
-        for (const statistic of ALL_STATISTICS) {
-            statisticValues[statistic] = [];
-        }
-
-        for (const rowIndices of rowIndicesPerGroup) {
-            // The backend drops nulls and NaNs before aggregating, so do the same here.
-            const values = rowIndices.map((row) => column.columnValues[row]).filter((value) => Number.isFinite(value));
-            const computedStatistics = computeStatistics(values);
-
+    const resultColumnStatistics: TableColumnStatisticalData_api[] = perRealizationData.resultColumns.map(
+        function computeResultColumnStatistics(column) {
+            const statisticValues: TableColumnStatisticalData_api["statisticValues"] = {};
             for (const statistic of ALL_STATISTICS) {
-                statisticValues[statistic]!.push(computedStatistics[STATISTIC_TO_FIELD[statistic]]);
+                statisticValues[statistic] = [];
             }
-        }
 
-        return { columnName: column.columnName, statisticValues };
-    });
+            for (const rowIndices of rowIndicesPerGroup) {
+                const values = rowIndices.map((row) => column.columnValues[row]);
+                const computedStatistics = computeStatistics(values);
+
+                for (const statistic of ALL_STATISTICS) {
+                    statisticValues[statistic]!.push(computedStatistics[STATISTIC_TO_FIELD[statistic]]);
+                }
+            }
+
+            return { columnName: column.columnName, statisticValues };
+        },
+    );
 
     return {
         fluidSelection: perRealizationData.fluidSelection,
@@ -100,8 +103,8 @@ export function computeStatisticalTableFromPerRealizationTable(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,
 ): InplaceVolumesStatisticalTableDataPerFluidSelection_api {
     return {
-        tableDataPerFluidSelection: perRealizationData.tableDataPerFluidSelection.map((fluidSelectionData) =>
-            computeStatisticalFluidSelectionTableData(fluidSelectionData),
+        tableDataPerFluidSelection: perRealizationData.tableDataPerFluidSelection.map(
+            computeStatisticalFluidSelectionTableData,
         ),
     };
 }

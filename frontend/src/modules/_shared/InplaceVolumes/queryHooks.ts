@@ -281,7 +281,7 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     const eachIndexHasValues = indicesWithValues.every((index) => index.values.length > 0);
     const validGroupByIndices = groupByIndices.length === 0 ? null : groupByIndices;
 
-    const queries = querySpecs.map((spec) => {
+    const queries = querySpecs.map(function makeDeltaSourceQuery(spec) {
         const validRealizations = spec.realizations.length === 0 ? null : [...spec.realizations];
         const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         const options = postGetAggregatedPerRealizationInplaceTableDataOptions({
@@ -297,19 +297,21 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
                 indices_with_values: indicesWithValues,
             },
         });
-        return () => ({
-            ...options,
-            enabled: Boolean(
-                allowEnable &&
-                spec.caseUuid &&
-                spec.ensembleName &&
-                spec.tableName &&
-                validRealizationsEncodedAsUintListStr &&
-                validRealizations?.length &&
-                resultNames.length &&
-                eachIndexHasValues,
-            ),
-        });
+        return function getDeltaSourceQueryOptions() {
+            return {
+                ...options,
+                enabled: Boolean(
+                    allowEnable &&
+                    spec.caseUuid &&
+                    spec.ensembleName &&
+                    spec.tableName &&
+                    validRealizationsEncodedAsUintListStr &&
+                    validRealizations?.length &&
+                    resultNames.length &&
+                    eachIndexHasValues,
+                ),
+            };
+        };
     });
 
     function combine(

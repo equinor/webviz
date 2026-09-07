@@ -10,6 +10,7 @@ import {
     subtractPerRealizationTables,
     subtractPerRealizationTablesMemoized,
 } from "@modules/_shared/InplaceVolumes/deltaTableUtils";
+import { computeStatisticalTableFromPerRealizationTable } from "@modules/_shared/InplaceVolumes/statisticalTableUtils";
 
 function makeRealColumn(realizations: number[]): RepeatedTableColumnData_api {
     const uniqueValues = Array.from(new Set(realizations));
@@ -66,6 +67,72 @@ describe("subtractPerRealizationTables", () => {
         expect(oil.fluidSelection).toBe("Oil");
         expect(oil.resultColumns[0].columnName).toBe("STOIIP");
         expect(oil.resultColumns[0].columnValues).toEqual([10, -10, 20]);
+    });
+
+    test.each([null, NaN, Infinity, -Infinity])(
+        "preserves missing values when either operand is %s",
+        function preservesMissingValues(invalidValue) {
+            const comparison = makePerFluidSelection([
+                makeFluidData(
+                    "Oil",
+                    [makeRealColumn([0, 1, 2])],
+                    [makeResultColumn("PORO", [invalidValue as number, 0.2, invalidValue as number])],
+                ),
+            ]);
+            const reference = makePerFluidSelection([
+                makeFluidData(
+                    "Oil",
+                    [makeRealColumn([0, 1, 2])],
+                    [makeResultColumn("PORO", [0.2, invalidValue as number, invalidValue as number])],
+                ),
+            ]);
+
+            const result = subtractPerRealizationTables(comparison, reference);
+
+            expect(result.data.tableDataPerFluidSelection[0].resultColumns[0].columnValues).toEqual([NaN, NaN, NaN]);
+            expect(result.data.tableDataPerFluidSelection[0].selectorColumns).toEqual([makeRealColumn([0, 1, 2])]);
+            expect(result.unmatchedRows).toEqual([]);
+        },
+    );
+
+    test("keeps zero operands as valid values", function keepsZeroOperands() {
+        const comparison = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0, 1, 2])], [makeResultColumn("STOIIP", [0, 10, 0])]),
+        ]);
+        const reference = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0, 1, 2])], [makeResultColumn("STOIIP", [10, 0, 0])]),
+        ]);
+
+        const result = subtractPerRealizationTables(comparison, reference);
+
+        expect(result.data.tableDataPerFluidSelection[0].resultColumns[0].columnValues).toEqual([-10, 10, 0]);
+    });
+
+    test("excludes API null pairs from delta statistics", function excludesApiNullPairsFromStatistics() {
+        const comparison = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0, 1, 2])], [makeResultColumn("PORO", [NaN, 0.3, NaN])]),
+        ]);
+        const reference = makePerFluidSelection([
+            makeFluidData("Oil", [makeRealColumn([0, 1, 2])], [makeResultColumn("PORO", [0.2, 0.2, NaN])]),
+        ]);
+
+        const result = subtractPerRealizationTables(
+            JSON.parse(JSON.stringify(comparison)),
+            JSON.parse(JSON.stringify(reference)),
+        );
+        const values = result.data.tableDataPerFluidSelection[0].resultColumns[0].columnValues;
+        expect(values[0]).toBeNaN();
+        expect(values[1]).toBeCloseTo(0.1);
+        expect(values[2]).toBeNaN();
+
+        const statistics = computeStatisticalTableFromPerRealizationTable(result.data).tableDataPerFluidSelection[0]
+            .resultColumnStatistics[0].statisticValues;
+        expect(statistics.mean?.[0]).toBeCloseTo(0.1);
+        expect(statistics.min?.[0]).toBeCloseTo(0.1);
+        expect(statistics.max?.[0]).toBeCloseTo(0.1);
+        expect(statistics.p10?.[0]).toBeCloseTo(0.1);
+        expect(statistics.p90?.[0]).toBeCloseTo(0.1);
+        expect(statistics.stddev?.[0]).toBeNaN();
     });
 
     test("performs an inner join on realizations (only common realizations kept)", () => {

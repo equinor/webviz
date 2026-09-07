@@ -65,23 +65,30 @@ function subtractFluidSelectionTableData(
     }
 
     // Rebuild selector columns for the matched rows.
-    const deltaSelectorColumns: RepeatedTableColumnData_api[] = selectorColumnNames.map((name) => {
-        const comparisonRowValues = comparisonSelectorRowValues.get(name)!;
-        const rowValues = matchedRows.map(({ comparisonRow }) => comparisonRowValues[comparisonRow]);
-        return encodeSelectorColumn(name, rowValues);
-    });
+    const deltaSelectorColumns: RepeatedTableColumnData_api[] = selectorColumnNames.map(
+        function encodeMatchedSelector(name) {
+            const comparisonRowValues = comparisonSelectorRowValues.get(name)!;
+            const rowValues = matchedRows.map(({ comparisonRow }) => comparisonRowValues[comparisonRow]);
+            return encodeSelectorColumn(name, rowValues);
+        },
+    );
 
     // Compute delta result columns for the matched rows.
     const comparisonResultColumnByName = new Map<string, TableColumnData_api>();
     for (const column of comparison.resultColumns) {
         comparisonResultColumnByName.set(column.columnName, column);
     }
-    const deltaResultColumns: TableColumnData_api[] = resultColumnNames.map((name) => {
+    const deltaResultColumns: TableColumnData_api[] = resultColumnNames.map(function subtractResultColumn(name) {
         const comparisonValues = comparisonResultColumnByName.get(name)!.columnValues;
         const referenceValues = referenceResultColumnByName.get(name)!.columnValues;
-        const columnValues = matchedRows.map(
-            ({ comparisonRow, referenceRow }) => comparisonValues[comparisonRow] - referenceValues[referenceRow],
-        );
+        const columnValues = matchedRows.map(function subtractMatchedRow({ comparisonRow, referenceRow }) {
+            const comparisonValue = comparisonValues[comparisonRow];
+            const referenceValue = referenceValues[referenceRow];
+
+            return Number.isFinite(comparisonValue) && Number.isFinite(referenceValue)
+                ? comparisonValue - referenceValue
+                : Number.NaN;
+        });
         return { columnName: name, columnValues };
     });
 
