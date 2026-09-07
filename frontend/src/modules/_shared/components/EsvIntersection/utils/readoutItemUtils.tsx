@@ -466,8 +466,13 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
             const traceSpan = fenceProjection[trace1][0] - fenceProjection[trace0][0];
             const traceFrac = traceSpan > 0 ? clamp((x - fenceProjection[trace0][0]) / traceSpan, 0, 1) : 0;
 
-            const valueAt = (traceNum: number, sampleNum: number) =>
-                seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum];
+            const valueAt = (traceNum: number, sampleNum: number) => {
+                const sample = seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum];
+                // The rendered image replaces missing samples (stored as NaN by the backend) with 0
+                // before interpolating (see createSeismicSliceImageDatapointsArrayFromFenceTracesArray);
+                // do the same so a single missing corner doesn't turn the readout into NaN.
+                return Number.isNaN(sample) ? 0 : sample;
+            };
 
             // Bilinear interpolation between the four surrounding samples.
             const top = valueAt(trace0, sample0) + (valueAt(trace1, sample0) - valueAt(trace0, sample0)) * traceFrac;
