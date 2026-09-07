@@ -17,6 +17,8 @@ import { PositionReadout, type PositionCoordinates } from "@modules/_shared/comp
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import { CURVE_FITTING_EPSILON } from "@modules/_shared/Intersection/intersectionPolylineUtils";
+import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 const AXES_LABELS = { xLabel: "Length along", yLabel: "Depth" };
@@ -58,6 +60,26 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.hoverService,
         moduleInstanceId,
     );
+
+    const simplifiedExtendedPath = React.useMemo(() => {
+        if (!props.referenceSystem) return null;
+        if (!props.intersectionSource) return null;
+
+        if (props.intersectionSource.type === IntersectionType.CUSTOM_POLYLINE) {
+            return props.referenceSystem.path ?? null;
+        }
+
+        return calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
+            props.referenceSystem.path,
+            props.intersectionSource.extensionLength,
+            CURVE_FITTING_EPSILON,
+        ).simplifiedWellboreTrajectoryXy;
+    }, [props.referenceSystem, props.intersectionSource]);
+
+    const extensionLength = React.useMemo(() => {
+        if (props.intersectionSource?.type !== IntersectionType.WELLBORE) return 0;
+        return props.intersectionSource.extensionLength;
+    }, [props.intersectionSource]);
 
     // Extract wellbore and polyline id
     const wellboreUuid =
@@ -116,17 +138,64 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             // Extract UTM coordinates from the intersection ref system
-            const utmPos = props.referenceSystem.getPosition(position.x);
-            setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
+            // ! When using a wellbore path with an extension length, we might hover
+            // ! outside of the "actual" intersection bounding box. This means we will
+            // ! need to interpolate a position based on the outgoing vector.
+            // ! ESV does support this, but it seems to not fully match our own extension
+            // ! done in calcExtendedSimplifiedWellboreTrajectoryInXYPlane() when making
+            // ! some layers (like Seismic Fence). Additionally, ESV does not seem to
+            // ! handle strictly vertical trajectories, so we'll use our own logic here
+
+            // Get a MD position along the well track.
+            const lengthAlong = props.referenceSystem.unproject(position.x) ?? position.x;
+
+            // This to if cases only happens if the intersection is an extended well track
+            if (lengthAlong < 0) {
+                const shiftedLengthAlong = lengthAlong + extensionLength;
+
+                // We're in the *one* extension segment at the *start* of the simplified
+                // track, which is always of 'extensionLength' length
+                const segmentStart = simplifiedExtendedPath![0];
+                const segmentEnd = simplifiedExtendedPath![1];
+
+                const ratio = shiftedLengthAlong / extensionLength;
+
+                setMouseCursorUtmCoordinate({
+                    x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
+                    y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
+                    z: position.y,
+                });
+            } else if (lengthAlong > props.referenceSystem.length) {
+                const shiftedLengthAlong = lengthAlong - props.referenceSystem.length;
+
+                // We're in the *one* extension segment at the *end* of the simplified
+                // track, which is always of 'extensionLength' length
+                const segmentStart = simplifiedExtendedPath!.at(-2)!;
+                const segmentEnd = simplifiedExtendedPath!.at(-1)!;
+
+                const ratio = shiftedLengthAlong / extensionLength;
+
+                setMouseCursorUtmCoordinate({
+                    x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
+                    y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
+                    z: position.y,
+                });
+            } else {
+                const utmPos = props.referenceSystem.getPosition(lengthAlong);
+
+                setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
+            }
         },
         [
-            polylineId,
-            props.bounds,
-            props.verticalScale,
             props.viewport,
+            props.verticalScale,
+            props.bounds.y,
+            props.bounds.x,
             props.referenceSystem,
+            polylineId,
+            extensionLength,
+            simplifiedExtendedPath,
             setPolylineHoverData,
-            setMouseCursorUtmCoordinate,
         ],
     );
 
