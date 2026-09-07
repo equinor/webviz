@@ -5,7 +5,7 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import { IntersectionType } from "@framework/types/intersection";
+import { isWellboreIntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
 import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
@@ -62,7 +62,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     // Extract wellbore and fence id
     const wellboreUuid =
-        props.intersectionSource?.type === IntersectionType.WELLBORE ? props.intersectionSource.uuid : null;
+        props.intersectionSource && isWellboreIntersectionType(props.intersectionSource.type)
+            ? props.intersectionSource.uuid
+            : null;
 
     const fenceSourceId = props.intersectionSource ? makeFenceSourceId(props.intersectionSource) : null;
 

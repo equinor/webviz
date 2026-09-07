@@ -13,6 +13,7 @@ import { TimeAgo } from "@lib/components/TimeAgo/timeAgo";
 import { Tooltip } from "@lib/components/Tooltip";
 import { Typography } from "@lib/components/Typography";
 import { Heading } from "@lib/components/Typography/compositions";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 Icon.add({ folder_open });
 
@@ -24,6 +25,7 @@ export type RecentListProps<TItemType, TQueryData = unknown> = {
     renderItem: (item: TItemType) => React.ReactNode;
     makeItemKey: (item: TItemType) => string;
     onDialogIconClick?: () => void;
+    className?: string;
 };
 
 export function RecentList<TItemType, TQueryData = unknown>(
@@ -90,7 +92,7 @@ export function RecentList<TItemType, TQueryData = unknown>(
     }
 
     return (
-        <section className="gap-xs flex w-96 min-w-64 flex-col">
+        <section className={resolveClassNames("gap-xs flex min-w-64 flex-col", props.className)}>
             <div className="gap-xs flex items-center">
                 <Heading as="h4" layoutClassName="grow">
                     {props.title}
