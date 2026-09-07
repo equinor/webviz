@@ -68,9 +68,9 @@ class AuthHelper:
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
         all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["sumo"])
-        all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["smda"])
-        all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["ssdl"])
-        #all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["pdm"])
+        # all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["smda"])
+        # all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["ssdl"])
+        all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["pdm"])
 
         if "CODESPACE_NAME" in os.environ:
             # Developer is using GitHub codespace, so we use the GitHub codespace port forward URL
