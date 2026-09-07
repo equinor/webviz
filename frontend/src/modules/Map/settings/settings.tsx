@@ -53,7 +53,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const [useObserved, toggleUseObserved] = React.useState(false);
     const setSurfaceAddress = useSetAtom(surfaceAddressAtom);
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.settingsContext,
     });
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");

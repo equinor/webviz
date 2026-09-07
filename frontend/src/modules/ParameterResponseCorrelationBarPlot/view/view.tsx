@@ -45,7 +45,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     const [prevParameterIdentString, setPrevParameterIdentString] = React.useState<string | null>(null);
 
     useSyncSetting({
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         moduleContext: props.viewContext,
         syncSettingKey: SyncSettingKey.PARAMETER,
         topic: "global.syncValue.parameter",

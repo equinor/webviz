@@ -5,8 +5,8 @@ import { cloneDeep, isEqual } from "lodash-es";
 
 import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Viewport } from "@framework/types/viewport";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { Bounds } from "@modules/_shared/components/EsvIntersection";
 import { isValidNumber, isValidViewport } from "@modules/_shared/components/EsvIntersection/utils/validationUtils";
 import type { Interfaces } from "@modules/Intersection/interfaces";
@@ -32,7 +32,7 @@ export type UseViewportStateProps = {
     /** Whether the viewport should automatically update as the focus bounds change */
     autofit: boolean;
 
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     viewContext: ViewContext<Interfaces>;
 };
 
@@ -55,7 +55,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
         layerItemsBounds,
         focusBounds,
         containerSize,
-        workbenchServices,
+        syncSettingsService,
         viewContext,
         autofit,
     } = props;
@@ -83,7 +83,7 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
 
     // --- Sync settings ---
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices,
+        syncSettingsService,
         moduleContext: viewContext,
     });
 
@@ -151,13 +151,13 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
             if (isLinked) {
                 onLinkedVerticalScaleChange();
             }
-            workbenchServices.publishGlobalData(
+            syncSettingsService.publishValue(
                 "global.syncValue.verticalScale",
                 newScale,
                 viewContext.getInstanceIdString(),
             );
         },
-        [isLinked, viewId, onLinkedVerticalScaleChange, setViewStateMap, viewContext, workbenchServices],
+        [isLinked, viewId, onLinkedVerticalScaleChange, setViewStateMap, viewContext, syncSettingsService],
     );
 
     const handleFitInView = React.useCallback(
@@ -259,13 +259,13 @@ export function useViewportState(props: UseViewportStateProps): ViewportState {
                 return;
             }
             lastPublishedViewportRef.current = cloneDeep(viewport);
-            workbenchServices.publishGlobalData(
+            syncSettingsService.publishValue(
                 "global.syncValue.cameraPositionIntersection",
                 viewport,
                 viewContext.getInstanceIdString(),
             );
         },
-        [viewport, isLinked, linkedViewportSourceViewId, viewId, workbenchServices, viewContext],
+        [viewport, isLinked, linkedViewportSourceViewId, viewId, syncSettingsService, viewContext],
     );
 
     // --- Refocus logic ---

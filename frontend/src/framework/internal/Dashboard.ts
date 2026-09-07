@@ -1,6 +1,8 @@
 import { nanoid } from "nanoid";
 import { v4 } from "uuid";
 
+import { HoverService } from "@framework/HoverService";
+import { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -56,6 +58,12 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _atomStoreMaster: AtomStoreMaster;
     private _cachedState: SerializedDashboardState | null = null;
 
+    // Per-dashboard framework services. Owned here so their state (synced setting values,
+    // current hover data) never leaks between dashboards, even while several dashboards are
+    // kept mounted at once by the dashboard hot-cache.
+    private _syncSettingsService = new SyncSettingsService();
+    private _hoverService = new HoverService();
+
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = nanoid(DASHBOARD_ID_LENGTH);
         this._metadata = { name: name ?? "Dashboard" };
@@ -93,6 +101,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     getId(): string {
         return this._id;
+    }
+
+    getSyncSettingsService(): SyncSettingsService {
+        return this._syncSettingsService;
+    }
+
+    getHoverService(): HoverService {
+        return this._hoverService;
     }
 
     getMetadata(): DashboardMetadata {
