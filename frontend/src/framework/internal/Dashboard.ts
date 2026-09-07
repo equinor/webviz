@@ -1,3 +1,4 @@
+import { cloneDeep } from "lodash-es";
 import { nanoid } from "nanoid";
 import { v4 } from "uuid";
 
@@ -268,13 +269,17 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.SERIALIZED_STATE);
     }
 
+    static makeModuleInstanceId(): string {
+        return v4();
+    }
+
     private makeAndRegisterModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        const id = predefinedId ?? v4();
+        const id = predefinedId ?? Dashboard.makeModuleInstanceId();
 
         const atomStore = this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
 
@@ -469,9 +474,38 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     static clone(source: Dashboard, atomStoreMaster: AtomStoreMaster, name?: string): Dashboard {
         const adjustedName = name ?? `${source.getMetadata().name} (Copy)`;
         const clonedDashboard = new Dashboard(atomStoreMaster, adjustedName);
-        const serializedState = source.serializeState();
+        const serializedState = cloneDeep(source.serializeState());
+
+        const moduleInstanceIdMap: Record<string, string> = {};
+
+        // The serialized state needs to be adjusted to change module instance IDs and other unique identifiers to avoid conflicts with the original dashboard.
         serializedState.id = clonedDashboard.getId(); // Ensure the cloned dashboard has a unique ID
         serializedState.name = adjustedName;
+
+        for (const serializedInstance of serializedState.moduleInstances) {
+            const { id } = serializedInstance.moduleInstanceState;
+
+            const newId = Dashboard.makeModuleInstanceId();
+
+            // Update the module instance ID and possibly update the active module instance ID if it matches the old ID.
+            serializedInstance.moduleInstanceState.id = newId;
+            moduleInstanceIdMap[id] = newId;
+            if (serializedState.activeModuleInstanceId === id) {
+                serializedState.activeModuleInstanceId = newId;
+            }
+        }
+
+        // Update ids in the data channel manager state to reflect the new module instance IDs.
+        for (const serializedInstance of serializedState.moduleInstances) {
+            const { dataChannelManagerState } = serializedInstance.moduleInstanceState;
+            for (const subscription of dataChannelManagerState.subscriptions) {
+                const listensToId = subscription.listensToModuleInstanceId;
+                if (moduleInstanceIdMap[listensToId]) {
+                    subscription.listensToModuleInstanceId = moduleInstanceIdMap[listensToId];
+                }
+            }
+        }
+
         clonedDashboard.deserializeState(serializedState);
         return clonedDashboard;
     }
