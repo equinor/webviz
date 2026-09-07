@@ -67,6 +67,10 @@ class AuthHelper:
         request.session.clear()
 
         all_scopes_list = config.GRAPH_SCOPES.copy()
+        all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["sumo"])
+        all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["smda"])
+        all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["ssdl"])
+        #all_scopes_list.extend(config.RESOURCE_SCOPES_DICT["pdm"])
 
         if "CODESPACE_NAME" in os.environ:
             # Developer is using GitHub codespace, so we use the GitHub codespace port forward URL
@@ -199,7 +203,13 @@ def _acquire_access_token_for_resource_scopes(
     if not scopes_list:
         return None
 
-    token_dict = cca.acquire_token_silent(scopes=scopes_list, account=account)
+    token_dict = cca.acquire_token_silent_with_error(scopes=scopes_list, account=account)
+    if "error" in token_dict:
+        LOGGER.error(f"Error acquiring token silently ({resource_name=}, {scopes_list=}), error: {token_dict['error']}, error_description: {token_dict.get('error_description')}")
+        return None
+
+    #token_dict = cca.acquire_token_silent(scopes=scopes_list, account=account)
+
     access_token = token_dict.get("access_token") if token_dict else None
     if not access_token:
         return None
