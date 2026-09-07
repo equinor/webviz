@@ -8,7 +8,7 @@ import type {
     Perforation,
     SchematicData,
 } from "@equinor/esv-intersection";
-import { clamp } from "lodash-es";
+import { clamp, sortedIndexBy } from "lodash-es";
 
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
 
@@ -434,30 +434,37 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
     if (isSeismicLayer(layer)) {
         const seismicData = layer.getData();
         const seismicInfo = layer.getSeismicInfo();
-        if (seismicData && seismicInfo) {
+        const fenceProjection = seismicData?.trajectoryFenceProjection ?? [];
+        if (seismicData && seismicInfo && fenceProjection.length >= 2) {
             const x = readoutItem.point[0];
             const y = readoutItem.point[1];
 
-            const height = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
-            const width = Math.abs(seismicInfo.maxX - seismicInfo.minX);
-            const rowHeight = height / seismicData.numSamplesPerTrace;
-            const columnWidth = width / seismicData.numTraces;
+            const fenceDepthSpan = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
+            const rowHeight = fenceDepthSpan / seismicData.numSamplesPerTrace;
 
-            const sampleGridPos = (y - seismicData.minFenceDepth) / rowHeight;
-            const traceGridPos = (x - seismicInfo.minX) / columnWidth;
-
-            // Position within the sample/trace grid, offset by half a cell so that integer
-            // positions line up with sample/trace centers.
-            const samplePos = clamp(sampleGridPos - 0.5, 0, seismicData.numSamplesPerTrace - 1);
-            const tracePos = clamp(traceGridPos - 0.5, 0, seismicData.numTraces - 1);
-
+            // Samples are evenly spaced between min and max fence depth, so the fractional sample
+            // index is a plain linear mapping.
+            const samplePos = clamp(
+                (y - seismicData.minFenceDepth) / rowHeight,
+                0,
+                seismicData.numSamplesPerTrace - 1,
+            );
             const sample0 = Math.floor(samplePos);
-            const trace0 = Math.floor(tracePos);
             const sample1 = Math.min(sample0 + 1, seismicData.numSamplesPerTrace - 1);
-            const trace1 = Math.min(trace0 + 1, seismicData.numTraces - 1);
-
             const sampleFrac = samplePos - sample0;
-            const traceFrac = tracePos - trace0;
+
+            // Traces sit at the vertices of the fence-polyline projection, which are not evenly
+            // spaced (per-section resampling leaves a shorter remainder at each original vertex).
+            // Mirror SeismicLayer's rendering: find the projection segment containing x and take the
+            // fraction from that segment's end points instead of assuming a uniform trace width.
+            const trace1 = clamp(
+                sortedIndexBy(fenceProjection, [x], (point) => point[0]),
+                1,
+                fenceProjection.length - 1,
+            );
+            const trace0 = trace1 - 1;
+            const traceSpan = fenceProjection[trace1][0] - fenceProjection[trace0][0];
+            const traceFrac = traceSpan > 0 ? clamp((x - fenceProjection[trace0][0]) / traceSpan, 0, 1) : 0;
 
             const valueAt = (traceNum: number, sampleNum: number) =>
                 seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum];
