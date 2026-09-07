@@ -16,13 +16,14 @@ export type PolylineFenceSource = FenceSource & {
 };
 
 export type WellboreFenceSource = FenceSource & {
-    type: IntersectionType.WELLBORE;
+    type: IntersectionType.WELLBORE | IntersectionType.PLANNED_WELLBORE;
     extensionLength: number;
 };
 
 export function makeFenceSourceId(sourceSetting: PolylineFenceSource | WellboreFenceSource): string {
     switch (sourceSetting.type) {
         case IntersectionType.WELLBORE:
+        case IntersectionType.PLANNED_WELLBORE:
             return makeFenceSourceIdForWellbore(sourceSetting.uuid, sourceSetting.extensionLength);
         case IntersectionType.CUSTOM_POLYLINE:
             return makeFenceSourceIdForPolyLine(sourceSetting.uuid);
