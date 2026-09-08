@@ -5,8 +5,11 @@ from webviz_core_utils.radix_utils import is_running_on_radix_platform
 
 TENANT_ID = "3aa4a235-b6e2-48d5-9195-7fcf05b459b0"
 
-# The default value for CLIENT_ID is for the webviz-local application registration
+# The default value for the CLIENT_ID here is for the webviz-local application registration.
+# We now use workload identity for all Radix deployments of our primary backend component,
+# and in that case Radix will populate the AZURE_CLIENT_ID environment variable for us.
 CLIENT_ID = os.getenv("AZURE_CLIENT_ID", "6e4f6e15-5b73-40e7-835e-f563fabd604a")
+
 CLIENT_SECRET = os.environ["WEBVIZ_CLIENT_SECRET"]
 
 PSEUDONYM_HMAC_KEY = os.getenv("WEBVIZ_PSEUDONYM_HMAC_KEY")
