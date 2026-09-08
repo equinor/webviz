@@ -14,7 +14,7 @@ in vec3 cameraPosition;
 in vec3 normals_commonspace;
 in vec4 position_commonspace;
 in vec4 vColor;
-flat in vec3 vPickingColor;
+in vec3 vPickingColor;
 
 out vec4 fragColor;
 

@@ -20,14 +20,7 @@ import { sampleSeismicGrid } from "@modules/_shared/Intersection/seismicGridSamp
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
-import {
-    decodeRgbToNodeIndex,
-    encodeNodeIndexToRgb,
-    fenceNumTraces,
-    getFenceGridCoordFromPoint,
-    nodeIndexToGridCoord,
-} from "./_private/fenceSampling";
-import { SeismicFenceGridLayer } from "./_private/SeismicFenceGridLayer";
+import { encodeNodeIndexToRgb, fenceNumTraces, getFenceGridCoordFromPoint } from "./_private/fenceSampling";
 // eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebWorkerParameters, type WebworkerResult } from "./_private/webworker/types";
@@ -52,8 +45,6 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
     loadingGeometry?: LoadingGeometry;
-    /** Trace/sample index the nearest-sample lattice spotlight is centred on, or null. */
-    highlightNode?: { traceIndex: number; sampleIndex: number } | null;
 
     // Non public properties:
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
@@ -326,11 +317,11 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                 ? [info.coordinate[0], info.coordinate[1], info.coordinate[2] / zScale]
                 : null;
 
-        // Resolve the pick back to continuous grid coordinates from the world position (exact), or
-        // fall back to the node index carried by the picking colour when there is no coordinate.
+        // Resolve the pick back to continuous grid coordinates from the world position. `pickable:
+        // "3d"` on the mesh means every pick (hover included) carries a real 3D coordinate.
         const gridCoord = meshSpacePoint
             ? getFenceGridCoordFromPoint(data, zIncreaseDownwards ?? false, meshSpacePoint)
-            : nodeIndexToGridCoord(decodeRgbToNodeIndex(info.color[0], info.color[1], info.color[2]), data.numSamples);
+            : null;
 
         if (gridCoord) {
             const sample = sampleSeismicGrid(
@@ -357,7 +348,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
-        const { isLoading, zIncreaseDownwards, loadingGeometry, opacity, highlightNode } = this.props;
+        const { isLoading, zIncreaseDownwards, loadingGeometry, opacity } = this.props;
         const { geometry, meshCreated, colorsArrayCreated } = this.state;
 
         const layers: Layer<any>[] = [];
@@ -384,20 +375,14 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         getPosition: [0, 0, 0],
                         getColor: [255, 255, 255, 255],
                         material: { ambient: 0.6, diffuse: 0.4, shininess: 8, specularColor: [0, 0, 0] },
-                        pickable: true,
+                        // "3d" makes deck's hover pick unproject against the mesh depth, so the
+                        // nearest-sample highlight gets a real 3D point every mouse move.
+                        pickable: "3d",
                         _instanced: false,
                         opacity,
                         parameters: {
                             blend: true,
                         },
-                    }),
-                ),
-                new SeismicFenceGridLayer(
-                    super.getSubLayerProps({
-                        id: "sample-grid",
-                        data: this.props.data,
-                        zIncreaseDownwards,
-                        highlightNode: highlightNode ?? null,
                     }),
                 ),
             );

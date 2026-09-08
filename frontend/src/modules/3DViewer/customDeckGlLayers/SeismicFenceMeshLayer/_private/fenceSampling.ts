@@ -22,6 +22,17 @@ export function fenceNumTraces(fence: SeismicFence): number {
     return fence.traceXYZPointsArray.length / 3;
 }
 
+/** Rough diagonal size of the fence in world units (trace span x sample span). */
+export function fenceExtent(fence: SeismicFence): number {
+    const numTraces = fenceNumTraces(fence);
+    if (numTraces < 1) {
+        return 0;
+    }
+    const traceSpan = vec3.distance(basePoint(fence, 0), basePoint(fence, numTraces - 1));
+    const sampleSpan = vec3.length(vec3.fromArray(fence.vVector));
+    return Math.hypot(traceSpan, sampleSpan);
+}
+
 /**
  * The seismic fence mesh is the ruled surface `P(s, f) = B(s) + f * vVector`, where `B` is the
  * (piecewise-linear) trace base polyline, `s` runs over the traces and `f` runs over `[0, 1]` in
@@ -97,14 +108,6 @@ export function getFenceGridCoordFromPoint(
     return best;
 }
 
-/** Grid coordinates of an integer node index (`trace * numSamples + sample`); null for an empty pick. */
-export function nodeIndexToGridCoord(nodeIndex: number, numSamples: number): FenceGridCoord | null {
-    if (nodeIndex < 0 || numSamples < 1) {
-        return null;
-    }
-    return { traceCoord: Math.floor(nodeIndex / numSamples), sampleCoord: nodeIndex % numSamples };
-}
-
 /** World-space position (mesh space, Z sign applied) of a single fence grid node. */
 export function getFencePointFromGridNode(
     fence: SeismicFence,
@@ -118,20 +121,14 @@ export function getFencePointFromGridNode(
     return [point.x, point.y, point.z * zSign];
 }
 
-// --- Node index <-> picking colour -------------------------------------------------------------
-
 /**
- * The seismic mesh writes one of these per vertex as its picking colour (see `makeColorsArray` and
- * the `flat` varying in the mesh shaders). `+1` keeps index 0 distinct from an empty pick.
+ * Per-vertex picking colour for the seismic mesh: the vertex's grid-node index (`+1` so it is never
+ * pure black). Only needs to be non-black so deck registers a pick — the readout and the highlight
+ * both work from `info.coordinate`, not this colour.
  */
 export function encodeNodeIndexToRgb(nodeIndex: number): [number, number, number] {
     const v = (nodeIndex + 1) & 0xffffff;
     return [v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff];
-}
-
-/** Inverse of {@link encodeNodeIndexToRgb}; returns -1 for an empty pick. */
-export function decodeRgbToNodeIndex(r: number, g: number, b: number): number {
-    return ((r + (g << 8) + (b << 16)) & 0xffffff) - 1;
 }
 
 // --- Lattice spotlight window ------------------------------------------------------------------

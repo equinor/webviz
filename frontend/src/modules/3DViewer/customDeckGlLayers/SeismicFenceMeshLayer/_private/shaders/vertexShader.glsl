@@ -27,9 +27,7 @@ out vec3 cameraPosition;
 out vec3 normals_commonspace;
 out vec4 position_commonspace;
 out vec4 vColor;
-// flat: the picking colour encodes this vertex's grid-node index, and must be read back as an exact
-// integer, not interpolated across the triangle.
-flat out vec3 vPickingColor;
+out vec3 vPickingColor;
 
 void main(void) {
   geometry.worldPosition = instancePositions;
