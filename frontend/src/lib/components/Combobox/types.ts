@@ -14,6 +14,8 @@ export type ComboboxItem<TValue> = {
     value: TValue;
     /** The display text shown in the list. */
     label: string;
+    /** Descriptive text shown below the label in the dropdown list. */
+    description?: string;
     /** When true, prevents the item from being selected. */
     disabled?: boolean;
 };

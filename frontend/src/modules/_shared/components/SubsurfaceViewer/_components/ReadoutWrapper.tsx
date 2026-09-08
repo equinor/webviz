@@ -456,6 +456,16 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const handleMainDivLeave = React.useCallback(() => setHideReadout(true), []);
     const handleMainDivEnter = React.useCallback(() => setHideReadout(false), []);
 
+    const handleDeckGlInstanceChange = React.useCallback(
+        function handleDeckGlInstanceChange(deckGlInstance: DeckGLRef | null) {
+            // A GPU-context-loss remount replaces the DeckGL instance. The manager is owned further
+            // up (InteractionWrapper) and captured the previous one, so re-point it at the fresh
+            // instance (setRef repaints so its plugins stop addressing the destroyed Deck).
+            props.deckGlManager.setRef(deckGlInstance);
+        },
+        [props.deckGlManager],
+    );
+
     const handleKeyDown = React.useCallback(
         function handleKeydown(event: React.KeyboardEvent<HTMLDivElement>) {
             if (event.key === Key.Escape) {
@@ -482,6 +492,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 views={storedDeckGlViews}
                 getCameraPosition={ctx.onViewStateChange}
                 initialCameraPosition={ctx.viewState}
+                onDeckGlInstanceChange={handleDeckGlInstanceChange}
                 onRenderingProgress={() => {}} // No-op; only here to suppress the render progress indicator
             >
                 {props.views.viewports.map((viewport) => (

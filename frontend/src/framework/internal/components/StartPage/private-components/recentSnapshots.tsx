@@ -15,6 +15,7 @@ import { RecentList } from "./recentList";
 
 export type RecentSnapshotsProps = {
     workbench: Workbench;
+    className?: string;
 };
 
 export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
@@ -39,6 +40,7 @@ export function RecentSnapshots(props: RecentSnapshotsProps): React.ReactNode {
 
     return (
         <RecentList
+            className={props.className}
             title="Recent snapshots"
             useQueryOptions={{
                 ...getSnapshotAccessLogsOptions({

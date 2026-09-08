@@ -2,6 +2,9 @@ import type { WellsLayerProps } from "@webviz/subsurface-viewer/dist/layers";
 import { LabelOrientation } from "@webviz/subsurface-viewer/dist/layers/wells/layers/wellLabelLayer";
 import type { Feature } from "geojson";
 
+export const PLANNED_WELL_COLOR: [number, number, number] = [150, 60, 210];
+export const PLANNED_WELL_COLOR_CSS = `rgb(${PLANNED_WELL_COLOR.join(", ")})`;
+
 function getLineStyleWidth(d: Feature): number {
     if (d.properties && "lineWidth" in d.properties) {
         return d.properties.lineWidth as number;
@@ -26,7 +29,7 @@ function getColor(d: Feature): [number, number, number, number] {
 export const DEFAULT_WELLS_LAYER_PROPS: Omit<Partial<WellsLayerProps>, "data" | "id"> = {
     refine: false,
     pickable: true,
-    outline: true,
+    outline: false,
     ZIncreasingDownwards: true,
 
     lineStyle: { width: getLineStyleWidth, color: getColor },

@@ -2,7 +2,7 @@ import { strToU8, zip } from "fflate";
 
 type StringFile = { filename: string; content: string };
 type BinaryFile = { filename: string; content: Uint8Array };
-type DownloadFile = StringFile | BinaryFile;
+export type DownloadFile = StringFile | BinaryFile;
 
 /**
  * Trigger a browser file download from a Blob.

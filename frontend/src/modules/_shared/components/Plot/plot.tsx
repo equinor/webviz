@@ -4,6 +4,9 @@ import { cloneDeep, isEqual, merge } from "lodash-es";
 import type { PlotParams } from "react-plotly.js";
 import BasePlot from "react-plotly.js";
 
+import { GpuResourceBoundary } from "@framework/components/GpuResourceBoundary";
+import { createManualContextLossAdapter } from "@framework/components/GpuResourceBoundary/adapters/manualContextLossAdapter";
+
 export type PlotProps = {
     /**
      * Informs if data/layout changes are ready to be applied
@@ -18,7 +21,7 @@ export type PlotProps = {
     layout?: Partial<Plotly.Layout>;
     data?: Partial<Plotly.Data>[];
     config?: Partial<Plotly.Config>;
-} & Omit<PlotParams, "data" | "layout" | "config">;
+} & Omit<PlotParams, "data" | "layout" | "config" | "onWebGlContextLost">;
 
 const DOWNLOAD_ICON: Plotly.Icon = {
     width: 24,
@@ -88,6 +91,14 @@ export function Plot(props: PlotProps): React.ReactNode {
     const onDownloadClickRef = React.useRef(onDownloadClick);
     onDownloadClickRef.current = onDownloadClick;
 
+    // Plotly's regl-backed WebGL traces (scattergl, heatmapgl, etc.) do not reliably rebuild their
+    // GPU resources after a context loss, and Plotly only exposes a "context lost" signal
+    // (onWebGlContextLost) with no restored counterpart - so we feed that single signal into a
+    // manual adapter and let GpuResourceBoundary's "remount" strategy (a fresh Plotly.newPlot)
+    // clear the lost state.
+    const adapter = React.useMemo(() => createManualContextLossAdapter(), []);
+    const handleWebGlContextLost = React.useCallback(() => adapter.notifyContextLost(), [adapter]);
+
     if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
         setStableLayout(cloneDeep(layout));
@@ -107,7 +118,7 @@ export function Plot(props: PlotProps): React.ReactNode {
         setStableOtherProps(otherProps);
     }
 
-    return React.useMemo(() => {
+    const plotElement = React.useMemo(() => {
         const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
 
         const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
@@ -122,7 +133,19 @@ export function Plot(props: PlotProps): React.ReactNode {
         const configWithDefaults = { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
 
         return (
-            <BasePlot data={stableData} layout={layoutWithDefaults} config={configWithDefaults} {...stableOtherProps} />
+            <BasePlot
+                {...stableOtherProps}
+                data={stableData}
+                layout={layoutWithDefaults}
+                config={configWithDefaults}
+                onWebGlContextLost={handleWebGlContextLost}
+            />
         );
-    }, [stableConfig, stableData, stableLayout, stableOtherProps]);
+    }, [stableConfig, stableData, stableLayout, stableOtherProps, handleWebGlContextLost]);
+
+    return (
+        <GpuResourceBoundary adapter={adapter} recoveryStrategy="remount">
+            {plotElement}
+        </GpuResourceBoundary>
+    );
 }

@@ -22,13 +22,20 @@ type ValueConstraintsType = string[];
 export class DropdownStringSetting implements CustomSettingImplementation<ValueType, ValueType, ValueConstraintsType> {
     private _staticOptions: ComboboxItem<ValueType>[] | null = null;
     private _showBrowseButtons: boolean = false;
+    private _valueLabel: (value: string) => string;
     valueConstraintsIntersectionReducerDefinition = makeValueConstraintsIntersectionReducerDefinition<string[]>();
 
     mapInternalToExternalValue(internalValue: ValueType): ValueType {
         return internalValue;
     }
 
-    constructor(props?: { options?: ValueType[] | ComboboxItem<ValueType>[]; showBrowseButtons?: boolean }) {
+    constructor(props?: {
+        options?: ValueType[] | ComboboxItem<ValueType>[];
+        showBrowseButtons?: boolean;
+        valueLabel?: (value: string) => string;
+    }) {
+        this._valueLabel = props?.valueLabel ?? ((value) => value);
+
         if (props?.showBrowseButtons) {
             this._showBrowseButtons = true;
         }
@@ -69,6 +76,7 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
     makeComponent(): (props: SettingComponentProps<ValueType, ValueConstraintsType>) => React.ReactNode {
         const isStatic = this.getIsStatic();
         const staticOptions = this._staticOptions;
+        const valueLabel = this._valueLabel;
 
         let Component: typeof Combobox | typeof ComboboxCompositions.WithBrowseButtons =
             ComboboxCompositions.WithBrowseButtons;
@@ -84,7 +92,7 @@ export class DropdownStringSetting implements CustomSettingImplementation<ValueT
             } else if (!isStatic && props.valueConstraints) {
                 options = props.valueConstraints.map((value) => ({
                     value: value,
-                    label: value === null ? "None" : value,
+                    label: value === null ? "None" : valueLabel(value),
                 }));
             } else {
                 options = [];

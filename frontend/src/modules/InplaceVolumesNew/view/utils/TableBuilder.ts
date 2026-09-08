@@ -1,4 +1,4 @@
-import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 
 import type { GroupedTableData } from "./GroupedTableData";
 import { computeStatistics } from "./statistics";
@@ -45,13 +45,13 @@ export function buildStatisticsTableData(groupedData: GroupedTableData, resultNa
             subplotValue: entry.subplotLabel,
             colorByValue: entry.colorLabel,
             colorByKey: entry.colorKey,
-            mean: formatNumber(stats.mean, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
-            stdDev: formatNumber(stats.stdDev, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
-            min: formatNumber(stats.min, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
-            max: formatNumber(stats.max, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
-            p10: formatNumber(stats.p10, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
-            p50: formatNumber(stats.p50, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
-            p90: formatNumber(stats.p90, { maxNumDecimalPlaces: 2, unitSystem: "si" }),
+            mean: formatInplaceVolumesValue(stats.mean),
+            stdDev: formatInplaceVolumesValue(stats.stdDev),
+            min: formatInplaceVolumesValue(stats.min),
+            max: formatInplaceVolumesValue(stats.max),
+            p10: formatInplaceVolumesValue(stats.p10),
+            p50: formatInplaceVolumesValue(stats.p50),
+            p90: formatInplaceVolumesValue(stats.p90),
         });
     }
 

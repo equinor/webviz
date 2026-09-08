@@ -21,7 +21,7 @@ function findWellboreTrajectory(uuid: string | null | undefined, trajectories: W
     return trajectories.find(({ wellboreUuid }) => wellboreUuid === uuid);
 }
 
-export function makeDrilledWellTrajectoriesHoverVisualizationFunctions(
+export function makeWellTrajectoriesHoverVisualizationFunctions(
     args: TransformerArgs<any, WellboreTrajectory_api[], any>,
 ): HoverVisualizationFunctions<VisualizationTarget.DECK_GL> {
     const { id, getData } = args;

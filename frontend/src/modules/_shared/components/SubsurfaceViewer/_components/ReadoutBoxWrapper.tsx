@@ -6,6 +6,7 @@ import type { PickingInfoPerView } from "@webviz/subsurface-viewer/dist/hooks/us
 
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import { getPolylinesLayerReadout, PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import {
     getReadoutFromSubsurfacePick,
     type LayerPickInfoWithReadout,
@@ -42,6 +43,9 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             if (pick.layer instanceof AdjustedWellsLayer) {
                 const infoWithReadout = pick as LayerPickInfoWithReadout<WellFeature>;
                 if (infoWithReadout.readout) readouts.push(infoWithReadout.readout);
+            } else if (pick.layer instanceof PolylinesLayer) {
+                const polylineReadout = getPolylinesLayerReadout(pick);
+                if (polylineReadout) readouts.push(polylineReadout);
             } else {
                 const extractedReadout = getReadoutFromSubsurfacePick(pick);
                 if (extractedReadout) readouts.push(extractedReadout);
