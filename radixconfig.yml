@@ -218,7 +218,7 @@ spec:
           - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              - { name: webviz-redis-auth-store-password, envVar: REDIS_REQUIREPASS }
+              - { name: webviz-redis-cache-password, envVar: REDIS_REQUIREPASS }
       runAsUser: 999
       # https://redis.io/docs/latest/operate/oss_and_stack/management/config/#configuring-redis-as-a-cache
       # maxmemory for redis must be aligned with component's requested memory, here 3gb vs 4gb
