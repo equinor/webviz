@@ -74,6 +74,16 @@ export class HighlightOverlay {
 
                 svgLayer.appendChild(cross);
             }
+            if (item.shape === HighlightItemShape.CIRCLE) {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", xScale(item.center[0]).toString());
+                circle.setAttribute("cy", yScale(item.center[1]).toString());
+                circle.setAttribute("r", item.radius.toString());
+                circle.setAttribute("fill", "none");
+                circle.setAttribute("stroke", item.color);
+                circle.setAttribute("stroke-width", "2");
+                svgLayer.appendChild(circle);
+            }
             if (item.shape === HighlightItemShape.POINT) {
                 const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                 circle.setAttribute("cx", xScale(item.point[0]).toString());

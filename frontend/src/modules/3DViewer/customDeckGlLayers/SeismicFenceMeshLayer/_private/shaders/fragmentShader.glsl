@@ -14,7 +14,7 @@ in vec3 cameraPosition;
 in vec3 normals_commonspace;
 in vec4 position_commonspace;
 in vec4 vColor;
-in vec3 vPickingColor;
+flat in vec3 vPickingColor;
 
 out vec4 fragColor;
 
@@ -26,16 +26,10 @@ void main(void) {
     return;
   }
 
-  vec3 normal;
-  if(simpleMesh.flatShading) {
-    normal = normalize(cross(dFdx(position_commonspace.xyz), dFdy(position_commonspace.xyz)));
-  } else {
-    normal = normals_commonspace;
-  }
-
   vec4 color = simpleMesh.hasTexture ? texture(sampler, vTexCoord) : vColor;
   DECKGL_FILTER_COLOR(color, geometry);
 
-  vec3 lightColor = lighting_getLightColor(color.rgb, cameraPosition, position_commonspace.xyz, normal);
-  fragColor = vec4(lightColor, color.a * layer.opacity);
+  // Seismic slices are unlit: the colour is the data, and directional lighting would wash out the
+  // amplitudes (worst on the near-horizontal depth slice) and make faces look different per side.
+  fragColor = vec4(color.rgb, color.a * layer.opacity);
 }

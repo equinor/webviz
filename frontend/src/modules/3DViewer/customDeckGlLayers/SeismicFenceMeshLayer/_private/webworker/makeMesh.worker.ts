@@ -50,13 +50,16 @@ function makeMesh(parameters: WebWorkerParameters) {
                 const i10 = (u - 1) * rowStride + v;
                 const i11 = u * rowStride + v;
 
+                // Both triangles of the cell are ordered so their provoking (last) vertex is i10.
+                // The mesh's picking colour is a `flat` per-vertex grid-node index, so this makes a
+                // whole cell report one consistent node instead of flipping across the diagonal.
                 indicesArray[indexIndex++] = i00;
                 indicesArray[indexIndex++] = i01;
                 indicesArray[indexIndex++] = i10;
 
-                indicesArray[indexIndex++] = i10;
                 indicesArray[indexIndex++] = i01;
                 indicesArray[indexIndex++] = i11;
+                indicesArray[indexIndex++] = i10;
             }
         }
     }

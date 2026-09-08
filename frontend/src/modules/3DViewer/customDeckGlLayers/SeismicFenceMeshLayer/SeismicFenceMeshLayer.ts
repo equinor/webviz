@@ -15,10 +15,19 @@ import { isEqual, isNaN } from "lodash-es";
 
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
+import { sampleSeismicGrid } from "@modules/_shared/Intersection/seismicGridSampling";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
+import {
+    decodeRgbToNodeIndex,
+    encodeNodeIndexToRgb,
+    fenceNumTraces,
+    getFenceGridCoordFromPoint,
+    nodeIndexToGridCoord,
+} from "./_private/fenceSampling";
+import { SeismicFenceGridLayer } from "./_private/SeismicFenceGridLayer";
 // eslint-disable-next-line import/default
 import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebWorkerParameters, type WebworkerResult } from "./_private/webworker/types";
@@ -32,6 +41,8 @@ export type SeismicFence = {
     properties: Float32Array;
     traceXYZPointsArray: Float32Array;
     vVector: [number, number, number];
+    propertyName?: string;
+    propertyUnit?: string;
 };
 
 export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
@@ -41,29 +52,11 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
     loadingGeometry?: LoadingGeometry;
+    /** Trace/sample index the nearest-sample lattice spotlight is centred on, or null. */
+    highlightNode?: { traceIndex: number; sampleIndex: number } | null;
 
     // Non public properties:
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
-}
-
-function encodePropertyToColor(property: number, min: number, max: number): [number, number, number] {
-    if (isNaN(property)) return [1, 0, 0]; // Allow NaN values to be explicitly picked
-
-    const normalized = (property - min) / (max - min);
-    const safeNormalized = Math.max(1 / 16777215, normalized); // avoid zero
-    const colorIndex = Math.floor(safeNormalized * 16777215) + 1; // Add 1 to separate from
-    const r = (colorIndex >> 16) & 255;
-    const g = (colorIndex >> 8) & 255;
-    const b = colorIndex & 255;
-    return [r, g, b];
-}
-
-function decodeColorToProperty(r: number, g: number, b: number, min: number, max: number): number {
-    if (isEqual([r, g, b], [1, 0, 0])) return NaN;
-
-    const colorIndex = r * 256 * 256 + g * 256 + b - 1;
-    const normalized = colorIndex / 16777215;
-    return normalized * (max - min) + min;
 }
 
 export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerProps> {
@@ -79,8 +72,6 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         geometry: Geometry;
         meshCreated: boolean;
         colorsArrayCreated: boolean;
-        minProperty: number;
-        maxProperty: number;
     };
 
     initializeState(): void {
@@ -294,64 +285,68 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const colorsArray = assertNonNull(this._colorsArray, "Colors array is null");
         const pickingColorsArray = assertNonNull(this._pickingColorsArray, "Picking colors array is null");
 
-        let minProperty = Number.MAX_VALUE;
-        let maxProperty = -Number.MAX_VALUE;
-        for (let i = 0; i < data.properties.length; i++) {
-            if (Number.isNaN(data.properties[i])) continue;
-
-            minProperty = Math.min(minProperty, data.properties[i]);
-            maxProperty = Math.max(maxProperty, data.properties[i]);
-        }
-
-        if (minProperty === Number.MAX_VALUE && maxProperty === -Number.MAX_VALUE) {
-            minProperty = -1;
-            maxProperty = 1;
-        }
-
-        if (minProperty === maxProperty) {
-            // Avoid division by zero in encodePropertyToColor
-            minProperty -= 1;
-            maxProperty += 1;
-        }
-
-        this.setState({
-            ...this.state,
-            minProperty,
-            maxProperty,
-        });
-
-        let colorIndex = 0;
         for (let i = 0; i < data.properties.length; i++) {
             const trueProperty = data.properties[i];
             const property = isNaN(trueProperty) ? 0 : trueProperty;
 
             const [r, g, b, a] = colorMapFunction(property);
 
-            colorsArray[colorIndex * 4 + 0] = r / 255;
-            colorsArray[colorIndex * 4 + 1] = g / 255;
-            colorsArray[colorIndex * 4 + 2] = b / 255;
-            colorsArray[colorIndex * 4 + 3] = a / 255;
+            colorsArray[i * 4 + 0] = r / 255;
+            colorsArray[i * 4 + 1] = g / 255;
+            colorsArray[i * 4 + 2] = b / 255;
+            colorsArray[i * 4 + 3] = a / 255;
 
-            const [r2, g2, b2] = encodePropertyToColor(trueProperty, minProperty, maxProperty);
+            // Picking colour = this vertex's grid-node index (trace * numSamples + sample). Read back
+            // via a `flat` varying in the mesh shaders, so it survives as an exact integer.
+            const [r2, g2, b2] = encodeNodeIndexToRgb(i);
             pickingColorsArray[i * 3 + 0] = r2;
             pickingColorsArray[i * 3 + 1] = g2;
             pickingColorsArray[i * 3 + 2] = b2;
-            colorIndex++;
         }
     }
 
     getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
         if (!info.color) return info;
 
-        const [r, g, b] = info.color; // Convert from [0, 1] to [0, 255]
-        const { minProperty, maxProperty } = this.state;
+        const { data, zIncreaseDownwards } = this.props;
+        const label = data.propertyName ?? "Value";
+        const unitSuffix = data.propertyUnit ? ` [${data.propertyUnit}]` : "";
 
-        const property = decodeColorToProperty(r, g, b, minProperty, maxProperty);
+        const properties: { name: string; value: number }[] = [];
+        const numTraces = fenceNumTraces(data);
+        const getSample = (traceIndex: number, sampleIndex: number) =>
+            data.properties[traceIndex * data.numSamples + sampleIndex];
 
-        const properties: { name: string; value: number }[] = [{ name: "Property", value: property }];
+        // `info.coordinate` is in common space, i.e. before this layer's modelMatrix. SubsurfaceViewer
+        // injects a modelMatrix that scales Z by the vertical exaggeration factor (m[10]), so undo
+        // that to get back to the mesh's own coordinates before comparing against the fence geometry.
+        const zScale = (this.props.modelMatrix as ArrayLike<number> | undefined)?.[10] || 1;
+        const meshSpacePoint: number[] | null =
+            info.coordinate?.length === 3
+                ? [info.coordinate[0], info.coordinate[1], info.coordinate[2] / zScale]
+                : null;
 
-        if (info.coordinate?.length === 3) {
-            const depth = (this.props.zIncreaseDownwards ? -1 : 1) * info.coordinate[2];
+        // Resolve the pick back to continuous grid coordinates from the world position (exact), or
+        // fall back to the node index carried by the picking colour when there is no coordinate.
+        const gridCoord = meshSpacePoint
+            ? getFenceGridCoordFromPoint(data, zIncreaseDownwards ?? false, meshSpacePoint)
+            : nodeIndexToGridCoord(decodeRgbToNodeIndex(info.color[0], info.color[1], info.color[2]), data.numSamples);
+
+        if (gridCoord) {
+            const sample = sampleSeismicGrid(
+                getSample,
+                numTraces,
+                data.numSamples,
+                gridCoord.traceCoord,
+                gridCoord.sampleCoord,
+            );
+
+            properties.push({ name: `${label} (interpolated)${unitSuffix}`, value: sample.interpolatedValue });
+            properties.push({ name: `${label} (nearest)${unitSuffix}`, value: sample.nearestValue });
+        }
+
+        if (meshSpacePoint) {
+            const depth = (zIncreaseDownwards ? -1 : 1) * meshSpacePoint[2];
             properties.push({ name: "Depth", value: depth });
         }
 
@@ -361,13 +356,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         };
     }
 
-    onHover(pickingInfo: PickingInfo): boolean {
-        this.setState({ ...this.state, isHovered: pickingInfo.index !== -1 });
-        return false;
-    }
-
     renderLayers() {
-        const { isLoading, zIncreaseDownwards, loadingGeometry, opacity } = this.props;
+        const { isLoading, zIncreaseDownwards, loadingGeometry, opacity, highlightNode } = this.props;
         const { geometry, meshCreated, colorsArrayCreated } = this.state;
 
         const layers: Layer<any>[] = [];
@@ -400,6 +390,14 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         parameters: {
                             blend: true,
                         },
+                    }),
+                ),
+                new SeismicFenceGridLayer(
+                    super.getSubLayerProps({
+                        id: "sample-grid",
+                        data: this.props.data,
+                        zIncreaseDownwards,
+                        highlightNode: highlightNode ?? null,
                     }),
                 ),
             );

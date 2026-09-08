@@ -38,6 +38,7 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
+import { computeSeismicSampleReadout } from "./seismicSampleReadout";
 
 export function makeIntersectionCalculatorFromIntersectionItem(
     intersectionItem: IntersectionItem,
@@ -168,7 +169,26 @@ export function makeHighlightItemsFromIntersectionResult(
         return [{ shape: HighlightItemShape.LINE, line: intersectionResult.line, paintOrder: layer.order, color }];
     }
     if (isRectangleIntersectionResult(intersectionResult)) {
-        return [{ shape: HighlightItemShape.CROSS, center: intersectionResult.point, paintOrder: layer.order, color }];
+        const highlightItems: HighlightItem[] = [
+            { shape: HighlightItemShape.CROSS, center: intersectionResult.point, paintOrder: layer.order, color },
+        ];
+
+        // For seismic, also mark the nearest stored sample the readout snaps to.
+        if (isSeismicLayer(layer)) {
+            const seismicData = layer.getData();
+            const sampleReadout = seismicData && computeSeismicSampleReadout(seismicData, intersectionResult.point);
+            if (sampleReadout) {
+                highlightItems.push({
+                    shape: HighlightItemShape.CIRCLE,
+                    center: sampleReadout.nearestSamplePoint,
+                    radius: 5,
+                    paintOrder: layer.order,
+                    color,
+                });
+            }
+        }
+
+        return highlightItems;
     }
     throw new Error("Invalid intersection result");
 }

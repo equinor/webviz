@@ -8,7 +8,6 @@ import type {
     Perforation,
     SchematicData,
 } from "@equinor/esv-intersection";
-import { clamp, sortedIndexBy } from "lodash-es";
 
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
 
@@ -27,6 +26,7 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
+import { computeSeismicSampleReadout } from "./seismicSampleReadout";
 
 export function getLabelFromLayerData(readoutItem: ReadoutItem): string {
     const layer = readoutItem.layer;
@@ -434,57 +434,23 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
     if (isSeismicLayer(layer)) {
         const seismicData = layer.getData();
         const seismicInfo = layer.getSeismicInfo();
-        const fenceProjection = seismicData?.trajectoryFenceProjection ?? [];
-        if (seismicData && seismicInfo && fenceProjection.length >= 2) {
-            const x = readoutItem.point[0];
-            const y = readoutItem.point[1];
+        if (seismicData && seismicInfo) {
+            const sampleReadout = computeSeismicSampleReadout(seismicData, readoutItem.point);
+            if (sampleReadout) {
+                items.push({
+                    label: `${seismicData.propertyName} (interpolated)`,
+                    type: AdditionalInformationType.PROP_VALUE,
+                    value: sampleReadout.interpolatedValue,
+                    unit: seismicData.propertyUnit,
+                });
 
-            const fenceDepthSpan = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
-            const rowHeight = fenceDepthSpan / seismicData.numSamplesPerTrace;
-
-            // Samples are evenly spaced between min and max fence depth, so the fractional sample
-            // index is a plain linear mapping.
-            const samplePos = clamp(
-                (y - seismicData.minFenceDepth) / rowHeight,
-                0,
-                seismicData.numSamplesPerTrace - 1,
-            );
-            const sample0 = Math.floor(samplePos);
-            const sample1 = Math.min(sample0 + 1, seismicData.numSamplesPerTrace - 1);
-            const sampleFrac = samplePos - sample0;
-
-            // Traces sit at the vertices of the fence-polyline projection, which are not evenly
-            // spaced (per-section resampling leaves a shorter remainder at each original vertex).
-            // Mirror SeismicLayer's rendering: find the projection segment containing x and take the
-            // fraction from that segment's end points instead of assuming a uniform trace width.
-            const trace1 = clamp(
-                sortedIndexBy(fenceProjection, [x], (point) => point[0]),
-                1,
-                fenceProjection.length - 1,
-            );
-            const trace0 = trace1 - 1;
-            const traceSpan = fenceProjection[trace1][0] - fenceProjection[trace0][0];
-            const traceFrac = traceSpan > 0 ? clamp((x - fenceProjection[trace0][0]) / traceSpan, 0, 1) : 0;
-
-            const valueAt = (traceNum: number, sampleNum: number) => {
-                const sample = seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum];
-                // The rendered image replaces missing samples (stored as NaN by the backend) with 0
-                // before interpolating (see createSeismicSliceImageDatapointsArrayFromFenceTracesArray);
-                // do the same so a single missing corner doesn't turn the readout into NaN.
-                return Number.isNaN(sample) ? 0 : sample;
-            };
-
-            // Bilinear interpolation between the four surrounding samples.
-            const top = valueAt(trace0, sample0) + (valueAt(trace1, sample0) - valueAt(trace0, sample0)) * traceFrac;
-            const bottom = valueAt(trace0, sample1) + (valueAt(trace1, sample1) - valueAt(trace0, sample1)) * traceFrac;
-            const value = top + (bottom - top) * sampleFrac;
-
-            items.push({
-                label: seismicData.propertyName,
-                type: AdditionalInformationType.PROP_VALUE,
-                value: value,
-                unit: seismicData.propertyUnit,
-            });
+                items.push({
+                    label: `${seismicData.propertyName} (nearest)`,
+                    type: AdditionalInformationType.PROP_VALUE,
+                    value: sampleReadout.nearestValue,
+                    unit: seismicData.propertyUnit,
+                });
+            }
         }
     }
 

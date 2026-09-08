@@ -22,6 +22,7 @@ export enum HighlightItemShape {
     POLYGON = "polygon",
     POLYGONS = "polygons",
     POINTS = "points",
+    CIRCLE = "circle",
 }
 
 export type PolygonData = {
@@ -106,6 +107,11 @@ export type HighlightItem = {
     | {
           shape: HighlightItemShape.POINTS;
           points: number[][];
+      }
+    | {
+          shape: HighlightItemShape.CIRCLE;
+          center: number[];
+          radius: number;
       }
 );
 
