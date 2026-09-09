@@ -7,6 +7,7 @@ import react from "@vitejs/plugin-react";
 import vitePluginChecker from "vite-plugin-checker";
 
 import aliases from "./aliases.json" with { type: "json" };
+import { plotlyWebglContextReleasePlugin } from "./vite-plugin-plotly-webgl-context-release.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,7 +39,12 @@ export default defineConfig({
         /* Port to use for Playwright component endpoint. */
         ctPort: 3100,
         ctViteConfig: {
-            plugins: [react(), vitePluginChecker({ typescript: true }), tailwindcssPlugin()],
+            plugins: [
+                plotlyWebglContextReleasePlugin(),
+                react(),
+                vitePluginChecker({ typescript: true }),
+                tailwindcssPlugin(),
+            ],
             resolve: {
                 alias: Object.keys(aliases.compilerOptions.paths).reduce(
                     (prev, current) => ({
