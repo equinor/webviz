@@ -133,6 +133,11 @@ export function DataProviderManagerWrapper(props: DataProviderManagerWrapperProp
             case "attribute":
                 groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.dataProviderManager));
                 return;
+            case "surface-attribute":
+                groupDelegate.appendChild(
+                    new SharedSetting(Setting.SURFACE_ATTRIBUTE, null, props.dataProviderManager),
+                );
+                return;
             case "date":
                 groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.dataProviderManager));
                 return;
@@ -253,6 +258,11 @@ const SHARED_SETTINGS_CHILDREN = [
         identifier: "attribute",
         icon: <Icon data={settings} size={16} />,
         label: "Attribute",
+    },
+    {
+        identifier: "surface-attribute",
+        icon: <Icon data={settings} size={16} />,
+        label: "Surface Attribute",
     },
     {
         identifier: "date",
