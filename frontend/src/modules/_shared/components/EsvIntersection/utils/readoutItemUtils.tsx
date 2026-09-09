@@ -445,10 +445,20 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
                 });
 
                 items.push({
-                    label: `${seismicData.propertyName} (nearest)`,
+                    label: `${seismicData.propertyName} (nearest real trace)`,
                     type: AdditionalInformationType.PROP_VALUE,
-                    value: sampleReadout.nearestValue,
+                    value: sampleReadout.nearestRealTraceValue,
                     unit: seismicData.propertyUnit,
+                });
+
+                items.push({
+                    label: "Inline, crossline, depth index",
+                    type: AdditionalInformationType.IJK,
+                    value: [
+                        sampleReadout.nearestRealTraceInline,
+                        sampleReadout.nearestRealTraceCrossline,
+                        sampleReadout.nearestSampleIndex,
+                    ],
                 });
             }
         }

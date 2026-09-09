@@ -7,19 +7,40 @@ import type { SeismicLayerData } from "../layers/SeismicLayer";
 export type SeismicSampleReadout = {
     /** Bilinear blend of the four surrounding samples — matches the rendered image. */
     interpolatedValue: number;
-    /** Value of the single nearest sample. Raw: `NaN` when that sample is missing in the backend data. */
-    nearestValue: number;
+    /** Value of the actual, non-interpolated cube trace nearest to the picked point (real trace + real sample). */
+    nearestRealTraceValue: number;
+    /** Inline/crossline line number of that same real trace. */
+    nearestRealTraceInline: number;
+    nearestRealTraceCrossline: number;
     /** Trace/sample indices of the nearest sample. */
     nearestTraceIndex: number;
     nearestSampleIndex: number;
-    /** World-space `[x, depth]` position of the nearest sample. */
-    nearestSamplePoint: [number, number];
+    /** World-space `[x, depth]` position of the nearest actual trace/sample. */
+    nearestRealTraceSamplePoint: [number, number];
+    /** Continuous (unrounded) trace/sample coordinate of the picked point, clamped to the grid extent. */
+    traceCoord: number;
+    sampleCoord: number;
 };
 
 /**
+ * World-space `[x, depth]` position of a given (traceIndex, sampleIndex) grid node of a seismic
+ * fence layer. Shared by the sample readout below and by the fade-lattice hover highlight, so both
+ * always agree on where a given node sits.
+ */
+export function getSeismicFenceNodeWorldPoint(
+    seismicData: SeismicLayerData,
+    traceIndex: number,
+    sampleIndex: number,
+): [number, number] {
+    const fenceDepthSpan = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
+    const rowHeight = fenceDepthSpan / seismicData.numSamplesPerTrace;
+    return [seismicData.trajectoryFenceProjection[traceIndex][0], seismicData.minFenceDepth + sampleIndex * rowHeight];
+}
+
+/**
  * Given a world point over a seismic fence layer, resolve the seismic value both by bilinear
- * interpolation and by snapping to the nearest stored sample, and report where that nearest
- * sample sits in world space so it can be highlighted.
+ * interpolation and by snapping to the nearest actual cube trace/sample, and report where that
+ * nearest actual sample sits in world space so it can be highlighted.
  *
  * Returns `null` when the layer data is not usable (fewer than two trace projection vertices).
  */
@@ -57,22 +78,31 @@ export function computeSeismicSampleReadout(
     const traceCoord = trace0 + traceFrac;
 
     const sample = sampleSeismicGrid(
-        (traceNum, sampleNum) =>
-            seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum],
+        (traceNum, sampleNum) => seismicData.fenceTracesArray[traceNum * seismicData.numSamplesPerTrace + sampleNum],
         fenceProjection.length,
         seismicData.numSamplesPerTrace,
         traceCoord,
         sampleCoord,
     );
 
+    const nearestRealTraceValue =
+        seismicData.nearestRealTraceFenceTracesArray[
+            sample.nearestTraceIndex * seismicData.numSamplesPerTrace + sample.nearestSampleIndex
+        ];
+
     return {
         interpolatedValue: sample.interpolatedValue,
-        nearestValue: sample.nearestValue,
+        nearestRealTraceValue,
+        nearestRealTraceInline: seismicData.nearestRealTraceInline[sample.nearestTraceIndex],
+        nearestRealTraceCrossline: seismicData.nearestRealTraceCrossline[sample.nearestTraceIndex],
         nearestTraceIndex: sample.nearestTraceIndex,
         nearestSampleIndex: sample.nearestSampleIndex,
-        nearestSamplePoint: [
-            fenceProjection[sample.nearestTraceIndex][0],
-            seismicData.minFenceDepth + sample.nearestSampleIndex * rowHeight,
-        ],
+        nearestRealTraceSamplePoint: getSeismicFenceNodeWorldPoint(
+            seismicData,
+            sample.nearestTraceIndex,
+            sample.nearestSampleIndex,
+        ),
+        traceCoord: sample.traceCoord,
+        sampleCoord: sample.sampleCoord,
     };
 }

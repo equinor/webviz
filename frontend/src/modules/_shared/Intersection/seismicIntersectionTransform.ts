@@ -7,8 +7,12 @@ import { b64DecodeFloatArrayToFloat32 } from "../base64";
  *
  * Remove the base64 encoded data and replace with a Float32Array
  */
-export type SeismicFenceData_trans = Omit<SeismicFenceData_api, "fence_traces_b64arr"> & {
+export type SeismicFenceData_trans = Omit<
+    SeismicFenceData_api,
+    "fence_traces_b64arr" | "nearest_real_trace_fence_traces_b64arr"
+> & {
     fenceTracesFloat32Arr: Float32Array;
+    nearestRealTraceFenceTracesFloat32Arr: Float32Array;
 };
 
 /**
@@ -17,11 +21,13 @@ export type SeismicFenceData_trans = Omit<SeismicFenceData_api, "fence_traces_b6
  * The transformed fence data is decoded from base64 to a Float32Array.
  */
 export function transformSeismicFenceData(apiData: SeismicFenceData_api): SeismicFenceData_trans {
-    const { fence_traces_b64arr, ...untransformedData } = apiData;
+    const { fence_traces_b64arr, nearest_real_trace_fence_traces_b64arr, ...untransformedData } = apiData;
 
     const dataFloat32Arr = b64DecodeFloatArrayToFloat32(fence_traces_b64arr);
+    const nearestRealTraceFloat32Arr = b64DecodeFloatArrayToFloat32(nearest_real_trace_fence_traces_b64arr);
     return {
         ...untransformedData,
         fenceTracesFloat32Arr: dataFloat32Arr,
+        nearestRealTraceFenceTracesFloat32Arr: nearestRealTraceFloat32Arr,
     };
 }

@@ -1690,6 +1690,15 @@ export type SeismicCubeSpec_api = {
  * - `num_samples_per_trace`: The number of samples in each trace.
  * - `min_fence_depth`: The minimum depth value of the fence.
  * - `max_fence_depth`: The maximum depth value of the fence.
+ * - `nearest_real_trace_fence_traces_b64arr`: Same shape/order as `fence_traces_b64arr`, but each trace is the
+ * exact, non-interpolated data of the real cube trace nearest to that column's requested (x, y) point - i.e.
+ * the actual bin-grid trace, rather than a value synthesized by interpolating between neighboring traces.
+ * Several neighboring columns may repeat the same real trace's values.
+ * - `nearest_real_trace_x_points`/`nearest_real_trace_y_points`: The UTM (x, y) position of the real trace
+ * actually used for each column of `nearest_real_trace_fence_traces_b64arr`, which may differ slightly from
+ * the originally requested polyline point.
+ * - `nearest_real_trace_inline`/`nearest_real_trace_crossline`: The inline/crossline line number of that same
+ * real trace, for each column.
  *
  * `Description - fence_traces_b64arr:`
  *
@@ -1720,6 +1729,23 @@ export type SeismicFenceData_api = {
      * Max Fence Depth
      */
     max_fence_depth: number;
+    nearest_real_trace_fence_traces_b64arr: B64FloatArray_api;
+    /**
+     * Nearest Real Trace X Points
+     */
+    nearest_real_trace_x_points: Array<number>;
+    /**
+     * Nearest Real Trace Y Points
+     */
+    nearest_real_trace_y_points: Array<number>;
+    /**
+     * Nearest Real Trace Inline
+     */
+    nearest_real_trace_inline: Array<number>;
+    /**
+     * Nearest Real Trace Crossline
+     */
+    nearest_real_trace_crossline: Array<number>;
 };
 
 /**

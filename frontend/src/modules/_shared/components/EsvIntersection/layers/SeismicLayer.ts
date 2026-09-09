@@ -33,6 +33,11 @@ export type SeismicLayerData = {
     numTraces: number;
     numSamplesPerTrace: number;
     fenceTracesArray: Float32Array;
+    /** Same shape as `fenceTracesArray`, but each trace is the exact, non-interpolated real cube trace. */
+    nearestRealTraceFenceTracesArray: Float32Array;
+    /** Inline/crossline line number of that same real trace, one entry per trace. */
+    nearestRealTraceInline: number[];
+    nearestRealTraceCrossline: number[];
     trajectoryFenceProjection: number[][];
     propertyName: string;
     propertyUnit: string;

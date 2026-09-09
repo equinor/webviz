@@ -27,6 +27,7 @@ export type InteractionHandlerOptions = {
 };
 
 export class InteractionHandler {
+    private _controller: Controller;
     private _intersectionHandler: IntersectionHandler;
     private _highlightOverlay: HighlightOverlay;
     private _dynamicHighlightItems: HighlightItem[] = [];
@@ -36,6 +37,7 @@ export class InteractionHandler {
     private _subscribers: Map<InteractionHandlerTopic, Set<(payload: any) => void>> = new Map();
 
     constructor(controller: Controller, container: HTMLElement, options: InteractionHandlerOptions) {
+        this._controller = controller;
         this._intersectionHandler = new IntersectionHandler(controller, options.intersectionOptions);
         this._highlightOverlay = new HighlightOverlay(container, controller);
 
@@ -129,6 +131,7 @@ export class InteractionHandler {
                         intersection.item,
                         layerDataObject.layer,
                         layerDataObject.index,
+                        this._controller.currentStateAsEvent,
                     ),
                 );
 
