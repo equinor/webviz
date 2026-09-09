@@ -9,8 +9,6 @@ from webviz_services.service_exceptions import InvalidParameterError, Service
 
 from .surface_types import STD_RES_SUB_NAME_FIELD, StdResAttribute, SurfaceAttribute, TagNameAttribute
 
-# Suffix used by the surface metadata to mark an attribute as a standard result rather than a tagname.
-LEGACY_STD_RES_ATTRIBUTE_SUFFIX = " (standard result)"
 
 
 def make_realization_surface_search_context(
@@ -60,7 +58,7 @@ def make_observed_surface_search_context(
 
 def apply_attribute_filter(search_context: SearchContext, attribute: SurfaceAttribute) -> SearchContext:
     if isinstance(attribute, TagNameAttribute):
-        return _apply_tag_name_filter(search_context, attribute.tag_name)
+        return search_context.filter(tagname=attribute.tag_name)
 
     search_context = search_context.filter(standard_result=attribute.std_res_name.value)
     if attribute.sub_name is None:
@@ -73,15 +71,6 @@ def apply_attribute_filter(search_context: SearchContext, attribute: SurfaceAttr
         )
 
     return search_context.filter(complex={"term": {sub_name_field: attribute.sub_name}})
-
-
-def _apply_tag_name_filter(search_context: SearchContext, tag_name: str) -> SearchContext:
-    # Surface metadata still reports standard results as "<name> (standard result)" in the attribute field,
-    # so a tag name may actually be a standard result. Remove once the metadata exposes structured attributes.
-    if tag_name.endswith(LEGACY_STD_RES_ATTRIBUTE_SUFFIX):
-        return search_context.filter(standard_result=tag_name.removesuffix(LEGACY_STD_RES_ATTRIBUTE_SUFFIX))
-
-    return search_context.filter(tagname=tag_name)
 
 
 def attribute_to_log_str(attribute: SurfaceAttribute) -> str:
