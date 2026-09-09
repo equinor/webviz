@@ -29,8 +29,8 @@ void main(void) {
   vec4 color = simpleMesh.hasTexture ? texture(sampler, vTexCoord) : vColor;
   DECKGL_FILTER_COLOR(color, geometry);
 
-  // Seismic slices are unlit: the colour already encodes the data, and directional lighting would
-  // wash out the amplitudes (worst on the near-horizontal depth slice) and make the same slice look
-  // different depending on which side it is viewed from.
+  // Seismic data surfaces are rendered unlit: the color already encodes the data, and directional lighting would
+  // wash out amplitudes (especially on near-horizontal depth slices) and make the same surface look different
+  // depending on which side it is viewed from.
   fragColor = vec4(color.rgb, color.a * layer.opacity);
 }
