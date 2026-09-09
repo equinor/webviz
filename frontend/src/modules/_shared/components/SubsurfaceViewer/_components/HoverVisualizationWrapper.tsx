@@ -54,7 +54,9 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     );
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
-    const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
+    // The actively hovered view gets its own hover visualization (e.g. the seismic sample-grid
+    // spotlight), so skip the picking-ray marker there and keep it only in the linked views.
+    const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false, currentlyHoveredViewport);
     const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(
         props.polylinesPlugin,
         ctx.hoverService,
@@ -242,10 +244,15 @@ function usePolylineHoverMarkerLayer(
 function usePickingRayLayers(
     unscaledCoordinatesPerView: Record<string, [number, number, number][]>,
     showRay: boolean = true,
+    excludeViewId?: string | null,
 ): Record<string, PickingRayLayer> {
     const pickingRayLayers: Record<string, PickingRayLayer> = {};
 
     for (const [viewId, pickCoordinates] of Object.entries(unscaledCoordinatesPerView)) {
+        if (viewId === excludeViewId) {
+            continue;
+        }
+
         pickingRayLayers[viewId] = new PickingRayLayer({
             id: `picking-ray-layer-${viewId}`,
             pickInfoCoordinates: pickCoordinates,

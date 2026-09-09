@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional, Tuple
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -5,8 +6,8 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from webviz_core_utils.b64 import b64_encode_float_array_as_float32
 from webviz_services.sumo_access.seismic_access import SeismicAccess, VdsHandle, SeismicRepresentation
 from webviz_services.utils.authenticated_user import AuthenticatedUser
+from webviz_services.vds_access.bin_grid_transform import build_seismic_bin_grid_transform
 from webviz_services.vds_access.request_types import VdsCoordinates, VdsCoordinateSystem
-from webviz_services.vds_access.response_types import VdsMetadata
 from webviz_services.vds_access.vds_access import VdsAccess
 
 from primary.auth.auth_helper import AuthHelper
@@ -123,22 +124,37 @@ async def post_get_seismic_fence(
         raise HTTPException(status_code=404, detail="Vds handle not found")
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
+    coordinates = VdsCoordinates(polyline.x_points, polyline.y_points)
 
     # Retrieve fence and post as seismic intersection using cdp coordinates for vds-slice
     # NOTE: Correct coordinate format and scaling - see VdsCoordinateSystem?
-    [
-        flattened_fence_traces_array,
-        num_traces,
-        num_samples_per_trace,
-    ] = await vds_access.get_flattened_fence_traces_array_and_metadata_async(
-        coordinates=VdsCoordinates(polyline.x_points, polyline.y_points),
-        coordinate_system=VdsCoordinateSystem.CDP,
+    (
+        [flattened_fence_traces_array, num_traces, num_samples_per_trace],
+        meta,
+    ) = await asyncio.gather(
+        vds_access.get_flattened_fence_traces_array_and_metadata_async(
+            coordinates=coordinates,
+            coordinate_system=VdsCoordinateSystem.CDP,
+        ),
+        vds_access.get_metadata_async(),
     )
-    meta: VdsMetadata = await vds_access.get_metadata_async()
 
     if len(meta.axis) != 3:
         raise HTTPException(status_code=400, detail=f"Expected 3 axes, got {len(meta.axis)}")
     depth_axis_meta = meta.axis[2]
+
+    # In addition to the interpolated fence above, look up the nearest real (non-interpolated) cube trace for
+    # each polyline point, so the frontend can offer an accurate hover readout without a second round trip.
+    bin_grid_transform = build_seismic_bin_grid_transform(meta.boundingBox)
+    (
+        nearest_real_trace_flat_array,
+        nearest_real_trace_x_points,
+        nearest_real_trace_y_points,
+        nearest_real_trace_inline,
+        nearest_real_trace_crossline,
+    ) = await vds_access.get_nearest_real_trace_fence_data_async(
+        coordinates=coordinates, bin_grid_transform=bin_grid_transform
+    )
 
     return schemas.SeismicFenceData(
         fence_traces_b64arr=b64_encode_float_array_as_float32(flattened_fence_traces_array),
@@ -146,4 +162,9 @@ async def post_get_seismic_fence(
         num_samples_per_trace=num_samples_per_trace,
         min_fence_depth=depth_axis_meta.min,
         max_fence_depth=depth_axis_meta.max,
+        nearest_real_trace_fence_traces_b64arr=b64_encode_float_array_as_float32(nearest_real_trace_flat_array),
+        nearest_real_trace_x_points=nearest_real_trace_x_points,
+        nearest_real_trace_y_points=nearest_real_trace_y_points,
+        nearest_real_trace_inline=nearest_real_trace_inline,
+        nearest_real_trace_crossline=nearest_real_trace_crossline,
     )

@@ -1,17 +1,26 @@
-import { CompositeLayer, type Layer, type UpdateParameters } from "@deck.gl/core";
+import { CompositeLayer, type Layer, type PickingInfo, type UpdateParameters } from "@deck.gl/core";
 import type {
     ReportBoundingBoxAction,
     ExtendedLayerProps,
 } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
+import { isEqual } from "lodash-es";
 
 import type { Geometry } from "@lib/utils/geometry";
 
+import { getFenceGridCoordFromPoint } from "./SeismicFenceMeshLayer/_private/fenceSampling";
+import { SeismicFenceGridLayer } from "./SeismicFenceMeshLayer/_private/SeismicFenceGridLayer";
 import {
     SeismicFenceMeshLayer,
     type SeismicFence,
     type SeismicFenceMeshLayerProps,
 } from "./SeismicFenceMeshLayer/SeismicFenceMeshLayer";
+
+type HighlightState = {
+    sectionId: string;
+    traceIndex: number;
+    sampleIndex: number;
+} | null;
 
 export type SeismicFenceWithId = {
     id: string;
@@ -32,6 +41,13 @@ export type SeismicSlicesLayerProps = ExtendedLayerProps & {
 export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> {
     static layerName = "SeismicSlicesLayer";
 
+    // @ts-expect-error - deck.gl state typing
+    state!: { highlight: HighlightState };
+
+    initializeState(): void {
+        this.setState({ highlight: null });
+    }
+
     updateState({ changeFlags, props }: UpdateParameters<this>): void {
         if (props.reportBoundingBox && changeFlags.propsOrDataChanged) {
             props.reportBoundingBox({
@@ -40,20 +56,77 @@ export class SeismicSlicesLayer extends CompositeLayer<SeismicSlicesLayerProps> 
         }
     }
 
+    // deck.gl only calls updateAutoHighlight on the root of a composite chain (this layer), on every
+    // hover pick. The mesh is `pickable: "3d"`, so `info.coordinate` is a real point on the slice —
+    // invert it to the nearest grid node and push that down to the matching fence layer's spotlight.
+    updateAutoHighlight(info: PickingInfo): void {
+        const next = this.decodeHighlight(info);
+        if (!isEqual(next, this.state.highlight)) {
+            this.setState({ highlight: next });
+        }
+    }
+
+    private decodeHighlight(info: PickingInfo): HighlightState {
+        if (!info.picked || !info.coordinate || info.coordinate.length !== 3 || !info.sourceLayer) {
+            return null;
+        }
+        const section = this.props.data.find(
+            (candidate) => info.sourceLayer?.id === `${this.props.id}-${candidate.id}`,
+        );
+        if (!section?.fence) {
+            return null;
+        }
+
+        // `info.coordinate` is common space (before the mesh modelMatrix, which scales Z by the
+        // vertical exaggeration m[10]); undo that to get back to the fence's own coordinates.
+        const zScale = (this.props.modelMatrix as ArrayLike<number> | undefined)?.[10] || 1;
+        const meshSpacePoint = [info.coordinate[0], info.coordinate[1], info.coordinate[2] / zScale];
+
+        const gridCoord = getFenceGridCoordFromPoint(section.fence, this.props.zIncreaseDownwards ?? false, meshSpacePoint);
+        if (!gridCoord) {
+            return null;
+        }
+        return {
+            sectionId: section.id,
+            traceIndex: Math.round(gridCoord.traceCoord),
+            sampleIndex: Math.round(gridCoord.sampleCoord),
+        };
+    }
+
     renderLayers(): Layer[] {
         const { data: sections, colorMapFunction, zIncreaseDownwards, isLoading } = this.props;
-        return sections.map((section) => {
-            return new SeismicFenceMeshLayer(
-                this.getSubLayerProps({
-                    id: section.id,
-                    data: section.fence,
-                    loadingGeometry: section.loadingGeometry,
-                    colorMapFunction,
-                    zIncreaseDownwards,
-                    isLoading,
-                }),
+        const { highlight } = this.state;
+
+        const layers: Layer[] = sections.map(
+            (section) =>
+                new SeismicFenceMeshLayer(
+                    this.getSubLayerProps({
+                        id: section.id,
+                        data: section.fence,
+                        loadingGeometry: section.loadingGeometry,
+                        colorMapFunction,
+                        zIncreaseDownwards,
+                        isLoading,
+                    }),
+                ),
+        );
+
+        // A single spotlight layer for the currently hovered section (it filters itself out on zoom).
+        const highlightedFence = highlight && sections.find((s) => s.id === highlight.sectionId)?.fence;
+        if (highlight && highlightedFence) {
+            layers.push(
+                new SeismicFenceGridLayer(
+                    this.getSubLayerProps({
+                        id: "sample-grid",
+                        data: highlightedFence,
+                        zIncreaseDownwards,
+                        highlightNode: { traceIndex: highlight.traceIndex, sampleIndex: highlight.sampleIndex },
+                    }),
+                ),
             );
-        });
+        }
+
+        return layers;
     }
 
     private calcBoundingBox(): BoundingBox3D {

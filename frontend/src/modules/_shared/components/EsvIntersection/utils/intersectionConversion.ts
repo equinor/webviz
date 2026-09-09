@@ -38,6 +38,9 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
+import type { PixelScale } from "./seismicGridFadeLattice";
+import { buildSeismicGridFadeHighlightItems } from "./seismicGridFadeLattice";
+import { computeSeismicSampleReadout } from "./seismicSampleReadout";
 
 export function makeIntersectionCalculatorFromIntersectionItem(
     intersectionItem: IntersectionItem,
@@ -116,6 +119,7 @@ export function makeHighlightItemsFromIntersectionResult(
     intersectionResult: IntersectedItem,
     layer: Layer<unknown>,
     index: number,
+    pixelScale: PixelScale,
 ): HighlightItem[] {
     const color = getColorFromLayerData(layer, index);
     if (isPointIntersectionResult(intersectionResult)) {
@@ -168,7 +172,36 @@ export function makeHighlightItemsFromIntersectionResult(
         return [{ shape: HighlightItemShape.LINE, line: intersectionResult.line, paintOrder: layer.order, color }];
     }
     if (isRectangleIntersectionResult(intersectionResult)) {
-        return [{ shape: HighlightItemShape.CROSS, center: intersectionResult.point, paintOrder: layer.order, color }];
+        const highlightItems: HighlightItem[] = [
+            { shape: HighlightItemShape.CROSS, center: intersectionResult.point, paintOrder: layer.order, color },
+        ];
+
+        // For seismic, also mark the nearest actual (real trace/sample) point the readout snaps to,
+        // with a fading lattice of nearby grid nodes - mirroring the 3D viewer's seismic-slice hover spotlight.
+        if (isSeismicLayer(layer)) {
+            const seismicData = layer.getData();
+            const sampleReadout = seismicData && computeSeismicSampleReadout(seismicData, intersectionResult.point);
+            if (sampleReadout && seismicData) {
+                highlightItems.push(
+                    ...buildSeismicGridFadeHighlightItems(
+                        seismicData,
+                        sampleReadout.traceCoord,
+                        sampleReadout.sampleCoord,
+                        { paintOrder: layer.order, pixelScale },
+                    ),
+                );
+
+                highlightItems.push({
+                    shape: HighlightItemShape.CIRCLE,
+                    center: sampleReadout.nearestRealTraceSamplePoint,
+                    radius: 5,
+                    paintOrder: layer.order,
+                    color,
+                });
+            }
+        }
+
+        return highlightItems;
     }
     throw new Error("Invalid intersection result");
 }

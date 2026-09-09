@@ -227,6 +227,9 @@ export function makeSeismicSlicesLayer(
 
     const previewOrLoading = !slicesSettings.applied || isLoading;
 
+    const propertyName = seismicCubeMeta.seismicAttribute;
+    const propertyUnit = seismicCubeMeta.unit;
+
     const sections: SeismicFenceWithId[] = [];
 
     // Inline slice
@@ -245,6 +248,8 @@ export function makeSeismicSlicesLayer(
                     vVector: [0, 0, data.inline.u_max - data.inline.u_min],
                     numSamples: data.inline.u_num_samples,
                     properties: data.inline.dataFloat32Arr,
+                    propertyName,
+                    propertyUnit,
                 },
                 loadingGeometry: inlinePreviewGeometry ?? undefined,
             });
@@ -272,6 +277,8 @@ export function makeSeismicSlicesLayer(
                     vVector: [0, 0, data.crossline.u_max - data.crossline.u_min],
                     numSamples: data.crossline.u_num_samples,
                     properties: data.crossline.dataFloat32Arr,
+                    propertyName,
+                    propertyUnit,
                 },
                 loadingGeometry: crosslinePreviewGeometry ?? undefined,
             });
@@ -304,6 +311,8 @@ export function makeSeismicSlicesLayer(
                     ),
                     numSamples: data.depthSlice.u_num_samples,
                     properties: data.depthSlice.dataFloat32Arr.toReversed(),
+                    propertyName,
+                    propertyUnit,
                 },
                 loadingGeometry: depthPreviewGeometry ?? undefined,
             });

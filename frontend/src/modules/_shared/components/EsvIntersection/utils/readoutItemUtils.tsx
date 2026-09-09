@@ -26,6 +26,7 @@ import {
     isSurfaceLayer,
     isWellborepathLayer,
 } from "./layers";
+import { computeSeismicSampleReadout } from "./seismicSampleReadout";
 
 export function getLabelFromLayerData(readoutItem: ReadoutItem): string {
     const layer = readoutItem.layer;
@@ -434,26 +435,32 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
         const seismicData = layer.getData();
         const seismicInfo = layer.getSeismicInfo();
         if (seismicData && seismicInfo) {
-            const x = readoutItem.point[0];
-            const y = readoutItem.point[1];
+            const sampleReadout = computeSeismicSampleReadout(seismicData, readoutItem.point);
+            if (sampleReadout) {
+                items.push({
+                    label: `${seismicData.propertyName} (interpolated)`,
+                    type: AdditionalInformationType.PROP_VALUE,
+                    value: sampleReadout.interpolatedValue,
+                    unit: seismicData.propertyUnit,
+                });
 
-            const height = Math.abs(seismicData.maxFenceDepth - seismicData.minFenceDepth);
-            const width = Math.abs(seismicInfo.maxX - seismicInfo.minX);
-            const rowHeight = height / seismicData.numSamplesPerTrace;
-            const columnWidth = width / seismicData.numTraces;
+                items.push({
+                    label: `${seismicData.propertyName} (nearest real trace)`,
+                    type: AdditionalInformationType.PROP_VALUE,
+                    value: sampleReadout.nearestRealTraceValue,
+                    unit: seismicData.propertyUnit,
+                });
 
-            const sampleNum = Math.floor((y - seismicData.minFenceDepth) / rowHeight);
-            const traceNum = Math.floor((x - seismicInfo.minX) / columnWidth);
-
-            const index = traceNum * seismicData.numSamplesPerTrace + sampleNum;
-            const value = seismicData.fenceTracesArray[index];
-
-            items.push({
-                label: seismicData.propertyName,
-                type: AdditionalInformationType.PROP_VALUE,
-                value: value,
-                unit: seismicData.propertyUnit,
-            });
+                items.push({
+                    label: "Inline, crossline, depth index",
+                    type: AdditionalInformationType.IJK,
+                    value: [
+                        sampleReadout.nearestRealTraceInline,
+                        sampleReadout.nearestRealTraceCrossline,
+                        sampleReadout.nearestSampleIndex,
+                    ],
+                });
+            }
         }
     }
 

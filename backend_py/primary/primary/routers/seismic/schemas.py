@@ -91,6 +91,15 @@ class SeismicFenceData(BaseModel):
     - `num_samples_per_trace`: The number of samples in each trace.
     - `min_fence_depth`: The minimum depth value of the fence.
     - `max_fence_depth`: The maximum depth value of the fence.
+    - `nearest_real_trace_fence_traces_b64arr`: Same shape/order as `fence_traces_b64arr`, but each trace is the
+      exact, non-interpolated data of the real cube trace nearest to that column's requested (x, y) point - i.e.
+      the actual bin-grid trace, rather than a value synthesized by interpolating between neighboring traces.
+      Several neighboring columns may repeat the same real trace's values.
+    - `nearest_real_trace_x_points`/`nearest_real_trace_y_points`: The UTM (x, y) position of the real trace
+      actually used for each column of `nearest_real_trace_fence_traces_b64arr`, which may differ slightly from
+      the originally requested polyline point.
+    - `nearest_real_trace_inline`/`nearest_real_trace_crossline`: The inline/crossline line number of that same
+      real trace, for each column.
 
     `Description - fence_traces_b64arr:`\n
     The encoded fence trace array is a flattened array of traces, where data is stored trace by trace.
@@ -107,6 +116,11 @@ class SeismicFenceData(BaseModel):
     num_samples_per_trace: int
     min_fence_depth: float
     max_fence_depth: float
+    nearest_real_trace_fence_traces_b64arr: B64FloatArray
+    nearest_real_trace_x_points: List[float]
+    nearest_real_trace_y_points: List[float]
+    nearest_real_trace_inline: List[int]
+    nearest_real_trace_crossline: List[int]
 
 
 class SeismicSliceData(BaseModel):
