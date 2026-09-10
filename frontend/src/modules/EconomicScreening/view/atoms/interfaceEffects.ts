@@ -9,6 +9,7 @@ import {
     earlyValueConfigurationAtom,
     ensembleIdentAtom,
     evaluationWindowAtom,
+    isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     salesGasStrategyAtom,
     selectedMeasureAtom,
@@ -30,6 +31,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(costProfileAtom, getInterfaceValue("costProfile"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(isCostProfileDraftValidAtom, getInterfaceValue("isCostProfileDraftValid"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(evaluationWindowAtom, getInterfaceValue("evaluationWindow"));

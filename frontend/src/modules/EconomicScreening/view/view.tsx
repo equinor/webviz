@@ -10,8 +10,9 @@ import { Combobox } from "@lib/components/Combobox";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { CashFlowProfileType, EarlyEconomicMeasure, EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import { countPositiveNpvAtBreakEvenTarget } from "@modules/EconomicScreening/utils/distributionAggregation";
+import { countPositiveNpvAtTarget } from "@modules/EconomicScreening/utils/distributionAggregation";
 import { getMeasureUnit, getMeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
+import { convertOilPriceToSimulatorUnit } from "@modules/EconomicScreening/utils/unitConversion";
 
 import type { Interfaces } from "../interfaces";
 
@@ -22,6 +23,7 @@ import {
     earlyValueConfigurationAtom,
     ensembleIdentAtom,
     evaluationWindowAtom,
+    isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     selectedMeasureAtom,
     showCashFlowPlotAtom,
@@ -54,6 +56,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const evaluationWindow = useAtomValue(evaluationWindowAtom);
     const earlyValueConfiguration = useAtomValue(earlyValueConfigurationAtom);
     const earlyValueEndYear = earlyValueConfiguration.endYear;
+    const isCostProfileDraftValid = useAtomValue(isCostProfileDraftValidAtom);
     const priceAssumptions = useAtomValue(priceAssumptionsAtom);
     const isFetching = useAtomValue(isFetchingAtom);
     const { results, oilUnit, gasUnit } = useAtomValue(economicScreeningResultsAtom);
@@ -72,19 +75,22 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         oilPriceBasis: priceAssumptions.oilPriceBasis,
     };
     const measureValues = getMeasureValues(results, selectedMeasure, unitContext);
-    const breakEvenMeasureValues = getMeasureValues(results, EconomicMeasure.BREAK_EVEN_OIL_PRICE, unitContext);
-    const breakEvenValuesByRealization = new Map(
-        breakEvenMeasureValues.realizations.map((realization, index) => [realization, breakEvenMeasureValues.values[index]]),
-    );
-    const breakEvenTargetCount =
+    const targetOilPricePerVolume =
         priceAssumptions.oilPrice === null
             ? null
-            : countPositiveNpvAtBreakEvenTarget(
-                results.map((result) => ({
-                    discountedOilVolume: result.discountedOilVolume,
-                    breakEvenOilPrice: breakEvenValuesByRealization.get(result.realization) ?? null,
-                })),
-                priceAssumptions.oilPrice,
+            : convertOilPriceToSimulatorUnit(priceAssumptions.oilPrice, priceAssumptions.oilPriceBasis, oilUnit);
+    const breakEvenTargetCount =
+        targetOilPricePerVolume === null
+            ? null
+            : countPositiveNpvAtTarget(
+                results.map((result) =>
+                    result.npv === null
+                        ? Number.NaN
+                        : result.npv +
+                          result.discountedOilVolume *
+                              (targetOilPricePerVolume -
+                                  (priceAssumptions.excludeOilRevenue ? 0 : targetOilPricePerVolume)),
+                ),
             );
 
     const plotHeight = Math.max(wrapperDivSize.height - TABLE_AREA_HEIGHT_PX, 200);
@@ -100,10 +106,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 ? results.some((result) => result.hasSalesGasData)
                 : hasNetCashFlow;
     const availableYears = results.flatMap((result) => result.years);
-    const valuationYear = discountAssumptions.baseYear ?? Math.min(...availableYears);
+    const valuationYear = results[0]?.valuationYear ?? discountAssumptions.baseYear ?? Math.min(...availableYears);
     const evaluationYears =
         evaluationWindow.firstYear !== null && evaluationWindow.lastYear !== null
             ? `${evaluationWindow.firstYear}-${evaluationWindow.lastYear}`
+            : evaluationWindow.firstYear !== null
+                ? `${evaluationWindow.firstYear} onward`
+                : evaluationWindow.lastYear !== null
+                    ? `through ${evaluationWindow.lastYear}`
             : "All available years";
     const excludedProducts = [
         priceAssumptions.excludeOilRevenue ? "oil" : null,
@@ -128,18 +138,26 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     ensembleIdentString={ensembleIdent?.toString() ?? ""}
                     ensembleDisplayName={ensembleDisplayName}
                     color={ensembleColor}
-                    enabled={!isFetching && hasResults}
+                    enabled={
+                        !isFetching &&
+                        hasResults &&
+                        (isCostProfileDraftValid ||
+                            ![
+                                EconomicMeasure.NPV,
+                                EconomicMeasure.IRR,
+                                EconomicMeasure.BREAK_EVEN_OIL_PRICE,
+                            ].includes(measure))
+                    }
                     assumptionContext={activeAssumptions.join("; ")}
                 />
             ))}
-            {earlyValueConfiguration.enabled && earlyValueEndYear !== null &&
-                Object.values(EarlyEconomicMeasure).map((measure) => (
+            {Object.values(EarlyEconomicMeasure).map((measure) => (
                     <EarlyMeasureChannelPublisher
                         key={measure}
                         viewContext={props.viewContext}
                         measure={measure}
                         results={results}
-                        endYear={earlyValueEndYear}
+                        endYear={earlyValueEndYear ?? 0}
                         unit={
                             measure === EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME
                                 ? oilUnit
@@ -150,7 +168,13 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         ensembleIdentString={ensembleIdent?.toString() ?? ""}
                         ensembleDisplayName={ensembleDisplayName}
                         color={ensembleColor}
-                        enabled={!isFetching && hasResults}
+                        enabled={
+                            !isFetching &&
+                            hasResults &&
+                            isCostProfileDraftValid &&
+                            earlyValueConfiguration.enabled &&
+                            earlyValueEndYear !== null
+                        }
                         assumptionContext={activeAssumptions.join("; ")}
                     />
                 ))}

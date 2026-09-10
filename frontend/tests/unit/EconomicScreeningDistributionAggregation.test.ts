@@ -4,7 +4,7 @@ import {
     computeEmpiricalExceedance,
     computeDistributionSummary,
     countValuesAboveThreshold,
-    countPositiveNpvAtBreakEvenTarget,
+    countPositiveNpvAtTarget,
 } from "@modules/EconomicScreening/utils/distributionAggregation";
 
 describe("computeEmpiricalExceedance", () => {
@@ -43,17 +43,8 @@ describe("countValuesAboveThreshold", () => {
     });
 });
 
-describe("countPositiveNpvAtBreakEvenTarget", () => {
-    test("uses signed oil volumes to evaluate NPV at the target price", () => {
-        expect(
-            countPositiveNpvAtBreakEvenTarget(
-                [
-                    { discountedOilVolume: 10, breakEvenOilPrice: 50 },
-                    { discountedOilVolume: -10, breakEvenOilPrice: 50 },
-                    { discountedOilVolume: 0, breakEvenOilPrice: null },
-                ],
-                60,
-            ),
-        ).toEqual({ positiveCount: 1, validCount: 2 });
+describe("countPositiveNpvAtTarget", () => {
+    test("includes finite gas-only and zero-oil financial results", () => {
+        expect(countPositiveNpvAtTarget([100, -100, 25, Number.NaN])).toEqual({ positiveCount: 2, validCount: 3 });
     });
 });

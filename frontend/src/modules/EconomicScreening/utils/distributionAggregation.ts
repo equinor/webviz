@@ -21,11 +21,6 @@ export type ThresholdCount = {
     validCount: number;
 };
 
-export type BreakEvenTargetInput = {
-    discountedOilVolume: number;
-    breakEvenOilPrice: number | null;
-};
-
 export type BreakEvenTargetCount = {
     positiveCount: number;
     validCount: number;
@@ -74,21 +69,11 @@ export function countValuesAboveThreshold(values: number[], threshold: number): 
     };
 }
 
-/** Evaluates the sign of NPV at an oil-price target using $NPV = D_{oil}(p - p_{break-even})$. */
-export function countPositiveNpvAtBreakEvenTarget(
-    values: BreakEvenTargetInput[],
-    targetOilPrice: number,
-): BreakEvenTargetCount {
-    const validValues = values.filter(
-        (value) =>
-            value.breakEvenOilPrice !== null &&
-            Number.isFinite(value.discountedOilVolume) &&
-            Number.isFinite(value.breakEvenOilPrice),
-    );
+/** Counts finite NPV values evaluated at the entered oil-price target. */
+export function countPositiveNpvAtTarget(npvValues: number[]): BreakEvenTargetCount {
+    const validValues = npvValues.filter(Number.isFinite);
     return {
-        positiveCount: validValues.filter(
-            (value) => value.discountedOilVolume * (targetOilPrice - value.breakEvenOilPrice!) > 0,
-        ).length,
+        positiveCount: validValues.filter((value) => value > 0).length,
         validCount: validValues.length,
     };
 }

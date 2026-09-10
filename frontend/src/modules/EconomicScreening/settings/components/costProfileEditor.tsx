@@ -18,6 +18,7 @@ export type CostProfileEditorProps = {
     isDelta: boolean;
     evaluationWindow: EvaluationWindow;
     onValueChange: (costProfile: CostProfileEntry[]) => void;
+    onValidityChange: (isValid: boolean) => void;
 };
 
 export function validateCostProfile(costProfile: EditableCostProfileEntry[], isDelta: boolean): string | null {
@@ -79,13 +80,17 @@ export function getCostYearsOutsideEvaluationWindow(
 }
 
 export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNode {
-    const { value, onValueChange } = props;
+    const { value, onValueChange, onValidityChange, isDelta } = props;
 
     const [immediateValue, setImmediateValue] = React.useState<EditableCostProfileEntry[]>(value);
     const [previousValue, setPreviousValue] = React.useState<CostProfileEntry[]>(value);
     const [pasteError, setPasteError] = React.useState<string | null>(null);
 
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, COST_INPUT_DEBOUNCE_MS);
+
+    React.useEffect(() => {
+        onValidityChange(validateCostProfile(immediateValue, isDelta) === null);
+    }, [immediateValue, isDelta, onValidityChange]);
 
     if (previousValue !== value) {
         setPreviousValue(value);

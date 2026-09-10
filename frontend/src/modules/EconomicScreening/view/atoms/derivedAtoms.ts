@@ -25,7 +25,9 @@ import { selectedEnsembleIdentAtom } from "../../settings/atoms/persistableFixab
 import {
     costProfileAtom,
     discountAssumptionsAtom,
+    earlyValueConfigurationAtom,
     evaluationWindowAtom,
+    isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     salesGasStrategyAtom,
 } from "./baseAtoms";
@@ -38,6 +40,8 @@ export type SalesGasData = {
     hasZeroGasConsumption: boolean;
     isGasConsumptionMissing: boolean;
     isGasInjectionMissing: boolean;
+    isGasConsumptionAssumedZero: boolean;
+    isGasInjectionAssumedZero: boolean;
     incompleteInjectionRealizations: number[];
     incompleteConsumptionRealizations: number[];
 };
@@ -90,6 +94,8 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
             hasZeroGasConsumption: salesGasStrategy.hasGasConsumption && isCumulativeVectorAllZero(gasConsumptionData),
             isGasConsumptionMissing: !salesGasStrategy.hasGasConsumption,
             isGasInjectionMissing: false,
+            isGasConsumptionAssumedZero: false,
+            isGasInjectionAssumedZero: false,
             incompleteInjectionRealizations: [],
             incompleteConsumptionRealizations: [],
         };
@@ -116,6 +122,12 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
             hasZeroGasConsumption: salesGasStrategy.hasGasConsumption && isCumulativeVectorAllZero(gasConsumptionData),
             isGasConsumptionMissing: !salesGasStrategy.hasGasConsumption,
             isGasInjectionMissing: !salesGasStrategy.hasGasInjection,
+            isGasConsumptionAssumedZero:
+                !salesGasStrategy.hasGasConsumption &&
+                (missingComponentAssumptions?.assumeMissingConsumptionAsZero ?? false),
+            isGasInjectionAssumedZero:
+                !salesGasStrategy.hasGasInjection &&
+                (missingComponentAssumptions?.assumeMissingInjectionAsZero ?? false),
             incompleteInjectionRealizations: derivedSalesGas.incompleteInjectionRealizations,
             incompleteConsumptionRealizations: derivedSalesGas.incompleteConsumptionRealizations,
         };
@@ -127,6 +139,8 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
         hasZeroGasConsumption: false,
         isGasConsumptionMissing: true,
         isGasInjectionMissing: true,
+        isGasConsumptionAssumedZero: false,
+        isGasInjectionAssumedZero: false,
         incompleteInjectionRealizations: [],
         incompleteConsumptionRealizations: [],
     };
@@ -139,6 +153,8 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const priceAssumptions = get(priceAssumptionsAtom);
     const costProfile = get(costProfileAtom);
     const evaluationWindow = get(evaluationWindowAtom);
+    const earlyValueConfiguration = get(earlyValueConfigurationAtom);
+    const isCostProfileDraftValid = get(isCostProfileDraftValidAtom);
 
     const warnings: string[] = [];
     const errors: string[] = [];
@@ -147,7 +163,9 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const gasUnit = salesGasData.unit;
     const salesGasStrategy = get(salesGasStrategyAtom);
 
-    if (salesGasData.isGasConsumptionMissing) {
+    if (salesGasData.isGasConsumptionAssumedZero) {
+        warnings.push("Assuming missing FGCT is zero.");
+    } else if (salesGasData.isGasConsumptionMissing) {
         warnings.push(
             salesGasStrategy.kind === "DIRECT"
                 ? "Gas consumption data unavailable."
@@ -156,7 +174,9 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     } else if (salesGasData.hasZeroGasConsumption) {
         warnings.push("FGCT is zero in all realizations, so no gas consumption is modelled.");
     }
-    if (salesGasData.isGasInjectionMissing && salesGasData.series.length > 0) {
+    if (salesGasData.isGasInjectionAssumedZero) {
+        warnings.push("Assuming missing FGIT is zero.");
+    } else if (salesGasData.isGasInjectionMissing && salesGasData.series.length > 0) {
         warnings.push(
             "FGIT is not available. Sales gas cannot be derived until a zero-injection assumption is accepted.",
         );
@@ -177,6 +197,32 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     }
 
     const normalizedProfiles = normalizeEconomicProfiles(oilProductionData, salesGasData.series);
+    const availableYears = normalizedProfiles.flatMap((profile) => profile.years);
+    const firstAvailableYear = Math.min(...availableYears);
+    const lastAvailableYear = Math.max(...availableYears);
+
+    if (
+        evaluationWindow.firstYear !== null &&
+        evaluationWindow.lastYear !== null &&
+        evaluationWindow.firstYear > evaluationWindow.lastYear
+    ) {
+        errors.push("Evaluation start year must be before or equal to the end year.");
+    }
+
+    const resolvedEvaluationFirstYear = evaluationWindow.firstYear ?? firstAvailableYear;
+    const resolvedEvaluationLastYear = evaluationWindow.lastYear ?? lastAvailableYear;
+    if (
+        earlyValueConfiguration.enabled &&
+        (earlyValueConfiguration.endYear === null ||
+            earlyValueConfiguration.endYear < resolvedEvaluationFirstYear ||
+            earlyValueConfiguration.endYear > resolvedEvaluationLastYear)
+    ) {
+        errors.push("Early-value end year must be within the evaluation range.");
+    }
+
+    if (errors.length > 0) {
+        return { results: [], oilUnit, gasUnit, warnings, errors };
+    }
 
     const gasToOilEquivalentDivisor =
         gasUnit === ""
@@ -210,9 +256,10 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         return { results: [], oilUnit, gasUnit, warnings, errors };
     }
 
+    const resolvedAutomaticBaseYear = firstAvailableYear;
     const assumptions: ResolvedEconomicAssumptions = {
         discountRateFraction: discountAssumptions.discountRatePercent / 100,
-        baseYear: discountAssumptions.baseYear,
+        baseYear: discountAssumptions.baseYear ?? (Number.isFinite(resolvedAutomaticBaseYear) ? resolvedAutomaticBaseYear : null),
         convention: discountAssumptions.convention,
         investmentTiming: discountAssumptions.investmentTiming,
         gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? discountAssumptions.gasToOilEquivalentFactor,
@@ -225,6 +272,27 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const results = normalizedProfiles.map((profile) => {
         return computeRealizationEconomics(profile, assumptions, costProfile, evaluationWindow);
     });
+
+    if (!isCostProfileDraftValid) {
+        warnings.push("Financial results are unavailable until the cost schedule is valid.");
+        return {
+            results: results.map((result) => ({
+                ...result,
+                npv: null,
+                irr: null,
+                irrStatus: undefined,
+                breakEvenOilPrice: null,
+                breakEvenSlopeDirection: undefined,
+                netCashFlow: null,
+                discountedNetCashFlow: null,
+                cumulativeDiscountedCashFlow: null,
+            })),
+            oilUnit,
+            gasUnit,
+            warnings,
+            errors,
+        };
+    }
 
     return { results, oilUnit, gasUnit, warnings, errors };
 });

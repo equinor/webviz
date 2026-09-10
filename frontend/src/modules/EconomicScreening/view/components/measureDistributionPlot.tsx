@@ -32,8 +32,9 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                     y: exceedancePoints.map((point) => point.percentAbove),
                     customdata: exceedancePoints.map((point) => point.countAbove),
                     type: "scatter",
-                    mode: "lines",
+                    mode: "lines+markers",
                     line: { color: props.color, shape: "hv" },
+                    marker: { color: props.color, size: 6 },
                     hovertemplate: "Value: %{x}<br>Realizations above: %{customdata}<br>Above: %{y:.1f}%<extra></extra>",
                 } as Partial<PlotData>,
             ]

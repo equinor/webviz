@@ -45,6 +45,7 @@ export const priceAssumptionsAtom = atom<PriceAssumptions>({
 });
 
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
+export const isCostProfileDraftValidAtom = atom<boolean>(true);
 
 export const evaluationWindowAtom = atom<EvaluationWindow>({ firstYear: null, lastYear: null });
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
@@ -54,4 +55,4 @@ export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUN
 export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.EXCEEDANCE);
 
 export const showCashFlowPlotAtom = atom<boolean>(false);
-export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_NET_CASH_FLOW);
+export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_OIL_VOLUME);

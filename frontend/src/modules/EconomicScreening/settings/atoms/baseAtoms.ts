@@ -33,6 +33,7 @@ export const gasPriceBasisAtom = atom<GasPriceBasis>(GasPriceBasis.PER_SM3);
 export const excludeGasRevenueAtom = atom<boolean>(false);
 
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
+export const isCostProfileDraftValidAtom = atom<boolean>(true);
 
 export const evaluationWindowAtom = atom<EvaluationWindow>({ firstYear: null, lastYear: null });
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
@@ -40,7 +41,7 @@ export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabl
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.EXCEEDANCE);
 export const showCashFlowPlotAtom = atom<boolean>(false);
-export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_NET_CASH_FLOW);
+export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_OIL_VOLUME);
 
 /** Explicit zero assumptions, keyed by the ensemble identity they apply to. */
 export const missingComponentAssumptionsAtom = atom<Record<string, MissingComponentAssumptions>>({});

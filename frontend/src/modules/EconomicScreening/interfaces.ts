@@ -18,6 +18,7 @@ import {
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
     investmentTimingAtom,
+    isCostProfileDraftValidAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     selectedMeasureAtom,
@@ -43,6 +44,7 @@ export type SettingsToViewInterface = {
     discountAssumptions: DiscountAssumptions;
     priceAssumptions: PriceAssumptions;
     costProfile: CostProfileEntry[];
+    isCostProfileDraftValid: boolean;
     evaluationWindow: EvaluationWindow;
     earlyValueConfiguration: EarlyValueConfiguration;
     selectedMeasure: EconomicMeasure;
@@ -84,6 +86,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     costProfile: (get) => {
         return get(costProfileAtom);
+    },
+    isCostProfileDraftValid: (get) => {
+        return get(isCostProfileDraftValidAtom);
     },
     evaluationWindow: (get) => {
         return get(evaluationWindowAtom);

@@ -53,6 +53,7 @@ import {
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
     investmentTimingAtom,
+    isCostProfileDraftValidAtom,
     missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
@@ -85,6 +86,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [gasPriceBasis, setGasPriceBasis] = useAtom(gasPriceBasisAtom);
     const [excludeGasRevenue, setExcludeGasRevenue] = useAtom(excludeGasRevenueAtom);
     const [costProfile, setCostProfile] = useAtom(costProfileAtom);
+    const [, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
     const [showCashFlowPlot, setShowCashFlowPlot] = useAtom(showCashFlowPlotAtom);
@@ -124,7 +126,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         statusWriter.addError("FOPT is not available for the selected ensemble.");
     }
     if (!vectorListQuery.isFetching && selectedEnsembleIdent.value && salesGasStrategy.kind === "UNAVAILABLE") {
-        statusWriter.addWarning("Neither FGST nor FGPT is available. Gas volumes are treated as zero.");
+        statusWriter.addWarning("Neither FGST nor FGPT is available. Gas revenue must be explicitly excluded.");
     }
 
     function handleEnsembleChange(newEnsembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {
@@ -202,6 +204,21 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Setting.Field>
                     <Setting.Field
+                        label="Discount rate [%]"
+                        help={{
+                            title: "Discount rate",
+                            content: "Annual rate used to discount future volumes and cash flow to the valuation date.",
+                        }}
+                    >
+                        <NumberInput
+                            value={immediateDiscountRate}
+                            min={0}
+                            max={25}
+                            step={1}
+                            onValueChange={(newValue) => setImmediateDiscountRate(newValue ?? 0)}
+                        />
+                    </Setting.Field>
+                    <Setting.Field
                         label="Sales gas"
                         help={{ title: "Sales gas", content: salesGasDescription }}
                         loadingOverlay={vectorListQuery.isFetching}
@@ -209,12 +226,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         stacked
                     >
                         <span className="text-sm">
-                            {salesGasStrategy.kind === "DIRECT" ? "FGST" : "FGPT − FGIT − FGCT"}
+                            {salesGasStrategy.kind === "DIRECT" ? "Reported" : "Calculated"}
                         </span>
                     </Setting.Field>
                     {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasInjection && (
                         <CheckboxCompositions.WithLabel
-                            label="Assume missing FGIT is zero"
+                            label="Assume no gas injection"
                             checked={
                                 missingComponentAssumptionsByEnsemble[
                                     selectedEnsembleIdent.value?.toString() ?? ""
@@ -228,7 +245,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     )}
                     {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasConsumption && (
                         <CheckboxCompositions.WithLabel
-                            label="Assume missing FGCT is zero"
+                            label="Assume no gas consumption"
                             checked={
                                 missingComponentAssumptionsByEnsemble[
                                     selectedEnsembleIdent.value?.toString() ?? ""
@@ -273,15 +290,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 }
                             />
                         </>
-                    </Setting.Field>
-                    <Setting.Field label="Discount rate [%]">
-                        <NumberInput
-                            value={immediateDiscountRate}
-                            min={0}
-                            max={25}
-                            step={1}
-                            onValueChange={(newValue) => setImmediateDiscountRate(newValue ?? 0)}
-                        />
                     </Setting.Field>
                     <Setting.Field
                         label="Base year"
@@ -453,12 +461,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             </div>
                         </>
                     </Setting.Field>}
-                    {salesGasStrategy.kind !== "UNAVAILABLE" && <CheckboxCompositions.WithLabel
+                    <CheckboxCompositions.WithLabel
                         label="Exclude gas revenue"
                         checked={excludeGasRevenue}
                         onCheckedChange={setExcludeGasRevenue}
                         size="small"
-                    />}
+                    />
                 </Setting.Section>
 
                 <Setting.Section title="Costs">
@@ -478,6 +486,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             isDelta={isDeltaEnsembleSelected}
                             evaluationWindow={evaluationWindow}
                             onValueChange={setCostProfile}
+                            onValidityChange={setIsCostProfileDraftValid}
                         />
                     </Setting.Field>
                 </Setting.Section>

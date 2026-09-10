@@ -47,6 +47,7 @@ export type RealizationEconomicInput = {
 
 export type RealizationEconomicResult = {
     realization: number;
+    valuationYear: number;
     oilVolumes: number[];
     salesGasVolumes: number[];
     hasOilData: boolean;
@@ -252,26 +253,23 @@ export function computeInternalRateOfReturnDetailed(
     convention: DiscountConvention,
     investmentTiming: InvestmentTiming = InvestmentTiming.START_OF_YEAR,
 ): IrrComputationResult {
-    // Check if there are any non-zero events
-    const hasAnnualTiming = investmentTiming === InvestmentTiming.FOLLOW_ANNUAL_TIMING;
-    const combinedEvents: number[] = [];
-    if (hasAnnualTiming) {
-        for (let i = 0; i < years.length; i++) {
-            combinedEvents.push(revenueMinusOpex[i] - capex[i]);
-        }
-    } else {
-        // Events are at distinct times: capex at start-of-year (offset 0), revenue/opex at mid/year-end.
-        // For assessing conventional profile order chronologically:
-        // For each year: capex event first (-capex), then rev-opex event (+rev-opex).
-        for (let i = 0; i < years.length; i++) {
-            if (Math.abs(capex[i]) > 1e-12) {
-                combinedEvents.push(-capex[i]);
-            }
-            if (Math.abs(revenueMinusOpex[i]) > 1e-12) {
-                combinedEvents.push(revenueMinusOpex[i]);
-            }
-        }
+    const annualOffset = convention === DiscountConvention.MID_YEAR ? 0.5 : 1.0;
+    const investmentOffset = investmentTiming === InvestmentTiming.START_OF_YEAR ? 0.0 : annualOffset;
+    const eventsByTime = new Map<number, number>();
+
+    const addEvent = (time: number, value: number) => {
+        eventsByTime.set(time, (eventsByTime.get(time) ?? 0) + value);
+    };
+
+    for (let i = 0; i < years.length; i++) {
+        addEvent(years[i] + annualOffset, revenueMinusOpex[i]);
+        addEvent(years[i] + investmentOffset, -capex[i]);
     }
+
+    const events = Array.from(eventsByTime, ([time, value]) => ({ time, value }))
+        .filter((event) => Math.abs(event.value) > 1e-12)
+        .sort((first, second) => first.time - second.time);
+    const combinedEvents = events.map((event) => event.value);
 
     const hasPositive = combinedEvents.some((v) => v > 1e-12);
     const hasNegative = combinedEvents.some((v) => v < -1e-12);
@@ -284,10 +282,14 @@ export function computeInternalRateOfReturnDetailed(
         return { irr: null, status: IrrStatus.NON_CONVENTIONAL };
     }
 
+    const firstEventTime = events[0].time;
+    const cashFlowScale = sumOf(combinedEvents.map((event) => Math.abs(event)));
+    const residualTolerance = Math.max(cashFlowScale * 1e-12, 1e-12);
     const npvAtRate = (rate: number): number => {
-        const annualDf = makeDiscountFactors(years, rate, baseYear, convention);
-        const invDf = makeInvestmentDiscountFactors(years, rate, baseYear, convention, investmentTiming);
-        return sumDiscounted(revenueMinusOpex, annualDf) - sumDiscounted(capex, invDf);
+        return events.reduce(
+            (sum, event) => sum + event.value / Math.pow(1 + rate, event.time - firstEventTime),
+            0,
+        );
     };
 
     let low = IRR_LOWER_BOUND;
@@ -299,8 +301,8 @@ export function computeInternalRateOfReturnDetailed(
         return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
     }
 
-    if (Math.abs(npvLow) < IRR_TOLERANCE) return { irr: low, status: IrrStatus.CONVERGED };
-    if (Math.abs(npvHigh) < IRR_TOLERANCE) return { irr: high, status: IrrStatus.CONVERGED };
+    if (Math.abs(npvLow) < residualTolerance) return { irr: low, status: IrrStatus.CONVERGED };
+    if (Math.abs(npvHigh) < residualTolerance) return { irr: high, status: IrrStatus.CONVERGED };
 
     if (npvLow * npvHigh > 0) {
         // Try bracket expansion upwards up to 100 (10,000%)
@@ -328,7 +330,7 @@ export function computeInternalRateOfReturnDetailed(
         if (!Number.isFinite(npvMid)) {
             return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
         }
-        if (Math.abs(npvMid) < IRR_TOLERANCE || high - low < IRR_TOLERANCE) {
+        if (Math.abs(npvMid) < residualTolerance || high - low < IRR_TOLERANCE) {
             return { irr: mid, status: IrrStatus.CONVERGED };
         }
         if (npvLow * npvMid < 0) {
@@ -490,6 +492,7 @@ export function computeRealizationEconomics(
 
     return {
         realization: alignedInput.realization,
+        valuationYear: baseYear,
         oilVolumes,
         salesGasVolumes,
         hasOilData,

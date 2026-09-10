@@ -4,6 +4,19 @@ import type { RealizationCumulativeSeries } from "@modules/EconomicScreening/uti
 
 import { computeAnnualVolumesFromCumulative } from "./economicCalculations";
 
+function hasCompleteCumulativeCoverage(timestampsUtcMs: number[], values: number[]): boolean {
+    if (timestampsUtcMs.length !== values.length || timestampsUtcMs.length < 2) {
+        return false;
+    }
+
+    return timestampsUtcMs.every(
+        (timestamp, index) =>
+            Number.isFinite(timestamp) &&
+            Number.isFinite(values[index]) &&
+            (index === 0 || timestamp > timestampsUtcMs[index - 1]),
+    );
+}
+
 /** Converts fetched cumulative vectors into assumption-independent annual realization profiles. */
 export function normalizeEconomicProfiles(
     oilProductionData: VectorRealizationData_api[],
@@ -22,7 +35,9 @@ export function normalizeEconomicProfiles(
         const gasProfile = gasSeries
             ? computeAnnualVolumesFromCumulative(gasSeries.timestampsUtcMs, gasSeries.values)
             : null;
-        const years = oilProfile?.years ?? gasProfile?.years ?? [];
+        const years = Array.from(new Set([...(oilProfile?.years ?? []), ...(gasProfile?.years ?? [])])).sort(
+            (firstYear, secondYear) => firstYear - secondYear,
+        );
         const oilVolumeByYear = new Map(
             oilProfile?.years.map((year, index) => [year, oilProfile.volumes[index]]) ?? [],
         );
@@ -35,8 +50,14 @@ export function normalizeEconomicProfiles(
             years,
             oilVolumes: years.map((year) => oilVolumeByYear.get(year) ?? 0),
             salesGasVolumes: years.map((year) => gasVolumeByYear.get(year) ?? 0),
-            hasOilData: oilSeries !== undefined,
-            hasSalesGasData: gasSeries !== undefined,
+            hasOilData:
+                oilSeries !== undefined &&
+                hasCompleteCumulativeCoverage(oilSeries.timestampsUtcMs, oilSeries.values) &&
+                years.every((year) => oilVolumeByYear.has(year)),
+            hasSalesGasData:
+                gasSeries !== undefined &&
+                hasCompleteCumulativeCoverage(gasSeries.timestampsUtcMs, gasSeries.values) &&
+                years.every((year) => gasVolumeByYear.has(year)),
         };
     });
 }

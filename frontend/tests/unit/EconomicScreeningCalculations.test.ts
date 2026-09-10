@@ -11,6 +11,7 @@ import {
     computeAnnualVolumesFromCumulative,
     extractEarlyValue,
     computeInternalRateOfReturn,
+    computeInternalRateOfReturnDetailed,
     computeRealizationEconomics,
     makeDiscountFactors,
     makeInvestmentDiscountFactors,
@@ -114,7 +115,7 @@ describe("normalizeEconomicProfiles", () => {
                 oilVolumes: [100, 200],
                 salesGasVolumes: [0, 50],
                 hasOilData: true,
-                hasSalesGasData: true,
+                hasSalesGasData: false,
             },
         ]);
     });
@@ -135,6 +136,23 @@ describe("normalizeEconomicProfiles", () => {
 
         expect(profiles[0].hasSalesGasData).toBe(false);
         expect(profiles[0].salesGasVolumes).toEqual([0]);
+    });
+
+    test("marks a product with a missing annual interval as incomplete", () => {
+        const profiles = normalizeEconomicProfiles(
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2021), yearStartUtcMs(2022)],
+                    values: [0, Number.NaN, 200],
+                    unit: "SM3",
+                    isRate: false,
+                },
+            ],
+            [],
+        );
+
+        expect(profiles[0].hasOilData).toBe(false);
     });
 
     test("preserves a gas-only realization", () => {
@@ -202,6 +220,32 @@ describe("computeInternalRateOfReturn", () => {
 
     test("returns null when the cash flow never turns negative", () => {
         expect(computeInternalRateOfReturn([2020, 2021], [100, 50], 2020, DiscountConvention.YEAR_END)).toBeNull();
+    });
+
+    test("is independent of the reporting valuation year", () => {
+        const result = computeInternalRateOfReturnDetailed(
+            [2040, 2041],
+            [-100, 110],
+            [0, 0],
+            2020,
+            DiscountConvention.YEAR_END,
+            InvestmentTiming.FOLLOW_ANNUAL_TIMING,
+        );
+
+        expect(result).toEqual({ irr: expect.closeTo(0.1, 9), status: IrrStatus.CONVERGED });
+    });
+
+    test("aggregates coincident investment and operating events before classifying cash flow", () => {
+        const result = computeInternalRateOfReturnDetailed(
+            [2020, 2021],
+            [150, 60],
+            [100, 100],
+            2020,
+            DiscountConvention.YEAR_END,
+            InvestmentTiming.START_OF_YEAR,
+        );
+
+        expect(result).toEqual({ irr: expect.closeTo(0.063941, 5), status: IrrStatus.CONVERGED });
     });
 });
 
@@ -337,6 +381,18 @@ describe("computeRealizationEconomics", () => {
 
         expect(result.years).toEqual([2021]);
         expect(result.undiscountedOilVolume).toBe(200);
+    });
+
+    test("retains the resolved automatic valuation year when the evaluation horizon changes", () => {
+        const assumptions = makeAssumptions({ baseYear: 2020 });
+        const fullResult = computeRealizationEconomics(input, assumptions, [], NO_EVALUATION_WINDOW);
+        const restrictedResult = computeRealizationEconomics(input, assumptions, [], {
+            firstYear: 2021,
+            lastYear: null,
+        });
+
+        expect(restrictedResult.discountFactors[0]).toBeCloseTo(fullResult.discountFactors[1], 10);
+        expect(restrictedResult.discountFactors[0]).toBeCloseTo(1 / 1.1 ** 2, 10);
     });
 
     test("defaults the base year to the first year of the profile", () => {
