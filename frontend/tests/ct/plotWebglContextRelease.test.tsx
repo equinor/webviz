@@ -91,6 +91,9 @@ function readGlStats(page: Page): Promise<GlStats> {
 const glCanvasCount = (page: Page): Promise<number> =>
     page.evaluate(() => document.querySelectorAll("canvas.gl-canvas").length);
 
+const afterPlotCount = (page: Page): Promise<number> =>
+    page.evaluate(() => (window as unknown as { __webvizAfterPlotCount?: number }).__webvizAfterPlotCount ?? 0);
+
 test.describe("plotly WebGL context release", () => {
     test.slow(); // plotly bundle + repeated react()/purge cycles are heavy, especially on webkit
 
@@ -142,11 +145,22 @@ test.describe("plotly WebGL context release", () => {
         const baseline = await readGlStats(page);
 
         // Plain data updates - a scattergl trace stays present, so the gl layer is not torn down.
+        // Synchronize on plotly's own `plotly_afterplot` so each update is fully flushed before the
+        // next click, then assert that no new WebGL context was created across the whole loop: a
+        // correct `Plotly.react()` data update reuses the live regl context. If the wrapper's
+        // `config` object regressed to a fresh reference per render, plotly would fall back to a
+        // full `Plotly.newPlot()` on every bump - tearing down and recreating the context each time
+        // (which the release patch would still keep `live` bounded, so `created` is what catches it).
         for (let i = 0; i < 6; i++) {
+            const before = await afterPlotCount(page);
             await cmp.getByTestId("bump").click();
             await expect(cmp.getByTestId("seed")).toHaveText(String(i + 1));
+            await expect.poll(() => afterPlotCount(page)).toBeGreaterThan(before);
         }
-        await expect.poll(() => readGlStats(page).then((s) => s.live)).toBeLessThanOrEqual(baseline.live + 2);
+        const afterBumps = await readGlStats(page);
+        expect(afterBumps.created).toBe(baseline.created);
+        expect(afterBumps.loseContextCalls).toBe(baseline.loseContextCalls);
+        expect(afterBumps.live).toBeLessThanOrEqual(baseline.live + 2);
 
         // Full unmount/remount - the Plots.purge path.
         for (let i = 0; i < 5; i++) {

@@ -29,6 +29,16 @@ function makeTrace(traceType: "scattergl" | "scatter", seed: number): Partial<Pl
  *   tear down and later rebuild its shared WebGL layer - the churn that leaked contexts before the
  *   patch.
  * - `remount` unmounts and remounts the whole plot (the `Plots.purge` path).
+ * - `window.__webvizAfterPlotCount` is bumped on every plotly `plotly_afterplot`, so a test can wait
+ *   for a data update to be flushed into plotly before inspecting WebGL state. It is a plain counter
+ *   (not React state) on purpose - reflecting it back into render would create a feedback loop when
+ *   the wrapper's plot props are unstable, which is one of the regressions these tests guard against.
+ *
+ * An `onDownloadClick` handler is always passed: it makes {@link Plot} put a `click` closure into
+ * plotly's `config`, and `Plotly.react()` compares `config` by value and treats a fresh closure as
+ * a config change - which forces a full `Plotly.newPlot()` (WebGL contexts torn down and rebuilt).
+ * The wrapper is expected to memoize that config so plain data updates do not churn it; the
+ * "data updates ... keep the scattergl plot healthy" test asserts exactly that.
  */
 export function PlotWebglHarness(props: Props): React.JSX.Element {
     const traceType = props.traceType ?? "scattergl";
@@ -36,6 +46,18 @@ export function PlotWebglHarness(props: Props): React.JSX.Element {
     const [seed, setSeed] = React.useState(0);
     const [hasTraces, setHasTraces] = React.useState(true);
     const [mountKey, setMountKey] = React.useState(0);
+
+    // Bumped from plotly's `plotly_afterplot` event so tests can synchronize on the point where a
+    // data update has actually been flushed into plotly (a plain `Plotly.react()` or a full
+    // `Plotly.newPlot()` both fire it), rather than only on the React state change. Deliberately a
+    // window-scoped counter and not React state - see the component doc comment.
+    const handleAfterPlot = React.useCallback(() => {
+        const holder = window as unknown as { __webvizAfterPlotCount?: number };
+        holder.__webvizAfterPlotCount = (holder.__webvizAfterPlotCount ?? 0) + 1;
+    }, []);
+
+    // Puts a `click` closure into plotly's `config` - see the component doc comment.
+    const handleDownloadClick = React.useCallback(() => undefined, []);
 
     const data = React.useMemo<Partial<Plotly.Data>[]>(
         () => (hasTraces ? [makeTrace(traceType, seed)] : []),
@@ -56,7 +78,13 @@ export function PlotWebglHarness(props: Props): React.JSX.Element {
             <div data-testid="seed">{seed}</div>
 
             <div style={{ width: 600, height: 400 }}>
-                <Plot key={mountKey} data={data} style={{ width: "100%", height: "100%" }} />
+                <Plot
+                    key={mountKey}
+                    data={data}
+                    onAfterPlot={handleAfterPlot}
+                    onDownloadClick={handleDownloadClick}
+                    style={{ width: "100%", height: "100%" }}
+                />
             </div>
         </div>
     );
