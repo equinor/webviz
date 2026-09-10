@@ -1,0 +1,130 @@
+import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
+import { setIfDefined } from "@framework/utils/atomUtils";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
+import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
+import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
+import {
+    DiscountConvention,
+    DistributionPlotType,
+    EconomicMeasure,
+    GasPriceBasis,
+    OilPriceBasis,
+} from "@modules/EconomicScreening/typesAndEnums";
+
+import {
+    costProfileAtom,
+    currencyAtom,
+    discountBaseYearAtom,
+    discountConventionAtom,
+    discountRatePercentAtom,
+    distributionPlotTypeAtom,
+    evaluationWindowAtom,
+    gasPriceAtom,
+    gasPriceBasisAtom,
+    gasToOilEquivalentFactorAtom,
+    oilPriceAtom,
+    oilPriceBasisAtom,
+    selectedMeasureAtom,
+    showCashFlowPlotAtom,
+} from "./atoms/baseAtoms";
+import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
+
+export type SerializedSettings = {
+    selectedEnsembleIdentString: string | null;
+    discountRatePercent: number;
+    discountBaseYear: number | null;
+    discountConvention: DiscountConvention;
+    gasToOilEquivalentFactor: number;
+    currency: string;
+    oilPrice: number | null;
+    oilPriceBasis: OilPriceBasis;
+    gasPrice: number | null;
+    gasPriceBasis: GasPriceBasis;
+    costProfile: CostProfileEntry[];
+    evaluationFirstYear: number | null;
+    evaluationLastYear: number | null;
+    selectedMeasure: EconomicMeasure;
+    distributionPlotType: DistributionPlotType;
+    showCashFlowPlot: boolean;
+};
+
+const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
+    properties: {
+        selectedEnsembleIdentString: { type: "string", nullable: true },
+        discountRatePercent: { type: "float64" },
+        discountBaseYear: { type: "int32", nullable: true },
+        discountConvention: { enum: Object.values(DiscountConvention) },
+        gasToOilEquivalentFactor: { type: "float64" },
+        currency: { type: "string" },
+        oilPrice: { type: "float64", nullable: true },
+        oilPriceBasis: { enum: Object.values(OilPriceBasis) },
+        gasPrice: { type: "float64", nullable: true },
+        gasPriceBasis: { enum: Object.values(GasPriceBasis) },
+        costProfile: {
+            elements: {
+                properties: {
+                    year: { type: "int32" },
+                    capex: { type: "float64" },
+                    opex: { type: "float64" },
+                },
+            },
+        },
+        evaluationFirstYear: { type: "int32", nullable: true },
+        evaluationLastYear: { type: "int32", nullable: true },
+        selectedMeasure: { enum: Object.values(EconomicMeasure) },
+        distributionPlotType: { enum: Object.values(DistributionPlotType) },
+        showCashFlowPlot: { type: "boolean" },
+    },
+}));
+
+export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
+
+export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
+    const evaluationWindow = get(evaluationWindowAtom);
+
+    return {
+        selectedEnsembleIdentString: get(selectedEnsembleIdentAtom).value?.toString() ?? null,
+        discountRatePercent: get(discountRatePercentAtom),
+        discountBaseYear: get(discountBaseYearAtom),
+        discountConvention: get(discountConventionAtom),
+        gasToOilEquivalentFactor: get(gasToOilEquivalentFactorAtom),
+        currency: get(currencyAtom),
+        oilPrice: get(oilPriceAtom),
+        oilPriceBasis: get(oilPriceBasisAtom),
+        gasPrice: get(gasPriceAtom),
+        gasPriceBasis: get(gasPriceBasisAtom),
+        costProfile: get(costProfileAtom),
+        evaluationFirstYear: evaluationWindow.firstYear,
+        evaluationLastYear: evaluationWindow.lastYear,
+        selectedMeasure: get(selectedMeasureAtom),
+        distributionPlotType: get(distributionPlotTypeAtom),
+        showCashFlowPlot: get(showCashFlowPlotAtom),
+    };
+};
+
+export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
+    const selectedEnsembleIdent = raw.selectedEnsembleIdentString
+        ? (getEnsembleIdentFromString(raw.selectedEnsembleIdentString) ?? undefined)
+        : undefined;
+
+    const evaluationWindow =
+        raw.evaluationFirstYear !== undefined || raw.evaluationLastYear !== undefined
+            ? { firstYear: raw.evaluationFirstYear ?? null, lastYear: raw.evaluationLastYear ?? null }
+            : undefined;
+
+    setIfDefined(set, selectedEnsembleIdentAtom, selectedEnsembleIdent);
+    setIfDefined(set, discountRatePercentAtom, raw.discountRatePercent);
+    setIfDefined(set, discountBaseYearAtom, raw.discountBaseYear);
+    setIfDefined(set, discountConventionAtom, raw.discountConvention);
+    setIfDefined(set, gasToOilEquivalentFactorAtom, raw.gasToOilEquivalentFactor);
+    setIfDefined(set, currencyAtom, raw.currency);
+    setIfDefined(set, oilPriceAtom, raw.oilPrice);
+    setIfDefined(set, oilPriceBasisAtom, raw.oilPriceBasis);
+    setIfDefined(set, gasPriceAtom, raw.gasPrice);
+    setIfDefined(set, gasPriceBasisAtom, raw.gasPriceBasis);
+    setIfDefined(set, costProfileAtom, raw.costProfile);
+    setIfDefined(set, evaluationWindowAtom, evaluationWindow);
+    setIfDefined(set, selectedMeasureAtom, raw.selectedMeasure);
+    setIfDefined(set, distributionPlotTypeAtom, raw.distributionPlotType);
+    setIfDefined(set, showCashFlowPlotAtom, raw.showCashFlowPlot);
+};
