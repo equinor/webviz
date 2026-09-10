@@ -26,6 +26,10 @@ from ._smda_get_request import smda_get_request_async, smda_get_aggregation_requ
 LOGGER = logging.getLogger(__name__)
 
 
+def _pick_has_complete_data(pick_result: dict) -> bool:
+    return all(pick_result.get(key) is not None for key in ["northing", "easting", "tvd", "tvd_msl"])
+
+
 class SmdaEndpoints:
     STRAT_UNITS = "strat-units"
     WELLBORE_STRATIGRAPHY = "wellbore-stratigraphy"
@@ -386,7 +390,7 @@ class SmdaAccess:
         picks: List[WellborePick] = []
         for result in results:
             # Drop any picks with missing data
-            if all(result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]):
+            if _pick_has_complete_data(result):
                 picks.append(WellborePick(**result))
             else:
                 LOGGER.warning(
@@ -423,7 +427,7 @@ class SmdaAccess:
         picks: List[WellborePick] = []
         for result in results:
             # Drop any picks with missing data
-            if all(result.get(key) is not None for key in ["northing", "easting", "tvd", "tvd_msl"]):
+            if _pick_has_complete_data(result):
                 picks.append(WellborePick(**result))
             else:
                 LOGGER.warning(
@@ -458,7 +462,7 @@ class SmdaAccess:
 
         for result in results:
             # Drop any picks with missing data
-            if all(result.get(key) is not None for key in ["northing", "easting", "tvd", "tvd_msl"]):
+            if _pick_has_complete_data(result):
                 picks.append(WellborePick(**result))
             else:
                 LOGGER.warning(
