@@ -5,7 +5,7 @@ import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { HoverService } from "@framework/HoverService";
 import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
-import { isWellboreIntersectionType } from "@framework/types/intersection";
+import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
 import type { EsvIntersectionReadoutEvent, EsvLayer, Bounds } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
@@ -17,7 +17,9 @@ import { PositionReadout, type PositionCoordinates } from "@modules/_shared/comp
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 import type { IntersectionSettingValue } from "@modules/_shared/DataProviderFramework/settings/implementations/IntersectionSetting";
+import { CURVE_FITTING_EPSILON } from "@modules/_shared/Intersection/intersectionPolylineUtils";
 import { makeFenceSourceId } from "@modules/_shared/utils/fence";
+import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 
 import { inBounds } from "../utils/boundsUtils";
@@ -61,6 +63,28 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
 
     // Extract wellbore and fence id
+    const simplifiedExtendedPath = React.useMemo(() => {
+        if (!props.referenceSystem) return null;
+        if (!props.intersectionSource) return null;
+
+        if (props.intersectionSource.type === IntersectionType.CUSTOM_POLYLINE) {
+            return props.referenceSystem.path ?? null;
+        }
+
+        return calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
+            props.referenceSystem.path,
+            props.intersectionSource.extensionLength,
+            CURVE_FITTING_EPSILON,
+        ).simplifiedWellboreTrajectoryXy;
+    }, [props.referenceSystem, props.intersectionSource]);
+
+    const extensionLength = React.useMemo(() => {
+        if (!isWellboreIntersectionType(props.intersectionSource?.type)) return 0;
+
+        return props.intersectionSource.extensionLength;
+    }, [props.intersectionSource]);
+
+    // Extract wellbore and polyline id
     const wellboreUuid =
         props.intersectionSource && isWellboreIntersectionType(props.intersectionSource.type)
             ? props.intersectionSource.uuid
@@ -119,8 +143,52 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
 
             // Extract UTM coordinates from the intersection ref system
-            const utmPos = props.referenceSystem.getPosition(position.x);
-            setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
+            // ! When using a wellbore path with an extension length, we might hover
+            // ! outside of the "actual" intersection bounding box. This means we will
+            // ! need to interpolate a position based on the outgoing vector.
+            // ! ESV does support this, but it seems to not fully match our own extension
+            // ! done in calcExtendedSimplifiedWellboreTrajectoryInXYPlane() when making
+            // ! some layers (like Seismic Fence). Additionally, ESV does not seem to
+            // ! handle strictly vertical trajectories, so we'll use our own logic here
+
+            // This to if cases only happens if the intersection is an extended well track
+            if (position.x < 0) {
+                const positionAlongSegment = position.x + extensionLength;
+
+                // We're in the *one* extension segment at the *start* of the simplified
+                // track, which is always of 'extensionLength' length
+                const segmentStart = simplifiedExtendedPath![0];
+                const segmentEnd = simplifiedExtendedPath![1];
+
+                const ratio = positionAlongSegment / extensionLength;
+
+                setMouseCursorUtmCoordinate({
+                    x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
+                    y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
+                    z: position.y,
+                });
+            } else if (position.x > props.referenceSystem.displacement) {
+                const positionAlongSegment = position.x - props.referenceSystem.displacement;
+
+                // We're in the *one* extension segment at the *end* of the simplified
+                // track, which is always of 'extensionLength' length
+                const segmentStart = simplifiedExtendedPath!.at(-2)!;
+                const segmentEnd = simplifiedExtendedPath!.at(-1)!;
+
+                const ratio = positionAlongSegment / extensionLength;
+
+                setMouseCursorUtmCoordinate({
+                    x: segmentStart[0] + ratio * (segmentEnd[0] - segmentStart[0]),
+                    y: segmentStart[1] + ratio * (segmentEnd[1] - segmentStart[1]),
+                    z: position.y,
+                });
+            } else {
+                // Get a MD position along the well track.
+                const lengthAlong = props.referenceSystem.unproject(position.x) ?? position.x;
+                const utmPos = props.referenceSystem.getPosition(lengthAlong);
+
+                setMouseCursorUtmCoordinate({ x: utmPos[0], y: utmPos[1], z: position.y });
+            }
         },
         [
             props.viewport,
@@ -129,6 +197,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             props.bounds.x,
             props.referenceSystem,
             fenceSourceId,
+            extensionLength,
+            simplifiedExtendedPath,
             setHoveredFence,
         ],
     );
