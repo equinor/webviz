@@ -100,3 +100,22 @@ export function getMeasureUnit(measure: EconomicMeasure, context: MeasureUnitCon
 export function getMeasureDisplayName(measure: EconomicMeasure): string {
     return EconomicMeasureEnumToStringMapping[measure];
 }
+
+export function getMeasureUnavailableReason(results: RealizationEconomicResult[], measure: EconomicMeasure): string {
+    if (measure === EconomicMeasure.NPV || measure === EconomicMeasure.IRR) {
+        const financialReason = results.find((result) => result.financialReason)?.financialReason;
+        if (financialReason) {
+            return financialReason;
+        }
+        if (measure === EconomicMeasure.IRR) {
+            const status = results.find((result) => result.irrStatus)?.irrStatus;
+            if (status === "NO_FINITE_ROOT") return "No finite IRR for the available cash-flow signs.";
+            if (status === "NON_CONVENTIONAL") return "Non-conventional cash flow has no selected IRR root.";
+            if (status === "OUT_OF_DOMAIN") return "IRR could not be solved within the supported rate range.";
+        }
+    }
+    if (measure === EconomicMeasure.BREAK_EVEN_OIL_PRICE) {
+        return "Break-even requires complete oil data, a gas revenue assumption, and non-zero costs.";
+    }
+    return "No valid values are available for this metric.";
+}

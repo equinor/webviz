@@ -59,6 +59,7 @@ export type RealizationEconomicResult = {
     undiscountedOilVolume: number;
     undiscountedSalesGasVolume: number;
     npv: number | null;
+    financialReason?: string;
     irr: number | null;
     irrStatus?: IrrStatus;
     breakEvenOilPrice: number | null;
@@ -432,6 +433,17 @@ export function computeRealizationEconomics(
         hasOilPrice &&
         hasGasPrice &&
         (hasSalesGasData || isGasRevenueExcluded);
+    const financialReason = !hasOilData
+        ? "Oil production data is incomplete."
+        : !hasSalesGasData && !isGasRevenueExcluded
+            ? "Sales gas data is incomplete or unavailable."
+            : !hasOilPrice
+                ? "Enter an oil price or exclude oil revenue."
+                : !hasGasPrice
+                    ? "Enter a gas price or exclude gas revenue."
+                    : !(hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry)
+                        ? "Enter prices, exclude revenue, or add costs."
+                        : undefined;
 
     let netCashFlow: number[] | null = null;
     let discountedNetCashFlow: number[] | null = null;
@@ -504,6 +516,7 @@ export function computeRealizationEconomics(
         undiscountedOilVolume: sumOf(oilVolumes),
         undiscountedSalesGasVolume: sumOf(salesGasVolumes),
         npv,
+        financialReason,
         irr,
         irrStatus,
         breakEvenOilPrice,

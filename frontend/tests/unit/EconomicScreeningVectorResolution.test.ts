@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import type { VectorRealizationData_api } from "@api";
 import {
+    countCumulativeVectorNonZeroRealizations,
     determineSalesGasStrategy,
     deriveSalesGasCumulative,
     isCumulativeVectorAllZero,
@@ -117,4 +118,14 @@ describe("isCumulativeVectorAllZero", () => {
     test("is false for no data because zero consumption is not confirmed", () => {
         expect(isCumulativeVectorAllZero([])).toBe(false);
     });
+});
+
+test("counts realizations with non-zero terminal consumption", () => {
+    expect(
+        countCumulativeVectorNonZeroRealizations([
+            makeVectorData(1, [0, 1], [0, 0]),
+            makeVectorData(2, [0, 1], [0, 5]),
+            makeVectorData(3, [0, 1], [0, -2]),
+        ]),
+    ).toBe(2);
 });

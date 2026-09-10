@@ -120,6 +120,33 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
     return { queries };
 });
 
+/** Delta FGCT is differenced server-side; fetch constituent FGCT separately for diagnostics only. */
+export const deltaConstituentGasConsumptionQueriesAtom = atomWithQueries((get) => {
+    const ensembleIdent = get(ensembleIdentAtom);
+    const deltaEnsembleIdent =
+        ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) ? ensembleIdent : null;
+    const constituents = deltaEnsembleIdent
+        ? [deltaEnsembleIdent.getComparisonEnsembleIdent(), deltaEnsembleIdent.getReferenceEnsembleIdent()]
+        : [];
+    const realizationsEncodedAsUintListStr = get(encodedRealizationsAtom);
+
+    const queries = constituents.map((constituent) => {
+        const options = getRealizationsVectorDataOptions({
+            query: {
+                case_uuid: constituent.getCaseUuid(),
+                ensemble_name: constituent.getEnsembleName(),
+                vector_name: GAS_CONSUMPTION_VECTOR,
+                resampling_frequency: Frequency_api.YEARLY,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(constituent),
+            },
+        });
+        return () => ({ ...options, enabled: true });
+    });
+
+    return { queries };
+});
+
 export const vectorDataQueriesAtom = atom((get) => {
     return get(isDeltaEnsembleAtom)
         ? get(deltaEnsembleVectorDataQueriesAtom)

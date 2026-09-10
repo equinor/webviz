@@ -1,6 +1,8 @@
 import { atom } from "jotai";
 
 import type { VectorRealizationData_api } from "@api";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import {
     computeRealizationEconomics,
     type RealizationEconomicResult,
@@ -15,6 +17,7 @@ import {
 import type { RealizationCumulativeSeries } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
     deriveSalesGasCumulative,
+    countCumulativeVectorNonZeroRealizations,
     isCumulativeVectorAllZero,
     toRealizationCumulativeSeries,
 } from "@modules/EconomicScreening/utils/vectorResolution";
@@ -26,12 +29,17 @@ import {
     costProfileAtom,
     discountAssumptionsAtom,
     earlyValueConfigurationAtom,
+    ensembleIdentAtom,
     evaluationWindowAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     salesGasStrategyAtom,
 } from "./baseAtoms";
-import { vectorDataQueriesAtom, VectorQueryIndex } from "./queryAtoms";
+import {
+    deltaConstituentGasConsumptionQueriesAtom,
+    vectorDataQueriesAtom,
+    VectorQueryIndex,
+} from "./queryAtoms";
 
 export type SalesGasData = {
     series: RealizationCumulativeSeries[];
@@ -149,6 +157,9 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
 export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get) => {
     const oilProductionData = get(oilProductionDataAtom);
     const salesGasData = get(salesGasDataAtom);
+    const ensembleIdent = get(ensembleIdentAtom);
+    const isDeltaEnsemble = ensembleIdent ? isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) : false;
+    const deltaConstituentConsumptionQueries = get(deltaConstituentGasConsumptionQueriesAtom);
     const discountAssumptions = get(discountAssumptionsAtom);
     const priceAssumptions = get(priceAssumptionsAtom);
     const costProfile = get(costProfileAtom);
@@ -171,8 +182,28 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
                 ? "Gas consumption data unavailable."
                 : "FGCT is not available. Sales gas is excluded until a zero-consumption assumption is accepted.",
         );
-    } else if (salesGasData.hasZeroGasConsumption) {
+    } else if (salesGasData.hasZeroGasConsumption && !isDeltaEnsemble) {
         warnings.push("FGCT is zero in all realizations, so no gas consumption is modelled.");
+    }
+    if (isDeltaEnsemble && deltaConstituentConsumptionQueries.length === 2) {
+        const [comparisonQuery, referenceQuery] = deltaConstituentConsumptionQueries;
+        if (comparisonQuery.isError || referenceQuery.isError) {
+            warnings.push("Constituent gas-consumption diagnostics are unavailable.");
+        } else if (comparisonQuery.data && referenceQuery.data) {
+            if (comparisonQuery.data.length === 0 || referenceQuery.data.length === 0) {
+                warnings.push("Constituent gas-consumption diagnostics are unavailable.");
+            } else {
+                const comparisonCount = countCumulativeVectorNonZeroRealizations(comparisonQuery.data);
+                const referenceCount = countCumulativeVectorNonZeroRealizations(referenceQuery.data);
+                if (comparisonCount === 0 && referenceCount === 0) {
+                    warnings.push("No gas consumption is modelled in either delta constituent.");
+                } else {
+                    warnings.push(
+                        `Gas consumption is modelled in ${comparisonCount} comparison and ${referenceCount} reference realizations.`,
+                    );
+                }
+            }
+        }
     }
     if (salesGasData.isGasInjectionAssumedZero) {
         warnings.push("Assuming missing FGIT is zero.");

@@ -156,3 +156,10 @@ export function isCumulativeVectorAllZero(data: VectorRealizationData_api[]): bo
         return lastValue === undefined || lastValue === 0;
     });
 }
+
+export function countCumulativeVectorNonZeroRealizations(data: VectorRealizationData_api[]): number {
+    return data.filter((realization) => {
+        const terminalValue = realization.values.at(-1);
+        return terminalValue !== undefined && Number.isFinite(terminalValue) && Math.abs(terminalValue) > 1e-12;
+    }).length;
+}

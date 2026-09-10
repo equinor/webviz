@@ -7,6 +7,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Combobox } from "@lib/components/Combobox";
+import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { CashFlowProfileType, EarlyEconomicMeasure, EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
@@ -26,7 +27,6 @@ import {
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     selectedMeasureAtom,
-    showCashFlowPlotAtom,
 } from "./atoms/baseAtoms";
 import { economicScreeningResultsAtom, isFetchingAtom } from "./atoms/derivedAtoms";
 import { CashFlowPlot } from "./components/cashFlowPlot";
@@ -39,10 +39,16 @@ import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriter
 
 const TABLE_AREA_HEIGHT_PX = 300;
 
+enum ViewMode {
+    DISTRIBUTION = "DISTRIBUTION",
+    TIME_PROFILE = "TIME_PROFILE",
+}
+
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const [selectedProfileRealization, setSelectedProfileRealization] = React.useState<number | null>(null);
+    const [viewMode, setViewMode] = React.useState<ViewMode>(ViewMode.DISTRIBUTION);
 
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -50,7 +56,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleIdent = useAtomValue(ensembleIdentAtom);
     const selectedMeasure = useAtomValue(selectedMeasureAtom);
     const distributionPlotType = useAtomValue(distributionPlotTypeAtom);
-    const showCashFlowPlot = useAtomValue(showCashFlowPlotAtom);
     const cashFlowProfileType = useAtomValue(cashFlowProfileTypeAtom);
     const discountAssumptions = useAtomValue(discountAssumptionsAtom);
     const evaluationWindow = useAtomValue(evaluationWindowAtom);
@@ -94,8 +99,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             );
 
     const plotHeight = Math.max(wrapperDivSize.height - TABLE_AREA_HEIGHT_PX, 200);
-    const cashFlowPlotHeight = showCashFlowPlot ? plotHeight / 2 : 0;
-    const distributionPlotHeight = showCashFlowPlot ? plotHeight / 2 : plotHeight;
+    const activePlotHeight = plotHeight;
 
     const hasResults = results.length > 0;
     const hasNetCashFlow = results.some((result) => result.netCashFlow !== null);
@@ -197,6 +201,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     <ResultsStatisticsTable
                         measure={selectedMeasure}
                         measureValues={measureValues}
+                        results={results}
                         unit={getMeasureUnit(selectedMeasure, unitContext)}
                         breakEvenTargetCount={breakEvenTargetCount}
                     />
@@ -206,19 +211,33 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         selectedRealization={selectedProfileRealization}
                         onSelectedRealizationChange={setSelectedProfileRealization}
                     />
-                    <MeasureDistributionPlot
-                        measure={selectedMeasure}
-                        measureValues={measureValues}
-                        unit={getMeasureUnit(selectedMeasure, unitContext)}
-                        plotType={distributionPlotType}
-                        color={ensembleColor}
-                        width={wrapperDivSize.width - 16}
-                        height={distributionPlotHeight}
-                        targetValue={
-                            selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE ? priceAssumptions.oilPrice : null
-                        }
+                    <RadioCompositions.GroupWithLabels
+                        value={viewMode}
+                        options={[
+                            { value: ViewMode.DISTRIBUTION, label: "Distribution" },
+                            { value: ViewMode.TIME_PROFILE, label: "Time profile" },
+                        ]}
+                        onValueChange={setViewMode}
+                        layout="horizontal"
+                        size="small"
                     />
-                    {showCashFlowPlot && hasSelectedTimeProfileData && (
+                    {viewMode === ViewMode.DISTRIBUTION && (
+                        <MeasureDistributionPlot
+                            measure={selectedMeasure}
+                            measureValues={measureValues}
+                            unit={getMeasureUnit(selectedMeasure, unitContext)}
+                            plotType={distributionPlotType}
+                            color={ensembleColor}
+                            width={wrapperDivSize.width - 16}
+                            height={activePlotHeight}
+                            targetValue={
+                                selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
+                                    ? priceAssumptions.oilPrice
+                                    : null
+                            }
+                        />
+                    )}
+                    {viewMode === ViewMode.TIME_PROFILE && hasSelectedTimeProfileData && (
                         <>
                             <div className="flex max-w-64 items-center gap-2">
                                 <label className="text-body-xs shrink-0" htmlFor="economic-screening-realization">
@@ -245,11 +264,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                 gasUnit={gasUnit}
                                 color={ensembleColor}
                                 width={wrapperDivSize.width - 16}
-                                height={cashFlowPlotHeight}
+                                height={activePlotHeight}
                             />
                         </>
                     )}
-                    {showCashFlowPlot && !hasSelectedTimeProfileData && (
+                    {viewMode === ViewMode.TIME_PROFILE && !hasSelectedTimeProfileData && (
                         <ContentInfo>No complete profile data is available for the selected time profile.</ContentInfo>
                     )}
                 </div>
