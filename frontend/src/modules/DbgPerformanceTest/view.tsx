@@ -34,22 +34,28 @@ function AtomStoreAllocator(): null {
     return null;
 }
 
-function QueryCacheAllocator(): React.ReactNode {
-    const storeInQueryCache = useAtomValue(storeInQueryCacheAtom);
+function MountedQueryCacheAllocator(): React.ReactNode {
     const sizeMb = useAtomValue(sizeMbAtom);
     const instanceIdRef = React.useRef<string>(v4());
 
     const queryResult = useQuery({
         queryKey: ["mem-leak-test-dummy-data", instanceIdRef.current, sizeMb],
         queryFn: () => makeDummyData(sizeMb),
-        enabled: storeInQueryCache,
         staleTime: Infinity,
-        gcTime: storeInQueryCache ? Infinity : 0,
+        gcTime: 0,
     });
 
-    return (
-        <li>TanStack Query cache: {storeInQueryCache ? (queryResult.isSuccess ? "allocated" : "loading") : "off"}</li>
-    );
+    return <li>TanStack Query cache: {queryResult.isSuccess ? "allocated" : "loading"}</li>;
+}
+
+function QueryCacheAllocator(): React.ReactNode {
+    const storeInQueryCache = useAtomValue(storeInQueryCacheAtom);
+
+    if (!storeInQueryCache) {
+        return <li>TanStack Query cache: off</li>;
+    }
+
+    return <MountedQueryCacheAllocator />;
 }
 
 function ViewStateAllocator(): React.ReactNode {

@@ -32,9 +32,18 @@ export function StartPanel(props: StartPanelProps) {
         <>
             <EnsembleSettingsButton workbench={props.workbench} />
             <Separator orientation="vertical" />
-            <Button disabled={isSnapshot} iconOnly onClick={handleTemplatesListClick} tone="accent" variant="ghost">
-                <GridView />
-            </Button>
+            <Tooltip content="Open templates dialog" side="bottom">
+                <Button
+                    aria-label="Open templates dialog"
+                    disabled={isSnapshot}
+                    iconOnly
+                    onClick={handleTemplatesListClick}
+                    tone="accent"
+                    variant="ghost"
+                >
+                    <GridView />
+                </Button>
+            </Tooltip>
         </>
     );
 }

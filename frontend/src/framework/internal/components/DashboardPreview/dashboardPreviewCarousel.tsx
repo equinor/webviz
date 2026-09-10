@@ -53,7 +53,7 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
         controlsHeight = 60;
     }
 
-    const tooltipContent = `${current?.name ?? ""}\n${current.description ? `⎯⎯⎯⎯⎯\n${current.description}` : ""}`;
+    const tooltipContent = `${current?.name ?? ""}\n${current?.description ? `⎯⎯⎯⎯⎯\n${current.description}` : ""}`;
 
     return (
         <div className="bg-neutral gap-y-2xs flex flex-col" style={{ width, height }}>

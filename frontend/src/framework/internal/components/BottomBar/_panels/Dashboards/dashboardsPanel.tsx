@@ -84,7 +84,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                 setShowCannotRemoveDashboardDialog(true);
                 return;
             }
-            if (dashboard.getModuleInstances().length === 0) {
+            if (dashboard.getLayoutForPreview().length === 0) {
                 handleRemoveDashboardClick(dashboard.getId());
                 return;
             }
@@ -111,6 +111,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         <div className="gap-xs -mt-[2px] flex w-full items-center">
             <div className="gap-3xs flex min-w-0 items-center">
                 <Button
+                    aria-label="Scroll to previous dashboard"
                     iconOnly
                     variant="ghost"
                     tone="neutral"
@@ -155,6 +156,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                         hotDashboardIds.includes(dashboard.getId())
                                     }
                                     isDragged={reorder.draggedDashboardId === dashboard.getId()}
+                                    isSnapshot={isSnapshot}
                                     previewDisabled={reorder.draggedDashboardId !== null}
                                     dropIndicatorSide={
                                         reorder.dropTarget?.dashboardId === dashboard.getId()
@@ -177,6 +179,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                     </Tabs.Root>
                 </div>
                 <Button
+                    aria-label="Scroll to next dashboard"
                     iconOnly
                     variant="ghost"
                     tone="neutral"

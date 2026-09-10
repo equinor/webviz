@@ -18,6 +18,7 @@ export type DashboardTabProps = {
     draggable: boolean;
     isHot: boolean;
     isDragged: boolean;
+    isSnapshot: boolean;
     previewDisabled: boolean;
     dropIndicatorSide: "before" | "after" | null;
     onRequestDelete: (dashboardId: string) => void;
@@ -104,56 +105,66 @@ export function DashboardTab(props: DashboardTabProps) {
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                 >
-                    <span
-                        draggable={props.draggable}
-                        onDragStart={handleDragStart}
-                        onDragEnd={props.onDragEnd}
-                        className={resolveClassNames("flex items-center", {
-                            "cursor-grab": props.draggable,
-                        })}
-                    >
-                        <DragIndicator fontSize="inherit" className="pointer-events-none" />
-                    </span>
+                    {!props.isSnapshot && (
+                        <span
+                            draggable={props.draggable}
+                            onDragStart={handleDragStart}
+                            onDragEnd={props.onDragEnd}
+                            className={resolveClassNames("flex items-center", {
+                                "cursor-grab": props.draggable,
+                            })}
+                        >
+                            <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                        </span>
+                    )}
                     <span
                         className={resolveClassNames("bg-neutral border-neutral h-1.5 w-1.5 rounded-full border", {
                             "bg-accent-strong! border-accent-strong!": props.isHot,
                         })}
                     ></span>
                     {metadata.name}
-                    <Menu.Root>
-                        <Menu.Trigger>
-                            <Button iconOnly variant="ghost" size="small" onClick={(e) => e.stopPropagation()}>
-                                <MoreVert />
-                            </Button>
-                        </Menu.Trigger>
-                        <Menu.Popup>
-                            <Menu.Group>
-                                <Menu.GroupLabel>{metadata.name}</Menu.GroupLabel>
-                                <Menu.Item onClick={handleEditClick} icon={<Edit />}>
-                                    Edit metadata
-                                </Menu.Item>
-                                <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
-                                    Create a copy
-                                </Menu.Item>
-                                <Menu.Separator />
-                                <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
-                                    Delete
-                                </Menu.Item>
-                                {isDevMode() && (
-                                    <>
-                                        <Menu.Separator />
-                                        <Menu.Item
-                                            onClick={handleForceEviction}
-                                            icon={<Eject />}
-                                            disabled={!props.isHot}
-                                        >
-                                            Force eviction
-                                        </Menu.Item>
-                                    </>
-                                )}
-                            </Menu.Group>
-                        </Menu.Popup>
-                    </Menu.Root>
+                    {!props.isSnapshot && (
+                        <Menu.Root>
+                            <Menu.Trigger>
+                                <Button
+                                    aria-label={`Open actions for ${metadata.name}`}
+                                    iconOnly
+                                    variant="ghost"
+                                    size="small"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <MoreVert />
+                                </Button>
+                            </Menu.Trigger>
+                            <Menu.Popup>
+                                <Menu.Group>
+                                    <Menu.GroupLabel>{metadata.name}</Menu.GroupLabel>
+                                    <Menu.Item onClick={handleEditClick} icon={<Edit />}>
+                                        Edit metadata
+                                    </Menu.Item>
+                                    <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
+                                        Create a copy
+                                    </Menu.Item>
+                                    <Menu.Separator />
+                                    <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
+                                        Delete
+                                    </Menu.Item>
+                                    {isDevMode() && (
+                                        <>
+                                            <Menu.Separator />
+                                            <Menu.Item
+                                                onClick={handleForceEviction}
+                                                icon={<Eject />}
+                                                disabled={!props.isHot}
+                                            >
+                                                Force eviction
+                                            </Menu.Item>
+                                        </>
+                                    )}
+                                </Menu.Group>
+                            </Menu.Popup>
+                        </Menu.Root>
+                    )}
                 </Tabs.Tab>
             </DashboardTabPreview>
             <div className="relative w-0">

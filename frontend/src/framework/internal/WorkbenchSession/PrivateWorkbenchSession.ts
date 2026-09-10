@@ -343,7 +343,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         return this._dashboardHotCache;
     }
 
-    setActiveDashboard(dashboardId: string): void {
+    setActiveDashboard(dashboardId: string | null): void {
         if (this._activeDashboardId === dashboardId) {
             return;
         }

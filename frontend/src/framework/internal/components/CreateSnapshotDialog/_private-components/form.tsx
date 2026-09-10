@@ -52,7 +52,7 @@ export function Form(props: FormProps): React.ReactNode {
         .map((dashboard) => ({
             id: dashboard.getId(),
             name: dashboard.getMetadata().name,
-            layout: dashboard.getLayout(),
+            layout: dashboard.getLayoutForPreview(),
         }));
 
     React.useEffect(function focusInput() {

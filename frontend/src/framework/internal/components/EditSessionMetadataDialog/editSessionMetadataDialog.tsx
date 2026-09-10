@@ -133,7 +133,7 @@ export function EditSessionMetadataDialog(props: EditSessionMetadataDialogProps)
         ? activeWorkbenchSession.getDashboards().map((dashboard) => ({
               id: dashboard.getId(),
               name: dashboard.getMetadata().name,
-              layout: dashboard.getLayout(),
+              layout: dashboard.getLayoutForPreview(),
           }))
         : [];
 
