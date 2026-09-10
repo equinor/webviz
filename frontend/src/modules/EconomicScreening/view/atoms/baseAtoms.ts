@@ -12,6 +12,7 @@ import type {
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
     DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
+    CashFlowProfileType,
     DiscountConvention,
     DistributionPlotType,
     EconomicMeasure,
@@ -50,6 +51,7 @@ export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabl
 
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 
-export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.HISTOGRAM);
+export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.EXCEEDANCE);
 
 export const showCashFlowPlotAtom = atom<boolean>(false);
+export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_NET_CASH_FLOW);

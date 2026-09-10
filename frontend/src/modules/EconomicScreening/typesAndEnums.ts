@@ -20,6 +20,18 @@ export const EconomicMeasureEnumToStringMapping: Record<EconomicMeasure, string>
     [EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME]: "Sales gas volume (undiscounted)",
 };
 
+export enum EarlyEconomicMeasure {
+    DISCOUNTED_OIL_VOLUME = "EARLY_DISCOUNTED_OIL_VOLUME",
+    DISCOUNTED_SALES_GAS_VOLUME = "EARLY_DISCOUNTED_SALES_GAS_VOLUME",
+    DISCOUNTED_CASH_FLOW = "EARLY_DISCOUNTED_CASH_FLOW",
+}
+
+export const EarlyEconomicMeasureEnumToStringMapping: Record<EarlyEconomicMeasure, string> = {
+    [EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME]: "Early discounted oil volume",
+    [EarlyEconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME]: "Early discounted sales gas volume",
+    [EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW]: "Early discounted cash flow",
+};
+
 export enum DiscountConvention {
     MID_YEAR = "MID_YEAR",
     YEAR_END = "YEAR_END",
@@ -73,13 +85,29 @@ export const GasPriceBasisEnumToStringMapping: Record<GasPriceBasis, string> = {
 };
 
 export enum DistributionPlotType {
+    EXCEEDANCE = "EXCEEDANCE",
     HISTOGRAM = "HISTOGRAM",
     BOX = "BOX",
 }
 
 export const DistributionPlotTypeEnumToStringMapping: Record<DistributionPlotType, string> = {
+    [DistributionPlotType.EXCEEDANCE]: "Exceedance",
     [DistributionPlotType.HISTOGRAM]: "Histogram",
     [DistributionPlotType.BOX]: "Box plot",
+};
+
+export enum CashFlowProfileType {
+    ANNUAL_OIL_VOLUME = "ANNUAL_OIL_VOLUME",
+    ANNUAL_SALES_GAS_VOLUME = "ANNUAL_SALES_GAS_VOLUME",
+    ANNUAL_NET_CASH_FLOW = "ANNUAL_NET_CASH_FLOW",
+    CUMULATIVE_DISCOUNTED_CASH_FLOW = "CUMULATIVE_DISCOUNTED_CASH_FLOW",
+}
+
+export const CashFlowProfileTypeEnumToStringMapping: Record<CashFlowProfileType, string> = {
+    [CashFlowProfileType.ANNUAL_OIL_VOLUME]: "Annual oil volume",
+    [CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME]: "Annual sales gas volume",
+    [CashFlowProfileType.ANNUAL_NET_CASH_FLOW]: "Annual net cash flow",
+    [CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW]: "Cumulative discounted cash flow",
 };
 
 /** Yearly CAPEX/OPEX. For a delta ensemble the values are interpreted as delta costs. */

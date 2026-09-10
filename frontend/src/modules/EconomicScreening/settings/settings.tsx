@@ -19,10 +19,11 @@ import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
-import type { MissingComponentAssumptions } from "../utils/vectorResolution";
 import {
     DiscountConvention,
     DiscountConventionEnumToStringMapping,
+    CashFlowProfileType,
+    CashFlowProfileTypeEnumToStringMapping,
     DistributionPlotType,
     DistributionPlotTypeEnumToStringMapping,
     EconomicMeasure,
@@ -34,9 +35,11 @@ import {
     OilPriceBasis,
     OilPriceBasisEnumToStringMapping,
 } from "../typesAndEnums";
+import type { MissingComponentAssumptions } from "../utils/vectorResolution";
 
 import {
     costProfileAtom,
+    cashFlowProfileTypeAtom,
     currencyAtom,
     discountBaseYearAtom,
     discountConventionAtom,
@@ -85,6 +88,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
     const [showCashFlowPlot, setShowCashFlowPlot] = useAtom(showCashFlowPlotAtom);
+    const [cashFlowProfileType, setCashFlowProfileType] = useAtom(cashFlowProfileTypeAtom);
     const [missingComponentAssumptionsByEnsemble, setMissingComponentAssumptionsByEnsemble] = useAtom(
         missingComponentAssumptionsAtom,
     );
@@ -161,6 +165,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             return;
         }
         setDistributionPlotType(newPlotType);
+    }
+
+    function handleCashFlowProfileTypeChange(newProfileType: CashFlowProfileType | null) {
+        if (newProfileType !== null) {
+            setCashFlowProfileType(newProfileType);
+        }
     }
 
     function setMissingComponentAssumption(key: keyof MissingComponentAssumptions, accepted: boolean) {
@@ -484,22 +494,38 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Setting.Field>
                     <Setting.Field label="Plot type">
-                        <Combobox
-                            items={Object.values(DistributionPlotType).map((value) => ({
-                                value,
-                                label: DistributionPlotTypeEnumToStringMapping[value],
-                            }))}
+                        <Combobox<DistributionPlotType>
+                            items={Object.values(DistributionPlotType)
+                                .filter(
+                                    (value): value is DistributionPlotType.EXCEEDANCE | DistributionPlotType.HISTOGRAM =>
+                                        value !== DistributionPlotType.BOX,
+                                )
+                                .map((value) => ({
+                                    value,
+                                    label: DistributionPlotTypeEnumToStringMapping[value],
+                                }))}
                             value={distributionPlotType}
                             onValueChange={handleDistributionPlotTypeChange}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Cash flow profile">
-                        <CheckboxCompositions.WithLabel
-                            label="Show cash flow per year"
-                            checked={showCashFlowPlot}
-                            onCheckedChange={setShowCashFlowPlot}
-                            size="small"
-                        />
+                    <Setting.Field label="Time profile">
+                        <div className="gap-y-xs flex flex-col">
+                            <CheckboxCompositions.WithLabel
+                                label="Show time profile"
+                                checked={showCashFlowPlot}
+                                onCheckedChange={setShowCashFlowPlot}
+                                size="small"
+                            />
+                            <Combobox<CashFlowProfileType>
+                                items={Object.values(CashFlowProfileType).map((value) => ({
+                                    value,
+                                    label: CashFlowProfileTypeEnumToStringMapping[value],
+                                }))}
+                                value={cashFlowProfileType}
+                                onValueChange={handleCashFlowProfileTypeChange}
+                                disabled={!showCashFlowPlot}
+                            />
+                        </div>
                     </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>

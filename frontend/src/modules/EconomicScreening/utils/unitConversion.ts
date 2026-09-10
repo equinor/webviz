@@ -55,6 +55,19 @@ export function convertOilPriceToSimulatorUnit(
     return (price * simulatorUnitInSm3) / OIL_PRICE_BASIS_IN_SM3[basis];
 }
 
+/** Rescales a price per simulator volume unit into the selected display basis. */
+export function convertOilPriceFromSimulatorUnit(
+    price: number,
+    basis: OilPriceBasis,
+    simulatorUnit: string,
+): number | null {
+    const simulatorUnitInSm3 = volumeUnitInSm3(simulatorUnit);
+    if (simulatorUnitInSm3 === null) {
+        return null;
+    }
+    return (price * OIL_PRICE_BASIS_IN_SM3[basis]) / simulatorUnitInSm3;
+}
+
 export function convertGasPriceToSimulatorUnit(
     price: number,
     basis: GasPriceBasis,

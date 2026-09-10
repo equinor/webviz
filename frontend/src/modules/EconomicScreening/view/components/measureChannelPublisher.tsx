@@ -16,13 +16,14 @@ export type MeasureChannelPublisherProps = {
     ensembleDisplayName: string;
     color: string;
     enabled: boolean;
+    assumptionContext: string;
 };
 
 /** Renders nothing; exists so that each channel gets its own hook call. */
 export function MeasureChannelPublisher(props: MeasureChannelPublisherProps): null {
     props.viewContext.usePublishChannelContents({
         channelIdString: MEASURE_CHANNEL_ID_MAP[props.measure],
-        dependencies: [props.results, props.unitContext, props.ensembleIdentString, props.color],
+        dependencies: [props.results, props.unitContext, props.ensembleIdentString, props.color, props.assumptionContext],
         enabled: props.enabled,
         contents: [
             {
@@ -35,6 +36,7 @@ export function MeasureChannelPublisher(props: MeasureChannelPublisherProps): nu
                     props.ensembleIdentString,
                     props.ensembleDisplayName,
                     props.color,
+                    props.assumptionContext,
                 ),
             },
         ],

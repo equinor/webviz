@@ -3,6 +3,7 @@ import type { SettingsToViewInterface } from "@modules/EconomicScreening/interfa
 
 import {
     costProfileAtom,
+    cashFlowProfileTypeAtom,
     discountAssumptionsAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
@@ -44,5 +45,8 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(showCashFlowPlotAtom, getInterfaceValue("showCashFlowPlot"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(cashFlowProfileTypeAtom, getInterfaceValue("cashFlowProfileType"));
     },
 ];

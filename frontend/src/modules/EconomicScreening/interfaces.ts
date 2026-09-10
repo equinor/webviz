@@ -4,6 +4,7 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 
 import {
     costProfileAtom,
+    cashFlowProfileTypeAtom,
     currencyAtom,
     discountBaseYearAtom,
     discountConventionAtom,
@@ -26,6 +27,7 @@ import { salesGasStrategyAtom } from "./settings/atoms/derivedAtoms";
 import { selectedEnsembleIdentAtom } from "./settings/atoms/persistableFixableAtoms";
 import type {
     CostProfileEntry,
+    CashFlowProfileType,
     DiscountAssumptions,
     DistributionPlotType,
     EarlyValueConfiguration,
@@ -46,6 +48,7 @@ export type SettingsToViewInterface = {
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
     showCashFlowPlot: boolean;
+    cashFlowProfileType: CashFlowProfileType;
 };
 
 export type Interfaces = {
@@ -96,5 +99,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     showCashFlowPlot: (get) => {
         return get(showCashFlowPlotAtom);
+    },
+    cashFlowProfileType: (get) => {
+        return get(cashFlowProfileTypeAtom);
     },
 };

@@ -4,6 +4,7 @@ import { GasPriceBasis, OilPriceBasis } from "@modules/EconomicScreening/typesAn
 import {
     convertGasPriceToSimulatorUnit,
     convertGasToOilEquivalentFactorToSimulatorUnit,
+    convertOilPriceFromSimulatorUnit,
     convertOilPriceToSimulatorUnit,
     volumeUnitInSm3,
 } from "@modules/EconomicScreening/utils/unitConversion";
@@ -31,6 +32,16 @@ describe("convertOilPriceToSimulatorUnit", () => {
 
     test("returns null for an unrecognised simulator unit", () => {
         expect(convertOilPriceToSimulatorUnit(70, OilPriceBasis.PER_BBL, "???")).toBeNull();
+    });
+});
+
+describe("convertOilPriceFromSimulatorUnit", () => {
+    test("converts a per-Sm³ break-even price to the selected per-barrel basis", () => {
+        expect(convertOilPriceFromSimulatorUnit(70 * 6.2898, OilPriceBasis.PER_BBL, "SM3")).toBeCloseTo(70, 2);
+    });
+
+    test("returns null for an unrecognised simulator unit", () => {
+        expect(convertOilPriceFromSimulatorUnit(70, OilPriceBasis.PER_BBL, "???")).toBeNull();
     });
 });
 

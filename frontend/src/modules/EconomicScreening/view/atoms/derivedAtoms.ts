@@ -19,6 +19,9 @@ import {
     toRealizationCumulativeSeries,
 } from "@modules/EconomicScreening/utils/vectorResolution";
 
+import { missingComponentAssumptionsAtom } from "../../settings/atoms/baseAtoms";
+import { selectedEnsembleIdentAtom } from "../../settings/atoms/persistableFixableAtoms";
+
 import {
     costProfileAtom,
     discountAssumptionsAtom,
@@ -26,8 +29,6 @@ import {
     priceAssumptionsAtom,
     salesGasStrategyAtom,
 } from "./baseAtoms";
-import { missingComponentAssumptionsAtom } from "../../settings/atoms/baseAtoms";
-import { selectedEnsembleIdentAtom } from "../../settings/atoms/persistableFixableAtoms";
 import { vectorDataQueriesAtom, VectorQueryIndex } from "./queryAtoms";
 
 export type SalesGasData = {

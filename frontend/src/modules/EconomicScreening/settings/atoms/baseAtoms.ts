@@ -5,10 +5,10 @@ import type {
     EarlyValueConfiguration,
     EvaluationWindow,
 } from "@modules/EconomicScreening/typesAndEnums";
-import type { MissingComponentAssumptions } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
     DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
+    CashFlowProfileType,
     DiscountConvention,
     DistributionPlotType,
     EconomicMeasure,
@@ -16,6 +16,7 @@ import {
     InvestmentTiming,
     OilPriceBasis,
 } from "@modules/EconomicScreening/typesAndEnums";
+import type { MissingComponentAssumptions } from "@modules/EconomicScreening/utils/vectorResolution";
 
 export const discountRatePercentAtom = atom<number>(DEFAULT_DISCOUNT_RATE_PERCENT);
 export const discountBaseYearAtom = atom<number | null>(null);
@@ -37,8 +38,9 @@ export const evaluationWindowAtom = atom<EvaluationWindow>({ firstYear: null, la
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
-export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.HISTOGRAM);
+export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.EXCEEDANCE);
 export const showCashFlowPlotAtom = atom<boolean>(false);
+export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_NET_CASH_FLOW);
 
 /** Explicit zero assumptions, keyed by the ensemble identity they apply to. */
 export const missingComponentAssumptionsAtom = atom<Record<string, MissingComponentAssumptions>>({});

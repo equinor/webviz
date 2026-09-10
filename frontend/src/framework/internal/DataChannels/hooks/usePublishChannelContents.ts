@@ -14,9 +14,20 @@ export interface UsePublishChannelContentsOptions {
 
 export function usePublishChannelContents(options: UsePublishChannelContentsOptions): void {
     const [prevDependencies, setPrevDependencies] = React.useState<any[]>([]);
+    const hasClearedDisabledContents = React.useRef(false);
 
     React.useEffect(() => {
-        if ((options.enabled || options.enabled === undefined) && !isEqual(prevDependencies, options.dependencies)) {
+        if (options.enabled === false) {
+            if (!hasClearedDisabledContents.current) {
+                hasClearedDisabledContents.current = true;
+                setPrevDependencies([]);
+                options.channel.replaceContents([]);
+            }
+            return;
+        }
+
+        hasClearedDisabledContents.current = false;
+        if (!isEqual(prevDependencies, options.dependencies)) {
             setPrevDependencies(options.dependencies);
 
             options.channel.replaceContents(options.contents);

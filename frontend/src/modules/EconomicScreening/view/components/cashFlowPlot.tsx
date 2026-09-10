@@ -1,101 +1,139 @@
 import type { Layout, PlotData } from "plotly.js";
 
+import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
-import { computeQuantile } from "@modules/_shared/utils/math/statistics";
+import { CashFlowProfileType } from "@modules/EconomicScreening/typesAndEnums";
 import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
+import {
+    aggregateAnnualVolumeProfiles,
+    aggregateCashFlowProfiles,
+} from "@modules/EconomicScreening/utils/timeProfileAggregation";
 
 export type CashFlowPlotProps = {
     results: RealizationEconomicResult[];
     currency: string;
+    oilUnit: string;
+    gasUnit: string;
+    profileType: CashFlowProfileType;
+    selectedRealization: number | null;
     color: string;
     width: number;
     height: number;
 };
 
-type YearAggregates = {
-    years: number[];
-    meanCashFlow: number[];
-    p10CashFlow: number[];
-    p90CashFlow: number[];
-    meanCumulativeDiscounted: number[];
-};
+export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
+    const cashFlowAggregate = aggregateCashFlowProfiles(
+        props.results.map((result) => ({
+            realization: result.realization,
+            years: result.years,
+            netCashFlow: result.netCashFlow,
+            cumulativeDiscountedCashFlow: result.cumulativeDiscountedCashFlow ?? null,
+        })),
+    );
+    const oilAggregate = aggregateAnnualVolumeProfiles(
+        props.results.map((result) => ({
+            realization: result.realization,
+            years: result.years,
+            values: result.oilVolumes,
+            hasData: result.hasOilData,
+        })),
+    );
+    const salesGasAggregate = aggregateAnnualVolumeProfiles(
+        props.results.map((result) => ({
+            realization: result.realization,
+            years: result.years,
+            values: result.salesGasVolumes,
+            hasData: result.hasSalesGasData,
+        })),
+    );
 
-function aggregateByYear(results: RealizationEconomicResult[]): YearAggregates {
-    const cashFlowByYear = new Map<number, number[]>();
-    const cumulativeDiscountedByYear = new Map<number, number[]>();
-
-    for (const result of results) {
-        if (!result.netCashFlow) {
-            continue;
-        }
-        let runningDiscounted = 0;
-        for (let i = 0; i < result.years.length; i++) {
-            const year = result.years[i];
-            runningDiscounted += result.netCashFlow[i] * result.discountFactors[i];
-
-            const cashFlowValues = cashFlowByYear.get(year) ?? [];
-            cashFlowValues.push(result.netCashFlow[i]);
-            cashFlowByYear.set(year, cashFlowValues);
-
-            const cumulativeValues = cumulativeDiscountedByYear.get(year) ?? [];
-            cumulativeValues.push(runningDiscounted);
-            cumulativeDiscountedByYear.set(year, cumulativeValues);
-        }
+    const selectedProfile =
+        props.profileType === CashFlowProfileType.ANNUAL_OIL_VOLUME && oilAggregate
+            ? { aggregate: oilAggregate, band: oilAggregate, name: "Annual oil volume", unit: props.oilUnit }
+            : props.profileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME && salesGasAggregate
+                ? { aggregate: salesGasAggregate, band: salesGasAggregate, name: "Annual sales gas volume", unit: props.gasUnit }
+                : props.profileType === CashFlowProfileType.ANNUAL_NET_CASH_FLOW && cashFlowAggregate
+                    ? {
+                        aggregate: cashFlowAggregate,
+                        band: cashFlowAggregate.annualNetCashFlow,
+                        name: "Annual net cash flow",
+                        unit: props.currency,
+                    }
+                    : props.profileType === CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW && cashFlowAggregate
+                        ? {
+                            aggregate: cashFlowAggregate,
+                            band: cashFlowAggregate.cumulativeDiscountedCashFlow,
+                            name: "Cumulative discounted cash flow",
+                            unit: props.currency,
+                        }
+                        : null;
+    if (!selectedProfile) {
+        return <ContentInfo>No complete profile data is available for the selected time profile.</ContentInfo>;
     }
 
-    const years = Array.from(cashFlowByYear.keys()).sort((a, b) => a - b);
-    const mean = (values: number[]) => values.reduce((acc, value) => acc + value, 0) / values.length;
-
-    return {
-        years,
-        meanCashFlow: years.map((year) => mean(cashFlowByYear.get(year) ?? [0])),
-        p10CashFlow: years.map((year) => computeQuantile(cashFlowByYear.get(year) ?? [0], 0.9)),
-        p90CashFlow: years.map((year) => computeQuantile(cashFlowByYear.get(year) ?? [0], 0.1)),
-        meanCumulativeDiscounted: years.map((year) => mean(cumulativeDiscountedByYear.get(year) ?? [0])),
-    };
-}
-
-export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
-    const aggregates = aggregateByYear(props.results);
+    const selectedResult = props.results.find((result) => result.realization === props.selectedRealization);
+    const selectedValues =
+        selectedResult &&
+        (props.profileType === CashFlowProfileType.ANNUAL_OIL_VOLUME
+            ? selectedResult.hasOilData
+                ? selectedResult.oilVolumes
+                : null
+            : props.profileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME
+                ? selectedResult.hasSalesGasData
+                    ? selectedResult.salesGasVolumes
+                    : null
+                : props.profileType === CashFlowProfileType.ANNUAL_NET_CASH_FLOW
+                    ? selectedResult.netCashFlow
+                    : (selectedResult.cumulativeDiscountedCashFlow ?? null));
 
     const data: Partial<PlotData>[] = [
         {
-            x: aggregates.years,
-            y: aggregates.meanCashFlow,
-            type: "bar",
-            name: "Mean net cash flow",
-            marker: { color: props.color },
-            error_y: {
-                type: "data",
-                symmetric: false,
-                array: aggregates.p10CashFlow.map((value, i) => value - aggregates.meanCashFlow[i]),
-                arrayminus: aggregates.meanCashFlow.map((value, i) => value - aggregates.p90CashFlow[i]),
-                color: "#555",
-                thickness: 1,
-            },
+            x: selectedProfile.aggregate.years,
+            y: selectedProfile.band.p10,
+            type: "scatter",
+            mode: "lines",
+            name: "P10",
+            line: { color: props.color, width: 0 },
+            showlegend: false,
         },
         {
-            x: aggregates.years,
-            y: aggregates.meanCumulativeDiscounted,
+            x: selectedProfile.aggregate.years,
+            y: selectedProfile.band.p90,
+            type: "scatter",
+            mode: "lines",
+            name: "P90-P10",
+            fill: "tonexty",
+            fillcolor: `${props.color}33`,
+            line: { color: props.color, width: 0 },
+        },
+        {
+            x: selectedProfile.aggregate.years,
+            y: selectedProfile.band.median,
             type: "scatter",
             mode: "lines+markers",
-            name: "Mean cumulative discounted cash flow",
-            line: { color: "#333", width: 2 },
-            yaxis: "y2",
+            name: "P50",
+            line: { color: props.color, width: 2 },
         },
+        ...(selectedResult && selectedValues && selectedValues.length === selectedResult.years.length
+            ? [
+                {
+                    x: selectedResult.years,
+                    y: selectedValues,
+                    type: "scatter" as const,
+                    mode: "lines+markers" as const,
+                    name: `Realization ${selectedResult.realization}`,
+                    line: { color: "#111827", width: 3 },
+                },
+            ]
+            : []),
     ];
 
     const layout: Partial<Layout> = {
         width: props.width,
         height: props.height,
-        margin: { l: 70, r: 70, t: 20, b: 50 },
+        margin: { l: 70, r: 20, t: 20, b: 50 },
         xaxis: { title: { text: "Year" } },
-        yaxis: { title: { text: `Net cash flow [${props.currency}]` } },
-        yaxis2: {
-            title: { text: `Cumulative discounted [${props.currency}]` },
-            overlaying: "y",
-            side: "right",
-        },
+        yaxis: { title: { text: `${selectedProfile.name} [${selectedProfile.unit}]` }, zeroline: true },
         showlegend: true,
     };
 

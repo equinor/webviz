@@ -5,6 +5,7 @@ import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
 import {
     DiscountConvention,
+    CashFlowProfileType,
     DistributionPlotType,
     EconomicMeasure,
     GasPriceBasis,
@@ -14,6 +15,7 @@ import {
 
 import {
     costProfileAtom,
+    cashFlowProfileTypeAtom,
     currencyAtom,
     discountBaseYearAtom,
     discountConventionAtom,
@@ -57,6 +59,7 @@ export type SerializedSettings = {
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
     showCashFlowPlot: boolean;
+    cashFlowProfileType?: CashFlowProfileType;
     missingComponentAssumptionsByEnsemble?: Record<
         string,
         { assumeMissingInjectionAsZero?: boolean; assumeMissingConsumptionAsZero?: boolean }
@@ -104,6 +107,7 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         investmentTiming: { enum: Object.values(InvestmentTiming) },
         excludeOilRevenue: { type: "boolean" },
         excludeGasRevenue: { type: "boolean" },
+        cashFlowProfileType: { enum: Object.values(CashFlowProfileType) },
     },
 }));
 
@@ -135,6 +139,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedMeasure: get(selectedMeasureAtom),
         distributionPlotType: get(distributionPlotTypeAtom),
         showCashFlowPlot: get(showCashFlowPlotAtom),
+        cashFlowProfileType: get(cashFlowProfileTypeAtom),
         missingComponentAssumptionsByEnsemble: get(missingComponentAssumptionsAtom),
     };
 };
@@ -172,5 +177,6 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedMeasureAtom, raw.selectedMeasure);
     setIfDefined(set, distributionPlotTypeAtom, raw.distributionPlotType);
     setIfDefined(set, showCashFlowPlotAtom, raw.showCashFlowPlot);
+    setIfDefined(set, cashFlowProfileTypeAtom, raw.cashFlowProfileType);
     setIfDefined(set, missingComponentAssumptionsAtom, raw.missingComponentAssumptionsByEnsemble);
 };

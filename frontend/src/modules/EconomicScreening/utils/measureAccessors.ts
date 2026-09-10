@@ -1,7 +1,15 @@
 import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
-import { EconomicMeasure, EconomicMeasureEnumToStringMapping } from "@modules/EconomicScreening/typesAndEnums";
+import type {
+    OilPriceBasis} from "@modules/EconomicScreening/typesAndEnums";
+import {
+    EconomicMeasure,
+    EconomicMeasureEnumToStringMapping,
+    OilPriceBasisEnumToStringMapping,
+} from "@modules/EconomicScreening/typesAndEnums";
 
 import type { RealizationEconomicResult } from "./economicCalculations";
+import { convertOilPriceFromSimulatorUnit } from "./unitConversion";
+
 
 export type MeasureValues = {
     realizations: number[];
@@ -12,9 +20,14 @@ export type MeasureUnitContext = {
     oilUnit: string;
     gasUnit: string;
     currency: string;
+    oilPriceBasis: OilPriceBasis;
 };
 
-function rawMeasureValue(result: RealizationEconomicResult, measure: EconomicMeasure): number | null {
+function rawMeasureValue(
+    result: RealizationEconomicResult,
+    measure: EconomicMeasure,
+    context: MeasureUnitContext,
+): number | null {
     switch (measure) {
         case EconomicMeasure.NPV:
             return result.npv;
@@ -22,7 +35,9 @@ function rawMeasureValue(result: RealizationEconomicResult, measure: EconomicMea
             // Reported in percent so the channel and axis read naturally.
             return result.irr === null ? null : result.irr * 100;
         case EconomicMeasure.BREAK_EVEN_OIL_PRICE:
-            return result.breakEvenOilPrice;
+            return result.breakEvenOilPrice === null
+                ? null
+                : convertOilPriceFromSimulatorUnit(result.breakEvenOilPrice, context.oilPriceBasis, context.oilUnit);
         case EconomicMeasure.DISCOUNTED_OIL_VOLUME:
             return result.hasOilData ? result.discountedOilVolume : null;
         case EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME:
@@ -39,12 +54,16 @@ function rawMeasureValue(result: RealizationEconomicResult, measure: EconomicMea
 }
 
 /** Realizations where the measure is undefined, e.g. IRR without a sign change, are left out. */
-export function getMeasureValues(results: RealizationEconomicResult[], measure: EconomicMeasure): MeasureValues {
+export function getMeasureValues(
+    results: RealizationEconomicResult[],
+    measure: EconomicMeasure,
+    context: MeasureUnitContext,
+): MeasureValues {
     const realizations: number[] = [];
     const values: number[] = [];
 
     for (const result of results) {
-        const value = rawMeasureValue(result, measure);
+        const value = rawMeasureValue(result, measure, context);
         if (value === null || !Number.isFinite(value)) {
             continue;
         }
@@ -65,7 +84,7 @@ export function getMeasureUnit(measure: EconomicMeasure, context: MeasureUnitCon
         case EconomicMeasure.IRR:
             return "%";
         case EconomicMeasure.BREAK_EVEN_OIL_PRICE:
-            return oilUnit ? `${context.currency}/${oilUnit}` : context.currency;
+            return `${context.currency}/${OilPriceBasisEnumToStringMapping[context.oilPriceBasis]}`;
         case EconomicMeasure.DISCOUNTED_OIL_VOLUME:
         case EconomicMeasure.UNDISCOUNTED_OIL_VOLUME:
         case EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS:

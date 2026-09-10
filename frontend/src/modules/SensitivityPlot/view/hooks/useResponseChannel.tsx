@@ -11,6 +11,8 @@ import { ContentWarning } from "@modules/_shared/components/ContentMessage";
 import type { EnsemblePerRealizationResponse } from "@modules/_shared/SensitivityProcessing/types";
 import type { Interfaces } from "@modules/SensitivityPlot/interfaces";
 
+import { makeEnsemblePerRealizationResponse } from "./responseChannelUtils";
+
 export interface ResponseChannelData {
     ensemblePerRealResponse: EnsemblePerRealizationResponse | null;
     channelEnsemble: RegularEnsemble | null;
@@ -80,19 +82,7 @@ export function useResponseChannel(
             ),
         };
     }
-    const realizations: number[] = [];
-    const values: number[] = [];
-
-    content.dataArray?.forEach((el) => {
-        realizations.push(el.key as number);
-        values.push(el.value as number);
-    });
-    const ensemblePerRealResponse: EnsemblePerRealizationResponse = {
-        realizations,
-        values,
-        name: content.displayName,
-        unit: "",
-    };
+    const ensemblePerRealResponse = makeEnsemblePerRealizationResponse(content);
 
     return {
         ensemblePerRealResponse,
