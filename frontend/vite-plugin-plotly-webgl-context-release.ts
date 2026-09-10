@@ -22,8 +22,13 @@ import type { Plugin } from "vite";
  * plugin writes a patched copy of the bundle next to the original and aliases the import to it.
  * The copy is regenerated every time Vite starts, so it survives `npm ci`.
  *
- * Remove this plugin (and its registration in vite.config.ts / playwright.ct.config.ts) once the
- * upstream fix is released and we bump plotly.js.
+ * It must be registered in every Vite config that bundles the plotly.js *runtime* (the UMD bundle
+ * at `plotly.js/dist/plotly`): vite.config.ts (app), playwright.ct.config.ts (component tests) and
+ * .storybook/main.ts (Storybook). vitest.config.ts is deliberately left out - the unit tests only
+ * `import type` from plotly.js, which is erased at compile time and never pulls the runtime bundle.
+ *
+ * Remove this plugin (and its registration in the three configs above) once the upstream fix is
+ * released and we bump plotly.js.
  */
 
 const PLOTLY_DIST_SPECIFIER = "plotly.js/dist/plotly";
