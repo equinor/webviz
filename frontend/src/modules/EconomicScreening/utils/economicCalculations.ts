@@ -39,10 +39,19 @@ export type RealizationEconomicInput = {
     years: number[];
     oilVolumes: number[];
     salesGasVolumes: number[];
+    /** False when oil data is absent or incomplete for this realization. */
+    hasOilData?: boolean;
+    /** False when sales-gas data is absent or incomplete for this realization. */
+    hasSalesGasData?: boolean;
 };
 
 export type RealizationEconomicResult = {
     realization: number;
+    oilVolumes: number[];
+    salesGasVolumes: number[];
+    hasOilData: boolean;
+    hasSalesGasData: boolean;
+    gasToOilEquivalentDivisor: number;
     discountedOilVolume: number;
     discountedSalesGasVolume: number;
     discountedOilEquivalents: number;
@@ -62,6 +71,13 @@ export type RealizationEconomicResult = {
     years: number[];
     discountFactors: number[];
     investmentDiscountFactors?: number[];
+};
+
+export type EarlyValueResult = {
+    discountedOilVolume: number;
+    discountedSalesGasVolume: number;
+    discountedOilEquivalents: number;
+    npv: number | null;
 };
 
 /**
@@ -361,18 +377,15 @@ export function computeRealizationEconomics(
     const costLookup = makeCostLookup(costProfile);
     const alignedInput = alignProfileWithCosts(input, costLookup, evaluationWindow);
     const { years, oilVolumes, salesGasVolumes } = alignedInput;
+    const hasOilData = input.hasOilData ?? true;
+    const hasSalesGasData = input.hasSalesGasData ?? true;
 
     const baseYear = assumptions.baseYear ?? years[0] ?? 0;
     const convention = assumptions.convention;
     // Default investment timing follows annual convention if unspecified, but default in UI is START_OF_YEAR
     const investmentTiming = assumptions.investmentTiming ?? InvestmentTiming.FOLLOW_ANNUAL_TIMING;
 
-    const discountFactors = makeDiscountFactors(
-        years,
-        assumptions.discountRateFraction,
-        baseYear,
-        convention,
-    );
+    const discountFactors = makeDiscountFactors(years, assumptions.discountRateFraction, baseYear, convention);
     const investmentDiscountFactors = makeInvestmentDiscountFactors(
         years,
         assumptions.discountRateFraction,
@@ -390,8 +403,7 @@ export function computeRealizationEconomics(
     const opexPerYear = years.map((year) => costLookup.get(year)?.opex ?? 0);
 
     const pvCosts =
-        sumDiscounted(capexPerYear, investmentDiscountFactors) +
-        sumDiscounted(opexPerYear, discountFactors);
+        sumDiscounted(capexPerYear, investmentDiscountFactors) + sumDiscounted(opexPerYear, discountFactors);
 
     // Check if at least one cost entry is entered and non-zero in the evaluation window
     const hasAnyCostEntry = years.some((year) => {
@@ -403,7 +415,7 @@ export function computeRealizationEconomics(
     const isGasRevenueExcluded = assumptions.excludeGasRevenue ?? false;
 
     // Oil price is resolved if specified or explicitly excluded (valued at 0)
-    const hasOilPrice = assumptions.oilPricePerVolume !== null || isOilRevenueExcluded;
+    const hasOilPrice = !hasOilData || assumptions.oilPricePerVolume !== null || isOilRevenueExcluded;
     // Gas price is resolved if specified or explicitly excluded (valued at 0)
     // If sales gas is completely absent or 0 in all years, gas price requirement is also considered satisfied (valued at 0)
     const isAllGasZero = salesGasVolumes.every((v) => Math.abs(v) < 1e-12);
@@ -416,7 +428,11 @@ export function computeRealizationEconomics(
     // If oil price is provided (or excluded) and gas price is provided (or excluded or all gas is zero),
     // and at least one price or exclusion or cost is actively entered.
     const hasAnyPriceEntered = assumptions.oilPricePerVolume !== null || assumptions.gasPricePerVolume !== null;
-    const canComputeFinancialNpv = (hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry) && hasOilPrice;
+    const canComputeFinancialNpv =
+        (hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry) &&
+        hasOilPrice &&
+        hasGasPrice &&
+        (hasSalesGasData || isGasRevenueExcluded);
 
     let netCashFlow: number[] | null = null;
     let discountedNetCashFlow: number[] | null = null;
@@ -441,7 +457,9 @@ export function computeRealizationEconomics(
             return runningCumulative;
         });
 
-        npv = sumDiscounted(revenueMinusOpexPerYear, discountFactors) - sumDiscounted(capexPerYear, investmentDiscountFactors);
+        npv =
+            sumDiscounted(revenueMinusOpexPerYear, discountFactors) -
+            sumDiscounted(capexPerYear, investmentDiscountFactors);
 
         const irrResult = computeInternalRateOfReturnDetailed(
             years,
@@ -464,19 +482,22 @@ export function computeRealizationEconomics(
     let breakEvenOilPrice: number | null = null;
     let breakEvenSlopeDirection: BreakEvenSlopeDirection | undefined = undefined;
 
-    if (hasAnyCostEntry && hasGasPrice) {
+    if (hasOilData && hasAnyCostEntry && hasGasPrice && (hasSalesGasData || isGasRevenueExcluded)) {
         if (Math.abs(discountedOilVolume) > BREAK_EVEN_OIL_VOLUME_TOLERANCE) {
             const pvGasRevenue = effectiveGasPrice * discountedSalesGasVolume;
             breakEvenOilPrice = (pvCosts - pvGasRevenue) / discountedOilVolume;
             breakEvenSlopeDirection =
-                discountedOilVolume > 0
-                    ? BreakEvenSlopeDirection.POSITIVE
-                    : BreakEvenSlopeDirection.NEGATIVE;
+                discountedOilVolume > 0 ? BreakEvenSlopeDirection.POSITIVE : BreakEvenSlopeDirection.NEGATIVE;
         }
     }
 
     return {
         realization: alignedInput.realization,
+        oilVolumes,
+        salesGasVolumes,
+        hasOilData,
+        hasSalesGasData,
+        gasToOilEquivalentDivisor: assumptions.gasToOilEquivalentDivisor,
         discountedOilVolume,
         discountedSalesGasVolume,
         discountedOilEquivalents,
@@ -493,5 +514,27 @@ export function computeRealizationEconomics(
         years,
         discountFactors,
         investmentDiscountFactors,
+    };
+}
+
+/** Extracts cumulative discounted values through an inclusive calendar year without rebasing. */
+export function extractEarlyValue(result: RealizationEconomicResult, endYear: number): EarlyValueResult {
+    const includedIndexes = result.years.flatMap((year, index) => (year <= endYear ? [index] : []));
+    const discountedOilVolume = sumDiscounted(
+        includedIndexes.map((index) => result.oilVolumes[index]),
+        includedIndexes.map((index) => result.discountFactors[index]),
+    );
+    const discountedSalesGasVolume = sumDiscounted(
+        includedIndexes.map((index) => result.salesGasVolumes[index]),
+        includedIndexes.map((index) => result.discountFactors[index]),
+    );
+
+    return {
+        discountedOilVolume,
+        discountedSalesGasVolume,
+        discountedOilEquivalents: discountedOilVolume + discountedSalesGasVolume / result.gasToOilEquivalentDivisor,
+        npv: result.discountedNetCashFlow
+            ? sumOf(includedIndexes.map((index) => result.discountedNetCashFlow![index]))
+            : null,
     };
 }

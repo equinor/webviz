@@ -18,6 +18,7 @@ import {
     discountConventionAtom,
     discountRatePercentAtom,
     distributionPlotTypeAtom,
+    earlyValueConfigurationAtom,
     evaluationWindowAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
@@ -44,6 +45,8 @@ export type SerializedSettings = {
     costProfile: CostProfileEntry[];
     evaluationFirstYear: number | null;
     evaluationLastYear: number | null;
+    earlyValueEnabled?: boolean;
+    earlyValueEndYear?: number | null;
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
     showCashFlowPlot: boolean;
@@ -89,6 +92,8 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
                 },
             },
         },
+        earlyValueEnabled: { type: "boolean" },
+        earlyValueEndYear: { type: "int32", nullable: true },
     },
 }));
 
@@ -96,6 +101,7 @@ export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
     const evaluationWindow = get(evaluationWindowAtom);
+    const earlyValueConfiguration = get(earlyValueConfigurationAtom);
 
     return {
         selectedEnsembleIdentString: get(selectedEnsembleIdentAtom).value?.toString() ?? null,
@@ -111,6 +117,8 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         costProfile: get(costProfileAtom),
         evaluationFirstYear: evaluationWindow.firstYear,
         evaluationLastYear: evaluationWindow.lastYear,
+        earlyValueEnabled: earlyValueConfiguration.enabled,
+        earlyValueEndYear: earlyValueConfiguration.endYear,
         selectedMeasure: get(selectedMeasureAtom),
         distributionPlotType: get(distributionPlotTypeAtom),
         showCashFlowPlot: get(showCashFlowPlotAtom),
@@ -127,6 +135,10 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
         raw.evaluationFirstYear !== undefined || raw.evaluationLastYear !== undefined
             ? { firstYear: raw.evaluationFirstYear ?? null, lastYear: raw.evaluationLastYear ?? null }
             : undefined;
+    const earlyValueConfiguration =
+        raw.earlyValueEnabled !== undefined || raw.earlyValueEndYear !== undefined
+            ? { enabled: raw.earlyValueEnabled ?? false, endYear: raw.earlyValueEndYear ?? null }
+            : undefined;
 
     setIfDefined(set, selectedEnsembleIdentAtom, selectedEnsembleIdent);
     setIfDefined(set, discountRatePercentAtom, raw.discountRatePercent);
@@ -140,6 +152,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, gasPriceBasisAtom, raw.gasPriceBasis);
     setIfDefined(set, costProfileAtom, raw.costProfile);
     setIfDefined(set, evaluationWindowAtom, evaluationWindow);
+    setIfDefined(set, earlyValueConfigurationAtom, earlyValueConfiguration);
     setIfDefined(set, selectedMeasureAtom, raw.selectedMeasure);
     setIfDefined(set, distributionPlotTypeAtom, raw.distributionPlotType);
     setIfDefined(set, showCashFlowPlotAtom, raw.showCashFlowPlot);

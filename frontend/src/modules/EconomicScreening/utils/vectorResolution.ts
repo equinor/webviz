@@ -7,7 +7,7 @@ export const GAS_INJECTION_VECTOR = "FGIT";
 export const GAS_CONSUMPTION_VECTOR = "FGCT";
 
 export type SalesGasStrategy =
-    | { kind: "DIRECT" }
+    | { kind: "DIRECT"; hasGasConsumption: boolean }
     | {
           kind: "DERIVED";
           hasGasProduction: boolean;
@@ -42,7 +42,7 @@ export type DerivedSalesGasCumulative = {
 export function determineSalesGasStrategy(availableVectorNames: string[]): SalesGasStrategy {
     const available = new Set(availableVectorNames);
     if (available.has(SALES_GAS_VECTOR)) {
-        return { kind: "DIRECT" };
+        return { kind: "DIRECT", hasGasConsumption: available.has(GAS_CONSUMPTION_VECTOR) };
     }
     if (!available.has(GAS_PRODUCTION_VECTOR)) {
         return { kind: "UNAVAILABLE" };
@@ -149,7 +149,7 @@ export function deriveSalesGasCumulative(
 /** True when every realization ends at zero cumulative volume, i.e. the process is not modelled. */
 export function isCumulativeVectorAllZero(data: VectorRealizationData_api[]): boolean {
     if (data.length === 0) {
-        return true;
+        return false;
     }
     return data.every((elm) => {
         const lastValue = elm.values.at(-1);

@@ -6,7 +6,7 @@ import { EconomicMeasure, EconomicMeasureEnumToStringMapping } from "./typesAndE
 export const MEASURE_CHANNEL_ID_MAP: Record<EconomicMeasure, string> = {
     [EconomicMeasure.NPV]: "NPV (value per realization)",
     [EconomicMeasure.IRR]: "IRR (value per realization)",
-    [EconomicMeasure.BREAK_EVEN_OIL_PRICE]: "Break-even oil price (value per realization)",
+    [EconomicMeasure.BREAK_EVEN_OIL_PRICE]: "Break-even oil price, fixed gas (value per realization)",
     [EconomicMeasure.DISCOUNTED_OIL_VOLUME]: "Discounted oil volume (value per realization)",
     [EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME]: "Discounted sales gas volume (value per realization)",
     [EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS]: "Discounted oil equivalents (value per realization)",

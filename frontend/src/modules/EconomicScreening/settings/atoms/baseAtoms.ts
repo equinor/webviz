@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { CostProfileEntry, EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
+import type { CostProfileEntry, EarlyValueConfiguration, EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
 import type { MissingComponentAssumptions } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
@@ -26,6 +26,7 @@ export const gasPriceBasisAtom = atom<GasPriceBasis>(GasPriceBasis.PER_SM3);
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
 
 export const evaluationWindowAtom = atom<EvaluationWindow>({ firstYear: null, lastYear: null });
+export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.HISTOGRAM);

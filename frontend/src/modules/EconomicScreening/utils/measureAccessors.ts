@@ -24,15 +24,15 @@ function rawMeasureValue(result: RealizationEconomicResult, measure: EconomicMea
         case EconomicMeasure.BREAK_EVEN_OIL_PRICE:
             return result.breakEvenOilPrice;
         case EconomicMeasure.DISCOUNTED_OIL_VOLUME:
-            return result.discountedOilVolume;
+            return result.hasOilData ? result.discountedOilVolume : null;
         case EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME:
-            return result.discountedSalesGasVolume;
+            return result.hasSalesGasData ? result.discountedSalesGasVolume : null;
         case EconomicMeasure.DISCOUNTED_OIL_EQUIVALENTS:
-            return result.discountedOilEquivalents;
+            return result.hasOilData && result.hasSalesGasData ? result.discountedOilEquivalents : null;
         case EconomicMeasure.UNDISCOUNTED_OIL_VOLUME:
-            return result.undiscountedOilVolume;
+            return result.hasOilData ? result.undiscountedOilVolume : null;
         case EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME:
-            return result.undiscountedSalesGasVolume;
+            return result.hasSalesGasData ? result.undiscountedSalesGasVolume : null;
         default:
             return null;
     }

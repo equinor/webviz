@@ -112,6 +112,11 @@ export type EvaluationWindow = {
     lastYear: number | null;
 };
 
+export type EarlyValueConfiguration = {
+    enabled: boolean;
+    endYear: number | null;
+};
+
 export const DEFAULT_DISCOUNT_RATE_PERCENT = 8;
 
 /** NPD/NOD convention: 1000 Sm³ gas equals 1 Sm³ oil equivalent. */

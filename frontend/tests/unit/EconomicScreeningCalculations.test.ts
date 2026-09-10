@@ -9,12 +9,14 @@ import {
 import type { ResolvedEconomicAssumptions } from "@modules/EconomicScreening/utils/economicCalculations";
 import {
     computeAnnualVolumesFromCumulative,
+    extractEarlyValue,
     computeInternalRateOfReturn,
     computeRealizationEconomics,
     makeDiscountFactors,
     makeInvestmentDiscountFactors,
     sumDiscounted,
 } from "@modules/EconomicScreening/utils/economicCalculations";
+import { normalizeEconomicProfiles } from "@modules/EconomicScreening/utils/normalizedProfiles";
 
 const NO_EVALUATION_WINDOW = { firstYear: null, lastYear: null };
 
@@ -80,6 +82,82 @@ describe("computeAnnualVolumesFromCumulative", () => {
 
     test("throws when the arrays have different lengths", () => {
         expect(() => computeAnnualVolumesFromCumulative([1, 2], [1])).toThrow();
+    });
+});
+
+describe("normalizeEconomicProfiles", () => {
+    test("aligns sales gas to each oil realization's annual grid", () => {
+        const profiles = normalizeEconomicProfiles(
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2021), yearStartUtcMs(2022)],
+                    values: [0, 100, 300],
+                    unit: "SM3",
+                    isRate: false,
+                },
+            ],
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [yearStartUtcMs(2021), yearStartUtcMs(2022)],
+                    values: [10, 60],
+                },
+            ],
+        );
+
+        expect(profiles).toEqual([
+            {
+                realization: 1,
+                years: [2020, 2021],
+                oilVolumes: [100, 200],
+                salesGasVolumes: [0, 50],
+                hasOilData: true,
+                hasSalesGasData: true,
+            },
+        ]);
+    });
+
+    test("marks a realization without sales-gas data as incomplete instead of assuming zero gas", () => {
+        const profiles = normalizeEconomicProfiles(
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2021)],
+                    values: [0, 100],
+                    unit: "SM3",
+                    isRate: false,
+                },
+            ],
+            [],
+        );
+
+        expect(profiles[0].hasSalesGasData).toBe(false);
+        expect(profiles[0].salesGasVolumes).toEqual([0]);
+    });
+
+    test("preserves a gas-only realization", () => {
+        const profiles = normalizeEconomicProfiles(
+            [],
+            [
+                {
+                    realization: 2,
+                    timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2021)],
+                    values: [0, 50],
+                },
+            ],
+        );
+
+        expect(profiles).toEqual([
+            {
+                realization: 2,
+                years: [2020],
+                oilVolumes: [0],
+                salesGasVolumes: [50],
+                hasOilData: false,
+                hasSalesGasData: true,
+            },
+        ]);
     });
 });
 
@@ -154,6 +232,30 @@ describe("computeRealizationEconomics", () => {
         expect(result.netCashFlow).toBeNull();
     });
 
+    test("preserves oil volumes but withholds financial results when sales-gas data is incomplete", () => {
+        const result = computeRealizationEconomics(
+            { ...input, hasSalesGasData: false },
+            makeAssumptions({ oilPricePerVolume: 2, gasPricePerVolume: 0 }),
+            [],
+            NO_EVALUATION_WINDOW,
+        );
+
+        expect(result.discountedOilVolume).toBeGreaterThan(0);
+        expect(result.hasSalesGasData).toBe(false);
+        expect(result.npv).toBeNull();
+    });
+
+    test("withholds financial results when present sales gas has no revenue assumption", () => {
+        const result = computeRealizationEconomics(
+            input,
+            makeAssumptions({ oilPricePerVolume: 2 }),
+            [],
+            NO_EVALUATION_WINDOW,
+        );
+
+        expect(result.npv).toBeNull();
+    });
+
     test("computes NPV from prices and costs", () => {
         const result = computeRealizationEconomics(
             input,
@@ -206,7 +308,7 @@ describe("computeRealizationEconomics", () => {
     test("includes cost-only years that precede first production", () => {
         const result = computeRealizationEconomics(
             input,
-            makeAssumptions({ baseYear: 2019, oilPricePerVolume: 1 }),
+            makeAssumptions({ baseYear: 2019, oilPricePerVolume: 1, gasPricePerVolume: 0 }),
             [{ year: 2019, capex: 500, opex: 0 }],
             NO_EVALUATION_WINDOW,
         );
@@ -229,6 +331,33 @@ describe("computeRealizationEconomics", () => {
         const result = computeRealizationEconomics(input, makeAssumptions(), [], NO_EVALUATION_WINDOW);
 
         expect(result.discountFactors[0]).toBeCloseTo(1 / 1.1, 10);
+    });
+
+    test("extracts early values without rebasing the valuation date", () => {
+        const result = computeRealizationEconomics(
+            input,
+            makeAssumptions({ baseYear: 2020, oilPricePerVolume: 1, gasPricePerVolume: 0 }),
+            [],
+            NO_EVALUATION_WINDOW,
+        );
+
+        const earlyValue = extractEarlyValue(result, 2020);
+
+        expect(earlyValue.discountedOilVolume).toBeCloseTo(100 / 1.1, 10);
+        expect(earlyValue.npv).toBeCloseTo(100 / 1.1, 10);
+    });
+
+    test("converts early sales gas to oil equivalents with the resolved divisor", () => {
+        const result = computeRealizationEconomics(
+            input,
+            makeAssumptions({ baseYear: 2020, gasToOilEquivalentDivisor: 1000 }),
+            [],
+            NO_EVALUATION_WINDOW,
+        );
+
+        const earlyValue = extractEarlyValue(result, 2020);
+
+        expect(earlyValue.discountedOilEquivalents).toBeCloseTo((100 + 1000 / 1000) / 1.1, 10);
     });
 });
 
@@ -267,7 +396,12 @@ describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, 
     };
 
     test("computes exact hand-calculated NPV and discounted volumes", () => {
-        const result = computeRealizationEconomics(fixtureInput, fixtureAssumptions, fixtureCosts, NO_EVALUATION_WINDOW);
+        const result = computeRealizationEconomics(
+            fixtureInput,
+            fixtureAssumptions,
+            fixtureCosts,
+            NO_EVALUATION_WINDOW,
+        );
 
         expect(result.years).toEqual([2020, 2021, 2022]);
 
@@ -330,7 +464,12 @@ describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, 
     });
 
     test("computes robust IRR for conventional profile and rejects non-conventional", () => {
-        const result = computeRealizationEconomics(fixtureInput, fixtureAssumptions, fixtureCosts, NO_EVALUATION_WINDOW);
+        const result = computeRealizationEconomics(
+            fixtureInput,
+            fixtureAssumptions,
+            fixtureCosts,
+            NO_EVALUATION_WINDOW,
+        );
         expect(result.irr).not.toBeNull();
         expect(result.irrStatus).toBe(IrrStatus.CONVERGED);
 
@@ -368,7 +507,12 @@ describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, 
             ...fixtureAssumptions,
             gasPricePerVolume: 50,
         };
-        const result = computeRealizationEconomics(fixtureInput, highGasAssumptions, fixtureCosts, NO_EVALUATION_WINDOW);
+        const result = computeRealizationEconomics(
+            fixtureInput,
+            highGasAssumptions,
+            fixtureCosts,
+            NO_EVALUATION_WINDOW,
+        );
         expect(result.breakEvenOilPrice).not.toBeNull();
         expect(result.breakEvenOilPrice!).toBeLessThan(0);
         expect(result.breakEvenSlopeDirection).toBe(BreakEvenSlopeDirection.POSITIVE);
@@ -441,7 +585,12 @@ describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, 
 
         const compResult = computeRealizationEconomics(compInput, fixtureAssumptions, compCosts, NO_EVALUATION_WINDOW);
         const refResult = computeRealizationEconomics(refInput, fixtureAssumptions, refCosts, NO_EVALUATION_WINDOW);
-        const deltaResult = computeRealizationEconomics(deltaInput, fixtureAssumptions, deltaCosts, NO_EVALUATION_WINDOW);
+        const deltaResult = computeRealizationEconomics(
+            deltaInput,
+            fixtureAssumptions,
+            deltaCosts,
+            NO_EVALUATION_WINDOW,
+        );
 
         expect(deltaResult.npv).not.toBeNull();
         expect(compResult.npv).not.toBeNull();
@@ -459,12 +608,10 @@ describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, 
         );
 
         // Truncated evaluation window: 2022 only
-        const truncatedResult = computeRealizationEconomics(
-            fixtureInput,
-            fixtureAssumptions,
-            fixtureCosts,
-            { firstYear: 2022, lastYear: 2022 },
-        );
+        const truncatedResult = computeRealizationEconomics(fixtureInput, fixtureAssumptions, fixtureCosts, {
+            firstYear: 2022,
+            lastYear: 2022,
+        });
 
         // 2022 discount factor must still be discounted back to baseYear 2020
         expect(truncatedResult.discountFactors[0]).toBeCloseTo(fullResult.discountFactors[2], 10);

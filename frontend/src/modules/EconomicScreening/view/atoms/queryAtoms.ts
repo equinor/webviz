@@ -61,7 +61,8 @@ const isVectorNeededAtom = atom<boolean[]>((get) => {
         salesGasStrategy.kind === "DIRECT",
         salesGasStrategy.kind === "DERIVED",
         salesGasStrategy.kind === "DERIVED" && salesGasStrategy.hasGasInjection,
-        salesGasStrategy.kind === "DERIVED" && salesGasStrategy.hasGasConsumption,
+        (salesGasStrategy.kind === "DIRECT" || salesGasStrategy.kind === "DERIVED") &&
+            salesGasStrategy.hasGasConsumption,
     ];
 });
 

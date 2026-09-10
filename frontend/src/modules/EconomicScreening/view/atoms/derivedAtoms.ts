@@ -2,11 +2,11 @@ import { atom } from "jotai";
 
 import type { VectorRealizationData_api } from "@api";
 import {
-    computeAnnualVolumesFromCumulative,
     computeRealizationEconomics,
     type RealizationEconomicResult,
     type ResolvedEconomicAssumptions,
 } from "@modules/EconomicScreening/utils/economicCalculations";
+import { normalizeEconomicProfiles } from "@modules/EconomicScreening/utils/normalizedProfiles";
 import {
     convertGasPriceToSimulatorUnit,
     convertGasToOilEquivalentFactorToSimulatorUnit,
@@ -80,11 +80,14 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
 
     if (salesGasStrategy.kind === "DIRECT") {
         const data = queries[VectorQueryIndex.SALES_GAS].data ?? [];
+        const gasConsumptionData = salesGasStrategy.hasGasConsumption
+            ? (queries[VectorQueryIndex.GAS_CONSUMPTION].data ?? [])
+            : [];
         return {
             series: toRealizationCumulativeSeries(data),
             unit: data[0]?.unit ?? "",
-            hasZeroGasConsumption: false,
-            isGasConsumptionMissing: false,
+            hasZeroGasConsumption: salesGasStrategy.hasGasConsumption && isCumulativeVectorAllZero(gasConsumptionData),
+            isGasConsumptionMissing: !salesGasStrategy.hasGasConsumption,
             isGasInjectionMissing: false,
             incompleteInjectionRealizations: [],
             incompleteConsumptionRealizations: [],
@@ -141,27 +144,38 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
 
     const oilUnit = oilProductionData[0]?.unit ?? "";
     const gasUnit = salesGasData.unit;
+    const salesGasStrategy = get(salesGasStrategyAtom);
 
     if (salesGasData.isGasConsumptionMissing) {
-        warnings.push("FGCT is not available. Sales gas cannot be derived until a zero-consumption assumption is accepted.");
+        warnings.push(
+            salesGasStrategy.kind === "DIRECT"
+                ? "Gas consumption data unavailable."
+                : "FGCT is not available. Sales gas is excluded until a zero-consumption assumption is accepted.",
+        );
     } else if (salesGasData.hasZeroGasConsumption) {
         warnings.push("FGCT is zero in all realizations, so no gas consumption is modelled.");
     }
     if (salesGasData.isGasInjectionMissing && salesGasData.series.length > 0) {
-        warnings.push("FGIT is not available. Sales gas cannot be derived until a zero-injection assumption is accepted.");
+        warnings.push(
+            "FGIT is not available. Sales gas cannot be derived until a zero-injection assumption is accepted.",
+        );
     }
     if (salesGasData.incompleteInjectionRealizations.length > 0) {
-        warnings.push(`FGIT has missing samples for ${salesGasData.incompleteInjectionRealizations.length} realizations.`);
+        warnings.push(
+            `FGIT has missing samples for ${salesGasData.incompleteInjectionRealizations.length} realizations.`,
+        );
     }
     if (salesGasData.incompleteConsumptionRealizations.length > 0) {
-        warnings.push(`FGCT has missing samples for ${salesGasData.incompleteConsumptionRealizations.length} realizations.`);
+        warnings.push(
+            `FGCT has missing samples for ${salesGasData.incompleteConsumptionRealizations.length} realizations.`,
+        );
     }
 
-    if (oilProductionData.length === 0) {
+    if (oilProductionData.length === 0 && salesGasData.series.length === 0) {
         return { results: [], oilUnit, gasUnit, warnings, errors };
     }
 
-    const gasSeriesByRealization = new Map(salesGasData.series.map((elm) => [elm.realization, elm]));
+    const normalizedProfiles = normalizeEconomicProfiles(oilProductionData, salesGasData.series);
 
     const gasToOilEquivalentDivisor =
         gasUnit === ""
@@ -187,7 +201,7 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     if (priceAssumptions.gasPrice !== null && gasUnit !== "" && gasPricePerVolume === null) {
         errors.push(`Unrecognised gas volume unit "${gasUnit}". Cannot apply the given gas price.`);
     }
-    if (gasToOilEquivalentDivisor === null) {
+    if (oilUnit !== "" && gasUnit !== "" && gasToOilEquivalentDivisor === null) {
         errors.push(`Cannot convert between oil unit "${oilUnit}" and gas unit "${gasUnit}".`);
     }
 
@@ -205,24 +219,9 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         gasPricePerVolume,
     };
 
-    const results = oilProductionData.map((oilRealizationData) => {
-        const oilProfile = computeAnnualVolumesFromCumulative(
-            oilRealizationData.timestampsUtcMs,
-            oilRealizationData.values,
-        );
-        const gasSeries = gasSeriesByRealization.get(oilRealizationData.realization);
-        const gasProfile = gasSeries
-            ? computeAnnualVolumesFromCumulative(gasSeries.timestampsUtcMs, gasSeries.values)
-            : null;
-        const gasVolumeByYear = new Map(gasProfile?.years.map((year, i) => [year, gasProfile.volumes[i]]) ?? []);
-
+    const results = normalizedProfiles.map((profile) => {
         return computeRealizationEconomics(
-            {
-                realization: oilRealizationData.realization,
-                years: oilProfile.years,
-                oilVolumes: oilProfile.volumes,
-                salesGasVolumes: oilProfile.years.map((year) => gasVolumeByYear.get(year) ?? 0),
-            },
+            profile,
             assumptions,
             costProfile,
             evaluationWindow,

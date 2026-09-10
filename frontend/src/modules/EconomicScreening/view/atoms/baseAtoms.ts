@@ -5,6 +5,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type {
     CostProfileEntry,
     DiscountAssumptions,
+    EarlyValueConfiguration,
     EvaluationWindow,
     PriceAssumptions,
 } from "@modules/EconomicScreening/typesAndEnums";
@@ -41,6 +42,7 @@ export const priceAssumptionsAtom = atom<PriceAssumptions>({
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
 
 export const evaluationWindowAtom = atom<EvaluationWindow>({ firstYear: null, lastYear: null });
+export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 

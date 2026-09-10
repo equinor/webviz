@@ -5,6 +5,7 @@ import {
     costProfileAtom,
     discountAssumptionsAtom,
     distributionPlotTypeAtom,
+    earlyValueConfigurationAtom,
     ensembleIdentAtom,
     evaluationWindowAtom,
     priceAssumptionsAtom,
@@ -31,6 +32,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(evaluationWindowAtom, getInterfaceValue("evaluationWindow"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(earlyValueConfigurationAtom, getInterfaceValue("earlyValueConfiguration"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(selectedMeasureAtom, getInterfaceValue("selectedMeasure"));

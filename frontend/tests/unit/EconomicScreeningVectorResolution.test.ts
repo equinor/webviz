@@ -19,7 +19,17 @@ function makeVectorData(realization: number, timestampsUtcMs: number[], values: 
 
 describe("determineSalesGasStrategy", () => {
     test("prefers FGST when available", () => {
-        expect(determineSalesGasStrategy(["FOPT", "FGST", "FGPT"])).toEqual({ kind: "DIRECT" });
+        expect(determineSalesGasStrategy(["FOPT", "FGST", "FGPT", "FGCT"])).toEqual({
+            kind: "DIRECT",
+            hasGasConsumption: true,
+        });
+    });
+
+    test("reports unavailable consumption even when FGST is used directly", () => {
+        expect(determineSalesGasStrategy(["FOPT", "FGST", "FGPT"])).toEqual({
+            kind: "DIRECT",
+            hasGasConsumption: false,
+        });
     });
 
     test("falls back to deriving from the gas components", () => {
@@ -104,7 +114,7 @@ describe("isCumulativeVectorAllZero", () => {
         );
     });
 
-    test("is true for no data at all", () => {
-        expect(isCumulativeVectorAllZero([])).toBe(true);
+    test("is false for no data because zero consumption is not confirmed", () => {
+        expect(isCumulativeVectorAllZero([])).toBe(false);
     });
 });
