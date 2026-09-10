@@ -1,6 +1,7 @@
 import { atom } from "jotai";
 
 import type { CostProfileEntry, EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
+import type { MissingComponentAssumptions } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
     DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
@@ -29,3 +30,6 @@ export const evaluationWindowAtom = atom<EvaluationWindow>({ firstYear: null, la
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.HISTOGRAM);
 export const showCashFlowPlotAtom = atom<boolean>(false);
+
+/** Explicit zero assumptions, keyed by the ensemble identity they apply to. */
+export const missingComponentAssumptionsAtom = atom<Record<string, MissingComponentAssumptions>>({});

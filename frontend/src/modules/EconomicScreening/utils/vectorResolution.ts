@@ -22,6 +22,19 @@ export type RealizationCumulativeSeries = {
     values: number[];
 };
 
+export type MissingComponentAssumptions = {
+    assumeMissingInjectionAsZero?: boolean;
+    assumeMissingConsumptionAsZero?: boolean;
+};
+
+export type DerivedSalesGasCumulative = {
+    series: RealizationCumulativeSeries[];
+    missingInjectionRealizations: number[];
+    missingConsumptionRealizations: number[];
+    incompleteInjectionRealizations: number[];
+    incompleteConsumptionRealizations: number[];
+};
+
 /**
  * Sales gas is taken from FGST when the ensemble provides it, otherwise derived as
  * FGPT - FGIT - FGCT from whichever components are available.
@@ -64,21 +77,52 @@ export function toRealizationCumulativeSeries(data: VectorRealizationData_api[])
 
 /**
  * Builds cumulative sales gas per realization as FGPT - FGIT - FGCT, using the FGPT timestamps as
- * the master sampling and treating missing components as zero.
+ * the master sampling. Missing vectors require an explicit zero assumption; missing samples always
+ * exclude the affected realization.
  */
 export function deriveSalesGasCumulative(
     gasProductionData: VectorRealizationData_api[],
     gasInjectionData: VectorRealizationData_api[],
     gasConsumptionData: VectorRealizationData_api[],
-): RealizationCumulativeSeries[] {
+    assumptions: MissingComponentAssumptions = {},
+): DerivedSalesGasCumulative {
     const injectionByRealization = makeDataByRealizationMap(gasInjectionData);
     const consumptionByRealization = makeDataByRealizationMap(gasConsumptionData);
+    const missingInjectionRealizations: number[] = [];
+    const missingConsumptionRealizations: number[] = [];
+    const incompleteInjectionRealizations: number[] = [];
+    const incompleteConsumptionRealizations: number[] = [];
+    const series: RealizationCumulativeSeries[] = [];
 
-    return gasProductionData.map((production) => {
+    for (const production of gasProductionData) {
         const injection = injectionByRealization.get(production.realization);
         const consumption = consumptionByRealization.get(production.realization);
+        let hasMissingComponent = false;
+        if (!injection && !assumptions.assumeMissingInjectionAsZero) {
+            missingInjectionRealizations.push(production.realization);
+            hasMissingComponent = true;
+        }
+        if (!consumption && !assumptions.assumeMissingConsumptionAsZero) {
+            missingConsumptionRealizations.push(production.realization);
+            hasMissingComponent = true;
+        }
+        if (hasMissingComponent) {
+            continue;
+        }
         const injectionByTimestamp = injection ? makeValueByTimestampMap(injection) : null;
         const consumptionByTimestamp = consumption ? makeValueByTimestampMap(consumption) : null;
+
+        const hasIncompleteInjection = injectionByTimestamp
+            ? production.timestampsUtcMs.some((timestampUtcMs) => !injectionByTimestamp.has(timestampUtcMs))
+            : false;
+        const hasIncompleteConsumption = consumptionByTimestamp
+            ? production.timestampsUtcMs.some((timestampUtcMs) => !consumptionByTimestamp.has(timestampUtcMs))
+            : false;
+        if (hasIncompleteInjection || hasIncompleteConsumption) {
+            if (hasIncompleteInjection) incompleteInjectionRealizations.push(production.realization);
+            if (hasIncompleteConsumption) incompleteConsumptionRealizations.push(production.realization);
+            continue;
+        }
 
         const values = production.timestampsUtcMs.map((timestampUtcMs, i) => {
             const injected = injectionByTimestamp?.get(timestampUtcMs) ?? 0;
@@ -86,12 +130,20 @@ export function deriveSalesGasCumulative(
             return production.values[i] - injected - consumed;
         });
 
-        return {
+        series.push({
             realization: production.realization,
             timestampsUtcMs: production.timestampsUtcMs,
             values,
-        };
-    });
+        });
+    }
+
+    return {
+        series,
+        missingInjectionRealizations,
+        missingConsumptionRealizations,
+        incompleteInjectionRealizations,
+        incompleteConsumptionRealizations,
+    };
 }
 
 /** True when every realization ends at zero cumulative volume, i.e. the process is not modelled. */

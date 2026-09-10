@@ -1,10 +1,16 @@
 import type { CostProfileEntry, EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
-import { DiscountConvention, InvestmentTiming } from "@modules/EconomicScreening/typesAndEnums";
+import {
+    BreakEvenSlopeDirection,
+    DiscountConvention,
+    InvestmentTiming,
+    IrrStatus,
+} from "@modules/EconomicScreening/typesAndEnums";
 
-const IRR_LOWER_BOUND = -0.9999;
-const IRR_UPPER_BOUND = 10;
-const IRR_MAX_ITERATIONS = 200;
-const IRR_TOLERANCE = 1e-9;
+export const IRR_LOWER_BOUND = -0.9999;
+export const IRR_UPPER_BOUND = 10;
+export const IRR_MAX_ITERATIONS = 200;
+export const IRR_TOLERANCE = 1e-9;
+export const BREAK_EVEN_OIL_VOLUME_TOLERANCE = 1e-9;
 
 /** Economic assumptions rescaled to the volume units of the source vectors. */
 export type ResolvedEconomicAssumptions = {
@@ -12,11 +18,13 @@ export type ResolvedEconomicAssumptions = {
     /** Null means "use the first year of the aligned profile". */
     baseYear: number | null;
     convention: DiscountConvention;
-    investmentTiming: InvestmentTiming;
+    investmentTiming?: InvestmentTiming;
     /** Divisor turning a raw gas volume into an oil equivalent in the oil vector's unit. */
     gasToOilEquivalentDivisor: number;
     oilPricePerVolume: number | null;
     gasPricePerVolume: number | null;
+    excludeOilRevenue?: boolean;
+    excludeGasRevenue?: boolean;
 };
 
 export type AnnualVolumeProfile = {
@@ -42,11 +50,18 @@ export type RealizationEconomicResult = {
     undiscountedSalesGasVolume: number;
     npv: number | null;
     irr: number | null;
+    irrStatus?: IrrStatus;
     breakEvenOilPrice: number | null;
+    breakEvenSlopeDirection?: BreakEvenSlopeDirection;
     /** Net cash flow per year, aligned with `years`. Null when prices are not given. */
     netCashFlow: number[] | null;
+    /** Discounted net cash flow per year (including separately timed CAPEX). */
+    discountedNetCashFlow?: number[] | null;
+    /** Cumulative discounted net cash flow per year. */
+    cumulativeDiscountedCashFlow?: number[] | null;
     years: number[];
     discountFactors: number[];
+    investmentDiscountFactors?: number[];
 };
 
 /**
@@ -63,11 +78,34 @@ export function computeAnnualVolumesFromCumulative(
         throw new Error("Timestamp and value arrays must have equal length");
     }
 
+    if (timestampsUtcMs.length < 2) {
+        return { years: [], volumes: [] };
+    }
+
+    // Filter and sort points by timestamp, ensuring finite values and removing non-strictly-increasing timestamps
+    const points: { t: number; v: number }[] = [];
+    for (let i = 0; i < timestampsUtcMs.length; i++) {
+        const t = timestampsUtcMs[i];
+        const v = cumulativeValues[i];
+        if (!Number.isFinite(t) || !Number.isFinite(v)) {
+            continue;
+        }
+        points.push({ t, v });
+    }
+
+    points.sort((a, b) => a.t - b.t);
+
     const years: number[] = [];
     const volumes: number[] = [];
-    for (let i = 0; i < timestampsUtcMs.length - 1; i++) {
-        years.push(new Date(timestampsUtcMs[i]).getUTCFullYear());
-        volumes.push(cumulativeValues[i + 1] - cumulativeValues[i]);
+    for (let i = 0; i < points.length - 1; i++) {
+        const t0 = points[i].t;
+        const t1 = points[i + 1].t;
+        // Avoid duplicate timestamps
+        if (t1 <= t0) {
+            continue;
+        }
+        years.push(new Date(t0).getUTCFullYear());
+        volumes.push(points[i + 1].v - points[i].v);
     }
 
     return { years, volumes };
@@ -83,17 +121,20 @@ export function makeDiscountFactors(
     return years.map((year) => 1 / Math.pow(1 + discountRateFraction, year - baseYear + offset));
 }
 
-function makeInvestmentDiscountFactors(
+export function makeInvestmentDiscountFactors(
     years: number[],
     discountRateFraction: number,
     baseYear: number,
     convention: DiscountConvention,
-    investmentTiming: InvestmentTiming,
+    investmentTiming: InvestmentTiming = InvestmentTiming.START_OF_YEAR,
 ): number[] {
-    if (investmentTiming === InvestmentTiming.FOLLOW_ANNUAL_TIMING) {
-        return makeDiscountFactors(years, discountRateFraction, baseYear, convention);
-    }
-    return years.map((year) => 1 / Math.pow(1 + discountRateFraction, year - baseYear));
+    const offset =
+        investmentTiming === InvestmentTiming.START_OF_YEAR
+            ? 0.0
+            : convention === DiscountConvention.MID_YEAR
+              ? 0.5
+              : 1.0;
+    return years.map((year) => 1 / Math.pow(1 + discountRateFraction, year - baseYear + offset));
 }
 
 export function sumDiscounted(values: number[], discountFactors: number[]): number {
@@ -155,39 +196,86 @@ export function alignProfileWithCosts(
 }
 
 /**
- * Finds the discount rate where the net present value of the cash flow is zero.
- *
- * Returns null when the cash flow does not change sign, i.e. when no internal rate of return exists.
+ * Checks if a cash flow profile is conventional (initial negative cash flows followed by positive cash flows).
+ * In a conventional profile:
+ * - Net cash flow starts with one or more negative events (ignoring any leading zeros).
+ * - Switches exactly once to positive events.
+ * - After the first positive event, no further negative events occur.
  */
-export function computeInternalRateOfReturn(
-    years: number[],
-    netCashFlow: number[],
-    baseYear: number,
-    convention: DiscountConvention,
-): number | null {
-    const offset = convention === DiscountConvention.MID_YEAR ? 0.5 : 1;
-    return computeConventionalInternalRateOfReturn(
-        years.map((year) => year - baseYear + offset),
-        netCashFlow,
-    );
+export function isConventionalCashFlow(netEvents: number[]): boolean {
+    const nonZero = netEvents.filter((val) => Math.abs(val) > 1e-12);
+    if (nonZero.length < 2) {
+        return false;
+    }
+    // Must start negative
+    if (nonZero[0] > 0) {
+        return false;
+    }
+    let signChanges = 0;
+    for (let i = 1; i < nonZero.length; i++) {
+        if ((nonZero[i] > 0 && nonZero[i - 1] < 0) || (nonZero[i] < 0 && nonZero[i - 1] > 0)) {
+            signChanges++;
+        }
+    }
+    return signChanges === 1;
 }
 
-function computeConventionalInternalRateOfReturn(eventTimes: number[], cashFlows: number[]): number | null {
-    const eventsByTime = new Map<number, number>();
-    for (let i = 0; i < eventTimes.length; i++) {
-        eventsByTime.set(eventTimes[i], (eventsByTime.get(eventTimes[i]) ?? 0) + cashFlows[i]);
+export type IrrComputationResult = {
+    irr: number | null;
+    status: IrrStatus;
+};
+
+/**
+ * Finds the discount rate where the net present value of the cash flow is zero.
+ *
+ * Supports timed cash-flow events, accounting for separate investment timing and operating/revenue timing.
+ * Conventional profiles are solved using a bracketed bisection solver.
+ */
+export function computeInternalRateOfReturnDetailed(
+    years: number[],
+    revenueMinusOpex: number[],
+    capex: number[],
+    baseYear: number,
+    convention: DiscountConvention,
+    investmentTiming: InvestmentTiming = InvestmentTiming.START_OF_YEAR,
+): IrrComputationResult {
+    // Check if there are any non-zero events
+    const hasAnnualTiming = investmentTiming === InvestmentTiming.FOLLOW_ANNUAL_TIMING;
+    const combinedEvents: number[] = [];
+    if (hasAnnualTiming) {
+        for (let i = 0; i < years.length; i++) {
+            combinedEvents.push(revenueMinusOpex[i] - capex[i]);
+        }
+    } else {
+        // Events are at distinct times: capex at start-of-year (offset 0), revenue/opex at mid/year-end.
+        // For assessing conventional profile order chronologically:
+        // For each year: capex event first (-capex), then rev-opex event (+rev-opex).
+        for (let i = 0; i < years.length; i++) {
+            if (Math.abs(capex[i]) > 1e-12) {
+                combinedEvents.push(-capex[i]);
+            }
+            if (Math.abs(revenueMinusOpex[i]) > 1e-12) {
+                combinedEvents.push(revenueMinusOpex[i]);
+            }
+        }
     }
 
-    const events = Array.from(eventsByTime.entries())
-        .sort(([firstTime], [secondTime]) => firstTime - secondTime)
-        .map(([time, cashFlow]) => ({ time, cashFlow }))
-        .filter((event) => event.cashFlow !== 0);
-    if (events.length < 2 || events[0].cashFlow >= 0 || events.slice(1).some((event) => event.cashFlow <= 0)) {
-        return null;
+    const hasPositive = combinedEvents.some((v) => v > 1e-12);
+    const hasNegative = combinedEvents.some((v) => v < -1e-12);
+
+    if (!hasPositive || !hasNegative) {
+        return { irr: null, status: IrrStatus.NO_FINITE_ROOT };
     }
 
-    const npvAtRate = (rate: number): number =>
-        events.reduce((sum, event) => sum + event.cashFlow / Math.pow(1 + rate, event.time), 0);
+    if (!isConventionalCashFlow(combinedEvents)) {
+        return { irr: null, status: IrrStatus.NON_CONVENTIONAL };
+    }
+
+    const npvAtRate = (rate: number): number => {
+        const annualDf = makeDiscountFactors(years, rate, baseYear, convention);
+        const invDf = makeInvestmentDiscountFactors(years, rate, baseYear, convention, investmentTiming);
+        return sumDiscounted(revenueMinusOpex, annualDf) - sumDiscounted(capex, invDf);
+    };
 
     let low = IRR_LOWER_BOUND;
     let high = IRR_UPPER_BOUND;
@@ -195,22 +283,40 @@ function computeConventionalInternalRateOfReturn(eventTimes: number[], cashFlows
     let npvHigh = npvAtRate(high);
 
     if (!Number.isFinite(npvLow) || !Number.isFinite(npvHigh)) {
-        return null;
+        return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
     }
-    if (npvLow === 0) return low;
-    if (npvHigh === 0) return high;
+
+    if (Math.abs(npvLow) < IRR_TOLERANCE) return { irr: low, status: IrrStatus.CONVERGED };
+    if (Math.abs(npvHigh) < IRR_TOLERANCE) return { irr: high, status: IrrStatus.CONVERGED };
+
     if (npvLow * npvHigh > 0) {
-        return null;
+        // Try bracket expansion upwards up to 100 (10,000%)
+        let expanded = false;
+        let testHigh = high;
+        while (testHigh < 100) {
+            testHigh *= 2;
+            const npvTest = npvAtRate(testHigh);
+            if (!Number.isFinite(npvTest)) break;
+            if (npvLow * npvTest <= 0) {
+                high = testHigh;
+                npvHigh = npvTest;
+                expanded = true;
+                break;
+            }
+        }
+        if (!expanded) {
+            return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
+        }
     }
 
     for (let i = 0; i < IRR_MAX_ITERATIONS; i++) {
         const mid = (low + high) / 2;
         const npvMid = npvAtRate(mid);
         if (!Number.isFinite(npvMid)) {
-            return null;
+            return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
         }
         if (Math.abs(npvMid) < IRR_TOLERANCE || high - low < IRR_TOLERANCE) {
-            return mid;
+            return { irr: mid, status: IrrStatus.CONVERGED };
         }
         if (npvLow * npvMid < 0) {
             high = mid;
@@ -221,7 +327,29 @@ function computeConventionalInternalRateOfReturn(eventTimes: number[], cashFlows
         }
     }
 
-    return (low + high) / 2;
+    return { irr: (low + high) / 2, status: IrrStatus.CONVERGED };
+}
+
+/**
+ * Finds the discount rate where the net present value of the cash flow is zero.
+ *
+ * Backwards-compatible signature for netCashFlow array.
+ */
+export function computeInternalRateOfReturn(
+    years: number[],
+    netCashFlow: number[],
+    baseYear: number,
+    convention: DiscountConvention,
+): number | null {
+    const res = computeInternalRateOfReturnDetailed(
+        years,
+        netCashFlow,
+        years.map(() => 0),
+        baseYear,
+        convention,
+        InvestmentTiming.FOLLOW_ANNUAL_TIMING,
+    );
+    return res.irr;
 }
 
 export function computeRealizationEconomics(
@@ -235,18 +363,22 @@ export function computeRealizationEconomics(
     const { years, oilVolumes, salesGasVolumes } = alignedInput;
 
     const baseYear = assumptions.baseYear ?? years[0] ?? 0;
+    const convention = assumptions.convention;
+    // Default investment timing follows annual convention if unspecified, but default in UI is START_OF_YEAR
+    const investmentTiming = assumptions.investmentTiming ?? InvestmentTiming.FOLLOW_ANNUAL_TIMING;
+
     const discountFactors = makeDiscountFactors(
         years,
         assumptions.discountRateFraction,
         baseYear,
-        assumptions.convention,
+        convention,
     );
     const investmentDiscountFactors = makeInvestmentDiscountFactors(
         years,
         assumptions.discountRateFraction,
         baseYear,
-        assumptions.convention,
-        assumptions.investmentTiming,
+        convention,
+        investmentTiming,
     );
 
     const discountedOilVolume = sumDiscounted(oilVolumes, discountFactors);
@@ -256,43 +388,92 @@ export function computeRealizationEconomics(
 
     const capexPerYear = years.map((year) => costLookup.get(year)?.capex ?? 0);
     const opexPerYear = years.map((year) => costLookup.get(year)?.opex ?? 0);
-    const discountedCosts =
-        sumDiscounted(capexPerYear, investmentDiscountFactors) + sumDiscounted(opexPerYear, discountFactors);
 
-    const hasPrices = assumptions.oilPricePerVolume !== null || assumptions.gasPricePerVolume !== null;
+    const pvCosts =
+        sumDiscounted(capexPerYear, investmentDiscountFactors) +
+        sumDiscounted(opexPerYear, discountFactors);
+
+    // Check if at least one cost entry is entered and non-zero in the evaluation window
+    const hasAnyCostEntry = years.some((year) => {
+        const c = costLookup.get(year);
+        return c !== undefined && (c.capex !== 0 || c.opex !== 0);
+    });
+
+    const isOilRevenueExcluded = assumptions.excludeOilRevenue ?? false;
+    const isGasRevenueExcluded = assumptions.excludeGasRevenue ?? false;
+
+    // Oil price is resolved if specified or explicitly excluded (valued at 0)
+    const hasOilPrice = assumptions.oilPricePerVolume !== null || isOilRevenueExcluded;
+    // Gas price is resolved if specified or explicitly excluded (valued at 0)
+    // If sales gas is completely absent or 0 in all years, gas price requirement is also considered satisfied (valued at 0)
+    const isAllGasZero = salesGasVolumes.every((v) => Math.abs(v) < 1e-12);
+    const hasGasPrice = assumptions.gasPricePerVolume !== null || isGasRevenueExcluded || isAllGasZero;
+
+    const effectiveOilPrice = isOilRevenueExcluded ? 0 : (assumptions.oilPricePerVolume ?? 0);
+    const effectiveGasPrice = isGasRevenueExcluded ? 0 : (assumptions.gasPricePerVolume ?? 0);
+
+    // Financial NPV is available when revenue assumptions are sufficiently specified:
+    // If oil price is provided (or excluded) and gas price is provided (or excluded or all gas is zero),
+    // and at least one price or exclusion or cost is actively entered.
+    const hasAnyPriceEntered = assumptions.oilPricePerVolume !== null || assumptions.gasPricePerVolume !== null;
+    const canComputeFinancialNpv = (hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry) && hasOilPrice;
+
     let netCashFlow: number[] | null = null;
+    let discountedNetCashFlow: number[] | null = null;
+    let cumulativeDiscountedCashFlow: number[] | null = null;
     let npv: number | null = null;
     let irr: number | null = null;
-    if (hasPrices) {
-        const oilPrice = assumptions.oilPricePerVolume ?? 0;
-        const gasPrice = assumptions.gasPricePerVolume ?? 0;
-        netCashFlow = years.map(
-            (_, i) => oilPrice * oilVolumes[i] + gasPrice * salesGasVolumes[i] - capexPerYear[i] - opexPerYear[i],
+    let irrStatus: IrrStatus | undefined = undefined;
+
+    if (canComputeFinancialNpv) {
+        const revenueMinusOpexPerYear = years.map(
+            (_, i) => effectiveOilPrice * oilVolumes[i] + effectiveGasPrice * salesGasVolumes[i] - opexPerYear[i],
         );
-        npv =
-            sumDiscounted(
-                years.map((_, i) => oilPrice * oilVolumes[i] + gasPrice * salesGasVolumes[i] - opexPerYear[i]),
-                discountFactors,
-            ) - sumDiscounted(capexPerYear, investmentDiscountFactors);
-        const annualOffset = assumptions.convention === DiscountConvention.MID_YEAR ? 0.5 : 1;
-        const investmentOffset = assumptions.investmentTiming === InvestmentTiming.START_OF_YEAR ? 0 : annualOffset;
-        irr = computeConventionalInternalRateOfReturn(
-            years.flatMap((year) => [year - baseYear + annualOffset, year - baseYear + investmentOffset]),
-            years.flatMap((_, i) => [
-                oilPrice * oilVolumes[i] + gasPrice * salesGasVolumes[i] - opexPerYear[i],
-                -capexPerYear[i],
-            ]),
+        netCashFlow = years.map((_, i) => revenueMinusOpexPerYear[i] - capexPerYear[i]);
+
+        discountedNetCashFlow = years.map(
+            (_, i) => revenueMinusOpexPerYear[i] * discountFactors[i] - capexPerYear[i] * investmentDiscountFactors[i],
         );
+
+        let runningCumulative = 0;
+        cumulativeDiscountedCashFlow = discountedNetCashFlow.map((flow) => {
+            runningCumulative += flow;
+            return runningCumulative;
+        });
+
+        npv = sumDiscounted(revenueMinusOpexPerYear, discountFactors) - sumDiscounted(capexPerYear, investmentDiscountFactors);
+
+        const irrResult = computeInternalRateOfReturnDetailed(
+            years,
+            revenueMinusOpexPerYear,
+            capexPerYear,
+            baseYear,
+            convention,
+            investmentTiming,
+        );
+        irr = irrResult.irr;
+        irrStatus = irrResult.status;
     }
 
-    // Gas revenue is held fixed while solving the oil price that makes NPV zero.
-    const hasCosts = capexPerYear.some((cost) => cost !== 0) || opexPerYear.some((cost) => cost !== 0);
-    const breakEvenOilPrice =
-        hasCosts &&
-        Math.abs(discountedOilVolume) > Number.EPSILON &&
-        (discountedSalesGasVolume === 0 || assumptions.gasPricePerVolume !== null)
-            ? (discountedCosts - (assumptions.gasPricePerVolume ?? 0) * discountedSalesGasVolume) / discountedOilVolume
-            : null;
+    // Break-even oil price calculation:
+    // PV_costs = sum_y(capex(y) * d(y, investment_timing) + opex(y) * d(y, annual_timing))
+    // PV_gas_revenue = gas_price * D_gas
+    // break_even_oil_price = (PV_costs - PV_gas_revenue) / D_oil
+    // Requires: at least one cost entry non-zero in evaluation window, resolved gas price assumption,
+    // and |D_oil| > BREAK_EVEN_OIL_VOLUME_TOLERANCE.
+    let breakEvenOilPrice: number | null = null;
+    let breakEvenSlopeDirection: BreakEvenSlopeDirection | undefined = undefined;
+
+    if (hasAnyCostEntry && hasGasPrice) {
+        if (Math.abs(discountedOilVolume) > BREAK_EVEN_OIL_VOLUME_TOLERANCE) {
+            const pvGasRevenue = effectiveGasPrice * discountedSalesGasVolume;
+            breakEvenOilPrice = (pvCosts - pvGasRevenue) / discountedOilVolume;
+            breakEvenSlopeDirection =
+                discountedOilVolume > 0
+                    ? BreakEvenSlopeDirection.POSITIVE
+                    : BreakEvenSlopeDirection.NEGATIVE;
+        }
+    }
 
     return {
         realization: alignedInput.realization,
@@ -303,9 +484,14 @@ export function computeRealizationEconomics(
         undiscountedSalesGasVolume: sumOf(salesGasVolumes),
         npv,
         irr,
+        irrStatus,
         breakEvenOilPrice,
+        breakEvenSlopeDirection,
         netCashFlow,
+        discountedNetCashFlow,
+        cumulativeDiscountedCashFlow,
         years,
         discountFactors,
+        investmentDiscountFactors,
     };
 }

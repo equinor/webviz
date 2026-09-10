@@ -1,7 +1,6 @@
 import { atom } from "jotai";
 
 import type { VectorRealizationData_api } from "@api";
-import { InvestmentTiming } from "@modules/EconomicScreening/typesAndEnums";
 import {
     computeAnnualVolumesFromCumulative,
     computeRealizationEconomics,
@@ -27,6 +26,8 @@ import {
     priceAssumptionsAtom,
     salesGasStrategyAtom,
 } from "./baseAtoms";
+import { missingComponentAssumptionsAtom } from "../../settings/atoms/baseAtoms";
+import { selectedEnsembleIdentAtom } from "../../settings/atoms/persistableFixableAtoms";
 import { vectorDataQueriesAtom, VectorQueryIndex } from "./queryAtoms";
 
 export type SalesGasData = {
@@ -36,6 +37,8 @@ export type SalesGasData = {
     hasZeroGasConsumption: boolean;
     isGasConsumptionMissing: boolean;
     isGasInjectionMissing: boolean;
+    incompleteInjectionRealizations: number[];
+    incompleteConsumptionRealizations: number[];
 };
 
 export type EconomicScreeningResults = {
@@ -72,6 +75,8 @@ const oilProductionDataAtom = atom<VectorRealizationData_api[]>((get) => {
 const salesGasDataAtom = atom<SalesGasData>((get) => {
     const salesGasStrategy = get(salesGasStrategyAtom);
     const queries = get(vectorDataQueriesAtom);
+    const ensembleKey = get(selectedEnsembleIdentAtom).value?.toString();
+    const missingComponentAssumptions = ensembleKey ? get(missingComponentAssumptionsAtom)[ensembleKey] : undefined;
 
     if (salesGasStrategy.kind === "DIRECT") {
         const data = queries[VectorQueryIndex.SALES_GAS].data ?? [];
@@ -81,6 +86,8 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
             hasZeroGasConsumption: false,
             isGasConsumptionMissing: false,
             isGasInjectionMissing: false,
+            incompleteInjectionRealizations: [],
+            incompleteConsumptionRealizations: [],
         };
     }
 
@@ -93,12 +100,20 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
             ? (queries[VectorQueryIndex.GAS_CONSUMPTION].data ?? [])
             : [];
 
+        const derivedSalesGas = deriveSalesGasCumulative(
+            gasProductionData,
+            gasInjectionData,
+            gasConsumptionData,
+            missingComponentAssumptions,
+        );
         return {
-            series: deriveSalesGasCumulative(gasProductionData, gasInjectionData, gasConsumptionData),
+            series: derivedSalesGas.series,
             unit: gasProductionData[0]?.unit ?? "",
             hasZeroGasConsumption: salesGasStrategy.hasGasConsumption && isCumulativeVectorAllZero(gasConsumptionData),
             isGasConsumptionMissing: !salesGasStrategy.hasGasConsumption,
             isGasInjectionMissing: !salesGasStrategy.hasGasInjection,
+            incompleteInjectionRealizations: derivedSalesGas.incompleteInjectionRealizations,
+            incompleteConsumptionRealizations: derivedSalesGas.incompleteConsumptionRealizations,
         };
     }
 
@@ -108,6 +123,8 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
         hasZeroGasConsumption: false,
         isGasConsumptionMissing: true,
         isGasInjectionMissing: true,
+        incompleteInjectionRealizations: [],
+        incompleteConsumptionRealizations: [],
     };
 });
 
@@ -126,12 +143,18 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const gasUnit = salesGasData.unit;
 
     if (salesGasData.isGasConsumptionMissing) {
-        warnings.push("FGCT is not available. Gas consumption is treated as zero.");
+        warnings.push("FGCT is not available. Sales gas cannot be derived until a zero-consumption assumption is accepted.");
     } else if (salesGasData.hasZeroGasConsumption) {
         warnings.push("FGCT is zero in all realizations, so no gas consumption is modelled.");
     }
     if (salesGasData.isGasInjectionMissing && salesGasData.series.length > 0) {
-        warnings.push("FGIT is not available. Gas injection is treated as zero.");
+        warnings.push("FGIT is not available. Sales gas cannot be derived until a zero-injection assumption is accepted.");
+    }
+    if (salesGasData.incompleteInjectionRealizations.length > 0) {
+        warnings.push(`FGIT has missing samples for ${salesGasData.incompleteInjectionRealizations.length} realizations.`);
+    }
+    if (salesGasData.incompleteConsumptionRealizations.length > 0) {
+        warnings.push(`FGCT has missing samples for ${salesGasData.incompleteConsumptionRealizations.length} realizations.`);
     }
 
     if (oilProductionData.length === 0) {
@@ -176,7 +199,7 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         discountRateFraction: discountAssumptions.discountRatePercent / 100,
         baseYear: discountAssumptions.baseYear,
         convention: discountAssumptions.convention,
-        investmentTiming: InvestmentTiming.START_OF_YEAR,
+        investmentTiming: discountAssumptions.investmentTiming,
         gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? discountAssumptions.gasToOilEquivalentFactor,
         oilPricePerVolume,
         gasPricePerVolume,

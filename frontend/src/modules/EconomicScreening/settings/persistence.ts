@@ -22,6 +22,7 @@ import {
     gasPriceAtom,
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
+    missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     selectedMeasureAtom,
@@ -46,6 +47,10 @@ export type SerializedSettings = {
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
     showCashFlowPlot: boolean;
+    missingComponentAssumptionsByEnsemble?: Record<
+        string,
+        { assumeMissingInjectionAsZero?: boolean; assumeMissingConsumptionAsZero?: boolean }
+    >;
 };
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
@@ -75,6 +80,16 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         distributionPlotType: { enum: Object.values(DistributionPlotType) },
         showCashFlowPlot: { type: "boolean" },
     },
+    optionalProperties: {
+        missingComponentAssumptionsByEnsemble: {
+            values: {
+                optionalProperties: {
+                    assumeMissingInjectionAsZero: { type: "boolean" },
+                    assumeMissingConsumptionAsZero: { type: "boolean" },
+                },
+            },
+        },
+    },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
@@ -99,6 +114,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         selectedMeasure: get(selectedMeasureAtom),
         distributionPlotType: get(distributionPlotTypeAtom),
         showCashFlowPlot: get(showCashFlowPlotAtom),
+        missingComponentAssumptionsByEnsemble: get(missingComponentAssumptionsAtom),
     };
 };
 
@@ -127,4 +143,5 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, selectedMeasureAtom, raw.selectedMeasure);
     setIfDefined(set, distributionPlotTypeAtom, raw.distributionPlotType);
     setIfDefined(set, showCashFlowPlotAtom, raw.showCashFlowPlot);
+    setIfDefined(set, missingComponentAssumptionsAtom, raw.missingComponentAssumptionsByEnsemble);
 };

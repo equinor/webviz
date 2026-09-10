@@ -35,6 +35,23 @@ export enum InvestmentTiming {
     FOLLOW_ANNUAL_TIMING = "FOLLOW_ANNUAL_TIMING",
 }
 
+export const InvestmentTimingEnumToStringMapping: Record<InvestmentTiming, string> = {
+    [InvestmentTiming.START_OF_YEAR]: "Start of year",
+    [InvestmentTiming.FOLLOW_ANNUAL_TIMING]: "Follow annual timing",
+};
+
+export enum BreakEvenSlopeDirection {
+    POSITIVE = "POSITIVE",
+    NEGATIVE = "NEGATIVE",
+}
+
+export enum IrrStatus {
+    CONVERGED = "CONVERGED",
+    NO_FINITE_ROOT = "NO_FINITE_ROOT",
+    NON_CONVENTIONAL = "NON_CONVENTIONAL",
+    OUT_OF_DOMAIN = "OUT_OF_DOMAIN",
+}
+
 export enum OilPriceBasis {
     PER_SM3 = "PER_SM3",
     PER_BBL = "PER_BBL",
@@ -85,6 +102,7 @@ export type DiscountAssumptions = {
     /** Null means "use the first year of the evaluation window". */
     baseYear: number | null;
     convention: DiscountConvention;
+    investmentTiming?: InvestmentTiming;
     /** Volume of gas equivalent to one volume of oil, in the gas volume unit of the source data. */
     gasToOilEquivalentFactor: number;
 };

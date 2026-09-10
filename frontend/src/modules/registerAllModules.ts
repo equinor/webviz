@@ -4,6 +4,7 @@ import { isDevMode } from "@lib/utils/devMode";
 import "./2DViewer/registerModule";
 import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
+import "./EconomicScreening/registerModule";
 import "./FlowNetwork/registerModule";
 import "./InplaceVolumesNew/registerModule";
 import "./InplaceVolumesPlot/registerModule";

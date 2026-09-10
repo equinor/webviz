@@ -19,6 +19,7 @@ import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 
 import type { Interfaces } from "../interfaces";
+import type { MissingComponentAssumptions } from "../utils/vectorResolution";
 import {
     DiscountConvention,
     DiscountConventionEnumToStringMapping,
@@ -43,6 +44,7 @@ import {
     gasPriceAtom,
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
+    missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     selectedMeasureAtom,
@@ -73,6 +75,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
     const [showCashFlowPlot, setShowCashFlowPlot] = useAtom(showCashFlowPlotAtom);
+    const [missingComponentAssumptionsByEnsemble, setMissingComponentAssumptionsByEnsemble] = useAtom(
+        missingComponentAssumptionsAtom,
+    );
 
     const vectorListQuery = useAtomValue(activeVectorListQueryAtom);
     const hasOilProductionVector = useAtomValue(hasOilProductionVectorAtom);
@@ -144,6 +149,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setDistributionPlotType(newPlotType);
     }
 
+    function setMissingComponentAssumption(key: keyof MissingComponentAssumptions, accepted: boolean) {
+        const ensembleKey = selectedEnsembleIdent.value?.toString();
+        if (!ensembleKey) {
+            return;
+        }
+        setMissingComponentAssumptionsByEnsemble((current) => ({
+            ...current,
+            [ensembleKey]: { ...current[ensembleKey], [key]: accepted },
+        }));
+    }
+
     const salesGasDescription = makeSalesGasDescription(salesGasStrategy.kind);
     const isDeltaEnsembleSelected =
         selectedEnsembleIdent.value !== null && isEnsembleIdentOfType(selectedEnsembleIdent.value, DeltaEnsembleIdent);
@@ -172,6 +188,34 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             {salesGasStrategy.kind === "DIRECT" ? "FGST" : "FGPT − FGIT − FGCT"}
                         </span>
                     </Setting.Field>
+                    {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasInjection && (
+                        <CheckboxCompositions.WithLabel
+                            label="Assume missing FGIT is zero"
+                            checked={
+                                missingComponentAssumptionsByEnsemble[
+                                    selectedEnsembleIdent.value?.toString() ?? ""
+                                ]?.assumeMissingInjectionAsZero ?? false
+                            }
+                            onCheckedChange={(checked) =>
+                                setMissingComponentAssumption("assumeMissingInjectionAsZero", checked)
+                            }
+                            size="small"
+                        />
+                    )}
+                    {salesGasStrategy.kind === "DERIVED" && !salesGasStrategy.hasGasConsumption && (
+                        <CheckboxCompositions.WithLabel
+                            label="Assume missing FGCT is zero"
+                            checked={
+                                missingComponentAssumptionsByEnsemble[
+                                    selectedEnsembleIdent.value?.toString() ?? ""
+                                ]?.assumeMissingConsumptionAsZero ?? false
+                            }
+                            onCheckedChange={(checked) =>
+                                setMissingComponentAssumption("assumeMissingConsumptionAsZero", checked)
+                            }
+                            size="small"
+                        />
+                    )}
                     <Setting.Field
                         label="Evaluation window"
                         description="Restricts the years included in the calculation. Leave empty to use the full range."

@@ -46,13 +46,15 @@ describe("deriveSalesGasCumulative", () => {
             [makeVectorData(0, timestamps, [1, 2])],
         );
 
-        expect(result).toEqual([{ realization: 0, timestampsUtcMs: timestamps, values: [89, 178] }]);
+        expect(result.series).toEqual([{ realization: 0, timestampsUtcMs: timestamps, values: [89, 178] }]);
     });
 
-    test("treats missing components as zero", () => {
+    test("does not treat an unavailable component as zero without an explicit assumption", () => {
         const result = deriveSalesGasCumulative([makeVectorData(0, timestamps, [100, 200])], [], []);
 
-        expect(result[0].values).toEqual([100, 200]);
+        expect(result.series).toEqual([]);
+        expect(result.missingInjectionRealizations).toEqual([0]);
+        expect(result.missingConsumptionRealizations).toEqual([0]);
     });
 
     test("aligns components on timestamps rather than position", () => {
@@ -60,9 +62,11 @@ describe("deriveSalesGasCumulative", () => {
             [makeVectorData(0, [0, 1000], [100, 200])],
             [makeVectorData(0, [1000], [50])],
             [],
+            { assumeMissingConsumptionAsZero: true },
         );
 
-        expect(result[0].values).toEqual([100, 150]);
+        expect(result.series).toEqual([]);
+        expect(result.incompleteInjectionRealizations).toEqual([0]);
     });
 
     test("matches components by realization", () => {
@@ -70,10 +74,22 @@ describe("deriveSalesGasCumulative", () => {
             [makeVectorData(0, timestamps, [100, 200]), makeVectorData(1, timestamps, [300, 400])],
             [makeVectorData(1, timestamps, [30, 40])],
             [],
+            { assumeMissingConsumptionAsZero: true },
         );
 
-        expect(result[0].values).toEqual([100, 200]);
-        expect(result[1].values).toEqual([270, 360]);
+        expect(result.series).toEqual([{ realization: 1, timestampsUtcMs: timestamps, values: [270, 360] }]);
+        expect(result.missingInjectionRealizations).toEqual([0]);
+    });
+
+    test("uses an explicitly accepted missing-component assumption only for an absent vector", () => {
+        const result = deriveSalesGasCumulative(
+            [makeVectorData(0, timestamps, [100, 200])],
+            [],
+            [makeVectorData(0, timestamps, [1, 2])],
+            { assumeMissingInjectionAsZero: true },
+        );
+
+        expect(result.series).toEqual([{ realization: 0, timestampsUtcMs: timestamps, values: [99, 198] }]);
     });
 });
 
