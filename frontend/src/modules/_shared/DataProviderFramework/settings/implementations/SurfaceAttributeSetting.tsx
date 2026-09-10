@@ -8,6 +8,7 @@ import { getSurfaceAttributeDisplayLabel, isSameAttribute, surfaceAttributeKey }
 
 import type {
     CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
 
@@ -82,6 +83,13 @@ export class SurfaceAttributeSetting
 
             return <Combobox items={items} value={currentKey} onValueChange={handleChange} disabled={props.disabled} />;
         };
+    }
+
+    overriddenValueRepresentation({ value }: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
+        if (value === null) {
+            return "-";
+        }
+        return getSurfaceAttributeDisplayLabel(value);
     }
 }
 
