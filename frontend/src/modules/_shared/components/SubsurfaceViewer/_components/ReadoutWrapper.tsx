@@ -345,7 +345,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const newPickInfoDict = collectReadoutInformationFromAllViewports(
                 pickingInfoWithCoordinates.coordinate,
                 userPickingDepth,
-                { [hoveredViewPort.id]: event.infos },
+                // ! We make sure to include the hovered id here, so the later logic can check what viewport we hovered
+                { [hoveredViewPort.id]: [] },
             );
 
             const yieldedPicks = Object.values(newPickInfoDict).some((picks) => picks.length > 0);
