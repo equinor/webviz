@@ -7,6 +7,7 @@ import { mergeConfig } from "vite";
 import glsl from "vite-plugin-glsl";
 
 import aliases from "../aliases.json" with { type: "json" };
+import { plotlyWebglContextReleasePlugin } from "../vite-plugin-plotly-webgl-context-release.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +22,7 @@ const config: StorybookConfig = {
     viteFinal: async (config) => {
         return mergeConfig(config, {
             plugins: [
+                plotlyWebglContextReleasePlugin(),
                 tailwindPlugin(),
                 glsl({
                     include: "**/*.glsl",
