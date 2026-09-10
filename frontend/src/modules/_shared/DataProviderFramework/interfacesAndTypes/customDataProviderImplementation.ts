@@ -201,4 +201,11 @@ export interface CustomDataProviderImplementation<
      * @returns true if the settings are valid, false otherwise.
      */
     areCurrentSettingsValid?: (args: DataProviderAccessors<TSettings, TData, TStoredData>) => boolean;
+
+    /**
+     * Maps a previously used, now-removed setting key to the current setting key that should take over its
+     * persisted value. Applied once before deserializing persisted settings, so renaming a provider's setting
+     * (e.g. splitting a shared key into a dedicated one) does not silently drop existing saved selections.
+     */
+    legacySettingKeyAliases?: Partial<Record<string, TSettingKey>>;
 }

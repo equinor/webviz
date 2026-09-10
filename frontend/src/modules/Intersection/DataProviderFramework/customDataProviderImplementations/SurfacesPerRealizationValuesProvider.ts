@@ -36,7 +36,7 @@ const surfacesPerRealizationValuesSettings = [
     Setting.INTERSECTION,
     Setting.ENSEMBLE,
     Setting.REALIZATIONS,
-    Setting.SURFACE_ATTRIBUTE,
+    Setting.DEPTH_ATTRIBUTE,
     Setting.SURFACE_NAMES,
     Setting.COLOR_SET,
 ] as const;
@@ -61,6 +61,9 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
 > {
     settings = surfacesPerRealizationValuesSettings;
 
+    // Older persisted state saved this provider's attribute under the shared "attribute" key.
+    legacySettingKeyAliases = { attribute: Setting.DEPTH_ATTRIBUTE } as const;
+
     getDefaultName() {
         return "Surfaces Per Realization Values";
     }
@@ -75,7 +78,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             !isEqual(prevSettings.intersection, newSettings.intersection) ||
             !isEqual(prevSettings.ensemble, newSettings.ensemble) ||
             !isEqual(prevSettings.realizations, newSettings.realizations) ||
-            !isEqual(prevSettings.surfaceAttribute, newSettings.surfaceAttribute) ||
+            !isEqual(prevSettings.depthAttribute, newSettings.depthAttribute) ||
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames)
         );
     }
@@ -91,7 +94,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             getSetting(Setting.INTERSECTION) !== null &&
             getSetting(Setting.ENSEMBLE) !== null &&
             getSetting(Setting.REALIZATIONS) !== null &&
-            getSetting(Setting.SURFACE_ATTRIBUTE) !== null &&
+            getSetting(Setting.DEPTH_ATTRIBUTE) !== null &&
             getSetting(Setting.SURFACE_NAMES) !== null
         );
     }
@@ -191,7 +194,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
             },
         });
 
-        setting(Setting.SURFACE_ATTRIBUTE).bindValueConstraints({
+        setting(Setting.DEPTH_ATTRIBUTE).bindValueConstraints({
             read(read) {
                 return { surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep) };
             },
@@ -209,7 +212,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
         setting(Setting.SURFACE_NAMES).bindValueConstraints({
             read(read) {
                 return {
-                    attribute: read.localSetting(Setting.SURFACE_ATTRIBUTE),
+                    attribute: read.localSetting(Setting.DEPTH_ATTRIBUTE),
                     surfaceMetadataSet: read.sharedResult(surfaceMetadataSetDep),
                 };
             },
@@ -307,7 +310,7 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
     >): Promise<SurfacesPerRealizationValuesData> {
         const ensembleIdent = assertNonNull(getSetting(Setting.ENSEMBLE), "No ensemble selected");
         const realizations = getSetting(Setting.REALIZATIONS);
-        const attribute = assertNonNull(getSetting(Setting.SURFACE_ATTRIBUTE), "No attribute selected");
+        const attribute = assertNonNull(getSetting(Setting.DEPTH_ATTRIBUTE), "No attribute selected");
         const surfaceNames = assertNonNull(getSetting(Setting.SURFACE_NAMES), "No surface names selected");
         const requestedPolylineWithCumulatedLengths = assertNonNull(
             getStoredData("requestedPolylineWithCumulatedLengths"),
