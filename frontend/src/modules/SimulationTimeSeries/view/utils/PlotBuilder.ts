@@ -174,10 +174,20 @@ export class PlotBuilder {
      * unnecessary teardown/rebuild of their (WebGL) resources.
      *
      * Plotly uses the uid verbatim in DOM class names and `querySelector` calls, so the result is
-     * reduced to characters that are safe in a CSS identifier.
+     * reduced to characters that are safe in a CSS identifier. The reduction is a reversible escape
+     * rather than a lossy replace, so distinct parts never collapse onto the same uid (e.g. `WOPR:A1`
+     * and `WOPR_A1` stay distinct); otherwise Plotly could match an update to the wrong prior trace.
      */
     private makeTraceUid(...parts: (string | number)[]): string {
-        return parts.join("::").replace(/[^a-zA-Z0-9_-]+/g, "_");
+        // Escape every character outside [A-Za-z0-9-] - including `_` itself, so it can only ever
+        // appear as an escape marker - to `_` + zero-padded hex of its UTF-16 code unit. Encoded
+        // parts therefore contain no bare `_`, which makes `__` an unambiguous part separator.
+        const encodePart = (part: string | number): string =>
+            String(part).replace(
+                /[^A-Za-z0-9-]/g,
+                (ch) => "_" + ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, "0"),
+            );
+        return parts.map(encodePart).join("__");
     }
 
     private makeVectorTraceUid(kind: string, vectorSpecification: VectorSpec, suffix: string | number): string {
@@ -490,7 +500,10 @@ export class PlotBuilder {
             });
 
             vectorFanchartTraces.forEach((trace, index) => {
-                trace.uid = this.makeVectorTraceUid("fanchart", elm.vectorSpecification, index);
+                // Key the uid off the statistic each trace represents (set by createFanchartTraces),
+                // not its array position - the optional min/max and low/high pairs shift indices when
+                // toggled, which would otherwise hand an unchanged trace a different uid.
+                trace.uid = this.makeVectorTraceUid("fanchart", elm.vectorSpecification, trace.uid ?? index);
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
@@ -544,7 +557,10 @@ export class PlotBuilder {
             });
 
             vectorStatisticsTraces.forEach((trace, index) => {
-                trace.uid = this.makeVectorTraceUid("statistics", elm.vectorSpecification, index);
+                // Key the uid off the statistic each trace represents (set by createStatisticsTraces),
+                // not its array position - the optional min/max/percentile lines shift indices when
+                // toggled, which would otherwise hand an unchanged trace a different uid.
+                trace.uid = this.makeVectorTraceUid("statistics", elm.vectorSpecification, trace.uid ?? index);
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);

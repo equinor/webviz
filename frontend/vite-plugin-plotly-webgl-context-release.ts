@@ -1,5 +1,5 @@
-import { createRequire } from "node:module";
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 
 import type { Plugin } from "vite";
@@ -14,7 +14,7 @@ import type { Plugin } from "vite";
  * is exhausted within a handful of interactions, after which every gl plot in the app dies with
  * "WebGL is not supported in your browser".
  *
- * Reported upstream: https://github.com/plotly/plotly.js/issues  (link the concrete issue here)
+ * Reported upstream: https://github.com/plotly/plotly.js/issues/6365#issuecomment-5493339463
  *
  * react-plotly.js pulls the prebuilt UMD bundle `plotly.js/dist/plotly`, and `Plots.cleanPlot`
  * is not on plotly's public API, so this can't be fixed by monkey-patching at runtime. We also
@@ -66,11 +66,17 @@ export function patchPlotlySource(code: string): string {
     let hits = 0;
 
     if (SITE_CLEAN_PLOT.test(patched)) {
-        patched = patched.replace(SITE_CLEAN_PLOT, (_m, head: string, tail: string) => head + releaseSnippet("oldFullLayout") + tail);
+        patched = patched.replace(
+            SITE_CLEAN_PLOT,
+            (_m, head: string, tail: string) => head + releaseSnippet("oldFullLayout") + tail,
+        );
         hits++;
     }
     if (SITE_PURGE.test(patched)) {
-        patched = patched.replace(SITE_PURGE, (_m, head: string, tail: string) => head + releaseSnippet("fullLayout") + tail);
+        patched = patched.replace(
+            SITE_PURGE,
+            (_m, head: string, tail: string) => head + releaseSnippet("fullLayout") + tail,
+        );
         hits++;
     }
 
@@ -117,7 +123,7 @@ export function plotlyWebglContextReleasePlugin(): Plugin {
             }
             if (current !== patched) {
                 fs.writeFileSync(patchedPath, patched);
-                // eslint-disable-next-line no-console
+
                 console.info(
                     `[plotly-webgl-context-release] wrote patched plotly bundle for \`${command}\` -> ${path.relative(process.cwd(), patchedPath)}`,
                 );
