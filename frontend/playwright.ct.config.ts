@@ -70,7 +70,14 @@ export default defineConfig({
         },
         {
             name: "firefox",
-            use: { ...devices["Desktop Firefox"] },
+            use: {
+                ...devices["Desktop Firefox"],
+                // Headless Firefox has no GL implementation on the CI runners, so plotly's
+                // scattergl canvases never get a WebGL context and the context-release tests
+                // can't run. Under `xvfb-run` (see the CI workflow) a headed Firefox gets a
+                // software GL context. Locally the default headless mode is kept.
+                headless: !process.env.CI,
+            },
         },
         {
             name: "webkit",
