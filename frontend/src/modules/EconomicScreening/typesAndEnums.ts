@@ -93,8 +93,10 @@ export type PriceAssumptions = {
     currency: string;
     oilPrice: number | null;
     oilPriceBasis: OilPriceBasis;
+    excludeOilRevenue: boolean;
     gasPrice: number | null;
     gasPriceBasis: GasPriceBasis;
+    excludeGasRevenue: boolean;
 };
 
 export type DiscountAssumptions = {

@@ -8,6 +8,7 @@ import {
     DistributionPlotType,
     EconomicMeasure,
     GasPriceBasis,
+    InvestmentTiming,
     OilPriceBasis,
 } from "@modules/EconomicScreening/typesAndEnums";
 
@@ -20,9 +21,12 @@ import {
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     evaluationWindowAtom,
+    excludeGasRevenueAtom,
+    excludeOilRevenueAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
+    investmentTimingAtom,
     missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
@@ -36,12 +40,15 @@ export type SerializedSettings = {
     discountRatePercent: number;
     discountBaseYear: number | null;
     discountConvention: DiscountConvention;
+    investmentTiming?: InvestmentTiming;
     gasToOilEquivalentFactor: number;
     currency: string;
     oilPrice: number | null;
     oilPriceBasis: OilPriceBasis;
+    excludeOilRevenue?: boolean;
     gasPrice: number | null;
     gasPriceBasis: GasPriceBasis;
+    excludeGasRevenue?: boolean;
     costProfile: CostProfileEntry[];
     evaluationFirstYear: number | null;
     evaluationLastYear: number | null;
@@ -94,6 +101,9 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         },
         earlyValueEnabled: { type: "boolean" },
         earlyValueEndYear: { type: "int32", nullable: true },
+        investmentTiming: { enum: Object.values(InvestmentTiming) },
+        excludeOilRevenue: { type: "boolean" },
+        excludeGasRevenue: { type: "boolean" },
     },
 }));
 
@@ -108,12 +118,15 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         discountRatePercent: get(discountRatePercentAtom),
         discountBaseYear: get(discountBaseYearAtom),
         discountConvention: get(discountConventionAtom),
+        investmentTiming: get(investmentTimingAtom),
         gasToOilEquivalentFactor: get(gasToOilEquivalentFactorAtom),
         currency: get(currencyAtom),
         oilPrice: get(oilPriceAtom),
         oilPriceBasis: get(oilPriceBasisAtom),
+        excludeOilRevenue: get(excludeOilRevenueAtom),
         gasPrice: get(gasPriceAtom),
         gasPriceBasis: get(gasPriceBasisAtom),
+        excludeGasRevenue: get(excludeGasRevenueAtom),
         costProfile: get(costProfileAtom),
         evaluationFirstYear: evaluationWindow.firstYear,
         evaluationLastYear: evaluationWindow.lastYear,
@@ -144,12 +157,15 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, discountRatePercentAtom, raw.discountRatePercent);
     setIfDefined(set, discountBaseYearAtom, raw.discountBaseYear);
     setIfDefined(set, discountConventionAtom, raw.discountConvention);
+    setIfDefined(set, investmentTimingAtom, raw.investmentTiming);
     setIfDefined(set, gasToOilEquivalentFactorAtom, raw.gasToOilEquivalentFactor);
     setIfDefined(set, currencyAtom, raw.currency);
     setIfDefined(set, oilPriceAtom, raw.oilPrice);
     setIfDefined(set, oilPriceBasisAtom, raw.oilPriceBasis);
+    setIfDefined(set, excludeOilRevenueAtom, raw.excludeOilRevenue);
     setIfDefined(set, gasPriceAtom, raw.gasPrice);
     setIfDefined(set, gasPriceBasisAtom, raw.gasPriceBasis);
+    setIfDefined(set, excludeGasRevenueAtom, raw.excludeGasRevenue);
     setIfDefined(set, costProfileAtom, raw.costProfile);
     setIfDefined(set, evaluationWindowAtom, evaluationWindow);
     setIfDefined(set, earlyValueConfigurationAtom, earlyValueConfiguration);

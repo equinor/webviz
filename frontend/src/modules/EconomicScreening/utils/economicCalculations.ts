@@ -168,13 +168,10 @@ function sumOf(values: number[]): number {
 export function makeCostLookup(costProfile: CostProfileEntry[]): Map<number, { capex: number; opex: number }> {
     const lookup = new Map<number, { capex: number; opex: number }>();
     for (const entry of costProfile) {
-        const existing = lookup.get(entry.year);
-        if (existing) {
-            existing.capex += entry.capex;
-            existing.opex += entry.opex;
-        } else {
-            lookup.set(entry.year, { capex: entry.capex, opex: entry.opex });
+        if (lookup.has(entry.year)) {
+            throw new Error(`Duplicate cost year: ${entry.year}`);
         }
+        lookup.set(entry.year, { capex: entry.capex, opex: entry.opex });
     }
     return lookup;
 }

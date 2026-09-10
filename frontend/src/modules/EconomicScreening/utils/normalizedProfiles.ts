@@ -23,8 +23,12 @@ export function normalizeEconomicProfiles(
             ? computeAnnualVolumesFromCumulative(gasSeries.timestampsUtcMs, gasSeries.values)
             : null;
         const years = oilProfile?.years ?? gasProfile?.years ?? [];
-        const oilVolumeByYear = new Map(oilProfile?.years.map((year, index) => [year, oilProfile.volumes[index]]) ?? []);
-        const gasVolumeByYear = new Map(gasProfile?.years.map((year, index) => [year, gasProfile.volumes[index]]) ?? []);
+        const oilVolumeByYear = new Map(
+            oilProfile?.years.map((year, index) => [year, oilProfile.volumes[index]]) ?? [],
+        );
+        const gasVolumeByYear = new Map(
+            gasProfile?.years.map((year, index) => [year, gasProfile.volumes[index]]) ?? [],
+        );
 
         return {
             realization,

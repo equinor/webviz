@@ -14,6 +14,7 @@ import {
     computeRealizationEconomics,
     makeDiscountFactors,
     makeInvestmentDiscountFactors,
+    makeCostLookup,
     sumDiscounted,
 } from "@modules/EconomicScreening/utils/economicCalculations";
 import { normalizeEconomicProfiles } from "@modules/EconomicScreening/utils/normalizedProfiles";
@@ -256,6 +257,17 @@ describe("computeRealizationEconomics", () => {
         expect(result.npv).toBeNull();
     });
 
+    test("allows financial results when sales-gas revenue is explicitly excluded", () => {
+        const result = computeRealizationEconomics(
+            input,
+            makeAssumptions({ oilPricePerVolume: 2, excludeGasRevenue: true }),
+            [],
+            NO_EVALUATION_WINDOW,
+        );
+
+        expect(result.npv).toBeCloseTo(2 * result.discountedOilVolume, 10);
+    });
+
     test("computes NPV from prices and costs", () => {
         const result = computeRealizationEconomics(
             input,
@@ -358,6 +370,17 @@ describe("computeRealizationEconomics", () => {
         const earlyValue = extractEarlyValue(result, 2020);
 
         expect(earlyValue.discountedOilEquivalents).toBeCloseTo((100 + 1000 / 1000) / 1.1, 10);
+    });
+});
+
+describe("makeCostLookup", () => {
+    test("rejects duplicate cost years instead of silently summing them", () => {
+        expect(() =>
+            makeCostLookup([
+                { year: 2020, capex: 10, opex: 0 },
+                { year: 2020, capex: 20, opex: 0 },
+            ]),
+        ).toThrow("Duplicate cost year: 2020");
     });
 });
 

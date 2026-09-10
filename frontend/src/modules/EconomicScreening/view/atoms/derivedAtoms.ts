@@ -217,15 +217,12 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? discountAssumptions.gasToOilEquivalentFactor,
         oilPricePerVolume,
         gasPricePerVolume,
+        excludeOilRevenue: priceAssumptions.excludeOilRevenue,
+        excludeGasRevenue: priceAssumptions.excludeGasRevenue,
     };
 
     const results = normalizedProfiles.map((profile) => {
-        return computeRealizationEconomics(
-            profile,
-            assumptions,
-            costProfile,
-            evaluationWindow,
-        );
+        return computeRealizationEconomics(profile, assumptions, costProfile, evaluationWindow);
     });
 
     return { results, oilUnit, gasUnit, warnings, errors };

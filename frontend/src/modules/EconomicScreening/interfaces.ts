@@ -11,9 +11,12 @@ import {
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     evaluationWindowAtom,
+    excludeGasRevenueAtom,
+    excludeOilRevenueAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
+    investmentTimingAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
     selectedMeasureAtom,
@@ -61,6 +64,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             discountRatePercent: get(discountRatePercentAtom),
             baseYear: get(discountBaseYearAtom),
             convention: get(discountConventionAtom),
+            investmentTiming: get(investmentTimingAtom),
             gasToOilEquivalentFactor: get(gasToOilEquivalentFactorAtom),
         };
     },
@@ -69,8 +73,10 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             currency: get(currencyAtom),
             oilPrice: get(oilPriceAtom),
             oilPriceBasis: get(oilPriceBasisAtom),
+            excludeOilRevenue: get(excludeOilRevenueAtom),
             gasPrice: get(gasPriceAtom),
             gasPriceBasis: get(gasPriceBasisAtom),
+            excludeGasRevenue: get(excludeGasRevenueAtom),
         };
     },
     costProfile: (get) => {

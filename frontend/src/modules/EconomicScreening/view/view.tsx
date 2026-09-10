@@ -15,7 +15,9 @@ import type { Interfaces } from "../interfaces";
 
 import {
     distributionPlotTypeAtom,
+    discountAssumptionsAtom,
     ensembleIdentAtom,
+    evaluationWindowAtom,
     priceAssumptionsAtom,
     selectedMeasureAtom,
     showCashFlowPlotAtom,
@@ -40,6 +42,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const selectedMeasure = useAtomValue(selectedMeasureAtom);
     const distributionPlotType = useAtomValue(distributionPlotTypeAtom);
     const showCashFlowPlot = useAtomValue(showCashFlowPlotAtom);
+    const discountAssumptions = useAtomValue(discountAssumptionsAtom);
+    const evaluationWindow = useAtomValue(evaluationWindowAtom);
     const priceAssumptions = useAtomValue(priceAssumptionsAtom);
     const isFetching = useAtomValue(isFetchingAtom);
     const { results, oilUnit, gasUnit } = useAtomValue(economicScreeningResultsAtom);
@@ -60,6 +64,22 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const hasResults = results.length > 0;
     const hasNetCashFlow = results.some((result) => result.netCashFlow !== null);
+    const availableYears = results.flatMap((result) => result.years);
+    const valuationYear = discountAssumptions.baseYear ?? Math.min(...availableYears);
+    const evaluationYears =
+        evaluationWindow.firstYear !== null && evaluationWindow.lastYear !== null
+            ? `${evaluationWindow.firstYear}-${evaluationWindow.lastYear}`
+            : "All available years";
+    const excludedProducts = [
+        priceAssumptions.excludeOilRevenue ? "oil" : null,
+        priceAssumptions.excludeGasRevenue ? "gas" : null,
+    ].filter((product): product is string => product !== null);
+    const activeAssumptions = [
+        `Discount rate ${discountAssumptions.discountRatePercent}%`,
+        `Valuation 1 Jan ${valuationYear}`,
+        `Evaluation ${evaluationYears}`,
+        excludedProducts.length > 0 ? `Excluded revenue: ${excludedProducts.join(", ")}` : null,
+    ].filter((assumption): assumption is string => assumption !== null);
 
     return (
         <div className="h-full w-full overflow-auto" ref={wrapperDivRef}>
@@ -91,6 +111,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             {!isFetching && hasResults && (
                 <div className="gap-y-sm flex flex-col p-2">
                     <div className="text-sm font-bold">{ensembleDisplayName}</div>
+                    <div className="text-body-xs text-subtle">{activeAssumptions.join(" | ")}</div>
                     <ResultsStatisticsTable results={results} unitContext={unitContext} />
                     <MeasureDistributionPlot
                         measure={selectedMeasure}

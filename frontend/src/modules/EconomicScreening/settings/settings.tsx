@@ -29,6 +29,8 @@ import {
     EconomicMeasureEnumToStringMapping,
     GasPriceBasis,
     GasPriceBasisEnumToStringMapping,
+    InvestmentTiming,
+    InvestmentTimingEnumToStringMapping,
     OilPriceBasis,
     OilPriceBasisEnumToStringMapping,
 } from "../typesAndEnums";
@@ -40,10 +42,14 @@ import {
     discountConventionAtom,
     discountRatePercentAtom,
     distributionPlotTypeAtom,
+    earlyValueConfigurationAtom,
     evaluationWindowAtom,
+    excludeGasRevenueAtom,
+    excludeOilRevenueAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
     gasToOilEquivalentFactorAtom,
+    investmentTimingAtom,
     missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
@@ -64,13 +70,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [discountRatePercent, setDiscountRatePercent] = useAtom(discountRatePercentAtom);
     const [discountBaseYear, setDiscountBaseYear] = useAtom(discountBaseYearAtom);
     const [discountConvention, setDiscountConvention] = useAtom(discountConventionAtom);
+    const [investmentTiming, setInvestmentTiming] = useAtom(investmentTimingAtom);
     const [gasToOilEquivalentFactor, setGasToOilEquivalentFactor] = useAtom(gasToOilEquivalentFactorAtom);
     const [evaluationWindow, setEvaluationWindow] = useAtom(evaluationWindowAtom);
+    const [earlyValueConfiguration, setEarlyValueConfiguration] = useAtom(earlyValueConfigurationAtom);
     const [currency, setCurrency] = useAtom(currencyAtom);
     const [oilPrice, setOilPrice] = useAtom(oilPriceAtom);
     const [oilPriceBasis, setOilPriceBasis] = useAtom(oilPriceBasisAtom);
+    const [excludeOilRevenue, setExcludeOilRevenue] = useAtom(excludeOilRevenueAtom);
     const [gasPrice, setGasPrice] = useAtom(gasPriceAtom);
     const [gasPriceBasis, setGasPriceBasis] = useAtom(gasPriceBasisAtom);
+    const [excludeGasRevenue, setExcludeGasRevenue] = useAtom(excludeGasRevenueAtom);
     const [costProfile, setCostProfile] = useAtom(costProfileAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
@@ -119,6 +129,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     function handleDiscountConventionChange(newConvention: DiscountConvention) {
         setDiscountConvention(newConvention);
+    }
+
+    function handleInvestmentTimingChange(newTiming: InvestmentTiming) {
+        setInvestmentTiming(newTiming);
     }
 
     function handleOilPriceBasisChange(newBasis: OilPriceBasis | null) {
@@ -179,7 +193,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Setting.Field>
                     <Setting.Field
                         label="Sales gas"
-                        description={salesGasDescription}
+                        help={{ title: "Sales gas", content: salesGasDescription }}
                         loadingOverlay={vectorListQuery.isFetching}
                         errorOverlay={vectorListQuery.isError ? "Could not load the vector list." : undefined}
                         stacked
@@ -216,9 +230,16 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             size="small"
                         />
                     )}
+                </Setting.Section>
+
+                <Setting.Section title="Advanced">
                     <Setting.Field
-                        label="Evaluation window"
-                        description="Restricts the years included in the calculation. Leave empty to use the full range."
+                        label="Evaluation years"
+                        help={{
+                            title: "Evaluation years",
+                            content:
+                                "Only volumes and costs in these calendar years contribute to results. Leave both empty to use the full available range.",
+                        }}
                         contentClassName="flex gap-x-xs"
                         stacked
                     >
@@ -243,9 +264,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             />
                         </>
                     </Setting.Field>
-                </Setting.Section>
-
-                <Setting.Section title="Discounting" defaultOpen>
                     <Setting.Field label="Discount rate [%]">
                         <NumberInput
                             value={immediateDiscountRate}
@@ -257,7 +275,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Setting.Field>
                     <Setting.Field
                         label="Base year"
-                        description="Year that cash flows and volumes are discounted back to. Defaults to the first year in the evaluation window."
+                        help={{
+                            title: "Valuation year",
+                            content:
+                                "Results are discounted to 1 January of this year. Leave empty to use the first year of the available profile.",
+                        }}
                         stacked
                     >
                         <NumberInput
@@ -281,8 +303,31 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Setting.Field>
                     <Setting.Field
+                        label="Investment timing"
+                        help={{
+                            title: "Investment timing",
+                            content: "Assigns annual investment costs to the start of the year or the same time as production and operating costs.",
+                        }}
+                        stacked
+                    >
+                        <RadioCompositions.GroupWithLabels
+                            value={investmentTiming}
+                            options={Object.values(InvestmentTiming).map((value) => ({
+                                value,
+                                label: InvestmentTimingEnumToStringMapping[value],
+                            }))}
+                            onValueChange={handleInvestmentTimingChange}
+                            layout="horizontal"
+                            size="small"
+                        />
+                    </Setting.Field>
+                    <Setting.Field
                         label="Gas to oil equivalents"
-                        description="Sm³ of gas equivalent to one Sm³ of oil. Used for oil equivalents and break-even price."
+                        help={{
+                            title: "Gas to oil equivalents",
+                            content:
+                                "Physical conversion used only for discounted oil equivalents. It does not determine gas revenue or break-even oil price.",
+                        }}
                         stacked
                     >
                         <NumberInput
@@ -291,18 +336,55 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             onValueChange={(newValue) => setGasToOilEquivalentFactor(newValue ?? 1)}
                         />
                     </Setting.Field>
+                    <Setting.Field
+                        label="Early-value end year"
+                        help={{
+                            title: "Early-value end year",
+                            content:
+                                "Publishes discounted values from the evaluation start through this year using the same valuation date. Full-evaluation results remain unchanged.",
+                        }}
+                        contentClassName="flex gap-x-xs"
+                        stacked
+                    >
+                        <>
+                            <CheckboxCompositions.WithLabel
+                                label="Enable"
+                                checked={earlyValueConfiguration.enabled}
+                                onCheckedChange={(enabled) =>
+                                    setEarlyValueConfiguration((current) => ({ ...current, enabled }))
+                                }
+                                size="small"
+                            />
+                            <NumberInput
+                                value={earlyValueConfiguration.endYear}
+                                placeholder="End year"
+                                min={1900}
+                                max={2200}
+                                disabled={!earlyValueConfiguration.enabled}
+                                onValueChange={(endYear) =>
+                                    setEarlyValueConfiguration((current) => ({ ...current, endYear }))
+                                }
+                            />
+                        </>
+                    </Setting.Field>
                 </Setting.Section>
 
                 <Setting.Section title="Prices">
                     <Setting.Field
                         label="Currency"
-                        description="Label only. Prices and costs must be given in the same currency."
+                        help={{
+                            title: "Currency",
+                            content: "All prices and costs must use this currency. Changing the label does not convert values.",
+                        }}
                     >
                         <TextInput value={immediateCurrency} onValueChange={setImmediateCurrency} />
                     </Setting.Field>
-                    <Setting.Field
+                    {hasOilProductionVector && <Setting.Field
                         label="Oil price"
-                        description="Leave empty to skip NPV and IRR."
+                        help={{
+                            title: "Oil price",
+                            content: "Constant oil sales price over the evaluation period. Leave blank for volume-only analysis.",
+                        }}
                         contentClassName="flex gap-x-xs"
                         stacked
                     >
@@ -311,6 +393,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 value={immediateOilPrice}
                                 placeholder="No oil price"
                                 onValueChange={setImmediateOilPrice}
+                                disabled={excludeOilRevenue}
                             />
                             <div className="w-32 shrink-0">
                                 <Combobox
@@ -320,16 +403,32 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     }))}
                                     value={oilPriceBasis}
                                     onValueChange={handleOilPriceBasisChange}
+                                    disabled={excludeOilRevenue}
                                 />
                             </div>
                         </>
-                    </Setting.Field>
-                    <Setting.Field label="Gas price" contentClassName="flex gap-x-xs" stacked>
+                    </Setting.Field>}
+                    {hasOilProductionVector && <CheckboxCompositions.WithLabel
+                        label="Exclude oil revenue"
+                        checked={excludeOilRevenue}
+                        onCheckedChange={setExcludeOilRevenue}
+                        size="small"
+                    />}
+                    {salesGasStrategy.kind !== "UNAVAILABLE" && <Setting.Field
+                        label="Gas price"
+                        help={{
+                            title: "Gas price",
+                            content: "Constant sales-gas price over the evaluation period. Leave blank for volume-only analysis.",
+                        }}
+                        contentClassName="flex gap-x-xs"
+                        stacked
+                    >
                         <>
                             <NumberInput
                                 value={immediateGasPrice}
                                 placeholder="No gas price"
                                 onValueChange={setImmediateGasPrice}
+                                disabled={excludeGasRevenue}
                             />
                             <div className="w-32 shrink-0">
                                 <Combobox
@@ -339,23 +438,37 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     }))}
                                     value={gasPriceBasis}
                                     onValueChange={handleGasPriceBasisChange}
+                                    disabled={excludeGasRevenue}
                                 />
                             </div>
                         </>
-                    </Setting.Field>
+                    </Setting.Field>}
+                    {salesGasStrategy.kind !== "UNAVAILABLE" && <CheckboxCompositions.WithLabel
+                        label="Exclude gas revenue"
+                        checked={excludeGasRevenue}
+                        onCheckedChange={setExcludeGasRevenue}
+                        size="small"
+                    />}
                 </Setting.Section>
 
                 <Setting.Section title="Costs">
                     <Setting.Field
                         label="CAPEX and OPEX per year"
-                        description={
-                            isDeltaEnsembleSelected
-                                ? "Delta ensemble selected. Costs are interpreted as delta costs between the two ensembles."
-                                : undefined
-                        }
+                        help={{
+                            title: "Annual costs",
+                            content: isDeltaEnsembleSelected
+                                ? "For a delta ensemble, costs represent comparison minus reference. Negative values represent savings."
+                                : "Enter annual investment and operating costs. Include known costs before or after production when they belong to the evaluation.",
+                        }}
                         stacked
                     >
-                        <CostProfileEditor value={costProfile} currency={currency} onValueChange={setCostProfile} />
+                        <CostProfileEditor
+                            value={costProfile}
+                            currency={currency}
+                            isDelta={isDeltaEnsembleSelected}
+                            evaluationWindow={evaluationWindow}
+                            onValueChange={setCostProfile}
+                        />
                     </Setting.Field>
                 </Setting.Section>
 
@@ -399,7 +512,7 @@ function makeSalesGasDescription(kind: "DIRECT" | "DERIVED" | "UNAVAILABLE"): st
         return "FGST is available and used directly.";
     }
     if (kind === "DERIVED") {
-        return "FGST is not available, so sales gas is derived. Missing components are treated as zero.";
+        return "FGST is not available, so sales gas is derived from FGPT minus FGIT and FGCT.";
     }
     return "Neither FGST nor FGPT is available for this ensemble.";
 }

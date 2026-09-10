@@ -1,6 +1,10 @@
 import { atom } from "jotai";
 
-import type { CostProfileEntry, EarlyValueConfiguration, EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
+import type {
+    CostProfileEntry,
+    EarlyValueConfiguration,
+    EvaluationWindow,
+} from "@modules/EconomicScreening/typesAndEnums";
 import type { MissingComponentAssumptions } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
@@ -9,19 +13,23 @@ import {
     DistributionPlotType,
     EconomicMeasure,
     GasPriceBasis,
+    InvestmentTiming,
     OilPriceBasis,
 } from "@modules/EconomicScreening/typesAndEnums";
 
 export const discountRatePercentAtom = atom<number>(DEFAULT_DISCOUNT_RATE_PERCENT);
 export const discountBaseYearAtom = atom<number | null>(null);
 export const discountConventionAtom = atom<DiscountConvention>(DiscountConvention.MID_YEAR);
+export const investmentTimingAtom = atom<InvestmentTiming>(InvestmentTiming.START_OF_YEAR);
 export const gasToOilEquivalentFactorAtom = atom<number>(DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR);
 
 export const currencyAtom = atom<string>("USD");
 export const oilPriceAtom = atom<number | null>(null);
 export const oilPriceBasisAtom = atom<OilPriceBasis>(OilPriceBasis.PER_BBL);
+export const excludeOilRevenueAtom = atom<boolean>(false);
 export const gasPriceAtom = atom<number | null>(null);
 export const gasPriceBasisAtom = atom<GasPriceBasis>(GasPriceBasis.PER_SM3);
+export const excludeGasRevenueAtom = atom<boolean>(false);
 
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
 

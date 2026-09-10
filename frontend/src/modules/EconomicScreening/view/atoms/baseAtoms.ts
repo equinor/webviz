@@ -16,6 +16,7 @@ import {
     DistributionPlotType,
     EconomicMeasure,
     GasPriceBasis,
+    InvestmentTiming,
     OilPriceBasis,
 } from "@modules/EconomicScreening/typesAndEnums";
 import type { SalesGasStrategy } from "@modules/EconomicScreening/utils/vectorResolution";
@@ -28,6 +29,7 @@ export const discountAssumptionsAtom = atom<DiscountAssumptions>({
     discountRatePercent: DEFAULT_DISCOUNT_RATE_PERCENT,
     baseYear: null,
     convention: DiscountConvention.MID_YEAR,
+    investmentTiming: InvestmentTiming.START_OF_YEAR,
     gasToOilEquivalentFactor: DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
 });
 
@@ -35,8 +37,10 @@ export const priceAssumptionsAtom = atom<PriceAssumptions>({
     currency: "USD",
     oilPrice: null,
     oilPriceBasis: OilPriceBasis.PER_BBL,
+    excludeOilRevenue: false,
     gasPrice: null,
     gasPriceBasis: GasPriceBasis.PER_SM3,
+    excludeGasRevenue: false,
 });
 
 export const costProfileAtom = atom<CostProfileEntry[]>([]);
