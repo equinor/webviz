@@ -10,7 +10,6 @@ from webviz_services.service_exceptions import InvalidParameterError, Service
 from .surface_types import STD_RES_SUB_NAME_FIELD, StdResAttribute, SurfaceAttribute, TagNameAttribute
 
 
-
 def make_realization_surface_search_context(
     sumo_client: SumoClient,
     case_uuid: str,
