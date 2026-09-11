@@ -427,8 +427,14 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             return;
         }
 
-        const [dashboard] = this._dashboards.splice(currentIndex, 1);
-        this._dashboards.splice(clampedIndex, 0, dashboard);
+        // Build a new array rather than splicing this._dashboards in place - its snapshot getter
+        // returns this._dashboards directly, and useSyncExternalStore skips re-rendering when
+        // getSnapshot() returns the same reference as before, so an in-place mutation here would
+        // reorder the dashboards internally without the tab strip ever reflecting it.
+        const dashboards = [...this._dashboards];
+        const [dashboard] = dashboards.splice(currentIndex, 1);
+        dashboards.splice(clampedIndex, 0, dashboard);
+        this._dashboards = dashboards;
 
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
         this.handleStateChange();
