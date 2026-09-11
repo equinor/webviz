@@ -3,6 +3,7 @@ import logging
 import os
 import time
 from typing import Literal, Optional, TypeAlias, get_args
+from pathlib import Path
 
 import jwt
 import msal
@@ -11,6 +12,7 @@ from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ValidationError
 from webviz_core_utils.perf_metrics import PerfMetrics
+from webviz_core_utils.radix_utils import is_running_on_radix_platform
 from webviz_services.utils.authenticated_user import AuthenticatedUser
 
 from primary import config
@@ -317,15 +319,36 @@ def _acquire_refreshed_identity_and_tokens(
     return new_auth_info
 
 
+def _get_client_assertion() -> str:
+    return Path(os.environ["AZURE_FEDERATED_TOKEN_FILE"]).read_text()
+
+
+
 def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
-    authority = f"https://login.microsoftonline.com/{config.TENANT_ID}"
-    return msal.ConfidentialClientApplication(
-        client_id=config.CLIENT_ID,
-        client_credential=config.CLIENT_SECRET,
-        authority=authority,
-        token_cache=token_cache,
-        instance_discovery=False,
-    )
+    tenant_id = os.environ["AZURE_TENANT_ID"]
+    client_id = os.environ["AZURE_CLIENT_ID"]
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
+
+    is_on_radix_platform = is_running_on_radix_platform()
+
+    if is_on_radix_platform:
+        client_credential = {"client_assertion": _get_client_assertion}
+        return msal.ConfidentialClientApplication(
+            client_id=client_id,
+            client_credential=client_credential,
+            authority=authority,
+            token_cache=token_cache,
+            instance_discovery=False,
+        )
+    else:
+        client_secret = os.environ["AZURE_CLIENT_SECRET"]
+        return msal.ConfidentialClientApplication(
+            client_id=client_id,
+            client_credential=client_secret,
+            authority=authority,
+            token_cache=token_cache,
+            instance_discovery=False,
+        )
 
 
 def _load_user_auth_info_from_session(request_with_session: Request) -> _UserAuthInfo | None:

@@ -57,23 +57,9 @@ def create_credential_for_azure_services(
         client_id = os.getenv("AZURE_CLIENT_ID")
         token_file_path = os.getenv("AZURE_FEDERATED_TOKEN_FILE")
         return WorkloadIdentityCredential(tenant_id=tenant_id, client_id=client_id, token_file_path=token_file_path)
-
-    # For local development, we will basically rely on DefaultAzureCredential, but to avoid always having to
-    # specifically configure AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET environment variables,
-    # we insert an explicitly created ClientSecretCredential first in a ChainedTokenCredential.
-    if secret_vars_for_local_dev is not None:
-        LOGGER.info("Creating local development credential for Azure services using ChainedTokenCredential")
-        LOGGER.info(f"ClientSecretVars.tenant_id present: {bool(secret_vars_for_local_dev.tenant_id)}")
-        LOGGER.info(f"ClientSecretVars.client_id present: {bool(secret_vars_for_local_dev.client_id)}")
-        LOGGER.info(f"ClientSecretVars.client_secret present: {bool(secret_vars_for_local_dev.client_secret)}")
-
-        client_secret_credential = ClientSecretCredential(
-            tenant_id=secret_vars_for_local_dev.tenant_id,
-            client_id=secret_vars_for_local_dev.client_id,
-            client_secret=secret_vars_for_local_dev.client_secret,
-        )
-        return ChainedTokenCredential(client_secret_credential, DefaultAzureCredential())
-
-    # Just rely on the default behavior of DefaultAzureCredential for local dev if explicit secrets are not provided
-    LOGGER.info("Creating local development credential for Azure services using DefaultAzureCredential")
-    return DefaultAzureCredential()
+    else:
+        LOGGER.info("Creating local development credential for Azure services using ClientSecretCredential")
+        tenant_id = os.getenv("AZURE_TENANT_ID")
+        client_id = os.getenv("AZURE_CLIENT_ID")
+        client_secret = os.environ["AZURE_CLIENT_SECRET"]    
+        return ClientSecretCredential(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret)

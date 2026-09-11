@@ -99,12 +99,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         )
         PersistenceStoresSingleton.initialize_with_emulator(config.COSMOS_DB_EMULATOR_HOST)
     else:
-        client_secret_vars_for_dev = ClientSecretVars(
-            tenant_id=config.TENANT_ID,
-            client_id=config.CLIENT_ID,
-            client_secret=config.CLIENT_SECRET,
-        )
-        azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
+        azure_services_credential = create_credential_for_azure_services()
         LOGGER.info(
             f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
         )

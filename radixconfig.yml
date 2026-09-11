@@ -49,7 +49,7 @@ spec:
           - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              - { name: webviz-client-secret-nonprod, envVar: WEBVIZ_CLIENT_SECRET }
+              # - { name: webviz-client-secret-nonprod, envVar: WEBVIZ_CLIENT_SECRET }
               - { name: webviz-smda-subscription-key, envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY }
               - { name: webviz-enterprise-subscription-key, envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY }
               - { name: webviz-pseudonym-hmac-key, envVar: WEBVIZ_PSEUDONYM_HMAC_KEY }
@@ -73,12 +73,12 @@ spec:
             azure:
               # Override with prod clientId
               clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
-          secretRefs:
-            azureKeyVaults:
-              - name: kv-webviz-shared
-                useAzureIdentity: true
-                items:
-                  - { name: webviz-client-secret-prod, envVar: WEBVIZ_CLIENT_SECRET }
+          # secretRefs:
+          #   azureKeyVaults:
+          #     - name: kv-webviz-shared
+          #       useAzureIdentity: true
+          #       items:
+          #         - { name: webviz-client-secret-prod, envVar: WEBVIZ_CLIENT_SECRET }
           resources:
             requests:
               memory: 8Gi
