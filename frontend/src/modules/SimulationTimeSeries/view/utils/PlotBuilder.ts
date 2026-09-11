@@ -253,8 +253,8 @@ export class PlotBuilder {
      *
      */
     private getSubplotRowAndColFromIndex(subplotIndex: number): { row: number; col: number } {
-        let col = 1;
-        let row = 1;
+        let col;
+        let row;
         if (this._limitDirection === SubplotLimitDirection.ROWS) {
             col = Math.floor(subplotIndex / this._numRows) + 1;
             row = (subplotIndex % this._numRows) + 1;

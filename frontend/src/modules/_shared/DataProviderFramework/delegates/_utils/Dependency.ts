@@ -385,7 +385,7 @@ export class Dependency<
         this._abortController = new AbortController();
         this._statusStore.clear();
 
-        let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending = null;
+        let newValue: Awaited<TReturnValue> | null | NoUpdate | Pending;
         try {
             newValue = await this.runResolver();
 

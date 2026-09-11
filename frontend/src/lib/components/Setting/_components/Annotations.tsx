@@ -18,6 +18,7 @@ export function Annotations(props: AnnotationsProps) {
     return (
         <>
             {props.annotations.map((a, i) => (
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- Trivial re-render
                 <Paragraph size="sm" key={i} tone="neutral" layoutClassName="flex items-center gap-x-2xs">
                     <AnnotationIcon type={a.type} />
                     {a.message}

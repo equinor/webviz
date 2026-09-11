@@ -20,7 +20,6 @@ import {
     makeValueConstraintsIntersectionReducerDefinition,
 } from "./_shared/arraySingleSelect";
 
-
 export type IntersectionSettingOption = {
     type: IntersectionType;
     name: string;
@@ -190,11 +189,11 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
             );
 
             // Initialize cached value for the current type on mount
-            const hasInitialized = React.useRef(false);
+            const hasInitializedRef = React.useRef(false);
             React.useEffect(
                 function initializeCachedValueOnMount() {
-                    if (!hasInitialized.current) {
-                        hasInitialized.current = true;
+                    if (!hasInitializedRef.current) {
+                        hasInitializedRef.current = true;
                         setCachedValueForIntersectionType(type, props.value);
                     }
                 },

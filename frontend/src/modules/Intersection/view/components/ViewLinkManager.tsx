@@ -52,7 +52,7 @@ export function ViewLinkManager({
     children,
 }: ViewLinkManagerProps): React.ReactNode {
     const [viewLinks, setViewLinks] = React.useState<ViewLink[]>([]);
-    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(new Set<string>());
+    const [hoveredViewIds, setHoveredViewIds] = React.useState<ReadonlySet<string>>(() => new Set());
 
     const prevAllItemIdsRef = React.useRef<Set<string> | null>(null);
     const hasAppliedInitialRef = React.useRef(false);

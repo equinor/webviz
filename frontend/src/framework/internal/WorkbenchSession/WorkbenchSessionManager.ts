@@ -444,7 +444,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      * @returns True if a session or snapshot was opened, false otherwise.
      */
     async maybeOpenFromUrl(): Promise<boolean> {
-        let snapshotId: string | null = null;
+        let snapshotId: string | null;
 
         // Check if a snapshot/session id is in the URL
         try {
@@ -616,6 +616,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             console.error("Failed to set active workbench session:", error);
             throw new Error(
                 "Could not load workbench session from data container. This should not happen and indicates a logic error.",
+                { cause: error },
             );
         }
     }

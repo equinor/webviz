@@ -291,10 +291,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
                     </Banner>
                 )}
 
-                {props.selectionAnnotations?.map((annotation, index) => (
+                {props.selectionAnnotations?.map((annotation) => (
                     <Banner
+                        key={annotation.message}
                         layoutClassName="col-span-3"
-                        key={index}
                         tone={({ info: "info", warning: "warning", error: "danger" } as const)[annotation.type]}
                     >
                         {annotation.message}

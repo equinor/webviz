@@ -88,6 +88,7 @@ function createWellLogTemplateFromProduct(factoryProduct: WellLogFactoryProduct 
 
         tracks.push({
             ...templateProps,
+            id: templateProps?.id ?? "-1",
             plots: templatePlots,
         });
     }

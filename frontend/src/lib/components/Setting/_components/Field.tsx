@@ -4,10 +4,9 @@ import { Field as FieldPrimitive } from "@lib/components/Field";
 import { Heading } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { SettingLayoutContext } from "..";
-
 import { Annotations } from "./Annotations";
 import { Overlay, type OverlayProps } from "./Overlay";
+import { LayoutContext } from "./Panel";
 
 export type SettingAnnotation = {
     /** The severity level that determines the icon and color of the annotation. */
@@ -94,13 +93,12 @@ function isNotAnnotationList(props: SettingFieldProps): props is SettingFieldPro
 }
 
 export function Field(props: SettingFieldProps) {
-    const groupContext = React.useContext(SettingLayoutContext);
+    const groupContext = React.useContext(LayoutContext);
     const generatedInputId = React.useId();
 
     React.useLayoutEffect(() => {
         const el = props.labelFor?.current;
         if (el && !el.id) {
-            // eslint-disable-next-line react-hooks/immutability -- Current version of eslint doesn't properly recognize ref objects as mutable
             el.id = generatedInputId;
         }
     }, [props.labelFor, generatedInputId]);

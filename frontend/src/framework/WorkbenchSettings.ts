@@ -55,7 +55,7 @@ export function useColorSet(workbenchSettings: WorkbenchSettings): ColorSet {
         WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS,
     );
     const [colorSet, setColorSet] = React.useState<ColorSet>(
-        new ColorSet(workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical)),
+        () => new ColorSet(workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical)),
     );
 
     React.useEffect(
@@ -98,7 +98,7 @@ export function useDiscreteColorScale(
 
     const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
 
-    const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
+    const [colorScale, setColorScale] = React.useState<ColorScale>(() => new ColorScale(optionsWithDefaults));
 
     if (!isEqual(optionsWithDefaults, adjustedOptions)) {
         setAdjustedOptions({ ...optionsWithDefaults });
@@ -158,7 +158,7 @@ export function useContinuousColorScale(
 
     const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
 
-    const [colorScale, setColorScale] = React.useState<ColorScale>(new ColorScale(optionsWithDefaults));
+    const [colorScale, setColorScale] = React.useState<ColorScale>(() => new ColorScale(optionsWithDefaults));
 
     if (!isEqual(optionsWithDefaults, adjustedOptions)) {
         setAdjustedOptions({ ...optionsWithDefaults });

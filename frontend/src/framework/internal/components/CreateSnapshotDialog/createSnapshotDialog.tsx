@@ -96,8 +96,8 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
         return null;
     }
 
-    let content: React.ReactNode = null;
-    let actions: React.ReactNode = null;
+    let content: React.ReactNode;
+    let actions: React.ReactNode;
 
     if (!snapshotUrl) {
         content = (

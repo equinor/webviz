@@ -462,12 +462,14 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
 
 export function esvReadoutToGenericReadout(
     readout: ReadoutItem,
-    index: number,
     layerIdToNameMap: Record<string, string>,
     axesLabels?: { xLabel?: string; yLabel?: string },
 ): GenericReadoutItem {
+    const readoutLabel = makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout);
     return {
-        label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
+        // ! It's assumed that each readout item has a unique name per layer
+        id: `readout-${readout.layer.id}-${readoutLabel}`,
+        label: readoutLabel,
         color: getColorFromLayerData(readout.layer, readout.index),
         info: esvReadoutToInfoItems(readout, axesLabels),
     };
@@ -490,6 +492,7 @@ function esvReadoutToInfoItems(item: ReadoutItem, axesLabels?: { xLabel?: string
                 name = axesLabels.yLabel;
             }
             return {
+                id: `info-${name}`,
                 name,
                 unit: el.unit,
                 adornment: makeAdornment(el),

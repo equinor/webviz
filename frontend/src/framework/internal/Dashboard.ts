@@ -11,7 +11,7 @@ import { ModuleRegistry } from "../ModuleRegistry";
 import type { SerializedDashboardState } from "./Dashboard.schema";
 
 export type LayoutElement = {
-    moduleInstanceId?: string;
+    moduleInstanceId: string;
     moduleName: string;
     relX: number;
     relY: number;

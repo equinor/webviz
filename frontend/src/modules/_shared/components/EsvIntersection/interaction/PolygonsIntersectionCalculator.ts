@@ -1,4 +1,3 @@
-
 import type { IntersectedItem, IntersectionCalculator, PolygonData } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 import { polygonFromVerticesAndIndices } from "../utils/geometry";
@@ -17,10 +16,10 @@ function isPointInPolygon(
     let inside = false;
 
     let p1 = [startOffset + vertices[polygonIndices[0] * 2], vertices[polygonIndices[0] * 2 + 1]];
-    let p2 = [0, 0];
+
     for (let i = 1; i <= numVertices; i++) {
         const idx = i % numVertices;
-        p2 = [startOffset + vertices[polygonIndices[idx] * 2], vertices[polygonIndices[idx] * 2 + 1]];
+        const p2 = [startOffset + vertices[polygonIndices[idx] * 2], vertices[polygonIndices[idx] * 2 + 1]];
 
         if (y > Math.min(p1[1], p2[1])) {
             if (y <= Math.max(p1[1], p2[1])) {

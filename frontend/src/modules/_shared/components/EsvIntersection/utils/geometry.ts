@@ -5,7 +5,8 @@ export function isPointInPolygon(point: number[], polygon: number[][]): boolean 
     let inside = false;
 
     let p1 = polygon[0];
-    let p2 = [0, 0];
+    let p2;
+
     for (let i = 1; i <= numVertices; i++) {
         const idx = i % numVertices;
         p2 = polygon[idx];

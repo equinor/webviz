@@ -44,6 +44,7 @@ function StatusMessage(props: { messages: StatusMessage[]; children: React.React
                 <Popover.Content>
                     <ul>
                         {props.messages.map((m, i) => (
+                            // eslint-disable-next-line @eslint-react/no-array-index-key -- trivial
                             <li key={i}>{m.message}</li>
                         ))}
                     </ul>

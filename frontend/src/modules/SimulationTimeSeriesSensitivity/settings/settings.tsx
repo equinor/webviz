@@ -17,7 +17,7 @@ import { Setting } from "@lib/components/Setting";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping } from "../typesAndEnums";
@@ -68,7 +68,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevSyncedSummaryVector, setPrevSyncedSummaryVector] = React.useState<{ vectorName: string } | null>(null);
 
-    usePropagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(vectorListQuery, statusWriter);
 
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
@@ -172,11 +172,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
                             onCheckedChange={setShowHistorical}
                         />
                     </Setting.Field>
-                    <Setting.Field
-                        label="Sensitivity filter"
-                        annotations={selectedSensitivityNamesAnnotations}
-                        stacked
-                    >
+                    <Setting.Field label="Sensitivity filter" annotations={selectedSensitivityNamesAnnotations} stacked>
                         <Select
                             value={selectedSensitivityNames.value ?? []}
                             onValueChange={setSelectedSensitivityNamesAtom}

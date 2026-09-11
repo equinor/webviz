@@ -165,10 +165,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function addDraggingEventListeners() {
+            /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- false positive; removed in removeDraggingEventListeners */
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
             document.addEventListener("blur-sm", handlePointerUp);
+            /* eslint-enable @eslint-react/web-api-no-leaked-event-listener */
         }
 
         function removeDraggingEventListeners() {

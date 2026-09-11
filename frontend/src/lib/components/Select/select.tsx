@@ -212,7 +212,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 
                 setSelectionAnchor(index);
 
-                let newSelectedOptions: TValue[] = [];
+                let newSelectedOptions: TValue[];
                 if (selectedOptionValues.includes(filteredOptions[index].value)) {
                     newSelectedOptions = selectedOptionValues.filter((value) => value !== filteredOptions[index].value);
                 } else {
@@ -360,7 +360,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             return;
         }
 
-        let newSelectedOptions: TValue[] = [];
+        let newSelectedOptions: TValue[];
         if (e.shiftKey && selectionAnchor !== null) {
             const start = Math.min(index, selectionAnchor);
             const end = Math.max(index, selectionAnchor);

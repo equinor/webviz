@@ -17,9 +17,9 @@ import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useDebouncedFunction } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
 import {
-    usePropagateAllApiErrorsToStatusWriter,
-    usePropagateQueryErrorsToStatusWriter,
-} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+    propagateAllApiErrorsToStatusWriter,
+    propagateQueryErrorsToStatusWriter,
+} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";
@@ -73,12 +73,12 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedTimestampAnnotations = useMakePersistableFixableAtomAnnotations(selectedTimestampUtcMsAtom);
 
     const tableDefinitionQueries = useAtomValue(rftTableDefinitionQueriesAtom);
-    usePropagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
+    propagateQueryErrorsToStatusWriter(tableDefinitionQueries, statusWriter);
 
     const rftRealizationDataResult = useAtomValue(rftRealizationDataQueriesAtom);
     const rftObservationsResult = useAtomValue(rftObservationsQueriesAtom);
-    usePropagateAllApiErrorsToStatusWriter(rftRealizationDataResult.errors, statusWriter);
-    usePropagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(rftRealizationDataResult.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(rftObservationsResult.errors, statusWriter);
 
     const availableResponseNames = useAtomValue(availableResponseNamesAtom);
     const selectedResponseName = useAtomValue(selectedResponseNameAtom).value;

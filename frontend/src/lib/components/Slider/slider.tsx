@@ -192,6 +192,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     if (defaultedProps.min > defaultedProps.max) throw new Error("Slider min cannot be greater than max");
 
+    // eslint-disable-next-line @eslint-react/naming-convention-ref-name
     const inputRefs = [React.useRef<HTMLInputElement | null>(null), React.useRef<HTMLInputElement | null>(null)];
 
     const wrapperRef = React.useRef<HTMLDivElement>(null);
@@ -515,10 +516,10 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
                             {allMarkers.map((v, i) => (
                                 <Marker
+                                    key={v} // value should be unique
                                     // We always keep the min and max markers as dots
                                     variant={i !== 0 && i !== allMarkers.length - 1 ? activeMarkerVariant : "dot"}
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
-                                    key={i}
                                 />
                             ))}
                         </SliderBase.Track>
@@ -559,7 +560,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
                         >
                             {allMarkers.map((v, i) => (
                                 <MarkerLabel
-                                    key={i}
+                                    key={v} // Value should be unique
                                     leftPosPercent={getMarkerPercentage(v, defaultedProps.min, defaultedProps.max)}
                                     value={v}
                                     index={i}
