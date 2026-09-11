@@ -359,7 +359,11 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
             clampedValue[1] = defaultedProps.max;
         }
 
-        setValueToClamp(isDualSlider ? clampedValue : clampedValue[0]);
+        const newValue = isDualSlider ? clampedValue : clampedValue[0];
+
+        if (!isEqual(newValue, internalValue)) {
+            setValueToClamp(isDualSlider ? clampedValue : clampedValue[0]);
+        }
     }
 
     React.useEffect(() => {
