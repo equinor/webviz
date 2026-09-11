@@ -1,12 +1,13 @@
 import eslintCore from "@eslint/js";
-import pluginQuery from "@tanstack/eslint-plugin-query";
 import reactPlugin from "@eslint-react/eslint-plugin";
+import pluginQuery from "@tanstack/eslint-plugin-query";
+import { defineConfig } from "eslint/config";
 import configPrettier from "eslint-config-prettier";
 import * as importPlugin from "eslint-plugin-import-x";
 import globals from "globals";
 import eslintTypescript from "typescript-eslint";
 
-export default eslintTypescript.config(
+export default defineConfig(
     // Plugins --------------------------------------------------------------------------
     eslintCore.configs.recommended,
     eslintTypescript.configs.recommended,
