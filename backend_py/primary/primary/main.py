@@ -50,6 +50,7 @@ from primary.utils.azure_service_credentials import log_azure_credential_env_var
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
+from primary.utils.message_bus import MessageBusSingleton
 
 from . import config
 
@@ -112,12 +113,20 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
             config.COSMOS_DB_URL, azure_services_credential
         )
 
+    if config.SERVICE_BUS_EMULATOR_CONNECTION_STRING is not None:
+        LOGGER.info("Initializing MessageBusSingleton using emulator connection string from environment")
+        MessageBusSingleton.initialize_with_connection_string(config.SERVICE_BUS_EMULATOR_CONNECTION_STRING)
+    else:
+        LOGGER.info(f"Initializing MessageBusSingleton using credential for azure services, {config.SERVICE_BUS_FQ_NAMESPACE=}")
+        await MessageBusSingleton.initialize_with_credential_async(config.SERVICE_BUS_FQ_NAMESPACE, azure_services_credential)
+
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
     # This part, after the yield, will be executed after the application has finished.
     yield
 
+    await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
     await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()

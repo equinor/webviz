@@ -326,3 +326,54 @@ async def get_ri_isect(
 #         "proto": request.headers.get("x-forwarded-proto"),
 #         "host": request.headers.get("host"),
 #     }
+
+
+
+from azure.servicebus import ServiceBusMessage
+from primary.utils.message_bus import MessageBusSingleton, MessageBus
+from primary import config
+
+from cryptography.fernet import Fernet
+
+from opentelemetry import trace
+
+tracer = trace.get_tracer(__name__)
+
+
+
+
+@router.get("/sb/{msg_text}")
+async def get_send_sb_msg(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    msg_text: Annotated[str, Path(description="The string to send")],
+    count: Annotated[int, Query(description="Number of messages to send")] = 1,
+    # fmt:on
+) -> str:
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    queue_name = config.SERVICE_BUS_QUEUE_NAME
+    LOGGER.info(f"About to send message on service bus {queue_name=} {msg_text=}")
+
+    message_bus: MessageBus = MessageBusSingleton.get_instance()
+
+    for i in range(count):
+        with tracer.start_as_current_span(f"SigSubmittingMessageToQueue_{i}", kind=trace.SpanKind.PRODUCER):
+            msg = ServiceBusMessage(subject="dummy", body=msg_text)
+            await message_bus.send_to_queue_async(queue_name=queue_name, message=msg)
+            LOGGER.info(f"Sent message {i} on service bus {msg.message_id=}")
+        if i == 0:
+            perf_metrics.record_lap("send-first-msg")
+
+    if count > 1:
+        perf_metrics.record_lap("send-remaining-msgs")
+
+    LOGGER.info(f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}")
+    return f"Sent {count} message(s) with {msg_text=} on service queue {queue_name} in {perf_metrics.to_string()}"
+
+
+
+
+

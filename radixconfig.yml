@@ -127,6 +127,25 @@ spec:
               cpu:
                 averageUtilization: 80
 
+        - environment: review2
+          variables:
+            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE=sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_QUEUE_NAME=review2-default
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
         - environment: dev
           resources:
             requests:
