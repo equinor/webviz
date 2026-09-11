@@ -10,7 +10,7 @@ import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Select, type SelectOption } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { propagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";

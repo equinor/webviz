@@ -2,7 +2,7 @@ import { useAtomValue } from "jotai";
 
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
-import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { indicesWithValuesAtom } from "../atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";

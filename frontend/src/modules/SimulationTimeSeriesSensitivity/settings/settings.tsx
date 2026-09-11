@@ -17,7 +17,7 @@ import { Setting } from "@lib/components/Setting";
 import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { propagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping } from "../typesAndEnums";

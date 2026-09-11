@@ -19,7 +19,7 @@ import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks
 import {
     propagateAllApiErrorsToStatusWriter,
     propagateQueryErrorsToStatusWriter,
-} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { RFT_STATISTIC_LABELS, type RftStatistic } from "../typesAndEnums";

@@ -4,7 +4,7 @@ import type { ViewStatusWriter } from "@framework/StatusWriter";
 import {
     propagateApiErrorToStatusWriter,
     propagateQueryErrorToStatusWriter,
-} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { showHistoricalAtom, showStatisticsAtom } from "../atoms/baseAtoms";
 import {

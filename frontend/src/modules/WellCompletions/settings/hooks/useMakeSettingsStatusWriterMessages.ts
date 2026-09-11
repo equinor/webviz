@@ -1,7 +1,7 @@
 import { useAtomValue } from "jotai";
 
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
-import { propagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { wellCompletionsQueryAtom } from "../atoms/queryAtoms";
 

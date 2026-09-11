@@ -2,7 +2,7 @@ import { useAtomValue } from "jotai";
 
 import type { InplaceVolumesStatisticalTableData_api, InplaceVolumesTableData_api } from "@api";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { resultNamesAtom } from "../atoms/baseAtoms";
 import { activeQueriesResultAtom, indicesWithValuesAtom } from "../atoms/derivedAtoms";

@@ -4,7 +4,7 @@ import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
-import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { selectedVectorNamesAtom } from "../atoms/baseAtoms";

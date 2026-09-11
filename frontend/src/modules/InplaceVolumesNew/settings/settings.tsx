@@ -16,10 +16,10 @@ import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { InplaceVolumesFilterComponent } from "@modules/_shared/components/InplaceVolumesFilterComponent";
 import { HistogramType } from "@modules/_shared/histogram";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { FLUID_SPECIFIC_RESULT_NAMES, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping, type InplaceVolumesPlotOptions } from "../typesAndEnums";
@@ -144,14 +144,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             <Setting.Section title="Data Visualization" defaultOpen>
                 {requiredFluid !== undefined && (
                     <Banner layoutClassName="col-span-3" tone={isRequiredFluidSelected ? "info" : "warning"}>
-                        {selectedFirstResultName.value} is calculated per fluid. Data is automatically grouped by
-                        FLUID. {!isRequiredFluidSelected && `Include ${requiredFluid} in the FLUID filter to see data.`}
+                        {selectedFirstResultName.value} is calculated per fluid. Data is automatically grouped by FLUID.{" "}
+                        {!isRequiredFluidSelected && `Include ${requiredFluid} in the FLUID filter to see data.`}
                     </Banner>
                 )}
                 {showFaciesFractionGroupingWarning && (
                     <Banner layoutClassName="col-span-3" tone="warning">
-                        FACIES_FRACTION is only meaningful when FACIES is used as &quot;Subplot by&quot; or
-                        &quot;Color by&quot;; otherwise every fraction collapses to 1.
+                        FACIES_FRACTION is only meaningful when FACIES is used as &quot;Subplot by&quot; or &quot;Color
+                        by&quot;; otherwise every fraction collapses to 1.
                     </Banner>
                 )}
                 <Setting.Field label="Response" annotations={selectedFirstResultNameAnnotations}>
@@ -258,13 +258,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     {[PlotType.HISTOGRAM, PlotType.BAR, PlotType.BOX, PlotType.DISTRIBUTION].includes(
                         selectedPlotType,
                     ) && (
-                            <SwitchCompositions.WithLabel
-                                label="Show statistical markers"
-                                checked={plotOptions.showStatisticalMarkers}
-                                onCheckedChange={handleOptionChange("showStatisticalMarkers")}
-                                size="small"
-                            />
-                        )}
+                        <SwitchCompositions.WithLabel
+                            label="Show statistical markers"
+                            checked={plotOptions.showStatisticalMarkers}
+                            onCheckedChange={handleOptionChange("showStatisticalMarkers")}
+                            size="small"
+                        />
+                    )}
                     {[PlotType.HISTOGRAM, PlotType.DISTRIBUTION].includes(selectedPlotType) && (
                         <SwitchCompositions.WithLabel
                             label="Show statistical marker labels"

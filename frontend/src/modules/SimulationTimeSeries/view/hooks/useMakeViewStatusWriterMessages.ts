@@ -9,7 +9,7 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import {
     propagateAllApiErrorsToStatusWriter,
     propagateQueryErrorsToStatusWriter,
-} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+} from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import {
     resampleFrequencyAtom,

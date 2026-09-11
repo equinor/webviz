@@ -18,7 +18,6 @@ import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import type { AnySurfaceAddress } from "@modules/_shared/Surface";
-import { propagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
     SurfaceAddressBuilder,
     SurfaceDirectory,
@@ -26,6 +25,7 @@ import {
     useObservedSurfacesMetadataQuery,
     useRealizationSurfacesMetadataQuery,
 } from "@modules/_shared/Surface";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { AggregationDropdown } from "../UiComponents";
