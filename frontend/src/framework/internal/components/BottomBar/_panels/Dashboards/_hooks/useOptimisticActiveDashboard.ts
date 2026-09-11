@@ -65,8 +65,8 @@ export function useOptimisticActiveDashboard(
     // doesn't get stuck showing the switch-loading overlay forever.
     React.useEffect(
         function cleanupPendingSwitchOnUnmount() {
+            const pendingRafIds = pendingRafIdsRef.current;
             return function cancelPendingFramesAndResetFlag() {
-                const pendingRafIds = pendingRafIdsRef.current;
                 if (pendingRafIds.outer !== null || pendingRafIds.inner !== null) {
                     if (pendingRafIds.outer !== null) {
                         cancelAnimationFrame(pendingRafIds.outer);
