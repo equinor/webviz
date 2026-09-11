@@ -22,5 +22,6 @@ export const SESSION_ID_LENGTH = 12;
 export const SNAPSHOT_ID_LENGTH = 12;
 // Dashboard IDs used to be uuid.v4() (36 chars); kept the same length as session/snapshot IDs for a
 // consistent URL shape. Older persisted sessions may still contain longer, uuid.v4()-shaped dashboard
-// IDs until a migration is implemented - see the backward-compat note in WorkbenchSession/utils/url.ts.
+// IDs - both shapes are accepted when reading a dashboard ID back out of a URL, see
+// WorkbenchSession/utils/url.ts.
 export const DASHBOARD_ID_LENGTH = 12;

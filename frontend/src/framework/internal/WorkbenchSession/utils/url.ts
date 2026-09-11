@@ -1,3 +1,5 @@
+import { validate as isUuid } from "uuid";
+
 import { DASHBOARD_ID_LENGTH, SESSION_ID_LENGTH } from "@framework/internal/persistence/constants";
 
 const SESSION_ID_REGEX = new RegExp(`^[a-zA-Z0-9_-]{${SESSION_ID_LENGTH}}$`);
@@ -75,13 +77,12 @@ export function readWorkbenchUrlLocation(): WorkbenchUrlLocation {
     return { kind: "root" };
 }
 
-// Unlike the session/snapshot id checks above, this never throws on a malformed id - it warns and
-// returns null instead. Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to
-// the shorter DASHBOARD_ID_LENGTH shape; links/reloads carrying an old-shaped ID must still open the
-// session/snapshot (falling back to its default dashboard) rather than being treated as a hard URL
-// error.
-// TODO: once dashboard ID porting/migration is implemented for old persisted sessions, this can go
-// back to throwing like the session/snapshot checks above.
+// Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to the shorter
+// DASHBOARD_ID_LENGTH nanoid shape, and existing persisted dashboards still carry those old IDs.
+// buildWorkbenchUrl writes whatever ID the Dashboard has into the URL, so a URL with a uuid-shaped
+// dashboard segment is not malformed - it is just an old dashboard. Accept both shapes here; only an
+// ID matching neither is treated as invalid and dropped (falling back to the default dashboard)
+// rather than as a hard URL error.
 function readDashboardSegment(pathParts: string[]): string | null {
     const dashboardIndex = pathParts.indexOf("dashboard");
     if (dashboardIndex === -1) {
@@ -93,7 +94,7 @@ function readDashboardSegment(pathParts: string[]): string | null {
         return null;
     }
 
-    if (!DASHBOARD_ID_REGEX.test(dashboardId)) {
+    if (!DASHBOARD_ID_REGEX.test(dashboardId) && !isUuid(dashboardId)) {
         console.warn(`Invalid dashboard ID in URL, ignoring: ${dashboardId}`);
         return null;
     }
