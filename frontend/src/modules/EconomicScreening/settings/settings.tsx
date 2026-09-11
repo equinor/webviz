@@ -1,4 +1,4 @@
-import type React from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { useAtom, useAtomValue } from "jotai";
 
@@ -17,6 +17,7 @@ import { Setting } from "@lib/components/Setting";
 import { TextInput } from "@lib/components/TextInput";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import { simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import type { Interfaces } from "../interfaces";
 import {
@@ -58,7 +59,6 @@ import {
     oilPriceAtom,
     oilPriceBasisAtom,
     selectedMeasureAtom,
-    showCashFlowPlotAtom,
 } from "./atoms/baseAtoms";
 import { activeVectorListQueryAtom, hasOilProductionVectorAtom, salesGasStrategyAtom } from "./atoms/derivedAtoms";
 import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
@@ -66,7 +66,7 @@ import { CostProfileEditor } from "./components/costProfileEditor";
 
 const NUMBER_INPUT_DEBOUNCE_MS = 500;
 
-export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
+export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
@@ -89,7 +89,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
-    const [showCashFlowPlot, setShowCashFlowPlot] = useAtom(showCashFlowPlotAtom);
     const [cashFlowProfileType, setCashFlowProfileType] = useAtom(cashFlowProfileTypeAtom);
     const [missingComponentAssumptionsByEnsemble, setMissingComponentAssumptionsByEnsemble] = useAtom(
         missingComponentAssumptionsAtom,
@@ -128,6 +127,28 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     if (!vectorListQuery.isFetching && selectedEnsembleIdent.value && salesGasStrategy.kind === "UNAVAILABLE") {
         statusWriter.addWarning("Neither FGST nor FGPT is available. Gas revenue must be explicitly excluded.");
     }
+
+    useEffect(() => {
+        if (vectorListQuery.isFetching || hasOilProductionVector || salesGasStrategy.kind === "UNAVAILABLE") {
+            return;
+        }
+        if (selectedMeasure === EconomicMeasure.DISCOUNTED_OIL_VOLUME) {
+            setSelectedMeasure(EconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME);
+        } else if (selectedMeasure === EconomicMeasure.UNDISCOUNTED_OIL_VOLUME) {
+            setSelectedMeasure(EconomicMeasure.UNDISCOUNTED_SALES_GAS_VOLUME);
+        }
+        if (cashFlowProfileType === CashFlowProfileType.ANNUAL_OIL_VOLUME) {
+            setCashFlowProfileType(CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME);
+        }
+    }, [
+        cashFlowProfileType,
+        hasOilProductionVector,
+        salesGasStrategy.kind,
+        selectedMeasure,
+        setCashFlowProfileType,
+        setSelectedMeasure,
+        vectorListQuery.isFetching,
+    ]);
 
     function handleEnsembleChange(newEnsembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {
         setSelectedEnsembleIdent(newEnsembleIdent);
@@ -518,23 +539,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         />
                     </Setting.Field>
                     <Setting.Field label="Time profile">
-                        <div className="gap-y-xs flex flex-col">
-                            <CheckboxCompositions.WithLabel
-                                label="Show time profile"
-                                checked={showCashFlowPlot}
-                                onCheckedChange={setShowCashFlowPlot}
-                                size="small"
-                            />
-                            <Combobox<CashFlowProfileType>
-                                items={Object.values(CashFlowProfileType).map((value) => ({
-                                    value,
-                                    label: CashFlowProfileTypeEnumToStringMapping[value],
-                                }))}
-                                value={cashFlowProfileType}
-                                onValueChange={handleCashFlowProfileTypeChange}
-                                disabled={!showCashFlowPlot}
-                            />
-                        </div>
+                        <Combobox<CashFlowProfileType>
+                            items={Object.values(CashFlowProfileType).map((value) => ({
+                                value,
+                                label: CashFlowProfileTypeEnumToStringMapping[value],
+                            }))}
+                            value={cashFlowProfileType}
+                            onValueChange={handleCashFlowProfileTypeChange}
+                        />
                     </Setting.Field>
                 </Setting.Section>
             </Setting.Panel>
@@ -544,10 +556,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
 function makeSalesGasDescription(kind: "DIRECT" | "DERIVED" | "UNAVAILABLE"): string {
     if (kind === "DIRECT") {
-        return "FGST is available and used directly.";
+        return `${simulationVectorDescription("FGST")} (FGST) is used directly.`;
     }
     if (kind === "DERIVED") {
-        return "FGST is not available, so sales gas is derived from FGPT minus FGIT and FGCT.";
+        return `${simulationVectorDescription("FGST")} is calculated as ${simulationVectorDescription("FGPT")} (FGPT) minus ${simulationVectorDescription("FGIT")} (FGIT) and ${simulationVectorDescription("FGCT")} (FGCT).`;
     }
     return "Neither FGST nor FGPT is available for this ensemble.";
 }

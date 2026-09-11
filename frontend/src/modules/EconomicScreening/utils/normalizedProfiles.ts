@@ -9,12 +9,20 @@ function hasCompleteCumulativeCoverage(timestampsUtcMs: number[], values: number
         return false;
     }
 
-    return timestampsUtcMs.every(
-        (timestamp, index) =>
-            Number.isFinite(timestamp) &&
-            Number.isFinite(values[index]) &&
-            (index === 0 || timestamp > timestampsUtcMs[index - 1]),
-    );
+    return timestampsUtcMs.every((timestamp, index) => {
+        if (!Number.isFinite(timestamp) || !Number.isFinite(values[index])) {
+            return false;
+        }
+        if (index === 0) return true;
+        const previousDate = new Date(timestampsUtcMs[index - 1]);
+        const currentDate = new Date(timestamp);
+        return (
+            timestamp > timestampsUtcMs[index - 1] &&
+            currentDate.getUTCFullYear() === previousDate.getUTCFullYear() + 1 &&
+            currentDate.getUTCMonth() === previousDate.getUTCMonth() &&
+            currentDate.getUTCDate() === previousDate.getUTCDate()
+        );
+    });
 }
 
 /** Converts fetched cumulative vectors into assumption-independent annual realization profiles. */

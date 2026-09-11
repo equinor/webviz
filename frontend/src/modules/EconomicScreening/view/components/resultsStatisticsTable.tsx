@@ -5,7 +5,11 @@ import type { BreakEvenTargetCount } from "@modules/EconomicScreening/utils/dist
 import { computeDistributionSummary, countValuesAboveThreshold } from "@modules/EconomicScreening/utils/distributionAggregation";
 import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
 import type { MeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
-import { getMeasureDisplayName, getMeasureUnavailableReason } from "@modules/EconomicScreening/utils/measureAccessors";
+import {
+    getMeasureDisplayName,
+    getMeasureDisplayScale,
+    getMeasureUnavailableReason,
+} from "@modules/EconomicScreening/utils/measureAccessors";
 
 export type ResultsStatisticsTableProps = {
     measure: EconomicMeasure;
@@ -13,16 +17,18 @@ export type ResultsStatisticsTableProps = {
     results: RealizationEconomicResult[];
     unit: string;
     breakEvenTargetCount: BreakEvenTargetCount | null;
+    isDelta: boolean;
 };
 
-function formatStatistic(value: number): string {
-    return formatNumber(value, { numSignificantDigits: 4 });
+function formatStatistic(value: number, scaleFactor: number): string {
+    return formatNumber(value / scaleFactor, { numSignificantDigits: 4 });
 }
 
 export function ResultsStatisticsTable(props: ResultsStatisticsTableProps): React.ReactNode {
     const summary = computeDistributionSummary(props.measureValues.values);
     const positiveNpvCount =
         props.measure === EconomicMeasure.NPV ? countValuesAboveThreshold(props.measureValues.values, 0) : null;
+    const displayScale = getMeasureDisplayScale(props.measure, props.measureValues.values, props.unit);
 
     return (
         <div className="gap-y-2xs flex flex-col">
@@ -32,23 +38,29 @@ export function ResultsStatisticsTable(props: ResultsStatisticsTableProps): Reac
                         <Table.Cell colKey="measure">Measure</Table.Cell>
                         <Table.Cell colKey="unit">Unit</Table.Cell>
                         <Table.Cell colKey="mean">Mean</Table.Cell>
-                        <Table.Cell colKey="p90">P90</Table.Cell>
+                        <Table.Cell colKey="p90" title="P90: 90% of valid realizations exceed this value.">
+                            P90
+                        </Table.Cell>
                         <Table.Cell colKey="p50">P50</Table.Cell>
-                        <Table.Cell colKey="p10">P10</Table.Cell>
+                        <Table.Cell colKey="p10" title="P10: 10% of valid realizations exceed this value.">
+                            P10
+                        </Table.Cell>
                         <Table.Cell colKey="count">Realizations</Table.Cell>
                     </Table.Row>
                 </Table.Head>
                 <Table.Body>
                     <Table.Row>
-                        <Table.Cell>{getMeasureDisplayName(props.measure)}</Table.Cell>
-                        <Table.Cell>{props.unit}</Table.Cell>
+                        <Table.Cell>{getMeasureDisplayName(props.measure, props.isDelta)}</Table.Cell>
+                        <Table.Cell>{displayScale.unit}</Table.Cell>
                         {summary ? (
                             <>
-                                <Table.Cell>{formatStatistic(summary.mean)}</Table.Cell>
-                                <Table.Cell>{formatStatistic(summary.p90)}</Table.Cell>
-                                <Table.Cell>{formatStatistic(summary.median)}</Table.Cell>
-                                <Table.Cell>{formatStatistic(summary.p10)}</Table.Cell>
-                                <Table.Cell>{summary.count}</Table.Cell>
+                                <Table.Cell>{formatStatistic(summary.mean, displayScale.factor)}</Table.Cell>
+                                <Table.Cell>{formatStatistic(summary.p90, displayScale.factor)}</Table.Cell>
+                                <Table.Cell>{formatStatistic(summary.median, displayScale.factor)}</Table.Cell>
+                                <Table.Cell>{formatStatistic(summary.p10, displayScale.factor)}</Table.Cell>
+                                <Table.Cell title={`${summary.count} valid of ${props.results.length} selected realizations`}>
+                                    {summary.count}/{props.results.length}
+                                </Table.Cell>
                             </>
                         ) : (
                             <Table.Cell colSpan={5}>

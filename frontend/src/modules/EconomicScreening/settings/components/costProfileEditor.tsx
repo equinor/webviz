@@ -79,6 +79,21 @@ export function getCostYearsOutsideEvaluationWindow(
     });
 }
 
+function costProfilesMatch(
+    draft: EditableCostProfileEntry[],
+    committed: CostProfileEntry[],
+): boolean {
+    return (
+        draft.length === committed.length &&
+        draft.every(
+            (entry, index) =>
+                entry.year === committed[index].year &&
+                entry.capex === committed[index].capex &&
+                entry.opex === committed[index].opex,
+        )
+    );
+}
+
 export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNode {
     const { value, onValueChange, onValidityChange, isDelta } = props;
 
@@ -89,8 +104,10 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
     const debouncedOnValueChange = useDebouncedFunction(onValueChange, COST_INPUT_DEBOUNCE_MS);
 
     React.useEffect(() => {
-        onValidityChange(validateCostProfile(immediateValue, isDelta) === null);
-    }, [immediateValue, isDelta, onValidityChange]);
+        onValidityChange(
+            validateCostProfile(immediateValue, isDelta) === null && costProfilesMatch(immediateValue, value),
+        );
+    }, [immediateValue, isDelta, onValidityChange, value]);
 
     if (previousValue !== value) {
         setPreviousValue(value);

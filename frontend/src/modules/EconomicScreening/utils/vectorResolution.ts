@@ -35,6 +35,12 @@ export type DerivedSalesGasCumulative = {
     incompleteConsumptionRealizations: number[];
 };
 
+export type CumulativeTerminalSummary = {
+    nonZeroCount: number;
+    zeroCount: number;
+    missingOrInvalidRealizations: number[];
+};
+
 /**
  * Sales gas is taken from FGST when the ensemble provides it, otherwise derived as
  * FGPT - FGIT - FGCT from whichever components are available.
@@ -155,6 +161,35 @@ export function isCumulativeVectorAllZero(data: VectorRealizationData_api[]): bo
         const lastValue = elm.values.at(-1);
         return lastValue === undefined || lastValue === 0;
     });
+}
+
+export function summarizeCumulativeVectorTerminals(
+    data: VectorRealizationData_api[],
+    expectedRealizations: number[],
+): CumulativeTerminalSummary {
+    const dataByRealization = makeDataByRealizationMap(data);
+    const missingOrInvalidRealizations: number[] = [];
+    let nonZeroCount = 0;
+    let zeroCount = 0;
+
+    for (const realizationNumber of expectedRealizations) {
+        const realization = dataByRealization.get(realizationNumber);
+        const terminalValue = realization?.values.at(-1);
+        if (
+            !realization ||
+            realization.timestampsUtcMs.length !== realization.values.length ||
+            terminalValue === undefined ||
+            !Number.isFinite(terminalValue)
+        ) {
+            missingOrInvalidRealizations.push(realizationNumber);
+        } else if (Math.abs(terminalValue) > 1e-12) {
+            nonZeroCount += 1;
+        } else {
+            zeroCount += 1;
+        }
+    }
+
+    return { nonZeroCount, zeroCount, missingOrInvalidRealizations };
 }
 
 export function countCumulativeVectorNonZeroRealizations(data: VectorRealizationData_api[]): number {

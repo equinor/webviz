@@ -2,8 +2,10 @@ import React from "react";
 
 import { useAtomValue } from "jotai";
 
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Combobox } from "@lib/components/Combobox";
@@ -37,12 +39,12 @@ import { RealizationResultsTable } from "./components/realizationResultsTable";
 import { ResultsStatisticsTable } from "./components/resultsStatisticsTable";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 
-const TABLE_AREA_HEIGHT_PX = 300;
-
 enum ViewMode {
     DISTRIBUTION = "DISTRIBUTION",
     TIME_PROFILE = "TIME_PROFILE",
 }
+
+const PLOT_CONTROLS_HEIGHT_PX = 300;
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
@@ -72,6 +74,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensemble = ensembleIdent ? ensembleSet.findEnsemble(ensembleIdent) : null;
     const ensembleDisplayName = ensemble?.getDisplayName() ?? "";
     const ensembleColor = ensemble?.getColor() ?? "#1f77b4";
+    const isDeltaEnsemble = Boolean(ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent));
 
     const unitContext = {
         oilUnit,
@@ -92,14 +95,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     result.npv === null
                         ? Number.NaN
                         : result.npv +
-                          result.discountedOilVolume *
-                              (targetOilPricePerVolume -
-                                  (priceAssumptions.excludeOilRevenue ? 0 : targetOilPricePerVolume)),
+                        result.discountedOilVolume *
+                        (targetOilPricePerVolume -
+                            (priceAssumptions.excludeOilRevenue ? 0 : targetOilPricePerVolume)),
                 ),
             );
 
-    const plotHeight = Math.max(wrapperDivSize.height - TABLE_AREA_HEIGHT_PX, 200);
-    const activePlotHeight = plotHeight;
+    const activePlotHeight = Math.max(wrapperDivSize.height - PLOT_CONTROLS_HEIGHT_PX, 200);
+    const activePlotWidth = Math.max(wrapperDivSize.width - 16, 0);
 
     const hasResults = results.length > 0;
     const hasNetCashFlow = results.some((result) => result.netCashFlow !== null);
@@ -118,7 +121,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 ? `${evaluationWindow.firstYear} onward`
                 : evaluationWindow.lastYear !== null
                     ? `through ${evaluationWindow.lastYear}`
-            : "All available years";
+                    : "All available years";
     const excludedProducts = [
         priceAssumptions.excludeOilRevenue ? "oil" : null,
         priceAssumptions.excludeGasRevenue ? "gas" : null,
@@ -156,32 +159,32 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 />
             ))}
             {Object.values(EarlyEconomicMeasure).map((measure) => (
-                    <EarlyMeasureChannelPublisher
-                        key={measure}
-                        viewContext={props.viewContext}
-                        measure={measure}
-                        results={results}
-                        endYear={earlyValueEndYear ?? 0}
-                        unit={
-                            measure === EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME
-                                ? oilUnit
-                                : measure === EarlyEconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME
-                                    ? gasUnit
-                                    : priceAssumptions.currency
-                        }
-                        ensembleIdentString={ensembleIdent?.toString() ?? ""}
-                        ensembleDisplayName={ensembleDisplayName}
-                        color={ensembleColor}
-                        enabled={
-                            !isFetching &&
-                            hasResults &&
-                            isCostProfileDraftValid &&
-                            earlyValueConfiguration.enabled &&
-                            earlyValueEndYear !== null
-                        }
-                        assumptionContext={activeAssumptions.join("; ")}
-                    />
-                ))}
+                <EarlyMeasureChannelPublisher
+                    key={measure}
+                    viewContext={props.viewContext}
+                    measure={measure}
+                    results={results}
+                    endYear={earlyValueEndYear ?? 0}
+                    unit={
+                        measure === EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME
+                            ? oilUnit
+                            : measure === EarlyEconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME
+                                ? gasUnit
+                                : priceAssumptions.currency
+                    }
+                    ensembleIdentString={ensembleIdent?.toString() ?? ""}
+                    ensembleDisplayName={ensembleDisplayName}
+                    color={ensembleColor}
+                    enabled={
+                        !isFetching &&
+                        hasResults &&
+                        isCostProfileDraftValid &&
+                        earlyValueConfiguration.enabled &&
+                        earlyValueEndYear !== null
+                    }
+                    assumptionContext={activeAssumptions.join("; ")}
+                />
+            ))}
 
             {isFetching && (
                 <div className="gap-x-xs flex h-full w-full items-center justify-center">
@@ -191,7 +194,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             )}
 
             {!isFetching && !hasResults && (
-                <ContentInfo>Select an ensemble with FOPT available to compute economic results.</ContentInfo>
+                <ContentInfo>Select an ensemble with oil or sales-gas production data to compute economic results.</ContentInfo>
             )}
 
             {!isFetching && hasResults && (
@@ -204,12 +207,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         results={results}
                         unit={getMeasureUnit(selectedMeasure, unitContext)}
                         breakEvenTargetCount={breakEvenTargetCount}
+                        isDelta={isDeltaEnsemble}
                     />
                     <RealizationResultsTable
                         results={results}
                         unitContext={unitContext}
                         selectedRealization={selectedProfileRealization}
                         onSelectedRealizationChange={setSelectedProfileRealization}
+                        isDelta={isDeltaEnsemble}
                     />
                     <RadioCompositions.GroupWithLabels
                         value={viewMode}
@@ -228,13 +233,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                             unit={getMeasureUnit(selectedMeasure, unitContext)}
                             plotType={distributionPlotType}
                             color={ensembleColor}
-                            width={wrapperDivSize.width - 16}
+                            width={activePlotWidth}
                             height={activePlotHeight}
                             targetValue={
                                 selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
                                     ? priceAssumptions.oilPrice
                                     : null
                             }
+                            isDelta={isDeltaEnsemble}
                         />
                     )}
                     {viewMode === ViewMode.TIME_PROFILE && hasSelectedTimeProfileData && (
@@ -263,7 +269,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                 oilUnit={oilUnit}
                                 gasUnit={gasUnit}
                                 color={ensembleColor}
-                                width={wrapperDivSize.width - 16}
+                                width={activePlotWidth}
                                 height={activePlotHeight}
                             />
                         </>

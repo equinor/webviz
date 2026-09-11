@@ -440,6 +440,65 @@ describe("makeCostLookup", () => {
     });
 });
 
+describe("review regressions", () => {
+    test("does not treat skipped yearly boundaries as complete coverage", () => {
+        const profiles = normalizeEconomicProfiles(
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2022)],
+                    values: [0, 200],
+                    unit: "SM3",
+                    isRate: false,
+                },
+            ],
+            [{ realization: 1, timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2022)], values: [0, 0] }],
+        );
+
+        expect(profiles[0].hasOilData).toBe(false);
+        expect(profiles[0].hasSalesGasData).toBe(false);
+    });
+
+    test("withholds financial results for incomplete oil unless its revenue is excluded", () => {
+        const incompleteOil = {
+            realization: 1,
+            years: [2020, 2021],
+            oilVolumes: [0, 0],
+            salesGasVolumes: [100, 100],
+            hasOilData: false,
+        };
+        expect(
+            computeRealizationEconomics(
+                incompleteOil,
+                makeAssumptions({ baseYear: 2020, gasPricePerVolume: 1 }),
+                [],
+                NO_EVALUATION_WINDOW,
+            ).npv,
+        ).toBeNull();
+        expect(
+            computeRealizationEconomics(
+                incompleteOil,
+                makeAssumptions({ baseYear: 2020, gasPricePerVolume: 1, excludeOilRevenue: true }),
+                [],
+                NO_EVALUATION_WINDOW,
+            ).npv,
+        ).not.toBeNull();
+    });
+
+    test("solves long conventional IRR profiles despite lower-bracket overflow", () => {
+        const result = computeInternalRateOfReturnDetailed(
+            [2020, 2100],
+            [-100, 200],
+            [0, 0],
+            2020,
+            DiscountConvention.YEAR_END,
+            InvestmentTiming.FOLLOW_ANNUAL_TIMING,
+        );
+
+        expect(result).toEqual({ irr: expect.closeTo(2 ** (1 / 80) - 1, 9), status: IrrStatus.CONVERGED });
+    });
+});
+
 describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, and break-even", () => {
     // 3-year project:
     // Year 2020: CAPEX 1000, OPEX 0, Oil 0, Gas 0 (pre-production investment)

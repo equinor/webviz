@@ -1,6 +1,5 @@
 import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
-import type {
-    OilPriceBasis} from "@modules/EconomicScreening/typesAndEnums";
+import type { OilPriceBasis } from "@modules/EconomicScreening/typesAndEnums";
 import {
     EconomicMeasure,
     EconomicMeasureEnumToStringMapping,
@@ -10,10 +9,14 @@ import {
 import type { RealizationEconomicResult } from "./economicCalculations";
 import { convertOilPriceFromSimulatorUnit } from "./unitConversion";
 
-
 export type MeasureValues = {
     realizations: number[];
     values: number[];
+};
+
+export type MeasureDisplayScale = {
+    factor: number;
+    unit: string;
 };
 
 export type MeasureUnitContext = {
@@ -97,8 +100,32 @@ export function getMeasureUnit(measure: EconomicMeasure, context: MeasureUnitCon
     }
 }
 
-export function getMeasureDisplayName(measure: EconomicMeasure): string {
-    return EconomicMeasureEnumToStringMapping[measure];
+export function getMeasureDisplayScale(measure: EconomicMeasure, values: number[], unit: string): MeasureDisplayScale {
+    if (measure !== EconomicMeasure.NPV || values.length === 0) {
+        return { factor: 1, unit };
+    }
+
+    const maximumAbsoluteValue = Math.max(...values.map(Math.abs));
+    if (maximumAbsoluteValue >= 1e9) return { factor: 1e9, unit: `billion ${unit}` };
+    if (maximumAbsoluteValue >= 1e6) return { factor: 1e6, unit: `million ${unit}` };
+    if (maximumAbsoluteValue >= 1e3) return { factor: 1e3, unit: `thousand ${unit}` };
+    return { factor: 1, unit };
+}
+
+export function getMeasureDisplayName(measure: EconomicMeasure, isDelta = false): string {
+    if (!isDelta) {
+        return EconomicMeasureEnumToStringMapping[measure];
+    }
+    switch (measure) {
+        case EconomicMeasure.NPV:
+            return "Incremental net present value";
+        case EconomicMeasure.IRR:
+            return "Incremental internal rate of return";
+        case EconomicMeasure.BREAK_EVEN_OIL_PRICE:
+            return "Incremental break-even oil price";
+        default:
+            return EconomicMeasureEnumToStringMapping[measure];
+    }
 }
 
 export function getMeasureUnavailableReason(results: RealizationEconomicResult[], measure: EconomicMeasure): string {

@@ -5,7 +5,7 @@ import type { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import { DistributionPlotType } from "@modules/EconomicScreening/typesAndEnums";
 import { computeEmpiricalExceedance } from "@modules/EconomicScreening/utils/distributionAggregation";
 import type { MeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
-import { getMeasureDisplayName } from "@modules/EconomicScreening/utils/measureAccessors";
+import { getMeasureDisplayName, getMeasureDisplayScale } from "@modules/EconomicScreening/utils/measureAccessors";
 
 export type MeasureDistributionPlotProps = {
     measure: EconomicMeasure;
@@ -16,14 +16,17 @@ export type MeasureDistributionPlotProps = {
     width: number;
     height: number;
     targetValue?: number | null;
+    isDelta: boolean;
 };
 
 export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): React.ReactNode {
-    const axisTitle = props.unit
-        ? `${getMeasureDisplayName(props.measure)} [${props.unit}]`
-        : getMeasureDisplayName(props.measure);
+    const displayScale = getMeasureDisplayScale(props.measure, props.measureValues.values, props.unit);
+    const scaledValues = props.measureValues.values.map((value) => value / displayScale.factor);
+    const axisTitle = displayScale.unit
+        ? `${getMeasureDisplayName(props.measure, props.isDelta)} [${displayScale.unit}]`
+        : getMeasureDisplayName(props.measure, props.isDelta);
 
-    const exceedancePoints = computeEmpiricalExceedance(props.measureValues.values);
+    const exceedancePoints = computeEmpiricalExceedance(scaledValues);
     const data: Partial<PlotData | BoxPlotData>[] =
         props.plotType === DistributionPlotType.EXCEEDANCE
             ? [
@@ -41,7 +44,7 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
             : props.plotType === DistributionPlotType.BOX
                 ? [
                     {
-                        x: props.measureValues.values,
+                        x: scaledValues,
                         type: "box",
                         name: "",
                         boxpoints: "all",
@@ -52,7 +55,7 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                 ]
                 : [
                     {
-                        x: props.measureValues.values,
+                        x: scaledValues,
                         type: "histogram",
                         marker: { color: props.color, line: { color: "white", width: 1 } },
                         name: "",
@@ -81,8 +84,8 @@ export function MeasureDistributionPlot(props: MeasureDistributionPlotProps): Re
                 : [
                     {
                         type: "line",
-                        x0: props.targetValue,
-                        x1: props.targetValue,
+                        x0: props.targetValue / displayScale.factor,
+                        x1: props.targetValue / displayScale.factor,
                         y0: 0,
                         y1: 1,
                         yref: "paper",

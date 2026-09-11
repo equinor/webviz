@@ -6,6 +6,7 @@ import {
     determineSalesGasStrategy,
     deriveSalesGasCumulative,
     isCumulativeVectorAllZero,
+    summarizeCumulativeVectorTerminals,
 } from "@modules/EconomicScreening/utils/vectorResolution";
 
 function makeVectorData(realization: number, timestampsUtcMs: number[], values: number[]): VectorRealizationData_api {
@@ -128,4 +129,28 @@ test("counts realizations with non-zero terminal consumption", () => {
             makeVectorData(3, [0, 1], [0, -2]),
         ]),
     ).toBe(2);
+});
+
+describe("summarizeCumulativeVectorTerminals", () => {
+    test("reports missing, empty, and non-finite terminals as incomplete", () => {
+        expect(
+            summarizeCumulativeVectorTerminals(
+                [
+                    makeVectorData(1, [0, 1], [0, 0]),
+                    makeVectorData(2, [], []),
+                    makeVectorData(3, [0, 1], [0, Number.NaN]),
+                ],
+                [1, 2, 3, 4],
+            ),
+        ).toEqual({ nonZeroCount: 0, zeroCount: 1, missingOrInvalidRealizations: [2, 3, 4] });
+    });
+
+    test("confirms zero consumption only for a complete selected population", () => {
+        expect(
+            summarizeCumulativeVectorTerminals(
+                [makeVectorData(1, [0, 1], [0, 0]), makeVectorData(2, [0, 1], [0, 0])],
+                [1, 2],
+            ),
+        ).toEqual({ nonZeroCount: 0, zeroCount: 2, missingOrInvalidRealizations: [] });
+    });
 });

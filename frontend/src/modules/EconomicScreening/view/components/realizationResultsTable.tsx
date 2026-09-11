@@ -4,17 +4,23 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
 import type { MeasureUnitContext } from "@modules/EconomicScreening/utils/measureAccessors";
-import { getMeasureDisplayName, getMeasureUnit, getMeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
+import {
+    getMeasureDisplayName,
+    getMeasureDisplayScale,
+    getMeasureUnit,
+    getMeasureValues,
+} from "@modules/EconomicScreening/utils/measureAccessors";
 
 export type RealizationResultsTableProps = {
     results: RealizationEconomicResult[];
     unitContext: MeasureUnitContext;
     selectedRealization: number | null;
     onSelectedRealizationChange: (realization: number | null) => void;
+    isDelta: boolean;
 };
 
-function formatValue(value: number | undefined): string {
-    return value === undefined ? "Unavailable" : formatNumber(value, { numSignificantDigits: 4 });
+function formatValue(value: number | undefined, scaleFactor: number): string {
+    return value === undefined ? "Unavailable" : formatNumber(value / scaleFactor, { numSignificantDigits: 4 });
 }
 
 export function RealizationResultsTable(props: RealizationResultsTableProps): React.ReactNode {
@@ -28,6 +34,12 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                 ]),
             ),
         ]),
+    );
+    const displayScaleByMeasure = new Map(
+        Object.values(EconomicMeasure).map((measure) => {
+            const measureValues = getMeasureValues(props.results, measure, props.unitContext).values;
+            return [measure, getMeasureDisplayScale(measure, measureValues, getMeasureUnit(measure, props.unitContext))];
+        }),
     );
 
     return (
@@ -46,7 +58,8 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                             <Table.Cell colKey="realization">Realization</Table.Cell>
                             {Object.values(EconomicMeasure).map((measure) => (
                                 <Table.Cell key={measure} colKey={measure}>
-                                    {getMeasureDisplayName(measure)} [{getMeasureUnit(measure, props.unitContext)}]
+                                    {getMeasureDisplayName(measure, props.isDelta)} [
+                                    {displayScaleByMeasure.get(measure)?.unit ?? getMeasureUnit(measure, props.unitContext)}]
                                 </Table.Cell>
                             ))}
                         </Table.Row>
@@ -57,7 +70,10 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                                 <Table.Cell>{result.realization}</Table.Cell>
                                 {Object.values(EconomicMeasure).map((measure) => (
                                     <Table.Cell key={measure}>
-                                        {formatValue(valuesByMeasure.get(measure)?.get(result.realization))}
+                                        {formatValue(
+                                            valuesByMeasure.get(measure)?.get(result.realization),
+                                            displayScaleByMeasure.get(measure)?.factor ?? 1,
+                                        )}
                                     </Table.Cell>
                                 ))}
                             </Table.Row>

@@ -8,6 +8,7 @@ import {
     type RealizationEconomicResult,
     type ResolvedEconomicAssumptions,
 } from "@modules/EconomicScreening/utils/economicCalculations";
+import type { EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
 import { normalizeEconomicProfiles } from "@modules/EconomicScreening/utils/normalizedProfiles";
 import {
     convertGasPriceToSimulatorUnit,
@@ -17,8 +18,8 @@ import {
 import type { RealizationCumulativeSeries } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
     deriveSalesGasCumulative,
-    countCumulativeVectorNonZeroRealizations,
     isCumulativeVectorAllZero,
+    summarizeCumulativeVectorTerminals,
     toRealizationCumulativeSeries,
 } from "@modules/EconomicScreening/utils/vectorResolution";
 
@@ -37,6 +38,8 @@ import {
 } from "./baseAtoms";
 import {
     deltaConstituentGasConsumptionQueriesAtom,
+    automaticBaseYearVectorDataQueriesAtom,
+    validRealizationNumbersAtom,
     vectorDataQueriesAtom,
     VectorQueryIndex,
 } from "./queryAtoms";
@@ -61,6 +64,28 @@ export type EconomicScreeningResults = {
     warnings: string[];
     errors: string[];
 };
+
+export function getEvaluationRangeError(
+    evaluationGridYears: number[],
+    evaluationWindow: EvaluationWindow,
+): string | null {
+    if (
+        evaluationWindow.firstYear !== null &&
+        evaluationWindow.lastYear !== null &&
+        evaluationWindow.firstYear > evaluationWindow.lastYear
+    ) {
+        return "Evaluation start year must be before or equal to the end year.";
+    }
+
+    const firstAvailableYear = Math.min(...evaluationGridYears);
+    const lastAvailableYear = Math.max(...evaluationGridYears);
+    const resolvedEvaluationFirstYear = evaluationWindow.firstYear ?? firstAvailableYear;
+    const resolvedEvaluationLastYear = evaluationWindow.lastYear ?? lastAvailableYear;
+    const hasEvaluationData = evaluationGridYears.some(
+        (year) => year >= resolvedEvaluationFirstYear && year <= resolvedEvaluationLastYear,
+    );
+    return hasEvaluationData ? null : "The evaluation range contains no production or cost years.";
+}
 
 export const isFetchingAtom = atom<boolean>((get) => {
     return get(vectorDataQueriesAtom).some((query) => query.isFetching);
@@ -160,12 +185,14 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const ensembleIdent = get(ensembleIdentAtom);
     const isDeltaEnsemble = ensembleIdent ? isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) : false;
     const deltaConstituentConsumptionQueries = get(deltaConstituentGasConsumptionQueriesAtom);
+    const automaticBaseYearQueries = get(automaticBaseYearVectorDataQueriesAtom);
     const discountAssumptions = get(discountAssumptionsAtom);
     const priceAssumptions = get(priceAssumptionsAtom);
     const costProfile = get(costProfileAtom);
     const evaluationWindow = get(evaluationWindowAtom);
     const earlyValueConfiguration = get(earlyValueConfigurationAtom);
     const isCostProfileDraftValid = get(isCostProfileDraftValidAtom);
+    const validRealizationNumbers = get(validRealizationNumbersAtom) ?? [];
 
     const warnings: string[] = [];
     const errors: string[] = [];
@@ -193,13 +220,24 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
             if (comparisonQuery.data.length === 0 || referenceQuery.data.length === 0) {
                 warnings.push("Constituent gas-consumption diagnostics are unavailable.");
             } else {
-                const comparisonCount = countCumulativeVectorNonZeroRealizations(comparisonQuery.data);
-                const referenceCount = countCumulativeVectorNonZeroRealizations(referenceQuery.data);
-                if (comparisonCount === 0 && referenceCount === 0) {
+                const comparisonSummary = summarizeCumulativeVectorTerminals(
+                    comparisonQuery.data,
+                    validRealizationNumbers,
+                );
+                const referenceSummary = summarizeCumulativeVectorTerminals(
+                    referenceQuery.data,
+                    validRealizationNumbers,
+                );
+                if (
+                    comparisonSummary.missingOrInvalidRealizations.length > 0 ||
+                    referenceSummary.missingOrInvalidRealizations.length > 0
+                ) {
+                    warnings.push("Constituent gas-consumption diagnostics are incomplete.");
+                } else if (comparisonSummary.nonZeroCount === 0 && referenceSummary.nonZeroCount === 0) {
                     warnings.push("No gas consumption is modelled in either delta constituent.");
                 } else {
                     warnings.push(
-                        `Gas consumption is modelled in ${comparisonCount} comparison and ${referenceCount} reference realizations.`,
+                        `Gas consumption is modelled in ${comparisonSummary.nonZeroCount} comparison and ${referenceSummary.nonZeroCount} reference realizations.`,
                     );
                 }
             }
@@ -229,23 +267,19 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
 
     const normalizedProfiles = normalizeEconomicProfiles(oilProductionData, salesGasData.series);
     const availableYears = normalizedProfiles.flatMap((profile) => profile.years);
-    const firstAvailableYear = Math.min(...availableYears);
-    const lastAvailableYear = Math.max(...availableYears);
-
-    if (
-        evaluationWindow.firstYear !== null &&
-        evaluationWindow.lastYear !== null &&
-        evaluationWindow.firstYear > evaluationWindow.lastYear
-    ) {
-        errors.push("Evaluation start year must be before or equal to the end year.");
+    const evaluationGridYears = Array.from(
+        new Set([...availableYears, ...costProfile.map((entry) => entry.year)]),
+    ).sort((firstYear, secondYear) => firstYear - secondYear);
+    const resolvedEvaluationFirstYear = evaluationWindow.firstYear ?? Math.min(...evaluationGridYears);
+    const resolvedEvaluationLastYear = evaluationWindow.lastYear ?? Math.max(...evaluationGridYears);
+    const evaluationRangeError = getEvaluationRangeError(evaluationGridYears, evaluationWindow);
+    if (evaluationRangeError) {
+        errors.push(evaluationRangeError);
     }
-
-    const resolvedEvaluationFirstYear = evaluationWindow.firstYear ?? firstAvailableYear;
-    const resolvedEvaluationLastYear = evaluationWindow.lastYear ?? lastAvailableYear;
     if (
         earlyValueConfiguration.enabled &&
-        (earlyValueConfiguration.endYear === null ||
-            earlyValueConfiguration.endYear < resolvedEvaluationFirstYear ||
+        earlyValueConfiguration.endYear !== null &&
+        (earlyValueConfiguration.endYear < resolvedEvaluationFirstYear ||
             earlyValueConfiguration.endYear > resolvedEvaluationLastYear)
     ) {
         errors.push("Early-value end year must be within the evaluation range.");
@@ -287,10 +321,19 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         return { results: [], oilUnit, gasUnit, warnings, errors };
     }
 
-    const resolvedAutomaticBaseYear = firstAvailableYear;
+    const automaticBaseYearTimestamps = automaticBaseYearQueries.flatMap((query) =>
+        (query.data ?? []).flatMap((series) => series.timestampsUtcMs.filter(Number.isFinite)),
+    );
+    const resolvedAutomaticBaseYear = automaticBaseYearTimestamps.length
+        ? new Date(Math.min(...automaticBaseYearTimestamps)).getUTCFullYear()
+        : null;
+    if (discountAssumptions.baseYear === null && resolvedAutomaticBaseYear === null) {
+        errors.push("Automatic valuation year is unavailable until ensemble production data has loaded.");
+        return { results: [], oilUnit, gasUnit, warnings, errors };
+    }
     const assumptions: ResolvedEconomicAssumptions = {
         discountRateFraction: discountAssumptions.discountRatePercent / 100,
-        baseYear: discountAssumptions.baseYear ?? (Number.isFinite(resolvedAutomaticBaseYear) ? resolvedAutomaticBaseYear : null),
+        baseYear: discountAssumptions.baseYear ?? resolvedAutomaticBaseYear,
         convention: discountAssumptions.convention,
         investmentTiming: discountAssumptions.investmentTiming,
         gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? discountAssumptions.gasToOilEquivalentFactor,

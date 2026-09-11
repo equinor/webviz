@@ -287,8 +287,14 @@ export function computeInternalRateOfReturnDetailed(
     const cashFlowScale = sumOf(combinedEvents.map((event) => Math.abs(event)));
     const residualTolerance = Math.max(cashFlowScale * 1e-12, 1e-12);
     const npvAtRate = (rate: number): number => {
+        return events.reduce((sum, event) => sum + event.value / Math.pow(1 + rate, event.time - firstEventTime), 0);
+    };
+    const npvSignAtRate = (rate: number): number => {
+        const logarithm = Math.log1p(rate);
+        const exponents = events.map((event) => -(event.time - firstEventTime) * logarithm);
+        const largestExponent = Math.max(...exponents);
         return events.reduce(
-            (sum, event) => sum + event.value / Math.pow(1 + rate, event.time - firstEventTime),
+            (sum, event, index) => sum + event.value * Math.exp(exponents[index] - largestExponent),
             0,
         );
     };
@@ -298,22 +304,23 @@ export function computeInternalRateOfReturnDetailed(
     let npvLow = npvAtRate(low);
     let npvHigh = npvAtRate(high);
 
-    if (!Number.isFinite(npvLow) || !Number.isFinite(npvHigh)) {
-        return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
-    }
+    const npvLowSign = Number.isFinite(npvLow) ? npvLow : npvSignAtRate(low);
+    const npvHighSign = Number.isFinite(npvHigh) ? npvHigh : npvSignAtRate(high);
 
-    if (Math.abs(npvLow) < residualTolerance) return { irr: low, status: IrrStatus.CONVERGED };
-    if (Math.abs(npvHigh) < residualTolerance) return { irr: high, status: IrrStatus.CONVERGED };
+    if (Number.isFinite(npvLow) && Math.abs(npvLow) < residualTolerance)
+        return { irr: low, status: IrrStatus.CONVERGED };
+    if (Number.isFinite(npvHigh) && Math.abs(npvHigh) < residualTolerance)
+        return { irr: high, status: IrrStatus.CONVERGED };
 
-    if (npvLow * npvHigh > 0) {
+    if (npvLowSign * npvHighSign > 0) {
         // Try bracket expansion upwards up to 100 (10,000%)
         let expanded = false;
         let testHigh = high;
         while (testHigh < 100) {
             testHigh *= 2;
             const npvTest = npvAtRate(testHigh);
-            if (!Number.isFinite(npvTest)) break;
-            if (npvLow * npvTest <= 0) {
+            const npvTestSign = Number.isFinite(npvTest) ? npvTest : npvSignAtRate(testHigh);
+            if (npvLowSign * npvTestSign <= 0) {
                 high = testHigh;
                 npvHigh = npvTest;
                 expanded = true;
@@ -328,13 +335,11 @@ export function computeInternalRateOfReturnDetailed(
     for (let i = 0; i < IRR_MAX_ITERATIONS; i++) {
         const mid = (low + high) / 2;
         const npvMid = npvAtRate(mid);
-        if (!Number.isFinite(npvMid)) {
-            return { irr: null, status: IrrStatus.OUT_OF_DOMAIN };
-        }
-        if (Math.abs(npvMid) < residualTolerance || high - low < IRR_TOLERANCE) {
+        if ((Number.isFinite(npvMid) && Math.abs(npvMid) < residualTolerance) || high - low < IRR_TOLERANCE) {
             return { irr: mid, status: IrrStatus.CONVERGED };
         }
-        if (npvLow * npvMid < 0) {
+        const npvMidSign = Number.isFinite(npvMid) ? npvMid : npvSignAtRate(mid);
+        if (npvLowSign * npvMidSign < 0) {
             high = mid;
             npvHigh = npvMid;
         } else {
@@ -415,7 +420,7 @@ export function computeRealizationEconomics(
     const isGasRevenueExcluded = assumptions.excludeGasRevenue ?? false;
 
     // Oil price is resolved if specified or explicitly excluded (valued at 0)
-    const hasOilPrice = !hasOilData || assumptions.oilPricePerVolume !== null || isOilRevenueExcluded;
+    const hasOilPrice = assumptions.oilPricePerVolume !== null || isOilRevenueExcluded;
     // Gas price is resolved if specified or explicitly excluded (valued at 0)
     // If sales gas is completely absent or 0 in all years, gas price requirement is also considered satisfied (valued at 0)
     const isAllGasZero = salesGasVolumes.every((v) => Math.abs(v) < 1e-12);
@@ -430,20 +435,22 @@ export function computeRealizationEconomics(
     const hasAnyPriceEntered = assumptions.oilPricePerVolume !== null || assumptions.gasPricePerVolume !== null;
     const canComputeFinancialNpv =
         (hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry) &&
+        (hasOilData || isOilRevenueExcluded) &&
         hasOilPrice &&
         hasGasPrice &&
         (hasSalesGasData || isGasRevenueExcluded);
-    const financialReason = !hasOilData
-        ? "Oil production data is incomplete."
-        : !hasSalesGasData && !isGasRevenueExcluded
-            ? "Sales gas data is incomplete or unavailable."
-            : !hasOilPrice
+    const financialReason =
+        !hasOilData && !isOilRevenueExcluded
+            ? "Oil production data is incomplete."
+            : !hasSalesGasData && !isGasRevenueExcluded
+              ? "Sales gas data is incomplete or unavailable."
+              : !hasOilPrice
                 ? "Enter an oil price or exclude oil revenue."
                 : !hasGasPrice
-                    ? "Enter a gas price or exclude gas revenue."
-                    : !(hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry)
-                        ? "Enter prices, exclude revenue, or add costs."
-                        : undefined;
+                  ? "Enter a gas price or exclude gas revenue."
+                  : !(hasAnyPriceEntered || isOilRevenueExcluded || isGasRevenueExcluded || hasAnyCostEntry)
+                    ? "Enter prices, exclude revenue, or add costs."
+                    : undefined;
 
     let netCashFlow: number[] | null = null;
     let discountedNetCashFlow: number[] | null = null;

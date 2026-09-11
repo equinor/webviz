@@ -2,7 +2,8 @@ import { atom } from "jotai";
 
 import { Frequency_api, getDeltaEnsembleRealizationsVectorDataOptions, getRealizationsVectorDataOptions } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
@@ -51,6 +52,22 @@ const isDeltaEnsembleAtom = atom<boolean>((get) => {
 const encodedRealizationsAtom = atom<string | null>((get) => {
     const validRealizationNumbers = get(validRealizationNumbersAtom);
     return validRealizationNumbers ? encodeAsUintListStr(validRealizationNumbers) : null;
+});
+
+export function getAllEnsembleRealizationNumbers(
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
+    ensembleSet: EnsembleSet,
+): number[] | null {
+    return ensembleIdent ? [...(ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [])] : null;
+}
+
+const allEnsembleRealizationNumbersAtom = atom<number[] | null>((get) => {
+    return getAllEnsembleRealizationNumbers(get(ensembleIdentAtom), get(EnsembleSetAtom));
+});
+
+const encodedAllEnsembleRealizationsAtom = atom<string | null>((get) => {
+    const realizationNumbers = get(allEnsembleRealizationNumbersAtom);
+    return realizationNumbers ? encodeAsUintListStr(realizationNumbers) : null;
 });
 
 /** Per-vector enabled flags, following `VectorQueryIndex` order. */
@@ -151,4 +168,68 @@ export const vectorDataQueriesAtom = atom((get) => {
     return get(isDeltaEnsembleAtom)
         ? get(deltaEnsembleVectorDataQueriesAtom)
         : get(regularEnsembleVectorDataQueriesAtom);
+});
+
+/** Annual production vectors for the complete ensemble, independent of active realization filters. */
+const automaticBaseYearProductionVectorsAtom = atom<string[]>((get) => {
+    const salesGasStrategy = get(salesGasStrategyAtom);
+    return [OIL_PRODUCTION_VECTOR, salesGasStrategy.kind === "DIRECT" ? SALES_GAS_VECTOR : GAS_PRODUCTION_VECTOR];
+});
+
+const regularAutomaticBaseYearVectorDataQueriesAtom = atomWithQueries((get) => {
+    const ensembleIdent = get(ensembleIdentAtom);
+    const regularEnsembleIdent =
+        ensembleIdent && isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent) ? ensembleIdent : null;
+    const allRealizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
+    const productionVectors = get(automaticBaseYearProductionVectorsAtom);
+
+    const queries = productionVectors.map((vectorName) => {
+        const options = getRealizationsVectorDataOptions({
+            query: {
+                case_uuid: regularEnsembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: regularEnsembleIdent?.getEnsembleName() ?? "",
+                vector_name: vectorName,
+                resampling_frequency: Frequency_api.YEARLY,
+                realizations_encoded_as_uint_list_str: allRealizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(regularEnsembleIdent),
+            },
+        });
+        return () => ({ ...options, enabled: Boolean(regularEnsembleIdent) });
+    });
+
+    return { queries };
+});
+
+const deltaAutomaticBaseYearVectorDataQueriesAtom = atomWithQueries((get) => {
+    const ensembleIdent = get(ensembleIdentAtom);
+    const deltaEnsembleIdent =
+        ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) ? ensembleIdent : null;
+    const comparisonEnsembleIdent = deltaEnsembleIdent?.getComparisonEnsembleIdent() ?? null;
+    const referenceEnsembleIdent = deltaEnsembleIdent?.getReferenceEnsembleIdent() ?? null;
+    const allRealizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
+    const productionVectors = get(automaticBaseYearProductionVectorsAtom);
+
+    const queries = productionVectors.map((vectorName) => {
+        const options = getDeltaEnsembleRealizationsVectorDataOptions({
+            query: {
+                comparison_case_uuid: comparisonEnsembleIdent?.getCaseUuid() ?? "",
+                comparison_ensemble_name: comparisonEnsembleIdent?.getEnsembleName() ?? "",
+                reference_case_uuid: referenceEnsembleIdent?.getCaseUuid() ?? "",
+                reference_ensemble_name: referenceEnsembleIdent?.getEnsembleName() ?? "",
+                vector_name: vectorName,
+                resampling_frequency: Frequency_api.YEARLY,
+                realizations_encoded_as_uint_list_str: allRealizationsEncodedAsUintListStr,
+                ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
+            },
+        });
+        return () => ({ ...options, enabled: Boolean(deltaEnsembleIdent) });
+    });
+
+    return { queries };
+});
+
+export const automaticBaseYearVectorDataQueriesAtom = atom((get) => {
+    return get(isDeltaEnsembleAtom)
+        ? get(deltaAutomaticBaseYearVectorDataQueriesAtom)
+        : get(regularAutomaticBaseYearVectorDataQueriesAtom);
 });
