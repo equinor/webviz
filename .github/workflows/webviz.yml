@@ -63,8 +63,10 @@ jobs:
 
       - name: 🤖 Run component tests
         working-directory: ./frontend
+        # xvfb provides a virtual display so headed Firefox can create a (software) WebGL
+        # context - headless Firefox exposes no GL, which the plotly WebGL tests need.
         run: |
-          npm run test:ct
+          xvfb-run -a npm run test:ct
 
       - uses: actions/upload-artifact@v4
         if: always()
