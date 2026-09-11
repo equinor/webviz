@@ -4,7 +4,7 @@ import { AddLink } from "@mui/icons-material";
 
 import { GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { MAX_TITLE_LENGTH } from "@framework/internal/persistence/constants";
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import type { Workbench } from "@framework/Workbench";
 import { AlertDialog } from "@lib/components/AlertDialog";
 import { Button } from "@lib/components/Button";
@@ -70,7 +70,8 @@ export function CreateSnapshotDialog(props: MakeSnapshotDialogProps): React.Reac
                 if (!snapshotId) {
                     return;
                 }
-                setSnapshotUrl(buildSnapshotUrl(snapshotId));
+                const dashboardId = activeSession.getActiveDashboard()?.getId() ?? null;
+                setSnapshotUrl(buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId }));
             })
             .catch((error) => {
                 console.error("Failed to save session:", error);

@@ -11,9 +11,9 @@ import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
 import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
+import type { SyncSettingsService } from "./SyncSettingsService";
 import type { ChannelDefinition, ChannelReceiverDefinition } from "./types/dataChannnel";
 import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
-import type { WorkbenchServices } from "./WorkbenchServices";
 import type { WorkbenchSession } from "./WorkbenchSession";
 import type { WorkbenchSettings } from "./WorkbenchSettings";
 
@@ -55,7 +55,7 @@ export type ModuleSettingsProps<
 > = {
     settingsContext: SettingsContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
 };
@@ -68,7 +68,7 @@ export type ModuleViewProps<
 > = {
     viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
     workbenchSettings: WorkbenchSettings;
     initialSettings?: InitialSettings;
@@ -318,6 +318,10 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         this._moduleInstances.push(instance);
         this.maybeImportSelf();
         return instance;
+    }
+
+    removeInstance(id: string): void {
+        this._moduleInstances = this._moduleInstances.filter((instance) => instance.getId() !== id);
     }
 
     onInstanceUnload(instanceId: string) {

@@ -5,8 +5,8 @@ import { Edit, Remove } from "@mui/icons-material";
 
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { useActiveDashboard } from "@framework/internal/components/ActiveDashboardBoundary";
 import { useActiveSession } from "@framework/internal/components/ActiveSessionBoundary";
+import { useDashboard } from "@framework/internal/components/DashboardContext";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import type { KeyKind } from "@framework/types/dataChannnel";
 import type { Workbench } from "@framework/Workbench";
@@ -33,7 +33,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
     const workbenchSession = useActiveSession();
     const isSnapshot = workbenchSession.isSnapshot();
 
-    const dashboard = useActiveDashboard();
+    const { dashboard } = useDashboard();
 
     const ref = React.useRef<HTMLDivElement>(null);
     const removeButtonRef = React.useRef<HTMLButtonElement>(null);

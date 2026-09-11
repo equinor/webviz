@@ -2,23 +2,27 @@ import React from "react";
 
 import type { SettingsContext, ViewContext } from "@framework/ModuleContext";
 import { useRefStableSyncSettingsHelper, type SyncSettingKey } from "@framework/SyncSettings";
-import type { GlobalTopicDefinitions, TopicDefinitionsType, WorkbenchServices } from "@framework/WorkbenchServices";
+import type {
+    SyncSettingsService,
+    SyncSettingsTopicDefinitions,
+    SyncSettingsTopicValueType,
+} from "@framework/SyncSettingsService";
 
-export type UseSyncSettingOptions<K extends keyof GlobalTopicDefinitions> = {
-    workbenchServices: WorkbenchServices;
+export type UseSyncSettingOptions<K extends keyof SyncSettingsTopicDefinitions> = {
+    syncSettingsService: SyncSettingsService;
     moduleContext: SettingsContext<any> | ViewContext<any>;
     syncSettingKey: SyncSettingKey;
     topic: K;
-    value: GlobalTopicDefinitions[K] | null;
-    setValue: (value: GlobalTopicDefinitions[K]) => void;
+    value: SyncSettingsTopicDefinitions[K] | null;
+    setValue: (value: SyncSettingsTopicDefinitions[K]) => void;
 };
 
-export function useSyncSetting<T extends keyof GlobalTopicDefinitions>(options: UseSyncSettingOptions<T>): void {
+export function useSyncSetting<T extends keyof SyncSettingsTopicDefinitions>(options: UseSyncSettingOptions<T>): void {
     const { setValue } = options;
-    const [prevSyncedValue, setPrevSyncedValue] = React.useState<GlobalTopicDefinitions[T] | null>(null);
+    const [prevSyncedValue, setPrevSyncedValue] = React.useState<SyncSettingsTopicDefinitions[T] | null>(null);
 
     const syncHelper = useRefStableSyncSettingsHelper({
-        workbenchServices: options.workbenchServices,
+        syncSettingsService: options.syncSettingsService,
         moduleContext: options.moduleContext,
     });
 
@@ -40,7 +44,7 @@ export function useSyncSetting<T extends keyof GlobalTopicDefinitions>(options: 
                 syncHelper.publishValue(
                     options.syncSettingKey,
                     options.topic,
-                    options.value as TopicDefinitionsType<T>,
+                    options.value as SyncSettingsTopicValueType<T>,
                 );
             }
         },

@@ -5,7 +5,7 @@ import { useAtom, useSetAtom } from "jotai";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorPaletteType } from "@framework/WorkbenchSettings";
@@ -66,7 +66,7 @@ export type DataProvidersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
 };
 
@@ -245,7 +245,7 @@ export function DataProvidersWrapper(props: DataProvidersWrapperProps): React.Re
                         isLoading={isLoading}
                         wellboreHeadersQuery={wellboreHeadersQuery}
                         workbenchSession={props.workbenchSession}
-                        workbenchServices={props.workbenchServices}
+                        syncSettingsService={props.syncSettingsService}
                         hoverService={props.hoverService}
                         viewContext={props.viewContext}
                     />

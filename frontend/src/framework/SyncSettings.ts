@@ -12,8 +12,12 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import React from "react";
 
-import type { GlobalTopicDefinitions, TopicDefinitionsType, WorkbenchServices } from "@framework/WorkbenchServices";
-import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
+import type {
+    SyncSettingsService,
+    SyncSettingsTopicDefinitions,
+    SyncSettingsTopicValueType,
+} from "@framework/SyncSettingsService";
+import { useSubscribedValueConditionally } from "@framework/SyncSettingsService";
 
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 
@@ -51,17 +55,17 @@ export const SyncSettingsMeta = {
 };
 
 export class SyncSettingsHelper {
-    private _workbenchServices: WorkbenchServices;
+    private _syncSettingsService: SyncSettingsService;
     private _moduleContext: SettingsContext<any> | ViewContext<any> | null;
     private _activeSyncedKeys: SyncSettingKey[];
 
     constructor(
         activeSyncedKeys: SyncSettingKey[],
-        workbenchServices: WorkbenchServices,
+        syncSettingsService: SyncSettingsService,
         moduleContext?: SettingsContext<any> | ViewContext<any>,
     ) {
         this._activeSyncedKeys = activeSyncedKeys;
-        this._workbenchServices = workbenchServices;
+        this._syncSettingsService = syncSettingsService;
         this._moduleContext = moduleContext ?? null;
     }
 
@@ -69,30 +73,33 @@ export class SyncSettingsHelper {
         return this._activeSyncedKeys.includes(key);
     }
 
-    useValue<T extends keyof GlobalTopicDefinitions>(key: SyncSettingKey, topic: T): GlobalTopicDefinitions[T] | null {
+    useValue<T extends keyof SyncSettingsTopicDefinitions>(
+        key: SyncSettingKey,
+        topic: T,
+    ): SyncSettingsTopicDefinitions[T] | null {
         const isSyncActiveForKey = this._activeSyncedKeys.includes(key);
         return useSubscribedValueConditionally(
             topic,
             isSyncActiveForKey,
-            this._workbenchServices,
+            this._syncSettingsService,
             this._moduleContext?.getInstanceIdString(),
         );
     }
 
-    publishValue<T extends keyof GlobalTopicDefinitions>(
+    publishValue<T extends keyof SyncSettingsTopicDefinitions>(
         key: SyncSettingKey,
         topic: T,
-        value: TopicDefinitionsType<T>,
+        value: SyncSettingsTopicValueType<T>,
     ) {
         const isSyncActiveForKey = this._activeSyncedKeys.includes(key);
         if (isSyncActiveForKey) {
-            this._workbenchServices.publishGlobalData(topic, value, this._moduleContext?.getInstanceIdString());
+            this._syncSettingsService.publishValue(topic, value, this._moduleContext?.getInstanceIdString());
         }
     }
 }
 
 export type UseRefStableSyncSettingsHelperOptions = {
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     moduleContext: SettingsContext<any> | ViewContext<any>;
 };
 
@@ -100,8 +107,8 @@ export function useRefStableSyncSettingsHelper(options: UseRefStableSyncSettings
     const syncedSettingKeys = options.moduleContext.useSyncedSettingKeys();
 
     const syncHelper = React.useMemo(
-        () => new SyncSettingsHelper(syncedSettingKeys, options.workbenchServices, options.moduleContext),
-        [syncedSettingKeys, options.workbenchServices, options.moduleContext],
+        () => new SyncSettingsHelper(syncedSettingKeys, options.syncSettingsService, options.moduleContext),
+        [syncedSettingKeys, options.syncSettingsService, options.moduleContext],
     );
 
     return syncHelper;

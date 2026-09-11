@@ -1,5 +1,9 @@
+import { cloneDeep } from "lodash-es";
+import { nanoid } from "nanoid";
 import { v4 } from "uuid";
 
+import { HoverService } from "@framework/HoverService";
+import { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
@@ -9,6 +13,7 @@ import { ModuleInstanceTopic, type ModuleInstance } from "../ModuleInstance";
 import { ModuleRegistry } from "../ModuleRegistry";
 
 import type { SerializedDashboardState } from "./Dashboard.schema";
+import { DASHBOARD_ID_LENGTH } from "./persistence/constants";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -22,13 +27,20 @@ export type LayoutElement = {
 };
 
 export enum DashboardTopic {
+    METADATA = "Metadata",
     LAYOUT = "Layout",
     MODULE_INSTANCES = "ModuleInstances",
     ACTIVE_MODULE_INSTANCE_ID = "ActiveModuleInstanceId",
     SERIALIZED_STATE = "SerializedState",
 }
 
+export type DashboardMetadata = {
+    name: string;
+    description?: string;
+};
+
 export type DashboardTopicPayloads = {
+    [DashboardTopic.METADATA]: DashboardMetadata;
     [DashboardTopic.LAYOUT]: LayoutElement[];
     [DashboardTopic.MODULE_INSTANCES]: ModuleInstance<any, any>[];
     [DashboardTopic.ACTIVE_MODULE_INSTANCE_ID]: string | null;
@@ -40,16 +52,23 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     private _unsubscribeFunctionsManagerDelegate = new UnsubscribeFunctionsManagerDelegate();
 
     private _id: string;
-    private _name: string;
-    private _description?: string;
+    private _metadata: DashboardMetadata;
     private _layout: LayoutElement[] = [];
     private _moduleInstances: ModuleInstance<any, any>[] = [];
     private _activeModuleInstanceId: string | null = null;
     private _atomStoreMaster: AtomStoreMaster;
+    private _cachedState: SerializedDashboardState | null = null;
 
-    constructor(atomStoreMaster: AtomStoreMaster) {
-        this._id = v4();
-        this._name = "New Dashboard";
+    // Per-dashboard framework services. Owned here so their state (synced setting values,
+    // current hover data) never leaks between dashboards, even while several dashboards are
+    // kept mounted at once by the dashboard hot-cache.
+    private _syncSettingsService = new SyncSettingsService();
+    private _hoverService = new HoverService();
+
+    constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
+        this._id = nanoid(DASHBOARD_ID_LENGTH);
+        this._metadata = { name: name ?? "Dashboard" };
+
         this._atomStoreMaster = atomStoreMaster;
     }
 
@@ -71,6 +90,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             if (topic === DashboardTopic.SERIALIZED_STATE) {
                 return;
             }
+            if (topic === DashboardTopic.METADATA) {
+                return this._metadata;
+            }
 
             throw new Error(`No snapshot getter for topic ${topic}`);
         };
@@ -82,12 +104,49 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._id;
     }
 
-    getName(): string {
-        return this._name;
+    getSyncSettingsService(): SyncSettingsService {
+        return this._syncSettingsService;
+    }
+
+    getHoverService(): HoverService {
+        return this._hoverService;
+    }
+
+    getMetadata(): DashboardMetadata {
+        return this._metadata;
+    }
+
+    updateMetadata(metadata: Partial<DashboardMetadata>): void {
+        this._metadata = { ...this._metadata, ...metadata };
+        this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.METADATA);
+        this.handleStateChange();
     }
 
     getLayout(): LayoutElement[] {
         return this._layout;
+    }
+
+    /**
+     * Layout to render a read-only preview from. Returns the live layout when the dashboard is
+     * loaded, and otherwise reconstructs it from the cached serialized state - an unloaded
+     * dashboard (never activated, or evicted from the hot cache) keeps `_layout` empty until
+     * `load()`, so a plain `getLayout()` would make every inactive dashboard preview as empty.
+     */
+    getLayoutForPreview(): LayoutElement[] {
+        if (this._layout.length > 0 || !this._cachedState) {
+            return this._layout;
+        }
+
+        return this._cachedState.moduleInstances.map((serializedInstance) => ({
+            moduleInstanceId: serializedInstance.moduleInstanceState.id,
+            moduleName: serializedInstance.moduleInstanceState.name,
+            relX: serializedInstance.layoutState.relX,
+            relY: serializedInstance.layoutState.relY,
+            relHeight: serializedInstance.layoutState.relHeight,
+            relWidth: serializedInstance.layoutState.relWidth,
+            minimized: serializedInstance.layoutState.minimized,
+            maximized: serializedInstance.layoutState.maximized,
+        }));
     }
 
     setLayout(layout: LayoutElement[]): void {
@@ -101,6 +160,16 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     serializeState(): SerializedDashboardState {
+        if (this._cachedState) {
+            // Destructuring the cached state and overriding the id, name, and description with the current values.
+            return {
+                ...this._cachedState,
+                id: this._id,
+                name: this._metadata.name,
+                description: this._metadata.description,
+            };
+        }
+
         const moduleInstances = this._moduleInstances.map((moduleInstance) => {
             const moduleInstanceState = moduleInstance.serializeState();
 
@@ -125,8 +194,8 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         return {
             id: this._id,
-            name: this._name,
-            description: this._description,
+            name: this._metadata.name,
+            description: this._metadata.description,
             activeModuleInstanceId: this._activeModuleInstanceId,
             moduleInstances,
         };
@@ -134,10 +203,24 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     deserializeState(serializedDashboard: SerializedDashboardState): void {
         this._id = serializedDashboard.id;
-        this._name = serializedDashboard.name;
-        this._description = serializedDashboard.description;
+        this._metadata = {
+            name: serializedDashboard.name,
+            description: serializedDashboard.description,
+        };
 
         this.clearLayout();
+
+        // Stopping here since we don't want to initialize module instances for
+        // inactive dashboards. The module instances will be initialized when the dashboard is activated.
+        this._cachedState = serializedDashboard;
+    }
+
+    initializeModuleInstancesFromCachedState(): void {
+        if (!this._cachedState) {
+            return;
+        }
+
+        const serializedDashboard = this._cachedState;
 
         for (const serializedInstance of serializedDashboard.moduleInstances) {
             const { id, name } = serializedInstance.moduleInstanceState;
@@ -186,13 +269,17 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.SERIALIZED_STATE);
     }
 
+    static makeModuleInstanceId(): string {
+        return v4();
+    }
+
     private makeAndRegisterModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
         }
 
-        const id = predefinedId ?? v4();
+        const id = predefinedId ?? Dashboard.makeModuleInstanceId();
 
         const atomStore = this._atomStoreMaster.makeAtomStoreForModuleInstance(id);
 
@@ -267,62 +354,53 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return this._activeModuleInstanceId;
     }
 
-    static fromPersistedState(
-        serializedDashboard: SerializedDashboardState,
-        atomStoreMaster: AtomStoreMaster,
-    ): Dashboard {
-        const dashboard = new Dashboard(atomStoreMaster);
-        dashboard._id = serializedDashboard.id;
-        dashboard._name = serializedDashboard.name;
-        dashboard._description = serializedDashboard.description;
-        dashboard._activeModuleInstanceId = serializedDashboard.activeModuleInstanceId;
+    /**
+     * This is loading the dashboard's layout and initializing its module instances. This is called
+     * when the dashboard becomes active.
+     */
+    load(): void {
+        this.initializeModuleInstancesFromCachedState();
+        this._cachedState = null;
+    }
 
-        const layout: LayoutElement[] = [];
-
-        for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name } = serializedInstance.moduleInstanceState;
-            dashboard.makeAndRegisterModuleInstance(name, id);
-        }
-
-        // Doing this after all module instances have been registered
-        // ensures that the module instances are available for data channel initialization.
-        for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const {
-                moduleInstanceState: { id, name },
-                layoutState,
-            } = serializedInstance;
-            const moduleInstance = dashboard.getModuleInstance(id);
-            if (!moduleInstance) {
-                throw new Error(`Module instance with ID ${id} not found`);
-            }
-
-            moduleInstance.initiateDeserialization(serializedInstance.moduleInstanceState, dashboard);
-
-            layout.push({
-                moduleInstanceId: id,
-                moduleName: name,
-                relX: layoutState.relX,
-                relY: layoutState.relY,
-                relHeight: layoutState.relHeight,
-                relWidth: layoutState.relWidth,
-                minimized: layoutState.minimized,
-                maximized: layoutState.maximized,
-            });
-        }
-
-        dashboard.setLayout(layout);
-
-        return dashboard;
+    // Note on memory: this drops every strong reference this framework holds to the dashboard's
+    // module instances (see clearLayout -> removeModuleInstance -> unregisterAndUnloadModuleInstance,
+    // and ModuleInstance.beforeDestroy/Module.removeInstance for the rest of the teardown chain), but
+    // an instance isn't guaranteed to become GC-eligible the instant this call returns. Any still-
+    // mounted component that read a now-removed instance (e.g. LeftSettingsPanel's activeModuleInstance)
+    // keeps a reference alive for one extra render cycle via React's fiber double-buffering - the old
+    // `current` fiber (holding the stale props) becomes the new `alternate` rather than being discarded,
+    // and isn't overwritten until that component renders again. In practice this resolves itself within
+    // the next render or two of the surrounding UI;.
+    unload(): void {
+        this._cachedState = this.serializeState();
+        this.clearLayout();
     }
 
     beforeUnload(): void {
         this.clearLayout();
     }
 
-    static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
+    // Note: the dashboard created here starts with a fresh, empty RealizationFilterSet (not yet
+    // synced against any ensembles), so module instances created below transiently get an empty
+    // wrapped filter set pushed into their atom stores at creation time. This is corrected
+    // synchronously afterwards by PrivateWorkbenchSession.replaceDashboard()/setDashboards()
+    // (called from WorkbenchSessionManager.applyTemplate()), which re-syncs and re-pushes the
+    // now-correct filter set into every one of this dashboard's module instances before anything
+    // renders. Do not "fix" this method in a way that breaks that ordering.
+    static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster, id?: string): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
-        dashboard._id = v4();
-        dashboard._description = template.description;
+        // Callers applying a template to an existing dashboard (rather than creating a brand new
+        // one) pass that dashboard's id here so it's preserved - dashboard ids are now part of
+        // session/snapshot URLs, so generating a fresh one here would invalidate existing deep
+        // links to a dashboard whose layout/content is meant to be its only change.
+        if (id) {
+            dashboard._id = id;
+        }
+        dashboard._metadata = {
+            name: template.name,
+            description: template.description,
+        };
 
         const layout: LayoutElement[] = [];
         const moduleInstances: ModuleInstance<any, any>[] = [];
@@ -398,5 +476,44 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         dashboard.setLayout(layout);
 
         return dashboard;
+    }
+
+    static clone(source: Dashboard, atomStoreMaster: AtomStoreMaster, name?: string): Dashboard {
+        const adjustedName = name ?? `${source.getMetadata().name} (Copy)`;
+        const clonedDashboard = new Dashboard(atomStoreMaster, adjustedName);
+        const serializedState = cloneDeep(source.serializeState());
+
+        const moduleInstanceIdMap: Record<string, string> = {};
+
+        // The serialized state needs to be adjusted to change module instance IDs and other unique identifiers to avoid conflicts with the original dashboard.
+        serializedState.id = clonedDashboard.getId(); // Ensure the cloned dashboard has a unique ID
+        serializedState.name = adjustedName;
+
+        for (const serializedInstance of serializedState.moduleInstances) {
+            const { id } = serializedInstance.moduleInstanceState;
+
+            const newId = Dashboard.makeModuleInstanceId();
+
+            // Update the module instance ID and possibly update the active module instance ID if it matches the old ID.
+            serializedInstance.moduleInstanceState.id = newId;
+            moduleInstanceIdMap[id] = newId;
+            if (serializedState.activeModuleInstanceId === id) {
+                serializedState.activeModuleInstanceId = newId;
+            }
+        }
+
+        // Update ids in the data channel manager state to reflect the new module instance IDs.
+        for (const serializedInstance of serializedState.moduleInstances) {
+            const { dataChannelManagerState } = serializedInstance.moduleInstanceState;
+            for (const subscription of dataChannelManagerState.subscriptions) {
+                const listensToId = subscription.listensToModuleInstanceId;
+                if (moduleInstanceIdMap[listensToId]) {
+                    subscription.listensToModuleInstanceId = moduleInstanceIdMap[listensToId];
+                }
+            }
+        }
+
+        clonedDashboard.deserializeState(serializedState);
+        return clonedDashboard;
     }
 }
