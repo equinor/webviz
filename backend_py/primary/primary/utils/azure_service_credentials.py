@@ -18,9 +18,7 @@ class ClientSecretVars:
     client_secret: str
 
 
-def create_credential_for_azure_services(
-    secret_vars_for_local_dev: ClientSecretVars | None,
-) -> WorkloadIdentityCredential | ChainedTokenCredential:
+def create_credential_for_azure_services() -> WorkloadIdentityCredential | ChainedTokenCredential:
     """
     Create an Azure Identity credential suitable for authenticating to Azure services such as Service Bus and Cosmos DB.
 
