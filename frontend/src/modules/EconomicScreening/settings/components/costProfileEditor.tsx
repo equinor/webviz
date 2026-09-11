@@ -204,6 +204,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                                     min={1900}
                                     max={2200}
                                     step={1}
+                                    format={{ useGrouping: false }}
                                     onValueChange={(newValue) => handleFieldChange(index, "year", newValue)}
                                     onPaste={(event) => handlePaste(event, index)}
                                 />

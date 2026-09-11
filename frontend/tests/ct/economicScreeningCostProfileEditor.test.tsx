@@ -33,3 +33,9 @@ test("revalidates signed Delta costs when switched to a regular ensemble", async
     await expect(page.getByTestId("cost-schedule-ready")).toHaveText("pending");
     await expect(page.getByText("Investment and operating costs must be zero or greater.")).toBeVisible();
 });
+
+test("displays calendar years without locale grouping", async ({ mount, page }) => {
+    await mount(<CostProfileEditorHarness initialCostProfile={[{ year: 2018, capex: 0, opex: 0 }]} />);
+
+    await expect(page.getByRole("textbox").first()).toHaveValue("2018");
+});

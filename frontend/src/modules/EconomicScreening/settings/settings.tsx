@@ -280,6 +280,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 min={1900}
                                 max={2200}
                                 step={1}
+                                format={{ useGrouping: false }}
                                 onValueChange={(newValue) =>
                                     setEvaluationWindow((prev) => ({ ...prev, firstYear: toCalendarYear(newValue) }))
                                 }
@@ -290,6 +291,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 min={1900}
                                 max={2200}
                                 step={1}
+                                format={{ useGrouping: false }}
                                 onValueChange={(newValue) =>
                                     setEvaluationWindow((prev) => ({ ...prev, lastYear: toCalendarYear(newValue) }))
                                 }
@@ -311,6 +313,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                             min={1900}
                             max={2200}
                             step={1}
+                            format={{ useGrouping: false }}
                             onValueChange={(newValue) => setDiscountBaseYear(toCalendarYear(newValue))}
                         />
                     </Setting.Field>
@@ -391,6 +394,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 min={1900}
                                 max={2200}
                                 step={1}
+                                format={{ useGrouping: false }}
                                 disabled={!earlyValueConfiguration.enabled}
                                 onValueChange={(endYear) =>
                                     setEarlyValueConfiguration((current) => ({
