@@ -129,8 +129,8 @@ spec:
 
         - environment: review2
           variables:
-            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE=sbns-webviz-nonprod.servicebus.windows.net
-            WEBVIZ_SERVICE_BUS_QUEUE_NAME=review2-default
+            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review2-default
           resources:
             requests:
               memory: 4Gi
