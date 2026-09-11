@@ -34,7 +34,7 @@ export function ChangelogDialog(): React.ReactNode {
             setOpen(true);
             setLastSeenChangelog(currentRelease);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- should only check on mount
+        // eslint-disable-next-line @eslint-react/exhaustive-deps -- should only check on mount
     }, []);
 
     return (

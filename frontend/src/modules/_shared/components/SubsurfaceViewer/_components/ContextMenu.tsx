@@ -49,7 +49,7 @@ export function ContextMenu(props: ContextMenuProps): React.ReactNode {
         <ContextMenuComponent.Root open onOpenChange={setVisible}>
             <ThemeProvider theme={contextMenuTheme}>
                 <ContextMenuComponent.Menu anchor={contextMenu.position}>
-                    {contextMenu.items.map((item, index) => (
+                    {contextMenu.items.map((item) => (
                         <ContextMenuComponent.Item
                             key={item.id}
                             onClick={() => {

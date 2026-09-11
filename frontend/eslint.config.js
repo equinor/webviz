@@ -11,7 +11,11 @@ export default defineConfig(
     // Plugins --------------------------------------------------------------------------
     eslintCore.configs.recommended,
     eslintTypescript.configs.recommended,
-    reactPlugin.configs["recommended-typescript"],
+    {
+        // Should only run where there might be components and hooks
+        files: ["src/**/*.{ts,tsx}", "tests/ct/**/*.{ts,tsx}"],
+        extends: [reactPlugin.configs["recommended-typescript"]],
+    },
     importPlugin.flatConfigs.recommended,
     pluginQuery.configs["flat/recommended"],
     // Configure typescript resolver
