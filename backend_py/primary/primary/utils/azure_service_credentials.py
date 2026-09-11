@@ -46,17 +46,17 @@ def create_credential_for_azure_services() -> WorkloadIdentityCredential | Clien
         return ClientSecretCredential(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret)
 
 
-def log_azure_credential_env_var_presence() -> None:
+def log_azure_credential_env_var_status() -> None:
     """
-    Log the presence of key Azure credential-related environment variables.
+    Log the status of key Azure credential-related environment variables.
     Intended as a debugging aid to diagnose authentication failures against Azure services.
     """
     is_on_radix_platform = is_running_on_radix_platform()
     LOGGER.info(f"Status of Azure credential environment variables (is_on_radix_platform={is_on_radix_platform})")
 
     # We always need these two to be set
-    LOGGER.info(f"  AZURE_TENANT_ID present: {'AZURE_TENANT_ID' in os.environ}")
-    LOGGER.info(f"  AZURE_CLIENT_ID present: {'AZURE_CLIENT_ID' in os.environ}")
+    LOGGER.info(f"  AZURE_TENANT_ID: {os.environ.get('AZURE_TENANT_ID')}")
+    LOGGER.info(f"  AZURE_CLIENT_ID: {os.environ.get('AZURE_CLIENT_ID')}")
 
     # One of the following environment variables needs to be set.
     #  * For Radix deploys, AZURE_FEDERATED_TOKEN_FILE must be set.
