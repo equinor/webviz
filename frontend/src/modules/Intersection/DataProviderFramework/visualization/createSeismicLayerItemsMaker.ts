@@ -99,6 +99,7 @@ export function createSeismicLayerItemsMaker({
                     {
                         order,
                         data: {
+                            source: fenceData.source,
                             propertyName: attribute ?? "",
                             propertyUnit: "",
                             minFenceDepth: fenceData.min_fence_depth,
