@@ -97,7 +97,20 @@ export function Plot(props: PlotProps): React.ReactNode {
     // manual adapter and let GpuResourceBoundary's "remount" strategy (a fresh Plotly.newPlot)
     // clear the lost state.
     const adapter = React.useMemo(() => createManualContextLossAdapter(), []);
-    const handleWebGlContextLost = React.useCallback(() => adapter.notifyContextLost(), [adapter]);
+    const handleWebGlContextLost = React.useCallback(
+        (info?: { event?: Event }) => {
+            // The Vite-injected plotly patch (vite-plugin-plotly-webgl-context-release) deliberately
+            // loses the WebGL context when plotly tears down its gl canvases, so the browser reclaims
+            // it instead of leaking. Plotly forwards that as a context-loss signal too - ignore it on
+            // a canvas we stamped; it is not a real browser eviction.
+            const target = info?.event?.target as (Element & { __webvizContextReleased?: boolean }) | undefined;
+            if (target?.__webvizContextReleased) {
+                return;
+            }
+            adapter.notifyContextLost();
+        },
+        [adapter],
+    );
 
     if (shouldApplyPlotUpdate && !isEqual(prevLayout, layout)) {
         setPrevLayout(layout);
@@ -118,11 +131,15 @@ export function Plot(props: PlotProps): React.ReactNode {
         setStableOtherProps(otherProps);
     }
 
-    const plotElement = React.useMemo(() => {
-        const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
-
+    // Keep the `config` object referentially stable across data/layout updates. Plotly.react()
+    // falls back to a full Plotly.newPlot() (tearing down and recreating the WebGL contexts) when
+    // it detects a config change, and it compares by value - a fresh `modeBarButtonsToAdd` array or
+    // `click` closure on every render counts as "changed". The download click handler is read
+    // through a ref so this closure never has to be recreated.
+    const hasDownloadHandler = onDownloadClick != null;
+    const configWithDefaults = React.useMemo(() => {
         const modeBarButtonsToAdd: Plotly.ModeBarButtonAny[] = [...(stableConfig?.modeBarButtonsToAdd ?? [])];
-        if (onDownloadClickRef.current) {
+        if (hasDownloadHandler) {
             modeBarButtonsToAdd.push({
                 name: "download",
                 title: "Download data",
@@ -130,7 +147,11 @@ export function Plot(props: PlotProps): React.ReactNode {
                 click: () => onDownloadClickRef.current?.(),
             });
         }
-        const configWithDefaults = { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
+        return { ...merge({}, DEFAULT_CONFIG, stableConfig), modeBarButtonsToAdd };
+    }, [stableConfig, hasDownloadHandler]);
+
+    const plotElement = React.useMemo(() => {
+        const layoutWithDefaults = merge({}, DEFAULT_LAYOUT, stableLayout);
 
         return (
             <BasePlot
@@ -141,7 +162,7 @@ export function Plot(props: PlotProps): React.ReactNode {
                 onWebGlContextLost={handleWebGlContextLost}
             />
         );
-    }, [stableConfig, stableData, stableLayout, stableOtherProps, handleWebGlContextLost]);
+    }, [configWithDefaults, stableData, stableLayout, stableOtherProps, handleWebGlContextLost]);
 
     return (
         <GpuResourceBoundary adapter={adapter} recoveryStrategy="remount">
