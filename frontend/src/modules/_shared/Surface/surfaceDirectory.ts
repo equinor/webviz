@@ -1,6 +1,9 @@
 import type { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api } from "@api";
 import { SurfaceTimeType_api } from "@api";
 
+import type { SurfaceAttribute } from "./surfaceAddress";
+import { dedupeSurfaceAttributes, getSurfaceAttributeDisplayLabel, isSameAttribute } from "./surfaceAttribute";
+
 export enum SurfaceTimeType {
     None = "None",
     TimePoint = "TimePoint",
@@ -56,17 +59,19 @@ export class SurfaceDirectory {
         }
     }
 
-    // Retrieves unique attribute names with optional filtering on surface name.
-    public getAttributeNames(requireSurfaceName: string | null): string[] {
+    // Retrieves unique attributes with optional filtering on surface name.
+    public getAttributeNames(requireSurfaceName: string | null): SurfaceAttribute[] {
         let filteredList = this._surfaceList;
         if (requireSurfaceName) {
             filteredList = filterOnName(filteredList, requireSurfaceName);
         }
-        return [...new Set(filteredList.map((surface) => surface.attribute_name))].sort();
+        return dedupeSurfaceAttributes(filteredList.map((surface) => surface.attribute)).sort((a, b) =>
+            getSurfaceAttributeDisplayLabel(a).localeCompare(getSurfaceAttributeDisplayLabel(b)),
+        );
     }
 
-    // Retrieves intersection of attribute names with filtering on surface names.
-    public getAttributeNamesIntersection(requireSurfaceNames: string[]): string[] {
+    // Retrieves intersection of attributes with filtering on surface names.
+    public getAttributeNamesIntersection(requireSurfaceNames: string[]): SurfaceAttribute[] {
         if (requireSurfaceNames.length === 0) {
             return [];
         }
@@ -75,39 +80,39 @@ export class SurfaceDirectory {
         const filteredSurfaceList = this._surfaceList.filter((surface) =>
             uniqueRequiredSurfaceNames.includes(surface.name),
         );
-        const uniqueAttributeNames = [...new Set(filteredSurfaceList.map((surface) => surface.attribute_name))].sort();
+        const uniqueAttributes = dedupeSurfaceAttributes(filteredSurfaceList.map((surface) => surface.attribute));
 
-        if (uniqueAttributeNames.length === 0) {
+        if (uniqueAttributes.length === 0) {
             return [];
         }
 
-        // Find attribute names present in all required surfaces.
-        const attributeNamesIntersection: string[] = [];
+        // Find attributes present in all required surfaces.
+        const attributesIntersection: SurfaceAttribute[] = [];
 
-        for (const attributeName of uniqueAttributeNames) {
+        for (const attribute of uniqueAttributes) {
             // For each unique required surface name, check if there exist a surface object with the given
-            // surface name and attribute name.
+            // surface name and attribute.
             const isAttributeInAllRequiredSurfaces = uniqueRequiredSurfaceNames.every((surfaceName) => {
                 return (
                     filteredSurfaceList.find(
-                        (surface) => surface.name === surfaceName && surface.attribute_name === attributeName,
+                        (surface) => surface.name === surfaceName && isSameAttribute(surface.attribute, attribute),
                     ) !== undefined
                 );
             });
 
             if (isAttributeInAllRequiredSurfaces) {
-                attributeNamesIntersection.push(attributeName);
+                attributesIntersection.push(attribute);
             }
         }
 
-        return attributeNamesIntersection;
+        return attributesIntersection;
     }
 
     // Retrieves unique surface names with optional filtering on surface attribute.
-    public getSurfaceNames(requireAttributeName: string | null): string[] {
+    public getSurfaceNames(requireAttribute: SurfaceAttribute | null): string[] {
         const uniqueSurfaceNames = new Set<string>();
         for (const surf of this._surfaceList) {
-            if (requireAttributeName == null || surf.attribute_name === requireAttributeName) {
+            if (requireAttribute == null || isSameAttribute(surf.attribute, requireAttribute)) {
                 uniqueSurfaceNames.add(surf.name);
             }
         }
@@ -128,10 +133,10 @@ export class SurfaceDirectory {
     }
 
     // Checks if a given name and attribute pair exists.
-    public nameAttributePairExists(surfaceName: string | null, attributeName: string | null): boolean {
-        if (!attributeName || !surfaceName) return false;
+    public nameAttributePairExists(surfaceName: string | null, attribute: SurfaceAttribute | null): boolean {
+        if (!attribute || !surfaceName) return false;
         return this._surfaceList.some(
-            (surface) => surface.name === surfaceName && surface.attribute_name === attributeName,
+            (surface) => surface.name === surfaceName && isSameAttribute(surface.attribute, attribute),
         );
     }
 
