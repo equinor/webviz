@@ -497,6 +497,23 @@ describe("review regressions", () => {
 
         expect(result).toEqual({ irr: expect.closeTo(2 ** (1 / 80) - 1, 9), status: IrrStatus.CONVERGED });
     });
+
+    test("keeps the long-profile IRR unchanged when cash flows are rescaled", () => {
+        const expectedIrr = 2 ** (1 / 80) - 1;
+
+        for (const scale of [1e-13, 1e-9, 1e9]) {
+            const result = computeInternalRateOfReturnDetailed(
+                [2020, 2100],
+                [-100 * scale, 200 * scale],
+                [0, 0],
+                2020,
+                DiscountConvention.YEAR_END,
+                InvestmentTiming.FOLLOW_ANNUAL_TIMING,
+            );
+
+            expect(result).toEqual({ irr: expect.closeTo(expectedIrr, 9), status: IrrStatus.CONVERGED });
+        }
+    });
 });
 
 describe("Agreed-assumption fixture: pins annual alignment, units, timing, NPV, and break-even", () => {

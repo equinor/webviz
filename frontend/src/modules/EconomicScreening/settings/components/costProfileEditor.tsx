@@ -27,6 +27,9 @@ export function validateCostProfile(costProfile: EditableCostProfileEntry[], isD
         if (entry.year === null) {
             return "Enter a calendar year for each cost row.";
         }
+        if (!Number.isInteger(entry.year)) {
+            return "Each cost year must be a whole calendar year.";
+        }
         if (years.has(entry.year)) {
             return "Each calendar year can appear only once.";
         }
@@ -136,7 +139,11 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
 
     function handleFieldChange(index: number, field: keyof CostProfileEntry, newValue: number | null) {
         if (field === "year") {
-            updateProfile(immediateValue.map((entry, i) => (i === index ? { ...entry, year: newValue } : entry)));
+            updateProfile(
+                immediateValue.map((entry, i) =>
+                    i === index ? { ...entry, year: newValue === null ? null : Math.round(newValue) } : entry,
+                ),
+            );
             return;
         }
         updateProfile(immediateValue.map((entry, i) => (i === index ? { ...entry, [field]: newValue ?? 0 } : entry)));
@@ -196,6 +203,7 @@ export function CostProfileEditor(props: CostProfileEditorProps): React.ReactNod
                                     value={entry.year}
                                     min={1900}
                                     max={2200}
+                                    step={1}
                                     onValueChange={(newValue) => handleFieldChange(index, "year", newValue)}
                                     onPaste={(event) => handlePaste(event, index)}
                                 />

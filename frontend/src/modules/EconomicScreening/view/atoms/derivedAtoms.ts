@@ -3,12 +3,12 @@ import { atom } from "jotai";
 import type { VectorRealizationData_api } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import type { EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
 import {
     computeRealizationEconomics,
     type RealizationEconomicResult,
     type ResolvedEconomicAssumptions,
 } from "@modules/EconomicScreening/utils/economicCalculations";
-import type { EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
 import { normalizeEconomicProfiles } from "@modules/EconomicScreening/utils/normalizedProfiles";
 import {
     convertGasPriceToSimulatorUnit,
@@ -63,6 +63,7 @@ export type EconomicScreeningResults = {
     gasUnit: string;
     warnings: string[];
     errors: string[];
+    isEarlyValueConfigurationValid: boolean;
 };
 
 export function getEvaluationRangeError(
@@ -196,6 +197,7 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
 
     const warnings: string[] = [];
     const errors: string[] = [];
+    let isEarlyValueConfigurationValid = true;
 
     const oilUnit = oilProductionData[0]?.unit ?? "";
     const gasUnit = salesGasData.unit;
@@ -262,7 +264,7 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     }
 
     if (oilProductionData.length === 0 && salesGasData.series.length === 0) {
-        return { results: [], oilUnit, gasUnit, warnings, errors };
+        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
     }
 
     const normalizedProfiles = normalizeEconomicProfiles(oilProductionData, salesGasData.series);
@@ -283,10 +285,11 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
             earlyValueConfiguration.endYear > resolvedEvaluationLastYear)
     ) {
         errors.push("Early-value end year must be within the evaluation range.");
+        isEarlyValueConfigurationValid = false;
     }
 
-    if (errors.length > 0) {
-        return { results: [], oilUnit, gasUnit, warnings, errors };
+    if (evaluationRangeError) {
+        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
     }
 
     const gasToOilEquivalentDivisor =
@@ -317,10 +320,14 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         errors.push(`Cannot convert between oil unit "${oilUnit}" and gas unit "${gasUnit}".`);
     }
 
-    if (errors.length > 0) {
-        return { results: [], oilUnit, gasUnit, warnings, errors };
+    if (errors.some((error) => error !== "Early-value end year must be within the evaluation range.")) {
+        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
     }
 
+    if (discountAssumptions.baseYear === null && automaticBaseYearQueries.some((query) => query.data === undefined)) {
+        errors.push("Automatic valuation year is unavailable until ensemble production data has loaded.");
+        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
+    }
     const automaticBaseYearTimestamps = automaticBaseYearQueries.flatMap((query) =>
         (query.data ?? []).flatMap((series) => series.timestampsUtcMs.filter(Number.isFinite)),
     );
@@ -329,7 +336,7 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         : null;
     if (discountAssumptions.baseYear === null && resolvedAutomaticBaseYear === null) {
         errors.push("Automatic valuation year is unavailable until ensemble production data has loaded.");
-        return { results: [], oilUnit, gasUnit, warnings, errors };
+        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
     }
     const assumptions: ResolvedEconomicAssumptions = {
         discountRateFraction: discountAssumptions.discountRatePercent / 100,
@@ -365,8 +372,9 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
             gasUnit,
             warnings,
             errors,
+            isEarlyValueConfigurationValid,
         };
     }
 
-    return { results, oilUnit, gasUnit, warnings, errors };
+    return { results, oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
 });

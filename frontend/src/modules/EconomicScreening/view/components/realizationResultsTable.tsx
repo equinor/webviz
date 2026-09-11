@@ -1,4 +1,3 @@
-import { Collapsible } from "@lib/components/Collapsible";
 import { Table } from "@lib/components/Table";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
@@ -43,16 +42,15 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
     );
 
     return (
-        <Collapsible.Group title="All results">
-            <Collapsible.Content layoutClassName="overflow-x-auto">
-                <Table.Root
-                    size="small"
-                    compact
-                    maxHeight={220}
-                    selectable
-                    rowSelection={props.selectedRealization?.toString() ?? null}
-                    onChangeRowSelection={(rowKey) => props.onSelectedRealizationChange(rowKey === null ? null : Number(rowKey))}
-                >
+        <div className="h-full overflow-x-auto">
+            <Table.Root
+                size="small"
+                compact
+                maxHeight="100%"
+                selectable
+                rowSelection={props.selectedRealization?.toString() ?? null}
+                onChangeRowSelection={(rowKey) => props.onSelectedRealizationChange(rowKey === null ? null : Number(rowKey))}
+            >
                     <Table.Head>
                         <Table.Row>
                             <Table.Cell colKey="realization">Realization</Table.Cell>
@@ -79,8 +77,7 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                             </Table.Row>
                         ))}
                     </Table.Body>
-                </Table.Root>
-            </Collapsible.Content>
-        </Collapsible.Group>
+            </Table.Root>
+        </div>
     );
 }

@@ -24,11 +24,7 @@ import {
     DiscountConvention,
     DiscountConventionEnumToStringMapping,
     CashFlowProfileType,
-    CashFlowProfileTypeEnumToStringMapping,
-    DistributionPlotType,
-    DistributionPlotTypeEnumToStringMapping,
     EconomicMeasure,
-    EconomicMeasureEnumToStringMapping,
     GasPriceBasis,
     GasPriceBasisEnumToStringMapping,
     InvestmentTiming,
@@ -37,6 +33,7 @@ import {
     OilPriceBasisEnumToStringMapping,
 } from "../typesAndEnums";
 import type { MissingComponentAssumptions } from "../utils/vectorResolution";
+import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
 
 import {
     costProfileAtom,
@@ -45,7 +42,6 @@ import {
     discountBaseYearAtom,
     discountConventionAtom,
     discountRatePercentAtom,
-    distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     evaluationWindowAtom,
     excludeGasRevenueAtom,
@@ -65,6 +61,10 @@ import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
 import { CostProfileEditor } from "./components/costProfileEditor";
 
 const NUMBER_INPUT_DEBOUNCE_MS = 500;
+
+function toCalendarYear(value: number | null): number | null {
+    return value === null ? null : Math.round(value);
+}
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -88,7 +88,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const [costProfile, setCostProfile] = useAtom(costProfileAtom);
     const [, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
-    const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
     const [cashFlowProfileType, setCashFlowProfileType] = useAtom(cashFlowProfileTypeAtom);
     const [missingComponentAssumptionsByEnsemble, setMissingComponentAssumptionsByEnsemble] = useAtom(
         missingComponentAssumptionsAtom,
@@ -176,26 +175,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         setGasPriceBasis(newBasis);
     }
 
-    function handleMeasureChange(newMeasure: EconomicMeasure | null) {
-        if (newMeasure === null) {
-            return;
-        }
-        setSelectedMeasure(newMeasure);
-    }
-
-    function handleDistributionPlotTypeChange(newPlotType: DistributionPlotType | null) {
-        if (newPlotType === null) {
-            return;
-        }
-        setDistributionPlotType(newPlotType);
-    }
-
-    function handleCashFlowProfileTypeChange(newProfileType: CashFlowProfileType | null) {
-        if (newProfileType !== null) {
-            setCashFlowProfileType(newProfileType);
-        }
-    }
-
     function setMissingComponentAssumption(key: keyof MissingComponentAssumptions, accepted: boolean) {
         const ensembleKey = selectedEnsembleIdent.value?.toString();
         if (!ensembleKey) {
@@ -215,6 +194,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
         <Setting.ScrollArea>
             <Setting.Panel>
                 <Setting.Section title="Data" defaultOpen>
+                    <div className="flex justify-end">
+                        <CalculationHelpDialog />
+                    </div>
                     <Setting.Field label="Ensemble" annotations={selectedEnsembleIdentAnnotations} stacked>
                         <EnsembleDropdown
                             ensembles={ensembleSet.getEnsembleArray()}
@@ -297,8 +279,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 placeholder="First year"
                                 min={1900}
                                 max={2200}
+                                step={1}
                                 onValueChange={(newValue) =>
-                                    setEvaluationWindow((prev) => ({ ...prev, firstYear: newValue }))
+                                    setEvaluationWindow((prev) => ({ ...prev, firstYear: toCalendarYear(newValue) }))
                                 }
                             />
                             <NumberInput
@@ -306,14 +289,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 placeholder="Last year"
                                 min={1900}
                                 max={2200}
+                                step={1}
                                 onValueChange={(newValue) =>
-                                    setEvaluationWindow((prev) => ({ ...prev, lastYear: newValue }))
+                                    setEvaluationWindow((prev) => ({ ...prev, lastYear: toCalendarYear(newValue) }))
                                 }
                             />
                         </>
                     </Setting.Field>
                     <Setting.Field
-                        label="Base year"
+                        label="Valuation year"
                         help={{
                             title: "Valuation year",
                             content:
@@ -326,10 +310,17 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                             placeholder="First year of data"
                             min={1900}
                             max={2200}
-                            onValueChange={setDiscountBaseYear}
+                            step={1}
+                            onValueChange={(newValue) => setDiscountBaseYear(toCalendarYear(newValue))}
                         />
                     </Setting.Field>
-                    <Setting.Field label="Timing">
+                    <Setting.Field
+                        label="Annual timing"
+                        help={{
+                            title: "Annual timing",
+                            content: "Places annual revenue and operating costs at mid-year or year-end for discounting.",
+                        }}
+                    >
                         <RadioCompositions.GroupWithLabels
                             value={discountConvention}
                             options={Object.values(DiscountConvention).map((value) => ({
@@ -361,11 +352,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                         />
                     </Setting.Field>
                     <Setting.Field
-                        label="Gas to oil equivalents"
+                        label="Gas per oil equivalent [Sm3 gas / Sm3 oe]"
                         help={{
-                            title: "Gas to oil equivalents",
+                            title: "Gas per oil equivalent",
                             content:
-                                "Physical conversion used only for discounted oil equivalents. It does not determine gas revenue or break-even oil price.",
+                                "Physical conversion used only for discounted oil equivalents. It does not determine gas revenue or break-even oil price. The default is 1000 Sm3 gas per Sm3 oil equivalent.",
                         }}
                         stacked
                     >
@@ -399,9 +390,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 placeholder="End year"
                                 min={1900}
                                 max={2200}
+                                step={1}
                                 disabled={!earlyValueConfiguration.enabled}
                                 onValueChange={(endYear) =>
-                                    setEarlyValueConfiguration((current) => ({ ...current, endYear }))
+                                    setEarlyValueConfiguration((current) => ({
+                                        ...current,
+                                        endYear: toCalendarYear(endYear),
+                                    }))
                                 }
                             />
                         </>
@@ -496,8 +491,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                         help={{
                             title: "Annual costs",
                             content: isDeltaEnsembleSelected
-                                ? "For a delta ensemble, costs represent comparison minus reference. Negative values represent savings."
-                                : "Enter annual investment and operating costs. Include known costs before or after production when they belong to the evaluation.",
+                                ? "For a delta ensemble, costs represent comparison minus reference. Negative values represent savings. Costs in years not entered are zero."
+                                : "Enter annual investment and operating costs. Include known costs before or after production when they belong to the evaluation. Costs in years not entered are zero.",
                         }}
                         stacked
                     >
@@ -508,44 +503,6 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                             evaluationWindow={evaluationWindow}
                             onValueChange={setCostProfile}
                             onValidityChange={setIsCostProfileDraftValid}
-                        />
-                    </Setting.Field>
-                </Setting.Section>
-
-                <Setting.Section title="Plot" defaultOpen>
-                    <Setting.Field label="Measure" stacked>
-                        <Combobox
-                            items={Object.values(EconomicMeasure).map((value) => ({
-                                value,
-                                label: EconomicMeasureEnumToStringMapping[value],
-                            }))}
-                            value={selectedMeasure}
-                            onValueChange={handleMeasureChange}
-                        />
-                    </Setting.Field>
-                    <Setting.Field label="Plot type">
-                        <Combobox<DistributionPlotType>
-                            items={Object.values(DistributionPlotType)
-                                .filter(
-                                    (value): value is DistributionPlotType.EXCEEDANCE | DistributionPlotType.HISTOGRAM =>
-                                        value !== DistributionPlotType.BOX,
-                                )
-                                .map((value) => ({
-                                    value,
-                                    label: DistributionPlotTypeEnumToStringMapping[value],
-                                }))}
-                            value={distributionPlotType}
-                            onValueChange={handleDistributionPlotTypeChange}
-                        />
-                    </Setting.Field>
-                    <Setting.Field label="Time profile">
-                        <Combobox<CashFlowProfileType>
-                            items={Object.values(CashFlowProfileType).map((value) => ({
-                                value,
-                                label: CashFlowProfileTypeEnumToStringMapping[value],
-                            }))}
-                            value={cashFlowProfileType}
-                            onValueChange={handleCashFlowProfileTypeChange}
                         />
                     </Setting.Field>
                 </Setting.Section>

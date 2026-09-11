@@ -45,7 +45,9 @@ export function ResultsStatisticsTable(props: ResultsStatisticsTableProps): Reac
                         <Table.Cell colKey="p10" title="P10: 10% of valid realizations exceed this value.">
                             P10
                         </Table.Cell>
-                        <Table.Cell colKey="count">Realizations</Table.Cell>
+                        <Table.Cell colKey="count" title="Valid realizations / selected realizations">
+                            Valid / selected
+                        </Table.Cell>
                     </Table.Row>
                 </Table.Head>
                 <Table.Body>
@@ -71,7 +73,10 @@ export function ResultsStatisticsTable(props: ResultsStatisticsTableProps): Reac
                 </Table.Body>
             </Table.Root>
             {positiveNpvCount && (
-                <span className="text-body-xs text-subtle">
+                <span
+                    className="text-body-xs text-subtle"
+                    title="Fraction of valid realizations with NPV strictly above zero; this is not a probability of commercial success."
+                >
                     Positive NPV: {positiveNpvCount.countAbove}/{positiveNpvCount.validCount}
                 </span>
             )}

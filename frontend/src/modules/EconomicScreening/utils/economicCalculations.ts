@@ -268,9 +268,11 @@ export function computeInternalRateOfReturnDetailed(
     }
 
     const events = Array.from(eventsByTime, ([time, value]) => ({ time, value }))
-        .filter((event) => Math.abs(event.value) > 1e-12)
+        .filter((event) => event.value !== 0)
         .sort((first, second) => first.time - second.time);
-    const combinedEvents = events.map((event) => event.value);
+    const cashFlowScale = Math.max(...events.map((event) => Math.abs(event.value)));
+    const normalizedEvents = events.map((event) => ({ ...event, value: event.value / cashFlowScale }));
+    const combinedEvents = normalizedEvents.map((event) => event.value);
 
     const hasPositive = combinedEvents.some((v) => v > 1e-12);
     const hasNegative = combinedEvents.some((v) => v < -1e-12);
@@ -283,17 +285,19 @@ export function computeInternalRateOfReturnDetailed(
         return { irr: null, status: IrrStatus.NON_CONVENTIONAL };
     }
 
-    const firstEventTime = events[0].time;
-    const cashFlowScale = sumOf(combinedEvents.map((event) => Math.abs(event)));
-    const residualTolerance = Math.max(cashFlowScale * 1e-12, 1e-12);
+    const firstEventTime = normalizedEvents[0].time;
+    const residualTolerance = 1e-12;
     const npvAtRate = (rate: number): number => {
-        return events.reduce((sum, event) => sum + event.value / Math.pow(1 + rate, event.time - firstEventTime), 0);
+        return normalizedEvents.reduce(
+            (sum, event) => sum + event.value / Math.pow(1 + rate, event.time - firstEventTime),
+            0,
+        );
     };
     const npvSignAtRate = (rate: number): number => {
         const logarithm = Math.log1p(rate);
-        const exponents = events.map((event) => -(event.time - firstEventTime) * logarithm);
+        const exponents = normalizedEvents.map((event) => -(event.time - firstEventTime) * logarithm);
         const largestExponent = Math.max(...exponents);
-        return events.reduce(
+        return normalizedEvents.reduce(
             (sum, event, index) => sum + event.value * Math.exp(exponents[index] - largestExponent),
             0,
         );
