@@ -319,36 +319,49 @@ def _acquire_refreshed_identity_and_tokens(
     return new_auth_info
 
 
-def _get_client_assertion() -> str:
-    return Path(os.environ["AZURE_FEDERATED_TOKEN_FILE"]).read_text()
-
-
-
-def _create_msal_confidential_client_app(token_cache: msal.TokenCache) -> msal.ConfidentialClientApplication:
+def _create_msal_confidential_client_app(token_cache: msal.TokenCache | None) -> msal.ConfidentialClientApplication:
     tenant_id = os.environ["AZURE_TENANT_ID"]
     client_id = os.environ["AZURE_CLIENT_ID"]
     authority = f"https://login.microsoftonline.com/{tenant_id}"
 
     is_on_radix_platform = is_running_on_radix_platform()
 
+    # Select how MSAL should prove the app's identity (the "client credential"):
+    # * On Radix we use workload identity federation. There is no client secret; instead the app authenticates with a
+    #   short-lived federated token presented as a client assertion. We pass _get_client_assertion as a callable so MSAL
+    #   invokes it each time it needs the assertion, ensuring the rotated token file is always re-read.
+    # * Locally (dev/docker-compose) we authenticate with a plain client secret from AZURE_CLIENT_SECRET.
     if is_on_radix_platform:
-        client_credential = {"client_assertion": _get_client_assertion}
-        return msal.ConfidentialClientApplication(
-            client_id=client_id,
-            client_credential=client_credential,
-            authority=authority,
-            token_cache=token_cache,
-            instance_discovery=False,
-        )
+        client_credential_to_use = {"client_assertion": _get_client_assertion}
     else:
-        client_secret = os.environ["AZURE_CLIENT_SECRET"]
-        return msal.ConfidentialClientApplication(
-            client_id=client_id,
-            client_credential=client_secret,
-            authority=authority,
-            token_cache=token_cache,
-            instance_discovery=False,
-        )
+        client_credential_to_use = os.environ["AZURE_CLIENT_SECRET"]
+
+    return msal.ConfidentialClientApplication(
+        client_id=client_id,
+        client_credential=client_credential_to_use,
+        authority=authority,
+        token_cache=token_cache,
+        instance_discovery=False,
+    )
+
+
+def _get_client_assertion() -> str:
+    """
+    Read and return the workload identity federated token used as the MSAL client assertion on Radix.
+    """
+    token_file_path = os.environ.get("AZURE_FEDERATED_TOKEN_FILE")
+    if not token_file_path:
+        raise RuntimeError("Cannot get client assertion: environment variable AZURE_FEDERATED_TOKEN_FILE not set.")
+
+    try:
+        assertion = Path(token_file_path).read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        raise RuntimeError(f"Cannot get client assertion: failed to read token file '{token_file_path}'") from exc
+
+    if not assertion:
+        raise RuntimeError(f"Cannot get client assertion: federated token file '{token_file_path}' is empty")
+
+    return assertion
 
 
 def _load_user_auth_info_from_session(request_with_session: Request) -> _UserAuthInfo | None:
