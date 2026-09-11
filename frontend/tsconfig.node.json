@@ -6,5 +6,11 @@
         "allowSyntheticDefaultImports": true,
         "resolveJsonModule": true
     },
-    "include": ["vite.config.ts", "aliases.json", "tests/ct/_playwright.config.ts", "tests/ct/playwright/"]
+    "include": [
+        "vite.config.ts",
+        "vite-plugin-plotly-webgl-context-release.ts",
+        "aliases.json",
+        "tests/ct/_playwright.config.ts",
+        "tests/ct/playwright/"
+    ]
 }
