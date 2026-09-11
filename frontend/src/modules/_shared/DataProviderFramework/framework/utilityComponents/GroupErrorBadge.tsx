@@ -39,7 +39,7 @@ export function GroupErrorBadge(props: GroupErrorBadgeProps) {
             }
             return descendantErrors;
         },
-        // ! "latestRevision" is included in the array to trigger recomputes
+        // ! "revisionNumber" is included in the array to trigger recomputes
         // eslint-disable-next-line @eslint-react/exhaustive-deps
         [groupDelegate, revisionNumber],
     );

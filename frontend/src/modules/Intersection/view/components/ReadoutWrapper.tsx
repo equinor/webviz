@@ -91,8 +91,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.intersectionSource?.type === IntersectionType.CUSTOM_POLYLINE ? props.intersectionSource.uuid : null;
 
     const formatEsvLayout = React.useCallback(
-        function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
-            return esvReadoutToGenericReadout(item, index, props.layerIdToNameMap, AXES_LABELS);
+        function formatEsvLayout(item: EsvReadoutItem): ReadoutItem {
+            return esvReadoutToGenericReadout(item, props.layerIdToNameMap, AXES_LABELS);
         },
         [props.layerIdToNameMap],
     );

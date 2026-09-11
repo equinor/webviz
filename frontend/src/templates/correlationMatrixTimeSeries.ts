@@ -29,8 +29,8 @@ const template: Template = {
                 },
             },
         }),
-        createTemplateModuleInstance("InplaceVolumesPlot", {
-            instanceRef: "MainInplaceVolumesPlotInstance",
+        createTemplateModuleInstance("InplaceVolumesNew", {
+            instanceRef: "MainInplaceVolumesNewInstance",
             layout: {
                 relHeight: 0.5,
                 relWidth: 0.5,

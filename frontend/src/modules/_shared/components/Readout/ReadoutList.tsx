@@ -42,6 +42,7 @@ export function ReadoutList(props: ReadoutListProps): React.ReactNode {
                     <ul className="space-y-2">
                         {groupReadouts.map((readout) => (
                             <ReadoutItem
+                                // ! It's assumed each group has a unique name for each readout
                                 key={`${readout.name}`}
                                 readout={readout}
                                 titleAdornment={makeTitleAdornment()}
