@@ -467,7 +467,7 @@ export function esvReadoutToGenericReadout(
 ): GenericReadoutItem {
     const readoutLabel = makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout);
     return {
-        // ! It's assumed that each readout item has a unique name per layer
+        // ! It's assumed that each readout item has a unique label per layer
         id: `readout-${readout.layer.id}-${readoutLabel}`,
         label: readoutLabel,
         color: getColorFromLayerData(readout.layer, readout.index),

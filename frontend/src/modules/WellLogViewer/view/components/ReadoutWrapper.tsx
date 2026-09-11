@@ -53,7 +53,8 @@ function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: Templa
             label: trackLabel,
             info: infos.map((info, idx) => ({
                 ...curveInfoToReadoutInfo(info),
-                id: trackTemplate.plots[idx].id,
+                // ! esv-intersection doesn't return data that let's us distinguish these properly, so we're forced to use the index
+                id: `${trackTemplate.id}-${info.trackId}-${idx}`,
             })),
         };
     }
