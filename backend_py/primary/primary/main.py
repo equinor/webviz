@@ -45,7 +45,8 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
-from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
+from primary.utils.azure_service_credentials import create_credential_for_azure_services
+from primary.utils.azure_service_credentials import log_azure_credential_env_var_presence
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
@@ -73,6 +74,9 @@ logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
+# Do a dump of key AZURE_ env variables that we rely on
+log_azure_credential_env_var_presence()
+
 services_config = ServicesConfig(
     sumo_env=config.SUMO_ENV,
     smda_subscription_key=config.SMDA_SUBSCRIPTION_KEY,
@@ -93,13 +97,14 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
+    azure_services_credential = create_credential_for_azure_services()
+
     if config.COSMOS_DB_EMULATOR_HOST:
         LOGGER.info(
             f"Using Cosmos DB Emulator at {config.COSMOS_DB_EMULATOR_HOST} to initialize PersistenceStoresSingleton"
         )
         PersistenceStoresSingleton.initialize_with_emulator(config.COSMOS_DB_EMULATOR_HOST)
     else:
-        azure_services_credential = create_credential_for_azure_services()
         LOGGER.info(
             f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
         )
@@ -114,8 +119,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     yield
 
     await PersistenceStoresSingleton.shutdown_async()
-    if not config.COSMOS_DB_EMULATOR_HOST:
-        await azure_services_credential.close()
+    await azure_services_credential.close()
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
