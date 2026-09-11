@@ -2,6 +2,33 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
+ * Expand delta identifiers into their comparison and reference identifiers.
+ *
+ * @param ensembleIdents - Regular and delta identifiers to expand.
+ * @returns Unique regular identifiers in first-seen order.
+ */
+export function expandToRegularEnsembleIdents(
+    ensembleIdents: readonly (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+): RegularEnsembleIdent[] {
+    const regularIdents: RegularEnsembleIdent[] = [];
+    const seenIdents = new Set<string>();
+    for (const ensembleIdent of ensembleIdents) {
+        const sources =
+            ensembleIdent instanceof DeltaEnsembleIdent
+                ? [ensembleIdent.getComparisonEnsembleIdent(), ensembleIdent.getReferenceEnsembleIdent()]
+                : [ensembleIdent];
+        for (const source of sources) {
+            const key = source.toString();
+            if (!seenIdents.has(key)) {
+                seenIdents.add(key);
+                regularIdents.push(source);
+            }
+        }
+    }
+    return regularIdents;
+}
+
+/**
  * Get an array of ensemble idents from an array of strings.
  *
  * Excludes invalid strings, unless throwOnInvalid is true.

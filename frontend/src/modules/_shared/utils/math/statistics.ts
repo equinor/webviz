@@ -67,7 +67,7 @@ export interface Statistics {
 export function computeStatistics(values: number[]): Statistics {
     const finiteValues = values.filter(Number.isFinite);
     if (finiteValues.length === 0) {
-        // Undefined rather than zero: a zero volume is indistinguishable from a real result.
+        // NaN rather than zero: zero is a valid volume, not a missing result.
         return {
             count: 0,
             mean: Number.NaN,

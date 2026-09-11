@@ -94,6 +94,12 @@ function computeStatisticalFluidSelectionTableData(
  * Compute statistics across realizations, keeping a separate group for each set of selector values.
  *
  * Delta tables use this because the backend cannot compute statistics for a client-side difference.
+ * Missing and non-finite values are excluded. Groups with no valid values return NaN statistics;
+ * groups with one valid value return NaN for sample standard deviation.
+ * P10 is the high estimate (90th percentile), and P90 is the low estimate (10th percentile).
+ *
+ * @param perRealizationData - Tables split by fluid selection, with one row per realization and selector group.
+ * @returns All supported statistics per group, with REAL removed and groups in first-seen order.
  */
 export function computeStatisticalTableFromPerRealizationTable(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,
@@ -112,6 +118,9 @@ const resultByData = new WeakMap<
 
 /**
  * Reuse the statistics while the input object is unchanged.
+ *
+ * @param perRealizationData - Per-realization tables. Treat the input as immutable while it is cached.
+ * @returns The cached statistics, or newly computed statistics for a new input object.
  */
 export function computeStatisticalTableFromPerRealizationTableMemoized(
     perRealizationData: InplaceVolumesTableDataPerFluidSelection_api,

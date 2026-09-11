@@ -1,7 +1,7 @@
 import { InplaceVolumesStatistic_api } from "@api";
 import type { DeserializeStateFunction, SerializeStateFunction } from "@framework/Module";
 import { setIfDefined } from "@framework/utils/atomUtils";
-import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
+import { getEnsembleIdentsFromStrings } from "@framework/utils/ensembleIdentUtils";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { TableType } from "@modules/_shared/InplaceVolumes/types";
 import type { InplaceVolumesIndexWithValuesAsStrings } from "@modules/_shared/jtd-schemas/definitions/InplaceVolumesIndexWithValues";
@@ -94,10 +94,9 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
 };
 
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    const ensembleIdents =
-        raw.selectedEnsembleIdentStrings
-            ?.map((ident) => getEnsembleIdentFromString(ident))
-            .filter((ident) => ident !== null) ?? undefined;
+    const ensembleIdents = raw.selectedEnsembleIdentStrings
+        ? getEnsembleIdentsFromStrings(raw.selectedEnsembleIdentStrings)
+        : undefined;
 
     setIfDefined(set, selectedEnsembleIdentsAtom, ensembleIdents);
     setIfDefined(set, selectedTableNamesAtom, raw.selectedTableNames);

@@ -49,6 +49,21 @@ export type AggregatedDeltaTableDataResults = AggregatedTableDataResults & {
     unmatchedRows: DeltaUnmatchedRows[];
 };
 
+type DeltaQuerySpec = {
+    tableName: string;
+    caseUuid: string;
+    ensembleName: string;
+    realizations: readonly number[];
+};
+
+/** Track the two source queries for each delta table. */
+type DeltaQueryPair = {
+    deltaEnsembleIdent: DeltaEnsembleIdent;
+    tableName: string;
+    comparisonQueryIndex: number;
+    referenceQueryIndex: number;
+};
+
 export function makeAggregatedStatisticalTableDataQueryOptions(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
@@ -226,21 +241,6 @@ export function makeAggregatedPerRealizationDeltaTableDataQueryOptions(
     indicesWithValues: InplaceVolumesIndexWithValues_api[],
     allowEnable: boolean,
 ) {
-    type DeltaQuerySpec = {
-        tableName: string;
-        caseUuid: string;
-        ensembleName: string;
-        realizations: readonly number[];
-    };
-
-    /** Track the two source queries for each delta table. */
-    type DeltaQueryPair = {
-        deltaEnsembleIdent: DeltaEnsembleIdent;
-        tableName: string;
-        comparisonQueryIndex: number;
-        referenceQueryIndex: number;
-    };
-
     const querySpecs: DeltaQuerySpec[] = [];
     const queryPairs: DeltaQueryPair[] = [];
     for (const el of deltaEnsembleIdentsWithRealizations) {

@@ -2,10 +2,12 @@ import { useAtomValue } from "jotai";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ViewStatusWriter } from "@framework/StatusWriter";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import {
     makeDeltaRealizationAlignmentWarnings,
     makeDeltaRealizationCountWarnings,
+} from "@modules/_shared/ensembleDeltaWarnings";
+import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import {
     makeDroppedFluidSelectionWarnings,
     makeUnmatchedDeltaRowWarnings,
 } from "@modules/_shared/InplaceVolumes/deltaEnsembleWarnings";
@@ -41,15 +43,15 @@ export function useMakeViewStatusWriterMessages(
         statusWriter.addWarning(warning);
     }
 
-    for (const warning of makeDeltaRealizationAlignmentWarnings(filter?.ensembleIdents ?? [])) {
+    for (const warning of makeDeltaRealizationAlignmentWarnings(filter?.ensembleIdents ?? [], ensembleSet)) {
         statusWriter.addWarning(warning);
     }
 
-    for (const warning of makeDroppedFluidSelectionWarnings(queriesResult.droppedFluidSelections)) {
+    for (const warning of makeDroppedFluidSelectionWarnings(queriesResult.droppedFluidSelections, ensembleSet)) {
         statusWriter.addWarning(warning);
     }
 
-    for (const warning of makeUnmatchedDeltaRowWarnings(queriesResult.unmatchedRows)) {
+    for (const warning of makeUnmatchedDeltaRowWarnings(queriesResult.unmatchedRows, ensembleSet)) {
         statusWriter.addWarning(warning);
     }
 

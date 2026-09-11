@@ -1,63 +1,19 @@
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleSet } from "@framework/EnsembleSet";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
+import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import type { DeltaDroppedFluidSelections, DeltaUnmatchedRows } from "./types";
 
 /**
- * Matching realization numbers do not guarantee that both ensembles represent the same samples.
+ * Warn about fluid selections left out because only one ensemble has them.
  */
-export function makeDeltaRealizationAlignmentWarnings(
-    ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-): string[] {
-    return filterEnsembleIdentsByType(ensembleIdents, DeltaEnsembleIdent).map(
-        (deltaEnsembleIdent) =>
-            `Delta ensemble "${deltaEnsembleIdent.getEnsembleName()}" pairs comparison and reference by realization number. ` +
-            "Distribution statistics are only meaningful when those realizations represent aligned samples.",
-    );
-}
-
-/**
- * Warn when some realizations are missing from either source ensemble.
- * Only shared realizations contribute to the delta and its statistics.
- */
-export function makeDeltaRealizationCountWarnings(
-    ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+export function makeDroppedFluidSelectionWarnings(
+    droppedFluidSelections: DeltaDroppedFluidSelections[],
     ensembleSet: EnsembleSet,
 ): string[] {
     const warnings: string[] = [];
 
-    for (const deltaEnsembleIdent of filterEnsembleIdentsByType(ensembleIdents, DeltaEnsembleIdent)) {
-        const deltaEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent);
-        const comparisonEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent.getComparisonEnsembleIdent());
-        const referenceEnsemble = ensembleSet.findEnsemble(deltaEnsembleIdent.getReferenceEnsembleIdent());
-        if (!deltaEnsemble || !comparisonEnsemble || !referenceEnsemble) {
-            continue;
-        }
-
-        const sharedRealizationCount = deltaEnsemble.getRealizations().length;
-        const largestConstituentRealizationCount = Math.max(
-            comparisonEnsemble.getRealizations().length,
-            referenceEnsemble.getRealizations().length,
-        );
-        if (sharedRealizationCount < largestConstituentRealizationCount) {
-            warnings.push(
-                `Delta ensemble "${deltaEnsembleIdent.getEnsembleName()}": using the ${sharedRealizationCount} realizations shared by the comparison and reference ensembles.`,
-            );
-        }
-    }
-
-    return warnings;
-}
-
-/**
- * Warn about fluid selections left out because only one ensemble has them.
- */
-export function makeDroppedFluidSelectionWarnings(droppedFluidSelections: DeltaDroppedFluidSelections[]): string[] {
-    const warnings: string[] = [];
-
     for (const dropped of droppedFluidSelections) {
+        const name = makeDistinguishableEnsembleDisplayName(dropped.ensembleIdent, ensembleSet.getEnsembleArray());
         for (const missingFrom of ["comparison", "reference"] as const) {
             const fluidSelections = dropped.fluidSelections
                 .filter((entry) => entry.missingFrom === missingFrom)
@@ -66,7 +22,7 @@ export function makeDroppedFluidSelectionWarnings(droppedFluidSelections: DeltaD
                 continue;
             }
             warnings.push(
-                `Delta ensemble "${dropped.ensembleIdent.getEnsembleName()}" (${dropped.tableName}): ${fluidSelections.join(", ")} ` +
+                `Delta ensemble "${name}" (${dropped.tableName}): ${fluidSelections.join(", ")} ` +
                     `not present in the ${missingFrom} ensemble, so excluded from the difference.`,
             );
         }
@@ -75,12 +31,13 @@ export function makeDroppedFluidSelectionWarnings(droppedFluidSelections: DeltaD
     return warnings;
 }
 
-export function makeUnmatchedDeltaRowWarnings(unmatchedRows: DeltaUnmatchedRows[]): string[] {
-    return unmatchedRows.flatMap((unmatched) =>
-        unmatched.rows.map(
+export function makeUnmatchedDeltaRowWarnings(unmatchedRows: DeltaUnmatchedRows[], ensembleSet: EnsembleSet): string[] {
+    return unmatchedRows.flatMap(function makeTableRowWarnings(unmatched) {
+        const name = makeDistinguishableEnsembleDisplayName(unmatched.ensembleIdent, ensembleSet.getEnsembleArray());
+        return unmatched.rows.map(
             (rows) =>
-                `Delta ensemble "${unmatched.ensembleIdent.getEnsembleName()}" (${unmatched.tableName}, ${rows.fluidSelection}): ` +
+                `Delta ensemble "${name}" (${unmatched.tableName}, ${rows.fluidSelection}): ` +
                 `${rows.comparisonOnlyRowCount} comparison and ${rows.referenceOnlyRowCount} reference rows had no matching selector tuple and were excluded.`,
-        ),
-    );
+        );
+    });
 }
