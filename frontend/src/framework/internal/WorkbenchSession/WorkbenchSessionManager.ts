@@ -35,17 +35,7 @@ import {
     loadWorkbenchSessionFromLocalStorage,
 } from "./utils/loaders";
 import { localStorageKeyForSessionId } from "./utils/localStorageHelpers";
-import {
-    buildDashboardUrl,
-    buildSessionUrl,
-    buildSnapshotUrl,
-    removeSessionIdFromUrl,
-    removeSnapshotIdFromUrl,
-    readDashboardIdFromUrl,
-    readSessionIdFromUrl,
-    readSnapshotIdFromUrl,
-    UrlError,
-} from "./utils/url";
+import { buildWorkbenchUrl, readWorkbenchUrlLocation, UrlError } from "./utils/url";
 import type { WorkbenchSessionDataContainer } from "./utils/WorkbenchSessionDataContainer";
 
 const SETTINGS_PANEL_DEFAULT_VISIBLE_WIDTH_PERCENT = 15;
@@ -255,7 +245,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSession, true);
 
-            const url = buildSessionUrl(sessionId);
+            const url = buildWorkbenchUrl({ kind: "session", sessionId, dashboardId: null });
             this._workbench.getNavigationManager().pushState(url);
 
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
@@ -296,7 +286,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, true);
 
-            const url = buildSnapshotUrl(snapshotId);
+            const url = buildWorkbenchUrl({ kind: "snapshot", snapshotId, dashboardId: null });
             this._workbench.getNavigationManager().pushState(url);
 
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
@@ -380,7 +370,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 // Update GUI states based on possible loading errors
                 this.applyActiveSessionEnsembleLoadErrorsToGuiState();
 
-                const url = buildSessionUrl(sessionId);
+                const url = buildWorkbenchUrl({ kind: "session", sessionId, dashboardId: null });
                 this._workbench.getNavigationManager().pushState(url);
             } else {
                 const session = await PrivateWorkbenchSession.fromDataContainer(
@@ -449,43 +439,26 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      * @returns True if a session or snapshot was opened, false otherwise.
      */
     async maybeOpenFromUrl(): Promise<boolean> {
-        // openSession/openSnapshot below rewrite the URL's whole path via buildSessionUrl/buildSnapshotUrl,
-        // wiping any dashboard segment - so it must be captured before either of them runs, not after.
-        const dashboardId = readDashboardIdFromUrl();
-
-        let snapshotId: string | null = null;
-
-        // Check if a snapshot/session id is in the URL
+        // Read once, atomically - openSession/openSnapshot below rewrite the URL's whole path, so a
+        // second read afterward could see a URL that no longer has a dashboard segment.
+        let location;
         try {
-            snapshotId = readSnapshotIdFromUrl();
+            location = readWorkbenchUrlLocation();
         } catch (error) {
             if (error instanceof UrlError) {
                 console.warn("Invalid ID in URL, ignoring URL parameters.", error);
-                this.createToast("Invalid snapshot ID in URL, ignoring URL parameters.", "error");
+                this.createToast("Invalid ID in URL, ignoring URL parameters.", "error");
                 return false;
             }
             throw error;
         }
 
-        if (snapshotId) {
-            const result = await this.openSnapshot(snapshotId);
+        if (location.kind === "snapshot") {
+            const result = await this.openSnapshot(location.snapshotId);
             if (result) {
-                this.applyActiveDashboardId(dashboardId);
+                this.applyActiveDashboardId(location.dashboardId);
             }
             return result;
-        }
-
-        let sessionId: string | null = null;
-
-        try {
-            sessionId = readSessionIdFromUrl();
-        } catch (error) {
-            if (error instanceof UrlError) {
-                console.warn("Invalid ID in URL, ignoring URL parameters.", error);
-                this.createToast("Invalid session ID in URL, ignoring URL parameters.", "error");
-                return false;
-            }
-            throw error;
         }
 
         let storedSessions: WorkbenchSessionDataContainer[] = [];
@@ -497,12 +470,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             console.error("Failed to load sessions from local storage:", error);
         }
 
-        if (sessionId) {
-            const result = await this.openSession(sessionId);
+        if (location.kind === "session") {
+            const result = await this.openSession(location.sessionId);
             if (result) {
-                this.applyActiveDashboardId(dashboardId);
+                this.applyActiveDashboardId(location.dashboardId);
             }
-            if (storedSessions.find((el) => el.id === sessionId)) {
+            if (storedSessions.find((el) => el.id === location.sessionId)) {
                 this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
             }
             return result;
@@ -540,8 +513,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             return;
         }
 
-        removeSnapshotIdFromUrl();
-        removeSessionIdFromUrl();
+        this._workbench.getNavigationManager().pushState(buildWorkbenchUrl({ kind: "root" }));
         this.unloadSession();
 
         this._publishSubscribeDelegate.notifySubscribers(WorkbenchSessionManagerTopic.HAS_ACTIVE_SESSION);
@@ -675,7 +647,12 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         if (!this._activeSession?.getIsPersisted()) {
             return;
         }
-        const url = buildDashboardUrl(this._activeSession?.getActiveDashboard()?.getId() ?? null);
+        const currentLocation = readWorkbenchUrlLocation();
+        if (currentLocation.kind === "root") {
+            return;
+        }
+        const dashboardId = this._activeSession.getActiveDashboard()?.getId() ?? null;
+        const url = buildWorkbenchUrl({ ...currentLocation, dashboardId });
         this._workbench.getNavigationManager().replaceState(url);
     }
 
@@ -749,7 +726,8 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 const newId = this._activeSession.getId();
                 // Update URL if session id changed. This happens when you save-as
                 if (newId && newId !== initialActiveSession.getId()) {
-                    const url = buildSessionUrl(newId);
+                    const dashboardId = this._activeSession.getActiveDashboard()?.getId() ?? null;
+                    const url = buildWorkbenchUrl({ kind: "session", sessionId: newId, dashboardId });
                     this._workbench.getNavigationManager().pushState(url);
                 }
 
@@ -855,7 +833,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         this._persistenceOrchestrator = new PersistenceOrchestrator(this._workbench, this._activeSession);
         this._persistenceOrchestrator.start();
 
-        removeSnapshotIdFromUrl();
+        this._workbench.getNavigationManager().pushState(buildWorkbenchUrl({ kind: "root" }));
     }
 
     // ========== Template Operations ==========
@@ -987,11 +965,9 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
      * Returns true if navigation should proceed, false to cancel.
      */
     async handleNavigation(): Promise<boolean> {
-        // When the user navigates with forward/backward buttons, they might want to load a snapshot/session
-        const snapshotId = readSnapshotIdFromUrl();
-        const sessionId = readSessionIdFromUrl();
-        // Must be read before openSession/openSnapshot below, which rewrite the URL's whole path.
-        const dashboardId = readDashboardIdFromUrl();
+        // When the user navigates with forward/backward buttons, they might want to load a snapshot/session.
+        // Read once, atomically - openSession/openSnapshot below rewrite the URL's whole path.
+        const location = readWorkbenchUrlLocation();
 
         const result = await this.maybeCloseCurrentSession();
         if (!result) {
@@ -999,19 +975,19 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         // No active session or no unsaved changes - load the requested entity
-        if (snapshotId) {
-            const result = await this.openSnapshot(snapshotId);
+        if (location.kind === "snapshot") {
+            const result = await this.openSnapshot(location.snapshotId);
             if (!result) {
-                removeSnapshotIdFromUrl();
+                this._workbench.getNavigationManager().pushState(buildWorkbenchUrl({ kind: "root" }));
             } else {
-                this.applyActiveDashboardId(dashboardId);
+                this.applyActiveDashboardId(location.dashboardId);
             }
-        } else if (sessionId) {
-            const result = await this.openSession(sessionId);
+        } else if (location.kind === "session") {
+            const result = await this.openSession(location.sessionId);
             if (!result) {
-                removeSessionIdFromUrl();
+                this._workbench.getNavigationManager().pushState(buildWorkbenchUrl({ kind: "root" }));
             } else {
-                this.applyActiveDashboardId(dashboardId);
+                this.applyActiveDashboardId(location.dashboardId);
             }
         }
 

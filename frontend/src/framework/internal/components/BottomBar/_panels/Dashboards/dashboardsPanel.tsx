@@ -196,6 +196,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                 side="bottom"
             >
                 <Button
+                    aria-label="Add new dashboard"
                     disabled={isSnapshot}
                     iconOnly
                     onClick={handleAddDashboardClick}

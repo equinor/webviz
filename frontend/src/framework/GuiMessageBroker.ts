@@ -175,6 +175,7 @@ defaultStates.set(GuiState.EnsembleLoadingErrorInfoDialogOpen, false);
 defaultStates.set(GuiState.EnsemblesLoadingWarningInfoMap, {});
 defaultStates.set(GuiState.EnsembleLoadingWarningInfoDialogOpen, false);
 defaultStates.set(GuiState.IsActionBarVisible, true);
+defaultStates.set(GuiState.IsSwitchingDashboard, false);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelIsCollapsed,

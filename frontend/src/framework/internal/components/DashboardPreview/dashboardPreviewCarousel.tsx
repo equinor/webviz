@@ -69,17 +69,20 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
             )}
             {dashboards.length > 1 && (
                 <div className="px-2xs pb-3xs gap-x-3xs flex items-center justify-center">
-                    <Button
-                        iconOnly
-                        variant="ghost"
-                        tone="neutral"
-                        size="small"
-                        disabled={currentIndex === 0}
-                        layoutClassName={currentIndex === 0 ? "invisible" : ""}
-                        onClick={() => setIndex(currentIndex - 1)}
-                    >
-                        <ChevronLeft fontSize="small" />
-                    </Button>
+                    <Tooltip content="Previous dashboard">
+                        <Button
+                            aria-label="Previous dashboard"
+                            iconOnly
+                            variant="ghost"
+                            tone="neutral"
+                            size="small"
+                            disabled={currentIndex === 0}
+                            layoutClassName={currentIndex === 0 ? "invisible" : ""}
+                            onClick={() => setIndex(currentIndex - 1)}
+                        >
+                            <ChevronLeft fontSize="small" />
+                        </Button>
+                    </Tooltip>
                     <div
                         ref={scrollContainerRef}
                         className="min-w-0 scrollbar-none overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -97,17 +100,20 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                             ))}
                         </div>
                     </div>
-                    <Button
-                        iconOnly
-                        variant="ghost"
-                        tone="neutral"
-                        size="small"
-                        disabled={currentIndex === dashboards.length - 1}
-                        layoutClassName={currentIndex === dashboards.length - 1 ? "invisible" : ""}
-                        onClick={() => setIndex(currentIndex + 1)}
-                    >
-                        <ChevronRight fontSize="small" />
-                    </Button>
+                    <Tooltip content="Next dashboard">
+                        <Button
+                            aria-label="Next dashboard"
+                            iconOnly
+                            variant="ghost"
+                            tone="neutral"
+                            size="small"
+                            disabled={currentIndex === dashboards.length - 1}
+                            layoutClassName={currentIndex === dashboards.length - 1 ? "invisible" : ""}
+                            onClick={() => setIndex(currentIndex + 1)}
+                        >
+                            <ChevronRight fontSize="small" />
+                        </Button>
+                    </Tooltip>
                 </div>
             )}
         </div>

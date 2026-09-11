@@ -10,116 +10,93 @@ export class UrlError extends Error {
     }
 }
 
-export function buildSessionUrl(sessionId: string): string {
-    const url = new URL(window.location.href);
+// A single type for everything the workbench URL can express, so building or reading a URL always
+// considers the whole entity (session/snapshot + dashboard) in one call. Keeping session/snapshot
+// and dashboard as separately buildable/readable segments let them drift out of sync - e.g. a
+// session-id URL rewrite silently dropping a dashboard segment nobody remembered to re-add.
+export type WorkbenchUrlLocation =
+    | { kind: "root" }
+    | { kind: "session"; sessionId: string; dashboardId: string | null }
+    | { kind: "snapshot"; snapshotId: string; dashboardId: string | null };
 
-    url.pathname = `/session/${sessionId}`;
+export function buildWorkbenchUrl(location: WorkbenchUrlLocation): string {
+    const url = new URL(window.location.href);
     url.search = ""; // Clear any existing query parameters
     url.hash = ""; // Clear any existing hash
+
+    const pathParts: string[] = [];
+    if (location.kind === "session") {
+        pathParts.push("session", location.sessionId);
+    } else if (location.kind === "snapshot") {
+        pathParts.push("snapshot", location.snapshotId);
+    }
+    if (location.kind !== "root" && location.dashboardId) {
+        pathParts.push("dashboard", location.dashboardId);
+    }
+
+    url.pathname = pathParts.length > 0 ? `/${pathParts.join("/")}` : "/";
     return url.toString();
 }
 
-export function readSessionIdFromUrl(): string | null {
-    return readIdFromUrl("session");
-}
-
-export function removeSessionIdFromUrl(): void {
-    const url = new URL(window.location.href);
-    const pathParts = url.pathname.split("/");
-    const sessionIndex = pathParts.indexOf("session");
-
-    if (sessionIndex === -1) {
-        return;
-    }
-
-    url.pathname = "/"; // Reset to root if no snapshot ID is present
-    url.search = ""; // Clear any existing query parameters
-    url.hash = ""; // Clear any existing hash
-    window.history.pushState({}, "", url.toString());
-}
-
-export function buildSnapshotUrl(snapshotId: string): string {
-    const url = new URL(window.location.href);
-
-    url.pathname = `/snapshot/${snapshotId}`;
-    url.search = ""; // Clear any existing query parameters
-    url.hash = ""; // Clear any existing hash
-    return url.toString();
-}
-
-export function readSnapshotIdFromUrl(): string | null {
-    return readIdFromUrl("snapshot");
-}
-
-export function removeSnapshotIdFromUrl(): void {
-    const url = new URL(window.location.href);
-    const pathParts = url.pathname.split("/");
-    const snapshotIndex = pathParts.indexOf("snapshot");
-
-    if (snapshotIndex === -1) {
-        return;
-    }
-
-    url.pathname = "/"; // Reset to root if no snapshot ID is present
-    url.search = ""; // Clear any existing query parameters
-    url.hash = ""; // Clear any existing hash
-    window.history.pushState({}, "", url.toString());
-}
-
-function readIdFromUrl(type: "session" | "snapshot"): string | null {
-    const url = new URL(window.location.href);
-    const pathParts = url.pathname.split("/");
-    const id = pathParts.includes(type) ? pathParts[pathParts.indexOf(type) + 1] : null;
-
-    if (!id) {
-        return null;
-    }
-
-    if (!SESSION_ID_REGEX.test(id)) {
-        throw new UrlError(`Invalid ${type} ID in URL: ${id}`);
-    }
-
-    return id;
-}
-
-// Independent of buildSessionUrl/buildSnapshotUrl - layers a /dashboard/:id segment onto whatever
-// path is currently set (session, snapshot, or root) rather than needing to know which.
-export function buildDashboardUrl(dashboardId: string | null): string {
+// Parses the whole current URL in one pass, so session/snapshot/dashboard ids are always read as a
+// single consistent snapshot of the URL - never as separate reads that a URL rewrite in between
+// could invalidate (a past source of bugs: code reading the dashboard id had to run "before" code
+// reading the session id purely because the latter rewrote the whole path as a side effect).
+export function readWorkbenchUrlLocation(): WorkbenchUrlLocation {
     const url = new URL(window.location.href);
     const pathParts = url.pathname.split("/").filter(Boolean);
 
-    const dashboardIndex = pathParts.indexOf("dashboard");
-    if (dashboardIndex !== -1) {
-        pathParts.splice(dashboardIndex, 2);
+    const dashboardId = readDashboardSegment(pathParts);
+
+    const sessionIndex = pathParts.indexOf("session");
+    if (sessionIndex !== -1) {
+        const sessionId = pathParts[sessionIndex + 1];
+        if (!sessionId) {
+            return { kind: "root" };
+        }
+        if (!SESSION_ID_REGEX.test(sessionId)) {
+            throw new UrlError(`Invalid session ID in URL: ${sessionId}`);
+        }
+        return { kind: "session", sessionId, dashboardId };
     }
 
-    if (dashboardId) {
-        pathParts.push("dashboard", dashboardId);
+    const snapshotIndex = pathParts.indexOf("snapshot");
+    if (snapshotIndex !== -1) {
+        const snapshotId = pathParts[snapshotIndex + 1];
+        if (!snapshotId) {
+            return { kind: "root" };
+        }
+        if (!SESSION_ID_REGEX.test(snapshotId)) {
+            throw new UrlError(`Invalid snapshot ID in URL: ${snapshotId}`);
+        }
+        return { kind: "snapshot", snapshotId, dashboardId };
     }
 
-    url.pathname = `/${pathParts.join("/")}`;
-    return url.toString();
+    return { kind: "root" };
 }
 
-// Unlike readSessionIdFromUrl/readSnapshotIdFromUrl, this never throws on a malformed id - it warns
-// and returns null instead. Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to
+// Unlike the session/snapshot id checks above, this never throws on a malformed id - it warns and
+// returns null instead. Dashboards used to have uuid.v4()-shaped (36 char) IDs before switching to
 // the shorter DASHBOARD_ID_LENGTH shape; links/reloads carrying an old-shaped ID must still open the
-// session (falling back to its default dashboard) rather than being treated as a hard URL error.
+// session/snapshot (falling back to its default dashboard) rather than being treated as a hard URL
+// error.
 // TODO: once dashboard ID porting/migration is implemented for old persisted sessions, this can go
-// back to throwing UrlError like the other read*IdFromUrl functions.
-export function readDashboardIdFromUrl(): string | null {
-    const url = new URL(window.location.href);
-    const pathParts = url.pathname.split("/");
-    const id = pathParts.includes("dashboard") ? pathParts[pathParts.indexOf("dashboard") + 1] : null;
-
-    if (!id) {
+// back to throwing like the session/snapshot checks above.
+function readDashboardSegment(pathParts: string[]): string | null {
+    const dashboardIndex = pathParts.indexOf("dashboard");
+    if (dashboardIndex === -1) {
         return null;
     }
 
-    if (!DASHBOARD_ID_REGEX.test(id)) {
-        console.warn(`Invalid dashboard ID in URL, ignoring: ${id}`);
+    const dashboardId = pathParts[dashboardIndex + 1];
+    if (!dashboardId) {
         return null;
     }
 
-    return id;
+    if (!DASHBOARD_ID_REGEX.test(dashboardId)) {
+        console.warn(`Invalid dashboard ID in URL, ignoring: ${dashboardId}`);
+        return null;
+    }
+
+    return dashboardId;
 }

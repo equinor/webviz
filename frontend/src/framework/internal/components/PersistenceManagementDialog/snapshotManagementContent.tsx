@@ -10,7 +10,7 @@ import type { UseRefreshQueryResult } from "@framework/internal/hooks/useRefresh
 import { useRefreshQuery } from "@framework/internal/hooks/useRefreshQuery";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { useUserAvatar } from "@framework/internal/utils/useUserAvatar";
-import { buildSnapshotUrl } from "@framework/internal/WorkbenchSession/utils/url";
+import { buildWorkbenchUrl } from "@framework/internal/WorkbenchSession/utils/url";
 import { edsDateRangeToIsoStringRange } from "@framework/utils/edsDateUtils";
 import type { EdsDateRange } from "@framework/utils/edsDateUtils";
 import type { Workbench } from "@framework/Workbench";
@@ -418,7 +418,7 @@ function SnapshotRow(props: { item: SnapshotAccessLog_api }) {
     const ownerInfo = useUserGraphInfo(item.snapshotMetadata.ownerId);
     const name = ownerInfo?.principal_name?.split("@")?.[0].toLocaleLowerCase();
     const avatarFn = useUserAvatar(ownerInfo?.id ?? "", ownerInfo?.display_name);
-    const url = buildSnapshotUrl(item.snapshotId);
+    const url = buildWorkbenchUrl({ kind: "snapshot", snapshotId: item.snapshotId, dashboardId: null });
 
     const isDeleted = item.snapshotDeleted;
 

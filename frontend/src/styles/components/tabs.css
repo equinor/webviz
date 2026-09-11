@@ -42,9 +42,6 @@
     }
     .tabs__indicator {
         @apply bg-accent-strong absolute top-0 left-0;
-        /* Kept small: the ends sit on the non-scaled axis, so this stays a subtle
-         * rounding rather than being stretched by the size animation below. */
-        border-radius: 1px;
         transform-origin: left top;
         /*
          * Position and size are both animated with compositor-only transforms
@@ -66,6 +63,10 @@
             width: 1px;
             height: 2px;
             scale: calc(var(--active-tab-width) / 1px) 1;
+            /* border-radius is stretched by `scale` just like everything else in the box, so the
+             * x-radius here is pre-shrunk by the same factor scale later stretches it by - the two
+             * cancel out to a true ~1px rounded end instead of an ellipse spanning most of the bar. */
+            border-radius: calc(1px * 1px / var(--active-tab-width)) / 1px;
             [data-position="start"] & {
                 translate: var(--active-tab-left) -2px;
             }
@@ -78,6 +79,9 @@
             width: 2px;
             height: 1px;
             scale: 1 calc(var(--active-tab-height) / 1px);
+            /* Same compensation as the horizontal case, mirrored onto the y-radius since that's the
+             * axis being scaled here. */
+            border-radius: 1px / calc(1px * 1px / var(--active-tab-height));
             [data-position="start"] & {
                 translate: -2px var(--active-tab-top);
             }

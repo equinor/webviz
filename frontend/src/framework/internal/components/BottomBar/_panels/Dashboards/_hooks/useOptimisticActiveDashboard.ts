@@ -22,6 +22,10 @@ export function useOptimisticActiveDashboard(
 ): UseOptimisticActiveDashboardResult {
     const [optimisticActiveDashboardId, setOptimisticActiveDashboardId] = React.useState<string | null>(null);
     const latestRequestedDashboardIdRef = React.useRef<string | null>(null);
+    const pendingRafIdsRef = React.useRef<{ outer: number | null; inner: number | null }>({
+        outer: null,
+        inner: null,
+    });
 
     const selectDashboard = React.useCallback(
         function selectDashboard(dashboardId: string) {
@@ -37,8 +41,10 @@ export function useOptimisticActiveDashboard(
             // screen before the freeze. Nesting rAF twice defers the heavy work to the frame AFTER
             // the one that paints this callback's own DOM changes, guaranteeing that paint has
             // already happened by the time the (still synchronous, blocking) switch runs.
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
+            pendingRafIdsRef.current.outer = requestAnimationFrame(function runOuterFrame() {
+                pendingRafIdsRef.current.inner = requestAnimationFrame(function runInnerFrame() {
+                    pendingRafIdsRef.current.outer = null;
+                    pendingRafIdsRef.current.inner = null;
                     // If another tab was clicked before this frame arrived, let that newer request
                     // win instead of switching to this now-stale one.
                     if (latestRequestedDashboardIdRef.current !== dashboardId) {
@@ -51,6 +57,28 @@ export function useOptimisticActiveDashboard(
             });
         },
         [workbenchSession, workbench],
+    );
+
+    // The rAF pair above outlives this hook if the panel unmounts mid-switch (e.g. the bottom bar
+    // panel is closed while the frames are still pending). Cancel them so a stale switch doesn't
+    // land on an unmounted workbench/session, and clear the flag they left set so the content area
+    // doesn't get stuck showing the switch-loading overlay forever.
+    React.useEffect(
+        function cleanupPendingSwitchOnUnmount() {
+            return function cancelPendingFramesAndResetFlag() {
+                const pendingRafIds = pendingRafIdsRef.current;
+                if (pendingRafIds.outer !== null || pendingRafIds.inner !== null) {
+                    if (pendingRafIds.outer !== null) {
+                        cancelAnimationFrame(pendingRafIds.outer);
+                    }
+                    if (pendingRafIds.inner !== null) {
+                        cancelAnimationFrame(pendingRafIds.inner);
+                    }
+                    workbench.getGuiMessageBroker().setState(GuiState.IsSwitchingDashboard, false);
+                }
+            };
+        },
+        [workbench],
     );
 
     return { optimisticActiveDashboardId, selectDashboard };

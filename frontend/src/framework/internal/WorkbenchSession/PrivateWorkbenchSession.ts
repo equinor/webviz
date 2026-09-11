@@ -576,6 +576,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     }
 
     clear(): void {
+        for (const dashboard of this._dashboards) {
+            this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
+            dashboard.beforeUnload();
+        }
         this._dashboards = [];
         this._activeDashboardId = null;
         this._ensembleSet = new EnsembleSet([]);

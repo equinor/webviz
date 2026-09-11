@@ -95,78 +95,86 @@ export function DashboardTab(props: DashboardTabProps) {
                     <div className="bg-accent-strong absolute top-0 -left-0.5 h-full w-1" />
                 )}
             </div>
-            <DashboardTabPreview dashboard={props.dashboard} disabled={props.previewDisabled}>
-                <Tabs.Tab
-                    as="div"
-                    value={props.dashboard.getId()}
-                    layoutClassName={resolveClassNames("relative flex items-center gap-x-xs snap-start", {
-                        "opacity-50": props.isDragged,
-                    })}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                >
-                    {!props.isSnapshot && (
+            {/*
+                The actions menu button must be a DOM sibling of Tabs.Tab, not a descendant: ARIA
+                gives role="tab" "presentational children" semantics, so assistive tech collapses
+                everything inside a tab into its single accessible label and never exposes a nested
+                button as its own control (on top of a role="tab" button not being able to contain a
+                real nested <button> at all).
+            */}
+            <div
+                className={resolveClassNames("gap-x-xs relative flex snap-start items-center", {
+                    "opacity-50": props.isDragged,
+                })}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+            >
+                <DashboardTabPreview dashboard={props.dashboard} disabled={props.previewDisabled}>
+                    <Tabs.Tab value={props.dashboard.getId()} layoutClassName="flex items-center gap-x-xs pr-3xl">
+                        {!props.isSnapshot && (
+                            <span
+                                draggable={props.draggable}
+                                onDragStart={handleDragStart}
+                                onDragEnd={props.onDragEnd}
+                                className={resolveClassNames("flex items-center", {
+                                    "cursor-grab": props.draggable,
+                                })}
+                            >
+                                <DragIndicator fontSize="inherit" className="pointer-events-none" />
+                            </span>
+                        )}
                         <span
-                            draggable={props.draggable}
-                            onDragStart={handleDragStart}
-                            onDragEnd={props.onDragEnd}
-                            className={resolveClassNames("flex items-center", {
-                                "cursor-grab": props.draggable,
+                            className={resolveClassNames("bg-neutral border-neutral h-1.5 w-1.5 rounded-full border", {
+                                "bg-accent-strong! border-accent-strong!": props.isHot,
                             })}
-                        >
-                            <DragIndicator fontSize="inherit" className="pointer-events-none" />
-                        </span>
-                    )}
-                    <span
-                        className={resolveClassNames("bg-neutral border-neutral h-1.5 w-1.5 rounded-full border", {
-                            "bg-accent-strong! border-accent-strong!": props.isHot,
-                        })}
-                    ></span>
-                    {metadata.name}
-                    {!props.isSnapshot && (
-                        <Menu.Root>
-                            <Menu.Trigger>
-                                <Button
-                                    aria-label={`Open actions for ${metadata.name}`}
-                                    iconOnly
-                                    variant="ghost"
-                                    size="small"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <MoreVert />
-                                </Button>
-                            </Menu.Trigger>
-                            <Menu.Popup>
-                                <Menu.Group>
-                                    <Menu.GroupLabel>{metadata.name}</Menu.GroupLabel>
-                                    <Menu.Item onClick={handleEditClick} icon={<Edit />}>
-                                        Edit metadata
-                                    </Menu.Item>
-                                    <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
-                                        Create a copy
-                                    </Menu.Item>
-                                    <Menu.Separator />
-                                    <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
-                                        Delete
-                                    </Menu.Item>
-                                    {isDevMode() && (
-                                        <>
-                                            <Menu.Separator />
-                                            <Menu.Item
-                                                onClick={handleForceEviction}
-                                                icon={<Eject />}
-                                                disabled={!props.isHot}
-                                            >
-                                                Force eviction
-                                            </Menu.Item>
-                                        </>
-                                    )}
-                                </Menu.Group>
-                            </Menu.Popup>
-                        </Menu.Root>
-                    )}
-                </Tabs.Tab>
-            </DashboardTabPreview>
+                        ></span>
+                        {metadata.name}
+                    </Tabs.Tab>
+                </DashboardTabPreview>
+                {!props.isSnapshot && (
+                    <Menu.Root>
+                        <Menu.Trigger>
+                            <Button
+                                aria-label={`Open actions for ${metadata.name}`}
+                                iconOnly
+                                variant="ghost"
+                                size="small"
+                                onClick={(e) => e.stopPropagation()}
+                                layoutClassName="absolute right-0"
+                            >
+                                <MoreVert />
+                            </Button>
+                        </Menu.Trigger>
+                        <Menu.Popup>
+                            <Menu.Group>
+                                <Menu.GroupLabel>{metadata.name}</Menu.GroupLabel>
+                                <Menu.Item onClick={handleEditClick} icon={<Edit />}>
+                                    Edit metadata
+                                </Menu.Item>
+                                <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
+                                    Create a copy
+                                </Menu.Item>
+                                <Menu.Separator />
+                                <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">
+                                    Delete
+                                </Menu.Item>
+                                {isDevMode() && (
+                                    <>
+                                        <Menu.Separator />
+                                        <Menu.Item
+                                            onClick={handleForceEviction}
+                                            icon={<Eject />}
+                                            disabled={!props.isHot}
+                                        >
+                                            Force eviction
+                                        </Menu.Item>
+                                    </>
+                                )}
+                            </Menu.Group>
+                        </Menu.Popup>
+                    </Menu.Root>
+                )}
+            </div>
             <div className="relative w-0">
                 {props.dropIndicatorSide === "after" && (
                     <div className="bg-accent-strong absolute top-0 -left-0.5 h-full w-1" />
