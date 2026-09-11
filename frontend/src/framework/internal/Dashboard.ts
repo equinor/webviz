@@ -388,8 +388,15 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     // (called from WorkbenchSessionManager.applyTemplate()), which re-syncs and re-pushes the
     // now-correct filter set into every one of this dashboard's module instances before anything
     // renders. Do not "fix" this method in a way that breaks that ordering.
-    static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster): Dashboard {
+    static fromTemplate(template: Template, atomStoreMaster: AtomStoreMaster, id?: string): Dashboard {
         const dashboard = new Dashboard(atomStoreMaster);
+        // Callers applying a template to an existing dashboard (rather than creating a brand new
+        // one) pass that dashboard's id here so it's preserved - dashboard ids are now part of
+        // session/snapshot URLs, so generating a fresh one here would invalidate existing deep
+        // links to a dashboard whose layout/content is meant to be its only change.
+        if (id) {
+            dashboard._id = id;
+        }
         dashboard._metadata = {
             name: template.name,
             description: template.description,

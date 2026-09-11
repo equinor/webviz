@@ -70,6 +70,7 @@ function EnsembleSettingsButton(props: EnsembleSettingsButtonProps): React.React
             side="bottom"
         >
             <Button
+                aria-label="Open ensemble selection dialog"
                 disabled={isSnapshot}
                 iconOnly
                 onClick={handleEnsembleDialogOpenClick}

@@ -90,6 +90,8 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                         <div ref={contentRef} className="gap-x-3xs flex w-max items-center">
                             {dashboards.map((dashboard, i) => (
                                 <button
+                                    aria-label={`Show dashboard "${dashboard.name}"`}
+                                    aria-current={i === currentIndex ? "true" : undefined}
                                     key={dashboard.id}
                                     data-carousel-indicator
                                     className={`focusable text-body-xs flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full ${i === currentIndex ? "bg-accent-strong- bg-accent-strong-active text-accent-strong-on-emphasis" : "bg-accent hover:bg-accent-hover text-accent-on-emphasis"}`}

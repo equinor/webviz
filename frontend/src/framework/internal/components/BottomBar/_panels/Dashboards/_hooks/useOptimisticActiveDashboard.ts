@@ -50,9 +50,15 @@ export function useOptimisticActiveDashboard(
                     if (latestRequestedDashboardIdRef.current !== dashboardId) {
                         return;
                     }
-                    workbenchSession.setActiveDashboard(dashboardId);
-                    setOptimisticActiveDashboardId(null);
-                    workbench.getGuiMessageBroker().setState(GuiState.IsSwitchingDashboard, false);
+                    try {
+                        workbenchSession.setActiveDashboard(dashboardId);
+                    } finally {
+                        // Runs even if setActiveDashboard throws (e.g. while lazily loading the
+                        // dashboard) - otherwise a failed switch would leave the tab selection
+                        // optimistic and the loading overlay up forever.
+                        setOptimisticActiveDashboardId(null);
+                        workbench.getGuiMessageBroker().setState(GuiState.IsSwitchingDashboard, false);
+                    }
                 });
             });
         },

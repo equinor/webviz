@@ -107,6 +107,28 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         [workbenchSession],
     );
 
+    const handleMoveDashboardLeftClick = React.useCallback(
+        function handleMoveDashboardLeftClick(dashboardId: string) {
+            const index = dashboards.findIndex((d) => d.getId() === dashboardId);
+            if (index <= 0) {
+                return;
+            }
+            workbenchSession.moveDashboard(dashboardId, index - 1);
+        },
+        [dashboards, workbenchSession],
+    );
+
+    const handleMoveDashboardRightClick = React.useCallback(
+        function handleMoveDashboardRightClick(dashboardId: string) {
+            const index = dashboards.findIndex((d) => d.getId() === dashboardId);
+            if (index === -1 || index >= dashboards.length - 1) {
+                return;
+            }
+            workbenchSession.moveDashboard(dashboardId, index + 1);
+        },
+        [dashboards, workbenchSession],
+    );
+
     return (
         <div className="gap-xs -mt-[2px] flex w-full items-center">
             <div className="gap-3xs flex min-w-0 items-center">
@@ -146,7 +168,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                         layoutClassName="w-max"
                     >
                         <Tabs.List size="small" indicatorPosition="start">
-                            {dashboards.map((dashboard) => (
+                            {dashboards.map((dashboard, index) => (
                                 <DashboardTab
                                     key={dashboard.getId()}
                                     dashboard={dashboard}
@@ -165,6 +187,8 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                                 : "before"
                                             : null
                                     }
+                                    canMoveLeft={index > 0}
+                                    canMoveRight={index < dashboards.length - 1}
                                     onRequestDelete={handleRequestDeleteDashboard}
                                     onEdit={handleEditDashboardClick}
                                     onDragStart={(e) => reorder.handleDragStart(dashboard.getId(), e)}
@@ -173,6 +197,8 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                     onDragEnd={reorder.handleDragEnd}
                                     onClone={handleCloneDashboardClick}
                                     onForceEviction={handleForceEvictionClick}
+                                    onMoveLeft={handleMoveDashboardLeftClick}
+                                    onMoveRight={handleMoveDashboardRightClick}
                                 />
                             ))}
                         </Tabs.List>

@@ -1,6 +1,15 @@
 import React from "react";
 
-import { Close, ContentCopy, DragIndicator, Edit, Eject, MoreVert } from "@mui/icons-material";
+import {
+    ChevronLeft,
+    ChevronRight,
+    Close,
+    ContentCopy,
+    DragIndicator,
+    Edit,
+    Eject,
+    MoreVert,
+} from "@mui/icons-material";
 
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardTopic } from "@framework/internal/Dashboard";
@@ -21,6 +30,8 @@ export type DashboardTabProps = {
     isSnapshot: boolean;
     previewDisabled: boolean;
     dropIndicatorSide: "before" | "after" | null;
+    canMoveLeft: boolean;
+    canMoveRight: boolean;
     onRequestDelete: (dashboardId: string) => void;
     onEdit: (dashboardId: string) => void;
     onDragStart: (event: React.DragEvent, dashboardId: string) => void;
@@ -29,10 +40,22 @@ export type DashboardTabProps = {
     onDragEnd: () => void;
     onClone: (dashboardId: string) => void;
     onForceEviction: (dashboardId: string) => void;
+    onMoveLeft: (dashboardId: string) => void;
+    onMoveRight: (dashboardId: string) => void;
 };
 
 export function DashboardTab(props: DashboardTabProps) {
-    const { onRequestDelete, onEdit, onClone, onForceEviction, onDragStart, onDragOver, onDrop } = props;
+    const {
+        onRequestDelete,
+        onEdit,
+        onClone,
+        onForceEviction,
+        onMoveLeft,
+        onMoveRight,
+        onDragStart,
+        onDragOver,
+        onDrop,
+    } = props;
     const metadata = usePublishSubscribeTopicValue(props.dashboard, DashboardTopic.METADATA);
 
     const handleDeleteClick = React.useCallback(
@@ -86,6 +109,22 @@ export function DashboardTab(props: DashboardTabProps) {
             onForceEviction(props.dashboard.getId());
         },
         [onForceEviction, props.dashboard],
+    );
+
+    const handleMoveLeftClick = React.useCallback(
+        function handleMoveLeftClick(event: React.MouseEvent) {
+            event.stopPropagation();
+            onMoveLeft(props.dashboard.getId());
+        },
+        [onMoveLeft, props.dashboard],
+    );
+
+    const handleMoveRightClick = React.useCallback(
+        function handleMoveRightClick(event: React.MouseEvent) {
+            event.stopPropagation();
+            onMoveRight(props.dashboard.getId());
+        },
+        [onMoveRight, props.dashboard],
     );
 
     return (
@@ -153,6 +192,21 @@ export function DashboardTab(props: DashboardTabProps) {
                                 </Menu.Item>
                                 <Menu.Item onClick={handleCloneClick} icon={<ContentCopy />}>
                                     Create a copy
+                                </Menu.Item>
+                                <Menu.Separator />
+                                <Menu.Item
+                                    onClick={handleMoveLeftClick}
+                                    icon={<ChevronLeft />}
+                                    disabled={!props.canMoveLeft}
+                                >
+                                    Move left
+                                </Menu.Item>
+                                <Menu.Item
+                                    onClick={handleMoveRightClick}
+                                    icon={<ChevronRight />}
+                                    disabled={!props.canMoveRight}
+                                >
+                                    Move right
                                 </Menu.Item>
                                 <Menu.Separator />
                                 <Menu.Item onClick={handleDeleteClick} icon={<Close />} tone="danger">

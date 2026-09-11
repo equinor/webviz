@@ -70,6 +70,7 @@ function extractLayoutFromSerializedDashboard(
 export type ExtractedDashboardPreview = {
     id: string;
     name: string;
+    description?: string;
     layout: LayoutElement[];
 };
 

@@ -863,7 +863,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             }
         }
 
-        const dashboard = await Dashboard.fromTemplate(template, activeSession.getAtomStoreMaster());
+        const dashboard = await Dashboard.fromTemplate(
+            template,
+            activeSession.getAtomStoreMaster(),
+            activeDashboard?.getId(),
+        );
         if (activeDashboard) {
             // Applying a template only replaces the dashboard's layout/content; the dashboard's
             // own name and description should be kept as-is.
