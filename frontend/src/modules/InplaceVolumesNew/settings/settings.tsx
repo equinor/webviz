@@ -330,6 +330,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     }
                     additionalSettings={plotSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+                    allowDeltaEnsembles
                     onChange={handleFilterChange}
                 />
             </Setting.Panel>

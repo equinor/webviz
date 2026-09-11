@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import type { InplaceVolumesTableDefinition_api } from "../../src/api";
+import { DeltaEnsembleIdent } from "../../src/framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "../../src/framework/RegularEnsembleIdent";
 import {
     IndexValueCriteria,
@@ -167,5 +168,30 @@ describe("TableDefinitionsAccessor index column reconciliation", () => {
 
         expect(accessor.getAreTablesComparable()).toBe(true);
         expect(accessor.getResultNamesIntersection()).toEqual(["STOIIP"]);
+    });
+});
+
+describe("TableDefinitionsAccessor delta ensembles", () => {
+    test("recognizes a delta when both constituent definitions are present", () => {
+        const accessor = new TableDefinitionsAccessor(
+            [
+                { ensembleIdent: ENSEMBLE_A, tableDefinitions: [makeTableDefinition(STRATIGRAPHIC_ZONES)] },
+                { ensembleIdent: ENSEMBLE_B, tableDefinitions: [makeTableDefinition(STRATIGRAPHIC_ZONES)] },
+            ],
+            ["geogrid"],
+            IndexValueCriteria.REQUIRE_EQUALITY,
+        );
+
+        expect(accessor.hasEnsembleIdents([new DeltaEnsembleIdent(ENSEMBLE_A, ENSEMBLE_B)])).toBe(true);
+    });
+
+    test("rejects a delta when a constituent definition is missing", () => {
+        const accessor = new TableDefinitionsAccessor(
+            [{ ensembleIdent: ENSEMBLE_A, tableDefinitions: [makeTableDefinition(STRATIGRAPHIC_ZONES)] }],
+            ["geogrid"],
+            IndexValueCriteria.REQUIRE_EQUALITY,
+        );
+
+        expect(accessor.hasEnsembleIdents([new DeltaEnsembleIdent(ENSEMBLE_A, ENSEMBLE_B)])).toBe(false);
     });
 });
