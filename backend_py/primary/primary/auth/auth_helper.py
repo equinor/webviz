@@ -2,7 +2,7 @@ import base64
 import logging
 import os
 import time
-from typing import Literal, Optional, TypeAlias, get_args
+from typing import Callable, Literal, Optional, TypeAlias, get_args
 from pathlib import Path
 
 import jwt
@@ -331,6 +331,7 @@ def _create_msal_confidential_client_app(token_cache: msal.TokenCache | None) ->
     #   short-lived federated token presented as a client assertion. We pass _get_client_assertion as a callable so MSAL
     #   invokes it each time it needs the assertion, ensuring the rotated token file is always re-read.
     # * Locally (dev/docker-compose) we authenticate with a plain client secret from AZURE_CLIENT_SECRET.
+    client_credential_to_use: str | dict[str, Callable]
     if is_on_radix_platform:
         client_credential_to_use = {"client_assertion": _get_client_assertion}
     else:

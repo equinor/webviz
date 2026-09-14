@@ -40,10 +40,11 @@ def create_credential_for_azure_services() -> WorkloadIdentityCredential | Clien
         LOGGER.info("Creating WorkloadIdentityCredential for Azure services (Radix environment detected)")
         token_file_path = os.environ["AZURE_FEDERATED_TOKEN_FILE"]
         return WorkloadIdentityCredential(tenant_id=tenant_id, client_id=client_id, token_file_path=token_file_path)
-    else:
-        LOGGER.info("Creating local development credential for Azure services using ClientSecretCredential")
-        client_secret = os.environ["AZURE_CLIENT_SECRET"]
-        return ClientSecretCredential(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret)
+
+    # Local development (not on Radix platform) falls through and uses client secret
+    LOGGER.info("Creating local development credential for Azure services using ClientSecretCredential")
+    client_secret = os.environ["AZURE_CLIENT_SECRET"]
+    return ClientSecretCredential(tenant_id=tenant_id, client_id=client_id, client_secret=client_secret)
 
 
 def log_azure_credential_env_var_status() -> None:
