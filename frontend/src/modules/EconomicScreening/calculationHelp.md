@@ -82,8 +82,6 @@ Internal rate of return (IRR) is the annual discount rate at which `NPV(IRR) = 0
 
 The solver supports conventional cash flows: initial net outflows followed by net inflows, with only one change of sign after cash flows at the same time are combined. A non-conventional profile may have multiple roots, or none; the module does not select an IRR for such a profile. A profile with no change of sign has no finite IRR. A result is also unavailable if the root is outside the solver's supported range.
 
-## Oil equivalents
-
 ## Oil equivalents, delta, and early value
 
 Discounted oil equivalents add discounted oil to discounted gas divided by the configured gas-per-oil-equivalent conversion factor, after unit conversion. The default is 1000 Sm3 gas per Sm3 oil equivalent. This is a configurable oil-equivalent convention, not a price relationship; it does not determine gas revenue or break-even oil price.

@@ -155,6 +155,36 @@ describe("normalizeEconomicProfiles", () => {
         expect(profiles[0].hasOilData).toBe(false);
     });
 
+    test("keeps partial endpoint increments visible without treating production coverage as complete", () => {
+        const profiles = normalizeEconomicProfiles(
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [yearStartUtcMs(2020), yearStartUtcMs(2021), yearStartUtcMs(2022)],
+                    values: [0, 100, 300],
+                    unit: "SM3",
+                    isRate: false,
+                },
+            ],
+            [
+                {
+                    realization: 1,
+                    timestampsUtcMs: [
+                        Date.UTC(2020, 6, 1),
+                        Date.UTC(2021, 6, 1),
+                        Date.UTC(2022, 0, 1),
+                    ],
+                    values: [0, 50, 80],
+                },
+            ],
+        );
+
+        expect(profiles[0].salesGasVolumes).toEqual([50, 30]);
+        expect(profiles[0].salesGasVolumes.reduce((sum, volume) => sum + volume, 0)).toBe(80);
+        expect(profiles[0].hasOilData).toBe(true);
+        expect(profiles[0].hasSalesGasData).toBe(false);
+    });
+
     test("preserves a gas-only realization", () => {
         const profiles = normalizeEconomicProfiles(
             [],

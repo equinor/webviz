@@ -13,6 +13,7 @@ import {
     InvestmentTiming,
     OilPriceBasis,
 } from "@modules/EconomicScreening/typesAndEnums";
+import { volumeUnitInSm3 } from "@modules/EconomicScreening/utils/unitConversion";
 import {
     costProfileAtom,
     discountAssumptionsAtom,
@@ -51,10 +52,15 @@ type QueryFixtureAtom = WritableAtom<QueryResult[], [QueryResult[]], void>;
 
 const unitContext = { oilUnit: "SM3", gasUnit: "SM3", currency: "USD", oilPriceBasis: OilPriceBasis.PER_SM3 };
 
-function series(realization: number, firstYear: number, values: number[]): VectorRealizationData_api {
+function series(
+    realization: number,
+    firstYear: number,
+    values: number[],
+    unit = "SM3",
+): VectorRealizationData_api {
     return {
         realization,
-        unit: "SM3",
+        unit,
         isRate: false,
         timestampsUtcMs: values.map((_, index) => Date.UTC(firstYear + index, 0, 1)),
         values,
@@ -91,15 +97,20 @@ function setup() {
     return { store, oil, gas };
 }
 
-function metricData(store: ReturnType<typeof createStore>, measure: EconomicMeasure) {
+function metricGenerator(store: ReturnType<typeof createStore>, measure: EconomicMeasure) {
+    const { oilUnit, gasUnit } = store.get(economicScreeningResultsAtom);
     return makeMeasureDataGenerator(
         store.get(economicScreeningResultsAtom).results,
         measure,
-        unitContext,
+        { ...unitContext, oilUnit, gasUnit },
         "fixture",
         "Fixture",
         "#123456",
-    )().data;
+    )();
+}
+
+function metricData(store: ReturnType<typeof createStore>, measure: EconomicMeasure) {
+    return metricGenerator(store, measure).data;
 }
 
 describe("Economic Screening query results to channel data", () => {
@@ -125,6 +136,51 @@ describe("Economic Screening query results to channel data", () => {
         expect(metricData(store, EconomicMeasure.BREAK_EVEN_OIL_PRICE)[0].value).toBeCloseTo(expectedBreakEven, 8);
         store.set(priceAssumptionsAtom, { ...store.get(priceAssumptionsAtom), oilPrice: expectedBreakEven });
         expect(metricData(store, EconomicMeasure.NPV)[0].value).toBeCloseTo(0, 8);
+    });
+
+    test("keeps NPV and physical volumes equivalent across supported source units", () => {
+        const { store, oil, gas } = setup();
+        const sm3Npv = metricData(store, EconomicMeasure.NPV);
+        const sm3OilVolumes = metricData(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME);
+        const bblInSm3 = volumeUnitInSm3("BBL")!;
+        const mscfInSm3 = volumeUnitInSm3("MSCF")!;
+        const oilInBbl = oil.map((entry) =>
+            series(
+                entry.realization,
+                new Date(entry.timestampsUtcMs[0]).getUTCFullYear(),
+                entry.values.map((value) => value / bblInSm3),
+                "BBL",
+            ),
+        );
+        const gasInMscf = gas.map((entry) =>
+            series(
+                entry.realization,
+                new Date(entry.timestampsUtcMs[0]).getUTCFullYear(),
+                entry.values.map((value) => value / mscfInSm3),
+                "MSCF",
+            ),
+        );
+
+        store.set(vectorDataQueriesAtom as unknown as QueryFixtureAtom, [
+            query(oilInBbl), query(gasInMscf), query([]), query([]), query([]),
+        ]);
+        store.set(automaticBaseYearVectorDataQueriesAtom as unknown as QueryFixtureAtom, [query(oilInBbl), query(gasInMscf)]);
+        store.set(priceAssumptionsAtom, {
+            ...store.get(priceAssumptionsAtom),
+            oilPrice: 2 * bblInSm3,
+            oilPriceBasis: OilPriceBasis.PER_BBL,
+            gasPrice: 0.1 * mscfInSm3,
+            gasPriceBasis: GasPriceBasis.PER_MSCF,
+        });
+
+        const convertedNpv = metricData(store, EconomicMeasure.NPV);
+        const convertedOilVolumes = metricGenerator(store, EconomicMeasure.DISCOUNTED_OIL_VOLUME);
+        expect(convertedNpv).toEqual(sm3Npv);
+        expect(convertedOilVolumes.metaData.unit).toBe("BBL");
+        expect(convertedOilVolumes.data.map((entry) => entry.key)).toEqual(sm3OilVolumes.map((entry) => entry.key));
+        convertedOilVolumes.data.forEach((entry, index) => {
+            expect(entry.value * bblInSm3).toBeCloseTo(sm3OilVolumes[index].value, 8);
+        });
     });
 
     test("omits incomplete oil financial values but retains independently valid gas", () => {

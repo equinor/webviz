@@ -1,11 +1,14 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import type { Channel } from "@framework/internal/DataChannels/Channel";
+import { ChannelManager } from "@framework/internal/DataChannels/ChannelManager";
+import { useChannelReceiver } from "@framework/internal/DataChannels/hooks/useChannelReceiver";
 import {
     usePublishChannelContents,
     type UsePublishChannelContentsOptions,
 } from "@framework/internal/DataChannels/hooks/usePublishChannelContents";
 import type { ViewContext } from "@framework/ModuleContext";
+import { KeyKind } from "@framework/types/dataChannnel";
+import { EARLY_MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
 import type { Interfaces } from "@modules/EconomicScreening/interfaces";
 import { EarlyEconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
@@ -35,11 +38,26 @@ const RESULTS: RealizationEconomicResult[] = [
 ];
 
 export function EarlyMeasureChannelPublisherHarness({ enabled }: { enabled: boolean }) {
-    const [publishedContentCount, setPublishedContentCount] = useState(0);
-    const channel = useRef({ replaceContents: (contents: unknown[]) => setPublishedContentCount(contents.length) });
+    const [channelManager] = useState(() => {
+        const manager = new ChannelManager("economic-screening");
+        const channelIdString = EARLY_MEASURE_CHANNEL_ID_MAP[EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME];
+        manager.registerChannels([{ idString: channelIdString, displayName: "Early oil", kindOfKey: KeyKind.REALIZATION }]);
+        manager.registerReceivers([
+            {
+                idString: "consumer",
+                displayName: "Consumer",
+                supportedKindsOfKeys: [KeyKind.REALIZATION],
+            },
+        ]);
+        manager.getReceiver("consumer")?.connectToChannel(manager.getChannel(channelIdString)!, "all");
+        return manager;
+    });
+    const channelIdString = EARLY_MEASURE_CHANNEL_ID_MAP[EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME];
+    const receiver = channelManager.getReceiver("consumer")!;
+    const received = useChannelReceiver(receiver, [KeyKind.REALIZATION]);
     const viewContext = {
         usePublishChannelContents: (options: Omit<UsePublishChannelContentsOptions, "channel">) =>
-            usePublishChannelContents({ channel: channel.current as Channel, ...options }),
+            usePublishChannelContents({ channel: channelManager.getChannel(channelIdString)!, ...options }),
     } as unknown as ViewContext<Interfaces>;
 
     return (
@@ -56,7 +74,8 @@ export function EarlyMeasureChannelPublisherHarness({ enabled }: { enabled: bool
                 enabled={enabled}
                 assumptionContext=""
             />
-            <output data-testid="published-content-count">{publishedContentCount}</output>
+            <output data-testid="received-content-count">{received.channel?.contents.length ?? 0}</output>
+            <output data-testid="received-data-count">{received.channel?.contents[0]?.dataArray.length ?? 0}</output>
         </>
     );
 }
