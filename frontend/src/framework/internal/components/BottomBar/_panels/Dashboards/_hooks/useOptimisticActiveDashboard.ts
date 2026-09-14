@@ -2,6 +2,7 @@ import React from "react";
 
 import { GuiState } from "@framework/GuiMessageBroker";
 import type { PrivateWorkbenchSession } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { toastManager } from "@framework/toastManager";
 import type { Workbench } from "@framework/Workbench";
 
 export type UseOptimisticActiveDashboardResult = {
@@ -67,10 +68,19 @@ export function useOptimisticActiveDashboard(
                     }
                     try {
                         workbenchSession.setActiveDashboard(dashboardId);
+                    } catch (error) {
+                        // setActiveDashboard() is explicitly allowed to throw while lazily loading
+                        // the target dashboard (see its own try/catch). This runs inside a
+                        // requestAnimationFrame callback though, not a React event handler or render
+                        // path - an uncaught exception here becomes a window error that the global
+                        // error boundary treats as fatal, instead of the recoverable "this one switch
+                        // failed" case it actually is. Catch and report it instead of letting it
+                        // escape.
+                        console.error(`Failed to switch to dashboard "${dashboardId}":`, error);
+                        toastManager.add({ title: "Failed to switch dashboard", type: "error" });
                     } finally {
-                        // Runs even if setActiveDashboard throws (e.g. while lazily loading the
-                        // dashboard) - otherwise a failed switch would leave the tab selection
-                        // optimistic and the loading overlay up forever.
+                        // Runs even if setActiveDashboard throws - otherwise a failed switch would
+                        // leave the tab selection optimistic and the loading overlay up forever.
                         setOptimisticActiveDashboardId(null);
                         workbench.getGuiMessageBroker().setState(GuiState.IsSwitchingDashboard, false);
                     }

@@ -222,32 +222,43 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         const serializedDashboard = this._cachedState;
 
-        for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { id, name } = serializedInstance.moduleInstanceState;
-            this.makeAndRegisterModuleInstance(name, id);
-        }
-
-        // Doing this after all module instances have been registered
-        // ensures that the module instances are available for data channel initialization.
-        for (const serializedInstance of serializedDashboard.moduleInstances) {
-            const { moduleInstanceState, layoutState } = serializedInstance;
-            const moduleInstance = this.getModuleInstance(moduleInstanceState.id);
-            if (!moduleInstance) {
-                throw new Error(`Module instance with ID ${moduleInstanceState.id} not found`);
+        try {
+            for (const serializedInstance of serializedDashboard.moduleInstances) {
+                const { id, name } = serializedInstance.moduleInstanceState;
+                this.makeAndRegisterModuleInstance(name, id);
             }
 
-            moduleInstance.initiateDeserialization(moduleInstanceState, this);
+            // Doing this after all module instances have been registered
+            // ensures that the module instances are available for data channel initialization.
+            for (const serializedInstance of serializedDashboard.moduleInstances) {
+                const { moduleInstanceState, layoutState } = serializedInstance;
+                const moduleInstance = this.getModuleInstance(moduleInstanceState.id);
+                if (!moduleInstance) {
+                    throw new Error(`Module instance with ID ${moduleInstanceState.id} not found`);
+                }
 
-            this._layout.push({
-                moduleInstanceId: moduleInstanceState.id,
-                moduleName: moduleInstanceState.name,
-                relX: layoutState.relX,
-                relY: layoutState.relY,
-                relHeight: layoutState.relHeight,
-                relWidth: layoutState.relWidth,
-                minimized: layoutState.minimized,
-                maximized: layoutState.maximized,
-            });
+                moduleInstance.initiateDeserialization(moduleInstanceState, this);
+
+                this._layout.push({
+                    moduleInstanceId: moduleInstanceState.id,
+                    moduleName: moduleInstanceState.name,
+                    relX: layoutState.relX,
+                    relY: layoutState.relY,
+                    relHeight: layoutState.relHeight,
+                    relWidth: layoutState.relWidth,
+                    minimized: layoutState.minimized,
+                    maximized: layoutState.maximized,
+                });
+            }
+        } catch (error) {
+            // A throw partway through (e.g. an old persisted dashboard referencing a module that's
+            // no longer registered) must not leave the module instances/atom stores already created
+            // by this attempt behind: this._cachedState is left untouched by the caller on a throw,
+            // so a retry re-runs this same loop over the same serialized instance ids -
+            // and would collide with those orphaned atom stores/module instances instead of the clean
+            // slate it expects.
+            this.clearLayout();
+            throw error;
         }
 
         this.setActiveModuleInstanceId(serializedDashboard.activeModuleInstanceId);
