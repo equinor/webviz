@@ -10,6 +10,7 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { VolumeChangeDecomposition, WaterfallMeasure } from "./computeVolumeChangeDecomposition";
 import { computeBarChangePercent, makeBarDisplayLabels } from "./waterfallBarPresentation";
+import { calcNumRowsAndCols, makeYAxisRange } from "./waterfallPlotLayout";
 
 // plotly.js ships no types for the native "waterfall" trace, so describe the subset we set. Keeping
 // the literal typed means a typo in e.g. `measure` or `connector` is still caught.
@@ -121,24 +122,6 @@ function makeBarHoverTexts(group: WaterfallGroupDecomposition, displayLabels: st
         const high = formatNumber(band.high, BAR_TEXT_FORMAT_OPTIONS);
         return `${displayLabels[index]}: ${barTexts[index]}<br>P90–P10: ${low} – ${high}`;
     });
-}
-
-function makeYAxisRange(decomposition: VolumeChangeDecomposition): [number, number] {
-    const cumulatives = decomposition.bars.map((bar) => bar.cumulative);
-    const cumulativeMin = Math.min(...cumulatives);
-    const cumulativeMax = Math.max(...cumulatives);
-    const range = cumulativeMax - cumulativeMin;
-    const padding = range !== 0 ? range / 2 : Math.abs(cumulativeMax) * 0.1 || 1;
-    return [cumulativeMin - padding, cumulativeMax + padding];
-}
-
-function calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
-    if (numSubplots < 1) {
-        return { numRows: 1, numCols: 1 };
-    }
-    const numRows = Math.ceil(Math.sqrt(numSubplots));
-    const numCols = Math.ceil(numSubplots / numRows);
-    return { numRows, numCols };
 }
 
 /**
