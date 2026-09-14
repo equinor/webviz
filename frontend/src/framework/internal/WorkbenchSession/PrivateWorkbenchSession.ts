@@ -394,15 +394,21 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             throw error;
         }
 
+        if (dashboard) {
+            // Cancelled before the outgoing dashboard is deferred below - not after. deferEviction()
+            // evicts (unloads) its oldest pending entry once the cache is over capacity, and with the
+            // hot cache already full, appending the outgoing dashboard first would make the target -
+            // if it's the oldest hot entry - that eviction victim, unloading the very dashboard this
+            // call is switching to before this cancellation ever got a chance to protect it.
+            this._dashboardHotCache.cancelEviction(dashboard.getId());
+        }
+
         const previouslyActiveDashboard = this.getActiveDashboard();
         if (previouslyActiveDashboard) {
             // Deferred instead of unloading immediately: the dashboard stays fully mounted for a
             // while in case the user switches back to it, instead of paying the full teardown/
             // recreate cost on every switch. See DashboardHotCache.
             this._dashboardHotCache.deferEviction(previouslyActiveDashboard);
-        }
-        if (dashboard) {
-            this._dashboardHotCache.cancelEviction(dashboard.getId());
         }
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);

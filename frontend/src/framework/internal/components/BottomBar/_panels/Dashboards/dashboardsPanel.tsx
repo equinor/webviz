@@ -109,7 +109,20 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
 
     const handleCloneDashboardClick = React.useCallback(
         function handleCloneDashboardClick(dashboardId: string) {
-            workbenchSession.cloneDashboard(dashboardId);
+            // cloneDashboard() is async and can reject (e.g. activating the clone fails to load, see
+            // setActiveDashboard()'s own try/catch) - dropping the returned promise here would leave
+            // that rejection unhandled: React error boundaries don't catch async rejections any more
+            // than they catch plain event-handler throws, so report it the same way the adjacent
+            // dashboard removal failure is.
+            workbenchSession
+                .cloneDashboard(dashboardId)
+                .then(() => {
+                    toastManager.add({ title: "Dashboard cloned", type: "success" });
+                })
+                .catch((error: unknown) => {
+                    console.error(`Failed to clone dashboard "${dashboardId}":`, error);
+                    toastManager.add({ title: "Failed to clone dashboard", type: "error" });
+                });
         },
         [workbenchSession],
     );
