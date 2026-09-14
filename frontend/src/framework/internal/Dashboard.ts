@@ -5,8 +5,8 @@ import { v4 } from "uuid";
 import { HoverService } from "@framework/HoverService";
 import { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
-import { truncateString } from "@lib/utils/strings";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
+import { truncateString } from "@lib/utils/strings";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
 import type { AtomStoreMaster } from "../AtomStoreMaster";
