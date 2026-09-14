@@ -42,7 +42,8 @@ export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogPr
     const handleSubmit = React.useCallback(
         function handleSubmit(event: React.FormEvent) {
             event.preventDefault();
-            if (name.trim() === "") {
+            const trimmedLength = name.trim().length;
+            if (trimmedLength === 0 || trimmedLength < MIN_TITLE_LENGTH || name.length > MAX_TITLE_LENGTH) {
                 inputRef.current?.focus();
                 return;
             }
@@ -141,7 +142,7 @@ export function EditDashboardMetadataDialog(props: EditDashboardMetadataDialogPr
                         <Button tone="neutral" variant="ghost" onClick={handleCancel} disabled={isSaving}>
                             Cancel
                         </Button>
-                        <Button type="submit" tone="accent" disabled={isSaving} onClick={handleSubmit}>
+                        <Button type="submit" tone="accent" disabled={isSaving}>
                             {isSaving ? <CircularProgress size="em" /> : "Save"}
                         </Button>
                     </Dialog.Actions>

@@ -26,6 +26,7 @@ export type DashboardTabProps = {
     dashboard: Dashboard;
     draggable: boolean;
     isHot: boolean;
+    isEvictable: boolean;
     isDragged: boolean;
     isSnapshot: boolean;
     previewDisabled: boolean;
@@ -218,7 +219,7 @@ export function DashboardTab(props: DashboardTabProps) {
                                         <Menu.Item
                                             onClick={handleForceEviction}
                                             icon={<Eject />}
-                                            disabled={!props.isHot}
+                                            disabled={!props.isEvictable}
                                         >
                                             Force eviction
                                         </Menu.Item>

@@ -204,6 +204,7 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                                         dashboard.getId() === activeDashboard?.getId() ||
                                         hotDashboardIds.includes(dashboard.getId())
                                     }
+                                    isEvictable={hotDashboardIds.includes(dashboard.getId())}
                                     isDragged={reorder.draggedDashboardId === dashboard.getId()}
                                     isSnapshot={isSnapshot}
                                     previewDisabled={reorder.draggedDashboardId !== null}
