@@ -5,6 +5,7 @@ import { Add, ChevronLeft, ChevronRight } from "@mui/icons-material";
 import type { Dashboard } from "@framework/internal/Dashboard";
 import { DashboardHotCacheTopic } from "@framework/internal/WorkbenchSession/DashboardHotCache";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
+import { toastManager } from "@framework/toastManager";
 import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { Tabs } from "@lib/components/Tabs";
@@ -71,7 +72,17 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
 
     const handleRemoveDashboardClick = React.useCallback(
         function handleRemoveDashboardClick(dashboardId: string) {
-            workbenchSession.removeDashboard(dashboardId);
+            try {
+                workbenchSession.removeDashboard(dashboardId);
+            } catch (error) {
+                // removeDashboard() throws rather than proceeding if the dashboard being removed is
+                // active and none of the remaining dashboards could be activated as its replacement
+                // (see its own comment) - an edge case, but this is a plain event handler, not a
+                // render/lifecycle path React's error boundary can catch, so report it instead of
+                // letting it go uncaught.
+                console.error(`Failed to remove dashboard "${dashboardId}":`, error);
+                toastManager.add({ title: "Failed to remove dashboard", type: "error" });
+            }
         },
         [workbenchSession],
     );

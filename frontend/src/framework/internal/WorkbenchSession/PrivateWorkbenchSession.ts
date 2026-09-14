@@ -430,44 +430,50 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             throw new Error("Cannot remove the last dashboard in a session");
         }
         const wasActive = this._activeDashboardId === dashboardId;
-        // Capture the index before removal, since the dashboard is no longer findable in the array afterwards
-        const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
-        this.unregisterDashboard(dashboard);
 
         if (wasActive) {
-            // Cleared immediately, before the replacement pick below gets a chance to throw:
-            // unregisterDashboard() just above already tore the removed dashboard down and dropped it
-            // from _dashboards, so leaving _activeDashboardId pointing at it in the meantime would let
-            // a failure below (setActiveDashboard() can throw while lazily loading the replacement -
-            // see its own try/catch) leave this session pointing at a dashboard that no longer exists,
-            // permanently: setActiveDashboard()'s own no-op guard only short-circuits on an *equal*
-            // id, so a dangling one would never self-heal on a later switch.
-            this._activeDashboardId = null;
-        }
+            // Switch to a working replacement BEFORE tearing the active dashboard down below - not
+            // after. ActiveDashboardBoundary renders nothing (the dashboard tab strip included) while
+            // there's no active dashboard, so destroying the active dashboard first and only then
+            // discovering every remaining candidate fails to load would leave the user with no
+            // content AND no tab strip to pick a different dashboard from - a fully stuck session.
+            // Validating a candidate first means the active dashboard only ever gets replaced by one
+            // that's confirmed to actually load; if none of the others do either, the removal itself
+            // is aborted below and the current (still working) active dashboard is left in place.
+            const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
+            const preferredCandidateId = index > 0 ? this._dashboards[index - 1].getId() : null;
+            const candidateIds = [
+                ...(preferredCandidateId ? [preferredCandidateId] : []),
+                ...this._dashboards.filter((d) => d.getId() !== dashboardId).map((d) => d.getId()),
+            ];
 
-        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+            let switched = false;
+            for (const candidateId of new Set(candidateIds)) {
+                try {
+                    this.setActiveDashboard(candidateId);
+                    switched = true;
+                    break;
+                } catch (error) {
+                    console.error(
+                        `Failed to activate dashboard "${candidateId}" while removing the active dashboard:`,
+                        error,
+                    );
+                }
+            }
 
-        // If the removed dashboard was the active one, set the active dashboard to the previous one
-        // in the list, or the new first one. this._dashboards is guaranteed non-empty here - the
-        // length<=1 guard above already rejected removing the last dashboard in the session.
-        if (wasActive) {
-            const newActiveDashboardId = index > 0 ? this._dashboards[index - 1].getId() : this._dashboards[0].getId();
-            try {
-                this.setActiveDashboard(newActiveDashboardId);
-            } catch (error) {
-                // A failure loading the replacement (e.g. it references a module that's no longer
-                // registered) must not fail the deletion itself. _activeDashboardId is already null
-                // from above - setActiveDashboard() only reassigns it after a successful load - so
-                // this correctly leaves the session reflecting "no active dashboard" instead of a
-                // dangling reference to the one just removed; explicitly notified here since the
-                // success path (where setActiveDashboard() already notifies) didn't run.
-                console.error(
-                    `Failed to activate dashboard "${newActiveDashboardId}" after removing the active dashboard:`,
-                    error,
+            if (!switched) {
+                throw new Error(
+                    "Cannot remove the active dashboard: none of the remaining dashboards could be activated as a replacement.",
                 );
-                this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
             }
         }
+
+        // The removed dashboard is only ever torn down once it's no longer the active one (either it
+        // never was, or the switch above already moved activation off of it) - setActiveDashboard()
+        // above hot-cached it via the same deferred-eviction path as any other switch, so this just
+        // cancels that and finishes the teardown for good.
+        this.unregisterDashboard(dashboard);
+        this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
     }
 
     moveDashboard(dashboardId: string, newIndex: number): void {
