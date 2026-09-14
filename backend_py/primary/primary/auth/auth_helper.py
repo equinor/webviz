@@ -204,13 +204,17 @@ def _acquire_access_token_for_resource_scopes(
     # Earlier we used acquire_token_silent() here, but it doesn't give any feedback on why a call failed,
     # so we switched to acquire_token_silent_with_error() instead and log errors.
     token_dict = cca.acquire_token_silent_with_error(scopes=scopes_list, account=account)
+    if token_dict is None:
+        LOGGER.error(f"No token found in cache when acquiring token silently ({resource_name=}, {scopes_list=})")
+        return None
+
     if "error" in token_dict:
         LOGGER.error(
             f"Error acquiring token silently ({resource_name=}, {scopes_list=}), error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
         )
         return None
 
-    access_token = token_dict.get("access_token") if token_dict else None
+    access_token = token_dict.get("access_token")
     if not access_token:
         return None
 
