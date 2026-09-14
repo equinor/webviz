@@ -98,8 +98,8 @@ export class AdjustedWellsLayer extends WellsLayer {
                 lineBillboard: true,
                 pointBillboard: true,
                 id: "colors",
-                lineWidthMinPixels: 1,
-                lineWidthMaxPixels: 5,
+                lineWidthMinPixels: 3,
+                lineWidthMaxPixels: 8,
                 onHover: () => {},
             } as GeoJsonLayerProps),
         );

@@ -1,4 +1,4 @@
-import { GridView, List } from "@mui/icons-material";
+import { GridView } from "@mui/icons-material";
 
 import { GuiState, useGuiValue, useSetGuiState } from "@framework/GuiMessageBroker";
 import { PrivateWorkbenchSessionTopic } from "@framework/internal/WorkbenchSession/PrivateWorkbenchSession";
@@ -9,6 +9,7 @@ import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Separator } from "@lib/components/Separator";
 import { Tooltip } from "@lib/components/Tooltip";
+import { WindowListIcon } from "@lib/icons";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 
 export type StartPanelProps = {
@@ -58,14 +59,14 @@ export function StartPanel(props: StartPanelProps) {
                                 )
                             }
                         >
-                            <List fontSize="inherit" />
+                            <WindowListIcon />
                         </Badge>
                     </Button>
                 </span>
             </Tooltip>
             <Separator orientation="vertical" />
             <Tooltip
-                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Show templates dialog"}
+                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Open templates dialog"}
                 side="bottom"
             >
                 {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
@@ -77,7 +78,7 @@ export function StartPanel(props: StartPanelProps) {
                         tone="accent"
                         variant="ghost"
                     >
-                        <GridView fontSize="inherit" />
+                        <GridView />
                     </Button>
                 </span>
             </Tooltip>

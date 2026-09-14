@@ -12,7 +12,8 @@ from webviz_services.services_config import get_services_config
 from webviz_services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async
 from webviz_services.sumo_access.sumo_client_factory import create_sumo_client
 from webviz_services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
-from webviz_services.sumo_access.surface_access import filter_search_context_on_attribute
+from webviz_services.sumo_access.surface_search_context import apply_attribute_filter
+from webviz_services.sumo_access.surface_types import SurfaceAttribute
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ async def batch_sample_surface_in_points_async(
     case_uuid: str,
     ensemble_name: str,
     surface_name: str,
-    surface_attribute: str,
+    surface_attribute: SurfaceAttribute,
     realizations: Optional[List[int]],
     x_coords: list[float],
     y_coords: list[float],
@@ -107,7 +108,7 @@ async def _get_object_uuids_for_surface_realizations_async(
     case_uuid: str,
     ensemble_name: str,
     surface_name: str,
-    surface_attribute: str,
+    surface_attribute: SurfaceAttribute,
     realizations: Optional[List[int]],
 ) -> List[_RealizationObjectId]:
 
@@ -118,10 +119,7 @@ async def _get_object_uuids_for_surface_realizations_async(
         name=surface_name,
         realization=realizations if realizations is not None else True,
     )
-    search_context = filter_search_context_on_attribute(
-        search_context=search_context,
-        attribute=surface_attribute,
-    )
+    search_context = apply_attribute_filter(search_context, surface_attribute)
     ret_list: List[_RealizationObjectId] = []
 
     # Getting just the object uuids seems easy, but we want them paired with realization numbers

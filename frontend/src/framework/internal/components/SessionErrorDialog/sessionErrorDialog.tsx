@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BugReport, Check, Error as ErrorIcon, Refresh } from "@mui/icons-material";
+import { Check, Error as ErrorIcon, Refresh } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAliveOptions } from "@api";
@@ -10,7 +10,8 @@ import type { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Dialog } from "@lib/components/Dialog";
-import { useSymbolicateStackTrace } from "@lib/hooks/useSymbolicateStackTrace";
+
+import { ReportIssueButton } from "../ReportIssueButton";
 
 export type SessionErrorDialogProps = {
     workbench: Workbench;
@@ -77,8 +78,6 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
     // Subscribe to the session error gui-event
     useRegisterGuiEventSubscriber(guiMessageBroker, GuiEvent.SessionPersistenceError, handleSessionSaveError);
 
-    const { reportIssue, isSymbolicatingStack } = useSymbolicateStackTrace(errorEventPayload?.error);
-
     return (
         <Dialog.Popup open={isOpen} width={700} modal onOpenChange={onCloseModal}>
             <Dialog.Header closeIconVisible>
@@ -104,17 +103,12 @@ export function SessionErrorDialog(props: SessionErrorDialogProps): React.ReactN
                 )}
             </Dialog.Body>
             <Dialog.Actions>
-                <Button variant="ghost" onClick={reportIssue} disabled={isSymbolicatingStack} tone="neutral">
-                    {isSymbolicatingStack ? (
-                        <>
-                            <CircularProgress size={16} /> Reporting...
-                        </>
-                    ) : (
-                        <>
-                            <BugReport style={{ fontSize: 16 }} /> Report Issue
-                        </>
-                    )}
-                </Button>
+                <ReportIssueButton
+                    dialogStacked
+                    error={errorEventPayload?.error ?? null}
+                    session={props.workbench.getSessionManager().getActiveSessionOrNull()}
+                    componentStack={null}
+                />
                 <Button onClick={onTryAgain}>
                     <Refresh style={{ fontSize: 16 }} /> Try again
                 </Button>

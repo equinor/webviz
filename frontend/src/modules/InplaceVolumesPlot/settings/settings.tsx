@@ -4,8 +4,10 @@ import { useAtom, useAtomValue } from "jotai";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
 import type { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Combobox } from "@lib/components/Combobox";
 import type { ComboboxItem } from "@lib/components/Combobox/types";
@@ -70,7 +72,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIndexValueCriteria,
     );
     function handleFilterChange(newFilter: InplaceVolumesFilterSettings) {
-        setSelectedEnsembleIdents(newFilter.ensembleIdents);
+        setSelectedEnsembleIdents(filterEnsembleIdentsByType(newFilter.ensembleIdents, RegularEnsembleIdent));
         setSelectedTableNames(newFilter.tableNames);
         setSelectedIndicesWithValues(newFilter.indicesWithValues);
         setSelectedIndexValueCriteria(
@@ -82,7 +84,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const resultNameOptions: ComboboxItem<string>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
+        .map((name) => ({ label: name, value: name, description: createHoverTextForVolume(name) }));
 
     // Create selector options
     const selectorOptions: ComboboxItem<string>[] = [
@@ -115,7 +117,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     onValueChange={(v) => v && setSelectedPlotType(v)}
                 />
             </Setting.Field>
-            <Setting.Field label="First Result" annotations={selectedFirstResultNameAnnotations}>
+            <Setting.Field label="First response" annotations={selectedFirstResultNameAnnotations}>
                 <Combobox
                     value={selectedFirstResultName.value}
                     items={resultNameOptions}
@@ -135,7 +137,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             )}
 
             {selectedPlotType === PlotType.SCATTER && (
-                <Setting.Field label="Second Result" annotations={selectedSecondResultNameAnnotations}>
+                <Setting.Field label="Second response" annotations={selectedSecondResultNameAnnotations}>
                     <Combobox
                         value={selectedSecondResultName.value}
                         items={resultNameOptions}

@@ -13,6 +13,7 @@ services:
       - ./frontend/src:/usr/src/app/frontend/src
       - ./frontend/theme:/usr/src/app/frontend/theme
       - ./frontend/index.html:/usr/src/app/frontend/index.html
+      - ./docs:/usr/src/app/docs
 
   backend-primary:
     build:

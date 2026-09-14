@@ -3,7 +3,7 @@ import { atom } from "jotai";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
-import { makeAggregatedStatisticalTableDataQueryOptions } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { makeAggregatedStatisticalTableDataQueryOptionsFromSources } from "@modules/_shared/InplaceVolumes/queryHooks";
 
 import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
 import type { WaterfallSource } from "../utils/waterfallSources";
@@ -71,7 +71,7 @@ export const waterfallStatisticalDataQueriesAtom = atomWithQueries((get) => {
     // and FVF. A selected "Subplot by" index is added to produce one waterfall per value.
     const groupByIndices = subplotBy ? [FLUID_INDEX_COLUMN, subplotBy] : [FLUID_INDEX_COLUMN];
 
-    return makeAggregatedStatisticalTableDataQueryOptions(
+    return makeAggregatedStatisticalTableDataQueryOptionsFromSources(
         sources,
         factorSpec?.requiredResultNames ?? [],
         groupByIndices,

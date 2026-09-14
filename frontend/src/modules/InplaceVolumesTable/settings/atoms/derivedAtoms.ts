@@ -48,6 +48,12 @@ export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
         return false;
     }
 
+    // Persisted/template selections are passed through unfixed, so they may still hold results that
+    // are invalid in the current context (e.g. BO/BG without FLUID grouping)
+    if (!selectedResultNames.isValidInContext) {
+        return false;
+    }
+
     if (!tableDefinitionsAccessor.hasIndicesWithValues(selectedIndicesWithValues.value)) {
         return false;
     }

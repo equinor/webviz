@@ -23,7 +23,12 @@ export function ComboboxListItem<TValue>(props: ComboboxListItemProps<TValue>): 
 
     if (props.isMultiSelect) {
         return (
-            <SharedCheckboxItem value={props.item.value} disabled={props.item.disabled} icon={makeAdornment()}>
+            <SharedCheckboxItem
+                value={props.item.value}
+                disabled={props.item.disabled}
+                icon={makeAdornment()}
+                description={props.item.description}
+            >
                 {props.item.label}
             </SharedCheckboxItem>
         );
@@ -32,6 +37,7 @@ export function ComboboxListItem<TValue>(props: ComboboxListItemProps<TValue>): 
             <SharedMenuItem
                 value={props.item.value}
                 disabled={props.item.disabled}
+                description={props.item.description}
                 icon={
                     <>
                         <ComboboxBase.ItemIndicator

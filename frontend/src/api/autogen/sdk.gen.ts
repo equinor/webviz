@@ -67,6 +67,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataErrors_api,
     GetHistoricalVectorDataResponses_api,
+    GetInitialFluidContactSurfacesMetadataData_api,
+    GetInitialFluidContactSurfacesMetadataErrors_api,
+    GetInitialFluidContactSurfacesMetadataResponses_api,
     GetInjectionDataData_api,
     GetInjectionDataErrors_api,
     GetInjectionDataResponses_api,
@@ -88,6 +91,12 @@ import type {
     GetParametersAndSensitivitiesData_api,
     GetParametersAndSensitivitiesErrors_api,
     GetParametersAndSensitivitiesResponses_api,
+    GetPlannedWellboreHeadersData_api,
+    GetPlannedWellboreHeadersErrors_api,
+    GetPlannedWellboreHeadersResponses_api,
+    GetPlannedWellTrajectoriesData_api,
+    GetPlannedWellTrajectoriesErrors_api,
+    GetPlannedWellTrajectoriesResponses_api,
     GetPolygonsDataData_api,
     GetPolygonsDataErrors_api,
     GetPolygonsDataResponses_api,
@@ -624,6 +633,28 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
     });
 
 /**
+ * Get Initial Fluid Contact Surfaces Metadata
+ *
+ * Get metadata for the initial fluid contact surfaces in a Sumo ensemble
+ */
+export const getInitialFluidContactSurfacesMetadata = <ThrowOnError extends boolean = false>(
+    options: Options<GetInitialFluidContactSurfacesMetadataData_api, ThrowOnError>,
+): RequestResult<
+    GetInitialFluidContactSurfacesMetadataResponses_api,
+    GetInitialFluidContactSurfacesMetadataErrors_api,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        GetInitialFluidContactSurfacesMetadataResponses_api,
+        GetInitialFluidContactSurfacesMetadataErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/surface/initial_fluid_contact_surfaces_metadata/",
+        ...options,
+    });
+
+/**
  * Get Surface Data
  *
  * Get surface data for the specified surface.
@@ -634,7 +665,6 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
  * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
  * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
  * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
- * - *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
  *
  * Structure of the different types of address strings:
  *
@@ -642,8 +672,18 @@ export const getObservedSurfacesMetadata = <ThrowOnError extends boolean = false
  * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
  * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
  * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
- * PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
  * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
  *
  * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
  * encoded as a `UintListStr` or "*" to include all realizations.
@@ -718,10 +758,36 @@ export const getStatisticalSurfaceDataHybrid = <ThrowOnError extends boolean = f
 /**
  * Post Get Surface Intersection
  *
- * Get surface intersection data for requested surface name.
+ * Get surface intersection data for the specified surface.
  *
- * The surface intersection data for surface name contains: An array of z-points, i.e. one z-value/depth per (x, y)-point in polyline,
- * and cumulative lengths, the accumulated length at each z-point in the array.
+ * ---
+ * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+ *
+ * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+ * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+ * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+ *
+ * Structure of the different types of address strings:
+ *
+ * ```
+ * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+ * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+ * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+ * ```
+ *
+ * The `<attribute>` component always spans three sub-components and says how the surface is identified:
+ *
+ * ```
+ * TAGNAME~~<tagname>~~-
+ * STDRES~~<standard_result>~~<sub_name>
+ * ```
+ *
+ * A *TAGNAME* attribute matches the free text tagname the surface was exported with. A *STDRES* attribute matches an
+ * FMU standard result, where `<sub_name>` discriminates between surfaces within that standard result, for example the
+ * contact type for `fluid_contact_surface`. Unused components are set to "-".
+ *
+ * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+ * encoded as a `UintListStr` or "*" to include all realizations.
  */
 export const postGetSurfaceIntersection = <ThrowOnError extends boolean = false>(
     options: Options<PostGetSurfaceIntersectionData_api, ThrowOnError>,
@@ -957,6 +1023,24 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
     });
 
 /**
+ * Get Planned Wellbore Headers
+ *
+ * Get planned wellbore headers for all planned wells in a given field
+ */
+export const getPlannedWellboreHeaders = <ThrowOnError extends boolean = false>(
+    options: Options<GetPlannedWellboreHeadersData_api, ThrowOnError>,
+): RequestResult<GetPlannedWellboreHeadersResponses_api, GetPlannedWellboreHeadersErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetPlannedWellboreHeadersResponses_api,
+        GetPlannedWellboreHeadersErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/well/planned_wellbore_headers/",
+        ...options,
+    });
+
+/**
  * Get Field Perforations
  *
  * Get field perforations for all wellbores in a given field.
@@ -996,6 +1080,24 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
     (options.client ?? client).get<GetWellTrajectoriesResponses_api, GetWellTrajectoriesErrors_api, ThrowOnError>({
         responseType: "json",
         url: "/well/well_trajectories/",
+        ...options,
+    });
+
+/**
+ * Get Planned Well Trajectories
+ *
+ * Get planned trajectories for wellbores in a given field. Can optionally return only a subset if a list of uuids are given
+ */
+export const getPlannedWellTrajectories = <ThrowOnError extends boolean = false>(
+    options: Options<GetPlannedWellTrajectoriesData_api, ThrowOnError>,
+): RequestResult<GetPlannedWellTrajectoriesResponses_api, GetPlannedWellTrajectoriesErrors_api, ThrowOnError> =>
+    (options.client ?? client).get<
+        GetPlannedWellTrajectoriesResponses_api,
+        GetPlannedWellTrajectoriesErrors_api,
+        ThrowOnError
+    >({
+        responseType: "json",
+        url: "/well/planned_well_trajectories/",
         ...options,
     });
 

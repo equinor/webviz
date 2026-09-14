@@ -3,12 +3,12 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { ScatterplotLayer } from "@deck.gl/layers";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { BoundingBox2D, MapMouseEvent, ViewportType } from "@webviz/subsurface-viewer";
+import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import { CrosshairLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { inRange } from "lodash-es";
 
-import type { HoverService } from "@framework/HoverService";
-import { HoverTopic, useHoverValue, usePublishHoverValue } from "@framework/HoverService";
+import type { HoverService, HoverData } from "@framework/HoverService";
+import { HoverTopic, useHoverValue, usePublishHoverValue, usePublishHoverValues } from "@framework/HoverService";
 import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelegate";
 import { PickingRayLayer } from "@modules/_shared/customDeckGlLayers/PickingRayLayer";
 import { useSubscribedProviderHoverVisualizations } from "@modules/_shared/DataProviderFramework/visualization/hooks/useSubscribedProviderHoverVisualizations";
@@ -16,9 +16,9 @@ import type { VisualizationTarget } from "@modules/_shared/DataProviderFramework
 import type { ViewsTypeExtended } from "@modules/_shared/types/deckgl";
 import { positionAtLengthAlong } from "@modules/_shared/utils/polylineHoverUtils";
 import type { DeckGlInstanceManager } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
+import { findFirstMatchingTransformation } from "@modules/_shared/utils/subsurfaceViewer/hoverTransformations";
 import type { PolylinesPlugin } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 import { PolylineEditingMode, PolylinesPluginTopic } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
-import { getHoverDataInPicks } from "@modules/_shared/utils/subsurfaceViewerLayers";
 
 import { useDpfSubsurfaceViewerContext } from "../DpfSubsurfaceViewerWrapper";
 
@@ -43,13 +43,10 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     >({});
 
     const ctx = useDpfSubsurfaceViewerContext();
-    const publishHoveredWorldPos = usePublishHoverValue(
-        HoverTopic.WORLD_POS_UTM,
-        ctx.hoverService,
-        ctx.moduleInstanceId,
-    );
-    const publishHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, ctx.hoverService, ctx.moduleInstanceId);
-    const publishHoveredMd = usePublishHoverValue(HoverTopic.WELLBORE_MD, ctx.hoverService, ctx.moduleInstanceId);
+
+    const publishHoverValues = usePublishHoverValues(ctx.hoverService, ctx.moduleInstanceId);
+
+    // Polyline hover is handled separately since it originates from the polyline plugin
     const publishHoveredPolylineLengthAlong = usePublishHoverValue(
         HoverTopic.POLYLINE_LENGTH_ALONG,
         ctx.hoverService,
@@ -121,40 +118,55 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
         }),
     };
 
-    const handleViewerHover = React.useCallback(
-        function handleViewerHover(mouseEvent: MapMouseEvent | null) {
-            const hoverData = getHoverDataInPicks(
-                mouseEvent?.infos ?? [],
-                HoverTopic.WELLBORE_MD,
-                HoverTopic.WELLBORE,
-                HoverTopic.WORLD_POS_UTM,
-            );
-
-            publishHoveredWorldPos(hoverData[HoverTopic.WORLD_POS_UTM]);
-            publishHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
-            publishHoveredMd(hoverData[HoverTopic.WELLBORE_MD]);
-        },
-        [publishHoveredMd, publishHoveredWellbore, publishHoveredWorldPos],
-    );
-
     const handleViewportHover = React.useCallback(function handleViewportHover(viewport: ViewportType | null) {
         setCurrentlyHoveredViewport(viewport?.id ?? null);
     }, []);
 
     const handlePickingInfoChange = React.useCallback(
-        function handlePickingInfoChange(newPickingInfoPerView: Record<string, PickingInfo[]>) {
-            // Convert to unscaled coordinates at the time of picking
-            // This ensures coordinates stay correct when verticalScale changes later
-            const unscaled: Record<string, [number, number, number][]> = {};
+        function handlePickingInfoChange(
+            newPickingInfoPerView: Record<string, PickingInfo[]>,
+            activeViewport?: string,
+        ) {
+            const coordsPerView: Record<string, [number, number, number][]> = {};
             for (const [viewId, picks] of Object.entries(newPickingInfoPerView)) {
-                unscaled[viewId] = picks
+                coordsPerView[viewId] = picks
                     .map((pick) => pick.coordinate)
                     .filter((coord): coord is number[] => Array.isArray(coord) && coord.length === 3)
-                    .map((coord): [number, number, number] => [coord[0], coord[1], coord[2] / props.verticalScale]);
+                    .map((coord): [number, number, number] => [coord[0], coord[1], coord[2]]);
             }
-            setUnscaledCoordinatesPerView(unscaled);
+            setUnscaledCoordinatesPerView(coordsPerView);
+
+            let allPickingInfo: PickingInfo[];
+
+            // Ensure picks in the hovered viewport is prioritized
+            if (activeViewport) {
+                const { [activeViewport]: hoveredPicks, ...otherPicks } = newPickingInfoPerView;
+                allPickingInfo = [...hoveredPicks, ...Object.values(otherPicks).flat()];
+            } else {
+                allPickingInfo = Object.values(newPickingInfoPerView).flat();
+            }
+
+            const hoverData = allPickingInfo.reduce<Partial<HoverData>>((acc, info) => {
+                if (!info.layer) return acc;
+
+                const transformationFunc = findFirstMatchingTransformation(
+                    ctx.hoverDataTransformationLookup,
+                    Object.getPrototypeOf(info.layer).constructor,
+                );
+
+                if (!transformationFunc) {
+                    return acc;
+                }
+
+                const hoverData = transformationFunc(info);
+
+                // ! Acc should override here to ensure that the first (aka, directly hovered and then closest) hovered data is being used
+                return { ...hoverData, ...acc };
+            }, {});
+
+            publishHoverValues(hoverData);
         },
-        [props.verticalScale],
+        [ctx.hoverDataTransformationLookup, publishHoverValues],
     );
 
     return (
@@ -163,7 +175,6 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
             views={adjustedViews}
             layers={adjustedLayers}
             overlayLayers={[crossHairLayer, polylineHoverMarkerLayer]}
-            onViewerHover={handleViewerHover}
             onViewportHover={handleViewportHover}
             onPickingInfoChange={handlePickingInfoChange}
         />

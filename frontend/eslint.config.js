@@ -1,4 +1,5 @@
 import eslintCore from "@eslint/js";
+import pluginQuery from "@tanstack/eslint-plugin-query";
 import configPrettier from "eslint-config-prettier";
 import * as importPlugin from "eslint-plugin-import";
 import reactPlugin from "eslint-plugin-react";
@@ -14,6 +15,7 @@ export default eslintTypescript.config(
     reactPlugin.configs.flat["jsx-runtime"],
     importPlugin.flatConfigs.recommended,
     reactHooksPlugin.configs.flat.recommended,
+    pluginQuery.configs["flat/recommended"],
     // Configure typescript resolver
     // ! Make sure "eslint-import-resolver-typescript" is installed
     {
@@ -121,7 +123,9 @@ export default eslintTypescript.config(
                         { pattern: "@core/**", group: "internal", position: "before" },
                         { pattern: "@components/**", group: "internal", position: "before" },
                         { pattern: "@shared-types/**", group: "internal", position: "before" },
+
                         { pattern: "@assets/**", group: "internal", position: "before" },
+                        { pattern: "@docs/**", group: "internal", position: "after" },
                         { pattern: "@/**", group: "internal" }, // fallback for anything else under @
                     ],
                     pathGroupsExcludedImportTypes: ["react"],

@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { FullSurfaceAddress } from "@modules/_shared/Surface";
+import type { AnySurfaceAddress } from "@modules/_shared/Surface";
 
 
-export const surfaceAddressAtom = atom<FullSurfaceAddress | null>(null);
+export const surfaceAddressAtom = atom<AnySurfaceAddress | null>(null);

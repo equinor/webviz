@@ -63,8 +63,10 @@ jobs:
 
       - name: 🤖 Run component tests
         working-directory: ./frontend
+        # xvfb provides a virtual display so headed Firefox can create a (software) WebGL
+        # context - headless Firefox exposes no GL, which the plotly WebGL tests need.
         run: |
-          npm run test:ct
+          xvfb-run -a npm run test:ct
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -109,6 +111,12 @@ jobs:
           pip install --upgrade pip
           pip install poetry==2.4.1
           poetry config virtualenvs.create false
+
+          # Changes in path-dependency locks do not get picked up during the check, so we need to 
+          # verify that each lock is as recent as possible and check that each lock file is 
+          # correctly generated
+          scripts/poetry-regenerate-lock-files.sh
+          git diff --exit-code || exit 1
 
           # Check that lock files are consistent with pyproject.toml
           poetry check --lock

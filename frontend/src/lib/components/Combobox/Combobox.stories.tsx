@@ -118,6 +118,25 @@ export const Default: Story = {
     },
 };
 
+export const WithItemDescriptions: Story = {
+    parameters: {
+        docs: {
+            description: { story: "Shows supporting text below item labels in the dropdown." },
+        },
+    },
+    args: {
+        items: [
+            { value: "stoiip", label: "STOIIP", description: "Stock tank oil initially in place" },
+            {
+                value: "stoiip-total",
+                label: "STOIIP_TOTAL",
+                description: "Stock tank oil initially in place (total). Calculated as STOIIP + ASSOCIATEDOIL.",
+            },
+        ],
+        placeholder: "Select a response",
+    },
+};
+
 export const Clearable: Story = {
     parameters: {
         docs: {

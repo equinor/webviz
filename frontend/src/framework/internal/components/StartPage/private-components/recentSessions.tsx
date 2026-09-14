@@ -11,6 +11,7 @@ import { RecentList } from "./recentList";
 
 export type RecentSessionsProps = {
     workbench: Workbench;
+    className?: string;
 };
 
 export function RecentSessions(props: RecentSessionsProps) {
@@ -35,6 +36,7 @@ export function RecentSessions(props: RecentSessionsProps) {
 
     return (
         <RecentList
+            className={props.className}
             title="Recent sessions"
             useQueryOptions={{
                 ...getSessionsMetadataOptions({

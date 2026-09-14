@@ -2,6 +2,7 @@ import React from "react";
 
 import type { AxisOptions, IntersectionReferenceSystem } from "@equinor/esv-intersection";
 
+import { GpuResourceBoundary, type GpuResourceAdapter } from "@framework/components/GpuResourceBoundary";
 import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import type { Size2D } from "@lib/utils/geometry";
@@ -9,7 +10,12 @@ import { usePublishSubscribeTopicValue } from "@lib/utils/PublishSubscribeDelega
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { Bounds } from "./EsvIntersectionController";
-import { EsvIntersectionController, EsvIntersectionControllerTopic } from "./EsvIntersectionController";
+import {
+    EsvIntersectionController,
+    EsvIntersectionControllerTopic,
+    EsvIntersectionLifeCycleState,
+} from "./EsvIntersectionController";
+import { createEsvIntersectionGpuResourceAdapter } from "./esvIntersectionGpuResourceAdapter";
 import type { EsvLayer } from "./EsvLayer";
 import type { HighlightItem, ReadoutItem } from "./types/types";
 
@@ -49,16 +55,26 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     const defaultedProps = { ...DEFAULT_PROPS, ...props };
     const { onReadout, onViewportChange, onMousePositionChange } = defaultedProps;
 
-    const containerRef = React.useRef<HTMLDivElement>(null);
-    const containerSize = useElementSize(containerRef);
-
     // Null-object controller for the pub/sub hooks before the real one is created.
     // Never initialized — snapshot getters return empty/null values.
     const nullControllerRef = React.useRef(new EsvIntersectionController());
 
+    // The controller + its Pixi canvas are owned by <EsvIntersectionRenderSurface>, which lives
+    // *inside* the GpuResourceBoundary. That keeps the boundary able to fully recover this renderer:
+    // if in-place context restoration is not possible it remounts the surface, which tears down the
+    // old controller and rebuilds a fresh one against the new container.
     const [controller, setController] = React.useState<EsvIntersectionController | null>(null);
+    const handleControllerChange = React.useCallback(function handleControllerChange(
+        nextController: EsvIntersectionController | null,
+    ) {
+        setController(nextController);
+    }, []);
     const pubSubController = controller ?? nullControllerRef.current;
 
+    const lifeCycleState = usePublishSubscribeTopicValue(
+        pubSubController,
+        EsvIntersectionControllerTopic.LIFE_CYCLE_STATE_CHANGE,
+    );
     const readoutItems = usePublishSubscribeTopicValue(
         pubSubController,
         EsvIntersectionControllerTopic.READOUT_ITEMS_CHANGE,
@@ -80,16 +96,6 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     onViewportChangeRef.current = onViewportChange;
     const onMousePositionChangeRef = React.useRef(onMousePositionChange);
     onMousePositionChangeRef.current = onMousePositionChange;
-
-    React.useEffect(function initializeController() {
-        if (!containerRef.current) return;
-        const ctrl = new EsvIntersectionController();
-        setController(ctrl);
-        void ctrl.initialize(containerRef.current).catch(console.error);
-        return function destroyController() {
-            ctrl.destroy();
-        };
-    }, []);
 
     React.useEffect(() => {
         onReadoutRef.current?.({ readoutItems });
@@ -136,6 +142,57 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
         controller?.setIntersectionThreshold(defaultedProps.intersectionThreshold);
     }, [controller, defaultedProps.intersectionThreshold]);
 
+    // Pixi's canvas (and its WebGL context) only exists once the controller has finished
+    // initializing, so gate adapter creation on that instead of racing the canvas into existence.
+    const adapter = React.useMemo<GpuResourceAdapter | undefined>(() => {
+        if (!controller || lifeCycleState !== EsvIntersectionLifeCycleState.INITIALIZED) {
+            return undefined;
+        }
+        return createEsvIntersectionGpuResourceAdapter(controller);
+    }, [controller, lifeCycleState]);
+
+    return (
+        <GpuResourceBoundary adapter={adapter} recoveryStrategy="redraw">
+            <EsvIntersectionRenderSurface size={defaultedProps.size} onControllerChange={handleControllerChange} />
+        </GpuResourceBoundary>
+    );
+}
+
+type EsvIntersectionRenderSurfaceProps = {
+    size?: Size2D;
+    onControllerChange: (controller: EsvIntersectionController | null) => void;
+};
+
+/**
+ * Owns the container element and the {@link EsvIntersectionController} (and thus the Pixi canvas /
+ * WebGL context). Kept as a separate component *inside* the {@link GpuResourceBoundary} so a
+ * boundary remount tears the controller down and rebuilds it against a fresh container, rather than
+ * leaving it orphaned on the detached old one.
+ */
+function EsvIntersectionRenderSurface(props: EsvIntersectionRenderSurfaceProps): React.ReactNode {
+    const { onControllerChange } = props;
+
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const containerSize = useElementSize(containerRef);
+
+    const [controller, setController] = React.useState<EsvIntersectionController | null>(null);
+
+    React.useEffect(
+        function initializeController() {
+            if (!containerRef.current) return;
+            const ctrl = new EsvIntersectionController();
+            setController(ctrl);
+            onControllerChange(ctrl);
+            void ctrl.initialize(containerRef.current).catch(console.error);
+            return function destroyController() {
+                ctrl.destroy();
+                setController(null);
+                onControllerChange(null);
+            };
+        },
+        [onControllerChange],
+    );
+
     React.useEffect(
         function handleResize() {
             if (containerSize.width && containerSize.height) {
@@ -164,8 +221,8 @@ export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
     return (
         <div
             ref={containerRef}
-            className={resolveClassNames({ "w-full h-full": defaultedProps.size === undefined })}
-            style={{ ...defaultedProps.size }}
+            className={resolveClassNames({ "h-full w-full": props.size === undefined })}
+            style={{ ...props.size }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         />

@@ -9,6 +9,9 @@ import {
 import { PathLayer, TextLayer } from "@deck.gl/layers";
 import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 
+import type { CategoricalReadout, ReadoutProperty } from "@modules/_shared/components/Readout/types";
+import { formatNumber } from "@modules/_shared/utils/numberFormatting";
+import { lengthAlongAtXyPosition } from "@modules/_shared/utils/polylineHoverUtils";
 import type { Polyline } from "@modules/_shared/utils/subsurfaceViewer/PolylinesPlugin";
 
 export type PolylinesLayerProps = ExtendedLayerProps & {
@@ -21,10 +24,55 @@ export type PolylinesLayerProps = ExtendedLayerProps & {
 export type PolylinesLayerPickingInfo = PickingInfo & {
     polylineId?: string;
     name?: string;
+    coordinates?: number[];
 };
 
 export function isPolylinesLayerPickingInfo(info: PickingInfo): info is PolylinesLayerPickingInfo {
     return Object.keys(info).includes("polylineId");
+}
+
+function formatMeters(value: number | undefined): string {
+    if (value == null || Number.isNaN(value)) {
+        return "-";
+    }
+    return formatNumber(value, { unit: "m", maxNumDecimalPlaces: 2 });
+}
+
+/**
+ * Builds the readout shown in the ReadoutWrapper when hovering/clicking a polyline.
+ *
+ * Expects a pick whose coordinate has already been un-scaled (as the ReadoutWrapper does before
+ * handing picks to the readout box) - the vertical scale is not known at this level.
+ */
+export function getPolylinesLayerReadout(pickingInfo: PolylinesLayerPickingInfo): CategoricalReadout | null {
+    const polyline = pickingInfo.object as Polyline | undefined;
+    if (!polyline || !pickingInfo.polylineId) {
+        return null;
+    }
+
+    const properties: ReadoutProperty[] = [];
+    const coordinate = pickingInfo.coordinate ?? pickingInfo.coordinates;
+
+    if (coordinate && coordinate.length >= 2) {
+        if (polyline.path.length >= 2) {
+            properties.push({
+                name: "Length along path",
+                value: lengthAlongAtXyPosition(polyline.path, coordinate[0], coordinate[1]),
+                format: formatMeters,
+            });
+        }
+        properties.push({ name: "X", value: coordinate[0], format: formatMeters });
+        properties.push({ name: "Y", value: coordinate[1], format: formatMeters });
+        if (coordinate.length >= 3) {
+            properties.push({ name: "Z", value: coordinate[2], format: formatMeters });
+        }
+    }
+
+    return {
+        group: "Polylines",
+        name: polyline.name || "Polyline",
+        properties,
+    };
 }
 
 export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
@@ -62,6 +110,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                 ...info,
                 name: info.object.name,
                 polylineId: info.object.id,
+                coordinates: info.coordinate,
             };
         }
 
