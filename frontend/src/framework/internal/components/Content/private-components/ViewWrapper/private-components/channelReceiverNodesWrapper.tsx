@@ -43,6 +43,12 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
     React.useEffect(() => {
         if (!isActiveDashboard) {
+            // A channel-connect drag left in progress (visible=true) when the user switches
+            // dashboards would otherwise never see its pointerup/HideDataChannelConnectionsRequest
+            // handlers again - this dashboard's own effect run is skipped entirely while inactive -
+            // leaving the portal-rendered overlay stuck visible the moment this dashboard becomes
+            // active again, with no drag actually in progress.
+            setVisible(false);
             return;
         }
 
@@ -268,7 +274,11 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     return createPortal(
         <div
             className={resolveClassNames("z-modal flex- absolute flex items-center justify-center", {
-                invisible: !((editDataChannelConnections && visible) || visible),
+                // This renders into the shared #portal-root, outside the DashboardStack's own
+                // display:none toggling for inactive dashboards - gate visibility on isActiveDashboard
+                // directly instead of relying solely on `visible` being reset in time.
+                invisible: !isActiveDashboard || !((editDataChannelConnections && visible) || visible),
+                "pointer-events-none": !isActiveDashboard,
             })}
             style={{
                 left: elementRect.x,

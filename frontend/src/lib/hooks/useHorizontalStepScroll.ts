@@ -13,7 +13,9 @@ function getItems(scrollContainer: HTMLElement, itemSelector: string): HTMLEleme
 // padding/offsetParent-agnostic and gives the item's true position in the container's own
 // scrollable coordinate space.
 function getItemLeftInScrollContainer(item: HTMLElement, scrollContainer: HTMLElement): number {
-    return item.getBoundingClientRect().left - scrollContainer.getBoundingClientRect().left + scrollContainer.scrollLeft;
+    return (
+        item.getBoundingClientRect().left - scrollContainer.getBoundingClientRect().left + scrollContainer.scrollLeft
+    );
 }
 
 export type UseHorizontalStepScrollOptions = {
@@ -64,9 +66,7 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
                 return;
             }
 
-            const containerWidth = el.getBoundingClientRect().width;
-            const contentWidth = contentEl.getBoundingClientRect().width;
-            const maxScrollLeft = Math.max(0, contentWidth - containerWidth);
+            const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth);
 
             // The first item's true resting scrollLeft isn't necessarily 0 - the scroll container's
             // own left padding means the natural, fully-scrolled-left position sits at the first

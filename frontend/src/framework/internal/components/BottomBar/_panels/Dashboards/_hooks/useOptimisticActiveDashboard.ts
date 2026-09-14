@@ -29,6 +29,21 @@ export function useOptimisticActiveDashboard(
 
     const selectDashboard = React.useCallback(
         function selectDashboard(dashboardId: string) {
+            // Cancel any still-pending frame pair from an earlier, now-superseded click instead of
+            // just overwriting the ref below - otherwise a rapid second click loses the only handle
+            // on the first chain's frame ids (this ref is the sole record of them), and when that
+            // first chain's own inner frame later fires it nulls out what are by then the SECOND
+            // chain's ids (both chains share this one ref), so an unmount landing between the two
+            // inner frames sees nothing pending and skips cancelling the second chain's still-live
+            // rAF - which then fires after unmount and calls into a session that may already be torn
+            // down.
+            if (pendingRafIdsRef.current.outer !== null) {
+                cancelAnimationFrame(pendingRafIdsRef.current.outer);
+            }
+            if (pendingRafIdsRef.current.inner !== null) {
+                cancelAnimationFrame(pendingRafIdsRef.current.inner);
+            }
+
             latestRequestedDashboardIdRef.current = dashboardId;
             setOptimisticActiveDashboardId(dashboardId);
             // Set alongside the optimistic tab selection so both paint on this same frame, giving

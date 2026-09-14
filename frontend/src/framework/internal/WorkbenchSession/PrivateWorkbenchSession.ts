@@ -348,19 +348,21 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             return;
         }
 
+        // Validated before touching the hot cache below: otherwise an unregistered dashboardId
+        // (e.g. a stale switch racing a dashboard removal - see useOptimisticActiveDashboard's
+        // rAF-deferred call) would already have deferred eviction of the still-displayed dashboard
+        // before this throws, leaving it ticking toward teardown despite the switch never happening.
+        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
+        if (dashboardId && !dashboard) {
+            throw new Error("Dashboard not registered in this session");
+        }
+
         const previouslyActiveDashboard = this.getActiveDashboard();
         if (previouslyActiveDashboard) {
             // Deferred instead of unloading immediately: the dashboard stays fully mounted for a
             // while in case the user switches back to it, instead of paying the full teardown/
             // recreate cost on every switch. See DashboardHotCache.
             this._dashboardHotCache.deferEviction(previouslyActiveDashboard);
-        }
-        const dashboard = this._dashboards.find((d) => d.getId() === dashboardId);
-        if (dashboardId && !dashboard) {
-            throw new Error("Dashboard not registered in this session");
-        }
-        if (this._activeDashboardId === (dashboard ? dashboard.getId() : null)) {
-            return;
         }
         if (dashboard) {
             this._dashboardHotCache.cancelEviction(dashboard.getId());
