@@ -1,3 +1,9 @@
+
+# Client IDs referenced in this configuration:
+#   900ed417-a860-4970-bd37-73b059ca6f0d  -  Prod application ID (webviz)
+#   025fe044-5ee8-4b27-bf83-aefb548f14fa  -  NonProd application ID (webviz-nonprod)
+#   cabb1ac4-d5a7-4017-b6bf-c883c503c95e  -  Managed identity for access to KeyVault (id-webviz-keyvault-shared)
+
 apiVersion: radix.equinor.com/v1
 kind: RadixApplication
 metadata:
@@ -124,6 +130,38 @@ spec:
               cpu:
                 averageUtilization: 80
 
+        - environment: review2
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
+        - environment: review3
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
         - environment: dev
           resources:
             requests:
@@ -176,7 +214,7 @@ spec:
       dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
-          # TRY TO USE MANAGED IDENTITY FOR KV ACCESS
+          # Use managed identity for pure KeyVault access
           clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
       secretRefs:
         azureKeyVaults:
@@ -202,8 +240,8 @@ spec:
       dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
-          # Set nonprod clientId as default, prod overrides below
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+          # Use managed identity for pure KeyVault access
+          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -223,12 +261,6 @@ spec:
           cpu: 1000m
         limits:
           memory: 4Gi
-      environmentConfig:
-        - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
 
   jobs:
@@ -251,8 +283,8 @@ spec:
           port: 8002
       identity:
         azure:
-          # Set nonprod clientId as default, prod overrides below
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+          # Use managed identity for pure KeyVault access
+          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -270,12 +302,6 @@ spec:
         UVICORN_PORT: 8002
       payload:
         path: /compute/args
-      environmentConfig:
-        - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
   dnsAppAlias:
     environment: prod
