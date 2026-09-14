@@ -5,6 +5,7 @@ import { v4 } from "uuid";
 import { HoverService } from "@framework/HoverService";
 import { SyncSettingsService } from "@framework/SyncSettingsService";
 import type { Template } from "@framework/TemplateRegistry";
+import { truncateString } from "@lib/utils/strings";
 import { PublishSubscribeDelegate, type PublishSubscribe } from "@lib/utils/PublishSubscribeDelegate";
 import { UnsubscribeFunctionsManagerDelegate } from "@lib/utils/UnsubscribeFunctionsManagerDelegate";
 
@@ -13,7 +14,7 @@ import { ModuleInstanceTopic, type ModuleInstance } from "../ModuleInstance";
 import { ModuleRegistry } from "../ModuleRegistry";
 
 import type { SerializedDashboardState } from "./Dashboard.schema";
-import { DASHBOARD_ID_LENGTH } from "./persistence/constants";
+import { DASHBOARD_ID_LENGTH, DEFAULT_DASHBOARD_NAME, MAX_TITLE_LENGTH } from "./persistence/constants";
 
 export type LayoutElement = {
     moduleInstanceId?: string;
@@ -67,7 +68,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
     constructor(atomStoreMaster: AtomStoreMaster, name?: string) {
         this._id = nanoid(DASHBOARD_ID_LENGTH);
-        this._metadata = { name: name ?? "Dashboard" };
+        this._metadata = { name: name ?? DEFAULT_DASHBOARD_NAME };
 
         this._atomStoreMaster = atomStoreMaster;
     }
@@ -374,15 +375,6 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._cachedState = null;
     }
 
-    // Note on memory: this drops every strong reference this framework holds to the dashboard's
-    // module instances (see clearLayout -> removeModuleInstance -> unregisterAndUnloadModuleInstance,
-    // and ModuleInstance.beforeDestroy/Module.removeInstance for the rest of the teardown chain), but
-    // an instance isn't guaranteed to become GC-eligible the instant this call returns. Any still-
-    // mounted component that read a now-removed instance (e.g. LeftSettingsPanel's activeModuleInstance)
-    // keeps a reference alive for one extra render cycle via React's fiber double-buffering - the old
-    // `current` fiber (holding the stale props) becomes the new `alternate` rather than being discarded,
-    // and isn't overwritten until that component renders again. In practice this resolves itself within
-    // the next render or two of the surrounding UI;.
     unload(): void {
         this._cachedState = this.serializeState();
         this.clearLayout();
@@ -490,7 +482,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     static clone(source: Dashboard, atomStoreMaster: AtomStoreMaster, name?: string): Dashboard {
-        const adjustedName = name ?? `${source.getMetadata().name} (Copy)`;
+        const copySuffix = " (Copy)";
+        // Truncate the source name before appending the suffix, not after - appending first and
+        // truncating the result could cut the suffix itself off, leaving a copy that doesn't read as
+        // one, and truncating without accounting for the suffix at all could push the final name past
+        // MAX_TITLE_LENGTH (the same bound EditDashboardMetadataDialog enforces on user edits).
+        const adjustedName =
+            name ?? `${truncateString(source.getMetadata().name, MAX_TITLE_LENGTH - copySuffix.length)}${copySuffix}`;
         const clonedDashboard = new Dashboard(atomStoreMaster, adjustedName);
         const serializedState = cloneDeep(source.serializeState());
 

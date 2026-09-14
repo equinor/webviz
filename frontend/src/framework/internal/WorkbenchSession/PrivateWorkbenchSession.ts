@@ -5,6 +5,7 @@ import { EnsembleFingerprintStore } from "@framework/EnsembleFingerprintStore";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "@framework/GlobalAtoms";
 import { Dashboard, DashboardTopic } from "@framework/internal/Dashboard";
+import { DEFAULT_DASHBOARD_NAME } from "@framework/internal/persistence/constants";
 import { RealizationFilterSet } from "@framework/RealizationFilterSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserCreatedItems, UserCreatedItemsEvent } from "@framework/UserCreatedItems";
@@ -410,7 +411,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
     addDashboard(): void {
         this.assertIsNotSnapshot();
-        const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), "Dashboard");
+        const name = makeUniqueName(new Set(this._dashboards.map((d) => d.getMetadata().name)), DEFAULT_DASHBOARD_NAME);
         const newDashboard = new Dashboard(this._atomStoreMaster, name);
         this.registerDashboard(newDashboard);
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
@@ -428,24 +429,43 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         if (this._dashboards.length <= 1) {
             throw new Error("Cannot remove the last dashboard in a session");
         }
+        const wasActive = this._activeDashboardId === dashboardId;
         // Capture the index before removal, since the dashboard is no longer findable in the array afterwards
         const index = this._dashboards.findIndex((d) => d.getId() === dashboardId);
         this.unregisterDashboard(dashboard);
 
+        if (wasActive) {
+            // Cleared immediately, before the replacement pick below gets a chance to throw:
+            // unregisterDashboard() just above already tore the removed dashboard down and dropped it
+            // from _dashboards, so leaving _activeDashboardId pointing at it in the meantime would let
+            // a failure below (setActiveDashboard() can throw while lazily loading the replacement -
+            // see its own try/catch) leave this session pointing at a dashboard that no longer exists,
+            // permanently: setActiveDashboard()'s own no-op guard only short-circuits on an *equal*
+            // id, so a dangling one would never self-heal on a later switch.
+            this._activeDashboardId = null;
+        }
+
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
 
-        // If the removed dashboard was the active one, set the active dashboard to the previous one in the list, or null if there are no dashboards left
-        if (this._activeDashboardId === dashboardId) {
-            let newActiveDashboardId: string | null = null;
-            if (index > 0) {
-                newActiveDashboardId = this._dashboards[index - 1].getId();
-            } else if (this._dashboards.length > 0) {
-                newActiveDashboardId = this._dashboards[0].getId();
-            } else {
-                newActiveDashboardId = null;
-            }
-            if (newActiveDashboardId) {
+        // If the removed dashboard was the active one, set the active dashboard to the previous one
+        // in the list, or the new first one. this._dashboards is guaranteed non-empty here - the
+        // length<=1 guard above already rejected removing the last dashboard in the session.
+        if (wasActive) {
+            const newActiveDashboardId = index > 0 ? this._dashboards[index - 1].getId() : this._dashboards[0].getId();
+            try {
                 this.setActiveDashboard(newActiveDashboardId);
+            } catch (error) {
+                // A failure loading the replacement (e.g. it references a module that's no longer
+                // registered) must not fail the deletion itself. _activeDashboardId is already null
+                // from above - setActiveDashboard() only reassigns it after a successful load - so
+                // this correctly leaves the session reflecting "no active dashboard" instead of a
+                // dangling reference to the one just removed; explicitly notified here since the
+                // success path (where setActiveDashboard() already notifies) didn't run.
+                console.error(
+                    `Failed to activate dashboard "${newActiveDashboardId}" after removing the active dashboard:`,
+                    error,
+                );
+                this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
             }
         }
     }

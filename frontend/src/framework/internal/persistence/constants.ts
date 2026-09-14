@@ -17,6 +17,12 @@ export const MAX_TITLE_LENGTH = 50;
 export const MIN_TITLE_LENGTH = 10;
 export const MAX_DESCRIPTION_LENGTH = 250;
 
+// Default name for a newly created dashboard (see Dashboard's constructor and
+// PrivateWorkbenchSession.addDashboard()). Must satisfy MIN_TITLE_LENGTH above - EditDashboardMetadataDialog
+// enforces that bound on user edits, and a system-generated default shorter than it would fail that same
+// validation the moment a user opened the rename dialog without changing anything.
+export const DEFAULT_DASHBOARD_NAME = "New Dashboard";
+
 // Nano ID lengths for sessions and snapshots
 export const SESSION_ID_LENGTH = 12;
 export const SNAPSHOT_ID_LENGTH = 12;
