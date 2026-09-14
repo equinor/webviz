@@ -518,7 +518,20 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         this.registerDashboard(clonedDashboard);
         this.moveDashboard(clonedDashboard.getId(), this._dashboards.indexOf(dashboardToClone) + 1);
-        this.setActiveDashboard(clonedDashboard.getId());
+
+        try {
+            this.setActiveDashboard(clonedDashboard.getId());
+        } catch (error) {
+            // setActiveDashboard() above only fails while lazily loading the clone (see its own
+            // try/catch), by which point registerDashboard()/moveDashboard() have already made it a
+            // first-class member of this session - DASHBOARDS notified and all. Leaving it registered
+            // after this method rejects would make it a phantom dashboard: it'd keep showing up in the
+            // tab strip, get included if the session is saved, and retry the exact same broken load if
+            // the user ever clicked it. Roll the registration back before rethrowing.
+            this.unregisterDashboard(clonedDashboard);
+            this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.DASHBOARDS);
+            throw error;
+        }
     }
 
     getDashboards(): Dashboard[] {
