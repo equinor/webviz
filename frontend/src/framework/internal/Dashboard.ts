@@ -367,8 +367,10 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
     }
 
     /**
-     * This is loading the dashboard's layout and initializing its module instances. This is called
-     * when the dashboard becomes active.
+     * Loads the dashboard's layout and initializes its module instances from cached state. Called
+     * while *attempting* to make the dashboard active, not as a result of it already being active:
+     * this can throw (e.g. a persisted dashboard referencing a module that's no longer registered),
+     * and PrivateWorkbenchSession.setActiveDashboard() only commits the switch if this succeeds.
      */
     load(): void {
         this.initializeModuleInstancesFromCachedState();
