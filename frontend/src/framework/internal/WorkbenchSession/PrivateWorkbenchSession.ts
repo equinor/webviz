@@ -377,6 +377,22 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             throw new Error("Dashboard not registered in this session");
         }
 
+        // Loaded before any state below is touched, and inside a try/catch: Dashboard.load() can
+        // throw (e.g. an inactive persisted dashboard referencing a module that's no longer
+        // registered). Committing the hot-cache/_activeDashboardId transition first and loading
+        // after, as this used to do, would leave the previous dashboard scheduled for eviction and
+        // this session pointing at a target that never actually finished loading - with
+        // ACTIVE_DASHBOARD never published to match. Loading first and only committing afterwards
+        // keeps a failed switch a true no-op: the previous dashboard stays active and untouched.
+        try {
+            // A no-op if `dashboard` was still hot (its module instances were never torn down) - see
+            // Dashboard.load()'s own "nothing cached" early-return.
+            dashboard?.load();
+        } catch (error) {
+            console.error(`Failed to load dashboard "${dashboardId}":`, error);
+            throw error;
+        }
+
         const previouslyActiveDashboard = this.getActiveDashboard();
         if (previouslyActiveDashboard) {
             // Deferred instead of unloading immediately: the dashboard stays fully mounted for a
@@ -388,9 +404,6 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             this._dashboardHotCache.cancelEviction(dashboard.getId());
         }
         this._activeDashboardId = dashboard ? dashboard.getId() : null;
-        // A no-op if `dashboard` was still hot (its module instances were never torn down) - see
-        // Dashboard.load()'s own "nothing cached" early-return.
-        dashboard?.load();
         this._publishSubscribeDelegate.notifySubscribers(PrivateWorkbenchSessionTopic.ACTIVE_DASHBOARD);
         this.handleStateChange();
     }

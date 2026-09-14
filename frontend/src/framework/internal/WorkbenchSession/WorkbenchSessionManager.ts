@@ -335,7 +335,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 error: new SessionPersistenceError(
                     `Could not load snapshot with ID '${snapshotId}'. ${errorExplanation}`,
                 ),
-                retry: () => this.openSnapshot(snapshotId),
+                retry: () => this.openSnapshot(snapshotId, dashboardId),
             });
 
             return false;

@@ -81,25 +81,36 @@ export function useOptimisticActiveDashboard(
     );
 
     // The rAF pair above outlives this hook if the panel unmounts mid-switch (e.g. the bottom bar
-    // panel is closed while the frames are still pending). Cancel them so a stale switch doesn't
-    // land on an unmounted workbench/session, and clear the flag they left set so the content area
-    // doesn't get stuck showing the switch-loading overlay forever.
+    // panel is closed while the frames are still pending), or if workbenchSession itself changes
+    // while this hook's component stays mounted (ActiveSessionBoundary reuses its descendants across
+    // a session swap, e.g. save-as replacing the active session with a new instance) - either way,
+    // depending on both lets the cleanup below fire whenever either identity changes, not just on
+    // unmount. Without this, a frame scheduled against the old session would still fire after the
+    // swap - calling setActiveDashboard on a session that may already be torn down - and the old
+    // optimistic id would keep showing as selected in the new session's tab strip since nothing ever
+    // clears it.
     React.useEffect(
-        function cleanupPendingSwitchOnUnmount() {
+        function cancelPendingSwitchOnSessionOrWorkbenchChange() {
+            // Captured once per effect run (not read fresh inside the returned cleanup) so the
+            // cleanup always operates on the same {outer, inner} container this effect run observed -
+            // it's a stable object reference whose fields are mutated in place, so this still sees
+            // whatever the latest values are by the time cleanup runs.
             const pendingRafIds = pendingRafIdsRef.current;
-            return function cancelPendingFramesAndResetFlag() {
-                if (pendingRafIds.outer !== null || pendingRafIds.inner !== null) {
-                    if (pendingRafIds.outer !== null) {
-                        cancelAnimationFrame(pendingRafIds.outer);
-                    }
-                    if (pendingRafIds.inner !== null) {
-                        cancelAnimationFrame(pendingRafIds.inner);
-                    }
-                    workbench.getGuiMessageBroker().setState(GuiState.IsSwitchingDashboard, false);
+            return function cancelPendingFramesAndResetState() {
+                if (pendingRafIds.outer !== null) {
+                    cancelAnimationFrame(pendingRafIds.outer);
+                    pendingRafIds.outer = null;
                 }
+                if (pendingRafIds.inner !== null) {
+                    cancelAnimationFrame(pendingRafIds.inner);
+                    pendingRafIds.inner = null;
+                }
+                latestRequestedDashboardIdRef.current = null;
+                setOptimisticActiveDashboardId(null);
+                workbench.getGuiMessageBroker().setState(GuiState.IsSwitchingDashboard, false);
             };
         },
-        [workbench],
+        [workbench, workbenchSession],
     );
 
     return { optimisticActiveDashboardId, selectDashboard };
