@@ -45,11 +45,14 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
         React.useState<Dashboard | null>(null);
     const [showCannotRemoveDashboardDialog, setShowCannotRemoveDashboardDialog] = React.useState<boolean>(false);
 
-    const tabStripScroll = useDashboardTabStripScroll(dashboards);
     const reorder = useDashboardReorder(dashboards, workbenchSession);
     const { optimisticActiveDashboardId, selectDashboard } = useOptimisticActiveDashboard(
         props.workbench,
         workbenchSession,
+    );
+    const tabStripScroll = useDashboardTabStripScroll(
+        dashboards,
+        optimisticActiveDashboardId ?? activeDashboard?.getId() ?? null,
     );
 
     const handleAddDashboardClick = React.useCallback(

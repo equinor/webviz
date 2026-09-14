@@ -230,7 +230,10 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         };
     }
 
-    async deserializeContentState(contentState: SerializedWorkbenchSessionContentState): Promise<void> {
+    async deserializeContentState(
+        contentState: SerializedWorkbenchSessionContentState,
+        preferredActiveDashboardId?: string | null,
+    ): Promise<void> {
         this._isPersisted = this._id !== null;
         this._activeDashboardId = null;
 
@@ -283,7 +286,24 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             newDashboard.deserializeState(dashboard);
         }
 
-        this.setActiveDashboard(contentState.activeDashboardId ?? this._dashboards[0]?.getId() ?? null);
+        // Prefer an explicitly requested dashboard (e.g. a deep-linked dashboard id from the URL)
+        // over the persisted "last active" one, so opening a deep link activates that dashboard
+        // directly instead of first loading the persisted-active one - instantiating its module
+        // instances, WebGL contexts included - only to immediately hot-cache it away in favor of the
+        // one the link actually pointed at. Both ids are validated against the freshly deserialized
+        // dashboard set: a stale/corrupted id (an old session format, a regenerated template, or a
+        // stale link) falls back to the first dashboard instead of throwing out of
+        // setActiveDashboard() below.
+        const dashboardIds = new Set(this._dashboards.map((d) => d.getId()));
+        const validPreferredId =
+            preferredActiveDashboardId && dashboardIds.has(preferredActiveDashboardId)
+                ? preferredActiveDashboardId
+                : null;
+        const validPersistedId =
+            contentState.activeDashboardId && dashboardIds.has(contentState.activeDashboardId)
+                ? contentState.activeDashboardId
+                : null;
+        this.setActiveDashboard(validPreferredId ?? validPersistedId ?? this._dashboards[0]?.getId() ?? null);
         this._settings.deserializeState(contentState.settings);
         this._userCreatedItems.deserializeState(contentState.userCreatedItems);
     }
@@ -523,6 +543,11 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         const oldDashboard = this._dashboards[index];
         const wasActive = this._activeDashboardId === dashboardId;
 
+        // Mirrors unregisterDashboard()'s own guard against the same failure mode: otherwise, if
+        // oldDashboard was hot-cached (pending eviction) rather than active, its stale timer would
+        // later call unload() on this now-detached Dashboard object, and hotDashboardIds would keep
+        // reporting this id as hot even though a different Dashboard instance has taken its place.
+        this._dashboardHotCache.forget(oldDashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
         oldDashboard.beforeUnload();
 
@@ -606,6 +631,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     static async fromDataContainer(
         queryClient: QueryClient,
         dataContainer: WorkbenchSessionDataContainer,
+        preferredActiveDashboardId?: string | null,
     ): Promise<PrivateWorkbenchSession> {
         const session = new PrivateWorkbenchSession(queryClient);
 
@@ -617,7 +643,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         session.setLoadedFromLocalStorage(dataContainer.source === WorkbenchSessionSource.LOCAL_STORAGE);
         session.setMetadata(dataContainer.metadata);
-        await session.deserializeContentState(dataContainer.content);
+        await session.deserializeContentState(dataContainer.content, preferredActiveDashboardId);
 
         return session;
     }

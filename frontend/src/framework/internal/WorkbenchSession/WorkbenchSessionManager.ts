@@ -235,7 +235,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         return session;
     }
 
-    async openSession(sessionId: string): Promise<boolean> {
+    // dashboardId, when given (e.g. from a deep-linked URL), is passed straight through to
+    // deserialization so the session activates that dashboard directly - instead of activating the
+    // persisted "last active" dashboard first (instantiating its module instances) only to
+    // immediately switch away from it once the caller applies the deep-linked id.
+    async openSession(sessionId: string, dashboardId: string | null = null): Promise<boolean> {
         if (this._activeSession) {
             throw new Error(
                 "A workbench session is already active. This should not happen and indicates a logic error.",
@@ -249,7 +253,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._workbench.getNavigationManager().pushState(url);
 
             const sessionData = await loadWorkbenchSessionFromBackend(this._queryClient, sessionId);
-            const session = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, sessionData);
+            const session = await PrivateWorkbenchSession.fromDataContainer(
+                this._queryClient,
+                sessionData,
+                dashboardId,
+            );
 
             await this.setActiveSession(session);
             return true;
@@ -273,7 +281,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
                 error: new SessionPersistenceError(
                     `Could not load session with ID '${sessionId}'. ${errorExplanation}`,
                 ),
-                retry: () => this.openSession(sessionId),
+                retry: () => this.openSession(sessionId, dashboardId),
             });
 
             return false;
@@ -282,7 +290,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
     }
 
-    async openSnapshot(snapshotId: string): Promise<boolean> {
+    async openSnapshot(snapshotId: string, dashboardId: string | null = null): Promise<boolean> {
         try {
             this._guiMessageBroker.setState(GuiState.IsLoadingSnapshot, true);
 
@@ -290,7 +298,11 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
             this._workbench.getNavigationManager().pushState(url);
 
             const snapshotData = await loadSnapshotFromBackend(this._queryClient, snapshotId);
-            const snapshot = await PrivateWorkbenchSession.fromDataContainer(this._queryClient, snapshotData);
+            const snapshot = await PrivateWorkbenchSession.fromDataContainer(
+                this._queryClient,
+                snapshotData,
+                dashboardId,
+            );
 
             await this.setActiveSession(snapshot);
 
@@ -454,11 +466,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         if (location.kind === "snapshot") {
-            const result = await this.openSnapshot(location.snapshotId);
-            if (result) {
-                this.applyActiveDashboardId(location.dashboardId);
-            }
-            return result;
+            return await this.openSnapshot(location.snapshotId, location.dashboardId);
         }
 
         let storedSessions: WorkbenchSessionDataContainer[] = [];
@@ -471,10 +479,7 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         }
 
         if (location.kind === "session") {
-            const result = await this.openSession(location.sessionId);
-            if (result) {
-                this.applyActiveDashboardId(location.dashboardId);
-            }
+            const result = await this.openSession(location.sessionId, location.dashboardId);
             if (storedSessions.find((el) => el.id === location.sessionId)) {
                 this._guiMessageBroker.setState(GuiState.ActiveSessionRecoveryDialogOpen, true);
             }
@@ -654,22 +659,6 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
         const dashboardId = this._activeSession.getActiveDashboard()?.getId() ?? null;
         const url = buildWorkbenchUrl({ ...currentLocation, dashboardId });
         this._workbench.getNavigationManager().replaceState(url);
-    }
-
-    // Applies a dashboard id captured from the URL (on boot or browser back/forward) to the
-    // just-opened active session. Silently ignored if the id is missing or not one of the session's
-    // dashboards (e.g. stale link) - the session's own default active dashboard stays in place.
-    private applyActiveDashboardId(dashboardId: string | null): void {
-        if (!dashboardId || !this._activeSession) {
-            return;
-        }
-
-        const dashboardExists = this._activeSession
-            .getDashboards()
-            .some((dashboard) => dashboard.getId() === dashboardId);
-        if (dashboardExists) {
-            this._activeSession.setActiveDashboard(dashboardId);
-        }
     }
 
     private resetGuiStates(): void {
@@ -980,18 +969,14 @@ export class WorkbenchSessionManager implements PublishSubscribe<WorkbenchSessio
 
         // No active session or no unsaved changes - load the requested entity
         if (location.kind === "snapshot") {
-            const result = await this.openSnapshot(location.snapshotId);
+            const result = await this.openSnapshot(location.snapshotId, location.dashboardId);
             if (!result) {
                 this._workbench.getNavigationManager().pushState(buildWorkbenchUrl({ kind: "root" }));
-            } else {
-                this.applyActiveDashboardId(location.dashboardId);
             }
         } else if (location.kind === "session") {
-            const result = await this.openSession(location.sessionId);
+            const result = await this.openSession(location.sessionId, location.dashboardId);
             if (!result) {
                 this._workbench.getNavigationManager().pushState(buildWorkbenchUrl({ kind: "root" }));
-            } else {
-                this.applyActiveDashboardId(location.dashboardId);
             }
         }
 
