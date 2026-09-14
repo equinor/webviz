@@ -4,11 +4,13 @@ import { cloneDeep, isEqual } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsemblePicker } from "@framework/components/EnsemblePicker";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { SettingsContext } from "@framework/ModuleContext";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, useRefStableSyncSettingsHelper } from "@framework/SyncSettings";
 import type { InplaceVolumesFilterSettings } from "@framework/types/inplaceVolumesFilterSettings";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, type WorkbenchSession } from "@framework/WorkbenchSession";
 import { Banner } from "@lib/components/Banner";
@@ -26,7 +28,7 @@ export type InplaceVolumesFilterComponentProps = {
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableIndicesWithValues: InplaceVolumesIndexWithValues_api[];
-    selectedEnsembleIdents: RegularEnsembleIdent[];
+    selectedEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
     selectedTableNames: string[];
     selectedIndicesWithValues: InplaceVolumesIndexWithValues_api[];
     selectedAllowIndicesValuesIntersection: boolean;
@@ -34,6 +36,7 @@ export type InplaceVolumesFilterComponentProps = {
     dataAnnotations?: SettingAnnotation[];
     selectionAnnotations?: SettingAnnotation[];
     debounceMs?: number;
+    allowDeltaEnsembles?: boolean;
     isPending?: boolean;
     areCurrentlySelectedTablesComparable?: boolean;
 
@@ -43,13 +46,15 @@ export type InplaceVolumesFilterComponentProps = {
 };
 
 export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterComponentProps): React.ReactNode {
-    const [ensembleIdents, setEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(props.selectedEnsembleIdents);
+    const [ensembleIdents, setEnsembleIdents] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
+        props.selectedEnsembleIdents,
+    );
     const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [indicesWithValues, setIndicesWithValues] = React.useState<InplaceVolumesIndexWithValues_api[]>(
         props.selectedIndicesWithValues,
     );
 
-    const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(
+    const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
         props.selectedEnsembleIdents,
     );
     const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.selectedTableNames);
@@ -173,7 +178,10 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
         }
     }
 
-    function handleEnsembleIdentsChange(newEnsembleIdents: RegularEnsembleIdent[], publish = true): void {
+    function handleEnsembleIdentsChange(
+        newEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+        publish = true,
+    ): void {
         setEnsembleIdents(newEnsembleIdents);
         const filter = {
             ensembleIdents: newEnsembleIdents,
@@ -230,17 +238,29 @@ export function InplaceVolumesFilterComponent(props: InplaceVolumesFilterCompone
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
 
+    const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(props.workbenchSession);
+
     return (
         <>
             <Setting.Section title="Data" defaultOpen>
                 <Setting.Field label="Ensembles" stacked>
-                    <EnsemblePicker
-                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
-                        value={ensembleIdents}
-                        allowDeltaEnsembles={false}
-                        ensembleRealizationFilterFunction={useEnsembleRealizationFilterFunc(props.workbenchSession)}
-                        onValueChange={handleEnsembleIdentsChange}
-                    />
+                    {props.allowDeltaEnsembles ? (
+                        <EnsemblePicker
+                            ensembles={props.ensembleSet.getEnsembleArray()}
+                            value={ensembleIdents}
+                            allowDeltaEnsembles={true}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={handleEnsembleIdentsChange}
+                        />
+                    ) : (
+                        <EnsemblePicker
+                            ensembles={props.ensembleSet.getRegularEnsembleArray()}
+                            value={filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent)}
+                            allowDeltaEnsembles={false}
+                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                            onValueChange={handleEnsembleIdentsChange}
+                        />
+                    )}
                 </Setting.Field>
 
                 <Setting.Field
