@@ -103,16 +103,18 @@ export const selectedIndicesWithValuesAtom = persistableFixableAtom<
     computeDependenciesState: computeTableDefinitionsQueryDependenciesState,
     precomputeFunction: ({ get }) => get(availableIndicesWithValuesAtom),
     isValidFunction: ({ value, precomputedValue: availableIndicesWithValues }) => {
+        // An empty selection is only invalid when there are columns available to select from. When
+        // the two sources share no filterable index column, [] is itself the valid selection.
+        if (availableIndicesWithValues.length === 0) {
+            return value.length === 0;
+        }
+
         // A selection that omits a newly available index column must count as invalid, so the
         // SELECT_ALL fixup runs and the column is not left as an empty (everything-filtered) filter.
         const coversAllAvailableColumns = availableIndicesWithValues.every((available) =>
             value.some((selected) => selected.indexColumn === available.indexColumn),
         );
-        return (
-            value.length > 0 &&
-            coversAllAvailableColumns &&
-            isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues)
-        );
+        return coversAllAvailableColumns && isSelectedIndicesWithValuesValidSubset(value, availableIndicesWithValues);
     },
     fixupFunction: ({ value, precomputedValue: availableIndicesWithValues }) =>
         fixupUserSelectedIndexValues(value ?? [], availableIndicesWithValues, FixupSelection.SELECT_ALL),
