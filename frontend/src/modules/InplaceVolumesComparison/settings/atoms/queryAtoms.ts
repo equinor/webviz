@@ -18,11 +18,13 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
     const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
     const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
 
+    // Always exactly these two sources, so fetch each ensemble once even when both sides match.
     const ensembleIdents: RegularEnsembleIdent[] = [];
-    for (const ensembleIdent of [referenceEnsembleIdent, comparisonEnsembleIdent]) {
-        if (ensembleIdent && !ensembleIdents.some((existing) => existing.equals(ensembleIdent))) {
-            ensembleIdents.push(ensembleIdent);
-        }
+    if (referenceEnsembleIdent) {
+        ensembleIdents.push(referenceEnsembleIdent);
+    }
+    if (comparisonEnsembleIdent && !comparisonEnsembleIdent.equals(referenceEnsembleIdent)) {
+        ensembleIdents.push(comparisonEnsembleIdent);
     }
 
     const queries = ensembleIdents.map((ensembleIdent) => {
