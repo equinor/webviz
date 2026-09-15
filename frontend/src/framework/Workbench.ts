@@ -11,7 +11,6 @@ import { WorkbenchSessionManager } from "./internal/WorkbenchSession/WorkbenchSe
  * - Session management -> WorkbenchSessionManager
  * - Navigation -> NavigationManager
  * - Persistence -> PersistenceOrchestrator (via SessionManager)
- * - Sync settings / hover -> per-dashboard services owned by each Dashboard
  * - GUI state -> GuiMessageBroker
  */
 export class Workbench {

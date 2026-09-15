@@ -494,7 +494,7 @@ export class ModuleInstance<
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.RESETTING);
 
         return new Promise((resolve) => {
-            this._module.onInstanceUnload(this._id);
+            this._module.notifyInstanceUnload(this._id);
 
             this.initialize();
             resolve();
@@ -509,12 +509,8 @@ export class ModuleInstance<
         return this._initialSettings;
     }
 
-    unload() {
-        this._module.onInstanceUnload(this._id);
-        this.beforeDestroy();
-    }
-
-    beforeDestroy(): void {
+    unload(): void {
+        this._module.notifyInstanceUnload(this._id);
         this._channelManager.unregisterAllChannels();
         this._channelManager.unregisterAllReceivers();
         this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();

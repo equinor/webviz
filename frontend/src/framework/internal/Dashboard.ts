@@ -138,16 +138,13 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
             return this._layout;
         }
 
-        return this._cachedState.moduleInstances.map((serializedInstance) => ({
-            moduleInstanceId: serializedInstance.moduleInstanceState.id,
-            moduleName: serializedInstance.moduleInstanceState.name,
-            relX: serializedInstance.layoutState.relX,
-            relY: serializedInstance.layoutState.relY,
-            relHeight: serializedInstance.layoutState.relHeight,
-            relWidth: serializedInstance.layoutState.relWidth,
-            minimized: serializedInstance.layoutState.minimized,
-            maximized: serializedInstance.layoutState.maximized,
-        }));
+        return this._cachedState.moduleInstances.map((serializedInstance) =>
+            Dashboard.makeLayoutElement(
+                serializedInstance.moduleInstanceState.id,
+                serializedInstance.moduleInstanceState.name,
+                serializedInstance.layoutState,
+            ),
+        );
     }
 
     setLayout(layout: LayoutElement[]): void {
@@ -226,7 +223,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         try {
             for (const serializedInstance of serializedDashboard.moduleInstances) {
                 const { id, name } = serializedInstance.moduleInstanceState;
-                this.makeAndRegisterModuleInstance(name, id);
+                this.instantiateModuleInstance(name, id);
             }
 
             // Doing this after all module instances have been registered
@@ -240,16 +237,9 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
                 moduleInstance.initiateDeserialization(moduleInstanceState, this);
 
-                this._layout.push({
-                    moduleInstanceId: moduleInstanceState.id,
-                    moduleName: moduleInstanceState.name,
-                    relX: layoutState.relX,
-                    relY: layoutState.relY,
-                    relHeight: layoutState.relHeight,
-                    relWidth: layoutState.relWidth,
-                    minimized: layoutState.minimized,
-                    maximized: layoutState.maximized,
-                });
+                this._layout.push(
+                    Dashboard.makeLayoutElement(moduleInstanceState.id, moduleInstanceState.name, layoutState),
+                );
             }
         } catch (error) {
             // A throw partway through (e.g. an old persisted dashboard referencing a module that's
@@ -285,7 +275,32 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         return v4();
     }
 
-    private makeAndRegisterModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
+    private static makeLayoutElement(
+        moduleInstanceId: string,
+        moduleName: string,
+        layout: Omit<LayoutElement, "moduleInstanceId" | "moduleName">,
+    ): LayoutElement {
+        return {
+            moduleInstanceId,
+            moduleName,
+            relX: layout.relX,
+            relY: layout.relY,
+            relHeight: layout.relHeight,
+            relWidth: layout.relWidth,
+            minimized: layout.minimized,
+            maximized: layout.maximized,
+        };
+    }
+
+    /**
+     * Creates a module instance and wires it into internal bookkeeping only (atom store,
+     * `_moduleInstances`, state-change subscription) - no layout entry, no MODULE_INSTANCES/LAYOUT
+     * notifications, no active-instance change. Building block for callers that add several
+     * instances at once and want to notify/activate once at
+     * the end rather than per instance. For adding a single instance to the live dashboard, use
+     * `makeAndAddModuleInstance` instead.
+     */
+    private instantiateModuleInstance(moduleName: string, predefinedId?: string): ModuleInstance<any, any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);
@@ -325,8 +340,14 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._atomStoreMaster.removeAtomStoreForModuleInstance(moduleInstanceId);
     }
 
+    /**
+     * Creates a module instance and fully adds it to the live dashboard: notifies
+     * MODULE_INSTANCES/LAYOUT subscribers and makes it the active instance. Use this to add a
+     * single instance (e.g. from the UI or a template); for bulk creation without per-instance
+     * side effects, see `instantiateModuleInstance`.
+     */
     makeAndAddModuleInstance(moduleName: string): ModuleInstance<any, any> {
-        const moduleInstance = this.makeAndRegisterModuleInstance(moduleName);
+        const moduleInstance = this.instantiateModuleInstance(moduleName);
 
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.MODULE_INSTANCES);
         this._publishSubscribeDelegate.notifySubscribers(DashboardTopic.LAYOUT);
@@ -377,12 +398,22 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
         this._cachedState = null;
     }
 
+    /**
+     * Tears down the dashboard's module instances but caches their serialized state first, so a
+     * later `load()` can bring it back. Use when the dashboard is only being switched away from
+     * (e.g. hot-cache eviction), not when it's being removed from the session for good - for that,
+     * use `beforeDestroy()`, which skips the caching since there's no future `load()` to serve.
+     */
     unload(): void {
         this._cachedState = this.serializeState();
         this.clearLayout();
     }
 
-    beforeUnload(): void {
+    /**
+     * Tears down the dashboard's module instances without caching state - use when the dashboard
+     * is being permanently removed from the session (or the session itself torn down).
+     */
+    beforeDestroy(): void {
         this.clearLayout();
     }
 
@@ -413,16 +444,7 @@ export class Dashboard implements PublishSubscribe<DashboardTopicPayloads> {
 
         for (const module of template.moduleInstances) {
             const moduleInstance = dashboard.makeAndAddModuleInstance(module.moduleName);
-            layout.push({
-                moduleInstanceId: moduleInstance.getId(),
-                moduleName: module.moduleName,
-                relX: module.layout.relX,
-                relY: module.layout.relY,
-                relHeight: module.layout.relHeight,
-                relWidth: module.layout.relWidth,
-                minimized: module.layout.minimized,
-                maximized: module.layout.maximized,
-            });
+            layout.push(Dashboard.makeLayoutElement(moduleInstance.getId(), module.moduleName, module.layout));
 
             if (module.syncedSettings) {
                 for (const syncedSetting of module.syncedSettings) {

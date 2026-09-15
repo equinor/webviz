@@ -324,7 +324,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes, TSerializedSta
         this._moduleInstances = this._moduleInstances.filter((instance) => instance.getId() !== id);
     }
 
-    onInstanceUnload(instanceId: string) {
+    notifyInstanceUnload(instanceId: string) {
         this._onInstanceUnloadFunc?.(instanceId);
     }
 

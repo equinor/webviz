@@ -557,7 +557,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         // no longer part of the session.
         this._dashboardHotCache.forget(dashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
-        dashboard.beforeUnload();
+        dashboard.beforeDestroy();
         this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
         this.handleStateChange();
     }
@@ -607,7 +607,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         // reporting this id as hot even though a different Dashboard instance has taken its place.
         this._dashboardHotCache.forget(oldDashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
-        oldDashboard.beforeUnload();
+        oldDashboard.beforeDestroy();
 
         this._unsubscribeFunctionsManagerDelegate.registerUnsubscribeFunction(
             `dashboard-${newDashboard.getId()}`,
@@ -669,7 +669,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     clear(): void {
         for (const dashboard of this._dashboards) {
             this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
-            dashboard.beforeUnload();
+            dashboard.beforeDestroy();
         }
         this._dashboards = [];
         this._activeDashboardId = null;

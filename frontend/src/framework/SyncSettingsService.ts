@@ -15,8 +15,7 @@ import type { Wellbore } from "./types/wellbore";
  * These are the module "sync settings" - values a module opts into sharing with the other
  * modules of the same dashboard (see {@link SyncSettingsHelper} in `SyncSettings.ts`). One
  * {@link SyncSettingsService} instance is owned per `Dashboard`, so syncing never crosses
- * dashboard boundaries - not even while several dashboards are mounted at once by the
- * dashboard hot-cache.
+ * dashboard boundaries.
  */
 export type SyncSettingsTopicDefinitions = {
     "global.syncValue.ensembles": RegularEnsembleIdent[];
