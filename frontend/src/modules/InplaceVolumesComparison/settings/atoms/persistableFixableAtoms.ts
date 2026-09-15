@@ -4,6 +4,7 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
+import type { PersistableAtomDependenciesState } from "@framework/utils/atomUtils";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
@@ -20,7 +21,7 @@ import {
 } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): "error" | "loading" | "loaded" {
+function computeTableDefinitionsQueryDependenciesState({ get }: { get: Getter }): PersistableAtomDependenciesState {
     const tableDefinitions = get(tableDefinitionsQueryAtom);
     if (tableDefinitions.isLoading) {
         return "loading";
