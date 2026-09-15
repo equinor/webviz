@@ -167,8 +167,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             <Setting.Panel>
                 <Setting.Section title="Sources" defaultOpen>
                     <Setting.Field
-                        label="Reference ensemble"
-                        description="Ensemble the change is measured from."
+                        label="Reference source"
+                        description="Ensemble and table the change is measured from."
                         help={{
                             title: "Reference and comparison",
                             content: (
@@ -198,13 +198,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     >
                         <>
                             <EnsembleDropdown
+                                aria-label="Reference ensemble"
                                 ensembles={ensembleSet.getRegularEnsembleArray()}
                                 value={referenceEnsembleIdent.value}
                                 ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                                 onValueChange={setReferenceEnsembleIdent}
                             />{" "}
                             <Combobox
-                                startAdornment={<span>Table source:</span>}
+                                aria-label="Reference table"
                                 value={selectedReferenceTableName.value}
                                 items={referenceTableNameOptions}
                                 onValueChange={(v) => setSelectedReferenceTableName(v)}
@@ -213,8 +214,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     </Setting.Field>
 
                     <Setting.Field
-                        label="Comparison ensemble"
-                        description="Ensemble the change is measured to."
+                        label="Comparison source"
+                        description="Ensemble and table the change is measured to."
                         annotations={comparisonSourceAnnotations}
                         stacked
                         loadingOverlay={tableDefinitionsQuery.isLoading}
@@ -228,13 +229,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     >
                         <>
                             <EnsembleDropdown
+                                aria-label="Comparison ensemble"
                                 ensembles={ensembleSet.getRegularEnsembleArray()}
                                 value={comparisonEnsembleIdent.value}
                                 ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
                                 onValueChange={setComparisonEnsembleIdent}
                             />{" "}
                             <Combobox
-                                startAdornment={<span>Table source:</span>}
+                                aria-label="Comparison table"
                                 value={selectedComparisonTableName.value}
                                 items={comparisonTableNameOptions}
                                 onValueChange={(v) => setSelectedComparisonTableName(v)}
