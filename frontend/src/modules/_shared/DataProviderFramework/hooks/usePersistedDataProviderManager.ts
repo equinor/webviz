@@ -30,7 +30,9 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
     } = options;
 
     // Ref to track last persisted serialized state - to avoid redundant applications of same state to manager
+    const currentSerializedStateRef = React.useRef(serializedState);
     const setSerializedStateRef = React.useRef(setSerializedState);
+    currentSerializedStateRef.current = serializedState;
     setSerializedStateRef.current = setSerializedState; // updated every render, no effect needed
 
     const dataProviderManagerRef = React.useRef<DataProviderManager | null>(null);
@@ -66,6 +68,13 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             // Reset ref tracking last persisted state
             dataProviderSerializedStateRef.current = null;
 
+            // If there is an existing state, make sure we apply it when we create a new manager
+            // ! Currently, *all* dependencies are technically static, so this arguably not relevant
+            // ! as we, effectively, will always run this effect, followed by persistedDataChangeEffect below
+            if (currentSerializedStateRef.current) {
+                dataProviderManagerRef.current.deserializeState(JSON.parse(currentSerializedStateRef.current));
+            }
+
             // Subscribe to DataProviderManager state changes to persist state.
             const unsubscribeDataRev = manager
                 .getPublishSubscribeDelegate()
@@ -87,6 +96,7 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
     /**
      * Apply persisted serialized state to DataProviderManager.
      * This should only apply the state once per manager, when the serialized state changes.
+     * ! Effects run in order! Ensure this effect always runs after the effect that initializes the manager!
      */
     React.useEffect(
         function persistedDataChangeEffect() {

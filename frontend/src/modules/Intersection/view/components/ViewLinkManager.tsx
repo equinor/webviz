@@ -82,7 +82,7 @@ export function ViewLinkManager({
 
     // Clean up ViewLinks when views are deleted/removed (not toggled visibility).
     // - Hidden views are still in `allItemIds`, until they are deleted/removed.
-    if (!hasAppliedInitialRef.current && !isEqual(allItemIds, prevAllItemIds)) {
+    if (hasAppliedInitialRef.current && !isEqual(allItemIds, prevAllItemIds)) {
         setPrevAllItemIds(allItemIds);
 
         setViewLinks((prev) => {
