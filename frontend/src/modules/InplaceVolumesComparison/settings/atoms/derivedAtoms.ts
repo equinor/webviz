@@ -1,3 +1,4 @@
+import type { Getter } from "jotai";
 import { atom } from "jotai";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
@@ -49,10 +50,10 @@ export const availableComparisonTableNamesAtom = atom((get) =>
 );
 
 /** The single table definition backing each side, or null while unselected or still loading. */
-const sourceTableDefinitionsAtom = atom<{
+function getSourceTableDefinitions(get: Getter): {
     reference: InplaceVolumesTableDefinition_api | null;
     comparison: InplaceVolumesTableDefinition_api | null;
-}>((get) => {
+} {
     const tableDefinitions = get(tableDefinitionsQueryAtom);
 
     function findDefinition(
@@ -76,7 +77,7 @@ const sourceTableDefinitionsAtom = atom<{
             get(selectedComparisonTableNameAtom).value,
         ),
     };
-});
+}
 
 /**
  * Accessor over exactly the two selected (ensemble, table) sources. The definitions are pre-filtered
@@ -88,7 +89,7 @@ const sourceTableDefinitionsAtom = atom<{
  * by leaving them unfiltered or by intersecting them, see `availableIndicesWithValuesAtom`.
  */
 export const tableDefinitionsAccessorAtom = atom((get) => {
-    const sourceTableDefinitions = get(sourceTableDefinitionsAtom);
+    const sourceTableDefinitions = getSourceTableDefinitions(get);
     const sourceSpecs = [
         { ensembleIdent: get(selectedReferenceEnsembleIdentAtom).value, definition: sourceTableDefinitions.reference },
         {
@@ -135,7 +136,7 @@ export type IndexColumnDifference = {
 
 /** Index columns the two sources do not agree on, either structurally or in their available values. */
 export const indexColumnDifferencesAtom = atom<IndexColumnDifference[]>((get) => {
-    const { reference, comparison } = get(sourceTableDefinitionsAtom);
+    const { reference, comparison } = getSourceTableDefinitions(get);
     if (!reference || !comparison) {
         return [];
     }
