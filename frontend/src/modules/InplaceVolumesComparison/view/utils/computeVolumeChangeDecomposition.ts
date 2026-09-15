@@ -95,7 +95,12 @@ export function isWaterfallTargetResultName(resultName: string | null): resultNa
     return resultName !== null && (WATERFALL_TARGET_RESULT_NAMES as readonly string[]).includes(resultName);
 }
 
-/** The FLUID value the volumes must be restricted to for the given waterfall target. */
+/**
+ * The FLUID value the volumes must be restricted to for the given waterfall target.
+ *
+ * @param target - The waterfall target volume ("STOIIP" or "GIIP").
+ * @returns "oil" for STOIIP, "gas" for GIIP.
+ */
 export function getRequiredFluidForWaterfallTarget(target: WaterfallTargetResultName): string {
     return REQUIRED_FLUID_BY_TARGET[target];
 }
@@ -104,8 +109,12 @@ export function getRequiredFluidForWaterfallTarget(target: WaterfallTargetResult
  * Determine the factor decomposition for a target result, given the available result names.
  *
  * When NTG/PORO_NET are available the porosity term is split into NTG · PORO_NET, otherwise the
- * combined PORO term is used. Returns null when the target is not decomposable or a required volume
- * column is not available.
+ * combined PORO term is used.
+ *
+ * @param targetResultName - The selected target volume, or null when nothing is selected.
+ * @param availableResultNames - Result names available on both sources.
+ * @returns The factor spec, or null when the target is not decomposable or a required volume column
+ * is unavailable.
  */
 export function getWaterfallFactorSpec(
     targetResultName: string | null,
@@ -201,8 +210,11 @@ function computeFactorMultiplier(
 /**
  * Compute the volume change decomposition from per-ensemble mean volumes.
  *
- * Returns null when the target means are missing/invalid or any factor multiplier cannot be
- * computed (e.g. a zero reference value).
+ * @param spec - The factor spec for the target volume, from `getWaterfallFactorSpec`.
+ * @param referenceMeans - Mean volumes for the reference source, keyed by result name.
+ * @param comparisonMeans - Mean volumes for the comparison source, keyed by result name.
+ * @returns The waterfall bars, or null when the target means are missing/invalid or any factor
+ * multiplier cannot be computed (e.g. a zero reference value).
  */
 export function computeVolumeChangeDecomposition(
     spec: WaterfallFactorSpec,

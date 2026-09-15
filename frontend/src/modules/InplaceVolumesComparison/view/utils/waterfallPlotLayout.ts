@@ -1,5 +1,11 @@
 import type { VolumeChangeDecomposition } from "./computeVolumeChangeDecomposition";
 
+/**
+ * Y-axis range for a waterfall's cumulative bars, padded so the bars don't touch the plot edges.
+ *
+ * @param decomposition - The decomposition to size the axis for.
+ * @returns A `[low, high]` range.
+ */
 export function makeYAxisRange(decomposition: VolumeChangeDecomposition): [number, number] {
     const cumulatives = decomposition.bars.map((bar) => bar.cumulative);
     const cumulativeMin = Math.min(...cumulatives);
@@ -9,6 +15,12 @@ export function makeYAxisRange(decomposition: VolumeChangeDecomposition): [numbe
     return [cumulativeMin - padding, cumulativeMax + padding];
 }
 
+/**
+ * Subplot grid dimensions that fit the given number of subplots as close to a square as possible.
+ *
+ * @param numSubplots - Number of subplots to lay out.
+ * @returns The number of rows and columns to use.
+ */
 export function calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
     if (numSubplots < 1) {
         return { numRows: 1, numCols: 1 };
