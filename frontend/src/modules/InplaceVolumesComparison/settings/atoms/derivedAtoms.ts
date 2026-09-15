@@ -177,9 +177,14 @@ export const isIndexValueIntersectionEnabledAtom = atom(
 );
 
 /** True when intersecting is enabled and actually narrows the data, i.e. the compared totals are partial. */
-export const isIndexValueIntersectionActiveAtom = atom(
-    (get) => get(isIndexValueIntersectionEnabledAtom) && get(indexColumnDifferencesAtom).length > 0,
-);
+export const isIndexValueIntersectionActiveAtom = atom((get) => {
+    if (!get(isIndexValueIntersectionEnabledAtom)) {
+        return false;
+    }
+    // A column missing entirely from one source can never be intersected (it never enters
+    // availableIndicesWithValuesAtom), so it does not make the switch narrow anything.
+    return get(indexColumnDifferencesAtom).some((difference) => difference.missingFrom === null);
+});
 
 /**
  * Index columns the two sources share but do not agree on the values of, and that are therefore not
@@ -212,6 +217,15 @@ export const indexColumnsWithNoSelectedValuesAtom = atom<string[]>((get) => {
                     .length ?? 0) === 0,
         )
         .map((available) => available.indexColumn);
+});
+
+/**
+ * False for a persisted/template selection that is invalid in the current context (e.g. it references
+ * a REGION/ZONE value no longer available). Such a selection is passed through unfixed by
+ * `persistableFixableAtom`, so it must be checked explicitly before querying with it.
+ */
+export const areSelectedIndicesWithValuesValidAtom = atom<boolean>((get) => {
+    return get(selectedIndicesWithValuesAtom).isValidInContext;
 });
 
 /**

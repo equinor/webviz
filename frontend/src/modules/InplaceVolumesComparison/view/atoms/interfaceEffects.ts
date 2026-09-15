@@ -3,6 +3,7 @@ import type { InterfaceEffects } from "@framework/Module";
 import type { SettingsToViewInterface } from "../../interfaces";
 
 import {
+    areSelectedIndicesWithValuesValidAtom,
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
@@ -58,6 +59,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(areSelectedTablesComparableAtom, getInterfaceValue("areSelectedTablesComparable"));
+    },
+    (getInterfaceValue, setAtomValue) => {
+        setAtomValue(areSelectedIndicesWithValuesValidAtom, getInterfaceValue("areSelectedIndicesWithValuesValid"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(showTableAtom, getInterfaceValue("showTable"));

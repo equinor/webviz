@@ -4,6 +4,7 @@ import type { InterfaceInitialization } from "@framework/UniDirectionalModuleCom
 
 import { showTableAtom } from "./settings/atoms/baseAtoms";
 import {
+    areSelectedIndicesWithValuesValidAtom,
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
     indexColumnsLeftUnfilteredAtom,
@@ -39,6 +40,8 @@ export type SettingsToViewInterface = {
     waterfallFactorSpec: WaterfallFactorSpec | null;
     areSourcesDistinct: boolean;
     areSelectedTablesComparable: boolean;
+    /** False for a persisted/template index-value selection that is invalid in the current context. */
+    areSelectedIndicesWithValuesValid: boolean;
     showTable: boolean;
 };
 
@@ -60,5 +63,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     waterfallFactorSpec: (get) => get(waterfallFactorSpecAtom),
     areSourcesDistinct: (get) => get(areSourcesDistinctAtom),
     areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
+    areSelectedIndicesWithValuesValid: (get) => get(areSelectedIndicesWithValuesValidAtom),
     showTable: (get) => get(showTableAtom),
 };

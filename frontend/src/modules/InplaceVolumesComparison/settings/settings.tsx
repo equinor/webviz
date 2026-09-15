@@ -14,6 +14,7 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
+import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
@@ -32,6 +33,7 @@ import {
     indexColumnDifferencesAtom,
     indexColumnsWithNoSelectedValuesAtom,
     isCrossTableComparisonAtom,
+    isIndexValueIntersectionActiveAtom,
     isSingleEnsembleComparisonAtom,
     waterfallFactorSpecAtom,
 } from "./atoms/derivedAtoms";
@@ -85,6 +87,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const waterfallFactorSpec = useAtomValue(waterfallFactorSpecAtom);
     const isSingleEnsembleComparison = useAtomValue(isSingleEnsembleComparisonAtom);
     const isCrossTableComparison = useAtomValue(isCrossTableComparisonAtom);
+    const isIndexValueIntersectionActive = useAtomValue(isIndexValueIntersectionActiveAtom);
+
+    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     const persistedReferenceEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedReferenceEnsembleIdentAtom,
@@ -95,8 +100,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const resultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
     const subplotByAnnotations = useMakePersistableFixableAtomAnnotations(selectedSubplotByAtom);
 
+    // areSourcesDistinct is also false while either table is still unselected/loading, so only treat
+    // this as a real duplicate-source error once both full sources (ensemble + table) are known.
     const isSameSourceSelectedTwice = Boolean(
-        referenceEnsembleIdent.value && comparisonEnsembleIdent.value && !areSourcesDistinct,
+        referenceEnsembleIdent.value &&
+            comparisonEnsembleIdent.value &&
+            selectedReferenceTableName.value &&
+            selectedComparisonTableName.value &&
+            !areSourcesDistinct,
     );
 
     const referenceEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
@@ -130,9 +141,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     ];
 
     function handleIndexValuesChange(indexColumn: string, values: string[]) {
-        const newIndicesWithValues = selectedIndicesWithValues.value
-            .filter((index) => index.indexColumn !== FLUID_INDEX_COLUMN)
-            .map((index) => (index.indexColumn === indexColumn ? { indexColumn, values } : index));
+        const withoutFluid = selectedIndicesWithValues.value.filter((index) => index.indexColumn !== FLUID_INDEX_COLUMN);
+        const hasExistingEntry = withoutFluid.some((index) => index.indexColumn === indexColumn);
+        // A persisted/template selection that omits a newly available column has no entry to update, so
+        // it must be appended rather than left stuck without a value.
+        const newIndicesWithValues = hasExistingEntry
+            ? withoutFluid.map((index) => (index.indexColumn === indexColumn ? { indexColumn, values } : index))
+            : [...withoutFluid, { indexColumn, values }];
         setSelectedIndicesWithValues(newIndicesWithValues);
     }
 
@@ -279,7 +294,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                     <li key={difference.indexColumn}>
                                         <strong>{difference.indexColumn}</strong>
                                         {difference.missingFrom !== null ? (
-                                            <> exists only in the {difference.missingFrom}, so it cannot be used.</>
+                                            <>
+                                                {" "}
+                                                exists only in the{" "}
+                                                {difference.missingFrom === "comparison" ? "reference" : "comparison"},
+                                                so it cannot be used.
+                                            </>
                                         ) : (
                                             <>
                                                 {difference.referenceOnlyValues.length > 0 && (
@@ -302,7 +322,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 ))}
                             </ul>
                             <div className="mt-xs">
-                                {isIndexValueIntersectionEnabled
+                                {isIndexValueIntersectionActive
                                     ? "Only values present in both are compared, so the totals below are for that shared subset and will not match the full-field volumes."
                                     : "These indices are left unfiltered, so the full volume of both sources is compared and the difference in coverage shows up in the BULK contribution."}
                             </div>

@@ -9,6 +9,7 @@ import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
 import type { WaterfallSource } from "../utils/waterfallSources";
 
 import {
+    areSelectedIndicesWithValuesValidAtom,
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
@@ -41,6 +42,7 @@ export const isWaterfallComputableAtom = atom((get) => {
     return (
         get(areSourcesDistinctAtom) &&
         get(areSelectedTablesComparableAtom) &&
+        get(areSelectedIndicesWithValuesValidAtom) &&
         get(waterfallFactorSpecAtom) !== null &&
         get(waterfallSourcesAtom) !== null
     );

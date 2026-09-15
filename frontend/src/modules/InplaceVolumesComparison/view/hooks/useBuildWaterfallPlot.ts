@@ -8,6 +8,7 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 import type { InplaceVolumesStatisticalTableData } from "@modules/_shared/InplaceVolumes/types";
 
 import {
+    areSelectedIndicesWithValuesValidAtom,
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
@@ -201,6 +202,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
     const spec = useAtomValue(waterfallFactorSpecAtom);
     const areSourcesDistinct = useAtomValue(areSourcesDistinctAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const areSelectedIndicesWithValuesValid = useAtomValue(areSelectedIndicesWithValuesValidAtom);
     const isComputable = useAtomValue(isWaterfallComputableAtom);
     const statisticalDataQueries = useAtomValue(waterfallStatisticalDataQueriesAtom);
     const subplotByIndex = useAtomValue(subplotByAtom);
@@ -219,14 +221,24 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         return makeInfoResult("The reference and comparison must differ in either ensemble or table source.");
     }
     if (!areSelectedTablesComparable) {
-        return makeErrorResult(
-            "The selected tables are not comparable: they have no result names or index columns in common.",
-        );
+        // With this module's ALLOW_INTERSECTION accessor, "not comparable" only ever means the two
+        // sources share no index column at all; result-name overlap is checked separately below.
+        return makeErrorResult("The selected tables are not comparable: they have no index columns in common.");
     }
     if (indexColumnsWithNoSelectedValues.length > 0) {
         return makeInfoResult(
             `Select at least one value for ${indexColumnsWithNoSelectedValues.join(", ")}. No data is included otherwise.`,
         );
+    }
+    if (!areSelectedIndicesWithValuesValid) {
+        // A persisted/template selection is kept as-is even when invalid, so it must be checked
+        // explicitly rather than silently querying with values that no longer exist.
+        return makeErrorResult(
+            "The saved index-value filters no longer match the selected tables. Reselect values in the filters section.",
+        );
+    }
+    if (resultName === null) {
+        return makeInfoResult("Select a response (STOIIP or GIIP).");
     }
     if (!isWaterfallTargetResultName(resultName)) {
         return makeErrorResult("Neither STOIIP nor GIIP is available for the selected tables.");
