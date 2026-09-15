@@ -12,6 +12,8 @@ describe("formatInplaceVolumesValue", () => {
     test("handles non-numeric values", () => {
         expect(formatInplaceVolumesValue(null)).toBe("-");
         expect(formatInplaceVolumesValue("N/A")).toBe("N/A");
-        expect(formatInplaceVolumesValue(Infinity)).toBe("Infinity");
+        expect(formatInplaceVolumesValue(Number.NaN)).toBe("-");
+        expect(formatInplaceVolumesValue(Infinity)).toBe("-");
+        expect(formatInplaceVolumesValue(-Infinity)).toBe("-");
     });
 });

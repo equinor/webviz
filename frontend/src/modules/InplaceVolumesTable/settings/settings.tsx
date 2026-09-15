@@ -205,6 +205,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                     additionalSettings={tableSettings}
                     areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
                     selectionAnnotations={selectedIndicesWithValuesAnnotations}
+                    allowDeltaEnsembles
                     onChange={handleFilterChange}
                 />
             </Setting.Panel>

@@ -95,7 +95,13 @@ export type ConvergenceResult = {
 };
 
 export function calcConvergenceArray(realizationAndResultArray: RealizationAndResult[]): ConvergenceResult[] {
-    const sortedArray = realizationAndResultArray.sort((a, b) => a.realization - b.realization);
+    const sortedArray = realizationAndResultArray
+        .filter(function hasFiniteResult(sample) {
+            return Number.isFinite(sample.resultValue);
+        })
+        .sort(function compareRealizations(left, right) {
+            return left.realization - right.realization;
+        });
     const growingDataArray: number[] = [];
     const convergenceArray: ConvergenceResult[] = [];
     let sum = 0;
