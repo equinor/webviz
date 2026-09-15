@@ -48,7 +48,7 @@ import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 const NO_SUBPLOT_VALUE = "__none__";
 
-/** Number of index values listed in the mismatch banner before the rest are elided. */
+/** Number of index values listed in the mismatch banner before the rest are left out. */
 const MAX_LISTED_INDEX_VALUES = 6;
 
 function formatIndexValueList(values: string[]): string {
@@ -174,8 +174,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         annotations={referenceTableNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            referenceEnsembleIdent.value &&
-                            referenceTableNameOptions.length === 0
+                                referenceEnsembleIdent.value &&
+                                referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -205,8 +205,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         annotations={comparisonTableNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            comparisonEnsembleIdent.value &&
-                            comparisonTableNameOptions.length === 0
+                                comparisonEnsembleIdent.value &&
+                                comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }

@@ -78,7 +78,7 @@ function makePendingResult(isFetching: boolean): WaterfallResult {
 
 const SINGLE_GROUP_KEY = "__single__";
 
-/** Number of group labels listed before the rest are elided. */
+/** Number of group labels listed before the rest are left out. */
 const MAX_LISTED_SKIPPED_GROUPS = 5;
 
 type GroupStatistics = {
@@ -299,7 +299,8 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
             comparisonStatistics.means,
         );
         if (!decomposition) {
-            // The ungrouped sentinel is never user-facing: a failed single group ends in the empty check below.
+            // SINGLE_GROUP_KEY is just an internal placeholder, never shown to the user: a failed single
+            // group ends in the empty check below instead.
             if (groupKey !== SINGLE_GROUP_KEY) {
                 skippedGroupLabels.push(groupKey);
             }

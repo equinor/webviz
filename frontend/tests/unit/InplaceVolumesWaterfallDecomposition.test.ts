@@ -70,7 +70,7 @@ describe("computeVolumeChangeDecomposition", () => {
         const decomposition = computeVolumeChangeDecomposition(spec, referenceMeans, comparisonMeans)!;
         expect(decomposition).not.toBeNull();
 
-        // [ref, BULK, PORO, SO, BO, comp] - no residual bar
+        // [ref, BULK, PORO, SO, BO, comp] - no leftover bar
         expect(decomposition.bars.map((bar) => bar.label)).toEqual([
             "Reference",
             "BULK",
@@ -101,9 +101,9 @@ describe("computeVolumeChangeDecomposition", () => {
         expect(relativeSum).toBeCloseTo(15.125 - 11.2, 6);
     });
 
-    test("reconciles exactly for arbitrary means, since the factors telescope", () => {
+    test("reconciles exactly for arbitrary means, since the factors cancel out step by step", () => {
         const spec = getWaterfallFactorSpec("STOIIP", COLLAPSED_RESULT_NAMES)!;
-        // Deliberately unrelated numbers: ratio-of-means factors telescope to STOIIP_comp/STOIIP_ref
+        // Deliberately unrelated numbers: ratio-of-means factors cancel out to STOIIP_comp/STOIIP_ref
         // regardless of whether the means satisfy any product identity.
         const messyReference = new Map<string, number>([
             ["BULK", 1234],

@@ -11,12 +11,13 @@
  *
  * Every factor is built from MEAN VOLUMES, e.g. PORO = mean(PORV)/mean(BULK) and SO = mean(HCPV)/
  * mean(PORV). The API also serves mean PORO/SW/BO directly, but those are means of per-realization
- * ratios, and the mean of a ratio is not the ratio of the means. Only the latter telescopes
+ * ratios, and the mean of a ratio is not the ratio of the means. Only the volume-based version
+ * cancels out step by step:
  *
  *   BULK · PORV/BULK · HCPV/PORV · STOIIP/HCPV = STOIIP
  *
- * so the waterfall lands exactly on the comparison mean. Substituting the mean properties leaves a
- * residual equal to the change in how the factors co-vary across realizations.
+ * so the waterfall lands exactly on the comparison mean. Substituting the mean properties instead
+ * leaves a leftover amount equal to the change in how the factors move together across realizations.
  *
  * Contributions are computed with a sequential cumulative-multiplier method:
  *
