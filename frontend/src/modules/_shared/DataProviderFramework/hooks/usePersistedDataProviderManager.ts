@@ -90,7 +90,6 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
      */
     React.useEffect(
         function persistedDataChangeEffect() {
-            console.log("LOAD STATE ???");
             if (!dataProviderManagerRef.current || !serializedState) {
                 return;
             }
@@ -98,7 +97,6 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             if (serializedState === dataProviderSerializedStateRef.current) {
                 return;
             }
-            console.log("LOAD STATE!!!");
 
             dataProviderManagerRef.current.deserializeState(JSON.parse(serializedState));
         },
