@@ -94,7 +94,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const persistedReferenceEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedReferenceEnsembleIdentAtom,
     );
-    const comparisonEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(selectedComparisonEnsembleIdentAtom);
+    const persistedComparisonEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
+        selectedComparisonEnsembleIdentAtom,
+    );
     const referenceTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedReferenceTableNameAtom);
     const comparisonTableNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedComparisonTableNameAtom);
     const resultNameAnnotations = useMakePersistableFixableAtomAnnotations(selectedResultNameAtom);
@@ -110,12 +112,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         !areSourcesDistinct,
     );
 
-    const referenceEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
-        ? [...persistedReferenceEnsembleAnnotations, { type: "error", message: "Must differ from the comparison" }]
-        : persistedReferenceEnsembleAnnotations;
+    const comparisonEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
+        ? [...persistedComparisonEnsembleAnnotations, { type: "error", message: "Must differ from the reference" }]
+        : persistedComparisonEnsembleAnnotations;
 
     const referenceSourceAnnotations: SettingAnnotation[] = [
-        ...referenceEnsembleAnnotations,
+        ...persistedReferenceEnsembleAnnotations,
         ...referenceTableNameAnnotations,
     ];
     const comparisonSourceAnnotations: SettingAnnotation[] = [
@@ -190,8 +192,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                referenceEnsembleIdent.value &&
-                                referenceTableNameOptions.length === 0
+                            referenceEnsembleIdent.value &&
+                            referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -221,8 +223,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                comparisonEnsembleIdent.value &&
-                                comparisonTableNameOptions.length === 0
+                            comparisonEnsembleIdent.value &&
+                            comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
