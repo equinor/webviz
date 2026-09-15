@@ -236,12 +236,6 @@ spec:
           cpu: 500m
         limits:
           memory: 1Gi
-      environmentConfig:
-        - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
 
     # -----------------------------------------------------------------
@@ -270,12 +264,6 @@ spec:
           cpu: 1000m
         limits:
           memory: 4Gi
-      environmentConfig:
-        - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
 
   jobs:
@@ -317,12 +305,6 @@ spec:
         UVICORN_PORT: 8002
       payload:
         path: /compute/args
-      environmentConfig:
-        - environment: prod
-          identity:
-            azure:
-              # Override with prod clientId
-              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
 
   dnsAppAlias:
     environment: prod
