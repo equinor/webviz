@@ -104,15 +104,24 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     // this as a real duplicate-source error once both full sources (ensemble + table) are known.
     const isSameSourceSelectedTwice = Boolean(
         referenceEnsembleIdent.value &&
-            comparisonEnsembleIdent.value &&
-            selectedReferenceTableName.value &&
-            selectedComparisonTableName.value &&
-            !areSourcesDistinct,
+        comparisonEnsembleIdent.value &&
+        selectedReferenceTableName.value &&
+        selectedComparisonTableName.value &&
+        !areSourcesDistinct,
     );
 
     const referenceEnsembleAnnotations: SettingAnnotation[] = isSameSourceSelectedTwice
         ? [...persistedReferenceEnsembleAnnotations, { type: "error", message: "Must differ from the comparison" }]
         : persistedReferenceEnsembleAnnotations;
+
+    const referenceSourceAnnotations: SettingAnnotation[] = [
+        ...referenceEnsembleAnnotations,
+        ...referenceTableNameAnnotations,
+    ];
+    const comparisonSourceAnnotations: SettingAnnotation[] = [
+        ...comparisonEnsembleAnnotations,
+        ...comparisonTableNameAnnotations,
+    ];
 
     if (areSourcesDistinct && !areSelectedTablesComparable) {
         statusWriter.addWarning("The selected table sources share no index columns and are not comparable.");
@@ -141,7 +150,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     ];
 
     function handleIndexValuesChange(indexColumn: string, values: string[]) {
-        const withoutFluid = selectedIndicesWithValues.value.filter((index) => index.indexColumn !== FLUID_INDEX_COLUMN);
+        const withoutFluid = selectedIndicesWithValues.value.filter(
+            (index) => index.indexColumn !== FLUID_INDEX_COLUMN,
+        );
         const hasExistingEntry = withoutFluid.some((index) => index.indexColumn === indexColumn);
         // A persisted/template selection that omits a newly available column has no entry to update, so
         // it must be appended rather than left stuck without a value.
@@ -174,63 +185,61 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                                 </>
                             ),
                         }}
-                        annotations={referenceEnsembleAnnotations}
-                    >
-                        <EnsembleDropdown
-                            ensembles={ensembleSet.getRegularEnsembleArray()}
-                            value={referenceEnsembleIdent.value}
-                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                            onValueChange={setReferenceEnsembleIdent}
-                        />
-                    </Setting.Field>
-                    <Setting.Field
-                        label="Reference table"
+                        annotations={referenceSourceAnnotations}
+                        stacked
                         loadingOverlay={tableDefinitionsQuery.isLoading}
-                        annotations={referenceTableNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                referenceEnsembleIdent.value &&
-                                referenceTableNameOptions.length === 0
+                            referenceEnsembleIdent.value &&
+                            referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
                     >
-                        <Combobox
-                            value={selectedReferenceTableName.value}
-                            items={referenceTableNameOptions}
-                            onValueChange={(v) => setSelectedReferenceTableName(v)}
-                        />
+                        <>
+                            <EnsembleDropdown
+                                ensembles={ensembleSet.getRegularEnsembleArray()}
+                                value={referenceEnsembleIdent.value}
+                                ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                                onValueChange={setReferenceEnsembleIdent}
+                            />{" "}
+                            <Combobox
+                                startAdornment={<span>Table source:</span>}
+                                value={selectedReferenceTableName.value}
+                                items={referenceTableNameOptions}
+                                onValueChange={(v) => setSelectedReferenceTableName(v)}
+                            />
+                        </>
                     </Setting.Field>
 
                     <Setting.Field
                         label="Comparison ensemble"
                         description="Ensemble the change is measured to."
-                        annotations={comparisonEnsembleAnnotations}
-                    >
-                        <EnsembleDropdown
-                            ensembles={ensembleSet.getRegularEnsembleArray()}
-                            value={comparisonEnsembleIdent.value}
-                            ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
-                            onValueChange={setComparisonEnsembleIdent}
-                        />
-                    </Setting.Field>
-                    <Setting.Field
-                        label="Comparison table"
+                        annotations={comparisonSourceAnnotations}
+                        stacked
                         loadingOverlay={tableDefinitionsQuery.isLoading}
-                        annotations={comparisonTableNameAnnotations}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                comparisonEnsembleIdent.value &&
-                                comparisonTableNameOptions.length === 0
+                            comparisonEnsembleIdent.value &&
+                            comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
                     >
-                        <Combobox
-                            value={selectedComparisonTableName.value}
-                            items={comparisonTableNameOptions}
-                            onValueChange={(v) => setSelectedComparisonTableName(v)}
-                        />
+                        <>
+                            <EnsembleDropdown
+                                ensembles={ensembleSet.getRegularEnsembleArray()}
+                                value={comparisonEnsembleIdent.value}
+                                ensembleRealizationFilterFunction={ensembleRealizationFilterFunction}
+                                onValueChange={setComparisonEnsembleIdent}
+                            />{" "}
+                            <Combobox
+                                startAdornment={<span>Table source:</span>}
+                                value={selectedComparisonTableName.value}
+                                items={comparisonTableNameOptions}
+                                onValueChange={(v) => setSelectedComparisonTableName(v)}
+                            />
+                        </>
                     </Setting.Field>
 
                     {isCrossTableComparison && (
