@@ -1,3 +1,9 @@
+
+# Client IDs referenced in this configuration:
+#   900ed417-a860-4970-bd37-73b059ca6f0d  -  Prod application ID (webviz)
+#   025fe044-5ee8-4b27-bf83-aefb548f14fa  -  NonProd application ID (webviz-nonprod)
+#   cabb1ac4-d5a7-4017-b6bf-c883c503c95e  -  Managed identity for access to KeyVault (id-webviz-keyvault-shared)
+
 apiVersion: radix.equinor.com/v1
 kind: RadixApplication
 metadata:
@@ -16,6 +22,9 @@ spec:
     - name: review2
       build:
         from: review2
+    - name: review3
+      build:
+        from: review3
     - name: dev
       build:
         from: dev
@@ -40,7 +49,7 @@ spec:
       ports:
         - name: http
           port: 5000
-      # Set non-prod clientId and client secret as default, prod overrides below
+      # Set non-prod clientId as default, prod overrides below
       identity:
         azure:
           clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
@@ -49,7 +58,6 @@ spec:
           - name: kv-webviz-shared
             useAzureIdentity: true
             items:
-              # - { name: webviz-client-secret-nonprod, envVar: WEBVIZ_CLIENT_SECRET }
               - { name: webviz-smda-subscription-key, envVar: WEBVIZ_SMDA_SUBSCRIPTION_KEY }
               - { name: webviz-enterprise-subscription-key, envVar: WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY }
               - { name: webviz-pseudonym-hmac-key, envVar: WEBVIZ_PSEUDONYM_HMAC_KEY }
@@ -63,6 +71,7 @@ spec:
               - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
               - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
+              - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
       variables:
         UVICORN_PORT: 5000
         WEBVIZ_VDS_HOST_ADDRESS: "https://server-oneseismic-prod.radix.equinor.com"
@@ -73,12 +82,6 @@ spec:
             azure:
               # Override with prod clientId
               clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
-          # secretRefs:
-          #   azureKeyVaults:
-          #     - name: kv-webviz-shared
-          #       useAzureIdentity: true
-          #       items:
-          #         - { name: webviz-client-secret-prod, envVar: WEBVIZ_CLIENT_SECRET }
           resources:
             requests:
               memory: 8Gi
@@ -128,9 +131,25 @@ spec:
                 averageUtilization: 80
 
         - environment: review2
+          resources:
+            requests:
+              memory: 4Gi
+              cpu: 500m
+            limits:
+              memory: 4Gi
+          horizontalScaling:
+            minReplicas: 1
+            maxReplicas: 3
+            resources:
+              memory:
+                averageUtilization: 60
+              cpu:
+                averageUtilization: 80
+
+        - environment: review3
           variables:
             WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
-            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review2-default
+            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
           resources:
             requests:
               memory: 4Gi
@@ -198,8 +217,8 @@ spec:
       dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
-          # Set nonprod clientId as default, prod overrides below
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+          # Use managed identity for pure KeyVault access
+          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -230,8 +249,8 @@ spec:
       dockerFileName: ./docker/redis/Dockerfile
       identity:
         azure:
-          # Set nonprod clientId as default, prod overrides below
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+          # Use managed identity for pure KeyVault access
+          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -279,8 +298,8 @@ spec:
           port: 8002
       identity:
         azure:
-          # Set nonprod clientId as default, prod overrides below
-          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+          # Use managed identity for pure KeyVault access
+          clientId: cabb1ac4-d5a7-4017-b6bf-c883c503c95e
       secretRefs:
         azureKeyVaults:
           - name: kv-webviz-shared
@@ -293,6 +312,7 @@ spec:
               - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
               - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
+              - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
       variables:
         UVICORN_PORT: 8002
       payload:

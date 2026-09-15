@@ -9,6 +9,7 @@ from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+from azure.identity.aio import WorkloadIdentityCredential, ClientSecretCredential
 
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
@@ -98,7 +99,10 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
-    azure_services_credential = create_credential_for_azure_services()
+    # The opt-out for the credential creation here is only meant for special scenarios such as e2e testing.
+    azure_services_credential: WorkloadIdentityCredential | ClientSecretCredential | None = None
+    if "WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION" not in os.environ:
+        azure_services_credential = create_credential_for_azure_services()
 
     if config.COSMOS_DB_EMULATOR_HOST:
         LOGGER.info(
@@ -109,6 +113,9 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
         LOGGER.info(
             f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
         )
+        if azure_services_credential is None:
+            raise RuntimeError("Cannot proceed without an Azure services credential.")
+
         await PersistenceStoresSingleton.initialize_with_credential_async(
             config.COSMOS_DB_URL, azure_services_credential
         )
@@ -128,7 +135,10 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 
     await MessageBusSingleton.shutdown_async()
     await PersistenceStoresSingleton.shutdown_async()
-    await azure_services_credential.close()
+
+    if azure_services_credential is not None:
+        await azure_services_credential.close()
+
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
@@ -136,7 +146,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 # we skip the actual initialization of the FastAPI app and just set lifespan_handler_async to None.
 # This allows us to import this module and access the app object without running the lifespan handler,
 # which may be desirable in certain contexts such as API code generation.
-if os.getenv("WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY") is not None:
+if "WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY" in os.environ:
     lifespan_handler_async = None  # type: ignore[assignment]
 
 app = FastAPI(

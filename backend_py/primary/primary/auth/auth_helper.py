@@ -2,7 +2,7 @@ import base64
 import logging
 import os
 import time
-from typing import Literal, Optional, TypeAlias, get_args
+from typing import Callable, Literal, Optional, TypeAlias, get_args
 from pathlib import Path
 
 import jwt
@@ -204,13 +204,17 @@ def _acquire_access_token_for_resource_scopes(
     # Earlier we used acquire_token_silent() here, but it doesn't give any feedback on why a call failed,
     # so we switched to acquire_token_silent_with_error() instead and log errors.
     token_dict = cca.acquire_token_silent_with_error(scopes=scopes_list, account=account)
+    if token_dict is None:
+        LOGGER.error(f"No token found in cache when acquiring token silently ({resource_name=}, {scopes_list=})")
+        return None
+
     if "error" in token_dict:
         LOGGER.error(
             f"Error acquiring token silently ({resource_name=}, {scopes_list=}), error: {token_dict['error']}, error_description: {token_dict.get('error_description')}"
         )
         return None
 
-    access_token = token_dict.get("access_token") if token_dict else None
+    access_token = token_dict.get("access_token")
     if not access_token:
         return None
 
@@ -331,6 +335,7 @@ def _create_msal_confidential_client_app(token_cache: msal.TokenCache | None) ->
     #   short-lived federated token presented as a client assertion. We pass _get_client_assertion as a callable so MSAL
     #   invokes it each time it needs the assertion, ensuring the rotated token file is always re-read.
     # * Locally (dev/docker-compose) we authenticate with a plain client secret from AZURE_CLIENT_SECRET.
+    client_credential_to_use: str | dict[str, Callable]
     if is_on_radix_platform:
         client_credential_to_use = {"client_assertion": _get_client_assertion}
     else:
