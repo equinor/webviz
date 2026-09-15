@@ -7,17 +7,16 @@ import {
     areSelectedTablesComparableAtom,
     areSourcesDistinctAtom,
     comparisonEnsembleIdentAtom,
-    comparisonTableNameAtom,
     indexColumnsLeftUnfilteredAtom,
     indexColumnsWithNoSelectedValuesAtom,
     indicesWithValuesAtom,
     isIndexValueIntersectionActiveAtom,
     referenceEnsembleIdentAtom,
-    referenceTableNameAtom,
     resultNameAtom,
     showTableAtom,
     subplotByAtom,
     waterfallFactorSpecAtom,
+    waterfallSourcesAtom,
 } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
@@ -28,10 +27,7 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(comparisonEnsembleIdentAtom, getInterfaceValue("comparisonEnsembleIdent"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(referenceTableNameAtom, getInterfaceValue("referenceTableName"));
-    },
-    (getInterfaceValue, setAtomValue) => {
-        setAtomValue(comparisonTableNameAtom, getInterfaceValue("comparisonTableName"));
+        setAtomValue(waterfallSourcesAtom, getInterfaceValue("waterfallSources"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(resultNameAtom, getInterfaceValue("resultName"));

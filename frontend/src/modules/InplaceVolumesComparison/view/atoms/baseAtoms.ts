@@ -4,11 +4,11 @@ import type { InplaceVolumesIndexWithValues_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import type { WaterfallFactorSpec } from "../utils/computeVolumeChangeDecomposition";
+import type { WaterfallSource } from "../utils/waterfallSources";
 
 export const referenceEnsembleIdentAtom = atom<RegularEnsembleIdent | null>(null);
 export const comparisonEnsembleIdentAtom = atom<RegularEnsembleIdent | null>(null);
-export const referenceTableNameAtom = atom<string | null>(null);
-export const comparisonTableNameAtom = atom<string | null>(null);
+export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; comparison: WaterfallSource } | null>(null);
 export const resultNameAtom = atom<string | null>(null);
 export const subplotByAtom = atom<string | null>(null);
 export const indicesWithValuesAtom = atom<InplaceVolumesIndexWithValues_api[]>([]);

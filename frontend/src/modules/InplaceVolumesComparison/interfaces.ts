@@ -12,22 +12,21 @@ import {
     indicesWithValuesForQueryAtom,
     isIndexValueIntersectionActiveAtom,
     waterfallFactorSpecAtom,
+    waterfallSourcesAtom,
 } from "./settings/atoms/derivedAtoms";
 import {
-    selectedComparisonEnsembleIdentAtom,
-    selectedComparisonTableNameAtom,
     selectedReferenceEnsembleIdentAtom,
-    selectedReferenceTableNameAtom,
+    selectedComparisonEnsembleIdentAtom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
 } from "./settings/atoms/persistableFixableAtoms";
 import type { WaterfallFactorSpec } from "./view/utils/computeVolumeChangeDecomposition";
+import type { WaterfallSource } from "./view/utils/waterfallSources";
 
 export type SettingsToViewInterface = {
     referenceEnsembleIdent: RegularEnsembleIdent | null;
     comparisonEnsembleIdent: RegularEnsembleIdent | null;
-    referenceTableName: string | null;
-    comparisonTableName: string | null;
+    waterfallSources: { reference: WaterfallSource; comparison: WaterfallSource } | null;
     resultName: string | null;
     subplotBy: string | null;
     indicesWithValues: InplaceVolumesIndexWithValues_api[];
@@ -52,8 +51,7 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     referenceEnsembleIdent: (get) => get(selectedReferenceEnsembleIdentAtom).value,
     comparisonEnsembleIdent: (get) => get(selectedComparisonEnsembleIdentAtom).value,
-    referenceTableName: (get) => get(selectedReferenceTableNameAtom).value,
-    comparisonTableName: (get) => get(selectedComparisonTableNameAtom).value,
+    waterfallSources: (get) => get(waterfallSourcesAtom),
     resultName: (get) => get(selectedResultNameAtom).value,
     subplotBy: (get) => get(selectedSubplotByAtom).value,
     indicesWithValues: (get) => get(indicesWithValuesForQueryAtom),

@@ -12,6 +12,7 @@ import {
     isWaterfallTargetResultName,
     WATERFALL_TARGET_RESULT_NAMES,
 } from "../../view/utils/computeVolumeChangeDecomposition";
+import type { WaterfallSource } from "../../view/utils/waterfallSources";
 
 import { selectedIndexValueCriteriaAtom } from "./baseAtoms";
 import {
@@ -227,6 +228,26 @@ export const indexColumnsWithNoSelectedValuesAtom = atom<string[]>((get) => {
  */
 export const areSelectedIndicesWithValuesValidAtom = atom<boolean>((get) => {
     return get(selectedIndicesWithValuesAtom).isValidInContext;
+});
+
+/**
+ * The reference and comparison sources, or null when either is incompletely selected. Computed once
+ * here so settings and view read the same combination of ensemble and table.
+ */
+export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; comparison: WaterfallSource } | null>((get) => {
+    const referenceEnsembleIdent = get(selectedReferenceEnsembleIdentAtom).value;
+    const comparisonEnsembleIdent = get(selectedComparisonEnsembleIdentAtom).value;
+    const referenceTableName = get(selectedReferenceTableNameAtom).value;
+    const comparisonTableName = get(selectedComparisonTableNameAtom).value;
+
+    if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
+        return null;
+    }
+
+    return {
+        reference: { ensembleIdent: referenceEnsembleIdent, tableName: referenceTableName },
+        comparison: { ensembleIdent: comparisonEnsembleIdent, tableName: comparisonTableName },
+    };
 });
 
 /**

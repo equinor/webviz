@@ -1,52 +1,12 @@
-import { atom } from "jotai";
-
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import type { InplaceVolumesSource } from "@modules/_shared/InplaceVolumes/queryHooks";
 import { makeAggregatedStatisticalTableDataQueryOptionsFromSources } from "@modules/_shared/InplaceVolumes/queryHooks";
 
 import { FLUID_INDEX_COLUMN } from "../utils/computeVolumeChangeDecomposition";
-import type { WaterfallSource } from "../utils/waterfallSources";
 
-import {
-    areSelectedIndicesWithValuesValidAtom,
-    areSelectedTablesComparableAtom,
-    areSourcesDistinctAtom,
-    comparisonEnsembleIdentAtom,
-    comparisonTableNameAtom,
-    indicesWithValuesAtom,
-    referenceEnsembleIdentAtom,
-    referenceTableNameAtom,
-    subplotByAtom,
-    waterfallFactorSpecAtom,
-} from "./baseAtoms";
-
-/** The reference and comparison sources, or null when either is incompletely selected. */
-export const waterfallSourcesAtom = atom<{ reference: WaterfallSource; comparison: WaterfallSource } | null>((get) => {
-    const referenceEnsembleIdent = get(referenceEnsembleIdentAtom);
-    const comparisonEnsembleIdent = get(comparisonEnsembleIdentAtom);
-    const referenceTableName = get(referenceTableNameAtom);
-    const comparisonTableName = get(comparisonTableNameAtom);
-
-    if (!referenceEnsembleIdent || !comparisonEnsembleIdent || !referenceTableName || !comparisonTableName) {
-        return null;
-    }
-
-    return {
-        reference: { ensembleIdent: referenceEnsembleIdent, tableName: referenceTableName },
-        comparison: { ensembleIdent: comparisonEnsembleIdent, tableName: comparisonTableName },
-    };
-});
-
-export const isWaterfallComputableAtom = atom((get) => {
-    return (
-        get(areSourcesDistinctAtom) &&
-        get(areSelectedTablesComparableAtom) &&
-        get(areSelectedIndicesWithValuesValidAtom) &&
-        get(waterfallFactorSpecAtom) !== null &&
-        get(waterfallSourcesAtom) !== null
-    );
-});
+import { indicesWithValuesAtom, subplotByAtom, waterfallFactorSpecAtom, waterfallSourcesAtom } from "./baseAtoms";
+import { isWaterfallComputableAtom } from "./derivedAtoms";
 
 /**
  * Statistical (mean and percentile) inplace volumes data for the reference and comparison sources,

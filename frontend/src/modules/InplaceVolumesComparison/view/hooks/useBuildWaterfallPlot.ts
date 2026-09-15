@@ -19,12 +19,10 @@ import {
     resultNameAtom,
     subplotByAtom,
     waterfallFactorSpecAtom,
-} from "../atoms/baseAtoms";
-import {
-    isWaterfallComputableAtom,
     waterfallSourcesAtom,
-    waterfallStatisticalDataQueriesAtom,
-} from "../atoms/queryAtoms";
+} from "../atoms/baseAtoms";
+import { isWaterfallComputableAtom } from "../atoms/derivedAtoms";
+import { waterfallStatisticalDataQueriesAtom } from "../atoms/queryAtoms";
 import { buildWaterfallPlot, type WaterfallGroupDecomposition } from "../utils/buildWaterfallPlot";
 import {
     computeVolumeChangeDecomposition,
