@@ -1,8 +1,9 @@
 import type { InplaceVolumesIndexWithValues_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { persistableFixableAtom } from "@framework/utils/atomUtils";
-import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import {
     fixupUserSelectedIndexValues,
@@ -16,7 +17,7 @@ import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimension
 import { tableDefinitionsAccessorAtom } from "./derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsembleIdent[]>({
+export const selectedEnsembleIdentsAtom = persistableFixableAtom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>({
     initialValue: [],
     isValidFunction: ({ get, value }) => {
         if (value.length === 0) {
@@ -28,7 +29,7 @@ export const selectedEnsembleIdentsAtom = persistableFixableAtom<RegularEnsemble
     },
     fixupFunction: ({ value, get }) => {
         const ensembleSet = get(EnsembleSetAtom);
-        return fixupRegularEnsembleIdents(value ?? null, ensembleSet) ?? [];
+        return fixupEnsembleIdents(value ?? null, ensembleSet) ?? [];
     },
 });
 
