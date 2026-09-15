@@ -192,8 +192,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            referenceEnsembleIdent.value &&
-                            referenceTableNameOptions.length === 0
+                                referenceEnsembleIdent.value &&
+                                referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -223,8 +223,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                            comparisonEnsembleIdent.value &&
-                            comparisonTableNameOptions.length === 0
+                                comparisonEnsembleIdent.value &&
+                                comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
