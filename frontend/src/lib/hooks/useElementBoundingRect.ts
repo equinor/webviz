@@ -43,6 +43,9 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
                     }
 
                     currentRect = rect;
+
+                    // State is tracking a DOM element, so we accept set-state here
+                    // eslint-disable-next-line @eslint-react/set-state-in-effect
                     setRect(rect);
                 }
             }

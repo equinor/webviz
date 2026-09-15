@@ -175,18 +175,18 @@ function EsvIntersectionRenderSurface(props: EsvIntersectionRenderSurfaceProps):
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = useElementSize(containerRef);
 
-    const [controller, setController] = React.useState<EsvIntersectionController | null>(null);
+    const controllerRef = React.useRef<EsvIntersectionController | null>(null);
 
     React.useEffect(
         function initializeController() {
             if (!containerRef.current) return;
             const ctrl = new EsvIntersectionController();
-            setController(ctrl);
+            controllerRef.current = ctrl;
             onControllerChange(ctrl);
             void ctrl.initialize(containerRef.current).catch(console.error);
             return function destroyController() {
                 ctrl.destroy();
-                setController(null);
+                controllerRef.current = null;
                 onControllerChange(null);
             };
         },
@@ -196,27 +196,21 @@ function EsvIntersectionRenderSurface(props: EsvIntersectionRenderSurfaceProps):
     React.useEffect(
         function handleResize() {
             if (containerSize.width && containerSize.height) {
-                controller?.adjustToSize(containerSize.width, containerSize.height);
+                controllerRef.current?.adjustToSize(containerSize.width, containerSize.height);
             }
         },
-        [controller, containerSize.width, containerSize.height],
+        [containerSize.width, containerSize.height],
     );
 
-    const handleMouseMove = React.useCallback(
-        function handleMouseMove(event: React.MouseEvent) {
-            if (!containerRef.current) return;
-            const rect = containerRef.current.getBoundingClientRect();
-            controller?.notifyMouseMove(event.clientX - rect.left, event.clientY - rect.top);
-        },
-        [controller],
-    );
+    const handleMouseMove = React.useCallback(function handleMouseMove(event: React.MouseEvent) {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        controllerRef.current?.notifyMouseMove(event.clientX - rect.left, event.clientY - rect.top);
+    }, []);
 
-    const handleMouseLeave = React.useCallback(
-        function handleMouseLeave() {
-            controller?.notifyMouseLeave();
-        },
-        [controller],
-    );
+    const handleMouseLeave = React.useCallback(function handleMouseLeave() {
+        controllerRef.current?.notifyMouseLeave();
+    }, []);
 
     return (
         <div

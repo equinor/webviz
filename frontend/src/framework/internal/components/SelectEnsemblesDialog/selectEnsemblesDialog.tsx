@@ -69,11 +69,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const dialogSizePercent = useResponsiveDialogSizePercent();
 
     // Set has opened flag when opening the ensemble explorer for the first time after dialog open
-    React.useEffect(() => {
-        if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
-            setHasExplorerBeenOpened(true);
-        }
-    }, [isOpen, showEnsembleExplorer, hasExplorerBeenOpened]);
+    if (isOpen && showEnsembleExplorer && !hasExplorerBeenOpened) {
+        setHasExplorerBeenOpened(true);
+    }
 
     // Custom hook for state management, will reset states when ensemble set changes
     const {

@@ -272,6 +272,8 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
 
     const updateValue = React.useCallback(
         function updateValue(newValue: number | number[], eventDetails: SliderChangeEventDetails, commit?: boolean) {
+            // Rule gets flagged by the clamp-value use-effect below.
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setInternalValue(newValue);
 
             onValueChange?.(newValue, eventDetails);
@@ -366,6 +368,8 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps<number | numb
     React.useEffect(() => {
         if (valueToClamp !== null) {
             updateValue(valueToClamp, { reason: "clamp-value" }, true);
+            // This effect should only trigger on a small set of prop changes, and there's isn't a simple way to avoid setting state here.
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setValueToClamp(null);
         }
     }, [updateValue, valueToClamp]);

@@ -11,11 +11,7 @@ export default defineConfig(
     // Plugins --------------------------------------------------------------------------
     eslintCore.configs.recommended,
     eslintTypescript.configs.recommended,
-    {
-        // Should only run where there might be components and hooks
-        files: ["src/**/*.{ts,tsx}", "tests/ct/**/*.{ts,tsx}"],
-        extends: [reactPlugin.configs["recommended-typescript"]],
-    },
+    reactPlugin.configs["recommended-typescript"],
     importPlugin.flatConfigs.recommended,
     pluginQuery.configs["flat/recommended"],
     // Configure typescript resolver
@@ -56,15 +52,6 @@ export default defineConfig(
         // generate-api will use the project linter config. However, the generated code occasionally uses bare-bones ts-comments, so we need to relax the rule a bit for this folder specifically
         files: ["src/api/**"],
         rules: { "@typescript-eslint/ban-ts-comment": "off" },
-    },
-
-    {
-        rules: {
-            // TODO: These rules were introduced after deps update. It's relevant in a lot of files so we'll hold off while we wait for the EDS branch to be merged.
-            "@eslint-react/set-state-in-effect": "off",
-            "@eslint-react/refs": "off",
-            "@eslint-react/purity": "off",
-        },
     },
     {
         // Lodash-es exposes the "chain" utility in its typing, but the function will fail due to tree-shaking in production. This rule config should flag any use of chain as an error
@@ -138,7 +125,7 @@ export default defineConfig(
         files: ["tests/e2e/**/*.ts"],
         rules: {
             // Playwright's `use` fixture callback is not a React hook.
-            "react-hooks/rules-of-hooks": "off",
+            "@eslint-react/rules-of-hooks": "off",
             // Fixtures that don't consume other fixtures use `async ({}, use) => {}`.
             "no-empty-pattern": "off",
             // Allow `_`-prefixed fixture dependencies that are requested only for setup ordering.

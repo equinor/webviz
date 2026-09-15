@@ -1,14 +1,3 @@
-/**
- * Why are we disbling rules-of-hooks here?
- *
- * Well, we are using several hooks in this class, which is not allowed by this rule.
- * However, we are not using these hooks in a component, but in a utility class.
- * The important thing to remember is that these functions must be called on every render,
- * unconditionally (i.e. not in a conditional statement) and not in a loop.
- * This is exactly what we are doing here. We are only using the class to group the functions together
- * and give additional context to the functions.
- */
-
 import React from "react";
 
 import { isEqual } from "lodash-es";
@@ -54,18 +43,12 @@ export function useColorSet(workbenchSettings: WorkbenchSettings): ColorSet {
         workbenchSettings,
         WorkbenchSettingsTopic.SELECTED_COLOR_PALETTE_IDS,
     );
-    const [colorSet, setColorSet] = React.useState<ColorSet>(
+
+    return React.useMemo(
         () => new ColorSet(workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical)),
+        // eslint-disable-next-line @eslint-react/exhaustive-deps -- selectedColorPalettes included to trigger re-computes
+        [workbenchSettings, selectedColorPalettes],
     );
-
-    React.useEffect(
-        function onColorPalettesChange() {
-            setColorSet(new ColorSet(workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical)));
-        },
-        [selectedColorPalettes, workbenchSettings],
-    );
-
-    return colorSet;
 }
 
 export function useDiscreteColorScale(
@@ -96,18 +79,16 @@ export function useDiscreteColorScale(
     const divergingSteps = steps[ColorScaleDiscreteSteps.Diverging];
     const sequentialSteps = steps[ColorScaleDiscreteSteps.Sequential];
 
+    // Storing the options in a state object to create a stable reference
     const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
-
-    const [colorScale, setColorScale] = React.useState<ColorScale>(() => new ColorScale(optionsWithDefaults));
 
     if (!isEqual(optionsWithDefaults, adjustedOptions)) {
         setAdjustedOptions({ ...optionsWithDefaults });
     }
 
-    React.useEffect(
-        function onColorPalettesChange() {
-            // Explicitly using arrow function to preserve the "this" context
-            const newColorScale = new ColorScale({
+    return React.useMemo(
+        () =>
+            new ColorScale({
                 ...adjustedOptions,
                 steps: options.gradientType === ColorScaleGradientType.Sequential ? sequentialSteps : divergingSteps,
                 colorPalette: workbenchSettings.getSelectedColorPalette(
@@ -115,20 +96,17 @@ export function useDiscreteColorScale(
                         ? ColorPaletteType.ContinuousSequential
                         : ColorPaletteType.ContinuousDiverging,
                 ),
-            });
-            setColorScale(newColorScale);
-        },
+            }),
+        // eslint-disable-next-line @eslint-react/exhaustive-deps -- selectedColorPalette is included to trigger recomputes
         [
+            selectedColorPalettes,
             adjustedOptions,
             divergingSteps,
-            sequentialSteps,
             options.gradientType,
-            selectedColorPalettes,
+            sequentialSteps,
             workbenchSettings,
         ],
     );
-
-    return colorScale;
 }
 
 export function useContinuousColorScale(
@@ -158,16 +136,13 @@ export function useContinuousColorScale(
 
     const [adjustedOptions, setAdjustedOptions] = React.useState<ColorScaleOptions>(optionsWithDefaults);
 
-    const [colorScale, setColorScale] = React.useState<ColorScale>(() => new ColorScale(optionsWithDefaults));
-
     if (!isEqual(optionsWithDefaults, adjustedOptions)) {
         setAdjustedOptions({ ...optionsWithDefaults });
     }
 
-    React.useEffect(
+    return React.useMemo(
         function onColorPalettesChange() {
-            // Explicitly using arrow function to preserve the "this" context
-            const newColorScale = new ColorScale({
+            return new ColorScale({
                 ...adjustedOptions,
                 colorPalette: workbenchSettings.getSelectedColorPalette(
                     options.gradientType === ColorScaleGradientType.Sequential
@@ -175,10 +150,8 @@ export function useContinuousColorScale(
                         : ColorPaletteType.ContinuousDiverging,
                 ),
             });
-            setColorScale(newColorScale);
         },
-        [adjustedOptions, options.gradientType, selectedColorPalettes, workbenchSettings],
+        // eslint-disable-next-line @eslint-react/exhaustive-deps -- selectedColorPalette is included to trigger recomputes
+        [selectedColorPalettes, adjustedOptions, options.gradientType, workbenchSettings],
     );
-
-    return colorScale;
 }
