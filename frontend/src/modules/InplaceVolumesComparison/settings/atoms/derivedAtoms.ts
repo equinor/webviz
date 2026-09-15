@@ -97,19 +97,19 @@ export const tableDefinitionsAccessorAtom = atom((get) => {
         },
     ];
 
-    const definitionsPerSource: TableDefinitionsPerEnsemble[] = [];
+    const sourceDefinitions: TableDefinitionsPerEnsemble[] = [];
     for (const spec of sourceSpecs) {
         if (!spec.ensembleIdent || !spec.definition) {
             continue;
         }
-        definitionsPerSource.push({ ensembleIdent: spec.ensembleIdent, tableDefinitions: [spec.definition] });
+        sourceDefinitions.push({ ensembleIdent: spec.ensembleIdent, tableDefinitions: [spec.definition] });
     }
 
-    const tableNamesFilter = Array.from(
-        new Set(definitionsPerSource.map((source) => source.tableDefinitions[0].tableName)),
+    const allowedTableNames = Array.from(
+        new Set(sourceDefinitions.map((source) => source.tableDefinitions[0].tableName)),
     );
 
-    return new TableDefinitionsAccessor(definitionsPerSource, tableNamesFilter, IndexValueCriteria.ALLOW_INTERSECTION);
+    return new TableDefinitionsAccessor(sourceDefinitions, allowedTableNames, IndexValueCriteria.ALLOW_INTERSECTION);
 });
 
 /** Only decomposable hydrocarbon volumes are selectable as the waterfall target. */

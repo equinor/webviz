@@ -115,10 +115,10 @@ export class TableDefinitionsAccessor {
             }
 
             const indicesToRemove = [];
-            // No early exit on the first REQUIRE_EQUALITY mismatch (unlike before): stopping here used
+            // No early exit on the first REQUIRE_EQUALITY mismatch: stopping here used
             // to skip the "not present in all table definitions" check for the remaining columns, so a
             // column entirely absent from this table definition could incorrectly stay in
-            // commonIndicesWithValuesMap. Consumers (InplaceVolumesTable/New/Plot) still gate their UI
+            // commonIndicesWithValuesMap. Consumers (InplaceVolumesTable/Plot) still gate their UI
             // on getAreTablesComparable(), which this loop still sets correctly either way.
             for (const [index, indexWithValues] of commonIndicesWithValuesMap) {
                 const currentIndexWithValues = tableDefinition.indicesWithValues.find(

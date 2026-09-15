@@ -26,12 +26,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const waterfall = useBuildWaterfallPlot(ensembleSet, plotDivBoundingRect.width, plotDivBoundingRect.height);
 
     statusWriter.setLoading(waterfall.isFetching);
-    for (const warning of waterfall.warnings) {
+    for (const warning of waterfall.nonBlockingWarnings) {
         statusWriter.addWarning(warning);
     }
 
-    const infoMessage = waterfall.message?.severity === "info" ? waterfall.message.text : null;
-    const errorMessage = waterfall.message?.severity === "error" ? waterfall.message.text : undefined;
+    const infoMessage = waterfall.message?.reason === "incomplete-selection" ? waterfall.message.text : null;
+    const errorMessage = waterfall.message?.reason === "failure" ? waterfall.message.text : undefined;
 
     return (
         <StatusWrapper className="h-full" isPending={waterfall.isFetching} errorMessage={errorMessage}>

@@ -33,48 +33,46 @@ import {
 } from "../utils/computeVolumeChangeDecomposition";
 import { findTableDataForSource, makeSourceLabels } from "../utils/waterfallSources";
 
-export type WaterfallMessage = {
-    text: string;
-    /** "info" for an incomplete selection the user still has to finish, "error" for a real failure. */
-    severity: "info" | "error";
-};
-
-export interface WaterfallResult {
+export interface UseBuildWaterfallPlotResult {
     plots: React.ReactNode | null;
     isFetching: boolean;
     /** User-facing message when the waterfall cannot be shown. */
-    message: WaterfallMessage | null;
+    message: {
+        text: string;
+        /** "incomplete-selection" while the user still has to finish choosing sources, "failure" for a real error. */
+        reason: "incomplete-selection" | "failure";
+    } | null;
     /** Non-blocking notes shown alongside a rendered plot. */
-    warnings: string[];
+    nonBlockingWarnings: string[];
     /** The plotted decompositions, for rendering the same numbers as a table. */
     groups: WaterfallGroupDecomposition[];
     endpointLabels: { referenceLabel: string; comparisonLabel: string } | null;
 }
 
-function makeInfoResult(text: string): WaterfallResult {
+function makeInfoResult(text: string): UseBuildWaterfallPlotResult {
     return {
         plots: null,
         isFetching: false,
-        message: { text, severity: "info" },
-        warnings: [],
+        message: { text, reason: "incomplete-selection" },
+        nonBlockingWarnings: [],
         groups: [],
         endpointLabels: null,
     };
 }
 
-function makeErrorResult(text: string): WaterfallResult {
+function makeErrorResult(text: string): UseBuildWaterfallPlotResult {
     return {
         plots: null,
         isFetching: false,
-        message: { text, severity: "error" },
-        warnings: [],
+        message: { text, reason: "failure" },
+        nonBlockingWarnings: [],
         groups: [],
         endpointLabels: null,
     };
 }
 
-function makePendingResult(isFetching: boolean): WaterfallResult {
-    return { plots: null, isFetching, message: null, warnings: [], groups: [], endpointLabels: null };
+function makePendingResult(isFetching: boolean): UseBuildWaterfallPlotResult {
+    return { plots: null, isFetching, message: null, nonBlockingWarnings: [], groups: [], endpointLabels: null };
 }
 
 const SINGLE_GROUP_KEY = "__single__";
@@ -195,7 +193,11 @@ function extractRequiredStatisticsByGroup(
  * Build the volume-change waterfall plot for the selected ensemble pair, or a user-facing message
  * explaining why it cannot be shown.
  */
-export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, height: number): WaterfallResult {
+export function useBuildWaterfallPlot(
+    ensembleSet: EnsembleSet,
+    width: number,
+    height: number,
+): UseBuildWaterfallPlotResult {
     const referenceEnsembleIdent = useAtomValue(referenceEnsembleIdentAtom);
     const comparisonEnsembleIdent = useAtomValue(comparisonEnsembleIdentAtom);
     const resultName = useAtomValue(resultNameAtom);
@@ -361,7 +363,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         comparisonLabel,
     });
 
-    const warnings = [
+    const nonBlockingWarnings = [
         isIndexValueIntersectionActive
             ? "Only index values present in both sources are included, so the volumes shown are for that shared subset and do not match the full-field volumes."
             : null,
@@ -376,7 +378,7 @@ export function useBuildWaterfallPlot(ensembleSet: EnsembleSet, width: number, h
         plots,
         isFetching: false,
         message: null,
-        warnings,
+        nonBlockingWarnings,
         groups: groupDecompositions,
         endpointLabels: { referenceLabel, comparisonLabel },
     };
