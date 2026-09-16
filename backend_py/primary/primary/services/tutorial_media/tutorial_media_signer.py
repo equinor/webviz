@@ -21,10 +21,10 @@ _CLOCK_SKEW_MARGIN = datetime.timedelta(minutes=5)
 
 
 class TutorialMediaSigner:
-    """Mints short-lived, read-only user-delegation SAS URLs for tutorial media blobs.
+    """Mints short-lived, read-only user-delegation SAS tokens for the tutorial media container.
 
     Uses the application's Entra identity (no storage account key) to obtain a user-delegation key,
-    which is cached and reused to sign individual blob URLs.
+    which is cached and reused to generate container-scoped SAS tokens.
     """
 
     def __init__(self, account_url: str, container_name: str, credential: AsyncTokenCredential) -> None:
