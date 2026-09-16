@@ -246,6 +246,16 @@ spec:
             WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
             WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
             WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: 1
+          horizontalScaling:
+            minReplicas: 0
+            maxReplicas: 5
+            triggers:
+              - name: my-azure-sb-trigger
+                azureServiceBus:
+                  namespace: sbns-webviz-nonprod
+                  queueName: review3-default
+                  messageCount: 1
+                  authentication: { identity: { azure: { clientId: 779de183-9805-47cb-8da6-bca425f6e64f } } }
 
 
     # -----------------------------------------------------------------
