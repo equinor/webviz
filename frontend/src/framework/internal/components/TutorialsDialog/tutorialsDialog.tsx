@@ -85,6 +85,14 @@ type TutorialCollectionProps = {
 function TutorialCollection(props: TutorialCollectionProps): React.ReactNode {
     return (
         <div className="gap-y-lg p-2xs flex h-full min-h-0 flex-col overflow-y-auto">
+            <Paragraph
+                size="sm"
+                tone="warning"
+                italic
+                layoutClassName="bg-warning-canvas py-2xs px-sm self-start rounded"
+            >
+                More short tutorial videos are on the way — check back for additional content going forward.
+            </Paragraph>
             {groupByCategory(TUTORIAL_VIDEOS).map(([category, videos]) => (
                 <div key={category} className="gap-y-xs flex flex-col">
                     <Heading as="h6">{category}</Heading>
