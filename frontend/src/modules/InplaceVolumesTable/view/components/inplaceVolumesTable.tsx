@@ -81,16 +81,19 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         <div className="flex h-full min-h-0 flex-col">
             <div className="flex shrink-0 justify-end">
                 <Tooltip content="Download table as CSV" side="bottom">
-                    <Button
-                        iconOnly
-                        variant="ghost"
-                        size="small"
-                        aria-label="Download data"
-                        disabled={isDownloadDisabled}
-                        onClick={() => props.onDownload?.(collatedRows)}
-                    >
-                        <Download fontSize="inherit" />
-                    </Button>
+                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                    <span>
+                        <Button
+                            iconOnly
+                            variant="ghost"
+                            size="small"
+                            aria-label="Download data"
+                            disabled={isDownloadDisabled}
+                            onClick={() => props.onDownload?.(collatedRows)}
+                        >
+                            <Download fontSize="inherit" />
+                        </Button>
+                    </span>
                 </Tooltip>
             </div>
             <div className="min-h-0 grow">
