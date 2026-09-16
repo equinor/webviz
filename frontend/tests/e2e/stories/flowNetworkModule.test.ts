@@ -105,6 +105,18 @@ test.describe("Flow Network module", () => {
         const timeStepControl = timeStepGroup.locator(".group\\/slider-comp").first();
         const timeStepThumb = timeStepGroup.getByRole("slider").first();
 
+        // Narrow the network down to producer wells only first. A plain click on a multi-select
+        // option replaces the whole selection, so this leaves just "Producer" selected.
+        const nodeTypeNarration = narrate(
+            "To focus on the producers, we limit the node types to show only producer wells.",
+        );
+        markStep("Show only producer wells");
+        const nodeTypesRow = page.locator(".setting-row").filter({ hasText: "Node Types" });
+        await smoothClick(page, nodeTypesRow.getByText("Producer", { exact: true }));
+        // Changing the node types refetches the network; wait for it to settle before continuing.
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await nodeTypeNarration;
+
         // Jump to the last time step and expand every branch so the whole network is visible.
         const expandNarration = narrate(
             "Let's jump to the final time step and expand every branch so the whole network is visible.",
@@ -115,17 +127,6 @@ test.describe("Flow Network module", () => {
         await pace(page);
         await expandAllGroupTreeNodes(page, moduleLayout);
         await expandNarration;
-
-        // Narrow the network down to producer wells only. A plain click on a multi-select option
-        // replaces the whole selection, so this leaves just "Producer" selected.
-        const nodeTypeNarration = narrate(
-            "To focus on the producers, we limit the node types to show only producer wells.",
-        );
-        markStep("Show only producer wells");
-        await smoothClick(page, page.getByRole("group", { name: "Node Types" }).getByText("Producer", { exact: true }));
-        // Changing the node types refetches the network; wait for it to settle before sweeping.
-        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
-        await nodeTypeNarration;
 
         // With the full network shown, gently sweep the time step back and forth (~4s each way) so
         // the viewer can watch how it evolves over time (codegen only captures abrupt clicks).
@@ -150,6 +151,8 @@ test.describe("Flow Network module", () => {
         await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
         await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
         await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
+        // Finish with the slider back at the last time step.
+        await pressKeyWithOverlay(page, timeStepThumb, "End", { pauseMs: 1_500 });
         await keyboardNarration;
 
         await captureThumbnail(page);
