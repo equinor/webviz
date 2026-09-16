@@ -134,7 +134,6 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
     );
 }
 
-
 function TableFilterRow(props: {
     filterState: { [columnKey: string]: string | null };
     columnConfig: TableColumnsConfig;

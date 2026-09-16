@@ -35,8 +35,7 @@ describe("buildCsvRowsFromTable", () => {
         const csvRows = buildCsvRowsFromTable(columnsConfig, rows, ensembleSet);
 
         expect(csvRows.headerRows).toEqual([["ENSEMBLE", "REAL", "ZONE", "STOIIP"]]);
-        expect(csvRows.dataRows[0]).not.toContain("1");
-        expect(csvRows.dataRows).toEqual([[expect.any(String), 0, "Valysar", 123.456]]);
+        expect(csvRows.dataRows).toEqual([["ens1", 0, "Valysar", 123.456]]);
     });
 
     test("statistical mode: exactly one header row, statistical leaves flattened, headers unique", () => {

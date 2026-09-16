@@ -39,4 +39,3 @@ export function InplaceVolumesTableHarness(props: InplaceVolumesTableHarnessProp
         </div>
     );
 }
-
