@@ -281,6 +281,71 @@ export async function hideDevOverlays(page: Page): Promise<void> {
 }
 
 /**
+ * Expose a `window.__pwShowKey__(label)` helper that briefly pops up a keycap-styled badge at the
+ * bottom of the screen, so a recorded video can show WHICH keyboard key was pressed (Playwright's
+ * screencast never paints physical key presses). The badge pops in, holds, then fades out on its own.
+ *
+ * No-op unless RECORD=1. Must be called BEFORE `page.goto(...)` so the init script is registered for
+ * the first navigation. Use together with {@link pressKeyWithOverlay}.
+ */
+export async function installKeyOverlay(page: Page): Promise<void> {
+    if (!RECORDING) {
+        return;
+    }
+    await page.addInitScript(() => {
+        const STYLE_ID = "__pw_key_overlay_style__";
+
+        function ensureKeyframes(): void {
+            if (document.getElementById(STYLE_ID)) {
+                return;
+            }
+            const style = document.createElement("style");
+            style.id = STYLE_ID;
+            style.textContent = `@keyframes __pw_key_pop__ {
+                0%   { transform: translateX(-50%) scale(0.8); opacity: 0; }
+                12%  { transform: translateX(-50%) scale(1);   opacity: 1; }
+                80%  { transform: translateX(-50%) scale(1);   opacity: 1; }
+                100% { transform: translateX(-50%) scale(0.96); opacity: 0; }
+            }`;
+            document.documentElement.appendChild(style);
+        }
+
+        function showKey(label: string): void {
+            ensureKeyframes();
+            const cap = document.createElement("div");
+            cap.textContent = label;
+            cap.style.cssText = [
+                "position: fixed",
+                "left: 50%",
+                "bottom: 48px",
+                "transform: translateX(-50%)",
+                "min-width: 44px",
+                "height: 44px",
+                "padding: 0 14px",
+                "display: flex",
+                "align-items: center",
+                "justify-content: center",
+                "box-sizing: border-box",
+                "font: 600 18px/1 system-ui, -apple-system, sans-serif",
+                "color: #1a1a1a",
+                "background: linear-gradient(#ffffff, #e7e7e7)",
+                "border: 1px solid rgba(0, 0, 0, 0.25)",
+                "border-bottom-width: 3px",
+                "border-radius: 8px",
+                "box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25)",
+                "pointer-events: none",
+                "z-index: 2147483647",
+                "animation: __pw_key_pop__ 900ms ease-out forwards",
+            ].join(";");
+            document.documentElement.appendChild(cap);
+            window.setTimeout(() => cap.remove(), 950);
+        }
+
+        (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__ = showKey;
+    });
+}
+
+/**
  * Glide the real Playwright mouse to the centre of `locator` in several small steps so the injected
  * fake cursor (which follows pointer/mouse move events) animates smoothly across the screen instead
  * of teleporting. Playwright interpolates from its last known pointer position, so the resulting
@@ -417,41 +482,120 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
 }
 
 /**
- * Slowly walk a slider's thumb from its minimum to its maximum, one step at a time, so the motion is
- * easy to follow in a recorded tutorial. Playwright codegen can only capture discrete clicks on a
- * slider, which look abrupt; here we drive the thumb with the keyboard (ArrowRight) instead, which
- * snaps cleanly to each value/marker and keeps the value tooltip visible while the thumb is focused.
+ * Slowly glide a slider's thumb from one end of the track to the other, so the motion is easy to
+ * follow in a recorded tutorial. Playwright codegen can only capture discrete clicks on a slider,
+ * which look abrupt; here we press the thumb at the start edge and drag it to the far edge with a
+ * real mouse drag instead.
  *
- * `durationMs` is the target time to traverse the whole range while recording; the per-step pause is
- * derived from the number of steps so the overall sweep lands close to that duration regardless of
- * how many time steps there are. Outside recording it jumps straight to the end so the slider is
- * still exercised without slowing the regression run down.
+ * `sliderControl` is the slider's pointer surface (base-ui `Slider.Control`, i.e. the full-width
+ * clickable track area). `direction` chooses which way to sweep (`"right"` = min→max, the default;
+ * `"left"` = max→min). The sweep position is driven by elapsed wall-clock time, so it lands close to
+ * `durationMs` regardless of how many discrete time steps the slider snaps through — unlike stepping
+ * key-by-key, whose per-press overhead makes the total balloon on sliders with many steps. Outside
+ * recording it just clicks the destination end so the slider is still exercised without slowing the
+ * regression run down.
  */
 export async function sweepSliderAcross(
     page: Page,
-    thumb: Locator,
-    { durationMs = 6000 }: { durationMs?: number } = {},
+    sliderControl: Locator,
+    { durationMs = 6000, direction = "right" }: { durationMs?: number; direction?: "left" | "right" } = {},
 ): Promise<void> {
-    await smoothMoveToLocator(page, thumb);
-    await thumb.focus();
-    // Start from the far left so the sweep always covers the full range.
-    await thumb.press("Home");
-
-    const valueMin = Number(await thumb.getAttribute("aria-valuemin"));
-    const valueMax = Number(await thumb.getAttribute("aria-valuemax"));
-    const range = valueMax - valueMin;
-    const steps = Number.isFinite(range) && range > 0 ? range : 0;
-
-    if (!RECORDING || steps === 0) {
-        // Outside recording (or when the range is unknown), just jump to the end.
-        await thumb.press("End");
+    await sliderControl.scrollIntoViewIfNeeded();
+    const box = await sliderControl.boundingBox();
+    if (!box) {
         return;
     }
 
-    const delayPerStepMs = Math.max(20, Math.round(durationMs / steps));
-    for (let i = 0; i < steps; i++) {
-        await thumb.press("ArrowRight");
-        await page.waitForTimeout(delayPerStepMs);
+    const y = box.y + box.height / 2;
+    const leftX = box.x + 2;
+    const rightX = box.x + box.width - 2;
+    const fromX = direction === "right" ? leftX : rightX;
+    const toX = direction === "right" ? rightX : leftX;
+
+    if (!RECORDING) {
+        // Outside recording, just jump to the destination end so the slider is still exercised.
+        await page.mouse.click(toX, y);
+        return;
+    }
+
+    // Grab the thumb at the start edge, then glide it to the far edge over the target duration.
+    // Position is driven by elapsed wall-clock time (not a fixed number of fixed-delay steps), so the
+    // sweep lands close to `durationMs` even though each move triggers a re-render; slow moves just
+    // yield fewer, larger position jumps rather than a longer total.
+    await glideMouseTo(page, fromX, y);
+    await page.mouse.down();
+    try {
+        const start = Date.now();
+        for (;;) {
+            const progress = Math.min(1, (Date.now() - start) / durationMs);
+            await page.mouse.move(fromX + (toX - fromX) * progress, y);
+            if (progress >= 1) {
+                break;
+            }
+            await page.waitForTimeout(16);
+        }
+        await page.mouse.up();
+        // Keep the tracked cursor position in sync so the next glide measures the right distance.
+        lastMousePosition.set(page, { x: toX, y });
+    } catch (error) {
+        // Never leave the mouse button pressed on failure.
+        await page.mouse.up().catch(() => undefined);
+        throw error;
+    }
+}
+
+/**
+ * Expand every collapsed node in a group-tree plot so all branches are visible. Collapsed nodes
+ * render a "+ N child(ren)" label; clicking a node expands it, which can reveal further collapsed
+ * descendants, so we keep clicking the first remaining collapsed label until none are left (bounded
+ * so an animating/stuck tree can never loop forever).
+ */
+export async function expandAllGroupTreeNodes(page: Page, container: Locator): Promise<void> {
+    const MAX_EXPANSIONS = 200;
+    for (let i = 0; i < MAX_EXPANSIONS; i++) {
+        const collapsed = container.getByText(/\+ \d+ child(ren)?/).first();
+        if ((await collapsed.count()) === 0) {
+            break;
+        }
+        await collapsed.click();
+        // Let the expand animation / re-layout settle before looking for the next collapsed node.
+        await page.waitForTimeout(150);
+        await pace(page, "short");
+    }
+}
+
+/** Friendly on-screen glyphs for the keys we demo; falls back to the raw key name. */
+const KEY_OVERLAY_LABELS: Record<string, string> = {
+    ArrowLeft: "←",
+    ArrowRight: "→",
+    ArrowUp: "↑",
+    ArrowDown: "↓",
+    Home: "Home",
+    End: "End",
+};
+
+/**
+ * Press `key` on `target` while (when recording) popping up a keycap badge showing which key was
+ * pressed, so the action is visible in the tutorial video. Requires {@link installKeyOverlay} to
+ * have been called before navigation. Waits `pauseMs` after each press (only while recording) so
+ * consecutive keycaps read clearly and can be paced to match the narration.
+ */
+export async function pressKeyWithOverlay(
+    page: Page,
+    target: Locator,
+    key: string,
+    { label, pauseMs = 600 }: { label?: string; pauseMs?: number } = {},
+): Promise<void> {
+    if (RECORDING) {
+        const shownLabel = label ?? KEY_OVERLAY_LABELS[key] ?? key;
+        await page.evaluate(
+            (l) => (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__?.(l),
+            shownLabel,
+        );
+    }
+    await target.press(key);
+    if (RECORDING) {
+        await page.waitForTimeout(pauseMs);
     }
 }
 

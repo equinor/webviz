@@ -10,9 +10,12 @@ import {
     hideDevOverlays,
     installCaseRowRedaction,
     installFakeCursor,
+    installKeyOverlay,
     pace,
+    pressKeyWithOverlay,
     smoothClick,
     sweepSliderAcross,
+    expandAllGroupTreeNodes,
 } from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
@@ -35,6 +38,9 @@ test.describe("Flow Network module", () => {
 
         // Render a cursor into the page so the mouse is visible in the recorded video.
         await installFakeCursor(page);
+
+        // Show which keyboard key is pressed during the keyboard-navigation demo.
+        await installKeyOverlay(page);
 
         // Blur every case row in the ensemble case-selector except the Drogon case we use.
         await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
@@ -95,15 +101,56 @@ test.describe("Flow Network module", () => {
             "And there's our flow network. It shows the dated network for the selected time step.",
         );
 
-        // Slowly walk the time-step slider across every time step so the viewer can watch the
-        // network evolve over time (codegen only captures abrupt clicks, so we animate it here).
+        const timeStepGroup = page.getByRole("group", { name: "Time step" });
+        const timeStepControl = timeStepGroup.locator(".group\\/slider-comp").first();
+        const timeStepThumb = timeStepGroup.getByRole("slider").first();
+
+        // Jump to the last time step and expand every branch so the whole network is visible.
+        const expandNarration = narrate(
+            "Let's jump to the final time step and expand every branch so the whole network is visible.",
+        );
+        markStep("Expand the whole network");
+        await timeStepThumb.focus();
+        await timeStepThumb.press("End");
+        await pace(page);
+        await expandAllGroupTreeNodes(page, moduleLayout);
+        await expandNarration;
+
+        // Narrow the network down to producer wells only. A plain click on a multi-select option
+        // replaces the whole selection, so this leaves just "Producer" selected.
+        const nodeTypeNarration = narrate(
+            "To focus on the producers, we limit the node types to show only producer wells.",
+        );
+        markStep("Show only producer wells");
+        await smoothClick(page, page.getByRole("group", { name: "Node Types" }).getByText("Producer", { exact: true }));
+        // Changing the node types refetches the network; wait for it to settle before sweeping.
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+        await nodeTypeNarration;
+
+        // With the full network shown, gently sweep the time step back and forth (~4s each way) so
+        // the viewer can watch how it evolves over time (codegen only captures abrupt clicks).
         const sweepNarration = narrate(
-            "Using the time step slider, we can gradually move across all the time steps and watch how the network changes over time.",
+            "Now we can gradually move the time step back and forth to watch how the whole network changes over time.",
         );
         markStep("Step through the time steps");
-        const timeStepSlider = page.getByRole("group", { name: "Time step" }).getByRole("slider").first();
-        await sweepSliderAcross(page, timeStepSlider, { durationMs: 6_000 });
+        await sweepSliderAcross(page, timeStepControl, { durationMs: 4_000, direction: "left" });
+        await sweepSliderAcross(page, timeStepControl, { durationMs: 4_000, direction: "right" });
         await sweepNarration;
+
+        // Keyboard is an alternative to dragging: Home/End jump to the ends, arrows step one at a
+        // time. A keycap overlay shows which key is pressed (see installKeyOverlay).
+        const keyboardNarration = narrate(
+            "You don't need the mouse for this. With the slider focused, the Home and End keys jump straight to the first and last time step, and the arrow keys move gradually, one time step at a time.",
+        );
+        markStep("Navigate with the keyboard");
+        await timeStepThumb.focus();
+        await pressKeyWithOverlay(page, timeStepThumb, "Home", { pauseMs: 1_500 });
+        await pressKeyWithOverlay(page, timeStepThumb, "End", { pauseMs: 1_500 });
+        await pressKeyWithOverlay(page, timeStepThumb, "Home", { pauseMs: 1_500 });
+        await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
+        await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
+        await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
+        await keyboardNarration;
 
         await captureThumbnail(page);
     });
