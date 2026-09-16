@@ -78,8 +78,8 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
    Captured actions are stored to `tests/e2e/stories/_recorded.gen.ts`
 5. Copy `tests/e2e/stories/_story.template.ts` to `<yourStory>.test.ts` and port the captured
    selectors/actions into it, wrapping interactions in `smoothClick`/`smoothFill` and adding
-   `narrate(...)` lines.
-6. Add named step markers at the meaningful points in a walkthrough with `markStep("Step title")`.
+   `narrate(...)` lines
+6. Add named step markers at the meaningful points in a walkthrough with `markStep("Step title")`
 7. Verify with
    ```bash
    npm run test:e2e:record --prefix ./frontend
