@@ -40,6 +40,15 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.steps.json",
     },
     {
+        slug: "flow-network-module",
+        category: "Modules",
+        title: "Flow Network",
+        description: "Add the Flow Network module and view a dated flow network.",
+        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/flow-network-module.webm",
+        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/flow-network-module.png",
+        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/flow-network-module.steps.json",
+    },
+    {
         slug: "simulation-time-series-chart",
         category: "Modules",
         title: "Simulation Time Series",
