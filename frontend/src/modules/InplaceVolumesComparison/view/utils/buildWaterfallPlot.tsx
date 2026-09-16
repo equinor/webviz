@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { Data, PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure } from "@modules/_shared/Figure";
@@ -175,5 +175,5 @@ export function buildWaterfallPlot(
 
     figure.updateLayout({ showlegend: false });
 
-    return <Plot data={figure.makeData() as Data[]} layout={figure.makeLayout()} />;
+    return <Plot data={figure.makeData()} layout={figure.makeLayout()} />;
 }
