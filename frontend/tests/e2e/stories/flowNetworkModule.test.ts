@@ -12,6 +12,7 @@ import {
     installFakeCursor,
     pace,
     smoothClick,
+    sweepSliderAcross,
 } from "../support/walkthroughHelpers";
 
 export const meta = tutorialMeta({
@@ -89,10 +90,21 @@ test.describe("Flow Network module", () => {
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await expect(moduleLayout.locator("svg").first()).toBeVisible({ timeout: 90_000 });
 
-        await captureThumbnail(page);
         markStep("View the flow network");
         await narrate(
-            "And there's our flow network. It shows the dated network for the selected time step, which we can step through over time.",
+            "And there's our flow network. It shows the dated network for the selected time step.",
         );
+
+        // Slowly walk the time-step slider across every time step so the viewer can watch the
+        // network evolve over time (codegen only captures abrupt clicks, so we animate it here).
+        const sweepNarration = narrate(
+            "Using the time step slider, we can gradually move across all the time steps and watch how the network changes over time.",
+        );
+        markStep("Step through the time steps");
+        const timeStepSlider = page.getByRole("group", { name: "Time step" }).getByRole("slider").first();
+        await sweepSliderAcross(page, timeStepSlider, { durationMs: 6_000 });
+        await sweepNarration;
+
+        await captureThumbnail(page);
     });
 });

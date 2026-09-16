@@ -416,6 +416,45 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
     }).toPass({ timeout: 60_000, intervals: [1_000] });
 }
 
+/**
+ * Slowly walk a slider's thumb from its minimum to its maximum, one step at a time, so the motion is
+ * easy to follow in a recorded tutorial. Playwright codegen can only capture discrete clicks on a
+ * slider, which look abrupt; here we drive the thumb with the keyboard (ArrowRight) instead, which
+ * snaps cleanly to each value/marker and keeps the value tooltip visible while the thumb is focused.
+ *
+ * `durationMs` is the target time to traverse the whole range while recording; the per-step pause is
+ * derived from the number of steps so the overall sweep lands close to that duration regardless of
+ * how many time steps there are. Outside recording it jumps straight to the end so the slider is
+ * still exercised without slowing the regression run down.
+ */
+export async function sweepSliderAcross(
+    page: Page,
+    thumb: Locator,
+    { durationMs = 6000 }: { durationMs?: number } = {},
+): Promise<void> {
+    await smoothMoveToLocator(page, thumb);
+    await thumb.focus();
+    // Start from the far left so the sweep always covers the full range.
+    await thumb.press("Home");
+
+    const valueMin = Number(await thumb.getAttribute("aria-valuemin"));
+    const valueMax = Number(await thumb.getAttribute("aria-valuemax"));
+    const range = valueMax - valueMin;
+    const steps = Number.isFinite(range) && range > 0 ? range : 0;
+
+    if (!RECORDING || steps === 0) {
+        // Outside recording (or when the range is unknown), just jump to the end.
+        await thumb.press("End");
+        return;
+    }
+
+    const delayPerStepMs = Math.max(20, Math.round(durationMs / steps));
+    for (let i = 0; i < steps; i++) {
+        await thumb.press("ArrowRight");
+        await page.waitForTimeout(delayPerStepMs);
+    }
+}
+
 /** Optional narration hooks for {@link createSessionAndSelectEnsemble}; default to no-ops. */
 export type SessionAndEnsembleNarrationHooks = {
     narrate?: (text: string) => Promise<void>;
