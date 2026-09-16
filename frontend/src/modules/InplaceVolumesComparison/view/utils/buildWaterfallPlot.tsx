@@ -4,13 +4,13 @@ import type { PlotData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure } from "@modules/_shared/Figure";
-import { makeSubplots } from "@modules/_shared/Figure";
+import { calcNumRowsAndCols, makeSubplots } from "@modules/_shared/Figure";
 import type { NumberFormatOptions } from "@modules/_shared/utils/numberFormatting";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 
 import type { VolumeChangeDecomposition, WaterfallMeasure } from "./computeVolumeChangeDecomposition";
 import { computeBarChangePercent, makeBarDisplayLabels } from "./waterfallBarPresentation";
-import { calcNumRowsAndCols, makeYAxisRange } from "./waterfallPlotLayout";
+import { makeYAxisRange } from "./waterfallPlotLayout";
 
 // plotly.js ships no types for the native "waterfall" trace, so describe the subset we set. Keeping
 // the literal typed means a typo in e.g. `measure` or `connector` is still caught.
@@ -112,8 +112,8 @@ function makeBarHoverTexts(group: WaterfallGroupDecomposition, displayLabels: st
         const band = isReference
             ? group.uncertainty?.reference
             : isComparison
-                ? group.uncertainty?.comparison
-                : undefined;
+              ? group.uncertainty?.comparison
+              : undefined;
 
         if (!band) {
             return `${displayLabels[index]}: ${barTexts[index]}`;
