@@ -72,7 +72,9 @@ export function usePersistedDataProviderManager(options: UsePersistedDataProvide
             // ! Currently, *all* dependencies are technically static, so this arguably not relevant
             // ! as we, effectively, will always run this effect, followed by persistedDataChangeEffect below
             if (currentSerializedStateRef.current) {
-                dataProviderManagerRef.current.deserializeState(JSON.parse(currentSerializedStateRef.current));
+                const serializedState = currentSerializedStateRef.current;
+                dataProviderManagerRef.current.deserializeState(JSON.parse(serializedState));
+                dataProviderSerializedStateRef.current = serializedState;
             }
 
             // Subscribe to DataProviderManager state changes to persist state.
