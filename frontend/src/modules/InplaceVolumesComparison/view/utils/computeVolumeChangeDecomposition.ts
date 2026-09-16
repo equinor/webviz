@@ -129,6 +129,8 @@ export function getWaterfallFactorSpec(
     const fvfLabel = FVF_LABEL_BY_TARGET[targetResultName];
 
     // NTG and PORO_NET are advertised exactly when NET is present, and NET is what the split needs.
+    // All three are checked explicitly (not just NET) so a future change to that backend contract
+    // fails safe here (falls back to the collapsed PORO factor) instead of requiring NET at runtime.
     const useNtgSplit = available.has("NTG") && available.has("PORO_NET") && available.has("NET");
     const porosityFactors: WaterfallFactor[] = useNtgSplit
         ? [
