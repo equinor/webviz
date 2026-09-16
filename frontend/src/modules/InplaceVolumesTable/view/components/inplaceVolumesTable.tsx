@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Clear } from "@mui/icons-material";
+import { Clear, Download } from "@mui/icons-material";
 import { orderBy } from "lodash";
 
 import type { EnsembleSet } from "@framework/EnsembleSet";
@@ -9,6 +9,7 @@ import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
 import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
+import { Tooltip } from "@lib/components/Tooltip";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
@@ -23,6 +24,9 @@ export type InplaceVolumesTableProps = {
     rows: TableRow<TableColumnsConfig>[];
 
     onHover: (row: TableRow<TableColumnsConfig> | null) => void;
+
+    /** Called with the currently filtered and sorted rows (all of them, not only the virtualized viewport) */
+    onDownload?: (rows: TableRow<TableColumnsConfig>[]) => void;
 };
 
 const FILTER_DEBOUNCE_TIME_MS = 250;
@@ -67,41 +71,66 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         );
     }, [tableFilterState, props.rows, tableSortState]);
 
-    return (
-        <Table.Root
-            height="100%"
-            size="small"
-            fixed
-            sortable="multiple"
-            columnSorting={tableSortState}
-            onChangeColumnSort={setTableSortState}
-            compact
-        >
-            <Table.Head sticky>
-                {tableColumns}
-                <TableFilterRow
-                    filterState={tableFilterState}
-                    columnConfig={props.columnsConfig}
-                    onFilterChange={(k, v) => setTableFilterState((prev) => ({ ...prev, [k]: v }))}
-                />
-            </Table.Head>
+    const hasExportableColumns = React.useMemo(
+        () => collectLeafColumns(props.columnsConfig).length > 0,
+        [props.columnsConfig],
+    );
+    const isDownloadDisabled = !props.onDownload || collatedRows.length === 0 || !hasExportableColumns;
 
-            <Table.Body onPointerLeave={() => props.onHover(null)}>
-                <TableCompositions.VirtualizedRows rows={collatedRows}>
-                    {(row) => (
-                        <TableRowComp
-                            key={row.__id}
-                            row={row}
-                            tableColumnConfig={props.columnsConfig}
-                            ensembleSet={props.ensembleSet}
-                            onHover={props.onHover}
+    return (
+        <div className="flex h-full min-h-0 flex-col">
+            <div className="flex shrink-0 justify-end">
+                <Tooltip content="Download table as CSV" side="bottom">
+                    <Button
+                        iconOnly
+                        variant="ghost"
+                        size="small"
+                        aria-label="Download data"
+                        disabled={isDownloadDisabled}
+                        onClick={() => props.onDownload?.(collatedRows)}
+                    >
+                        <Download fontSize="inherit" />
+                    </Button>
+                </Tooltip>
+            </div>
+            <div className="min-h-0 grow">
+                <Table.Root
+                    height="100%"
+                    size="small"
+                    fixed
+                    sortable="multiple"
+                    columnSorting={tableSortState}
+                    onChangeColumnSort={setTableSortState}
+                    compact
+                >
+                    <Table.Head sticky>
+                        {tableColumns}
+                        <TableFilterRow
+                            filterState={tableFilterState}
+                            columnConfig={props.columnsConfig}
+                            onFilterChange={(k, v) => setTableFilterState((prev) => ({ ...prev, [k]: v }))}
                         />
-                    )}
-                </TableCompositions.VirtualizedRows>
-            </Table.Body>
-        </Table.Root>
+                    </Table.Head>
+
+                    <Table.Body onPointerLeave={() => props.onHover(null)}>
+                        <TableCompositions.VirtualizedRows rows={collatedRows}>
+                            {(row) => (
+                                <TableRowComp
+                                    key={row.__id}
+                                    row={row}
+                                    tableColumnConfig={props.columnsConfig}
+                                    ensembleSet={props.ensembleSet}
+                                    onHover={props.onHover}
+                                />
+                            )}
+                        </TableCompositions.VirtualizedRows>
+                    </Table.Body>
+                </Table.Root>
+            </div>
+        </div>
     );
 }
+
 
 function TableFilterRow(props: {
     filterState: { [columnKey: string]: string | null };
