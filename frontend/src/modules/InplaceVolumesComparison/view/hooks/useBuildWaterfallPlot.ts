@@ -136,22 +136,28 @@ function makeSingleSidedGroupsWarning(
 /**
  * Extract per-ensemble statistics for the required result names, grouped by the given subplot index
  * column (e.g. one entry per REGION value). When no group-by index is given, all rows collapse to a
- * single group. Returns null when the required fluid is absent, lacks any of the required results,
- * or does not carry the requested group-by column.
+ * single group.
  */
+type StatisticsByGroupResult =
+    | { kind: "ok"; statisticsByGroup: Map<string, GroupStatistics> }
+    /** The required fluid, or one of the required result columns, is absent from the data. */
+    | { kind: "data-missing" }
+    /** The selected "Subplot by" column is not a selector column in the fetched data. */
+    | { kind: "group-by-column-missing" };
+
 function extractRequiredStatisticsByGroup(
     statisticalTableData: InplaceVolumesStatisticalTableData,
     requiredResultNames: string[],
     targetResultName: string,
     requiredFluid: string,
     groupByIndexColumn: string | null,
-): Map<string, GroupStatistics> | null {
+): StatisticsByGroupResult {
     // The target dictates the fluid: STOIIP decomposes oil, GIIP gas.
     const fluidTableData = statisticalTableData.data.tableDataPerFluidSelection.find(
         (tableData) => tableData.fluidSelection === requiredFluid,
     );
     if (!fluidTableData) {
-        return null;
+        return { kind: "data-missing" };
     }
 
     const meanArraysByResultName = new Map<string, number[]>();
@@ -169,7 +175,7 @@ function extractRequiredStatisticsByGroup(
     }
 
     if (!requiredResultNames.every((resultName) => meanArraysByResultName.has(resultName))) {
-        return null;
+        return { kind: "data-missing" };
     }
 
     const groupColumn = groupByIndexColumn
@@ -178,7 +184,7 @@ function extractRequiredStatisticsByGroup(
 
     // Without the requested column every row would collapse onto one key and overwrite the last.
     if (groupByIndexColumn && !groupColumn) {
-        return null;
+        return { kind: "group-by-column-missing" };
     }
 
     const numRows = meanArraysByResultName.get(requiredResultNames[0])!.length;
@@ -200,7 +206,7 @@ function extractRequiredStatisticsByGroup(
 
         statisticsByGroup.set(groupKey, { means, targetBand });
     }
-    return statisticsByGroup;
+    return { kind: "ok", statisticsByGroup };
 }
 
 /**
@@ -314,14 +320,14 @@ export function useBuildWaterfallPlot(
             return { kind: "message", result: makeErrorResult(noDataMessage) };
         }
 
-        const comparisonStatisticsByGroup = extractRequiredStatisticsByGroup(
+        const comparisonStatisticsResult = extractRequiredStatisticsByGroup(
             comparisonTableData,
             spec.requiredResultNames,
             spec.target,
             requiredFluid,
             subplotByIndex,
         );
-        const referenceStatisticsByGroup = extractRequiredStatisticsByGroup(
+        const referenceStatisticsResult = extractRequiredStatisticsByGroup(
             referenceTableData,
             spec.requiredResultNames,
             spec.target,
@@ -329,9 +335,23 @@ export function useBuildWaterfallPlot(
             subplotByIndex,
         );
 
-        if (!comparisonStatisticsByGroup || !referenceStatisticsByGroup) {
+        if (
+            subplotByIndex &&
+            (comparisonStatisticsResult.kind === "group-by-column-missing" ||
+                referenceStatisticsResult.kind === "group-by-column-missing")
+        ) {
+            return {
+                kind: "message",
+                result: makeErrorResult(
+                    `The "Subplot by" column "${subplotByIndex}" is not present in the selected data. Change or clear the subplot selection.`,
+                ),
+            };
+        }
+        if (comparisonStatisticsResult.kind !== "ok" || referenceStatisticsResult.kind !== "ok") {
             return { kind: "message", result: makeErrorResult(noDataMessage) };
         }
+        const comparisonStatisticsByGroup = comparisonStatisticsResult.statisticsByGroup;
+        const referenceStatisticsByGroup = referenceStatisticsResult.statisticsByGroup;
 
         // Compute a decomposition per group present in both ensembles.
         const groupKeys = Array.from(comparisonStatisticsByGroup.keys())
@@ -377,10 +397,11 @@ export function useBuildWaterfallPlot(
         }
 
         if (groupDecompositions.length === 0) {
-            return {
-                kind: "message",
-                result: makeErrorResult("The waterfall could not be computed for the selected data."),
-            };
+            const message =
+                groupKeys.length === 0
+                    ? "None of the selected group values are present in both sources, so no waterfall can be decomposed."
+                    : "The waterfall could not be computed for the selected data.";
+            return { kind: "message", result: makeErrorResult(message) };
         }
 
         const { referenceLabel, comparisonLabel } = makeSourceLabels(
