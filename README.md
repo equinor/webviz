@@ -66,7 +66,6 @@ in the Python backend. In order to update the auto-generated code you can either
 In both cases the backend needs to already be running (e.g. using `docker-compose`
 as stated above).
 
-
 ### Radix applications
 
 The production application is located at https://webviz.fmu.equinor.com
@@ -88,7 +87,6 @@ git push upstream <featurebranchname>:review --force
 The `dev` branch is updated similarly. The `main` branch only accepts commits through pull requests.
 
 NB: Note that Radix will always use the `radixconfig.yml` as it is in `main` branch (unless changed in Radix UI).
-
 
 ### Usage in GitHub codespaces
 
