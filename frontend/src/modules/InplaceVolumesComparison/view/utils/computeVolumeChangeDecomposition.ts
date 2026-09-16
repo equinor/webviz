@@ -167,6 +167,17 @@ export function getWaterfallFactorSpec(
     return { target: targetResultName, factors, requiredResultNames };
 }
 
+/**
+ * True when `value` is negligible relative to `comparedTo`, i.e. too small for their ratio to be
+ * numerically trustworthy. Catches both true near-zero physical volumes (e.g. a near-empty zone) and
+ * floating-point noise, without an absolute cutoff that would be meaningless across the wide range of
+ * volume magnitudes and units this module sees.
+ */
+export function isNegligible(value: number, comparedTo: number): boolean {
+    const scale = Math.max(Math.abs(value), Math.abs(comparedTo));
+    return scale === 0 || Math.abs(value) < scale * 1e-9;
+}
+
 /** Factor value from mean volumes, e.g. PORO = mean(PORV) / mean(BULK). */
 function computeFactorValue(factor: WaterfallFactor, means: Map<string, number>): number | null {
     const numerator = means.get(factor.numeratorResultName);
@@ -177,7 +188,7 @@ function computeFactorValue(factor: WaterfallFactor, means: Map<string, number>)
         return numerator;
     }
     const denominator = means.get(factor.denominatorResultName);
-    if (denominator === undefined || denominator === 0) {
+    if (denominator === undefined || isNegligible(denominator, numerator)) {
         return null;
     }
     return numerator / denominator;
@@ -195,13 +206,13 @@ function computeFactorMultiplier(
     }
 
     if (factor.dividesVolume) {
-        if (comparisonValue === 0) {
+        if (isNegligible(comparisonValue, referenceValue)) {
             return null;
         }
         return referenceValue / comparisonValue - 1;
     }
 
-    if (referenceValue === 0) {
+    if (isNegligible(referenceValue, comparisonValue)) {
         return null;
     }
     return comparisonValue / referenceValue - 1;

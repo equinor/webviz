@@ -149,6 +149,29 @@ describe("computeVolumeChangeDecomposition", () => {
         expect(computeVolumeChangeDecomposition(spec, zeroBulkReference, comparisonMeans)).toBeNull();
     });
 
+    test("returns null when a reference volume is negligible rather than exactly zero", () => {
+        const spec = getWaterfallFactorSpec("STOIIP", COLLAPSED_RESULT_NAMES)!;
+        // BULK is ~9 orders of magnitude smaller than its comparison counterpart: a real near-empty
+        // zone, not floating-point noise, but the ratio would still be numerically absurd.
+        const negligibleBulkReference = new Map(referenceMeans).set("BULK", 1e-10);
+        expect(computeVolumeChangeDecomposition(spec, negligibleBulkReference, comparisonMeans)).toBeNull();
+    });
+
+    test("computes normally when both sides of a ratio are small but comparable in magnitude", () => {
+        const spec = getWaterfallFactorSpec("STOIIP", COLLAPSED_RESULT_NAMES)!;
+        // Same ratios as referenceMeans/comparisonMeans above, just uniformly scaled down: every
+        // factor stays well-defined, only the absolute magnitudes become tiny.
+        const scaleDown = (means: Map<string, number>) =>
+            new Map([...means].map(([name, value]) => [name, value * 1e-6]));
+        const decomposition = computeVolumeChangeDecomposition(
+            spec,
+            scaleDown(referenceMeans),
+            scaleDown(comparisonMeans),
+        );
+        expect(decomposition).not.toBeNull();
+        expect(decomposition!.comparisonVolume).toBeCloseTo(15.125e-6, 12);
+    });
+
     test("returns null when a required mean is missing", () => {
         const spec = getWaterfallFactorSpec("STOIIP", COLLAPSED_RESULT_NAMES)!;
         const withoutHcpv = new Map(referenceMeans);

@@ -31,4 +31,22 @@ describe("computeBarChangePercent", () => {
 
         expect(computeBarChangePercent(bars, 1)).toBeNull();
     });
+
+    it("returns null when the previous cumulative is negligible rather than exactly zero", () => {
+        const bars: WaterfallBar[] = [
+            { label: "Reference", measure: "absolute", value: 1e-10, cumulative: 1e-10 },
+            { label: "BULK", measure: "relative", value: 5, cumulative: 5 + 1e-10 },
+        ];
+
+        expect(computeBarChangePercent(bars, 1)).toBeNull();
+    });
+
+    it("computes normally when the previous cumulative and the bar value are both small but comparable", () => {
+        const bars: WaterfallBar[] = [
+            { label: "Reference", measure: "absolute", value: 1e-6, cumulative: 1e-6 },
+            { label: "BULK", measure: "relative", value: 5e-7, cumulative: 1.5e-6 },
+        ];
+
+        expect(computeBarChangePercent(bars, 1)).toBeCloseTo(50, 6);
+    });
 });
