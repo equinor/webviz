@@ -235,228 +235,233 @@ export function useBuildWaterfallPlot(
 
     // Everything below is independent of width/height, so it is memoized to avoid redoing the
     // per-group statistics extraction and decomposition on every resize.
-    const computation = useMemo((): ComputationResult => {
-        if (!referenceEnsembleIdent || !comparisonEnsembleIdent) {
-            return { kind: "message", result: makeInfoResult("Select a reference and a comparison ensemble.") };
-        }
-        if (!waterfallSources) {
-            return { kind: "message", result: makeInfoResult("Select a table source for both ensembles.") };
-        }
-        if (!areSourcesDistinct) {
-            return {
-                kind: "message",
-                result: makeInfoResult("The reference and comparison must differ in either ensemble or table source."),
-            };
-        }
-        if (!areSelectedTablesComparable) {
-            // With this module's ALLOW_INTERSECTION accessor, "not comparable" only ever means the two
-            // sources share no index column at all; result-name overlap is checked separately below.
-            return {
-                kind: "message",
-                result: makeErrorResult(
-                    "The selected tables are not comparable: they have no index columns in common.",
-                ),
-            };
-        }
-        if (indexColumnsWithNoSelectedValues.length > 0) {
-            return {
-                kind: "message",
-                result: makeInfoResult(
-                    `Select at least one value for ${indexColumnsWithNoSelectedValues.join(", ")}. No data is included otherwise.`,
-                ),
-            };
-        }
-        if (!areSelectedIndicesWithValuesValid) {
-            // A persisted/template selection is kept as-is even when invalid, so it must be checked
-            // explicitly rather than silently querying with values that no longer exist.
-            return {
-                kind: "message",
-                result: makeErrorResult(
-                    "The saved index-value filters no longer match the selected tables. Reselect values in the filters section.",
-                ),
-            };
-        }
-        if (resultName === null) {
-            return { kind: "message", result: makeInfoResult("Select a response (STOIIP or GIIP).") };
-        }
-        if (!isWaterfallTargetResultName(resultName)) {
-            return {
-                kind: "message",
-                result: makeErrorResult("Neither STOIIP nor GIIP is available for the selected tables."),
-            };
-        }
-        if (!spec) {
-            return {
-                kind: "message",
-                result: makeErrorResult(
-                    "The volume columns the decomposition is built from (BULK, PORV, HCPV) are not available for the selected table.",
-                ),
-            };
-        }
-        if (!isComputable) {
-            return { kind: "message", result: makePendingResult(false) };
-        }
-
-        if (statisticalDataQueries.isFetching) {
-            return { kind: "message", result: makePendingResult(true) };
-        }
-
-        const requiredFluid = getRequiredFluidForWaterfallTarget(spec.target);
-        const noDataMessage = `No ${requiredFluid} data available for the ${spec.target} decomposition in the selected tables.`;
-
-        const comparisonTableData = findTableDataForSource(
-            statisticalDataQueries.tablesData,
-            waterfallSources.comparison,
-        );
-        const referenceTableData = findTableDataForSource(
-            statisticalDataQueries.tablesData,
-            waterfallSources.reference,
-        );
-
-        if (!comparisonTableData || !referenceTableData) {
-            if (statisticalDataQueries.errors.length > 0) {
-                return { kind: "message", result: makeErrorResult("Failed to load inplace volumes table data.") };
+    const computation = useMemo(
+        function computeWaterfallGroups(): ComputationResult {
+            if (!referenceEnsembleIdent || !comparisonEnsembleIdent) {
+                return { kind: "message", result: makeInfoResult("Select a reference and a comparison ensemble.") };
             }
-            return { kind: "message", result: makeErrorResult(noDataMessage) };
-        }
+            if (!waterfallSources) {
+                return { kind: "message", result: makeInfoResult("Select a table source for both ensembles.") };
+            }
+            if (!areSourcesDistinct) {
+                return {
+                    kind: "message",
+                    result: makeInfoResult(
+                        "The reference and comparison must differ in either ensemble or table source.",
+                    ),
+                };
+            }
+            if (!areSelectedTablesComparable) {
+                // With this module's ALLOW_INTERSECTION accessor, "not comparable" only ever means the two
+                // sources share no index column at all; result-name overlap is checked separately below.
+                return {
+                    kind: "message",
+                    result: makeErrorResult(
+                        "The selected tables are not comparable: they have no index columns in common.",
+                    ),
+                };
+            }
+            if (indexColumnsWithNoSelectedValues.length > 0) {
+                return {
+                    kind: "message",
+                    result: makeInfoResult(
+                        `Select at least one value for ${indexColumnsWithNoSelectedValues.join(", ")}. No data is included otherwise.`,
+                    ),
+                };
+            }
+            if (!areSelectedIndicesWithValuesValid) {
+                // A persisted/template selection is kept as-is even when invalid, so it must be checked
+                // explicitly rather than silently querying with values that no longer exist.
+                return {
+                    kind: "message",
+                    result: makeErrorResult(
+                        "The saved index-value filters no longer match the selected tables. Reselect values in the filters section.",
+                    ),
+                };
+            }
+            if (resultName === null) {
+                return { kind: "message", result: makeInfoResult("Select a response (STOIIP or GIIP).") };
+            }
+            if (!isWaterfallTargetResultName(resultName)) {
+                return {
+                    kind: "message",
+                    result: makeErrorResult("Neither STOIIP nor GIIP is available for the selected tables."),
+                };
+            }
+            if (!spec) {
+                return {
+                    kind: "message",
+                    result: makeErrorResult(
+                        "The volume columns the decomposition is built from (BULK, PORV, HCPV) are not available for the selected table.",
+                    ),
+                };
+            }
+            if (!isComputable) {
+                return { kind: "message", result: makePendingResult(false) };
+            }
 
-        const comparisonStatisticsResult = extractRequiredStatisticsByGroup(
-            comparisonTableData,
-            spec.requiredResultNames,
-            spec.target,
-            requiredFluid,
-            subplotByIndex,
-        );
-        const referenceStatisticsResult = extractRequiredStatisticsByGroup(
-            referenceTableData,
-            spec.requiredResultNames,
-            spec.target,
-            requiredFluid,
-            subplotByIndex,
-        );
+            if (statisticalDataQueries.isFetching) {
+                return { kind: "message", result: makePendingResult(true) };
+            }
 
-        if (
-            subplotByIndex &&
-            (comparisonStatisticsResult.kind === "group-by-column-missing" ||
-                referenceStatisticsResult.kind === "group-by-column-missing")
-        ) {
-            return {
-                kind: "message",
-                result: makeErrorResult(
-                    `The "Subplot by" column "${subplotByIndex}" is not present in the selected data. Change or clear the subplot selection.`,
-                ),
-            };
-        }
-        if (comparisonStatisticsResult.kind !== "ok" || referenceStatisticsResult.kind !== "ok") {
-            return { kind: "message", result: makeErrorResult(noDataMessage) };
-        }
-        const comparisonStatisticsByGroup = comparisonStatisticsResult.statisticsByGroup;
-        const referenceStatisticsByGroup = referenceStatisticsResult.statisticsByGroup;
+            const requiredFluid = getRequiredFluidForWaterfallTarget(spec.target);
+            const noDataMessage = `No ${requiredFluid} data available for the ${spec.target} decomposition in the selected tables.`;
 
-        // Compute a decomposition per group present in both ensembles.
-        const groupKeys = Array.from(comparisonStatisticsByGroup.keys())
-            .filter((groupKey) => referenceStatisticsByGroup.has(groupKey))
-            .sort((a, b) => a.localeCompare(b));
-
-        const comparisonOnlyGroupLabels = Array.from(comparisonStatisticsByGroup.keys())
-            .filter((groupKey) => groupKey !== SINGLE_GROUP_KEY && !referenceStatisticsByGroup.has(groupKey))
-            .sort((a, b) => a.localeCompare(b));
-        const referenceOnlyGroupLabels = Array.from(referenceStatisticsByGroup.keys())
-            .filter((groupKey) => groupKey !== SINGLE_GROUP_KEY && !comparisonStatisticsByGroup.has(groupKey))
-            .sort((a, b) => a.localeCompare(b));
-
-        const groupDecompositions: WaterfallGroupDecomposition[] = [];
-        const skippedGroupLabels: string[] = [];
-        for (const groupKey of groupKeys) {
-            const referenceStatistics = referenceStatisticsByGroup.get(groupKey)!;
-            const comparisonStatistics = comparisonStatisticsByGroup.get(groupKey)!;
-            const decomposition = computeVolumeChangeDecomposition(
-                spec,
-                referenceStatistics.means,
-                comparisonStatistics.means,
+            const comparisonTableData = findTableDataForSource(
+                statisticalDataQueries.tablesData,
+                waterfallSources.comparison,
             );
-            if (!decomposition) {
-                // SINGLE_GROUP_KEY is just an internal placeholder, never shown to the user: a failed single
-                // group ends in the empty check below instead.
-                if (groupKey !== SINGLE_GROUP_KEY) {
-                    skippedGroupLabels.push(groupKey);
+            const referenceTableData = findTableDataForSource(
+                statisticalDataQueries.tablesData,
+                waterfallSources.reference,
+            );
+
+            if (!comparisonTableData || !referenceTableData) {
+                if (statisticalDataQueries.errors.length > 0) {
+                    return { kind: "message", result: makeErrorResult("Failed to load inplace volumes table data.") };
                 }
-                continue;
+                return { kind: "message", result: makeErrorResult(noDataMessage) };
             }
-            groupDecompositions.push({
-                groupLabel: groupKey === SINGLE_GROUP_KEY ? "" : groupKey,
-                decomposition,
-                uncertainty:
-                    referenceStatistics.targetBand && comparisonStatistics.targetBand
-                        ? {
-                              reference: referenceStatistics.targetBand,
-                              comparison: comparisonStatistics.targetBand,
-                          }
-                        : null,
-            });
-        }
 
-        if (groupDecompositions.length === 0) {
-            const message =
-                groupKeys.length === 0
-                    ? "None of the selected group values are present in both sources, so no waterfall can be decomposed."
-                    : "The waterfall could not be computed for the selected data.";
-            return { kind: "message", result: makeErrorResult(message) };
-        }
+            const comparisonStatisticsResult = extractRequiredStatisticsByGroup(
+                comparisonTableData,
+                spec.requiredResultNames,
+                spec.target,
+                requiredFluid,
+                subplotByIndex,
+            );
+            const referenceStatisticsResult = extractRequiredStatisticsByGroup(
+                referenceTableData,
+                spec.requiredResultNames,
+                spec.target,
+                requiredFluid,
+                subplotByIndex,
+            );
 
-        const { referenceLabel, comparisonLabel } = makeSourceLabels(
-            {
-                ensembleName: makeDistinguishableEnsembleDisplayName(
-                    referenceEnsembleIdent,
-                    ensembleSet.getRegularEnsembleArray(),
-                ),
-                tableName: waterfallSources.reference.tableName,
-            },
-            {
-                ensembleName: makeDistinguishableEnsembleDisplayName(
-                    comparisonEnsembleIdent,
-                    ensembleSet.getRegularEnsembleArray(),
-                ),
-                tableName: waterfallSources.comparison.tableName,
-            },
-        );
+            if (
+                subplotByIndex &&
+                (comparisonStatisticsResult.kind === "group-by-column-missing" ||
+                    referenceStatisticsResult.kind === "group-by-column-missing")
+            ) {
+                return {
+                    kind: "message",
+                    result: makeErrorResult(
+                        `The "Subplot by" column "${subplotByIndex}" is not present in the selected data. Change or clear the subplot selection.`,
+                    ),
+                };
+            }
+            if (comparisonStatisticsResult.kind !== "ok" || referenceStatisticsResult.kind !== "ok") {
+                return { kind: "message", result: makeErrorResult(noDataMessage) };
+            }
+            const comparisonStatisticsByGroup = comparisonStatisticsResult.statisticsByGroup;
+            const referenceStatisticsByGroup = referenceStatisticsResult.statisticsByGroup;
 
-        const nonBlockingWarnings = [
-            isIndexValueIntersectionActive
-                ? "Only index values present in both sources are included, so the volumes shown are for that shared subset and do not match the full-field volumes."
-                : null,
-            indexColumnsLeftUnfiltered.length > 0
-                ? `The sources offer different values for ${indexColumnsLeftUnfiltered.join(", ")}. Both are compared unfiltered, so the difference in coverage is part of the BULK contribution.`
-                : null,
-            makeSingleSidedGroupsWarning(referenceOnlyGroupLabels, comparisonOnlyGroupLabels),
-            makeSkippedGroupsWarning(skippedGroupLabels),
-        ].filter((warning): warning is string => warning !== null);
+            // Compute a decomposition per group present in both ensembles.
+            const groupKeys = Array.from(comparisonStatisticsByGroup.keys())
+                .filter((groupKey) => referenceStatisticsByGroup.has(groupKey))
+                .sort((a, b) => a.localeCompare(b));
 
-        return {
-            kind: "ready",
-            groupDecompositions,
-            nonBlockingWarnings,
-            referenceLabel,
-            comparisonLabel,
-            title: `${spec.target} change contributions from ${referenceLabel} to ${comparisonLabel}`,
-        };
-    }, [
-        referenceEnsembleIdent,
-        comparisonEnsembleIdent,
-        resultName,
-        spec,
-        areSourcesDistinct,
-        areSelectedTablesComparable,
-        areSelectedIndicesWithValuesValid,
-        isComputable,
-        statisticalDataQueries,
-        subplotByIndex,
-        waterfallSources,
-        indexColumnsLeftUnfiltered,
-        isIndexValueIntersectionActive,
-        indexColumnsWithNoSelectedValues,
-        ensembleSet,
-    ]);
+            const comparisonOnlyGroupLabels = Array.from(comparisonStatisticsByGroup.keys())
+                .filter((groupKey) => groupKey !== SINGLE_GROUP_KEY && !referenceStatisticsByGroup.has(groupKey))
+                .sort((a, b) => a.localeCompare(b));
+            const referenceOnlyGroupLabels = Array.from(referenceStatisticsByGroup.keys())
+                .filter((groupKey) => groupKey !== SINGLE_GROUP_KEY && !comparisonStatisticsByGroup.has(groupKey))
+                .sort((a, b) => a.localeCompare(b));
+
+            const groupDecompositions: WaterfallGroupDecomposition[] = [];
+            const skippedGroupLabels: string[] = [];
+            for (const groupKey of groupKeys) {
+                const referenceStatistics = referenceStatisticsByGroup.get(groupKey)!;
+                const comparisonStatistics = comparisonStatisticsByGroup.get(groupKey)!;
+                const decomposition = computeVolumeChangeDecomposition(
+                    spec,
+                    referenceStatistics.means,
+                    comparisonStatistics.means,
+                );
+                if (!decomposition) {
+                    // SINGLE_GROUP_KEY is just an internal placeholder, never shown to the user: a failed single
+                    // group ends in the empty check below instead.
+                    if (groupKey !== SINGLE_GROUP_KEY) {
+                        skippedGroupLabels.push(groupKey);
+                    }
+                    continue;
+                }
+                groupDecompositions.push({
+                    groupLabel: groupKey === SINGLE_GROUP_KEY ? "" : groupKey,
+                    decomposition,
+                    uncertainty:
+                        referenceStatistics.targetBand && comparisonStatistics.targetBand
+                            ? {
+                                  reference: referenceStatistics.targetBand,
+                                  comparison: comparisonStatistics.targetBand,
+                              }
+                            : null,
+                });
+            }
+
+            if (groupDecompositions.length === 0) {
+                const message =
+                    groupKeys.length === 0
+                        ? "None of the selected group values are present in both sources, so no waterfall can be decomposed."
+                        : "The waterfall could not be computed for the selected data.";
+                return { kind: "message", result: makeErrorResult(message) };
+            }
+
+            const { referenceLabel, comparisonLabel } = makeSourceLabels(
+                {
+                    ensembleName: makeDistinguishableEnsembleDisplayName(
+                        referenceEnsembleIdent,
+                        ensembleSet.getRegularEnsembleArray(),
+                    ),
+                    tableName: waterfallSources.reference.tableName,
+                },
+                {
+                    ensembleName: makeDistinguishableEnsembleDisplayName(
+                        comparisonEnsembleIdent,
+                        ensembleSet.getRegularEnsembleArray(),
+                    ),
+                    tableName: waterfallSources.comparison.tableName,
+                },
+            );
+
+            const nonBlockingWarnings = [
+                isIndexValueIntersectionActive
+                    ? "Only index values present in both sources are included, so the volumes shown are for that shared subset and do not match the full-field volumes."
+                    : null,
+                indexColumnsLeftUnfiltered.length > 0
+                    ? `The sources offer different values for ${indexColumnsLeftUnfiltered.join(", ")}. Both are compared unfiltered, so the difference in coverage is part of the BULK contribution.`
+                    : null,
+                makeSingleSidedGroupsWarning(referenceOnlyGroupLabels, comparisonOnlyGroupLabels),
+                makeSkippedGroupsWarning(skippedGroupLabels),
+            ].filter((warning): warning is string => warning !== null);
+
+            return {
+                kind: "ready",
+                groupDecompositions,
+                nonBlockingWarnings,
+                referenceLabel,
+                comparisonLabel,
+                title: `${spec.target} change contributions from ${referenceLabel} to ${comparisonLabel}`,
+            };
+        },
+        [
+            referenceEnsembleIdent,
+            comparisonEnsembleIdent,
+            resultName,
+            spec,
+            areSourcesDistinct,
+            areSelectedTablesComparable,
+            areSelectedIndicesWithValuesValid,
+            isComputable,
+            statisticalDataQueries,
+            subplotByIndex,
+            waterfallSources,
+            indexColumnsLeftUnfiltered,
+            isIndexValueIntersectionActive,
+            indexColumnsWithNoSelectedValues,
+            ensembleSet,
+        ],
+    );
 
     if (computation.kind === "message") {
         return computation.result;
