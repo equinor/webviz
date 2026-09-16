@@ -15,7 +15,7 @@ import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numbe
 import { ColumnType } from "@modules/_shared/InplaceVolumes/Table";
 
 import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
-import { formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
+import { collectLeafColumns, formatEnsembleIdent, isValidFluidType } from "../utils/tableComponentUtils";
 
 export type InplaceVolumesTableProps = {
     ensembleSet: EnsembleSet;
@@ -111,19 +111,9 @@ function TableFilterRow(props: {
     // ! As with sorting, the keys/sub-keys should match the property key path in the data object
     const flattenedLeafColumns = React.useMemo(() => {
         const leafColumns: { [key: string]: TableHeading } = {};
-
-        function addLeafColumnsRecursive(heading: TableHeading, key: string) {
-            if (heading.subHeading) {
-                Object.entries(heading.subHeading).forEach(([subKey, subHeading]) =>
-                    addLeafColumnsRecursive(subHeading, subKey),
-                );
-            } else {
-                leafColumns[key] = heading;
-            }
+        for (const leaf of collectLeafColumns(props.columnConfig)) {
+            leafColumns[leaf.key] = leaf.heading;
         }
-
-        Object.entries(props.columnConfig).forEach(([key, heading]) => addLeafColumnsRecursive(heading, key));
-
         return leafColumns;
     }, [props.columnConfig]);
 
