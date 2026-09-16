@@ -3,7 +3,9 @@ import React from "react";
 import { Icon } from "@equinor/eds-core-react";
 import { play_circle } from "@equinor/eds-icons";
 import { KeyboardArrowLeft } from "@mui/icons-material";
+import { useQuery } from "@tanstack/react-query";
 
+import { getMediaSasTokenOptions } from "@api";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { Dialog } from "@lib/components/Dialog";
@@ -14,6 +16,11 @@ import { TUTORIAL_VIDEOS, type TutorialVideo } from "./tutorials.generated";
 
 Icon.add({ play_circle });
 
+// The container is private; blob URLs from the manifest need a short-lived read SAS token appended to be fetchable.
+function appendSasToken(url: string, sasToken: string | undefined): string | undefined {
+    return sasToken ? `${url}?${sasToken}` : undefined;
+}
+
 export type TutorialsDialogProps = {
     workbench: Workbench;
 };
@@ -21,6 +28,10 @@ export type TutorialsDialogProps = {
 export function TutorialsDialog(props: TutorialsDialogProps): React.ReactNode {
     const [isOpen, setIsOpen] = useGuiState(props.workbench.getGuiMessageBroker(), GuiState.TutorialsDialogOpen);
     const [selectedSlug, setSelectedSlug] = React.useState<string | null>(null);
+
+    // Re-fetched each time the dialog opens so the token stays fresh.
+    const sasTokenQuery = useQuery({ ...getMediaSasTokenOptions(), enabled: isOpen });
+    const sasToken = sasTokenQuery.data?.sasToken;
 
     if (!isOpen) {
         return null;
@@ -50,9 +61,14 @@ export function TutorialsDialog(props: TutorialsDialogProps): React.ReactNode {
             </Dialog.Header>
             <Dialog.Body layoutClassName="grow min-h-0">
                 {selectedVideo ? (
-                    <TutorialDetails video={selectedVideo} onBack={() => runViewTransition(() => setSelectedSlug(null))} />
+                    <TutorialDetails
+                        video={selectedVideo}
+                        sasToken={sasToken}
+                        onBack={() => runViewTransition(() => setSelectedSlug(null))}
+                    />
                 ) : (
                     <TutorialCollection
+                        sasToken={sasToken}
                         onSelect={(video) => runViewTransition(() => setSelectedSlug(video.slug))}
                     />
                 )}
@@ -62,6 +78,7 @@ export function TutorialsDialog(props: TutorialsDialogProps): React.ReactNode {
 }
 
 type TutorialCollectionProps = {
+    sasToken: string | undefined;
     onSelect: (video: TutorialVideo) => void;
 };
 
@@ -73,7 +90,12 @@ function TutorialCollection(props: TutorialCollectionProps): React.ReactNode {
                     <Heading as="h6">{category}</Heading>
                     <div className="gap-md grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
                         {videos.map((video) => (
-                            <TutorialCard key={video.slug} video={video} onClick={() => props.onSelect(video)} />
+                            <TutorialCard
+                                key={video.slug}
+                                video={video}
+                                sasToken={props.sasToken}
+                                onClick={() => props.onSelect(video)}
+                            />
                         ))}
                     </div>
                 </div>
@@ -105,6 +127,7 @@ function groupByCategory(videos: TutorialVideo[]): [string, TutorialVideo[]][] {
 
 type TutorialCardProps = {
     video: TutorialVideo;
+    sasToken: string | undefined;
     onClick: () => void;
 };
 
@@ -119,7 +142,12 @@ function TutorialCard(props: TutorialCardProps): React.ReactNode {
                 style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}
             >
                 {/* loading="lazy" + no <video> here: only the poster image is fetched until a card is clicked. */}
-                <img src={props.video.thumbnailUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <img
+                    src={appendSasToken(props.video.thumbnailUrl, props.sasToken)}
+                    alt=""
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                />
                 <Icon name="play_circle" className="absolute inset-0 m-auto text-4xl text-white drop-shadow" />
             </div>
             <div className="font-bolder text-body-md line-clamp-1">{props.video.title}</div>
@@ -132,6 +160,7 @@ function TutorialCard(props: TutorialCardProps): React.ReactNode {
 
 type TutorialDetailsProps = {
     video: TutorialVideo | null;
+    sasToken: string | undefined;
     onBack: () => void;
 };
 
@@ -145,8 +174,11 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
     const [steps, setSteps] = React.useState<TutorialStep[]>([]);
     const [currentTime, setCurrentTime] = React.useState(0);
 
+    const video = props.video;
+    const sasToken = props.sasToken;
+
     React.useEffect(() => {
-        if (!props.video) {
+        if (!video || !sasToken) {
             setSteps([]);
             return;
         }
@@ -154,7 +186,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
         const controller = new AbortController();
         setSteps([]);
         setCurrentTime(0);
-        fetch(props.video.stepsUrl, { signal: controller.signal })
+        fetch(`${video.stepsUrl}?${sasToken}`, { signal: controller.signal })
             .then((response) => (response.ok ? response.json() : null))
             .then((payload: unknown) => {
                 if (!payload || typeof payload !== "object" || !("steps" in payload)) {
@@ -178,7 +210,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
             .catch(() => undefined);
 
         return () => controller.abort();
-    }, [props.video]);
+    }, [video, sasToken]);
 
     if (!props.video) {
         return (
@@ -271,8 +303,8 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                     controls
                     autoPlay
                     preload="metadata"
-                    poster={props.video.thumbnailUrl}
-                    src={props.video.videoUrl}
+                    poster={appendSasToken(props.video.thumbnailUrl, sasToken)}
+                    src={appendSasToken(props.video.videoUrl, sasToken)}
                     onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
                     className="border-neutral-subtle shadow-elevation-overlay aspect-video h-auto max-h-full w-auto max-w-full rounded-md border-2 object-contain"
                     style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}

@@ -45,6 +45,8 @@ from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
+from primary.routers.tutorials.router import router as tutorials_router
+from primary.services.tutorial_media.tutorial_media_signer import TutorialMediaSignerSingleton
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
 from primary.utils.azure_service_credentials import create_credential_for_azure_services
 from primary.utils.azure_service_credentials import log_azure_credential_env_var_status
@@ -122,10 +124,18 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     TaskMetaTrackerFactory.initialize(redis_url=config.REDIS_CACHE_URL)
     SumoFingerprinterFactory.initialize(redis_url=config.REDIS_CACHE_URL)
 
+    if config.TUTORIAL_STORAGE_ACCOUNT_URL and azure_services_credential is not None:
+        TutorialMediaSignerSingleton.initialize(
+            account_url=config.TUTORIAL_STORAGE_ACCOUNT_URL,
+            container_name=config.TUTORIAL_BLOB_CONTAINER,
+            credential=azure_services_credential,
+        )
+
     # This part, after the yield, will be executed after the application has finished.
     yield
 
     await PersistenceStoresSingleton.shutdown_async()
+    await TutorialMediaSignerSingleton.shutdown_async()
 
     if azure_services_credential is not None:
         await azure_services_credential.close()
@@ -173,6 +183,7 @@ app.include_router(rft_router, prefix="/rft", tags=["rft"])
 app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 app.include_router(persistence_router, prefix="/persistence", tags=["persistence"])
+app.include_router(tutorials_router, prefix="/tutorials", tags=["tutorials"])
 
 auth_helper = AuthHelper()
 app.include_router(auth_helper.router)

@@ -1,10 +1,10 @@
 import asyncio
 import datetime
 import logging
-from urllib.parse import quote, urlparse
+from urllib.parse import urlparse
 
 from azure.core.credentials_async import AsyncTokenCredential
-from azure.storage.blob import BlobSasPermissions, UserDelegationKey, generate_blob_sas
+from azure.storage.blob import ContainerSasPermissions, UserDelegationKey, generate_container_sas
 from azure.storage.blob.aio import BlobServiceClient
 
 LOGGER = logging.getLogger(__name__)
@@ -53,20 +53,21 @@ class TutorialMediaSigner:
             self._delegation_key_expiry = key_expiry
             return self._delegation_key
 
-    async def sign_blob_async(self, blob_name: str) -> str:
-        """Return a read-only SAS URL for the given blob within the tutorial container."""
+    async def get_container_read_sas_token_async(self) -> str:
+        """Return a read-only, container-scoped SAS token for the tutorial media container.
+
+        The token is appended by the frontend to the (non-sensitive) blob URLs from the manifest.
+        """
         delegation_key = await self._get_delegation_key_async()
         now = datetime.datetime.now(datetime.timezone.utc)
-        sas_token = generate_blob_sas(
+        return generate_container_sas(
             account_name=self._account_name,
             container_name=self._container_name,
-            blob_name=blob_name,
             user_delegation_key=delegation_key,
-            permission=BlobSasPermissions(read=True),
+            permission=ContainerSasPermissions(read=True),
             start=now - _CLOCK_SKEW_MARGIN,
             expiry=now + _SAS_TTL,
         )
-        return f"{self._account_url}/{self._container_name}/{quote(blob_name)}?{sas_token}"
 
     async def close_async(self) -> None:
         await self._service_client.close()

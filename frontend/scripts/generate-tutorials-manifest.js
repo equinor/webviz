@@ -6,7 +6,7 @@ import glob from "fast-glob";
 
 import { parseTutorialMeta } from "./lib/parseTutorialMeta.js";
 
-/** Public, anonymously-readable container the e2e_recordings CI workflow publishes videos to. */
+/** Private container (SAS-gated). Blob names aren't sensitive; a short-lived read token is appended when fetching. */
 const TUTORIAL_VIDEOS_BASE_URL = "https://webviz.blob.core.windows.net/tutorial-videos";
 
 const STORIES_GLOB = "tests/e2e/stories/[^_]*.test.ts";
