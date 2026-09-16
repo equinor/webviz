@@ -77,23 +77,25 @@ function makeWaterfallTrace(
 ): Partial<PlotData> {
     const { bars } = group.decomposition;
     const labels = makeBarDisplayLabels(group.decomposition, referenceLabel, comparisonLabel);
+    const barTexts = makeBarTexts(group.decomposition);
 
-    return {
+    const trace: WaterfallTrace = {
         type: "waterfall",
         orientation: "v",
         measure: bars.map((bar) => bar.measure),
         x: labels,
         y: bars.map((bar) => bar.value),
-        text: makeBarTexts(group.decomposition),
+        text: barTexts,
         textposition: "outside",
         textfont: { size: 11 },
-        hovertext: makeBarHoverTexts(group, labels),
+        hovertext: makeBarHoverTexts(group, labels, barTexts),
         hoverinfo: "text",
         connector: { mode: "spanning" },
         increasing: { marker: { color: INCREASING_COLOR } },
         decreasing: { marker: { color: DECREASING_COLOR } },
         totals: { marker: { color: TOTALS_COLOR } },
-    } satisfies WaterfallTrace as unknown as Partial<PlotData>;
+    };
+    return trace as Partial<PlotData>;
 }
 
 /**
@@ -101,11 +103,10 @@ function makeWaterfallTrace(
  * within-ensemble spread is typically far wider than the change being decomposed, so drawing it on
  * the same axis would dwarf the factor bars.
  */
-function makeBarHoverTexts(group: WaterfallGroupDecomposition, displayLabels: string[]): string[] {
+function makeBarHoverTexts(group: WaterfallGroupDecomposition, displayLabels: string[], barTexts: string[]): string[] {
     const { bars } = group.decomposition;
-    const barTexts = makeBarTexts(group.decomposition);
 
-    return bars.map((bar, index) => {
+    return bars.map((_bar, index) => {
         const isReference = index === 0;
         const isComparison = index === bars.length - 1;
         const band = isReference
@@ -132,7 +133,11 @@ export function buildWaterfallPlot(
     groups: WaterfallGroupDecomposition[],
     options: WaterfallPlotOptions,
 ): React.ReactNode {
-    const numSubplots = Math.max(groups.length, 1);
+    if (groups.length === 0) {
+        return null;
+    }
+
+    const numSubplots = groups.length;
     const { numRows, numCols } = calcNumRowsAndCols(numSubplots);
     const isSingleGroup = groups.length <= 1;
 
@@ -168,7 +173,7 @@ export function buildWaterfallPlot(
         });
     });
 
-    figure.updateLayout({ showlegend: false, plot_bgcolor: "white" });
+    figure.updateLayout({ showlegend: false });
 
     return <Plot data={figure.makeData() as Data[]} layout={figure.makeLayout()} />;
 }
