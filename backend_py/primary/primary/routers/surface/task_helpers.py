@@ -46,11 +46,10 @@ async def submit_and_track_stat_surf_task_async(
     # According to Sumo team, the tasks and task results will be purged after 24 hours, so we set our TTL slightly shorter at 23 hours
     task_ttl_s = 23 * 60 * 60
     task_meta = await task_tracker.register_task_with_fingerprint_async(
-        task_system="sumo_task",
         task_id=sumo_task_id,
         fingerprint=task_fingerprint,
         ttl_s=task_ttl_s,
-        task_start_time_utc_s=task_start_time_utc_s,
+        actual_start_time_utc_s=task_start_time_utc_s,
         expected_store_key=None,
     )
 
@@ -60,7 +59,10 @@ async def submit_and_track_stat_surf_task_async(
 def make_lro_in_progress_resp(
     task_meta: TaskMeta, task_just_submitted: bool, prog_obj_from_access: InProgress
 ) -> LroInProgressResp:
-    elapsed_time_s = time.time() - task_meta.start_time_utc_s
+    elapsed_time_s = 0.0
+    if task_meta.started_at_utc_s is not None:
+        elapsed_time_s = time.time() - task_meta.started_at_utc_s
+
     if task_just_submitted:
         prog_msg = f"New task submitted: {prog_obj_from_access.progress_message}"
     else:

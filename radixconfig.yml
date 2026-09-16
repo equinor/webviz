@@ -213,6 +213,42 @@ spec:
 
 
     # -----------------------------------------------------------------
+    - name: pyworker-default
+      dockerFileName: ./backend_py/pyworker_default/Dockerfile
+      # Set non-prod clientId as default, prod overrides below
+      identity:
+        azure:
+          clientId: 025fe044-5ee8-4b27-bf83-aefb548f14fa
+      secretRefs:
+        azureKeyVaults:
+          - name: kv-webviz-shared
+            useAzureIdentity: true
+            items:
+              - { name: webviz-service-bus-payload-fernet-key, envVar: WEBVIZ_SERVICE_BUS_PAYLOAD_FERNET_KEY }
+              - { name: webviz-redis-cache-password, envVar: WEBVIZ_REDIS_CACHE_PASSWORD }
+              # Inject all App Insights connection strings as env vars.
+              # Azure Monitor setup picks the right one based on the Radix environment.
+              - { name: webviz-insights-connectionstring-prod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD }
+              - { name: webviz-insights-connectionstring-preprod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD }
+              - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
+              - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
+              - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
+              - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
+      environmentConfig:
+        - environment: prod
+          identity:
+            azure:
+              # Override with prod clientId
+              clientId: 900ed417-a860-4970-bd37-73b059ca6f0d
+
+        - environment: review3
+          variables:
+            WEBVIZ_SERVICE_BUS_FQ_NAMESPACE: sbns-webviz-nonprod.servicebus.windows.net
+            WEBVIZ_SERVICE_BUS_QUEUE_NAME: review3-default
+            WEBVIZ_WORKER_MAX_CONCURRENT_TASKS: 1
+
+
+    # -----------------------------------------------------------------
     - name: redis-auth-store
       dockerFileName: ./docker/redis/Dockerfile
       identity:
