@@ -112,8 +112,8 @@ function makeBarHoverTexts(group: WaterfallGroupDecomposition, displayLabels: st
         const band = isReference
             ? group.uncertainty?.reference
             : isComparison
-              ? group.uncertainty?.comparison
-              : undefined;
+                ? group.uncertainty?.comparison
+                : undefined;
 
         if (!band) {
             return `${displayLabels[index]}: ${barTexts[index]}`;
