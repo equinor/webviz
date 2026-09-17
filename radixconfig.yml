@@ -25,9 +25,6 @@ spec:
     - name: review3
       build:
         from: review3
-    - name: dev
-      build:
-        from: dev
 
   components:
     # -----------------------------------------------------------------
@@ -68,7 +65,6 @@ spec:
               # Azure Monitor setup picks the right one based on the Radix environment.
               - { name: webviz-insights-connectionstring-prod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD }
               - { name: webviz-insights-connectionstring-preprod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD }
-              - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
               - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
               - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
@@ -146,22 +142,6 @@ spec:
                 averageUtilization: 80
 
         - environment: review3
-          resources:
-            requests:
-              memory: 4Gi
-              cpu: 500m
-            limits:
-              memory: 4Gi
-          horizontalScaling:
-            minReplicas: 1
-            maxReplicas: 3
-            resources:
-              memory:
-                averageUtilization: 60
-              cpu:
-                averageUtilization: 80
-
-        - environment: dev
           resources:
             requests:
               memory: 4Gi
@@ -293,7 +273,6 @@ spec:
               # Azure Monitor setup picks the right one based on the Radix environment.
               - { name: webviz-insights-connectionstring-prod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PROD }
               - { name: webviz-insights-connectionstring-preprod, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_PREPROD }
-              - { name: webviz-insights-connectionstring-dev, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_DEV }
               - { name: webviz-insights-connectionstring-review, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW }
               - { name: webviz-insights-connectionstring-review2, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW2 }
               - { name: webviz-insights-connectionstring-review3, envVar: WEBVIZ_INSIGHTS_CONNECTIONSTRING_REVIEW3 }
