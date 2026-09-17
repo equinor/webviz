@@ -124,37 +124,46 @@ export function SessionManagementContent(props: SessionOverviewContentProps): Re
                     </Tooltip>
                     <span className="grow" />
                     <Tooltip content="Edit the selected session">
-                        <Button
-                            tone="accent"
-                            variant="ghost"
-                            disabled={!selectedSession}
-                            onClick={handleEditClick}
-                            icon={<Edit />}
-                        >
-                            Edit
-                        </Button>
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                tone="accent"
+                                variant="ghost"
+                                disabled={!selectedSession}
+                                onClick={handleEditClick}
+                                icon={<Edit />}
+                            >
+                                Edit
+                            </Button>
+                        </span>
                     </Tooltip>
                     <Tooltip content="Open the selected session">
-                        <Button
-                            tone="accent"
-                            variant="ghost"
-                            disabled={!selectedSession}
-                            onClick={handleOpenSessionClick}
-                            icon={<FileOpen />}
-                        >
-                            Open
-                        </Button>
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                tone="accent"
+                                variant="ghost"
+                                disabled={!selectedSession}
+                                onClick={handleOpenSessionClick}
+                                icon={<FileOpen />}
+                            >
+                                Open
+                            </Button>
+                        </span>
                     </Tooltip>
                     <Tooltip content="Delete the selected session">
-                        <Button
-                            tone="danger"
-                            disabled={!selectedSession || deletePending}
-                            onClick={handleDeleteClick}
-                            variant="ghost"
-                            icon={deletePending ? <CircularProgress /> : <Delete />}
-                        >
-                            Delete
-                        </Button>
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                tone="danger"
+                                disabled={!selectedSession || deletePending}
+                                onClick={handleDeleteClick}
+                                variant="ghost"
+                                icon={deletePending ? <CircularProgress /> : <Delete />}
+                            >
+                                Delete
+                            </Button>
+                        </span>
                     </Tooltip>
 
                     <Tooltip content="Refresh list">

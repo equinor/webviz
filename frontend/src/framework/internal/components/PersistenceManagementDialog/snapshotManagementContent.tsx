@@ -186,26 +186,32 @@ export function SnapshotManagementContent(props: SnapshotOverviewContentProps): 
                 <span className="grow" />
                 <Tooltip.Provider side="bottom">
                     <Tooltip content="Open selected snapshot">
-                        <Button
-                            variant="ghost"
-                            tone="accent"
-                            disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
-                            onClick={handleOpenSnapshotClick}
-                            icon={<FileOpen />}
-                        >
-                            Open
-                        </Button>
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                variant="ghost"
+                                tone="accent"
+                                disabled={!selectedSnapshot || selectedSnapshot?.snapshotDeleted}
+                                onClick={handleOpenSnapshotClick}
+                                icon={<FileOpen />}
+                            >
+                                Open
+                            </Button>
+                        </span>
                     </Tooltip>
                     <Tooltip content={deleteButtonTooltip}>
-                        <Button
-                            variant="ghost"
-                            tone="danger"
-                            disabled={!selectedSnapshot || deletePending || !userId}
-                            onClick={handleDeleteClick}
-                            icon={deletePending ? <CircularProgress /> : <Delete />}
-                        >
-                            {deleteButtonText}
-                        </Button>
+                        {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                        <span>
+                            <Button
+                                variant="ghost"
+                                tone="danger"
+                                disabled={!selectedSnapshot || deletePending || !userId}
+                                onClick={handleDeleteClick}
+                                icon={deletePending ? <CircularProgress /> : <Delete />}
+                            >
+                                {deleteButtonText}
+                            </Button>
+                        </span>
                     </Tooltip>
                     <Tooltip content="Refresh list">
                         <Button
