@@ -33,10 +33,13 @@ export function ParametersSelector({
     const [prevAllParameterIdents, setPrevAllParameterIdents] = React.useState(allParameterIdents);
     const [autoSelectAllOnGroupChange, setAutoSelectAllOnGroupChange] = React.useState<boolean>(true);
     const [userHasInteracted, setUserHasInteracted] = React.useState<boolean>(false);
-    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>([]);
+    const [selectedGroupFilterValues, setSelectedGroupFilterValues] = React.useState<string[]>(() =>
+        parameterIdentsToGroupSelection(selectedParameterIdents.length ? selectedParameterIdents : allParameterIdents),
+    );
 
     const [prevSelectedParameterIdents, setPrevSelectedParameterIdents] =
         React.useState<ParameterIdent[]>(selectedParameterIdents);
+
     if (prevSelectedParameterIdents !== selectedParameterIdents) {
         setPrevSelectedParameterIdents(selectedParameterIdents);
         if (selectedGroupFilterValues.length === 0 && selectedParameterIdents.length > 0) {
