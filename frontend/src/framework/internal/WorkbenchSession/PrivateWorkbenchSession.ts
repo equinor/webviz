@@ -400,7 +400,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
             // hot cache already full, appending the outgoing dashboard first would make the target -
             // if it's the oldest hot entry - that eviction victim, unloading the very dashboard this
             // call is switching to before this cancellation ever got a chance to protect it.
-            this._dashboardHotCache.cancelEviction(dashboard.getId());
+            this._dashboardHotCache.release(dashboard.getId());
         }
 
         const previouslyActiveDashboard = this.getActiveDashboard();
@@ -555,7 +555,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         // Stop tracking any pending hot-cache eviction for this dashboard before tearing it down
         // directly below - otherwise a stale timer would later call unload() on a dashboard that's
         // no longer part of the session.
-        this._dashboardHotCache.forget(dashboard.getId());
+        this._dashboardHotCache.release(dashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${dashboard.getId()}`);
         dashboard.beforeDestroy();
         this._dashboards = this._dashboards.filter((d) => d.getId() !== dashboard.getId());
@@ -605,7 +605,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
         // oldDashboard was hot-cached (pending eviction) rather than active, its stale timer would
         // later call unload() on this now-detached Dashboard object, and hotDashboardIds would keep
         // reporting this id as hot even though a different Dashboard instance has taken its place.
-        this._dashboardHotCache.forget(oldDashboard.getId());
+        this._dashboardHotCache.release(oldDashboard.getId());
         this._unsubscribeFunctionsManagerDelegate.unsubscribe(`dashboard-${oldDashboard.getId()}`);
         oldDashboard.beforeDestroy();
 

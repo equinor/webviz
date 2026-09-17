@@ -32,7 +32,7 @@ type PendingEviction = {
  */
 export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopicPayloads> {
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<DashboardHotCacheTopicPayloads>();
-    private _pending: PendingEviction[] = [];
+    private _pendingEvictions: PendingEviction[] = [];
     private _hotDashboardIdsSnapshot: string[] = [];
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<DashboardHotCacheTopicPayloads> {
@@ -58,36 +58,30 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
         // A dashboard should never already have a pending eviction when this is called (it would
         // have to be the active dashboard to be switched away from), but guard against a duplicate
         // timer regardless.
-        this.forgetInternal(dashboard.getId());
+        this.releaseInternal(dashboard.getId());
 
         const timer = setTimeout(() => {
             this.evictInternal(dashboard.getId());
             this.notify();
         }, DASHBOARD_HOT_CACHE_TIMEOUT_MS);
-        this._pending.push({ dashboard, timer });
+        this._pendingEvictions.push({ dashboard, timer });
 
-        while (this._pending.length > DASHBOARD_HOT_CACHE_MAX_COUNT) {
-            this.evictInternal(this._pending[0].dashboard.getId());
+        while (this._pendingEvictions.length > DASHBOARD_HOT_CACHE_MAX_COUNT) {
+            this.evictInternal(this._pendingEvictions[0].dashboard.getId());
         }
         this.notify();
     }
 
     /**
-     * Call when switching to a dashboard, to cancel its pending eviction if it has one. Its module
-     * instances are untouched either way - Dashboard.load()'s own "nothing cached" early-return
-     * already makes reactivating a still-hot dashboard a no-op - so there's nothing else to do here.
+     * Stops tracking a dashboard's pending eviction, if it has one, without unloading it. Covers two
+     * cases: switching back to a still-hot dashboard (its module instances are untouched either way -
+     * Dashboard.load()'s own "nothing cached" early-return already makes reactivating a still-hot
+     * dashboard a no-op) and a dashboard being removed from the session or the session itself being
+     * torn down (it's being destroyed through a different path already, so this just avoids a stale
+     * timer later acting on an already-removed dashboard).
      */
-    cancelEviction(dashboardId: string): void {
-        this.forget(dashboardId);
-    }
-
-    /**
-     * Call when a dashboard is removed from the session, or the session itself is torn down - the
-     * dashboard is being destroyed through a different path already, so this only stops tracking
-     * it (no `unload()` call), avoiding a stale timer later acting on an already-removed dashboard.
-     */
-    forget(dashboardId: string): void {
-        this.forgetInternal(dashboardId);
+    release(dashboardId: string): void {
+        this.releaseInternal(dashboardId);
         this.notify();
     }
 
@@ -97,7 +91,7 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
      * dashboard isn't currently hot.
      */
     evictNow(dashboardId: string): void {
-        const isHot = this._pending.some((entry) => entry.dashboard.getId() === dashboardId);
+        const isHot = this._pendingEvictions.some((entry) => entry.dashboard.getId() === dashboardId);
         if (!isHot) {
             return;
         }
@@ -107,34 +101,34 @@ export class DashboardHotCache implements PublishSubscribe<DashboardHotCacheTopi
 
     /** Cancels every pending eviction. Call on session teardown. */
     clear(): void {
-        for (const entry of this._pending) {
+        for (const entry of this._pendingEvictions) {
             clearTimeout(entry.timer);
         }
-        this._pending = [];
+        this._pendingEvictions = [];
         this.notify();
     }
 
-    private forgetInternal(dashboardId: string): void {
-        const index = this._pending.findIndex((entry) => entry.dashboard.getId() === dashboardId);
+    private releaseInternal(dashboardId: string): void {
+        const index = this._pendingEvictions.findIndex((entry) => entry.dashboard.getId() === dashboardId);
         if (index === -1) {
             return;
         }
-        clearTimeout(this._pending[index].timer);
-        this._pending.splice(index, 1);
+        clearTimeout(this._pendingEvictions[index].timer);
+        this._pendingEvictions.splice(index, 1);
     }
 
     private evictInternal(dashboardId: string): void {
-        const index = this._pending.findIndex((entry) => entry.dashboard.getId() === dashboardId);
+        const index = this._pendingEvictions.findIndex((entry) => entry.dashboard.getId() === dashboardId);
         if (index === -1) {
             return;
         }
-        const [{ dashboard, timer }] = this._pending.splice(index, 1);
+        const [{ dashboard, timer }] = this._pendingEvictions.splice(index, 1);
         clearTimeout(timer);
         dashboard.unload();
     }
 
     private notify(): void {
-        this._hotDashboardIdsSnapshot = this._pending.map((entry) => entry.dashboard.getId());
+        this._hotDashboardIdsSnapshot = this._pendingEvictions.map((entry) => entry.dashboard.getId());
         this._publishSubscribeDelegate.notifySubscribers(DashboardHotCacheTopic.HOT_DASHBOARD_IDS);
     }
 }
