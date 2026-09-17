@@ -27,8 +27,7 @@ export type UseHorizontalStepScrollOptions = {
     // array reference won't register as changed if it's mutated in place.
     itemsKey?: string;
     // Runs in a layout effect whenever itemsKey changes, after the forced recompute. Use it to make
-    // a dependent measurement-based component remeasure (e.g. base-ui <Tabs.Indicator/> after a
-    // reorder of same-sized tabs, which its own ResizeObserver never catches).
+    // a dependent measurement-based component remeasure.
     onItemsChange?: () => void;
 };
 
@@ -58,8 +57,8 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
     const onItemsChangeRef = React.useRef(options.onItemsChange);
     onItemsChangeRef.current = options.onItemsChange;
 
-    const updateScrollButtonsState = React.useCallback(
-        function updateScrollButtonsState() {
+    const updateScrollOptions = React.useCallback(
+        function updateScrollOptions() {
             const el = scrollContainerRef.current;
             const contentEl = contentRef.current;
             if (!el || !contentEl) {
@@ -88,9 +87,9 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
     React.useLayoutEffect(
         function recomputeOnItemsChange() {
             onItemsChangeRef.current?.();
-            updateScrollButtonsState();
+            updateScrollOptions();
         },
-        [itemsKey, updateScrollButtonsState],
+        [itemsKey, updateScrollOptions],
     );
 
     React.useEffect(
@@ -104,8 +103,8 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
             // Observe both the scroll container (its allotted width can change, e.g. on window
             // resize) and the content itself (its natural width changes whenever an item is added or
             // removed), since either one can change whether the content overflows.
-            const handleResize = () => updateScrollButtonsState();
-            const handleScroll = () => updateScrollButtonsState();
+            const handleResize = () => updateScrollOptions();
+            const handleScroll = () => updateScrollOptions();
             const resizeObserver = new ResizeObserver(handleResize);
             resizeObserver.observe(el);
             resizeObserver.observe(contentEl);
@@ -116,7 +115,7 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
                 el.removeEventListener("scroll", handleScroll);
             };
         },
-        [updateScrollButtonsState],
+        [updateScrollOptions],
     );
 
     const scrollToPrevious = React.useCallback(
