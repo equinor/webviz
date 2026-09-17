@@ -12,19 +12,11 @@ spec:
   build:
     useBuildKit: true
   environments:
-    - name: prod
-    - name: preprod
-      build:
-        from: main
-    - name: review
-      build:
-        from: review
-    - name: review2
-      build:
-        from: review2
-    - name: review3
-      build:
-        from: review3
+    - { name: prod }
+    - { name: preprod, build: { from: main } }
+    - { name: review, build: { from: review } }
+    - { name: review2, build: { from: review2 } }
+    - { name: review3, build: { from: review3 } }
 
   components:
     # -----------------------------------------------------------------
