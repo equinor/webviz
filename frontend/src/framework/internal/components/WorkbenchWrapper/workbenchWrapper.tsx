@@ -18,7 +18,7 @@ import { useGlobalErrorBoundaryContext } from "../../../../GlobalErrorBoundary";
 import { ActionBar } from "../ActionBar/actionBar";
 import { ActiveDashboardBoundary } from "../ActiveDashboardBoundary";
 import { ActiveSessionRecoveryDialog } from "../ActiveSessionRecoveryDialog/activeSessionRecoveryDialog";
-import { BottomBar } from "../BottomBar/bottomBar";
+import { BottomBar } from "../BottomBar";
 import { CreateSnapshotDialog } from "../CreateSnapshotDialog/createSnapshotDialog";
 import { DocumentTitleSync } from "../DocumentTitleSync";
 import { InitialEnsemblesLoadingErrorInfoDialog } from "../InitialEnsemblesLoadingErrorInfoDialog";
