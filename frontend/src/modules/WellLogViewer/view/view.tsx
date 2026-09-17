@@ -5,7 +5,7 @@ import { useAtomValue } from "jotai";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { StatusWrapper } from "@lib/components/StatusWrapper";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { InterfaceTypes } from "../interfaces";
 
@@ -22,7 +22,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
     const wellboreTrajectoryDataQuery = useAtomValue(wellboreTrajectoryQueryAtom);
 
-    const propagatedErrorMessage = usePropagateQueryErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
+    const propagatedErrorMessage = propagateQueryErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
 
     // Only treat the trajectory query's pending state as "loading" once a wellbore is actually
     // selected; while nothing is selected the query is intentionally disabled and stays pending forever.
@@ -35,7 +35,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
     React.useEffect(
         function setModuleName() {
-            let title = "";
+            let title;
 
             if (selectedWellboreHeader?.uniqueWellboreIdentifier) {
                 title = selectedWellboreHeader.uniqueWellboreIdentifier;

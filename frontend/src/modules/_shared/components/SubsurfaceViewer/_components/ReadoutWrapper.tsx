@@ -88,6 +88,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED,
     );
 
+    const [prevIsReadoutSuppressed, setPrevIsReadoutSuppressed] = React.useState(isReadoutSuppressed);
+
     React.useEffect(function onMountEffect() {
         return function onUnmountEffect() {
             // Clear any pending click timeout
@@ -196,16 +198,33 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     // debounced picks, instead of relying solely on the next hover/click event to notice.
     // Note: only the deep-pick readout is suppressed - the plain x/y/z coordinate readout stays as-is
     // (it will keep updating live via hover events while suppression is active).
+    if (prevIsReadoutSuppressed !== isReadoutSuppressed) {
+        setPrevIsReadoutSuppressed(isReadoutSuppressed);
+
+        if (isReadoutSuppressed) {
+            setReadoutMode("hover");
+            setPickingInfoPerView({});
+        }
+    }
+
     React.useEffect(
         function resetOnReadoutSuppressed() {
             if (!isReadoutSuppressed) {
                 return;
             }
             debouncedMultiViewPicking.cancel();
-            setReadoutMode("hover");
-            clearPicks();
+            onViewerHover?.(null);
+            onViewportHover?.(null);
+            onPickingInfoChange?.({});
         },
-        [isReadoutSuppressed, debouncedMultiViewPicking, clearPicks],
+        [
+            isReadoutSuppressed,
+            debouncedMultiViewPicking,
+            clearPicks,
+            onViewerHover,
+            onViewportHover,
+            onPickingInfoChange,
+        ],
     );
 
     const handleHoverEvent = React.useCallback(

@@ -287,11 +287,13 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         }
 
         function addDraggingEventListeners() {
+            /* eslint-disable @eslint-react/web-api-no-leaked-event-listener -- false positive; removed in removeDraggingEventListeners */
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("keydown", handleButtonClick);
             document.addEventListener("pointercancel", handlePointerUp);
             document.addEventListener("blur-sm", handlePointerUp);
+            /* eslint-enable @eslint-react/web-api-no-leaked-event-listener */
         }
 
         function removeDraggingEventListeners() {

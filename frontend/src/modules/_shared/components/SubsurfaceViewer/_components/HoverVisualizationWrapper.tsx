@@ -54,7 +54,7 @@ export function HoverVisualizationWrapper(props: HoverVisualizationWrapperProps)
     );
 
     const crossHairLayer = useCrosshairLayer(ctx.bounds, ctx.hoverService, ctx.moduleInstanceId);
-    const pickingRayLayers = usePickingRayLayers(unscaledCoordinatesPerView, false);
+    const pickingRayLayers = createPickingRayLayers(unscaledCoordinatesPerView, false);
     const polylineHoverMarkerLayer = usePolylineHoverMarkerLayer(
         props.polylinesPlugin,
         ctx.hoverService,
@@ -239,7 +239,7 @@ function usePolylineHoverMarkerLayer(
     });
 }
 
-function usePickingRayLayers(
+function createPickingRayLayers(
     unscaledCoordinatesPerView: Record<string, [number, number, number][]>,
     showRay: boolean = true,
 ): Record<string, PickingRayLayer> {

@@ -37,7 +37,7 @@ export function WorkbenchWrapper() {
     const queryClient = useQueryClient();
     const { registerActiveWorkbench } = useGlobalErrorBoundaryContext();
 
-    const [workbench] = React.useState(new Workbench(queryClient));
+    const [workbench] = React.useState(() => new Workbench(queryClient));
     const [isInitialized, setIsInitialized] = React.useState<boolean>(false);
     const isSessionLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSession);
     const isSnapshotLoading = useGuiValue(workbench.getGuiMessageBroker(), GuiState.IsLoadingSnapshot);

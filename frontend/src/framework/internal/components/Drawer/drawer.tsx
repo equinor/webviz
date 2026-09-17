@@ -67,7 +67,7 @@ export function Drawer<T extends string | number>(props: DrawerProps<T>) {
         <div className={`bg-surface flex h-full min-h-0 flex-col ${props.visible ? "" : "hidden"}`}>
             {showHeader && (
                 <div className="bg-canvas py-3xs px-2xs border-neutral-subtle gap-x-xs flex items-center justify-center border-b">
-                    {props.icon && React.cloneElement(props.icon, { fontSize: "small" })}
+                    <span className="icon-font-size-small contents">{props.icon}</span>
                     <span className="text-header-xs font-bolder grow p-0">{props.title}</span>
                     {props.actions}
                     {props.onClose && (

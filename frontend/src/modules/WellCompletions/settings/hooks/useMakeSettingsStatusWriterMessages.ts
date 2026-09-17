@@ -1,12 +1,12 @@
 import { useAtomValue } from "jotai";
 
 import type { SettingsStatusWriter } from "@framework/StatusWriter";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { wellCompletionsQueryAtom } from "../atoms/queryAtoms";
 
 export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatusWriter) {
     const wellCompletionsQuery = useAtomValue(wellCompletionsQueryAtom);
 
-    usePropagateQueryErrorToStatusWriter(wellCompletionsQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(wellCompletionsQuery, statusWriter);
 }

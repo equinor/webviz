@@ -66,10 +66,10 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                         {children}
                     </AlertDialogBase.Description>
                     <div className="dialog__popup__child gap-x-md flex items-center justify-end">
-                        {secondaryActions?.map((action, index) =>
+                        {secondaryActions?.map((action) =>
                             action.closesDialog ? (
                                 <AlertDialogBase.Close
-                                    key={index}
+                                    key={action.label}
                                     onClick={action.onClick}
                                     render={(htmlProps) => (
                                         <Button variant="outlined" tone={action.tone} {...htmlProps}>
@@ -78,7 +78,7 @@ export const AlertDialog = React.forwardRef<HTMLDivElement, AlertDialogProps>(fu
                                     )}
                                 />
                             ) : (
-                                <Button variant="ghost" key={index} tone={action.tone} onClick={action.onClick}>
+                                <Button variant="ghost" key={action.label} tone={action.tone} onClick={action.onClick}>
                                     {action.label}
                                 </Button>
                             ),

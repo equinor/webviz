@@ -14,9 +14,9 @@ import type { SettingAnnotation } from "@lib/components/Setting";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateAllApiErrorsToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { IndexValueCriteria } from "@modules/_shared/InplaceVolumes/TableDefinitionsAccessor";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
+import { propagateAllApiErrorsToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FLUID_INDEX_COLUMN } from "../view/utils/computeVolumeChangeDecomposition";
@@ -89,7 +89,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const isCrossTableComparison = useAtomValue(isCrossTableComparisonAtom);
     const isIndexValueIntersectionActive = useAtomValue(isIndexValueIntersectionActiveAtom);
 
-    usePropagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
+    propagateAllApiErrorsToStatusWriter(tableDefinitionsQuery.errors, statusWriter);
 
     const persistedReferenceEnsembleAnnotations = useMakePersistableFixableAtomAnnotations(
         selectedReferenceEnsembleIdentAtom,
@@ -192,8 +192,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                referenceEnsembleIdent.value &&
-                                referenceTableNameOptions.length === 0
+                            referenceEnsembleIdent.value &&
+                            referenceTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
@@ -223,8 +223,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         loadingOverlay={tableDefinitionsQuery.isLoading}
                         errorOverlay={
                             !tableDefinitionsQuery.isLoading &&
-                                comparisonEnsembleIdent.value &&
-                                comparisonTableNameOptions.length === 0
+                            comparisonEnsembleIdent.value &&
+                            comparisonTableNameOptions.length === 0
                                 ? "No inplace volumes tables in this ensemble."
                                 : undefined
                         }
