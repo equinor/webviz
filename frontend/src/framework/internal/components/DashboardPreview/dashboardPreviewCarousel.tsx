@@ -24,11 +24,10 @@ export type DashboardPreviewCarouselProps = {
 };
 
 export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): React.ReactNode {
-    const { dashboards, width, height } = props;
     const [index, setIndex] = React.useState(0);
 
-    const currentIndex = dashboards.length > 0 ? index % dashboards.length : 0;
-    const current = dashboards[currentIndex];
+    const currentIndex = props.dashboards.length > 0 ? index % props.dashboards.length : 0;
+    const current = props.dashboards[currentIndex];
 
     const { scrollContainerRef, contentRef, scrollItemIntoView } = useHorizontalStepScroll({
         itemSelector: "[data-carousel-indicator]",
@@ -40,7 +39,7 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
         function keepActiveIndicatorInView() {
             scrollItemIntoView(currentIndex);
         },
-        [currentIndex, dashboards.length, scrollItemIntoView],
+        [currentIndex, props.dashboards.length, scrollItemIntoView],
     );
 
     function handleIndicatorClick(e: React.MouseEvent<HTMLButtonElement>, i: number) {
@@ -49,15 +48,19 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
     }
 
     let controlsHeight = 30;
-    if (dashboards.length > 1) {
+    if (props.dashboards.length > 1) {
         controlsHeight = 60;
     }
 
     const tooltipContent = `${current?.name ?? ""}\n${current?.description ? `⎯⎯⎯⎯⎯\n${current.description}` : ""}`;
 
     return (
-        <div className="bg-neutral gap-y-2xs flex flex-col" style={{ width, height }}>
-            <DashboardPreview width={width} height={height - controlsHeight} layout={current?.layout ?? []} />
+        <div className="bg-neutral gap-y-2xs flex flex-col" style={{ width: props.width, height: props.height }}>
+            <DashboardPreview
+                width={props.width}
+                height={props.height - controlsHeight}
+                layout={current?.layout ?? []}
+            />
             {current && (
                 <div className="px-2xs gap-x-2xs flex items-center justify-center">
                     <Tooltip content={tooltipContent}>
@@ -67,7 +70,7 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                     </Tooltip>
                 </div>
             )}
-            {dashboards.length > 1 && (
+            {props.dashboards.length > 1 && (
                 <div className="px-2xs pb-3xs gap-x-3xs flex items-center justify-center">
                     <Tooltip content="Previous dashboard">
                         <Button
@@ -88,7 +91,7 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                         className="min-w-0 scrollbar-none overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
                     >
                         <div ref={contentRef} className="gap-x-3xs flex w-max items-center">
-                            {dashboards.map((dashboard, i) => (
+                            {props.dashboards.map((dashboard, i) => (
                                 <button
                                     aria-label={`Show dashboard "${dashboard.name}"`}
                                     aria-current={i === currentIndex ? "true" : undefined}
@@ -109,8 +112,8 @@ export function DashboardPreviewCarousel(props: DashboardPreviewCarouselProps): 
                             variant="ghost"
                             tone="neutral"
                             size="small"
-                            disabled={currentIndex === dashboards.length - 1}
-                            layoutClassName={currentIndex === dashboards.length - 1 ? "invisible" : ""}
+                            disabled={currentIndex === props.dashboards.length - 1}
+                            layoutClassName={currentIndex === props.dashboards.length - 1 ? "invisible" : ""}
                             onClick={() => setIndex(currentIndex + 1)}
                         >
                             <ChevronRight fontSize="small" />
