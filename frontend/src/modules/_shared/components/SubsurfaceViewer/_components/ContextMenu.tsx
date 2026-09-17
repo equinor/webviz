@@ -1,6 +1,5 @@
 import React from "react";
 
-import { createTheme, ThemeProvider } from "@mui/material";
 import { isEqual } from "lodash-es";
 
 import { ContextMenu as ContextMenuComponent } from "@lib/components/ContextMenu";
@@ -14,10 +13,6 @@ import {
 export type ContextMenuProps = {
     deckGlManager: DeckGlInstanceManager;
 };
-
-const contextMenuTheme = createTheme({
-    components: { MuiSvgIcon: { defaultProps: { fontSize: "small" } } },
-});
 
 export function ContextMenu(props: ContextMenuProps): React.ReactNode {
     const [visible, setVisible] = React.useState<boolean>(false);
@@ -47,23 +42,20 @@ export function ContextMenu(props: ContextMenuProps): React.ReactNode {
 
     return (
         <ContextMenuComponent.Root open onOpenChange={setVisible}>
-            <ThemeProvider theme={contextMenuTheme}>
-                <ContextMenuComponent.Menu anchor={contextMenu.position}>
-                    {contextMenu.items.map((item) => (
-                        <ContextMenuComponent.Item
-                            key={item.id}
-                            onClick={() => {
-                                item.onClick();
-                                setVisible(false);
-                            }}
-                        >
-                            {item.icon}
-
-                            <span>{item.label}</span>
-                        </ContextMenuComponent.Item>
-                    ))}
-                </ContextMenuComponent.Menu>
-            </ThemeProvider>
+            <ContextMenuComponent.Menu anchor={contextMenu.position}>
+                {contextMenu.items.map((item) => (
+                    <ContextMenuComponent.Item
+                        key={item.id}
+                        onClick={() => {
+                            item.onClick();
+                            setVisible(false);
+                        }}
+                    >
+                        <span className="icon-font-size-small">{item.icon}</span>
+                        <span>{item.label}</span>
+                    </ContextMenuComponent.Item>
+                ))}
+            </ContextMenuComponent.Menu>
         </ContextMenuComponent.Root>
     );
 }

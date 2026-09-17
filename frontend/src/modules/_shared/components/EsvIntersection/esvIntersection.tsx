@@ -182,6 +182,15 @@ function EsvIntersectionRenderSurface(props: EsvIntersectionRenderSurfaceProps):
             if (!containerRef.current) return;
             const ctrl = new EsvIntersectionController();
             controllerRef.current = ctrl;
+
+            const { offsetWidth, offsetHeight } = containerRef.current;
+
+            // Seed the size immediately so it doesn't depend on handleResize's effect happening to
+            // run after this one; adjustToSize is safe to call before initialize() (buffered).
+            if (offsetWidth && offsetHeight) {
+                ctrl.adjustToSize(offsetWidth, offsetHeight);
+            }
+
             onControllerChange(ctrl);
             void ctrl.initialize(containerRef.current).catch(console.error);
             return function destroyController() {
