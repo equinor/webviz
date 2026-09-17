@@ -1,5 +1,6 @@
 import { Ajv, type ValidateFunction } from "ajv/dist/jtd";
 import { atom, type Atom, type Setter } from "jotai";
+import { debounce } from "lodash-es";
 
 import type { AtomStore } from "@framework/AtomStoreMaster";
 import {
@@ -35,12 +36,12 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
     private _serializationFunctions: ModuleComponentSerializationFunctions<TSerializedState>;
     private _persistenceAtom: Atom<TSerializedState | undefined>;
     private _lastSerializedHash: string | null = null;
-    private _debouncedNotifyChange: { (): void; cancel: () => void };
+    private _debouncedNotifyChange: ReturnType<typeof debounce>;
     private _validationFunctions: {
         settings?: ValidateFunction<TSerializedState["settings"]>;
         view?: ValidateFunction<TSerializedState["view"]>;
     };
-    private _persistenceAtomUnsubFunc: (() => void) | null = null;
+    private _persistenceAtomUnsubFunc: ReturnType<AtomStore["sub"]> | null = null;
 
     constructor(
         moduleInstance: ModuleInstance<any, TSerializedState>,
@@ -281,17 +282,4 @@ export class ModuleInstanceSerializer<TSerializedState extends ModuleComponentsS
         this._persistenceAtomUnsubFunc = null;
         this._debouncedNotifyChange.cancel();
     }
-}
-
-function debounce(fn: () => void, delay: number): { (): void; cancel: () => void } {
-    let timeout: ReturnType<typeof setTimeout> | null = null;
-    const debounced = () => {
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(fn, delay);
-    };
-    debounced.cancel = () => {
-        if (timeout) clearTimeout(timeout);
-        timeout = null;
-    };
-    return debounced;
 }
