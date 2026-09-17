@@ -64,12 +64,8 @@ function ViewStateAllocator(): React.ReactNode {
 
     // Local component state, deliberately not routed through the atom store, to test whether
     // React state held by the view component leaks past module instance teardown.
-    const [viewStateData, setViewStateData] = React.useState<Float64Array | null>(null);
-
-    React.useEffect(
-        function allocateOrClearViewStateData() {
-            setViewStateData(storeInViewState ? makeDummyData(sizeMb) : null);
-        },
+    const viewStateData = React.useMemo(
+        () => (storeInViewState ? makeDummyData(sizeMb) : null),
         [storeInViewState, sizeMb],
     );
 

@@ -49,17 +49,13 @@ export function Settings(): React.ReactNode {
 
     // Local component state, deliberately not routed through the atom store, to test whether
     // React state held by the settings component leaks past module instance teardown.
-    const [settingsStateData, setSettingsStateData] = React.useState<Float64Array | null>(null);
+    const settingsStateData = React.useMemo(
+        () => (storeInSettingsState ? makeDummyData(sizeMb) : null),
+        [storeInSettingsState, sizeMb],
+    );
 
     // Bumped on each button press so the query below re-runs with a fresh key.
     const [longTaskRunId, setLongTaskRunId] = React.useState(0);
-
-    React.useEffect(
-        function allocateOrClearSettingsStateData() {
-            setSettingsStateData(storeInSettingsState ? makeDummyData(sizeMb) : null);
-        },
-        [storeInSettingsState, sizeMb],
-    );
 
     const longTaskDurationClamped = Math.max(0, Math.floor(longTaskDurationS));
 

@@ -123,14 +123,16 @@ export function useSubscribedValueConditionally<T extends keyof SyncSettingsTopi
     subscriberId?: string,
 ): SyncSettingsTopicDefinitions[T] | null {
     const [latestValue, setLatestValue] = React.useState<SyncSettingsTopicDefinitions[T] | null>(null);
+    const [prevEnable, setPrevEnable] = React.useState(enable);
+
+    if (prevEnable !== enable) {
+        setPrevEnable(enable);
+        if (!enable) setLatestValue(null);
+    }
 
     React.useEffect(
-        function subscribeToSyncSettingsTopic() {
-            if (!enable) {
-                setLatestValue(null);
-                return;
-            }
-
+        function subscribeToServiceTopic() {
+            if (!enable) return;
             function handleNewValue(newValue: SyncSettingsTopicDefinitions[T] | null) {
                 setLatestValue(newValue);
             }

@@ -78,7 +78,11 @@ export function useHorizontalStepScroll(options: UseHorizontalStepScrollOptions)
             const prev = el.scrollLeft > firstItemLeft + 1;
             const next = maxScrollLeft > 1 && el.scrollLeft < maxScrollLeft - 1;
 
+            // State is derived from DOM measurements only available after layout, so it must be set
+            // from an effect.
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setCanScrollToPrevious(prev);
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setCanScrollToNext(next);
         },
         [itemSelector],

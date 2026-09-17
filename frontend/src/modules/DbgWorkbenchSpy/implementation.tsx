@@ -121,12 +121,11 @@ function useHoverValueWithTS<T extends keyof HoverData>(
     const latestValue = useHoverValue(topic, hoverService, moduleInstanceId);
     const [lastUpdatedTS, setLastUpdatedTS] = React.useState("");
 
-    React.useEffect(
-        function stampUpdateTime() {
-            setLastUpdatedTS(getTimestampString());
-        },
-        [latestValue],
-    );
+    const previousValueRef = React.useRef(latestValue);
+    if (previousValueRef.current !== latestValue) {
+        previousValueRef.current = latestValue;
+        setLastUpdatedTS(getTimestampString());
+    }
 
     return [latestValue, lastUpdatedTS];
 }

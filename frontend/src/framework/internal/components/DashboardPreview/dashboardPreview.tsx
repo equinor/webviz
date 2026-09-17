@@ -12,7 +12,7 @@ export type DashboardPreviewProps = {
 
 export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode {
     const { layout, width, height } = props;
-    const clipIdPrefix = React.useId();
+    const clipPrefixId = React.useId();
 
     return (
         <div
@@ -41,7 +41,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                         const headerHeight = 9;
                         const module = ModuleRegistry.getModule(element.moduleName);
                         const drawFunc = module.getDrawPreviewFunc();
-                        const titleClipId = `${clipIdPrefix}-title-clip-${idx}`;
+                        const titleClipId = `${clipPrefixId}-title-clip-${element.moduleInstanceId}`;
                         return (
                             <g key={element.moduleInstanceId}>
                                 <defs>
