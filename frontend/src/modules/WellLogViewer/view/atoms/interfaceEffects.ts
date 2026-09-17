@@ -5,10 +5,10 @@ import { selectedFieldIdentAtom, wellboreHeaderAtom } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
     (getInterfaceValue, setAtomValue) => {
-        const wellboreUuid = getInterfaceValue("wellboreHeader");
+        const wellboreHeader = getInterfaceValue("wellboreHeaderStatus").header;
         const selectedField = getInterfaceValue("selectedField");
 
         setAtomValue(selectedFieldIdentAtom, selectedField);
-        setAtomValue(wellboreHeaderAtom, wellboreUuid);
+        setAtomValue(wellboreHeaderAtom, wellboreHeader);
     },
 ];

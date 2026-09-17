@@ -3,8 +3,7 @@ import type { Dash, PlotData } from "plotly.js";
 
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
 import { BarSortBy } from "@modules/_shared/InplaceVolumes/plotOptions";
-
-import { computeStatistics } from "../statistics";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 export { BarSortBy };
 export const MAX_LABELS_FOR_BARS = 20;
