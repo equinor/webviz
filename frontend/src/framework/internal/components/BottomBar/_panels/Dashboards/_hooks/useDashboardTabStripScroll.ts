@@ -11,9 +11,8 @@ export type UseDashboardTabStripScrollResult = UseHorizontalStepScrollResult;
 // extra render so <Tabs.Indicator/> (the active-tab underline) gets a post-commit chance to
 // remeasure - its own ResizeObserver never fires for a pure reorder of same-sized tabs.
 //
-// Key off the *ordered id sequence*, not `dashboards` itself: PrivateWorkbenchSession.moveDashboard()
-// reorders the underlying array in place (splice), it never replaces it, so the array reference stays
-// identical across a reorder and would never register as a changed dependency.
+// Key off the ordered id sequence so item additions, removals, and reorders are represented directly
+// in the dependency passed to useHorizontalStepScroll.
 //
 // activeDashboardId should be the optimistic-or-actual selection (see useOptimisticActiveDashboard) -
 // whichever tab is highlighted is the one that gets scrolled into view, so a rapid click still scrolls

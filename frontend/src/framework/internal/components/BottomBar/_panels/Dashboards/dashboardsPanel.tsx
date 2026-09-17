@@ -249,17 +249,19 @@ export function DashboardsPanel(props: DashboardsPanelProps) {
                 content={isSnapshot ? "Dashboards cannot be modified in snapshot mode" : "Add new dashboard"}
                 side="bottom"
             >
-                <Button
-                    aria-label="Add new dashboard"
-                    disabled={isSnapshot}
-                    iconOnly
-                    onClick={handleAddDashboardClick}
-                    tone="accent"
-                    variant="ghost"
-                    size="small"
-                >
-                    <Add fontSize="small" />
-                </Button>
+                <span>
+                    <Button
+                        aria-label="Add new dashboard"
+                        disabled={isSnapshot}
+                        iconOnly
+                        onClick={handleAddDashboardClick}
+                        tone="accent"
+                        variant="ghost"
+                        size="small"
+                    >
+                        <Add fontSize="small" />
+                    </Button>
+                </span>
             </Tooltip>
             {editingDashboard && (
                 <EditDashboardMetadataDialog

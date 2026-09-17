@@ -283,8 +283,13 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
 
         for (const dashboard of contentState.dashboards) {
             const newDashboard = new Dashboard(this._atomStoreMaster);
-            this.registerDashboard(newDashboard);
+            // Deserialize before registering: deserializeState() replaces the constructor-generated id
+            // with the persisted one, and registerDashboard() keys the dashboard's unsubscribe callback
+            // by getId() at call time. Registering first would key it by the stale id, so the later
+            // unregisterDashboard() (keyed by the persisted id) would never find and remove it - leaking
+            // the subscription, and the dashboard it closes over, for the life of the session.
             newDashboard.deserializeState(dashboard);
+            this.registerDashboard(newDashboard);
         }
 
         // Prefer an explicitly requested dashboard (e.g. a deep-linked dashboard id from the URL)
