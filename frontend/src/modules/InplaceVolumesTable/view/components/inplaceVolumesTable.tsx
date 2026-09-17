@@ -9,7 +9,6 @@ import { Table } from "@lib/components/Table";
 import { TableCompositions } from "@lib/components/Table/compositions";
 import type { TableSortState } from "@lib/components/Table/typesAndEnums";
 import { TextInput } from "@lib/components/TextInput";
-import { Tooltip } from "@lib/components/Tooltip";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { PHASE_COLORS } from "@modules/_shared/constants/colors";
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
@@ -76,25 +75,34 @@ export function InplaceVolumesTable(props: InplaceVolumesTableProps): React.Reac
         [props.columnsConfig],
     );
     const isDownloadDisabled = !props.onDownload || collatedRows.length === 0 || !hasExportableColumns;
+    const hasActiveFilters = Object.values(tableFilterState).some((v) => v !== null && v !== "");
 
     return (
         <div className="flex h-full min-h-0 flex-col">
-            <div className="flex shrink-0 justify-end">
-                <Tooltip content="Download table as CSV" side="bottom">
-                    {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
-                    <span>
-                        <Button
-                            iconOnly
-                            variant="ghost"
-                            size="small"
-                            aria-label="Download data"
-                            disabled={isDownloadDisabled}
-                            onClick={() => props.onDownload?.(collatedRows)}
-                        >
-                            <Download fontSize="inherit" />
-                        </Button>
+            <div className="gap-x-3xs px-3xs py-3xs flex shrink-0 items-center justify-between">
+                <div className="gap-x-3xs text-body-sm text-neutral-subtle flex items-center">
+                    <span aria-live="polite">
+                        {hasActiveFilters
+                            ? `${collatedRows.length} of ${props.rows.length} rows`
+                            : `${props.rows.length} rows`}
                     </span>
-                </Tooltip>
+                    <Button
+                        variant="ghost"
+                        size="small"
+                        disabled={!hasActiveFilters}
+                        onClick={() => setTableFilterState({})}
+                    >
+                        Clear filters
+                    </Button>
+                </div>
+                <Button
+                    variant="outlined"
+                    icon={<Download fontSize="inherit" />}
+                    disabled={isDownloadDisabled}
+                    onClick={() => props.onDownload?.(collatedRows)}
+                >
+                    Download CSV
+                </Button>
             </div>
             <div className="min-h-0 grow">
                 <Table.Root

@@ -22,7 +22,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
             <InplaceVolumesTableHarness mode="realization" columnsConfig={columnsConfig} rows={rows} />,
         );
 
-        const button = cmp.getByRole("button", { name: "Download data" });
+        const button = cmp.getByRole("button", { name: "Download CSV" });
         const downloadPromise = page.waitForEvent("download");
         await button.click();
         const download = await downloadPromise;
@@ -40,7 +40,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
             <InplaceVolumesTableHarness mode="statistical" columnsConfig={columnsConfig} rows={rows} />,
         );
 
-        const button = cmp.getByRole("button", { name: "Download data" });
+        const button = cmp.getByRole("button", { name: "Download CSV" });
         const downloadPromise = page.waitForEvent("download");
         await button.click();
         const download = await downloadPromise;
@@ -67,7 +67,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
         // (`tbody tr` also includes a non-matching virtualization placeholder row, so match on visible text.)
         await expect.poll(() => cmp.locator("tbody tr", { hasText: "Valysar" }).count(), { timeout: 2000 }).toBe(10);
 
-        const button = cmp.getByRole("button", { name: "Download data" });
+        const button = cmp.getByRole("button", { name: "Download CSV" });
         const downloadPromise = page.waitForEvent("download");
         await button.click();
         const download = await downloadPromise;
@@ -89,7 +89,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
 
         await cmp.getByRole("button", { name: "ZONE" }).click();
 
-        const button = cmp.getByRole("button", { name: "Download data" });
+        const button = cmp.getByRole("button", { name: "Download CSV" });
         const downloadPromise = page.waitForEvent("download");
         await button.click();
         const download = await downloadPromise;
@@ -112,8 +112,9 @@ test.describe("InplaceVolumesTable CSV download", () => {
         await zoneFilterInput.fill("NonExistentZone");
 
         await expect(cmp.getByText("No data found")).toBeVisible();
+        await expect(cmp.getByText("0 of 10 rows")).toBeVisible();
 
-        const button = cmp.getByRole("button", { name: "Download data" });
+        const button = cmp.getByRole("button", { name: "Download CSV" });
         await expect(button).toBeDisabled();
     });
 
@@ -123,7 +124,7 @@ test.describe("InplaceVolumesTable CSV download", () => {
             <InplaceVolumesTableHarness mode="realization" columnsConfig={columnsConfig} rows={rows} />,
         );
 
-        const button = cmp.getByRole("button", { name: "Download data" });
+        const button = cmp.getByRole("button", { name: "Download CSV" });
         const downloadPromise = page.waitForEvent("download");
         await button.click();
         const download = await downloadPromise;
@@ -152,5 +153,36 @@ test.describe("InplaceVolumesTable CSV download", () => {
         expect(before).not.toBeNull();
         expect(after).not.toBeNull();
         expect(after?.y).toBe(before?.y);
+    });
+
+    test("row count and clear filters", async ({ mount, page }) => {
+        const { columnsConfig, rows } = makeRealizationFixture(30);
+        const cmp = await mount(
+            <InplaceVolumesTableHarness mode="realization" columnsConfig={columnsConfig} rows={rows} />,
+        );
+
+        await expect(cmp.getByText("30 rows")).toBeVisible();
+        const clearFiltersButton = cmp.getByRole("button", { name: "Clear filters" });
+        await expect(clearFiltersButton).toBeDisabled();
+
+        const zoneFilterInput = cmp.getByPlaceholder("Filter values...").nth(4);
+        await zoneFilterInput.fill("Valysar");
+
+        await expect(cmp.getByText("10 of 30 rows")).toBeVisible();
+
+        await clearFiltersButton.click();
+
+        await expect(cmp.getByText("30 rows")).toBeVisible();
+        await expect(zoneFilterInput).toHaveValue("");
+
+        const button = cmp.getByRole("button", { name: "Download CSV" });
+        const downloadPromise = page.waitForEvent("download");
+        await button.click();
+        const download = await downloadPromise;
+
+        const content = await readDownloadAsString(download);
+        const lines = content.split("\n");
+
+        expect(lines.length).toBe(1 + 30);
     });
 });
