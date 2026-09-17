@@ -7,8 +7,8 @@ import { isEqual } from "lodash-es";
 import type { WellboreHeader_api } from "@api";
 import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
+import type { SyncSettingsService } from "@framework/SyncSettingsService";
 import { IntersectionType, isWellboreIntersectionType } from "@framework/types/intersection";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { BBox } from "@lib/utils/bbox";
 import { combine } from "@lib/utils/bbox";
@@ -47,7 +47,7 @@ export type ViewDataProcessorProps = {
     isLoading: boolean;
     wellboreHeadersQuery: UseQueryResult<WellboreHeader_api[]>;
     workbenchSession: WorkbenchSession;
-    workbenchServices: WorkbenchServices;
+    syncSettingsService: SyncSettingsService;
     hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
@@ -145,7 +145,7 @@ export function ViewDataProcessor(props: ViewDataProcessorProps): React.ReactNod
             layerItemsBounds={dataBounds}
             focusBounds={focusBounds}
             colorScales={colorScales}
-            workbenchServices={props.workbenchServices}
+            syncSettingsService={props.syncSettingsService}
             hoverService={props.hoverService}
             viewContext={props.viewContext}
             intersectionSource={viewIntersection}

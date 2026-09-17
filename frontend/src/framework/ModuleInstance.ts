@@ -494,7 +494,7 @@ export class ModuleInstance<
         this.setModuleInstanceState(ModuleInstanceLifeCycleState.RESETTING);
 
         return new Promise((resolve) => {
-            this._module.onInstanceUnload(this._id);
+            this._module.notifyInstanceUnload(this._id);
 
             this.initialize();
             resolve();
@@ -509,20 +509,18 @@ export class ModuleInstance<
         return this._initialSettings;
     }
 
-    unload() {
-        this._module.onInstanceUnload(this._id);
+    unload(): void {
+        this._module.notifyInstanceUnload(this._id);
         this._channelManager.unregisterAllChannels();
         this._channelManager.unregisterAllReceivers();
-    }
-
-    beforeDestroy(): void {
-        this._channelManager.unregisterAllChannels();
-        this._channelManager.unregisterAllReceivers();
+        this._unsubscribeFunctionsManagerDelegate.unsubscribeAll();
         this._context = null;
         this._settingsToViewInterface = null;
         this._viewToSettingsInterface = null;
         this._settingsToViewInterfaceEffectsAtom = null;
         this._viewToSettingsInterfaceEffectsAtom = null;
+        this._serializer?.beforeDestroy();
+        this._module.removeInstance(this._id);
     }
 }
 

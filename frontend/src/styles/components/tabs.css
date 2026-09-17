@@ -41,8 +41,17 @@
         }
     }
     .tabs__indicator {
-        @apply bg-accent-strong absolute top-0 left-0 rounded transition-all duration-150;
-        transition-property: translate, width, height;
+        @apply bg-accent-strong absolute top-0 left-0;
+        transform-origin: left top;
+        /*
+         * Position and size are both animated with compositor-only transforms
+         * (`translate` + `scale`) rather than `translate` + `width`/`height`.
+         * Animating `width`/`height` drives layout on the main thread every frame,
+         * so under load it stutters and lags behind the smooth, compositor-driven
+         * `translate` - the indicator appeared to move to the new tab first and
+         * only then resize. Scaling a 1px base keeps move and resize in lockstep.
+         */
+        transition-property: translate, scale;
         transition-duration: 200ms;
         transition-timing-function: ease-in-out;
 
@@ -51,8 +60,13 @@
         }
 
         &[data-orientation="horizontal"] {
-            width: var(--active-tab-width);
+            width: 1px;
             height: 2px;
+            scale: calc(var(--active-tab-width) / 1px) 1;
+            /* border-radius is stretched by `scale` just like everything else in the box, so the
+             * x-radius here is pre-shrunk by the same factor scale later stretches it by - the two
+             * cancel out to a true ~1px rounded end instead of an ellipse spanning most of the bar. */
+            border-radius: calc(1px * 1px / var(--active-tab-width)) / 1px;
             [data-position="start"] & {
                 translate: var(--active-tab-left) -2px;
             }
@@ -62,8 +76,12 @@
         }
 
         &[data-orientation="vertical"] {
-            height: var(--active-tab-height);
             width: 2px;
+            height: 1px;
+            scale: 1 calc(var(--active-tab-height) / 1px);
+            /* Same compensation as the horizontal case, mirrored onto the y-radius since that's the
+             * axis being scaled here. */
+            border-radius: 1px / calc(1px * 1px / var(--active-tab-height));
             [data-position="start"] & {
                 translate: -2px var(--active-tab-top);
             }
