@@ -46,6 +46,7 @@ function formatStack(stack: string): React.ReactNode {
     return (
         <>
             {lines.map((line, index) => (
+                // eslint-disable-next-line @eslint-react/no-array-index-key -- No good unique key for this
                 <div key={"line-" + index} className="text-body-sm">
                     {index === 0 ? line : formatStackLine(line)}
                 </div>

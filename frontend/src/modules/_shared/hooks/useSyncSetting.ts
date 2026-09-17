@@ -19,7 +19,7 @@ export type UseSyncSettingOptions<K extends keyof SyncSettingsTopicDefinitions> 
 
 export function useSyncSetting<T extends keyof SyncSettingsTopicDefinitions>(options: UseSyncSettingOptions<T>): void {
     const { setValue } = options;
-    const [prevSyncedValue, setPrevSyncedValue] = React.useState<SyncSettingsTopicDefinitions[T] | null>(null);
+    const prevSyncedValueRef = React.useRef<GlobalTopicDefinitions[T] | null>(null);
 
     const syncHelper = useRefStableSyncSettingsHelper({
         syncSettingsService: options.syncSettingsService,
@@ -30,12 +30,12 @@ export function useSyncSetting<T extends keyof SyncSettingsTopicDefinitions>(opt
 
     React.useEffect(
         function syncValue() {
-            if (syncedValue !== null && syncedValue !== prevSyncedValue) {
+            if (syncedValue !== null && syncedValue !== prevSyncedValueRef.current) {
                 setValue(syncedValue);
-                setPrevSyncedValue(syncedValue);
+                prevSyncedValueRef.current = syncedValue;
             }
         },
-        [syncedValue, prevSyncedValue, setValue],
+        [syncedValue, setValue],
     );
 
     React.useEffect(

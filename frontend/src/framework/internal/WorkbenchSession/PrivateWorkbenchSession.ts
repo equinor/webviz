@@ -100,7 +100,7 @@ export class PrivateWorkbenchSession implements WorkbenchSession {
     };
     private _userCreatedItems: UserCreatedItems;
     private _metadata: WorkbenchSessionMetadata = {
-        title: "New Session",
+        title: "Untitled Session",
         createdAt: Date.now(),
         updatedAt: Date.now(),
         lastModifiedMs: Date.now(),

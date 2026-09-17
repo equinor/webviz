@@ -41,7 +41,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>) {
         () => {
             setReceivedChannel(receiverResponse);
         }, // We only want to listen to revision number changes, but we need the whole channel response to set it
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line @eslint-react/exhaustive-deps
         [receiverResponse.revisionNumber, setReceivedChannel],
     );
 

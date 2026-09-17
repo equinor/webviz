@@ -29,8 +29,12 @@ export function useResponsiveDialogSizePercent(): { width: number; height: numbe
             if (window.innerHeight < pxHeightAtStandardDialog) {
                 heightPercent = Math.min(100, Math.round((pxHeightAtFullDialog / window.innerHeight) * 100));
             }
+
+            // ! Rule has been disabled here to allow initializing the size immediately
+            /* eslint-disable @eslint-react/set-state-in-effect */
             setDialogWidthPercent(widthPercent);
             setDialogHeightPercent(heightPercent);
+            /* eslint-enable @eslint-react/set-state-in-effect */
         }
 
         // Initialize immediately

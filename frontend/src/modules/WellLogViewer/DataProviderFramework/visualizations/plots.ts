@@ -53,6 +53,7 @@ function getCommonConfig(args: PlotVisualizationArgs<AreaPlotSettingTypes>): Tem
     const color = args.getSetting(Setting.COLOR)!;
 
     return {
+        id: args.id,
         name: data.name,
         logName: data.logName,
         color,
@@ -112,6 +113,7 @@ export function makeStackedPlotConfig(args: PlotVisualizationArgs<StackedPlotSet
     const rotation = args.getSetting(Setting.LABEL_ROTATION) ?? 90;
 
     return {
+        id: args.id,
         name: data.name,
         logName: data.logName,
         type: "stacked",

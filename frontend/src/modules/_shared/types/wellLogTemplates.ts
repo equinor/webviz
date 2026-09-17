@@ -9,11 +9,13 @@ import type {
  * extension to the type, so it can be used in a later workaround (see `logViewerTemplate.ts`)
  */
 export type TemplatePlot = TemplatePlotSSC & {
+    id: string;
     logName: string;
     logName2?: string;
 };
 
 export type TemplateTrack = Omit<TemplateTrackSSC, "plots"> & {
+    id: string;
     plots: TemplatePlot[];
 };
 

@@ -23,7 +23,7 @@ function propagateApiError(error: Error, statusWriter: ViewStatusWriter | Settin
     return createErrorMessageFromHelper(helper, statusWriter);
 }
 
-export function usePropagateApiErrorToStatusWriter(
+export function propagateApiErrorToStatusWriter(
     error: Error | null,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
@@ -32,7 +32,7 @@ export function usePropagateApiErrorToStatusWriter(
     return propagateApiError(error, statusWriter);
 }
 
-export function usePropagateAllApiErrorsToStatusWriter(
+export function propagateAllApiErrorsToStatusWriter(
     errors: Error[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string[] {
@@ -48,14 +48,14 @@ function propagateQueryError(
     return createErrorMessageFromHelper(helper, statusWriter);
 }
 
-export function usePropagateQueryErrorToStatusWriter(
+export function propagateQueryErrorToStatusWriter(
     queryResult: UseQueryResult<any, any>,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
     return propagateQueryError(queryResult, statusWriter);
 }
 
-export function usePropagateQueryErrorsToStatusWriter(
+export function propagateQueryErrorsToStatusWriter(
     queryResults: UseQueryResult<any, any>[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string[] {

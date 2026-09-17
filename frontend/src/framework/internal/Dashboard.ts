@@ -17,7 +17,7 @@ import type { SerializedDashboardState } from "./Dashboard.schema";
 import { DASHBOARD_ID_LENGTH, DEFAULT_DASHBOARD_NAME, MAX_TITLE_LENGTH } from "./persistence/constants";
 
 export type LayoutElement = {
-    moduleInstanceId?: string;
+    moduleInstanceId: string;
     moduleName: string;
     relX: number;
     relY: number;

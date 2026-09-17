@@ -32,7 +32,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                     version="1.1"
                     className="z-overlay relative"
                 >
-                    {layout.map((element, idx) => {
+                    {layout.map((element) => {
                         const w = element.relWidth * width;
                         const h = element.relHeight * height;
                         const x = element.relX * width;
@@ -43,7 +43,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                         const drawFunc = module.getDrawPreviewFunc();
                         const titleClipId = `${clipIdPrefix}-title-clip-${idx}`;
                         return (
-                            <g key={`${element.moduleName}-${idx}`}>
+                            <g key={element.moduleInstanceId}>
                                 <defs>
                                     <clipPath id={titleClipId}>
                                         <rect

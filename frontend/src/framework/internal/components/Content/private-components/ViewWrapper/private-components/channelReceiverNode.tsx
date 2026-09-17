@@ -135,6 +135,8 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
             const receiver = moduleInstance.getChannelManager().getReceiver(props.idString);
             const hasConnection = receiver?.hasActiveSubscription() ?? false;
+            // TODO: We will rework channels to use pubsub/syncExternalStore in a separate PR
+            // eslint-disable-next-line @eslint-react/set-state-in-effect
             setHasConnection(hasConnection);
         }
 

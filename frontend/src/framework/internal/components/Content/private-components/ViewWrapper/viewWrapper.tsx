@@ -51,7 +51,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     );
 
     const timeRef = React.useRef<number | null>(null);
-    const pointerDown = React.useRef<boolean>(false);
+    const pointerDownRef = React.useRef<boolean>(false);
 
     if (props.width !== prevWidth && !props.changingLayout) {
         setPrevWidth(props.width);
@@ -95,14 +95,14 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
 
     function handlePointerDown() {
         timeRef.current = Date.now();
-        pointerDown.current = true;
+        pointerDownRef.current = true;
     }
 
     function handlePointerUp() {
-        if (!pointerDown.current) {
+        if (!pointerDownRef.current) {
             return;
         }
-        pointerDown.current = false;
+        pointerDownRef.current = false;
         handleModuleClick();
     }
 
