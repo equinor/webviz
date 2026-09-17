@@ -4,7 +4,7 @@ import type { Axis, PlotData } from "plotly.js";
 
 import { Plot } from "../components/Plot";
 import type { Figure, MakeSubplotOptions } from "../Figure";
-import { CoordinateDomain, makeSubplots } from "../Figure";
+import { calcNumRowsAndCols, CoordinateDomain, makeSubplots } from "../Figure";
 
 import type { Table } from "./Table";
 
@@ -60,16 +60,6 @@ export class PlotBuilder {
 
     setHighlightedSubPlots(subPlotNames: string[]): void {
         this._highlightedSubPlotNames = subPlotNames;
-    }
-
-    private calcNumRowsAndCols(numTables: number): { numRows: number; numCols: number } {
-        if (numTables < 1) {
-            return { numRows: 1, numCols: 1 };
-        }
-
-        const numRows = Math.ceil(Math.sqrt(numTables));
-        const numCols = Math.ceil(numTables / numRows);
-        return { numRows, numCols };
     }
 
     private updateLayout(figure: Figure) {
@@ -159,7 +149,7 @@ export class PlotBuilder {
         const keepColumn = true;
         const tableCollection = table.splitByColumn(this._subplotByColumn, keepColumn);
         const numTables = tableCollection.getNumTables();
-        const { numRows, numCols } = this.calcNumRowsAndCols(numTables);
+        const { numRows, numCols } = calcNumRowsAndCols(numTables);
 
         const tables = tableCollection.getTables();
         const keys = tableCollection.getKeys();
