@@ -10,6 +10,7 @@ import vitePluginChecker from "vite-plugin-checker";
 import glsl from "vite-plugin-glsl";
 
 import aliases from "./aliases.json";
+import { plotlyWebglContextReleasePlugin } from "./vite-plugin-plotly-webgl-context-release.js";
 
 const paths = {
     public: "./public",
@@ -27,6 +28,7 @@ export default defineConfig(() => {
 
     return {
         plugins: [
+            plotlyWebglContextReleasePlugin(),
             tailwindPlugin(),
             react(),
             vitePluginChecker({ typescript: true }),

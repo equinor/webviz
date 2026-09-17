@@ -6,6 +6,7 @@ import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
 import "./EconomicScreening/registerModule";
 import "./FlowNetwork/registerModule";
+import "./InplaceVolumesComparison/registerModule";
 import "./InplaceVolumesNew/registerModule";
 import "./InplaceVolumesPlot/registerModule";
 import "./InplaceVolumesTable/registerModule";

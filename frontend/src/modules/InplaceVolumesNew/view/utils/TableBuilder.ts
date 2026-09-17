@@ -1,7 +1,7 @@
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 import type { GroupedTableData } from "./GroupedTableData";
-import { computeStatistics } from "./statistics";
 
 export type StatisticsTableRowData = {
     id: string;

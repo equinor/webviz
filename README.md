@@ -20,7 +20,10 @@ Before you start however you need to create a file `.env` at the root of the pro
 with the following variables:
 
 ```
-WEBVIZ_CLIENT_SECRET=...
+AZURE_TENANT_ID=3aa4a235-b6e2-48d5-9195-7fcf05b459b0
+AZURE_CLIENT_ID=6e4f6e15-5b73-40e7-835e-f563fabd604a
+AZURE_CLIENT_SECRET=...
+
 WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY=0
 WEBVIZ_REDIS_AUTH_STORE_PASSWORD=0
 WEBVIZ_REDIS_CACHE_PASSWORD=0

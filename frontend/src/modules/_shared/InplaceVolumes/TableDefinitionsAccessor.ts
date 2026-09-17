@@ -1,7 +1,9 @@
 import { isEqual } from "lodash-es";
 
 import type { InplaceVolumesIndexWithValues_api, InplaceVolumesTableDefinition_api } from "@api";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 
 import { sortResultNameStrings } from "./sortResultNames";
 
@@ -56,6 +58,7 @@ export class TableDefinitionsAccessor {
     private _resultNamesIntersection: string[] = [];
 
     private _commonIndicesWithValues: InplaceVolumesIndexWithValues_api[] = [];
+    private _indexColumnsWithDifferingValues: string[] = [];
     private _indexValueCriteria: IndexValueCriteria;
 
     private _tablesNotComparable: boolean = false;
@@ -82,6 +85,7 @@ export class TableDefinitionsAccessor {
 
         const resultNames: Set<string> = new Set();
         const commonIndicesWithValuesMap: Map<string, InplaceVolumesIndexWithValues_api> = new Map();
+        const indexColumnsWithDifferingValues: Set<string> = new Set();
 
         let isInitialized = false;
         for (const tableDefinition of this._tableDefinitions) {
@@ -111,6 +115,11 @@ export class TableDefinitionsAccessor {
             }
 
             const indicesToRemove = [];
+            // No early exit on the first REQUIRE_EQUALITY mismatch: stopping here used
+            // to skip the "not present in all table definitions" check for the remaining columns, so a
+            // column entirely absent from this table definition could incorrectly stay in
+            // commonIndicesWithValuesMap. Consumers (InplaceVolumesTable/Plot) still gate their UI
+            // on getAreTablesComparable(), which this loop still sets correctly either way.
             for (const [index, indexWithValues] of commonIndicesWithValuesMap) {
                 const currentIndexWithValues = tableDefinition.indicesWithValues.find(
                     (item) => item.indexColumn === index,
@@ -120,6 +129,16 @@ export class TableDefinitionsAccessor {
                 if (!currentIndexWithValues) {
                     indicesToRemove.push(index);
                     continue;
+                }
+
+                // Compare sorted copies so equality is order-insensitive without mutating the
+                // backend-provided order used by selectors and plots.
+                const areValuesEqual = isEqual(
+                    [...indexWithValues.values].sort(),
+                    [...currentIndexWithValues.values].sort(),
+                );
+                if (!areValuesEqual) {
+                    indexColumnsWithDifferingValues.add(index);
                 }
 
                 if (this._indexValueCriteria === IndexValueCriteria.ALLOW_INTERSECTION) {
@@ -132,11 +151,9 @@ export class TableDefinitionsAccessor {
                         indexColumn: index,
                         values: valuesIntersection,
                     });
-                } else if (!isEqual([...indexWithValues.values].sort(), [...currentIndexWithValues.values].sort())) {
-                    // Compare sorted copies so equality is order-insensitive without changing the
-                    // backend-provided order used by selectors and plots.
+                } else if (!areValuesEqual) {
+                    // Tables are not comparable when index values are not equal
                     this._tablesNotComparable = true;
-                    break;
                 }
             }
 
@@ -148,6 +165,9 @@ export class TableDefinitionsAccessor {
 
         this._resultNamesIntersection = sortResultNameStrings(Array.from(resultNames));
         this._commonIndicesWithValues = Array.from(commonIndicesWithValuesMap.values());
+        this._indexColumnsWithDifferingValues = Array.from(indexColumnsWithDifferingValues).filter((indexColumn) =>
+            commonIndicesWithValuesMap.has(indexColumn),
+        );
 
         // Not comparable if there are no common indices
         if (this._commonIndicesWithValues.length === 0) {
@@ -171,6 +191,11 @@ export class TableDefinitionsAccessor {
         return this._commonIndicesWithValues;
     }
 
+    /** Common index columns whose value sets are not identical across the table definitions. */
+    getIndexColumnsWithDifferingValues(): string[] {
+        return this._indexColumnsWithDifferingValues;
+    }
+
     getCommonSelectorColumns(): string[] {
         return ["REAL", ...this._commonIndicesWithValues.map((indexWithValues) => indexWithValues.indexColumn)];
     }
@@ -179,9 +204,23 @@ export class TableDefinitionsAccessor {
         return !this._tablesNotComparable;
     }
 
-    hasEnsembleIdents(ensembleIdents: RegularEnsembleIdent[]): boolean {
+    hasEnsembleIdents(ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[]): boolean {
+        // Delta ensembles are represented by their constituent regular ensembles in the table
+        // definitions, so expand them before checking presence.
+        const requiredRegularEnsembleIdents: RegularEnsembleIdent[] = [];
         for (const ensembleIdent of ensembleIdents) {
-            if (!this._uniqueEnsembleIdents.includes(ensembleIdent)) {
+            if (isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)) {
+                requiredRegularEnsembleIdents.push(
+                    ensembleIdent.getComparisonEnsembleIdent(),
+                    ensembleIdent.getReferenceEnsembleIdent(),
+                );
+            } else {
+                requiredRegularEnsembleIdents.push(ensembleIdent);
+            }
+        }
+
+        for (const ensembleIdent of requiredRegularEnsembleIdents) {
+            if (!this._uniqueEnsembleIdents.some((existing) => existing.equals(ensembleIdent))) {
                 return false;
             }
         }

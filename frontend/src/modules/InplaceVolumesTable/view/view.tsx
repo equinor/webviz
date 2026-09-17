@@ -23,7 +23,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
 
-    useMakeViewStatusWriterMessages(statusWriter);
+    useMakeViewStatusWriterMessages(statusWriter, ensembleSet);
     statusWriter.setLoading(isQueryFetching);
 
     // Build table headings and rows

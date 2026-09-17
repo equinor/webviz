@@ -14,6 +14,8 @@
 ### Added
 
 - **Economic screening**: A new screening module provides discounted oil and sales-gas volumes, oil equivalents, NPV, IRR, fixed-gas break-even oil price, early-value channels, distributions, and time profiles for regular and delta ensembles.
+- **In-place volumes**: Delta ensembles can now be used in plots and tables to compare volumes per realization, with statistics calculated from the differences.
+- **In-place volumes**: A new "Inplace Volumes Comparison" module shows a waterfall chart decomposing the change in STOIIP/GIIP between two ensembles or tables into contributions from BULK, porosity, saturation, and formation volume factor.
 - **Planned well trajectories**: Planned well trajectories from SMDA can now be displayed in the 2D and 3D viewers and used as the path for Intersection views.
 - **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
 - **Top bar**: Clicking the FMU logo or the "FMU Analysis" title reloads the application and returns you to the start page.
