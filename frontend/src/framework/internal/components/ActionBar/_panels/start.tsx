@@ -36,7 +36,11 @@ export function StartPanel(props: StartPanelProps) {
     return (
         <>
             <Tooltip
-                content={isSnapshot ? "Ensembles cannot be changed in snapshot mode" : "Open ensemble selection dialog"}
+                content={
+                    isSnapshot
+                        ? "Ensembles cannot be changed in snapshot mode"
+                        : "Change ensemble selection for this session"
+                }
                 side="bottom"
             >
                 {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
@@ -66,7 +70,11 @@ export function StartPanel(props: StartPanelProps) {
             </Tooltip>
             <Separator orientation="vertical" />
             <Tooltip
-                content={isSnapshot ? "Templates cannot be applied in snapshot mode" : "Open templates dialog"}
+                content={
+                    isSnapshot
+                        ? "Templates cannot be applied in snapshot mode"
+                        : "Apply a template to the active dashboard"
+                }
                 side="bottom"
             >
                 {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
