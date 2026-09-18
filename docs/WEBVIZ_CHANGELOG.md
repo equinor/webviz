@@ -11,6 +11,10 @@
 
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
 
+### Fixed
+
+- **Well trajectories**: Failures when fetching well perforations or completions/screens no longer prevent drilled wellbore trajectories from loading; error details are now surfaced via the provider status indicator while still displaying trajectories.
+
 ### Added
 
 - **In-place volumes**: Delta ensembles can now be used in plots and tables to compare volumes per realization, with statistics calculated from the differences.
