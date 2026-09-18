@@ -46,7 +46,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const [tableSortState, setTableSortState] = React.useState<TableSortState[]>([]);
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
-    useMakeViewStatusWriterMessages(statusWriter, resultName, subplotBy, colorBy);
+    useMakeViewStatusWriterMessages(statusWriter, ensembleSet, resultName, subplotBy, colorBy);
 
     const plotAndTableData = useBuildPlotAndTable(
         props.viewContext,

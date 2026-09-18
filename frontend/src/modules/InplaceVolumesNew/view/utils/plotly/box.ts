@@ -1,8 +1,7 @@
 import type { PlotData } from "plotly.js";
 
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
-
-import { computeStatistics } from "../statistics";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 export type PlotlyBoxPlotTracesOptions = {
     title: string;

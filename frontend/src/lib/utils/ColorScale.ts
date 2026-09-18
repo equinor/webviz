@@ -1,3 +1,5 @@
+import { uniqBy } from "lodash-es";
+
 import type { ColorPaletteSerialization } from "@lib/utils/ColorPalette";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 
@@ -109,8 +111,6 @@ export class ColorScale {
     }
 
     getColorForValue(value: number): string {
-        let color = "";
-
         // Clamp colors
         if (value < this._min) {
             value = this._min;
@@ -123,15 +123,13 @@ export class ColorScale {
             const colors = this.sampleColors(this._steps);
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
             const colorIndex = Math.min(Math.floor(normalizedValue * this._steps), colors.length - 1);
-            color = colors[colorIndex];
+            return colors[colorIndex];
         } else {
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);
             // Clamp normalized value to [0,1] to avoid out of bounds errors
             const clampedNormalizedValue = Math.min(Math.max(normalizedValue, 0), 1);
-            color = this._colorPalette.getInterpolatedColor(clampedNormalizedValue);
+            return this._colorPalette.getInterpolatedColor(clampedNormalizedValue);
         }
-
-        return color;
     }
 
     getMin(): number {
@@ -209,7 +207,7 @@ export class ColorScale {
             }
         }
 
-        return colorStops;
+        return uniqBy(colorStops, "offset");
     }
 
     getPlotlyColorScale(): [number, string][] {

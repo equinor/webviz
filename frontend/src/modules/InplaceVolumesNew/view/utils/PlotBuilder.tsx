@@ -4,7 +4,7 @@ import type { Axis, PlotData } from "plotly.js";
 
 import { Plot } from "@modules/_shared/components/Plot";
 import type { Figure, MakeSubplotOptions } from "@modules/_shared/Figure";
-import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
+import { calcNumRowsAndCols, CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import type { HistogramType } from "@modules/_shared/histogram";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
@@ -52,16 +52,6 @@ export class PlotBuilder {
 
     setHighlightedSubPlots(subPlotNames: string[]): void {
         this._highlightedSubPlotNames = subPlotNames;
-    }
-
-    private calcNumRowsAndCols(numSubplots: number): { numRows: number; numCols: number } {
-        if (numSubplots < 1) {
-            return { numRows: 1, numCols: 1 };
-        }
-
-        const numRows = Math.ceil(Math.sqrt(numSubplots));
-        const numCols = Math.ceil(numSubplots / numRows);
-        return { numRows, numCols };
     }
 
     private updateLayout(figure: Figure) {
@@ -142,7 +132,7 @@ export class PlotBuilder {
             });
         }
 
-        const { numRows, numCols } = this.calcNumRowsAndCols(numSubplots);
+        const { numRows, numCols } = calcNumRowsAndCols(numSubplots);
 
         const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");

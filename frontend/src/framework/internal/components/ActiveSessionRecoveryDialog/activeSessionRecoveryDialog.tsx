@@ -8,7 +8,7 @@ import {
 } from "@framework/internal/WorkbenchSession/utils/WorkbenchSessionDataContainer";
 import type { Workbench } from "@framework/Workbench";
 import { AlertDialog } from "@lib/components/AlertDialog";
-import { timeAgo } from "@lib/utils/dates";
+import { TimeAgo } from "@lib/components/TimeAgo";
 
 import { useActiveSession } from "../ActiveSessionBoundary";
 import { DashboardPreview } from "../DashboardPreview/dashboardPreview";
@@ -81,11 +81,11 @@ export function ActiveSessionRecoveryDialog(props: ActiveSessionRecoveryDialogPr
                         </div>
                         <div className="gap-y-4xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Last modified</strong>
-                            {timeAgo(Date.now() - sessionData.metadata.lastModifiedMs)}
+                            <TimeAgo datetimeMs={sessionData.metadata.lastModifiedMs} />
                         </div>
                         <div className="gap-y-4xs flex flex-col">
                             <strong className="text-body-xs text-neutral-subtle">Last persisted</strong>
-                            {timeAgo(Date.now() - activeSession.getMetadata().lastModifiedMs)}
+                            <TimeAgo datetimeMs={activeSession.getMetadata().lastModifiedMs} />
                         </div>
                     </div>
                 </div>

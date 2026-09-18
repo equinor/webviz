@@ -442,8 +442,8 @@ export const WithSortableList: Story = {
 };
 
 function ExampleTableDataRows(props: { data: readonly TExampleData[] }): React.ReactNode {
-    return props.data.map((datum, i) => (
-        <Table.Row rowKey={String(datum.id)} key={datum.id ?? i}>
+    return props.data.map((datum) => (
+        <Table.Row rowKey={String(datum.id)} key={datum.id}>
             {Object.values(datum).map((v) => (
                 <Table.Cell key={v}>{v}</Table.Cell>
             ))}

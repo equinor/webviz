@@ -105,9 +105,10 @@ export function MultiSessionsRecoveryDialog(props: MultiSessionsRecoveryDialogPr
                     </Table.Head>
 
                     <Table.Body>
-                        {sessions.map((session, i) => (
+                        {sessions.map((session) => (
                             <SessionRecoveryRow
-                                key={session.id ?? i}
+                                // Missing ID would be an unsaved local session, and there should never be more than one
+                                key={session.id ?? "unsaved-session"}
                                 session={session}
                                 onOpenInNewTab={handleOpenInNewTab}
                                 onOpen={handleOpen}

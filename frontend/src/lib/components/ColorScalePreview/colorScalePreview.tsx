@@ -85,8 +85,12 @@ function GradientDef(props: GradientDefProps): React.ReactNode {
 
     return (
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-            {colorStops.map((colorStop, index) => (
-                <stop key={index} offset={`${(colorStop.offset * 100).toFixed(2)}%`} stopColor={colorStop.color} />
+            {colorStops.map((colorStop) => (
+                <stop
+                    key={colorStop.offset}
+                    offset={`${(colorStop.offset * 100).toFixed(2)}%`}
+                    stopColor={colorStop.color}
+                />
             ))}
         </linearGradient>
     );
