@@ -38,6 +38,11 @@ export type NarrationEntry = {
     durationMs: number;
 };
 
+export type TutorialStep = {
+    title: string;
+    startMs: number;
+};
+
 type WorkerMessage =
     | { type: "ready" }
     | { type: "result"; id: number; durationMs: number }
@@ -178,6 +183,7 @@ export async function terminateNarrationWorker(): Promise<void> {
 export class Narrator {
     private recordingStartMs = Date.now();
     private readonly entries: NarrationEntry[] = [];
+    private readonly steps: TutorialStep[] = [];
     private readonly outputDir: string;
     private nextIndex = 0;
     /** Manual timeline nudge (ms) for aligning voice with video; see NARRATION_OFFSET_MS. */
@@ -192,6 +198,18 @@ export class Narrator {
     /** Reset the timeline zero-point to now — call as close as possible to the video's first frame. */
     markRecordingStart(): void {
         this.recordingStartMs = Date.now();
+    }
+
+    /** Add a named step at the current position in the recording. */
+    markStep(title: string): void {
+        const trimmedTitle = title.trim();
+        if (!trimmedTitle) {
+            throw new Error("Step titles must not be empty.");
+        }
+        this.steps.push({
+            title: trimmedTitle,
+            startMs: Date.now() - this.recordingStartMs + this.offsetMs,
+        });
     }
 
     /**
@@ -222,13 +240,13 @@ export class Narrator {
 
     /** Write the narration manifest into the test's output folder (next to the audio and video). */
     flush(): void {
-        if (this.entries.length === 0) {
+        if (this.entries.length === 0 && this.steps.length === 0) {
             return;
         }
         const manifest = [...this.entries].sort((a, b) => a.startMs - b.startMs);
         writeFileSync(
             join(this.outputDir, NARRATION_MANIFEST_FILENAME),
-            JSON.stringify({ clips: manifest }, null, 2),
+            JSON.stringify({ clips: manifest, steps: this.steps }, null, 2),
         );
     }
 }
@@ -236,8 +254,9 @@ export class Narrator {
 /** Narrator whose methods are no-ops; used when not recording so tests run at full speed. */
 export const NOOP_NARRATOR = {
     markRecordingStart: (): void => undefined,
+    markStep: (_title: string): void => undefined,
     narrate: (): Promise<void> => Promise.resolve(),
     flush: (): void => undefined,
 } as const;
 
-export type NarratorLike = Pick<Narrator, "markRecordingStart" | "narrate" | "flush">;
+export type NarratorLike = Pick<Narrator, "markRecordingStart" | "markStep" | "narrate" | "flush">;

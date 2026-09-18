@@ -14,6 +14,8 @@ import { RECORDING } from "./walkthroughHelpers";
 type NarrationFixtures = {
     /** Speak `text` over the recording; see Narrator.narrate for the await-now / await-later usage. */
     narrate: (text: string) => Promise<void>;
+    /** Add a step at the current position in the recording. */
+    markStep: (title: string) => void;
     narrator: NarratorLike;
 };
 
@@ -50,6 +52,10 @@ export const test = base.extend<NarrationFixtures, NarrationWorkerFixtures>({
 
     narrate: async ({ narrator }, use) => {
         await use((text: string) => narrator.narrate(text));
+    },
+
+    markStep: async ({ narrator }, use) => {
+        await use((title: string) => narrator.markStep(title));
     },
 });
 

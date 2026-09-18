@@ -8,15 +8,15 @@ export type ClientOptions = {
  * ALQ
  */
 export enum ALQ_api {
-    GRAT = "GRAT",
-    IGLR = "IGLR",
-    TGLR = "TGLR",
-    PUMP = "PUMP",
-    COMP = "COMP",
-    DENO = "DENO",
-    DENG = "DENG",
-    BEAN = "BEAN",
-    "''" = "''",
+    GRAT = 'GRAT',
+    IGLR = 'IGLR',
+    TGLR = 'TGLR',
+    PUMP = 'PUMP',
+    COMP = 'COMP',
+    DENO = 'DENO',
+    DENG = 'DENG',
+    BEAN = 'BEAN',
+    '\'\'' = '\'\''
 }
 
 /**
@@ -36,7 +36,7 @@ export type B64FloatArray_api = {
     /**
      * Element Type
      */
-    element_type: "float32" | "float64";
+    element_type: 'float32' | 'float64';
     /**
      * Data B64Str
      */
@@ -50,7 +50,7 @@ export type B64UintArray_api = {
     /**
      * Element Type
      */
-    element_type: "uint8" | "uint16" | "uint32" | "uint64";
+    element_type: 'uint8' | 'uint16' | 'uint32' | 'uint64';
     /**
      * Data B64Str
      */
@@ -274,8 +274,8 @@ export type DerivedVectorInfo_api = {
  * DerivedVectorType
  */
 export enum DerivedVectorType_api {
-    PER_DAY = "PER_DAY",
-    PER_INTVL = "PER_INTVL",
+    PER_DAY = 'PER_DAY',
+    PER_INTVL = 'PER_INTVL'
 }
 
 /**
@@ -295,7 +295,11 @@ export type DiscreteValueMetadata_api = {
     /**
      * Rgbcolor
      */
-    rgbColor: [number, number, number];
+    rgbColor: [
+        number,
+        number,
+        number
+    ];
 };
 
 /**
@@ -576,12 +580,12 @@ export type FlowNetworkPerTreeType_api = {
  * FlowRateType
  */
 export enum FlowRateType_api {
-    OIL = "OIL",
-    LIQ = "LIQ",
-    GAS = "GAS",
-    WG = "WG",
-    TM = "TM",
-    WAT = "WAT",
+    OIL = 'OIL',
+    LIQ = 'LIQ',
+    GAS = 'GAS',
+    WG = 'WG',
+    TM = 'TM',
+    WAT = 'WAT'
 }
 
 /**
@@ -607,21 +611,21 @@ export type FormationSegment_api = {
  * Frequency
  */
 export enum Frequency_api {
-    DAILY = "DAILY",
-    WEEKLY = "WEEKLY",
-    MONTHLY = "MONTHLY",
-    QUARTERLY = "QUARTERLY",
-    YEARLY = "YEARLY",
+    DAILY = 'DAILY',
+    WEEKLY = 'WEEKLY',
+    MONTHLY = 'MONTHLY',
+    QUARTERLY = 'QUARTERLY',
+    YEARLY = 'YEARLY'
 }
 
 /**
  * GFR
  */
 export enum GFR_api {
-    GOR = "GOR",
-    GLR = "GLR",
-    OGR = "OGR",
-    MMW = "MMW",
+    GOR = 'GOR',
+    GLR = 'GLR',
+    OGR = 'OGR',
+    MMW = 'MMW'
 }
 
 /**
@@ -846,11 +850,11 @@ export type InitialFluidContactSurfaceMeta_api = {
  * InitialFluidContactType
  */
 export enum InitialFluidContactType_api {
-    FGL = "fgl",
-    FWL = "fwl",
-    GOC = "goc",
-    GWC = "gwc",
-    OWC = "owc",
+    FGL = 'fgl',
+    FWL = 'fwl',
+    GOC = 'goc',
+    GWC = 'gwc',
+    OWC = 'owc'
 }
 
 /**
@@ -875,12 +879,12 @@ export type InplaceVolumesIndexWithValues_api = {
  * Definition of possible statistics for a result column in an inplace volumes table
  */
 export enum InplaceVolumesStatistic_api {
-    MEAN = "mean",
-    STDDEV = "stddev",
-    MAX = "max",
-    MIN = "min",
-    P10 = "p10",
-    P90 = "p90",
+    MEAN = 'mean',
+    STDDEV = 'stddev',
+    MAX = 'max',
+    MIN = 'min',
+    P10 = 'p10',
+    P90 = 'p90'
 }
 
 /**
@@ -982,7 +986,7 @@ export type LroCommandResp_api = {
     /**
      * Response Type
      */
-    response_type: "LroCommandResp";
+    response_type: 'LroCommandResp';
     /**
      * Command Ok
      */
@@ -1000,7 +1004,7 @@ export type LroFailureResp_api = {
     /**
      * Response Type
      */
-    response_type: "LroFailureResp";
+    response_type: 'LroFailureResp';
     /**
      * Task Id
      */
@@ -1018,7 +1022,7 @@ export type LroInProgressResp_api = {
     /**
      * Response Type
      */
-    response_type: "LroInProgressResp";
+    response_type: 'LroInProgressResp';
     /**
      * Task Id
      */
@@ -1030,7 +1034,7 @@ export type LroInProgressResp_api = {
     /**
      * Status Str
      */
-    status_str: "pending" | "running" | string;
+    status_str: 'pending' | 'running' | string;
     /**
      * Progress Message
      */
@@ -1044,7 +1048,7 @@ export type LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api = {
     /**
      * Response Type
      */
-    response_type: "LroSuccessResp";
+    response_type: 'LroSuccessResp';
     /**
      * Result
      */
@@ -1058,7 +1062,7 @@ export type NetworkNode_api = {
     /**
      * Node Type
      */
-    node_type: "Group" | "Well";
+    node_type: 'Group' | 'Well';
     /**
      * Node Label
      */
@@ -1125,9 +1129,9 @@ export type NewSnapshot_api = {
  * NodeType
  */
 export enum NodeType_api {
-    PROD = "prod",
-    INJ = "inj",
-    OTHER = "other",
+    PROD = 'prod',
+    INJ = 'inj',
+    OTHER = 'other'
 }
 
 /**
@@ -1218,18 +1222,18 @@ export type PolygonData_api = {
  * To be revisited later when the metadata is more mature.
  */
 export enum PolygonsAttributeType_api {
-    DEPTH = "depth",
-    TIME = "time",
-    PROPERTY = "property",
-    SEISMIC = "seismic",
-    THICKNESS = "thickness",
-    ISOCHORE = "isochore",
-    FLUID_CONTACT = "fluid_contact",
-    FIELD_OUTLINE = "field_outline",
-    PINCHOUT = "pinchout",
-    SUBCROP = "subcrop",
-    FAULT_LINES = "fault_lines",
-    NAMED_AREA = "named_area",
+    DEPTH = 'depth',
+    TIME = 'time',
+    PROPERTY = 'property',
+    SEISMIC = 'seismic',
+    THICKNESS = 'thickness',
+    ISOCHORE = 'isochore',
+    FLUID_CONTACT = 'fluid_contact',
+    FIELD_OUTLINE = 'field_outline',
+    PINCHOUT = 'pinchout',
+    SUBCROP = 'subcrop',
+    FAULT_LINES = 'fault_lines',
+    NAMED_AREA = 'named_area'
 }
 
 /**
@@ -1751,9 +1755,9 @@ export type SeismicFencePolyline_api = {
  * SeismicRepresentation
  */
 export enum SeismicRepresentation_api {
-    OBSERVED_CASE = "observed_case",
-    OBSERVED_REALIZATION = "observed_realization",
-    MODELLED = "modelled",
+    OBSERVED_CASE = 'observed_case',
+    OBSERVED_REALIZATION = 'observed_realization',
+    MODELLED = 'modelled'
 }
 
 /**
@@ -1832,8 +1836,8 @@ export type SeismicSliceData_api = {
  * SensitivityType
  */
 export enum SensitivityType_api {
-    MONTECARLO = "montecarlo",
-    SCENARIO = "scenario",
+    MONTECARLO = 'montecarlo',
+    SCENARIO = 'scenario'
 }
 
 /**
@@ -1889,9 +1893,9 @@ export type SessionMetadata_api = {
  * SessionSortBy
  */
 export enum SessionSortBy_api {
-    METADATA_CREATED_AT = "metadata.created_at",
-    METADATA_UPDATED_AT = "metadata.updated_at",
-    METADATA_TITLE = "metadata.title",
+    METADATA_CREATED_AT = 'metadata.created_at',
+    METADATA_UPDATED_AT = 'metadata.updated_at',
+    METADATA_TITLE = 'metadata.title'
 }
 
 /**
@@ -1958,11 +1962,11 @@ export type SnapshotAccessLog_api = {
  * SnapshotAccessLogSortBy
  */
 export enum SnapshotAccessLogSortBy_api {
-    VISITS = "visits",
-    LAST_VISITED_AT = "last_visited_at",
-    SNAPSHOT_METADATA_TITLE = "snapshot_metadata.title",
-    SNAPSHOT_METADATA_TITLE_LOWER = "snapshot_metadata.title__lower",
-    SNAPSHOT_METADATA_CREATED_AT = "snapshot_metadata.created_at",
+    VISITS = 'visits',
+    LAST_VISITED_AT = 'last_visited_at',
+    SNAPSHOT_METADATA_TITLE = 'snapshot_metadata.title',
+    SNAPSHOT_METADATA_TITLE_LOWER = 'snapshot_metadata.title__lower',
+    SNAPSHOT_METADATA_CREATED_AT = 'snapshot_metadata.created_at'
 }
 
 /**
@@ -1999,30 +2003,30 @@ export type SnapshotMetadata_api = {
  * SnapshotSortBy
  */
 export enum SnapshotSortBy_api {
-    CREATED_AT = "created_at",
-    UPDATED_AT = "updated_at",
-    TITLE = "title",
-    TITLE_LOWER = "title_lower",
+    CREATED_AT = 'created_at',
+    UPDATED_AT = 'updated_at',
+    TITLE = 'title',
+    TITLE_LOWER = 'title_lower'
 }
 
 /**
  * SortDirection
  */
 export enum SortDirection_api {
-    ASC = "asc",
-    DESC = "desc",
+    ASC = 'asc',
+    DESC = 'desc'
 }
 
 /**
  * StatisticFunction
  */
 export enum StatisticFunction_api {
-    MEAN = "MEAN",
-    MIN = "MIN",
-    MAX = "MAX",
-    P10 = "P10",
-    P90 = "P90",
-    P50 = "P50",
+    MEAN = 'MEAN',
+    MIN = 'MIN',
+    MAX = 'MAX',
+    P10 = 'P10',
+    P90 = 'P90',
+    P50 = 'P50'
 }
 
 /**
@@ -2113,18 +2117,18 @@ export type SummaryVectorObservations_api = {
  * To be revisited later when the metadata is more mature.
  */
 export enum SurfaceAttributeType_api {
-    DEPTH = "depth",
-    FACIES_THICKNESS = "facies_thickness",
-    FLUID_CONTACT = "fluid_contact",
-    PINCHOUT = "pinchout",
-    PROPERTY = "property",
-    SEISMIC = "seismic",
-    SUBCROP = "subcrop",
-    THICKNESS = "thickness",
-    TIME = "time",
-    VELOCITY = "velocity",
-    VOLUMES = "volumes",
-    UNKNOWN = "UNKNOWN",
+    DEPTH = 'depth',
+    FACIES_THICKNESS = 'facies_thickness',
+    FLUID_CONTACT = 'fluid_contact',
+    PINCHOUT = 'pinchout',
+    PROPERTY = 'property',
+    SEISMIC = 'seismic',
+    SUBCROP = 'subcrop',
+    THICKNESS = 'thickness',
+    TIME = 'time',
+    VELOCITY = 'velocity',
+    VOLUMES = 'volumes',
+    UNKNOWN = 'UNKNOWN'
 }
 
 /**
@@ -2134,7 +2138,7 @@ export type SurfaceDataFloat_api = {
     /**
      * Format
      */
-    format?: "float";
+    format?: 'float';
     surface_def: SurfaceDef_api;
     transformed_bbox_utm: BoundingBox2d_api;
     /**
@@ -2155,7 +2159,7 @@ export type SurfaceDataPng_api = {
     /**
      * Format
      */
-    format?: "png";
+    format?: 'png';
     surface_def: SurfaceDef_api;
     transformed_bbox_utm: BoundingBox2d_api;
     /**
@@ -2337,49 +2341,49 @@ export type SurfaceRealizationSampleValues_api = {
  * The FMU standard results that are surfaces. Used when building standard result surface addresses.
  */
 export enum SurfaceStandardResult_api {
-    FLUID_CONTACT_SURFACE = "fluid_contact_surface",
-    GRID_EXTRACTED_DEPTH_SURFACE = "grid_extracted_depth_surface",
-    STRUCTURE_DEPTH_FAULT_SURFACE = "structure_depth_fault_surface",
-    STRUCTURE_DEPTH_ISOCHORE = "structure_depth_isochore",
-    STRUCTURE_DEPTH_SURFACE = "structure_depth_surface",
-    STRUCTURE_TIME_SURFACE = "structure_time_surface",
+    FLUID_CONTACT_SURFACE = 'fluid_contact_surface',
+    GRID_EXTRACTED_DEPTH_SURFACE = 'grid_extracted_depth_surface',
+    STRUCTURE_DEPTH_FAULT_SURFACE = 'structure_depth_fault_surface',
+    STRUCTURE_DEPTH_ISOCHORE = 'structure_depth_isochore',
+    STRUCTURE_DEPTH_SURFACE = 'structure_depth_surface',
+    STRUCTURE_TIME_SURFACE = 'structure_time_surface'
 }
 
 /**
  * SurfaceStatisticFunction
  */
 export enum SurfaceStatisticFunction_api {
-    MEAN = "MEAN",
-    STD = "STD",
-    MIN = "MIN",
-    MAX = "MAX",
-    P10 = "P10",
-    P90 = "P90",
-    P50 = "P50",
+    MEAN = 'MEAN',
+    STD = 'STD',
+    MIN = 'MIN',
+    MAX = 'MAX',
+    P10 = 'P10',
+    P90 = 'P90',
+    P50 = 'P50'
 }
 
 /**
  * SurfaceTimeType
  */
 export enum SurfaceTimeType_api {
-    NO_TIME = "NO_TIME",
-    TIME_POINT = "TIME_POINT",
-    INTERVAL = "INTERVAL",
+    NO_TIME = 'NO_TIME',
+    TIME_POINT = 'TIME_POINT',
+    INTERVAL = 'INTERVAL'
 }
 
 /**
  * THP
  */
 export enum THP_api {
-    THP = "THP",
+    THP = 'THP'
 }
 
 /**
  * TabType
  */
 export enum TabType_api {
-    BHP = "BHP",
-    TEMP = "TEMP",
+    BHP = 'BHP',
+    TEMP = 'TEMP'
 }
 
 /**
@@ -2421,14 +2425,24 @@ export type TableColumnStatisticalData_api = {
 };
 
 /**
+ * TutorialMediaSasToken
+ */
+export type TutorialMediaSasToken_api = {
+    /**
+     * Sastoken
+     */
+    sasToken: string;
+};
+
+/**
  * UnitType
  */
 export enum UnitType_api {
-    METRIC = "METRIC",
-    FIELD = "FIELD",
-    LAB = "LAB",
-    PVT_M = "PVT-M",
-    DEFAULT = "DEFAULT",
+    METRIC = 'METRIC',
+    FIELD = 'FIELD',
+    LAB = 'LAB',
+    PVT_M = 'PVT-M',
+    DEFAULT = 'DEFAULT'
 }
 
 /**
@@ -2625,7 +2639,7 @@ export type VfpInjTable_api = {
     /**
      * Vfptype
      */
-    vfpType?: "INJ";
+    vfpType?: 'INJ';
     /**
      * Tablenumber
      */
@@ -2670,7 +2684,7 @@ export type VfpProdTable_api = {
     /**
      * Vfptype
      */
-    vfpType?: "PROD";
+    vfpType?: 'PROD';
     /**
      * Tablenumber
      */
@@ -2740,11 +2754,11 @@ export type VfpProdTable_api = {
  * WFR
  */
 export enum WFR_api {
-    WOR = "WOR",
-    WCT = "WCT",
-    WGR = "WGR",
-    WWR = "WWR",
-    WTF = "WTF",
+    WOR = 'WOR',
+    WCT = 'WCT',
+    WGR = 'WGR',
+    WWR = 'WWR',
+    WTF = 'WTF'
 }
 
 /**
@@ -2863,19 +2877,19 @@ export type WellInjectionData_api = {
  * WellLogCurveSourceEnum
  */
 export enum WellLogCurveSourceEnum_api {
-    SSDL_WELL_LOG = "ssdl.well_log",
-    SMDA_GEOLOGY = "smda.geology",
-    SMDA_STRATIGRAPHY = "smda.stratigraphy",
-    SMDA_SURVEY = "smda.survey",
+    SSDL_WELL_LOG = 'ssdl.well_log',
+    SMDA_GEOLOGY = 'smda.geology',
+    SMDA_STRATIGRAPHY = 'smda.stratigraphy',
+    SMDA_SURVEY = 'smda.survey'
 }
 
 /**
  * WellLogCurveTypeEnum
  */
 export enum WellLogCurveTypeEnum_api {
-    CONTINUOUS = "continuous",
-    DISCRETE = "discrete",
-    FLAG = "flag",
+    CONTINUOUS = 'continuous',
+    DISCRETE = 'discrete',
+    FLAG = 'flag'
 }
 
 /**
@@ -2946,13 +2960,11 @@ export type WellTrajectory_api = {
     uwi: string;
 };
 
-export type WellTrajectoryFormationSegments_api =
-    | ({
-          status: "success";
-      } & WellTrajectoryFormationSegmentsSuccess_api)
-    | ({
-          status: "error";
-      } & WellTrajectoryFormationSegmentsError_api);
+export type WellTrajectoryFormationSegments_api = ({
+    status: 'success';
+} & WellTrajectoryFormationSegmentsSuccess_api) | ({
+    status: 'error';
+} & WellTrajectoryFormationSegmentsError_api);
 
 /**
  * WellTrajectoryFormationSegmentsError
@@ -2967,7 +2979,7 @@ export type WellTrajectoryFormationSegmentsError_api = {
     /**
      * Status
      */
-    status?: "error";
+    status?: 'error';
     /**
      * Uwi
      */
@@ -2993,7 +3005,7 @@ export type WellTrajectoryFormationSegmentsSuccess_api = {
     /**
      * Status
      */
-    status?: "success";
+    status?: 'success';
     /**
      * Uwi
      */
@@ -3242,7 +3254,10 @@ export type WellboreLogCurveData_api = {
     /**
      * Datapoints
      */
-    dataPoints: Array<[number, number | string | null]>;
+    dataPoints: Array<[
+        number,
+        number | string | null
+    ]>;
     /**
      * Discretevaluemetadata
      */
@@ -3427,7 +3442,7 @@ export type GetAssetInfosData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/asset_infos";
+    url: '/asset_infos';
 };
 
 export type GetAssetInfosResponses_api = {
@@ -3447,7 +3462,7 @@ export type GetFieldIdentifiersData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/field_identifiers";
+    url: '/field_identifiers';
 };
 
 export type GetFieldIdentifiersResponses_api = {
@@ -3473,7 +3488,7 @@ export type GetCasesData_api = {
         asset_name: string;
         zCacheBust?: string;
     };
-    url: "/cases";
+    url: '/cases';
 };
 
 export type GetCasesErrors_api = {
@@ -3515,7 +3530,7 @@ export type GetEnsembleDetailsData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
+    url: '/cases/{case_uuid}/ensembles/{ensemble_name}';
 };
 
 export type GetEnsembleDetailsErrors_api = {
@@ -3547,7 +3562,7 @@ export type PostRefreshFingerprintsForEnsemblesData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/ensembles/refresh_fingerprints";
+    url: '/ensembles/refresh_fingerprints';
 };
 
 export type PostRefreshFingerprintsForEnsemblesErrors_api = {
@@ -3557,8 +3572,7 @@ export type PostRefreshFingerprintsForEnsemblesErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostRefreshFingerprintsForEnsemblesError_api =
-    PostRefreshFingerprintsForEnsemblesErrors_api[keyof PostRefreshFingerprintsForEnsemblesErrors_api];
+export type PostRefreshFingerprintsForEnsemblesError_api = PostRefreshFingerprintsForEnsemblesErrors_api[keyof PostRefreshFingerprintsForEnsemblesErrors_api];
 
 export type PostRefreshFingerprintsForEnsemblesResponses_api = {
     /**
@@ -3569,8 +3583,7 @@ export type PostRefreshFingerprintsForEnsemblesResponses_api = {
     200: Array<string | null>;
 };
 
-export type PostRefreshFingerprintsForEnsemblesResponse_api =
-    PostRefreshFingerprintsForEnsemblesResponses_api[keyof PostRefreshFingerprintsForEnsemblesResponses_api];
+export type PostRefreshFingerprintsForEnsemblesResponse_api = PostRefreshFingerprintsForEnsemblesResponses_api[keyof PostRefreshFingerprintsForEnsemblesResponses_api];
 
 export type GetVectorListData_api = {
     body?: never;
@@ -3596,7 +3609,7 @@ export type GetVectorListData_api = {
         include_derived_vectors?: boolean | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/vector_list/";
+    url: '/timeseries/vector_list/';
 };
 
 export type GetVectorListErrors_api = {
@@ -3655,7 +3668,7 @@ export type GetDeltaEnsembleVectorListData_api = {
         include_derived_vectors?: boolean | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/delta_ensemble_vector_list/";
+    url: '/timeseries/delta_ensemble_vector_list/';
 };
 
 export type GetDeltaEnsembleVectorListErrors_api = {
@@ -3665,8 +3678,7 @@ export type GetDeltaEnsembleVectorListErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetDeltaEnsembleVectorListError_api =
-    GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
+export type GetDeltaEnsembleVectorListError_api = GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
 
 export type GetDeltaEnsembleVectorListResponses_api = {
     /**
@@ -3677,8 +3689,7 @@ export type GetDeltaEnsembleVectorListResponses_api = {
     200: Array<VectorDescription_api>;
 };
 
-export type GetDeltaEnsembleVectorListResponse_api =
-    GetDeltaEnsembleVectorListResponses_api[keyof GetDeltaEnsembleVectorListResponses_api];
+export type GetDeltaEnsembleVectorListResponse_api = GetDeltaEnsembleVectorListResponses_api[keyof GetDeltaEnsembleVectorListResponses_api];
 
 export type GetRealizationsVectorDataData_api = {
     body?: never;
@@ -3716,7 +3727,7 @@ export type GetRealizationsVectorDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/realizations_vector_data/";
+    url: '/timeseries/realizations_vector_data/';
 };
 
 export type GetRealizationsVectorDataErrors_api = {
@@ -3726,8 +3737,7 @@ export type GetRealizationsVectorDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetRealizationsVectorDataError_api =
-    GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
+export type GetRealizationsVectorDataError_api = GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
 
 export type GetRealizationsVectorDataResponses_api = {
     /**
@@ -3738,8 +3748,7 @@ export type GetRealizationsVectorDataResponses_api = {
     200: Array<VectorRealizationData_api>;
 };
 
-export type GetRealizationsVectorDataResponse_api =
-    GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
+export type GetRealizationsVectorDataResponse_api = GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
 
 export type GetDeltaEnsembleRealizationsVectorDataData_api = {
     body?: never;
@@ -3787,7 +3796,7 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/delta_ensemble_realizations_vector_data/";
+    url: '/timeseries/delta_ensemble_realizations_vector_data/';
 };
 
 export type GetDeltaEnsembleRealizationsVectorDataErrors_api = {
@@ -3797,8 +3806,7 @@ export type GetDeltaEnsembleRealizationsVectorDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetDeltaEnsembleRealizationsVectorDataError_api =
-    GetDeltaEnsembleRealizationsVectorDataErrors_api[keyof GetDeltaEnsembleRealizationsVectorDataErrors_api];
+export type GetDeltaEnsembleRealizationsVectorDataError_api = GetDeltaEnsembleRealizationsVectorDataErrors_api[keyof GetDeltaEnsembleRealizationsVectorDataErrors_api];
 
 export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
     /**
@@ -3809,8 +3817,7 @@ export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
     200: Array<VectorRealizationData_api>;
 };
 
-export type GetDeltaEnsembleRealizationsVectorDataResponse_api =
-    GetDeltaEnsembleRealizationsVectorDataResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataResponses_api];
+export type GetDeltaEnsembleRealizationsVectorDataResponse_api = GetDeltaEnsembleRealizationsVectorDataResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataResponses_api];
 
 export type GetHistoricalVectorDataData_api = {
     body?: never;
@@ -3842,7 +3849,7 @@ export type GetHistoricalVectorDataData_api = {
         resampling_frequency?: Frequency_api | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/historical_vector_data/";
+    url: '/timeseries/historical_vector_data/';
 };
 
 export type GetHistoricalVectorDataErrors_api = {
@@ -3852,8 +3859,7 @@ export type GetHistoricalVectorDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetHistoricalVectorDataError_api =
-    GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
+export type GetHistoricalVectorDataError_api = GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
 
 export type GetHistoricalVectorDataResponses_api = {
     /**
@@ -3862,8 +3868,7 @@ export type GetHistoricalVectorDataResponses_api = {
     200: VectorHistoricalData_api;
 };
 
-export type GetHistoricalVectorDataResponse_api =
-    GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
+export type GetHistoricalVectorDataResponse_api = GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataData_api = {
     body?: never;
@@ -3905,7 +3910,7 @@ export type GetStatisticalVectorDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/statistical_vector_data/";
+    url: '/timeseries/statistical_vector_data/';
 };
 
 export type GetStatisticalVectorDataErrors_api = {
@@ -3915,8 +3920,7 @@ export type GetStatisticalVectorDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetStatisticalVectorDataError_api =
-    GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
+export type GetStatisticalVectorDataError_api = GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
 
 export type GetStatisticalVectorDataResponses_api = {
     /**
@@ -3925,8 +3929,7 @@ export type GetStatisticalVectorDataResponses_api = {
     200: VectorStatisticData_api;
 };
 
-export type GetStatisticalVectorDataResponse_api =
-    GetStatisticalVectorDataResponses_api[keyof GetStatisticalVectorDataResponses_api];
+export type GetStatisticalVectorDataResponse_api = GetStatisticalVectorDataResponses_api[keyof GetStatisticalVectorDataResponses_api];
 
 export type GetDeltaEnsembleStatisticalVectorDataData_api = {
     body?: never;
@@ -3980,7 +3983,7 @@ export type GetDeltaEnsembleStatisticalVectorDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/delta_ensemble_statistical_vector_data/";
+    url: '/timeseries/delta_ensemble_statistical_vector_data/';
 };
 
 export type GetDeltaEnsembleStatisticalVectorDataErrors_api = {
@@ -3990,8 +3993,7 @@ export type GetDeltaEnsembleStatisticalVectorDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetDeltaEnsembleStatisticalVectorDataError_api =
-    GetDeltaEnsembleStatisticalVectorDataErrors_api[keyof GetDeltaEnsembleStatisticalVectorDataErrors_api];
+export type GetDeltaEnsembleStatisticalVectorDataError_api = GetDeltaEnsembleStatisticalVectorDataErrors_api[keyof GetDeltaEnsembleStatisticalVectorDataErrors_api];
 
 export type GetDeltaEnsembleStatisticalVectorDataResponses_api = {
     /**
@@ -4000,8 +4002,7 @@ export type GetDeltaEnsembleStatisticalVectorDataResponses_api = {
     200: VectorStatisticData_api;
 };
 
-export type GetDeltaEnsembleStatisticalVectorDataResponse_api =
-    GetDeltaEnsembleStatisticalVectorDataResponses_api[keyof GetDeltaEnsembleStatisticalVectorDataResponses_api];
+export type GetDeltaEnsembleStatisticalVectorDataResponse_api = GetDeltaEnsembleStatisticalVectorDataResponses_api[keyof GetDeltaEnsembleStatisticalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataPerSensitivityData_api = {
     body?: never;
@@ -4043,7 +4044,7 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/timeseries/statistical_vector_data_per_sensitivity/";
+    url: '/timeseries/statistical_vector_data_per_sensitivity/';
 };
 
 export type GetStatisticalVectorDataPerSensitivityErrors_api = {
@@ -4053,8 +4054,7 @@ export type GetStatisticalVectorDataPerSensitivityErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetStatisticalVectorDataPerSensitivityError_api =
-    GetStatisticalVectorDataPerSensitivityErrors_api[keyof GetStatisticalVectorDataPerSensitivityErrors_api];
+export type GetStatisticalVectorDataPerSensitivityError_api = GetStatisticalVectorDataPerSensitivityErrors_api[keyof GetStatisticalVectorDataPerSensitivityErrors_api];
 
 export type GetStatisticalVectorDataPerSensitivityResponses_api = {
     /**
@@ -4065,8 +4065,7 @@ export type GetStatisticalVectorDataPerSensitivityResponses_api = {
     200: Array<VectorStatisticSensitivityData_api>;
 };
 
-export type GetStatisticalVectorDataPerSensitivityResponse_api =
-    GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
+export type GetStatisticalVectorDataPerSensitivityResponse_api = GetStatisticalVectorDataPerSensitivityResponses_api[keyof GetStatisticalVectorDataPerSensitivityResponses_api];
 
 export type GetInplaceTableDefinitionsData_api = {
     body?: never;
@@ -4086,7 +4085,7 @@ export type GetInplaceTableDefinitionsData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/inplace_volumes/inplace_table_definitions/";
+    url: '/inplace_volumes/inplace_table_definitions/';
 };
 
 export type GetInplaceTableDefinitionsErrors_api = {
@@ -4096,8 +4095,7 @@ export type GetInplaceTableDefinitionsErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetInplaceTableDefinitionsError_api =
-    GetInplaceTableDefinitionsErrors_api[keyof GetInplaceTableDefinitionsErrors_api];
+export type GetInplaceTableDefinitionsError_api = GetInplaceTableDefinitionsErrors_api[keyof GetInplaceTableDefinitionsErrors_api];
 
 export type GetInplaceTableDefinitionsResponses_api = {
     /**
@@ -4108,8 +4106,7 @@ export type GetInplaceTableDefinitionsResponses_api = {
     200: Array<InplaceVolumesTableDefinition_api>;
 };
 
-export type GetInplaceTableDefinitionsResponse_api =
-    GetInplaceTableDefinitionsResponses_api[keyof GetInplaceTableDefinitionsResponses_api];
+export type GetInplaceTableDefinitionsResponse_api = GetInplaceTableDefinitionsResponses_api[keyof GetInplaceTableDefinitionsResponses_api];
 
 export type PostGetAggregatedPerRealizationInplaceTableDataData_api = {
     body: BodyPostGetAggregatedPerRealizationInplaceTableData_api;
@@ -4153,7 +4150,7 @@ export type PostGetAggregatedPerRealizationInplaceTableDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/inplace_volumes/get_aggregated_per_realization_inplace_table_data/";
+    url: '/inplace_volumes/get_aggregated_per_realization_inplace_table_data/';
 };
 
 export type PostGetAggregatedPerRealizationInplaceTableDataErrors_api = {
@@ -4163,8 +4160,7 @@ export type PostGetAggregatedPerRealizationInplaceTableDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostGetAggregatedPerRealizationInplaceTableDataError_api =
-    PostGetAggregatedPerRealizationInplaceTableDataErrors_api[keyof PostGetAggregatedPerRealizationInplaceTableDataErrors_api];
+export type PostGetAggregatedPerRealizationInplaceTableDataError_api = PostGetAggregatedPerRealizationInplaceTableDataErrors_api[keyof PostGetAggregatedPerRealizationInplaceTableDataErrors_api];
 
 export type PostGetAggregatedPerRealizationInplaceTableDataResponses_api = {
     /**
@@ -4173,8 +4169,7 @@ export type PostGetAggregatedPerRealizationInplaceTableDataResponses_api = {
     200: InplaceVolumesTableDataPerFluidSelection_api;
 };
 
-export type PostGetAggregatedPerRealizationInplaceTableDataResponse_api =
-    PostGetAggregatedPerRealizationInplaceTableDataResponses_api[keyof PostGetAggregatedPerRealizationInplaceTableDataResponses_api];
+export type PostGetAggregatedPerRealizationInplaceTableDataResponse_api = PostGetAggregatedPerRealizationInplaceTableDataResponses_api[keyof PostGetAggregatedPerRealizationInplaceTableDataResponses_api];
 
 export type PostGetAggregatedStatisticalInplaceTableDataData_api = {
     body: BodyPostGetAggregatedStatisticalInplaceTableData_api;
@@ -4218,7 +4213,7 @@ export type PostGetAggregatedStatisticalInplaceTableDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/inplace_volumes/get_aggregated_statistical_inplace_table_data/";
+    url: '/inplace_volumes/get_aggregated_statistical_inplace_table_data/';
 };
 
 export type PostGetAggregatedStatisticalInplaceTableDataErrors_api = {
@@ -4228,8 +4223,7 @@ export type PostGetAggregatedStatisticalInplaceTableDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostGetAggregatedStatisticalInplaceTableDataError_api =
-    PostGetAggregatedStatisticalInplaceTableDataErrors_api[keyof PostGetAggregatedStatisticalInplaceTableDataErrors_api];
+export type PostGetAggregatedStatisticalInplaceTableDataError_api = PostGetAggregatedStatisticalInplaceTableDataErrors_api[keyof PostGetAggregatedStatisticalInplaceTableDataErrors_api];
 
 export type PostGetAggregatedStatisticalInplaceTableDataResponses_api = {
     /**
@@ -4238,8 +4232,7 @@ export type PostGetAggregatedStatisticalInplaceTableDataResponses_api = {
     200: InplaceVolumesStatisticalTableDataPerFluidSelection_api;
 };
 
-export type PostGetAggregatedStatisticalInplaceTableDataResponse_api =
-    PostGetAggregatedStatisticalInplaceTableDataResponses_api[keyof PostGetAggregatedStatisticalInplaceTableDataResponses_api];
+export type PostGetAggregatedStatisticalInplaceTableDataResponse_api = PostGetAggregatedStatisticalInplaceTableDataResponses_api[keyof PostGetAggregatedStatisticalInplaceTableDataResponses_api];
 
 export type GetRealizationSurfacesMetadataData_api = {
     body?: never;
@@ -4259,7 +4252,7 @@ export type GetRealizationSurfacesMetadataData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/surface/realization_surfaces_metadata/";
+    url: '/surface/realization_surfaces_metadata/';
 };
 
 export type GetRealizationSurfacesMetadataErrors_api = {
@@ -4269,8 +4262,7 @@ export type GetRealizationSurfacesMetadataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetRealizationSurfacesMetadataError_api =
-    GetRealizationSurfacesMetadataErrors_api[keyof GetRealizationSurfacesMetadataErrors_api];
+export type GetRealizationSurfacesMetadataError_api = GetRealizationSurfacesMetadataErrors_api[keyof GetRealizationSurfacesMetadataErrors_api];
 
 export type GetRealizationSurfacesMetadataResponses_api = {
     /**
@@ -4279,8 +4271,7 @@ export type GetRealizationSurfacesMetadataResponses_api = {
     200: SurfaceMetaSet_api;
 };
 
-export type GetRealizationSurfacesMetadataResponse_api =
-    GetRealizationSurfacesMetadataResponses_api[keyof GetRealizationSurfacesMetadataResponses_api];
+export type GetRealizationSurfacesMetadataResponse_api = GetRealizationSurfacesMetadataResponses_api[keyof GetRealizationSurfacesMetadataResponses_api];
 
 export type GetObservedSurfacesMetadataData_api = {
     body?: never;
@@ -4294,7 +4285,7 @@ export type GetObservedSurfacesMetadataData_api = {
         case_uuid: string;
         zCacheBust?: string;
     };
-    url: "/surface/observed_surfaces_metadata/";
+    url: '/surface/observed_surfaces_metadata/';
 };
 
 export type GetObservedSurfacesMetadataErrors_api = {
@@ -4304,8 +4295,7 @@ export type GetObservedSurfacesMetadataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetObservedSurfacesMetadataError_api =
-    GetObservedSurfacesMetadataErrors_api[keyof GetObservedSurfacesMetadataErrors_api];
+export type GetObservedSurfacesMetadataError_api = GetObservedSurfacesMetadataErrors_api[keyof GetObservedSurfacesMetadataErrors_api];
 
 export type GetObservedSurfacesMetadataResponses_api = {
     /**
@@ -4314,8 +4304,7 @@ export type GetObservedSurfacesMetadataResponses_api = {
     200: SurfaceMetaSet_api;
 };
 
-export type GetObservedSurfacesMetadataResponse_api =
-    GetObservedSurfacesMetadataResponses_api[keyof GetObservedSurfacesMetadataResponses_api];
+export type GetObservedSurfacesMetadataResponse_api = GetObservedSurfacesMetadataResponses_api[keyof GetObservedSurfacesMetadataResponses_api];
 
 export type GetInitialFluidContactSurfacesMetadataData_api = {
     body?: never;
@@ -4335,7 +4324,7 @@ export type GetInitialFluidContactSurfacesMetadataData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/surface/initial_fluid_contact_surfaces_metadata/";
+    url: '/surface/initial_fluid_contact_surfaces_metadata/';
 };
 
 export type GetInitialFluidContactSurfacesMetadataErrors_api = {
@@ -4345,8 +4334,7 @@ export type GetInitialFluidContactSurfacesMetadataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetInitialFluidContactSurfacesMetadataError_api =
-    GetInitialFluidContactSurfacesMetadataErrors_api[keyof GetInitialFluidContactSurfacesMetadataErrors_api];
+export type GetInitialFluidContactSurfacesMetadataError_api = GetInitialFluidContactSurfacesMetadataErrors_api[keyof GetInitialFluidContactSurfacesMetadataErrors_api];
 
 export type GetInitialFluidContactSurfacesMetadataResponses_api = {
     /**
@@ -4357,8 +4345,7 @@ export type GetInitialFluidContactSurfacesMetadataResponses_api = {
     200: Array<InitialFluidContactSurfaceMeta_api>;
 };
 
-export type GetInitialFluidContactSurfacesMetadataResponse_api =
-    GetInitialFluidContactSurfacesMetadataResponses_api[keyof GetInitialFluidContactSurfacesMetadataResponses_api];
+export type GetInitialFluidContactSurfacesMetadataResponse_api = GetInitialFluidContactSurfacesMetadataResponses_api[keyof GetInitialFluidContactSurfacesMetadataResponses_api];
 
 export type GetSurfaceDataData_api = {
     body?: never;
@@ -4375,7 +4362,7 @@ export type GetSurfaceDataData_api = {
          *
          * Format of binary data in the response
          */
-        data_format?: "float" | "png";
+        data_format?: 'float' | 'png';
         /**
          * Resample To Def Str
          *
@@ -4384,7 +4371,7 @@ export type GetSurfaceDataData_api = {
         resample_to_def_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/surface_data";
+    url: '/surface/surface_data';
 };
 
 export type GetSurfaceDataErrors_api = {
@@ -4425,7 +4412,7 @@ export type PostGetWellTrajectoriesFormationSegmentsData_api = {
         bottom_depth_surf_addr_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/get_well_trajectories_formation_segments";
+    url: '/surface/get_well_trajectories_formation_segments';
 };
 
 export type PostGetWellTrajectoriesFormationSegmentsErrors_api = {
@@ -4435,8 +4422,7 @@ export type PostGetWellTrajectoriesFormationSegmentsErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostGetWellTrajectoriesFormationSegmentsError_api =
-    PostGetWellTrajectoriesFormationSegmentsErrors_api[keyof PostGetWellTrajectoriesFormationSegmentsErrors_api];
+export type PostGetWellTrajectoriesFormationSegmentsError_api = PostGetWellTrajectoriesFormationSegmentsErrors_api[keyof PostGetWellTrajectoriesFormationSegmentsErrors_api];
 
 export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
     /**
@@ -4447,8 +4433,7 @@ export type PostGetWellTrajectoriesFormationSegmentsResponses_api = {
     200: Array<WellTrajectoryFormationSegments_api>;
 };
 
-export type PostGetWellTrajectoriesFormationSegmentsResponse_api =
-    PostGetWellTrajectoriesFormationSegmentsResponses_api[keyof PostGetWellTrajectoriesFormationSegmentsResponses_api];
+export type PostGetWellTrajectoriesFormationSegmentsResponse_api = PostGetWellTrajectoriesFormationSegmentsResponses_api[keyof PostGetWellTrajectoriesFormationSegmentsResponses_api];
 
 export type GetStatisticalSurfaceDataHybridData_api = {
     body?: never;
@@ -4465,7 +4450,7 @@ export type GetStatisticalSurfaceDataHybridData_api = {
          *
          * Format of binary data in the response
          */
-        data_format?: "float" | "png";
+        data_format?: 'float' | 'png';
         /**
          * Delete Task
          *
@@ -4480,7 +4465,7 @@ export type GetStatisticalSurfaceDataHybridData_api = {
         resample_to_def_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/statistical_surface_data_hybrid";
+    url: '/surface/statistical_surface_data_hybrid';
 };
 
 export type GetStatisticalSurfaceDataHybridErrors_api = {
@@ -4490,8 +4475,7 @@ export type GetStatisticalSurfaceDataHybridErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetStatisticalSurfaceDataHybridError_api =
-    GetStatisticalSurfaceDataHybridErrors_api[keyof GetStatisticalSurfaceDataHybridErrors_api];
+export type GetStatisticalSurfaceDataHybridError_api = GetStatisticalSurfaceDataHybridErrors_api[keyof GetStatisticalSurfaceDataHybridErrors_api];
 
 export type GetStatisticalSurfaceDataHybridResponses_api = {
     /**
@@ -4499,15 +4483,10 @@ export type GetStatisticalSurfaceDataHybridResponses_api = {
      *
      * Successful Response
      */
-    200:
-        | LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api
-        | LroInProgressResp_api
-        | LroFailureResp_api
-        | LroCommandResp_api;
+    200: LroSuccessRespUnionSurfaceDataFloatSurfaceDataPng_api | LroInProgressResp_api | LroFailureResp_api | LroCommandResp_api;
 };
 
-export type GetStatisticalSurfaceDataHybridResponse_api =
-    GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
+export type GetStatisticalSurfaceDataHybridResponse_api = GetStatisticalSurfaceDataHybridResponses_api[keyof GetStatisticalSurfaceDataHybridResponses_api];
 
 export type PostGetSurfaceIntersectionData_api = {
     body: BodyPostGetSurfaceIntersection_api;
@@ -4521,7 +4500,7 @@ export type PostGetSurfaceIntersectionData_api = {
         surf_addr_str: string;
         zCacheBust?: string;
     };
-    url: "/surface/get_surface_intersection";
+    url: '/surface/get_surface_intersection';
 };
 
 export type PostGetSurfaceIntersectionErrors_api = {
@@ -4531,8 +4510,7 @@ export type PostGetSurfaceIntersectionErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostGetSurfaceIntersectionError_api =
-    PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
+export type PostGetSurfaceIntersectionError_api = PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
 
 export type PostGetSurfaceIntersectionResponses_api = {
     /**
@@ -4541,8 +4519,7 @@ export type PostGetSurfaceIntersectionResponses_api = {
     200: SurfaceIntersectionData_api;
 };
 
-export type PostGetSurfaceIntersectionResponse_api =
-    PostGetSurfaceIntersectionResponses_api[keyof PostGetSurfaceIntersectionResponses_api];
+export type PostGetSurfaceIntersectionResponse_api = PostGetSurfaceIntersectionResponses_api[keyof PostGetSurfaceIntersectionResponses_api];
 
 export type PostGetSampleSurfaceInPointsData_api = {
     body: BodyPostGetSampleSurfaceInPoints_api;
@@ -4580,7 +4557,7 @@ export type PostGetSampleSurfaceInPointsData_api = {
         realization_nums: Array<number>;
         zCacheBust?: string;
     };
-    url: "/surface/get_sample_surface_in_points";
+    url: '/surface/get_sample_surface_in_points';
 };
 
 export type PostGetSampleSurfaceInPointsErrors_api = {
@@ -4590,8 +4567,7 @@ export type PostGetSampleSurfaceInPointsErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostGetSampleSurfaceInPointsError_api =
-    PostGetSampleSurfaceInPointsErrors_api[keyof PostGetSampleSurfaceInPointsErrors_api];
+export type PostGetSampleSurfaceInPointsError_api = PostGetSampleSurfaceInPointsErrors_api[keyof PostGetSampleSurfaceInPointsErrors_api];
 
 export type PostGetSampleSurfaceInPointsResponses_api = {
     /**
@@ -4602,8 +4578,7 @@ export type PostGetSampleSurfaceInPointsResponses_api = {
     200: Array<SurfaceRealizationSampleValues_api>;
 };
 
-export type PostGetSampleSurfaceInPointsResponse_api =
-    PostGetSampleSurfaceInPointsResponses_api[keyof PostGetSampleSurfaceInPointsResponses_api];
+export type PostGetSampleSurfaceInPointsResponse_api = PostGetSampleSurfaceInPointsResponses_api[keyof PostGetSampleSurfaceInPointsResponses_api];
 
 export type GetDeltaSurfaceDataData_api = {
     body?: never;
@@ -4626,7 +4601,7 @@ export type GetDeltaSurfaceDataData_api = {
          *
          * Format of binary data in the response
          */
-        data_format?: "float" | "png";
+        data_format?: 'float' | 'png';
         /**
          * Resample To Def Str
          *
@@ -4635,7 +4610,7 @@ export type GetDeltaSurfaceDataData_api = {
         resample_to_def_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/delta_surface_data";
+    url: '/surface/delta_surface_data';
 };
 
 export type GetDeltaSurfaceDataErrors_api = {
@@ -4691,7 +4666,7 @@ export type GetMisfitSurfaceDataData_api = {
          *
          * Format of binary data in the response
          */
-        data_format?: "float" | "png";
+        data_format?: 'float' | 'png';
         /**
          * Resample To Def Str
          *
@@ -4700,7 +4675,7 @@ export type GetMisfitSurfaceDataData_api = {
         resample_to_def_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/surface/misfit_surface_data";
+    url: '/surface/misfit_surface_data';
 };
 
 export type GetMisfitSurfaceDataErrors_api = {
@@ -4721,8 +4696,7 @@ export type GetMisfitSurfaceDataResponses_api = {
     200: Array<SurfaceDataFloat_api>;
 };
 
-export type GetMisfitSurfaceDataResponse_api =
-    GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
+export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
 export type GetParametersAndSensitivitiesData_api = {
     body?: never;
@@ -4742,7 +4716,7 @@ export type GetParametersAndSensitivitiesData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/parameters/parameters_and_sensitivities/";
+    url: '/parameters/parameters_and_sensitivities/';
 };
 
 export type GetParametersAndSensitivitiesErrors_api = {
@@ -4752,8 +4726,7 @@ export type GetParametersAndSensitivitiesErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetParametersAndSensitivitiesError_api =
-    GetParametersAndSensitivitiesErrors_api[keyof GetParametersAndSensitivitiesErrors_api];
+export type GetParametersAndSensitivitiesError_api = GetParametersAndSensitivitiesErrors_api[keyof GetParametersAndSensitivitiesErrors_api];
 
 export type GetParametersAndSensitivitiesResponses_api = {
     /**
@@ -4762,8 +4735,7 @@ export type GetParametersAndSensitivitiesResponses_api = {
     200: EnsembleParametersAndSensitivities_api;
 };
 
-export type GetParametersAndSensitivitiesResponse_api =
-    GetParametersAndSensitivitiesResponses_api[keyof GetParametersAndSensitivitiesResponses_api];
+export type GetParametersAndSensitivitiesResponse_api = GetParametersAndSensitivitiesResponses_api[keyof GetParametersAndSensitivitiesResponses_api];
 
 export type GetGridModelsInfoData_api = {
     body?: never;
@@ -4789,7 +4761,7 @@ export type GetGridModelsInfoData_api = {
         realization_num: number;
         zCacheBust?: string;
     };
-    url: "/grid3d/grid_models_info/";
+    url: '/grid3d/grid_models_info/';
 };
 
 export type GetGridModelsInfoErrors_api = {
@@ -4878,7 +4850,7 @@ export type GetGridSurfaceData_api = {
         k_max?: number;
         zCacheBust?: string;
     };
-    url: "/grid3d/grid_surface";
+    url: '/grid3d/grid_surface';
 };
 
 export type GetGridSurfaceErrors_api = {
@@ -4977,7 +4949,7 @@ export type GetGridParameterData_api = {
         k_max?: number;
         zCacheBust?: string;
     };
-    url: "/grid3d/grid_parameter";
+    url: '/grid3d/grid_parameter';
 };
 
 export type GetGridParameterErrors_api = {
@@ -5040,7 +5012,7 @@ export type PostGetPolylineIntersectionData_api = {
         parameter_time_or_interval_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/grid3d/get_polyline_intersection";
+    url: '/grid3d/get_polyline_intersection';
 };
 
 export type PostGetPolylineIntersectionErrors_api = {
@@ -5050,8 +5022,7 @@ export type PostGetPolylineIntersectionErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type PostGetPolylineIntersectionError_api =
-    PostGetPolylineIntersectionErrors_api[keyof PostGetPolylineIntersectionErrors_api];
+export type PostGetPolylineIntersectionError_api = PostGetPolylineIntersectionErrors_api[keyof PostGetPolylineIntersectionErrors_api];
 
 export type PostGetPolylineIntersectionResponses_api = {
     /**
@@ -5060,8 +5031,7 @@ export type PostGetPolylineIntersectionResponses_api = {
     200: PolylineIntersection_api;
 };
 
-export type PostGetPolylineIntersectionResponse_api =
-    PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
+export type PostGetPolylineIntersectionResponse_api = PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
 
 export type GetRealizationFlowNetworkData_api = {
     body?: never;
@@ -5097,7 +5067,7 @@ export type GetRealizationFlowNetworkData_api = {
         node_type_set: Array<NodeType_api>;
         zCacheBust?: string;
     };
-    url: "/flow_network/realization_flow_network/";
+    url: '/flow_network/realization_flow_network/';
 };
 
 export type GetRealizationFlowNetworkErrors_api = {
@@ -5107,8 +5077,7 @@ export type GetRealizationFlowNetworkErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetRealizationFlowNetworkError_api =
-    GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
+export type GetRealizationFlowNetworkError_api = GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
 
 export type GetRealizationFlowNetworkResponses_api = {
     /**
@@ -5117,8 +5086,7 @@ export type GetRealizationFlowNetworkResponses_api = {
     200: FlowNetworkPerTreeType_api;
 };
 
-export type GetRealizationFlowNetworkResponse_api =
-    GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
+export type GetRealizationFlowNetworkResponse_api = GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
 
 export type GetProductionDataData_api = {
     body?: never;
@@ -5144,7 +5112,7 @@ export type GetProductionDataData_api = {
         end_date: string;
         zCacheBust?: string;
     };
-    url: "/flow_data/production_data/";
+    url: '/flow_data/production_data/';
 };
 
 export type GetProductionDataErrors_api = {
@@ -5191,7 +5159,7 @@ export type GetInjectionDataData_api = {
         end_date: string;
         zCacheBust?: string;
     };
-    url: "/flow_data/injection_data/";
+    url: '/flow_data/injection_data/';
 };
 
 export type GetInjectionDataErrors_api = {
@@ -5238,7 +5206,7 @@ export type GetPvtTableDataData_api = {
         realization: number;
         zCacheBust?: string;
     };
-    url: "/pvt/pvt_table_data/";
+    url: '/pvt/pvt_table_data/';
 };
 
 export type GetPvtTableDataErrors_api = {
@@ -5285,7 +5253,7 @@ export type GetWellCompletionsDataData_api = {
         realizations_encoded_as_uint_list_str?: number | string | null;
         zCacheBust?: string;
     };
-    url: "/well_completions/well_completions_data/";
+    url: '/well_completions/well_completions_data/';
 };
 
 export type GetWellCompletionsDataErrors_api = {
@@ -5304,8 +5272,7 @@ export type GetWellCompletionsDataResponses_api = {
     200: WellCompletionsData_api;
 };
 
-export type GetWellCompletionsDataResponse_api =
-    GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
+export type GetWellCompletionsDataResponse_api = GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
 
 export type GetDrilledWellboreHeadersData_api = {
     body?: never;
@@ -5319,7 +5286,7 @@ export type GetDrilledWellboreHeadersData_api = {
         field_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/drilled_wellbore_headers/";
+    url: '/well/drilled_wellbore_headers/';
 };
 
 export type GetDrilledWellboreHeadersErrors_api = {
@@ -5329,8 +5296,7 @@ export type GetDrilledWellboreHeadersErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetDrilledWellboreHeadersError_api =
-    GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
+export type GetDrilledWellboreHeadersError_api = GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
 
 export type GetDrilledWellboreHeadersResponses_api = {
     /**
@@ -5341,8 +5307,7 @@ export type GetDrilledWellboreHeadersResponses_api = {
     200: Array<WellboreHeader_api>;
 };
 
-export type GetDrilledWellboreHeadersResponse_api =
-    GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
+export type GetDrilledWellboreHeadersResponse_api = GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
 export type GetPlannedWellboreHeadersData_api = {
     body?: never;
@@ -5356,7 +5321,7 @@ export type GetPlannedWellboreHeadersData_api = {
         field_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/planned_wellbore_headers/";
+    url: '/well/planned_wellbore_headers/';
 };
 
 export type GetPlannedWellboreHeadersErrors_api = {
@@ -5366,8 +5331,7 @@ export type GetPlannedWellboreHeadersErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetPlannedWellboreHeadersError_api =
-    GetPlannedWellboreHeadersErrors_api[keyof GetPlannedWellboreHeadersErrors_api];
+export type GetPlannedWellboreHeadersError_api = GetPlannedWellboreHeadersErrors_api[keyof GetPlannedWellboreHeadersErrors_api];
 
 export type GetPlannedWellboreHeadersResponses_api = {
     /**
@@ -5378,8 +5342,7 @@ export type GetPlannedWellboreHeadersResponses_api = {
     200: Array<WellboreHeader_api>;
 };
 
-export type GetPlannedWellboreHeadersResponse_api =
-    GetPlannedWellboreHeadersResponses_api[keyof GetPlannedWellboreHeadersResponses_api];
+export type GetPlannedWellboreHeadersResponse_api = GetPlannedWellboreHeadersResponses_api[keyof GetPlannedWellboreHeadersResponses_api];
 
 export type GetFieldPerforationsData_api = {
     body?: never;
@@ -5393,7 +5356,7 @@ export type GetFieldPerforationsData_api = {
         field_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/field_perforations";
+    url: '/well/field_perforations';
 };
 
 export type GetFieldPerforationsErrors_api = {
@@ -5414,8 +5377,7 @@ export type GetFieldPerforationsResponses_api = {
     200: Array<WellborePerforations_api>;
 };
 
-export type GetFieldPerforationsResponse_api =
-    GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
+export type GetFieldPerforationsResponse_api = GetFieldPerforationsResponses_api[keyof GetFieldPerforationsResponses_api];
 
 export type GetFieldScreensData_api = {
     body?: never;
@@ -5429,7 +5391,7 @@ export type GetFieldScreensData_api = {
         field_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/field_screens";
+    url: '/well/field_screens';
 };
 
 export type GetFieldScreensErrors_api = {
@@ -5470,7 +5432,7 @@ export type GetWellTrajectoriesData_api = {
         wellbore_uuids?: Array<string> | null;
         zCacheBust?: string;
     };
-    url: "/well/well_trajectories/";
+    url: '/well/well_trajectories/';
 };
 
 export type GetWellTrajectoriesErrors_api = {
@@ -5511,7 +5473,7 @@ export type GetPlannedWellTrajectoriesData_api = {
         wellbore_uuids?: Array<string> | null;
         zCacheBust?: string;
     };
-    url: "/well/planned_well_trajectories/";
+    url: '/well/planned_well_trajectories/';
 };
 
 export type GetPlannedWellTrajectoriesErrors_api = {
@@ -5521,8 +5483,7 @@ export type GetPlannedWellTrajectoriesErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetPlannedWellTrajectoriesError_api =
-    GetPlannedWellTrajectoriesErrors_api[keyof GetPlannedWellTrajectoriesErrors_api];
+export type GetPlannedWellTrajectoriesError_api = GetPlannedWellTrajectoriesErrors_api[keyof GetPlannedWellTrajectoriesErrors_api];
 
 export type GetPlannedWellTrajectoriesResponses_api = {
     /**
@@ -5533,8 +5494,7 @@ export type GetPlannedWellTrajectoriesResponses_api = {
     200: Array<WellboreTrajectory_api>;
 };
 
-export type GetPlannedWellTrajectoriesResponse_api =
-    GetPlannedWellTrajectoriesResponses_api[keyof GetPlannedWellTrajectoriesResponses_api];
+export type GetPlannedWellTrajectoriesResponse_api = GetPlannedWellTrajectoriesResponses_api[keyof GetPlannedWellTrajectoriesResponses_api];
 
 export type GetWellborePickIdentifiersData_api = {
     body?: never;
@@ -5548,7 +5508,7 @@ export type GetWellborePickIdentifiersData_api = {
         strat_column_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_pick_identifiers/";
+    url: '/well/wellbore_pick_identifiers/';
 };
 
 export type GetWellborePickIdentifiersErrors_api = {
@@ -5558,8 +5518,7 @@ export type GetWellborePickIdentifiersErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetWellborePickIdentifiersError_api =
-    GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
+export type GetWellborePickIdentifiersError_api = GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
 
 export type GetWellborePickIdentifiersResponses_api = {
     /**
@@ -5570,8 +5529,7 @@ export type GetWellborePickIdentifiersResponses_api = {
     200: Array<string>;
 };
 
-export type GetWellborePickIdentifiersResponse_api =
-    GetWellborePickIdentifiersResponses_api[keyof GetWellborePickIdentifiersResponses_api];
+export type GetWellborePickIdentifiersResponse_api = GetWellborePickIdentifiersResponses_api[keyof GetWellborePickIdentifiersResponses_api];
 
 export type GetWellborePicksForPickIdentifierData_api = {
     body?: never;
@@ -5591,7 +5549,7 @@ export type GetWellborePicksForPickIdentifierData_api = {
         pick_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_picks_for_pick_identifier/";
+    url: '/well/wellbore_picks_for_pick_identifier/';
 };
 
 export type GetWellborePicksForPickIdentifierErrors_api = {
@@ -5601,8 +5559,7 @@ export type GetWellborePicksForPickIdentifierErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetWellborePicksForPickIdentifierError_api =
-    GetWellborePicksForPickIdentifierErrors_api[keyof GetWellborePicksForPickIdentifierErrors_api];
+export type GetWellborePicksForPickIdentifierError_api = GetWellborePicksForPickIdentifierErrors_api[keyof GetWellborePicksForPickIdentifierErrors_api];
 
 export type GetWellborePicksForPickIdentifierResponses_api = {
     /**
@@ -5613,8 +5570,7 @@ export type GetWellborePicksForPickIdentifierResponses_api = {
     200: Array<WellborePick_api>;
 };
 
-export type GetWellborePicksForPickIdentifierResponse_api =
-    GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
+export type GetWellborePicksForPickIdentifierResponse_api = GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
 
 export type GetWellborePicksInStratColumnData_api = {
     body?: never;
@@ -5634,7 +5590,7 @@ export type GetWellborePicksInStratColumnData_api = {
         strat_column_identifier: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_picks_in_strat_column";
+    url: '/well/wellbore_picks_in_strat_column';
 };
 
 export type GetWellborePicksInStratColumnErrors_api = {
@@ -5644,8 +5600,7 @@ export type GetWellborePicksInStratColumnErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetWellborePicksInStratColumnError_api =
-    GetWellborePicksInStratColumnErrors_api[keyof GetWellborePicksInStratColumnErrors_api];
+export type GetWellborePicksInStratColumnError_api = GetWellborePicksInStratColumnErrors_api[keyof GetWellborePicksInStratColumnErrors_api];
 
 export type GetWellborePicksInStratColumnResponses_api = {
     /**
@@ -5656,8 +5611,7 @@ export type GetWellborePicksInStratColumnResponses_api = {
     200: Array<WellborePick_api>;
 };
 
-export type GetWellborePicksInStratColumnResponse_api =
-    GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
+export type GetWellborePicksInStratColumnResponse_api = GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
 
 export type GetWellboreStratigraphicColumnsData_api = {
     body?: never;
@@ -5671,7 +5625,7 @@ export type GetWellboreStratigraphicColumnsData_api = {
         wellbore_uuid: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_stratigraphic_columns/";
+    url: '/well/wellbore_stratigraphic_columns/';
 };
 
 export type GetWellboreStratigraphicColumnsErrors_api = {
@@ -5681,8 +5635,7 @@ export type GetWellboreStratigraphicColumnsErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetWellboreStratigraphicColumnsError_api =
-    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
+export type GetWellboreStratigraphicColumnsError_api = GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
 
 export type GetWellboreStratigraphicColumnsResponses_api = {
     /**
@@ -5693,8 +5646,7 @@ export type GetWellboreStratigraphicColumnsResponses_api = {
     200: Array<StratigraphicColumn_api>;
 };
 
-export type GetWellboreStratigraphicColumnsResponse_api =
-    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
+export type GetWellboreStratigraphicColumnsResponse_api = GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
 
 export type GetWellboreCompletionsData_api = {
     body?: never;
@@ -5708,7 +5660,7 @@ export type GetWellboreCompletionsData_api = {
         wellbore_uuid: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_completions/";
+    url: '/well/wellbore_completions/';
 };
 
 export type GetWellboreCompletionsErrors_api = {
@@ -5729,8 +5681,7 @@ export type GetWellboreCompletionsResponses_api = {
     200: Array<WellboreCompletion_api>;
 };
 
-export type GetWellboreCompletionsResponse_api =
-    GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
+export type GetWellboreCompletionsResponse_api = GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
 
 export type GetWellboreCasingsData_api = {
     body?: never;
@@ -5744,7 +5695,7 @@ export type GetWellboreCasingsData_api = {
         wellbore_uuid: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_casings/";
+    url: '/well/wellbore_casings/';
 };
 
 export type GetWellboreCasingsErrors_api = {
@@ -5779,7 +5730,7 @@ export type GetWellborePerforationsData_api = {
         wellbore_uuid: string;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_perforations/";
+    url: '/well/wellbore_perforations/';
 };
 
 export type GetWellborePerforationsErrors_api = {
@@ -5789,8 +5740,7 @@ export type GetWellborePerforationsErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetWellborePerforationsError_api =
-    GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
+export type GetWellborePerforationsError_api = GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
 
 export type GetWellborePerforationsResponses_api = {
     /**
@@ -5801,8 +5751,7 @@ export type GetWellborePerforationsResponses_api = {
     200: Array<WellborePerforation_api>;
 };
 
-export type GetWellborePerforationsResponse_api =
-    GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
+export type GetWellborePerforationsResponse_api = GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
 
 export type GetWellboreLogCurveHeadersData_api = {
     body?: never;
@@ -5822,7 +5771,7 @@ export type GetWellboreLogCurveHeadersData_api = {
         sources?: Array<WellLogCurveSourceEnum_api>;
         zCacheBust?: string;
     };
-    url: "/well/wellbore_log_curve_headers/";
+    url: '/well/wellbore_log_curve_headers/';
 };
 
 export type GetWellboreLogCurveHeadersErrors_api = {
@@ -5832,8 +5781,7 @@ export type GetWellboreLogCurveHeadersErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetWellboreLogCurveHeadersError_api =
-    GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
+export type GetWellboreLogCurveHeadersError_api = GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
 
 export type GetWellboreLogCurveHeadersResponses_api = {
     /**
@@ -5844,8 +5792,7 @@ export type GetWellboreLogCurveHeadersResponses_api = {
     200: Array<WellboreLogCurveHeader_api>;
 };
 
-export type GetWellboreLogCurveHeadersResponse_api =
-    GetWellboreLogCurveHeadersResponses_api[keyof GetWellboreLogCurveHeadersResponses_api];
+export type GetWellboreLogCurveHeadersResponse_api = GetWellboreLogCurveHeadersResponses_api[keyof GetWellboreLogCurveHeadersResponses_api];
 
 export type GetLogCurveDataData_api = {
     body?: never;
@@ -5875,7 +5822,7 @@ export type GetLogCurveDataData_api = {
         source?: WellLogCurveSourceEnum_api;
         zCacheBust?: string;
     };
-    url: "/well/log_curve_data/";
+    url: '/well/log_curve_data/';
 };
 
 export type GetLogCurveDataErrors_api = {
@@ -5914,7 +5861,7 @@ export type GetSeismicCubeMetaListData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/seismic/seismic_cube_meta_list/";
+    url: '/seismic/seismic_cube_meta_list/';
 };
 
 export type GetSeismicCubeMetaListErrors_api = {
@@ -5935,8 +5882,7 @@ export type GetSeismicCubeMetaListResponses_api = {
     200: Array<SeismicCubeMeta_api>;
 };
 
-export type GetSeismicCubeMetaListResponse_api =
-    GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
+export type GetSeismicCubeMetaListResponse_api = GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
 
 export type GetSeismicSlicesData_api = {
     body?: never;
@@ -5996,7 +5942,7 @@ export type GetSeismicSlicesData_api = {
         depth_slice_number: number;
         zCacheBust?: string;
     };
-    url: "/seismic/get_seismic_slices/";
+    url: '/seismic/get_seismic_slices/';
 };
 
 export type GetSeismicSlicesErrors_api = {
@@ -6014,7 +5960,11 @@ export type GetSeismicSlicesResponses_api = {
      *
      * Successful Response
      */
-    200: [SeismicSliceData_api, SeismicSliceData_api, SeismicSliceData_api];
+    200: [
+        SeismicSliceData_api,
+        SeismicSliceData_api,
+        SeismicSliceData_api
+    ];
 };
 
 export type GetSeismicSlicesResponse_api = GetSeismicSlicesResponses_api[keyof GetSeismicSlicesResponses_api];
@@ -6059,7 +6009,7 @@ export type PostGetSeismicFenceData_api = {
         representation: SeismicRepresentation_api;
         zCacheBust?: string;
     };
-    url: "/seismic/get_seismic_fence/";
+    url: '/seismic/get_seismic_fence/';
 };
 
 export type PostGetSeismicFenceErrors_api = {
@@ -6098,7 +6048,7 @@ export type GetPolygonsDirectoryData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/polygons/polygons_directory/";
+    url: '/polygons/polygons_directory/';
 };
 
 export type GetPolygonsDirectoryErrors_api = {
@@ -6119,8 +6069,7 @@ export type GetPolygonsDirectoryResponses_api = {
     200: Array<PolygonsMeta_api>;
 };
 
-export type GetPolygonsDirectoryResponse_api =
-    GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
+export type GetPolygonsDirectoryResponse_api = GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
 
 export type GetPolygonsDataData_api = {
     body?: never;
@@ -6158,7 +6107,7 @@ export type GetPolygonsDataData_api = {
         attribute: string;
         zCacheBust?: string;
     };
-    url: "/polygons/polygons_data/";
+    url: '/polygons/polygons_data/';
 };
 
 export type GetPolygonsDataErrors_api = {
@@ -6194,7 +6143,7 @@ export type GetUserInfoData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/graph/user_info/{user_id_or_email}";
+    url: '/graph/user_info/{user_id_or_email}';
 };
 
 export type GetUserInfoErrors_api = {
@@ -6229,7 +6178,7 @@ export type GetUserPhotoData_api = {
         user_id_or_email: string;
         zCacheBust?: string;
     };
-    url: "/graph/user_photo/";
+    url: '/graph/user_photo/';
 };
 
 export type GetUserPhotoErrors_api = {
@@ -6268,7 +6217,7 @@ export type GetSummaryObservationsData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/observations/summary_observations";
+    url: '/observations/summary_observations';
 };
 
 export type GetSummaryObservationsErrors_api = {
@@ -6289,8 +6238,7 @@ export type GetSummaryObservationsResponses_api = {
     200: Array<SummaryVectorObservations_api>;
 };
 
-export type GetSummaryObservationsResponse_api =
-    GetSummaryObservationsResponses_api[keyof GetSummaryObservationsResponses_api];
+export type GetSummaryObservationsResponse_api = GetSummaryObservationsResponses_api[keyof GetSummaryObservationsResponses_api];
 
 export type GetRelpermTableNamesData_api = {
     body?: never;
@@ -6310,7 +6258,7 @@ export type GetRelpermTableNamesData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/relperm/table_names";
+    url: '/relperm/table_names';
 };
 
 export type GetRelpermTableNamesErrors_api = {
@@ -6331,8 +6279,7 @@ export type GetRelpermTableNamesResponses_api = {
     200: Array<string>;
 };
 
-export type GetRelpermTableNamesResponse_api =
-    GetRelpermTableNamesResponses_api[keyof GetRelpermTableNamesResponses_api];
+export type GetRelpermTableNamesResponse_api = GetRelpermTableNamesResponses_api[keyof GetRelpermTableNamesResponses_api];
 
 export type GetRelpermTableDefinitionData_api = {
     body?: never;
@@ -6358,7 +6305,7 @@ export type GetRelpermTableDefinitionData_api = {
         table_name: string;
         zCacheBust?: string;
     };
-    url: "/relperm/table_definition";
+    url: '/relperm/table_definition';
 };
 
 export type GetRelpermTableDefinitionErrors_api = {
@@ -6368,8 +6315,7 @@ export type GetRelpermTableDefinitionErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetRelpermTableDefinitionError_api =
-    GetRelpermTableDefinitionErrors_api[keyof GetRelpermTableDefinitionErrors_api];
+export type GetRelpermTableDefinitionError_api = GetRelpermTableDefinitionErrors_api[keyof GetRelpermTableDefinitionErrors_api];
 
 export type GetRelpermTableDefinitionResponses_api = {
     /**
@@ -6378,8 +6324,7 @@ export type GetRelpermTableDefinitionResponses_api = {
     200: RelpermTableDefinition_api;
 };
 
-export type GetRelpermTableDefinitionResponse_api =
-    GetRelpermTableDefinitionResponses_api[keyof GetRelpermTableDefinitionResponses_api];
+export type GetRelpermTableDefinitionResponse_api = GetRelpermTableDefinitionResponses_api[keyof GetRelpermTableDefinitionResponses_api];
 
 export type GetRelpermRealizationDataData_api = {
     body?: never;
@@ -6429,7 +6374,7 @@ export type GetRelpermRealizationDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/relperm/realization_data";
+    url: '/relperm/realization_data';
 };
 
 export type GetRelpermRealizationDataErrors_api = {
@@ -6439,8 +6384,7 @@ export type GetRelpermRealizationDataErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type GetRelpermRealizationDataError_api =
-    GetRelpermRealizationDataErrors_api[keyof GetRelpermRealizationDataErrors_api];
+export type GetRelpermRealizationDataError_api = GetRelpermRealizationDataErrors_api[keyof GetRelpermRealizationDataErrors_api];
 
 export type GetRelpermRealizationDataResponses_api = {
     /**
@@ -6449,8 +6393,7 @@ export type GetRelpermRealizationDataResponses_api = {
     200: RelpermRealizationDataResponse_api;
 };
 
-export type GetRelpermRealizationDataResponse_api =
-    GetRelpermRealizationDataResponses_api[keyof GetRelpermRealizationDataResponses_api];
+export type GetRelpermRealizationDataResponse_api = GetRelpermRealizationDataResponses_api[keyof GetRelpermRealizationDataResponses_api];
 
 export type GetRftTableDefinitionData_api = {
     body?: never;
@@ -6470,7 +6413,7 @@ export type GetRftTableDefinitionData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/rft/rft_table_definition";
+    url: '/rft/rft_table_definition';
 };
 
 export type GetRftTableDefinitionErrors_api = {
@@ -6489,8 +6432,7 @@ export type GetRftTableDefinitionResponses_api = {
     200: RftTableDefinition_api;
 };
 
-export type GetRftTableDefinitionResponse_api =
-    GetRftTableDefinitionResponses_api[keyof GetRftTableDefinitionResponses_api];
+export type GetRftTableDefinitionResponse_api = GetRftTableDefinitionResponses_api[keyof GetRftTableDefinitionResponses_api];
 
 export type GetRftRealizationDataData_api = {
     body?: never;
@@ -6534,7 +6476,7 @@ export type GetRftRealizationDataData_api = {
         realizations_encoded_as_uint_list_str?: string | null;
         zCacheBust?: string;
     };
-    url: "/rft/rft_realization_data";
+    url: '/rft/rft_realization_data';
 };
 
 export type GetRftRealizationDataErrors_api = {
@@ -6555,8 +6497,7 @@ export type GetRftRealizationDataResponses_api = {
     200: Array<RftRealizationData_api>;
 };
 
-export type GetRftRealizationDataResponse_api =
-    GetRftRealizationDataResponses_api[keyof GetRftRealizationDataResponses_api];
+export type GetRftRealizationDataResponse_api = GetRftRealizationDataResponses_api[keyof GetRftRealizationDataResponses_api];
 
 export type GetRftObservationsData_api = {
     body?: never;
@@ -6576,7 +6517,7 @@ export type GetRftObservationsData_api = {
         ensemble_name: string;
         zCacheBust?: string;
     };
-    url: "/rft/rft_observations";
+    url: '/rft/rft_observations';
 };
 
 export type GetRftObservationsErrors_api = {
@@ -6623,7 +6564,7 @@ export type GetVfpTableNamesData_api = {
         realization: number;
         zCacheBust?: string;
     };
-    url: "/vfp/vfp_table_names/";
+    url: '/vfp/vfp_table_names/';
 };
 
 export type GetVfpTableNamesErrors_api = {
@@ -6676,7 +6617,7 @@ export type GetVfpTableData_api = {
         vfp_table_name: string;
         zCacheBust?: string;
     };
-    url: "/vfp/vfp_table/";
+    url: '/vfp/vfp_table/';
 };
 
 export type GetVfpTableErrors_api = {
@@ -6753,7 +6694,7 @@ export type GetSessionsMetadataData_api = {
         filter_updated_to?: string | null;
         zCacheBust?: string;
     };
-    url: "/persistence/sessions";
+    url: '/persistence/sessions';
 };
 
 export type GetSessionsMetadataErrors_api = {
@@ -6780,7 +6721,7 @@ export type CreateSessionData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/sessions";
+    url: '/persistence/sessions';
 };
 
 export type CreateSessionErrors_api = {
@@ -6814,7 +6755,7 @@ export type DeleteSessionData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/sessions/{session_id}";
+    url: '/persistence/sessions/{session_id}';
 };
 
 export type DeleteSessionErrors_api = {
@@ -6844,7 +6785,7 @@ export type GetSessionData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/sessions/{session_id}";
+    url: '/persistence/sessions/{session_id}';
 };
 
 export type GetSessionErrors_api = {
@@ -6876,7 +6817,7 @@ export type UpdateSessionData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/sessions/{session_id}";
+    url: '/persistence/sessions/{session_id}';
 };
 
 export type UpdateSessionErrors_api = {
@@ -6908,7 +6849,7 @@ export type GetSessionMetadataData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/sessions/metadata/{session_id}";
+    url: '/persistence/sessions/metadata/{session_id}';
 };
 
 export type GetSessionMetadataErrors_api = {
@@ -7007,7 +6948,7 @@ export type GetSnapshotAccessLogsData_api = {
         filter_snapshot_deleted?: boolean | null;
         zCacheBust?: string;
     };
-    url: "/persistence/snapshot_access_logs";
+    url: '/persistence/snapshot_access_logs';
 };
 
 export type GetSnapshotAccessLogsErrors_api = {
@@ -7026,8 +6967,7 @@ export type GetSnapshotAccessLogsResponses_api = {
     200: PageSnapshotAccessLog_api;
 };
 
-export type GetSnapshotAccessLogsResponse_api =
-    GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
+export type GetSnapshotAccessLogsResponse_api = GetSnapshotAccessLogsResponses_api[keyof GetSnapshotAccessLogsResponses_api];
 
 export type GetSnapshotsMetadataData_api = {
     body?: never;
@@ -7083,7 +7023,7 @@ export type GetSnapshotsMetadataData_api = {
         filter_created_to?: string | null;
         zCacheBust?: string;
     };
-    url: "/persistence/snapshots";
+    url: '/persistence/snapshots';
 };
 
 export type GetSnapshotsMetadataErrors_api = {
@@ -7102,8 +7042,7 @@ export type GetSnapshotsMetadataResponses_api = {
     200: PageSnapshotMetadata_api;
 };
 
-export type GetSnapshotsMetadataResponse_api =
-    GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
+export type GetSnapshotsMetadataResponse_api = GetSnapshotsMetadataResponses_api[keyof GetSnapshotsMetadataResponses_api];
 
 export type CreateSnapshotData_api = {
     body: NewSnapshot_api;
@@ -7111,7 +7050,7 @@ export type CreateSnapshotData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/snapshots";
+    url: '/persistence/snapshots';
 };
 
 export type CreateSnapshotErrors_api = {
@@ -7145,7 +7084,7 @@ export type DeleteSnapshotData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/snapshots/{snapshot_id}";
+    url: '/persistence/snapshots/{snapshot_id}';
 };
 
 export type DeleteSnapshotErrors_api = {
@@ -7175,7 +7114,7 @@ export type GetSnapshotData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/snapshots/{snapshot_id}";
+    url: '/persistence/snapshots/{snapshot_id}';
 };
 
 export type GetSnapshotErrors_api = {
@@ -7207,7 +7146,7 @@ export type DeleteSnapshotAccessLogData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/persistence/snapshot_access_logs/{snapshot_id}";
+    url: '/persistence/snapshot_access_logs/{snapshot_id}';
 };
 
 export type DeleteSnapshotAccessLogErrors_api = {
@@ -7217,8 +7156,7 @@ export type DeleteSnapshotAccessLogErrors_api = {
     422: HTTPValidationError_api;
 };
 
-export type DeleteSnapshotAccessLogError_api =
-    DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
+export type DeleteSnapshotAccessLogError_api = DeleteSnapshotAccessLogErrors_api[keyof DeleteSnapshotAccessLogErrors_api];
 
 export type DeleteSnapshotAccessLogResponses_api = {
     /**
@@ -7226,6 +7164,24 @@ export type DeleteSnapshotAccessLogResponses_api = {
      */
     200: unknown;
 };
+
+export type GetMediaSasTokenData_api = {
+    body?: never;
+    path?: never;
+    query?: {
+        zCacheBust?: string;
+    };
+    url: '/tutorials/media_sas_token';
+};
+
+export type GetMediaSasTokenResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: TutorialMediaSasToken_api;
+};
+
+export type GetMediaSasTokenResponse_api = GetMediaSasTokenResponses_api[keyof GetMediaSasTokenResponses_api];
 
 export type LoginRouteData_api = {
     body?: never;
@@ -7237,7 +7193,7 @@ export type LoginRouteData_api = {
         redirect_url_after_login?: string | null;
         zCacheBust?: string;
     };
-    url: "/login";
+    url: '/login';
 };
 
 export type LoginRouteErrors_api = {
@@ -7262,7 +7218,7 @@ export type AuthorizedCallbackRouteData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/auth-callback";
+    url: '/auth-callback';
 };
 
 export type AuthorizedCallbackRouteResponses_api = {
@@ -7278,7 +7234,7 @@ export type GetAliveData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/alive";
+    url: '/alive';
 };
 
 export type GetAliveResponses_api = {
@@ -7298,7 +7254,7 @@ export type GetAliveProtectedData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/alive_protected";
+    url: '/alive_protected';
 };
 
 export type GetAliveProtectedResponses_api = {
@@ -7318,7 +7274,7 @@ export type PostLogoutData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/logout";
+    url: '/logout';
 };
 
 export type PostLogoutResponses_api = {
@@ -7344,7 +7300,7 @@ export type GetLoggedInUserData_api = {
         includeGraphApiInfo?: boolean;
         zCacheBust?: string;
     };
-    url: "/logged_in_user";
+    url: '/logged_in_user';
 };
 
 export type GetLoggedInUserErrors_api = {
@@ -7371,7 +7327,7 @@ export type RootData_api = {
     query?: {
         zCacheBust?: string;
     };
-    url: "/";
+    url: '/';
 };
 
 export type RootResponses_api = {
