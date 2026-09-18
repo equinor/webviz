@@ -22,7 +22,7 @@ import type {
 import type { SetupBindingsContext } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "@modules/_shared/DataProviderFramework/interfacesAndTypes/utils";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
-import { SurfaceAddressBuilder, type AnySurfaceAddress } from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder, dedupeSurfaceAttributes, isSameAttribute, type AnySurfaceAddress } from "@modules/_shared/Surface";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
@@ -206,7 +206,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
                     (surface) => surface.attribute_type === SurfaceAttributeType_api.DEPTH,
                 );
 
-                return [...new Set(filteredSurfaceMetadata.map((surface) => surface.attribute_name))];
+                return dedupeSurfaceAttributes(filteredSurfaceMetadata.map((surface) => surface.attribute));
             },
         });
 
@@ -224,7 +224,9 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
 
                 const availableSurfaceNames = [
                     ...new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                        data.surfaces
+                            .filter((surface) => isSameAttribute(surface.attribute, attribute))
+                            .map((el) => el.name),
                     ),
                 ];
                 return sortStringArray(availableSurfaceNames, data.surface_names_in_strat_order);
@@ -277,7 +279,7 @@ export class DepthSurfaceProvider implements CustomDataProviderImplementation<
             const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(ensembleIdent);
             addrBuilder.withName(surfaceName);
-            addrBuilder.withTagNameAttribute(attribute);
+            addrBuilder.withAttribute(attribute);
 
             const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
 
