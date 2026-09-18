@@ -156,14 +156,16 @@ export function useSubscribedValueConditionally<T extends keyof AllTopicDefiniti
     subscriberId?: string,
 ): AllTopicDefinitions[T] | null {
     const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
+    const [prevEnable, setPrevEnable] = React.useState(enable);
+
+    if (prevEnable !== enable) {
+        setPrevEnable(enable);
+        if (!enable) setLatestValue(null);
+    }
 
     React.useEffect(
         function subscribeToServiceTopic() {
-            if (!enable) {
-                setLatestValue(null);
-                return;
-            }
-
+            if (!enable) return;
             function handleNewValue(newValue: AllTopicDefinitions[T] | null) {
                 setLatestValue(newValue);
             }

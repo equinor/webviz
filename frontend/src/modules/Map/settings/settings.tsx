@@ -17,7 +17,6 @@ import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { SwitchCompositions } from "@lib/components/Switch/compositions";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import type { AnySurfaceAddress, SurfaceAttribute } from "@modules/_shared/Surface";
 import {
     SurfaceAddressBuilder,
@@ -29,6 +28,7 @@ import {
     useObservedSurfacesMetadataQuery,
     useRealizationSurfacesMetadataQuery,
 } from "@modules/_shared/Surface";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { AggregationDropdown } from "../UiComponents";
@@ -53,7 +53,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [selectedTimeOrInterval, setSelectedTimeOrInterval] = React.useState<string | null>(null);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
-    const [useObserved, toggleUseObserved] = React.useState(false);
+    const [useObserved, setUseObserved] = React.useState(false);
     const setSurfaceAddress = useSetAtom(surfaceAddressAtom);
     const syncHelper = useRefStableSyncSettingsHelper({
         workbenchServices: props.workbenchServices,
@@ -68,8 +68,8 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(computedEnsembleIdent);
     const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent);
 
-    usePropagateQueryErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
-    usePropagateQueryErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
 
     const surfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: realizationSurfacesMetaQuery.data,
@@ -198,18 +198,16 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         setTimeType(event.target.value as SurfaceTimeType);
     }
 
-    let surfNameOptions: SelectOption[] = [];
-    let surfAttributeOptions: SelectOption[] = [];
-    let timeOrIntervalOptions: SelectOption[] = [];
-
-    surfNameOptions = surfaceDirectory.getSurfaceNames(null).map((name) => ({
+    const surfNameOptions = surfaceDirectory.getSurfaceNames(null).map<SelectOption>((name) => ({
         value: name,
         label: name,
     }));
-    surfAttributeOptions = surfaceDirectory.getAttributeNames(computedSurfaceName).map((attr) => ({
+    const surfAttributeOptions = surfaceDirectory.getAttributeNames(computedSurfaceName).map<SelectOption>((attr) => ({
         value: surfaceAttributeKey(attr),
         label: getSurfaceAttributeDisplayLabel(attr),
     }));
+
+    let timeOrIntervalOptions: SelectOption[] = [];
 
     if (timeType === SurfaceTimeType.Interval || timeType === SurfaceTimeType.TimePoint) {
         timeOrIntervalOptions = surfaceDirectory.getTimeOrIntervalStrings().map((interval) => ({
@@ -255,7 +253,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                 </Setting.Field>
                 <Setting.Field>
                     <SwitchCompositions.WithLabel
-                        onCheckedChange={(checked) => toggleUseObserved(checked)}
+                        onCheckedChange={(checked) => setUseObserved(checked)}
                         checked={useObserved}
                         label="Use observed surfaces"
                     />

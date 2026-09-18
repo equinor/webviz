@@ -215,9 +215,9 @@ export class DataProvider<
             return;
         }
 
-        let refetchRequired = false;
-
         this.tidyUpFetchRelatedResources();
+
+        let refetchRequired;
 
         if (this._customDataProviderImpl.doSettingsChangesRequireDataRefetch) {
             refetchRequired = this._customDataProviderImpl.doSettingsChangesRequireDataRefetch(

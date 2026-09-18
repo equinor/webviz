@@ -10,7 +10,6 @@ import {
     DeckGlInstanceManagerTopic,
 } from "@modules/_shared/utils/subsurfaceViewer/DeckGlInstanceManager";
 
-
 export type ContextMenuProps = {
     deckGlManager: DeckGlInstanceManager;
 };
@@ -44,15 +43,15 @@ export function ContextMenu(props: ContextMenuProps): React.ReactNode {
     return (
         <ContextMenuComponent.Root open onOpenChange={setVisible}>
             <ContextMenuComponent.Menu anchor={contextMenu.position}>
-                {contextMenu.items.map((item, index) => (
+                {contextMenu.items.map((item) => (
                     <ContextMenuComponent.Item
-                        key={index}
+                        key={item.id}
                         onClick={() => {
                             item.onClick();
                             setVisible(false);
                         }}
                     >
-                        {item.icon ? React.cloneElement(item.icon, { fontSize: "small" }) : null}
+                        <span className="icon-font-size-small">{item.icon}</span>
                         <span>{item.label}</span>
                     </ContextMenuComponent.Item>
                 ))}

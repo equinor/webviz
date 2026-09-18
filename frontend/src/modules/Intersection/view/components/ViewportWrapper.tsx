@@ -62,17 +62,24 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
     );
 
     // Viewport, bounds, vertical scale, and all related handlers
-    const { viewport, verticalScale, effectiveLayerItemsBounds, updateViewport, updateVerticalScale, handleFitInView } =
-        useViewportState({
-            viewId,
-            viewLinkResult,
-            autofit: autoFitView,
-            layerItemsBounds: props.layerItemsBounds,
-            focusBounds: props.focusBounds,
-            containerSize: mainDivSize,
-            workbenchServices: props.workbenchServices,
-            viewContext: props.viewContext,
-        });
+    const {
+        viewport,
+        verticalScale,
+        effectiveLayerItemsBounds,
+        effectiveFocusBounds,
+        updateViewport,
+        updateVerticalScale,
+        handleFitInView,
+    } = useViewportState({
+        viewId,
+        viewLinkResult,
+        autofit: autoFitView,
+        layerItemsBounds: props.layerItemsBounds,
+        focusBounds: props.focusBounds,
+        containerSize: mainDivSize,
+        workbenchServices: props.workbenchServices,
+        viewContext: props.viewContext,
+    });
 
     const handleViewportChange = React.useCallback(
         function handleViewportChange(newViewport: Viewport) {
@@ -140,6 +147,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                     layers={props.layerItems}
                     layerIdToNameMap={props.layerItemIdToNameMap}
                     bounds={effectiveLayerItemsBounds}
+                    focusBounds={effectiveFocusBounds}
                     viewport={viewport ?? undefined}
                     hoverService={props.hoverService}
                     viewContext={props.viewContext}

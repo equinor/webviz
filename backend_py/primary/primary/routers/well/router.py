@@ -83,7 +83,7 @@ async def get_field_perforations(
     field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
 
     if not field_uuid:
-        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
+        raise NoDataError(f"Perforations - Field not found: {field_identifier}", Service.SSDL)
 
     perforations = await well_access_ssdl.get_field_perforations_async(field_uuid=field_uuid)
     return converters.convert_field_perforations_to_schema(perforations)
@@ -106,7 +106,7 @@ async def get_field_screens(
     field_uuid = next((field.field_uuid for field in fields_info if field.field_identifier == field_identifier), None)
 
     if not field_uuid:
-        raise NoDataError(f"Field not found: {field_identifier}", Service.SSDL)
+        raise NoDataError(f"Screens - Field not found: {field_identifier}", Service.SSDL)
 
     screens = await well_access_ssdl.get_field_screens_async(field_uuid=field_uuid)
     return converters.convert_field_screens_to_schema(screens)

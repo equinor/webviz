@@ -5,8 +5,10 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import {
     areEnsembleIdentListsEqual,
     areEnsembleIdentsEqual,
+    expandToRegularEnsembleIdents,
     filterEnsembleIdentsByType,
     getEnsembleIdentFromString,
+    getEnsembleIdentsFromStrings,
     isEnsembleIdentOfType,
 } from "@framework/utils/ensembleIdentUtils";
 
@@ -29,6 +31,42 @@ describe("Ensemble ident utility functions", () => {
         new RegularEnsembleIdent("33333333-aaaa-4444-aaaa-aaaaaaaaaaaa", "comparison-ensemble-name"),
         new RegularEnsembleIdent("44444444-aaaa-4444-aaaa-aaaaaaaaaaaa", "reference-ensemble-name"),
     );
+
+    test("parses mixed persisted identifiers and skips invalid strings", function parsesPersistedIdents() {
+        expect(
+            getEnsembleIdentsFromStrings([
+                REGULAR_ENSEMBLE_IDENT_1.toString(),
+                "invalid",
+                DELTA_ENSEMBLE_IDENT_1.toString(),
+            ]),
+        ).toEqual([REGULAR_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_1]);
+        expect(getEnsembleIdentsFromStrings([])).toEqual([]);
+    });
+
+    test("expands mixed identifiers in first-seen order without duplicates", function expandsSourceIdents() {
+        const comparison = DELTA_ENSEMBLE_IDENT_1.getComparisonEnsembleIdent();
+        const reference = DELTA_ENSEMBLE_IDENT_1.getReferenceEnsembleIdent();
+        const duplicateComparison = RegularEnsembleIdent.fromString(comparison.toString());
+        const input = [
+            REGULAR_ENSEMBLE_IDENT_1,
+            DELTA_ENSEMBLE_IDENT_1,
+            duplicateComparison,
+            new DeltaEnsembleIdent(reference, REGULAR_ENSEMBLE_IDENT_1),
+        ];
+        const original = [...input];
+
+        expect(expandToRegularEnsembleIdents(input)).toEqual([REGULAR_ENSEMBLE_IDENT_1, comparison, reference]);
+        expect(input).toEqual(original);
+        expect(expandToRegularEnsembleIdents([duplicateComparison, comparison])[0]).toBe(duplicateComparison);
+    });
+
+    test("expands empty and regular-only selections", function expandsRegularSelections() {
+        expect(expandToRegularEnsembleIdents([])).toEqual([]);
+        expect(expandToRegularEnsembleIdents([REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2])).toEqual([
+            REGULAR_ENSEMBLE_IDENT_1,
+            REGULAR_ENSEMBLE_IDENT_2,
+        ]);
+    });
 
     test("should return RegularEnsembleIdent when valid regular ensemble ident string is passed", () => {
         const regularEnsembleIdentString = REGULAR_ENSEMBLE_IDENT_1.toString();

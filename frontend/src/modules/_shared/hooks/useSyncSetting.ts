@@ -15,7 +15,7 @@ export type UseSyncSettingOptions<K extends keyof GlobalTopicDefinitions> = {
 
 export function useSyncSetting<T extends keyof GlobalTopicDefinitions>(options: UseSyncSettingOptions<T>): void {
     const { setValue } = options;
-    const [prevSyncedValue, setPrevSyncedValue] = React.useState<GlobalTopicDefinitions[T] | null>(null);
+    const prevSyncedValueRef = React.useRef<GlobalTopicDefinitions[T] | null>(null);
 
     const syncHelper = useRefStableSyncSettingsHelper({
         workbenchServices: options.workbenchServices,
@@ -26,12 +26,12 @@ export function useSyncSetting<T extends keyof GlobalTopicDefinitions>(options: 
 
     React.useEffect(
         function syncValue() {
-            if (syncedValue !== null && syncedValue !== prevSyncedValue) {
+            if (syncedValue !== null && syncedValue !== prevSyncedValueRef.current) {
                 setValue(syncedValue);
-                setPrevSyncedValue(syncedValue);
+                prevSyncedValueRef.current = syncedValue;
             }
         },
-        [syncedValue, prevSyncedValue, setValue],
+        [syncedValue, setValue],
     );
 
     React.useEffect(

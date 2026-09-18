@@ -28,7 +28,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                     version="1.1"
                     className="z-overlay relative"
                 >
-                    {layout.map((element, idx) => {
+                    {layout.map((element) => {
                         const w = element.relWidth * width;
                         const h = element.relHeight * height;
                         const x = element.relX * width;
@@ -38,7 +38,7 @@ export function DashboardPreview(props: DashboardPreviewProps): React.ReactNode 
                         const module = ModuleRegistry.getModule(element.moduleName);
                         const drawFunc = module.getDrawPreviewFunc();
                         return (
-                            <g key={`${element.moduleName}-${idx}`}>
+                            <g key={element.moduleInstanceId}>
                                 <rect
                                     x={x}
                                     y={y}

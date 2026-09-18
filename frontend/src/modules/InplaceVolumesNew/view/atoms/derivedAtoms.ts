@@ -1,7 +1,13 @@
 import { atom } from "jotai";
 
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumes/queryHooks";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
+import type {
+    DeltaEnsembleIdentWithRealizations,
+    EnsembleIdentWithRealizations,
+} from "@modules/_shared/InplaceVolumes/queryHooks";
 import { isFluidSpecificResultName, TableOriginKey } from "@modules/_shared/InplaceVolumes/types";
 import { PlotType } from "@modules/InplaceVolumesNew/typesAndEnums";
 
@@ -60,11 +66,14 @@ export const groupByIndicesAtom = atom((get) => {
 
 export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const filter = get(filterAtom);
-    const ensemblIdents = filter?.ensembleIdents ?? [];
+    const ensembleIdents = filter?.ensembleIdents ?? [];
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
+    // NOTE: Delta ensembles are handled separately in `deltaEnsembleIdentsWithRealizationsAtom`.
+    const regularEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, RegularEnsembleIdent);
+
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
-    for (const ensembleIdent of ensemblIdents) {
+    for (const ensembleIdent of regularEnsembleIdents) {
         ensembleIdentsWithRealizations.push({
             ensembleIdent,
             realizations: [...validEnsembleRealizationsFunction(ensembleIdent)],
@@ -72,4 +81,22 @@ export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     }
 
     return ensembleIdentsWithRealizations;
+});
+
+export const deltaEnsembleIdentsWithRealizationsAtom = atom((get) => {
+    const filter = get(filterAtom);
+    const ensembleIdents = filter?.ensembleIdents ?? [];
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+
+    const deltaEnsembleIdents = filterEnsembleIdentsByType(ensembleIdents, DeltaEnsembleIdent);
+
+    const deltaEnsembleIdentsWithRealizations: DeltaEnsembleIdentWithRealizations[] = [];
+    for (const ensembleIdent of deltaEnsembleIdents) {
+        deltaEnsembleIdentsWithRealizations.push({
+            ensembleIdent,
+            realizations: [...validEnsembleRealizationsFunction(ensembleIdent)],
+        });
+    }
+
+    return deltaEnsembleIdentsWithRealizations;
 });

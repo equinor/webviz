@@ -17,7 +17,7 @@ jobs:
 
     env:
       COMPOSE_FILE: docker-compose.yml:docker-compose-cosmos-db.yml
-      WEBVIZ_CLIENT_SECRET: 0
+      WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION: true
       WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
       WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
       WEBVIZ_VDS_HOST_ADDRESS: 0

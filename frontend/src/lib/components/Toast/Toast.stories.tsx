@@ -35,7 +35,7 @@ export const Default: Story = {
 const multipleToastsManager = createToastManager();
 
 function MultipleToastsDemo() {
-    const count = React.useRef(0);
+    const countRef = React.useRef(0);
     return (
         <>
             <Toast toastManager={multipleToastsManager} />
@@ -43,8 +43,8 @@ function MultipleToastsDemo() {
                 variant="contained"
                 tone="accent"
                 onClick={() => {
-                    count.current += 1;
-                    multipleToastsManager.add({ title: `Notification ${count.current}` });
+                    countRef.current += 1;
+                    multipleToastsManager.add({ title: `Notification ${countRef.current}` });
                 }}
             >
                 Add toast
