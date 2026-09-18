@@ -28,6 +28,7 @@ export type SeismicSliceImageOptions = {
 // Note: This type does not extend SeismicCanvasData because we want to generate the image and seismic info
 // inside this render due to async seismic slice image generation
 export type SeismicLayerData = {
+    source: { id: string; name: string };
     minFenceDepth: number;
     maxFenceDepth: number;
     numTraces: number;

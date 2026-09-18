@@ -11,10 +11,13 @@ import type { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import type { ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/layers/utils/layerTools";
 import type { BoundingBox3D } from "@webviz/subsurface-viewer/dist/utils";
 import { transfer, wrap } from "comlink";
-import { isEqual, isNaN } from "lodash-es";
+import { chunk, isEqual, isNaN } from "lodash-es";
 
+import { transformPickToNormalSpace } from "@framework/utils/deckgl";
 import { assertNonNull } from "@lib/utils/assertNonNull";
 import type { Geometry as LoadingGeometry } from "@lib/utils/geometry";
+import type { UtmFence } from "@modules/_shared/utils/fence";
+import { lengthAlongAtXyPosition } from "@modules/_shared/utils/polylineHoverUtils";
 
 import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
@@ -24,6 +27,9 @@ import MeshWorker from "./_private/webworker/makeMesh.worker?worker";
 import { type WebWorkerParameters, type WebworkerResult } from "./_private/webworker/types";
 
 export type SeismicFenceMeshLayerPickingInfo = {
+    sourceFence?: SeismicFence["sourceFence"];
+    lengthAlongFence?: number;
+    fenceDepth?: number;
     properties?: { name: string; value: number }[];
 } & PickingInfo;
 
@@ -32,6 +38,7 @@ export type SeismicFence = {
     properties: Float32Array;
     traceXYZPointsArray: Float32Array;
     vVector: [number, number, number];
+    sourceFence?: UtmFence;
 };
 
 export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
@@ -345,18 +352,41 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
 
         const [r, g, b] = info.color; // Convert from [0, 1] to [0, 255]
         const { minProperty, maxProperty } = this.state;
+        const sourceFence = this.props.data.sourceFence;
 
         const property = decodeColorToProperty(r, g, b, minProperty, maxProperty);
 
         const properties: { name: string; value: number }[] = [{ name: "Property", value: property }];
+        const extraInfo: Partial<SeismicFenceMeshLayerPickingInfo> = {};
 
-        if (info.coordinate?.length === 3) {
-            const depth = (this.props.zIncreaseDownwards ? -1 : 1) * info.coordinate[2];
+        const normalSpaceCoord = transformPickToNormalSpace(info, this).coordinate;
+
+        if (normalSpaceCoord?.length === 3) {
+            const depth = (this.props.zIncreaseDownwards ? -1 : 1) * normalSpaceCoord[2];
+            extraInfo.fenceDepth = depth;
             properties.push({ name: "Depth", value: depth });
         }
 
+        if (sourceFence && normalSpaceCoord) {
+            const sourceFenceOffset = sourceFence.offset;
+
+            const lengthAlong = lengthAlongAtXyPosition(
+                chunk(sourceFence.utmXY, 2),
+                normalSpaceCoord[0],
+                normalSpaceCoord[1],
+            );
+
+            extraInfo.sourceFence = this.props.data.sourceFence;
+            extraInfo.lengthAlongFence = lengthAlong - sourceFenceOffset;
+
+            properties.push({ name: "Length along", value: lengthAlong - sourceFenceOffset });
+        }
+
         return {
+            // Note that we return the original info without the normal space transform, later
+            // layer picks should always assume non-translated data
             ...info,
+            ...extraInfo,
             properties,
         };
     }

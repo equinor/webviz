@@ -52,3 +52,9 @@ export function createBoundsForIntersectionView(
 
     return cloneDeep(DEFAULT_INTERSECTION_VIEW_BOUNDS);
 }
+
+export function inBounds(point: [number, number], bounds: Bounds) {
+    const [x, y] = point;
+
+    return x >= bounds.x[0] && x <= bounds.x[1] && y >= bounds.y[0] && y <= bounds.y[1];
+}
