@@ -1,5 +1,8 @@
 import { isEqual } from "lodash-es";
+import { CancelledError } from "@tanstack/react-query";
 
+import type { StatusWriter } from "@framework/types/statusWriter";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type {
     FormationSegment_api,
     WellboreCompletion_api,
@@ -81,6 +84,16 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         return "Well Trajectories (Official)";
     }
 
+    private handleOptionalQueryError(err: unknown, statusWriter: StatusWriter): null {
+        if (err instanceof CancelledError) {
+            throw err;
+        }
+        const apiError = err instanceof Error ? ApiErrorHelper.fromError(err) : null;
+        const message = apiError ? apiError.makeFullErrorMessage() : err instanceof Error ? err.message : String(err);
+        statusWriter.addError(message);
+        return null;
+    }
+
     areCurrentSettingsValid({
         getSetting,
     }: DataProviderAccessors<
@@ -123,12 +136,14 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         getGlobalSetting,
         getSetting,
         getStoredData,
+        getStatusWriter,
         fetchQuery,
     }: FetchDataParams<
         DrilledWellboreTrajectoriesSettings,
         DrilledWellboreTrajectoriesData,
         DrilledWellboreTrajectoriesStoredData
     >): Promise<DrilledWellboreTrajectoriesData> {
+        const statusWriter = getStatusWriter();
         const fieldIdentifier = getGlobalSetting("fieldId");
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const selectedWellboreHeaders = getSetting(Setting.WELLBORES);
@@ -158,7 +173,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const allPerforations = await fetchQuery({
             ...perforationsQueryOptions,
-        });
+        }).catch((err) => this.handleOptionalQueryError(err, statusWriter));
 
         const screensQueryOptions = getFieldScreensOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
@@ -166,7 +181,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const allScreens = await fetchQuery({
             ...screensQueryOptions,
-        });
+        }).catch((err) => this.handleOptionalQueryError(err, statusWriter));
 
         const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
         const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
