@@ -158,6 +158,7 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
                         if (!module) {
                             return null;
                         }
+                        // eslint-disable-next-line @eslint-react/no-array-index-key -- Rerender is trivial
                         return <li key={`${instance.moduleName}-${idx}`}>{module.getDefaultTitle()}</li>;
                     })}
                 </ul>
@@ -173,6 +174,7 @@ function TemplateDetails(props: TemplateDetailsProps): React.ReactNode {
 function templateToLayoutElements(template: Template): LayoutElement[] {
     return template.moduleInstances.map((instance) => ({
         moduleName: instance.moduleName,
+        moduleInstanceId: instance.id,
         ...instance.layout,
     }));
 }

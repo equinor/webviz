@@ -10,7 +10,7 @@ import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Select, type SelectOption } from "@lib/components/Select";
 import { Setting } from "@lib/components/Setting";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
@@ -58,8 +58,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const availableRealizationNumbers = useAtomValue(availableRealizationNumbersAtom);
     const validVfpTableNames = useAtomValue(availableVfpTableNamesAtom);
 
-    usePropagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
-    usePropagateQueryErrorToStatusWriter(vfpTableNamesQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(vfpTableQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(vfpTableNamesQuery, statusWriter);
 
     function handleThpIndicesSelectionChange(thpIndices: string[]) {
         const thpIndicesNumbers = thpIndices.map((value) => parseInt(value));

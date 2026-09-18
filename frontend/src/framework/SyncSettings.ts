@@ -9,7 +9,7 @@
  * and give additional context to the functions.
  */
 
-/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @eslint-react/rules-of-hooks */
 import React from "react";
 
 import type { GlobalTopicDefinitions, TopicDefinitionsType, WorkbenchServices } from "@framework/WorkbenchServices";

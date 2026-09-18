@@ -9,7 +9,7 @@ import {
     plotTypeAtom,
     selectedParameterIdentsAtom,
     showLabelsAtom,
-    useFixedColorRangeAtom,
+    fixedColorRangeEnabledAtom,
     correlationThresholdAtom,
     hideIndividualCellsAtom,
     filterColumnsAtom,
@@ -49,7 +49,7 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         plotType: get(plotTypeAtom),
         parameterIdentStrings: get(selectedParameterIdentsAtom).map((ident) => ident.toString()),
         showLabels: get(showLabelsAtom),
-        useFixedColorRange: get(useFixedColorRangeAtom),
+        useFixedColorRange: get(fixedColorRangeEnabledAtom),
         correlationThreshold: get(correlationThresholdAtom),
         hideIndividualCells: get(hideIndividualCellsAtom),
         filterColumns: get(filterColumnsAtom),
@@ -62,7 +62,7 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, plotTypeAtom, raw.plotType);
     setIfDefined(set, selectedParameterIdentsAtom, parameterIdents);
     setIfDefined(set, showLabelsAtom, raw.showLabels);
-    setIfDefined(set, useFixedColorRangeAtom, raw.useFixedColorRange);
+    setIfDefined(set, fixedColorRangeEnabledAtom, raw.useFixedColorRange);
     setIfDefined(set, correlationThresholdAtom, raw.correlationThreshold);
     setIfDefined(set, hideIndividualCellsAtom, raw.hideIndividualCells);
     setIfDefined(set, filterColumnsAtom, raw.filterColumns);

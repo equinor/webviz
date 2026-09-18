@@ -401,13 +401,16 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             />
                         </div>
                         <Tooltip content={addButtonText ?? ""}>
-                            <Button
-                                variant="contained"
-                                disabled={isAddButtonDisabled}
-                                onClick={handleAddSelectedParametersClick}
-                            >
-                                <Add fontSize="small" />
-                            </Button>
+                            {/* Using a span to ensure the tooltip has a child with enabled pointer-events */}
+                            <span>
+                                <Button
+                                    variant="contained"
+                                    disabled={isAddButtonDisabled}
+                                    onClick={handleAddSelectedParametersClick}
+                                >
+                                    <Add fontSize="small" />
+                                </Button>
+                            </span>
                         </Tooltip>
                     </div>
                     <Field.Error match={true}>{reportIconText}</Field.Error>

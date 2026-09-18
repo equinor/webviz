@@ -64,6 +64,8 @@ export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function 
     });
     const [imageLoadingStatus, setImageLoadingStatus] = React.useState<ImageLoadingStatus>("idle");
 
+    // Image loading might be async, so a use-effect is required. Re-render is trivial, so shouldn't be a problem
+    /* eslint-disable @eslint-react/set-state-in-effect*/
     React.useEffect(
         function loadImageEffect() {
             if (userData && typeof userData !== "function") {
@@ -88,6 +90,7 @@ export const Avatar = React.forwardRef<HTMLButtonElement, AvatarProps>(function 
         },
         [userData],
     );
+    /* eslint-enable @eslint-react/set-state-in-effect -- Disabling the rule */
 
     const handleImageLoadingStatusChange = React.useCallback(function handleImageLoadingStatusChange(
         status: ImageLoadingStatus,

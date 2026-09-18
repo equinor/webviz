@@ -14,7 +14,7 @@ import { Setting } from "@lib/components/Setting";
 import { Slider } from "@lib/components/Slider";
 import { TextInput } from "@lib/components/TextInput";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
-import { usePropagateQueryErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { propagateQueryErrorToStatusWriter } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
@@ -59,7 +59,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const flowNetworkQuery = useAtomValue(realizationFlowNetworkQueryAtom);
 
-    usePropagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
+    propagateQueryErrorToStatusWriter(flowNetworkQuery, statusWriter);
 
     const ensembleRealizationFilterFunction = useEnsembleRealizationFilterFunc(workbenchSession);
     const timeStepSliderDebounceTimeMs = 10;

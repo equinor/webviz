@@ -11,13 +11,12 @@ import {
     sortTableRowsByCategoryOrder,
 } from "../utils/tableComponentUtils";
 
-export function useTableBuilder(): {
+type TableBuilderResult = {
     headings: TableColumnsConfig;
     tableRows: TableRow<TableColumnsConfig>[];
-} {
-    let headings: TableColumnsConfig = {};
-    let tableRows: TableRow<TableColumnsConfig>[] = [];
+};
 
+export function useTableBuilder(): TableBuilderResult {
     const tableType = useAtomValue(tableTypeAtom);
     const statisticOptions = useAtomValue(statisticOptionsAtom);
     const filter = useAtomValue(filterAtom);
@@ -28,28 +27,29 @@ export function useTableBuilder(): {
         const tableHeadingsAndRows = createTableHeadingsAndRowsFromTablesData(
             perRealizationTableDataResults.tablesData,
         );
-        headings = tableHeadingsAndRows.headings;
-        tableRows = sortTableRowsByCategoryOrder(
-            tableHeadingsAndRows.rows,
-            headings,
-            new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
-        );
 
-        return { headings, tableRows };
+        return {
+            headings: tableHeadingsAndRows.headings,
+            tableRows: sortTableRowsByCategoryOrder(
+                tableHeadingsAndRows.rows,
+                tableHeadingsAndRows.headings,
+                new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
+            ),
+        };
     } else if (tableType === TableType.STATISTICAL) {
         const tableHeadingsAndRows = createStatisticalTableHeadingsAndRowsFromTablesData(
             statisticalTableDataResults.tablesData,
             statisticOptions,
         );
 
-        headings = tableHeadingsAndRows.headings;
-        tableRows = sortTableRowsByCategoryOrder(
-            tableHeadingsAndRows.rows,
-            headings,
-            new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
-        );
-
-        return { headings, tableRows };
+        return {
+            headings: tableHeadingsAndRows.headings,
+            tableRows: sortTableRowsByCategoryOrder(
+                tableHeadingsAndRows.rows,
+                tableHeadingsAndRows.headings,
+                new Map(filter.indicesWithValues.map((index) => [index.indexColumn, index.values])),
+            ),
+        };
     }
 
     throw new Error("Not able to build table - Table type not supported");

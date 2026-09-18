@@ -4,7 +4,7 @@ import { domRectsAreEqual } from "@lib/utils/geometry";
 import { elementIsVisible } from "@lib/utils/htmlElementUtils";
 
 export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVGElement>): DOMRect {
-    const [rect, setRect] = React.useState<DOMRect>(new DOMRect(0, 0, 0, 0));
+    const [rect, setRect] = React.useState<DOMRect>(() => new DOMRect(0, 0, 0, 0));
 
     React.useEffect(
         function onMountEffect() {
@@ -43,6 +43,9 @@ export function useElementBoundingRect(ref: React.RefObject<HTMLElement | SVGSVG
                     }
 
                     currentRect = rect;
+
+                    // State is tracking a DOM element, so we accept set-state here
+                    // eslint-disable-next-line @eslint-react/set-state-in-effect
                     setRect(rect);
                 }
             }
