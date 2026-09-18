@@ -49,8 +49,7 @@ export function makeDrilledWellTrajectoriesLayer(
         return null;
     }
 
-    // Transform data. In 2D, simplification uses an XY-only distance metric so that near-vertical
-    // sections (small XY deviation, large Z) don't collapse.
+    // 2D simplifies on XY distance only; 3D must use full 3D distance so near-vertical sections keep their shape.
     const computeDistance =
         options.viewMode === "2D"
             ? (point1: { easting: number; northing: number }, point2: { easting: number; northing: number }) =>

@@ -2,11 +2,17 @@ import type { PerforationProperties, ScreenProperties } from "@webviz/subsurface
 import { parse, type Rgb } from "culori";
 import type { FeatureCollection, GeometryCollection } from "geojson";
 
-import type { SettingTypeDefinitions, Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
+import type {
+    SettingTypeDefinitions,
+    Setting,
+} from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import type { ExtendedWellFeature, ExtendedWellFeatureProperties } from "@modules/_shared/types/geojson";
 import { simplifyWellTrajectoryRadialDist, wellTrajectoryToGeojson } from "@modules/_shared/utils/wellbore";
 
-import type { DrilledWellboreTrajectoriesData, DrilledWellboreTrajectoryData } from "../../dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
+import type {
+    DrilledWellboreTrajectoriesData,
+    DrilledWellboreTrajectoryData,
+} from "../../dataProviders/implementations/DrilledWellboreTrajectoriesProvider";
 
 export const SIMPLIFICATION_RADIAL_DIST = 1.5;
 export const FORMATION_FILTER_NAME = "WITHIN FILTER";
@@ -71,10 +77,8 @@ export function createSimplifiedTrajectory(
     trajectory: DrilledWellboreTrajectoryData,
     computeDistance?: TrajectoryDistanceFn,
 ): DrilledWellboreTrajectoryData {
-    // simplifyWellTrajectoryRadialDist falls back to a full 3D radial distance when computeDistance is undefined
-    return computeDistance
-        ? simplifyWellTrajectoryRadialDist(trajectory, SIMPLIFICATION_RADIAL_DIST, computeDistance)
-        : simplifyWellTrajectoryRadialDist(trajectory, SIMPLIFICATION_RADIAL_DIST);
+    // Undefined falls back to the util's full-3D radial distance
+    return simplifyWellTrajectoryRadialDist(trajectory, SIMPLIFICATION_RADIAL_DIST, computeDistance);
 }
 
 export function hexToRgb(hex: string): [r: number, g: number, b: number] {

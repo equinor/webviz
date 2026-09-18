@@ -71,23 +71,18 @@ export class WebvizWellsLayer extends WellsLayer {
             return layers;
         }
 
-        // When `markers.showScreenTrajectoryAsDash` is set, subsurface-viewer renders the trajectory
-        // sublayer with id SCREEN_TRAJECTORY instead of COLORS.
-        const trajectoryLayer = layers.find((layer) => {
-            if (!(layer instanceof Layer)) {
-                return false;
-            }
+        // With `markers.showScreenTrajectoryAsDash` the trajectory sublayer is SCREEN_TRAJECTORY instead of COLORS.
+        // Match on the exact id: SCREEN_TRAJECTORY_OUTLINE contains SCREEN_TRAJECTORY as a substring.
+        const trajectorySubLayerId = this.props.markers?.showScreenTrajectoryAsDash
+            ? SubLayerId.SCREEN_TRAJECTORY
+            : SubLayerId.COLORS;
+        const fullTrajectorySubLayerId = this.getSubLayerProps({ id: trajectorySubLayerId }).id;
 
-            return layer.id.includes(SubLayerId.COLORS) || layer.id.includes(SubLayerId.SCREEN_TRAJECTORY);
-        });
+        const trajectoryLayer = layers.find((layer) => layer instanceof Layer && layer.id === fullTrajectorySubLayerId);
 
         if (!(trajectoryLayer instanceof GeoJsonLayer)) {
             return layers;
         }
-
-        const trajectorySubLayerId = trajectoryLayer.id.includes(SubLayerId.SCREEN_TRAJECTORY)
-            ? SubLayerId.SCREEN_TRAJECTORY
-            : SubLayerId.COLORS;
 
         const newTrajectoryLayer = new GeoJsonLayer(
             super.getSubLayerProps({
