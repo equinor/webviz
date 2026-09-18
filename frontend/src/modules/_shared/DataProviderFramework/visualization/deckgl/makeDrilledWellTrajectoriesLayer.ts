@@ -4,7 +4,7 @@ import type { Feature } from "geojson";
 
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 import { DEFAULT_WELLS_LAYER_PROPS } from "@modules/_shared/constants/wellsLayer";
-import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import { WebvizWellsLayer } from "@modules/_shared/customDeckGlLayers/WebvizWellsLayer";
 import type {
     DrilledWellboreTrajectoriesData,
     DrilledWellboreTrajectoriesSettings,
@@ -91,7 +91,7 @@ export function makeDrilledWellTrajectoriesLayer(
         return null;
     }
 
-    const wellsLayer = new AdjustedWellsLayer({
+    const wellsLayer = new WebvizWellsLayer({
         ...DEFAULT_WELLS_LAYER_PROPS,
         id: id,
         positionFormat: options.viewMode === "2D" ? "XY" : "XYZ",
