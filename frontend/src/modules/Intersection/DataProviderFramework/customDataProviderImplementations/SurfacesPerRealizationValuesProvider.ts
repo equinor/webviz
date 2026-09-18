@@ -61,9 +61,6 @@ export class SurfacesPerRealizationValuesProvider implements CustomDataProviderI
 > {
     settings = surfacesPerRealizationValuesSettings;
 
-    // Older persisted state saved this provider's attribute under the shared "attribute" key.
-    legacySettingKeyAliases = { attribute: Setting.DEPTH_ATTRIBUTE } as const;
-
     getDefaultName() {
         return "Surfaces Per Realization Values";
     }

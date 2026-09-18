@@ -86,9 +86,6 @@ export class AttributeSurfaceProvider implements CustomDataProviderImplementatio
 > {
     settings = surfaceSettings;
 
-    // Older persisted state saved this provider's attribute under the shared "attribute" key.
-    legacySettingKeyAliases = { attribute: Setting.SURFACE_ATTRIBUTE } as const;
-
     private _dataFormat: SurfaceDataFormat = SurfaceDataFormat.FLOAT;
     private _surfaceType: AttributeSurfaceType;
 

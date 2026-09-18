@@ -63,28 +63,6 @@ export function isDataProvider(obj: any): obj is DataProvider<any, any> {
     return typeof obj === "object" && obj !== null && DATA_PROVIDER_BRAND in obj;
 }
 
-// Mutates serializedSettings in place, moving values from removed legacy keys onto their current key -
-// otherwise a renamed setting key silently loses its persisted value (the old key no longer matches any
-// setting on the provider, so SettingsContextDelegate.deserializeSettings skips it).
-export function applyLegacySettingKeyAliases(
-    serializedSettings: Record<string, string>,
-    legacySettingKeyAliases: Partial<Record<string, string>> | undefined,
-): void {
-    if (!legacySettingKeyAliases) {
-        return;
-    }
-
-    for (const [legacyKey, currentKey] of Object.entries(legacySettingKeyAliases)) {
-        if (currentKey === undefined) {
-            continue;
-        }
-        if (legacyKey in serializedSettings && !(currentKey in serializedSettings)) {
-            serializedSettings[currentKey] = serializedSettings[legacyKey];
-        }
-        delete serializedSettings[legacyKey];
-    }
-}
-
 export type DataProviderParams<
     TSettings extends Settings,
     TData,
@@ -110,12 +88,12 @@ export type DataProviderParams<
  * It also manages the status of the provider (loading, success, error).
  */
 export class DataProvider<
-        TSettings extends Settings,
-        TData,
-        TStoredData extends StoredData = Record<string, never>,
-        TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-        TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
-    >
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
+>
     implements Item, PublishSubscribe<DataProviderPayloads<TData>>
 {
     private readonly [DATA_PROVIDER_BRAND] = true;
@@ -509,7 +487,6 @@ export class DataProvider<
         const reportError = (errorMsg: string) => {
             this.getItemDelegate().reportDeserializationError(errorMsg);
         };
-        applyLegacySettingKeyAliases(serializedDataProvider.settings, this._customDataProviderImpl.legacySettingKeyAliases);
         this._settingsContextDelegate.deserializeSettings(serializedDataProvider.settings, reportError);
     }
 
