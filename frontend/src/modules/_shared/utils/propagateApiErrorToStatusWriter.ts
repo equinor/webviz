@@ -1,8 +1,8 @@
 import { CancelledError, type UseQueryResult } from "@tanstack/react-query";
 
 import type { SettingsStatusWriter, ViewStatusWriter } from "@framework/StatusWriter";
+import type { StatusWriter as DpfStatusWriter } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
-import { StatusWriter as DpfStatusWriter } from "@framework/types/statusWriter";
 
 function createErrorMessageFromHelper(
     helper: ApiErrorHelper | null,

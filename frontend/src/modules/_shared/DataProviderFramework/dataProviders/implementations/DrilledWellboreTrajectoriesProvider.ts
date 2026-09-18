@@ -28,6 +28,7 @@ import { sortStringArray } from "@lib/utils/arrays";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+import { handleOptionalDpfQueryError } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
@@ -38,7 +39,6 @@ import type {
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import { getAvailableEnsembleIdentsForField } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
-import { handleOptionalDpfQueryError } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
