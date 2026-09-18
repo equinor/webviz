@@ -1,8 +1,5 @@
 import { isEqual } from "lodash-es";
-import { CancelledError } from "@tanstack/react-query";
 
-import type { StatusWriter } from "@framework/types/statusWriter";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import type {
     FormationSegment_api,
     WellboreCompletion_api,
@@ -41,6 +38,7 @@ import type {
 import type { SetupBindingsContext } from "../../interfacesAndTypes/customSettingsHandler";
 import type { MakeSettingTypesMap } from "../../interfacesAndTypes/utils";
 import { getAvailableEnsembleIdentsForField } from "../dependencyFunctions/sharedSettingUpdaterFunctions";
+import { handleOptionalDpfQueryError } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 const drilledWellboreTrajectoriesSettings = [
     Setting.ENSEMBLE,
@@ -82,16 +80,6 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
     getDefaultName() {
         return "Well Trajectories (Official)";
-    }
-
-    private handleOptionalQueryError(err: unknown, statusWriter: StatusWriter): null {
-        if (err instanceof CancelledError) {
-            throw err;
-        }
-        const apiError = err instanceof Error ? ApiErrorHelper.fromError(err) : null;
-        const message = apiError ? apiError.makeFullErrorMessage() : err instanceof Error ? err.message : String(err);
-        statusWriter.addError(message);
-        return null;
     }
 
     areCurrentSettingsValid({
@@ -173,7 +161,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const allPerforations = await fetchQuery({
             ...perforationsQueryOptions,
-        }).catch((err) => this.handleOptionalQueryError(err, statusWriter));
+        }).catch((err) => handleOptionalDpfQueryError(err, statusWriter));
 
         const screensQueryOptions = getFieldScreensOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
@@ -181,7 +169,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const allScreens = await fetchQuery({
             ...screensQueryOptions,
-        }).catch((err) => this.handleOptionalQueryError(err, statusWriter));
+        }).catch((err) => handleOptionalDpfQueryError(err, statusWriter));
 
         const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
         const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);
