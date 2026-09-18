@@ -265,8 +265,8 @@ export async function installCaseRowRedaction(page: Page, allowedCaseUuids: stri
 /**
  * Hide developer-only overlays that float over the app so they don't appear in the recorded video.
  *
- * The app's own dev tools are suppressed by seeding `devToolsVisible=false` (see setup/globalSetup),
- * but the TanStack React Query Devtools render their own floating toggle button (the logo in the
+ * The app's own dev tools are suppressed by forcing dev-mode off (see setup/globalSetup), but the
+ * TanStack React Query Devtools render their own floating toggle button (the logo in the
  * lower-left corner) independently of that flag. We hide it with pure CSS, which can't be missed for
  * a single frame regardless of when the button mounts.
  *
@@ -319,19 +319,19 @@ export async function installKeyOverlay(page: Page): Promise<void> {
                 "left: 50%",
                 "bottom: 48px",
                 "transform: translateX(-50%)",
-                "min-width: 44px",
-                "height: 44px",
-                "padding: 0 14px",
+                "min-width: 56px",
+                "height: 56px",
+                "padding: 0 18px",
                 "display: flex",
                 "align-items: center",
                 "justify-content: center",
                 "box-sizing: border-box",
-                "font: 600 18px/1 system-ui, -apple-system, sans-serif",
+                "font: 600 24px/1 system-ui, -apple-system, sans-serif",
                 "color: #1a1a1a",
                 "background: linear-gradient(#ffffff, #e7e7e7)",
                 "border: 1px solid rgba(0, 0, 0, 0.25)",
-                "border-bottom-width: 3px",
-                "border-radius: 8px",
+                "border-bottom-width: 4px",
+                "border-radius: 10px",
                 "box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25)",
                 "pointer-events: none",
                 "z-index: 2147483647",
@@ -557,7 +557,7 @@ export async function expandAllGroupTreeNodes(page: Page, container: Locator): P
         if ((await collapsed.count()) === 0) {
             break;
         }
-        await collapsed.click();
+        await smoothClick(page, collapsed);
         // Let the expand animation / re-layout settle before looking for the next collapsed node.
         await page.waitForTimeout(150);
         await pace(page, "short");
@@ -624,18 +624,21 @@ export async function createSessionAndSelectEnsemble(
     await newSessionNarration;
 
     const ensembleNarration = narrate(
-        "...and then add an ensemble. We pick the Drogon asset and find the case we want.",
+        "...and then add an ensemble. The Drogon asset is already selected, so we just check that the case we want is the one shown, and select it.",
     );
     markStep("Add the Drogon ensemble");
     await expect(page.getByText("Ensembles used in this session")).toBeVisible({ timeout: 60_000 });
     await smoothClick(page, page.getByTestId("add-regular-ensemble-button"));
     await pace(page);
 
-    await smoothClick(page, page.getByRole("combobox", { name: "Asset" }));
-    await smoothClick(page, page.getByRole("option", { name: DROGON_AHM.assetName }));
+    // The test user only has access to one asset (Drogon), so it is already selected. Just glide the
+    // cursor over the Asset selector to point it out — opening it would leave the dropdown covering
+    // the case filter below.
+    await smoothMoveToLocator(page, page.getByRole("combobox", { name: "Asset" }));
     await pace(page);
 
-    // Filter the case table by the test case UUID.
+    // Filter the case table by the test case UUID. The Asset dropdown is never opened, so its own
+    // "Filter ..." search field isn't present and this reliably targets the Case (ID) column filter.
     await smoothFill(page, page.getByPlaceholder("Filter ...").first(), DROGON_AHM.caseUuid);
     await expect(page.getByText(DROGON_AHM.caseUuid)).toBeVisible({ timeout: 60_000 });
     await pace(page);

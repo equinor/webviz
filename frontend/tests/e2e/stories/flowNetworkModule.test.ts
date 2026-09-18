@@ -14,6 +14,7 @@ import {
     pace,
     pressKeyWithOverlay,
     smoothClick,
+    smoothMoveToLocator,
     sweepSliderAcross,
     expandAllGroupTreeNodes,
 } from "../support/walkthroughHelpers";
@@ -61,32 +62,57 @@ test.describe("Flow Network module", () => {
         await expect(moduleListItem).toBeVisible();
         await pace(page);
 
-        const dragNarration = narrate(
-            "We start by dragging the Flow Network module from the list onto the dashboard and wait for the relevant data and settings to load.",
+        const introNarration = narrate(
+            "The Flow Network module visualizes the network topology as modelled in the reservoir simulator, along with how much of the different fluid phases flow through the network.",
         );
+        // Open the module's info popover so its description is on screen during the introduction.
+        // The help/info icon is the last button on the module list item.
+        await smoothClick(page, moduleListItem.getByRole("button").last());
+        await introNarration;
+        // Close the info popover before we start dragging the module onto the dashboard.
+        await page.keyboard.press("Escape");
+        await pace(page);
+
         markStep("Add the Flow Network module");
+
+        // Narrate the drag after the step marker so it lines up with the drag itself.
+        const dragNarration = narrate(
+            "Let's start by dragging it from the module list onto the dashboard, and close the module list to increase the space available to the module.",
+        );
         await dragModuleOntoLayout(page, FLOW_NETWORK);
-        await dragNarration;
 
         // Confirm the drop actually created the module instance. The module header in the layout
         // carries the module title.
         const moduleLayout = page.getByTestId("module-layout");
         await expect(moduleLayout.getByTitle(FLOW_NETWORK).first()).toBeVisible({ timeout: 30_000 });
-        await pace(page);
 
-        // Make sure the active module's settings panel is expanded.
+        // Close the modules list so the module gets more room on the dashboard.
+        await smoothClick(page, page.getByTestId("modules-list-open-button"));
+
+        // Make sure the active module's settings panel is expanded so the settings are visible.
         const expandSettingsButton = page.getByTitle("Expand settings panel");
         if (await expandSettingsButton.isVisible()) {
             await smoothClick(page, expandSettingsButton);
-            await pace(page);
         }
+        await dragNarration;
+
+        // Separate narration so the cursor lands on the Ensemble/Realization selectors as they are named.
+        const ensembleRealizationNarration = narrate(
+            "The network shown is for the ensemble and realization you select.",
+        );
+        await smoothMoveToLocator(page, page.locator(".setting-row").filter({ hasText: "Ensembles" }));
+        await smoothMoveToLocator(page, page.locator(".setting-row").filter({ hasText: "Realization" }));
+        await ensembleRealizationNarration;
+        await pace(page);
 
         // Pick a resampling frequency so the network has dated time steps to step through.
-        const frequencyNarration = narrate(
-            "In the settings we choose a resampling frequency for the network \u2014 here, weekly.",
-        );
         markStep("Choose a frequency");
+        // Open the dropdown as the first sentence starts; defer picking Weekly to the second sentence.
+        const frequencyIntroNarration = narrate("Next, we pick a resampling frequency for the time dependent flow data in the network.");
         await smoothClick(page, page.getByRole("combobox", { name: "Frequency" }));
+        await frequencyIntroNarration;
+
+        const frequencyNarration = narrate("Let's go with weekly for this example.");
         await smoothClick(page, page.getByRole("option", { name: "Weekly" }));
         await frequencyNarration;
 
@@ -96,34 +122,46 @@ test.describe("Flow Network module", () => {
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await expect(moduleLayout.locator("svg").first()).toBeVisible({ timeout: 90_000 });
 
-        markStep("View the flow network");
-        await narrate(
-            "And there's our flow network. It shows the dated network for the selected time step.",
-        );
-
         const timeStepGroup = page.getByRole("group", { name: "Time step" });
         const timeStepControl = timeStepGroup.locator(".group\\/slider-comp").first();
         const timeStepThumb = timeStepGroup.getByRole("slider").first();
 
         // Narrow the network down to producer wells only first. A plain click on a multi-select
         // option replaces the whole selection, so this leaves just "Producer" selected.
-        const nodeTypeNarration = narrate(
-            "To focus on the producers, we limit the node types to show only producer wells.",
+        markStep("Select node types");
+
+        await narrate(
+            "The node types setting controls which wells appear in the network.",
         );
-        markStep("Show only producer wells");
+
+        const nodeTypeNarration = narrate("Let's focus on the producers.");
         const nodeTypesRow = page.locator(".setting-row").filter({ hasText: "Node Types" });
         await smoothClick(page, nodeTypesRow.getByText("Producer", { exact: true }));
+        await nodeTypeNarration;
+
         // Changing the node types refetches the network; wait for it to settle before continuing.
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
-        await nodeTypeNarration;
+
+        // Point out the tree type setting that picks which simulator network definition is shown.
+        markStep("Choose the tree type");
+        const treeTypeRow = page.locator(".setting-row").filter({ hasText: "Tree Type" });
+        const treeTypeNarration = narrate(
+            "The tree type selects which simulator network to show \u2014 the Standard Network covers producers and injectors, while some models also offer the Extended Network from BRANPROP.",
+        );
+        // Open the setting's info popover so the on-screen explanation is visible while narrated.
+        // The info icon is the last (unlabelled) button in the row, after the combobox controls.
+        await smoothClick(page, treeTypeRow.getByRole("button").last());
+        await treeTypeNarration;
+        await page.keyboard.press("Escape");
+        await pace(page);
 
         // Jump to the last time step and expand every branch so the whole network is visible.
         const expandNarration = narrate(
-            "Let's jump to the final time step and expand every branch so the whole network is visible.",
+            "Now let's jump to the final time step and expand every branch to reveal the whole network. The wells sit at the leaf nodes on the far right, with the platform and infrastructure to the left.",
         );
         markStep("Expand the whole network");
-        await timeStepThumb.focus();
-        await timeStepThumb.press("End");
+        // Drag the slider to the final time step so the cursor visibly carries it there.
+        await sweepSliderAcross(page, timeStepControl, { durationMs: 2_500, direction: "right" });
         await pace(page);
         await expandAllGroupTreeNodes(page, moduleLayout);
         await expandNarration;
@@ -131,7 +169,7 @@ test.describe("Flow Network module", () => {
         // With the full network shown, gently sweep the time step back and forth (~4s each way) so
         // the viewer can watch how it evolves over time (codegen only captures abrupt clicks).
         const sweepNarration = narrate(
-            "Now we can gradually move the time step back and forth to watch how the whole network changes over time.",
+            "As we move the time step back and forth, we can watch the network evolve: the tree grows as new wells are drilled, and each edge's thickness reflects how much of the selected phase flows through that branch at the chosen time step.",
         );
         markStep("Step through the time steps");
         await sweepSliderAcross(page, timeStepControl, { durationMs: 4_000, direction: "left" });
@@ -141,19 +179,43 @@ test.describe("Flow Network module", () => {
         // Keyboard is an alternative to dragging: Home/End jump to the ends, arrows step one at a
         // time. A keycap overlay shows which key is pressed (see installKeyOverlay).
         const keyboardNarration = narrate(
-            "You don't need the mouse for this. With the slider focused, the Home and End keys jump straight to the first and last time step, and the arrow keys move gradually, one time step at a time.",
+            "You don't need the mouse for moving the slider \u2014 with the slider focused, Home and End jump to the first and last time step, while the arrow keys move one step at a time.",
         );
         markStep("Navigate with the keyboard");
         await timeStepThumb.focus();
         await pressKeyWithOverlay(page, timeStepThumb, "Home", { pauseMs: 1_500 });
         await pressKeyWithOverlay(page, timeStepThumb, "End", { pauseMs: 1_500 });
         await pressKeyWithOverlay(page, timeStepThumb, "Home", { pauseMs: 1_500 });
-        await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
-        await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
-        await pressKeyWithOverlay(page, timeStepThumb, "ArrowRight", { pauseMs: 1_500 });
         // Finish with the slider back at the last time step.
         await pressKeyWithOverlay(page, timeStepThumb, "End", { pauseMs: 1_500 });
         await keyboardNarration;
+
+        markStep("Switch between phases");
+        // Show the same network for a different phase via the "Edge options" setting.
+        const edgeOptionsCombobox = page.locator(".setting-row").filter({ hasText: "Edge options" }).getByRole("combobox");
+
+        const gasNarration = narrate(
+            "The edges currently visualise the oil rate, but we can switch for example over to the gas rate.",
+        );
+        await smoothClick(page, edgeOptionsCombobox);
+        await gasNarration;
+        await smoothClick(page, page.getByRole("option", { name: "Gas Rate" }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
+
+        // Node options control the value displayed inside each node over time.
+        const nodeOptionsCombobox = page.locator(".setting-row").filter({ hasText: "Node options" }).getByRole("combobox");
+        markStep("Change the node values");
+
+        // Open the dropdown first so the available options are on screen while we describe them.
+        await smoothClick(page, nodeOptionsCombobox);
+        const nodeOptionsNarration = narrate(
+            "The node options control what each node itself displays as time goes by. There are three to choose from: the node pressure, the well bottom-hole pressure, and the well control mode.",
+        );
+        await nodeOptionsNarration;
+
+        // With the options explained, pick pressure and let the network refetch.
+        await smoothClick(page, page.getByRole("option", { name: "Pressure" }));
+        await expect(loadingBar).toBeHidden({ timeout: 90_000 });
 
         await captureThumbnail(page);
     });
