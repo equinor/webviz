@@ -70,11 +70,12 @@ test.describe("Landing page", () => {
 
         markStep("Watch tutorials");
         const tutorialsNarration = narrate(
-            "In the tutorials section, you have in-app access to short videos on selected topics \u2014 like this one \u2014 that walk you through the app step by step.",
+            "You'll also find a tutorials section with short, in-app videos on selected topics \u2014 in fact, it's exactly where you're watching this walkthrough right now.",
         );
-        await smoothClick(page, page.getByRole("button", { name: "Watch tutorials" }));
+        // Point at the button rather than opening the dialog: its poster images are served from a
+        // private blob container that isn't populated during recording, so it would look empty.
+        await smoothMoveToLocator(page, page.getByRole("button", { name: "Watch tutorials" }));
         await tutorialsNarration;
-        await smoothClick(page, page.getByRole("button"));
 
         markStep("Topbar section");
 
@@ -100,14 +101,26 @@ test.describe("Landing page", () => {
         await smoothClick(page, darkModeButton);
         await lightModeNarration;
 
-        await narrate("Finally, you can choose how compact the layout should be.");
         const densityModeButton = page.getByRole("button", { name: "Toggle density mode" });
+
+        await Promise.all([
+            smoothMoveToLocator(page, densityModeButton),
+            narrate("Finally, you can choose how compact the layout should be."),
+        ]);
+
         await smoothClick(page, densityModeButton);
-        await narrate(
-            "Switching to the compact density mode makes the fonts and spacing smaller, freeing up more screen space for data visualization.",
-        );
+        await Promise.all([
+            smoothMoveToLocator(page, densityModeButton),
+            narrate(
+                "Switching to the compact density mode makes the fonts and spacing smaller, freeing up more screen space for data visualization.",
+            ),
+        ]);
+
         await smoothClick(page, densityModeButton);
-        await narrate("The same control brings you back to the regular, roomier layout.");
+        await Promise.all([
+            smoothMoveToLocator(page, densityModeButton),
+            narrate("The same control brings you back to the regular, roomier layout."),
+        ]);
         await pace(page);
         await narrate("That completes our tour of the landing page.");
     });
