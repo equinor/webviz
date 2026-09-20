@@ -220,5 +220,8 @@ test.describe("Flow Network module", () => {
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
 
         await captureThumbnail(page);
+
+        markStep("Wrap up");
+        await narrate("And that concludes our walkthrough of the Flow Network module.");
     });
 });

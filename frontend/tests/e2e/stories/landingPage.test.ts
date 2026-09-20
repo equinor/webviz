@@ -89,18 +89,20 @@ test.describe("Landing page", () => {
         await smoothMoveToLocator(page, page.getByRole("link", { name: "FMU Hub" }));
         await narrate("...and next to it, a link to the FMU Hub, with general information about Fast Model Update.");
 
-        await smoothMoveToLocator(page, page.getByRole("button").nth(1));
+        await smoothMoveToLocator(page, page.getByRole("button", { name: "Enter fullscreen (F11)" }));
         await narrate("You can also switch to fullscreen mode from here whenever you want more room to work.");
         await narrate("If you prefer dark mode...");
-        await smoothClick(page, page.getByRole("button").nth(2));
+        const darkModeButton = page.getByRole("button", { name: "Toggle dark mode" });
+        await smoothClick(page, darkModeButton);
         await narrate("...you can toggle it on here, and switch back to light mode just as easily.");
-        await smoothClick(page, page.getByRole("button").nth(2));
+        await smoothClick(page, darkModeButton);
         await narrate("Finally, you can choose how compact the layout should be.");
-        await smoothClick(page, page.getByRole("button").nth(3));
+        const densityModeButton = page.getByRole("button", { name: "Toggle density mode" });
+        await smoothClick(page, densityModeButton);
         await narrate(
             "Switching to the compact density mode makes the fonts and spacing smaller, freeing up more screen space for data visualization.",
         );
-        await smoothClick(page, page.getByRole("button").nth(3));
+        await smoothClick(page, densityModeButton);
         await narrate("The same control brings you back to the regular, roomier layout.");
         await pace(page);
         await narrate("That completes our tour of the landing page.");

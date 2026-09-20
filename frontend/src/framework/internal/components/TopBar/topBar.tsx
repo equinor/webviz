@@ -624,6 +624,7 @@ function TopBarButtonComponent(props: TopBarButtonProps, ref: React.ForwardedRef
                     variant="ghost"
                     tone="accent"
                     iconOnly
+                    aria-label={title}
                     pressed={active}
                     onClick={onClick}
                     disabled={disabled}
