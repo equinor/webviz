@@ -126,15 +126,19 @@ test.describe("Flow Network module", () => {
         const timeStepControl = timeStepGroup.locator(".group\\/slider-comp").first();
         const timeStepThumb = timeStepGroup.getByRole("slider").first();
 
-        // Narrow the network down to producer wells only first. A plain click on a multi-select
-        // option replaces the whole selection, so this leaves just "Producer" selected.
+        // Focus the network on producers and injectors. A plain click on a multi-select option
+        // replaces the whole selection, so click "Producer" first, then Ctrl-click "Injector" to
+        // add it to the selection.
         markStep("Select node types");
 
         await narrate("The node types control which wells appear in the network.");
 
-        const nodeTypeNarration = narrate("Let's focus on the producers.");
+        const nodeTypeNarration = narrate("Let's focus on the producers and injectors.");
         const nodeTypesRow = page.locator(".setting-row").filter({ hasText: "Node Types" });
         await smoothClick(page, nodeTypesRow.getByText("Producer", { exact: true }));
+        await smoothClick(page, nodeTypesRow.getByText("Injector", { exact: true }), {
+            modifiers: ["ControlOrMeta"],
+        });
         await nodeTypeNarration;
 
         // Changing the node types refetches the network; wait for it to settle before continuing.
@@ -192,12 +196,12 @@ test.describe("Flow Network module", () => {
         // Show the same network for a different phase via the "Edge options" setting.
         const edgeOptionsCombobox = page.locator(".setting-row").filter({ hasText: "Edge options" }).getByRole("combobox");
 
-        const gasNarration = narrate(
-            "The edges show the oil rate, but we can switch to another phase, like the gas rate.",
+        const waterInjNarration = narrate(
+            "The edges show the oil rate, but we can switch to another phase, like the water injection rate.",
         );
         await smoothClick(page, edgeOptionsCombobox);
-        await gasNarration;
-        await smoothClick(page, page.getByRole("option", { name: "Gas Rate" }));
+        await waterInjNarration;
+        await smoothClick(page, page.getByRole("option", { name: "Water Inj Rate" }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
 
         // Node options control the value displayed inside each node over time.
