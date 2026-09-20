@@ -238,7 +238,9 @@ async function injectRecordingStyle(page: Page, styleId: string, css: string): P
  * `data-case-uuid="<case uuid>"` attribute on a normal block-level <div>. We blur those divs
  * directly (not the <tr>/<td>), because CSS `filter` — like `opacity` and `transform` — is not
  * reliably rendered on `display: table-row`/`table-cell` boxes in Chromium, whereas a plain <div>
- * renders it fine. The attribute is unique to case cells, so no extra scoping is needed.
+ * renders it fine. The attribute is unique to case cells, so no extra scoping is needed. As a
+ * belt-and-braces fallback (blur doesn't always composite into the screencast), the text is also
+ * made transparent with a blurred shadow, so glyphs stay unreadable even if the blur doesn't paint.
  *
  * No-op unless RECORD=1, so normal test runs are unaffected. Must be called BEFORE `page.goto(...)`
  * so the init script is registered for the first navigation (and re-applied on every navigation).
@@ -255,9 +257,25 @@ export async function installCaseRowRedaction(page: Page, allowedCaseUuids: stri
     // unreadable) smudge — strong enough to obscure case names/authors, light enough that small
     // cells like the author avatar don't disappear entirely.
     const allowSelectors = allowed.map((uuid) => `:not([data-case-uuid="${uuid}"])`).join("");
-    const css = `[data-case-uuid]${allowSelectors} {
+    const blockSelector = `[data-case-uuid]${allowSelectors}`;
+    // Two layers, because `filter: blur` alone proved fragile: depending on how the cell is wrapped
+    // and stacked, Chromium doesn't always composite the blur into the screencast. So we ALSO smear
+    // the glyphs themselves — transparent text casting a blurred shadow — which never relies on
+    // filter compositing and reaches text in nested spans via the descendant selector. If the blur
+    // does paint we simply get both; if it doesn't, the text is still unreadable. Author avatars are
+    // images, which a text smear can't hide, so any img/svg in a non-allowed cell is hidden outright.
+    const css = `${blockSelector} {
         filter: blur(5px) !important;
         user-select: none !important;
+    }
+    ${blockSelector},
+    ${blockSelector} * {
+        color: transparent !important;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.6) !important;
+    }
+    ${blockSelector} img,
+    ${blockSelector} svg {
+        visibility: hidden !important;
     }`;
     await injectRecordingStyle(page, "__pw_case_row_redaction_style__", css);
 }
