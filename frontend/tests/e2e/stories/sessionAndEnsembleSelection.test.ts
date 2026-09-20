@@ -51,10 +51,14 @@ test.describe("Session and ensemble selection", () => {
         await page.goto("/");
         await expect(page.getByText("FMU Analysis").first()).toBeVisible();
 
-        await createSessionAndSelectEnsemble(page, { narrate, markStep });
+        await createSessionAndSelectEnsemble(page, {
+            narrate,
+            markStep,
+            additionalEnsembleNames: [DROGON_AHM.secondEnsembleName],
+        });
 
-        markStep("Ensemble applied");
-        await narrate("The ensemble is now applied and ready to use in the session.");
+        markStep("Ensembles applied");
+        await narrate("Both ensembles are now applied and ready to use in the session.");
 
         // Bring a module's list item into view, opening the modules list first if it is collapsed.
         async function ensureModuleListItemVisible(moduleTitle: string) {
@@ -67,7 +71,7 @@ test.describe("Session and ensemble selection", () => {
 
         markStep("Add modules to the dashboard");
         const addModulesNarration = narrate(
-            "With the ensemble loaded, we can start building the dashboard. Modules are added by dragging them from the list on the right onto the canvas.",
+            "With the ensembles loaded, we can start building the dashboard. Modules are added by dragging them from the list on the right onto the canvas.",
         );
         await ensureModuleListItemVisible("Simulation Time Series");
         await dragModuleOntoLayout(page, "Simulation Time Series");
@@ -133,6 +137,15 @@ test.describe("Session and ensemble selection", () => {
         await expect(page.getByRole("heading", { name: "Snapshot created successfully!" })).toBeVisible({
             timeout: 60_000,
         });
+        // The link is built from the local dev origin; show the production URL in the recording only.
+        await page
+            .getByRole("dialog")
+            .getByRole("textbox")
+            .last()
+            .evaluate((el, prodOrigin) => {
+                const input = el as HTMLInputElement;
+                input.value = input.value.replace(/^https?:\/\/[^/]+/, prodOrigin);
+            }, "https://webviz.fmu.equinor.com");
         const shareNarration = narrate(
             "The snapshot is created, and sharing this link is all it takes to give others access to exactly this view.",
         );

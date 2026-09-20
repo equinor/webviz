@@ -168,6 +168,8 @@ test.describe("Flow Network module", () => {
         await expandAllGroupTreeNodes(page, moduleLayout);
         await expandNarration;
 
+        await captureThumbnail(page);
+
         // With the full network shown, gently sweep the time step back and forth (~4s each way) so
         // the viewer can watch how it evolves over time (codegen only captures abrupt clicks).
         const sweepNarration = narrate(
@@ -218,8 +220,6 @@ test.describe("Flow Network module", () => {
         // With the options explained, pick pressure and let the network refetch.
         await smoothClick(page, page.getByRole("option", { name: "Pressure" }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
-
-        await captureThumbnail(page);
 
         markStep("Wrap up");
         await narrate("And that concludes our walkthrough of the Flow Network module.");

@@ -477,14 +477,34 @@ export async function smoothType(page: Page, locator: Locator, value: string): P
  */
 export type ModuleDropPosition = "center" | "left" | "right" | "top" | "bottom";
 
-/** Fractional (x, y) target within the layout box for each drop position; see layoutBox edge zones. */
-const DROP_POSITION_FRACTIONS: Record<ModuleDropPosition, { fx: number; fy: number }> = {
-    center: { fx: 0.5, fy: 0.5 },
-    left: { fx: 0.15, fy: 0.5 },
-    right: { fx: 0.85, fy: 0.5 },
-    top: { fx: 0.5, fy: 0.15 },
-    bottom: { fx: 0.5, fy: 0.85 },
-};
+/**
+ * How far (px) inside the layout edge to aim for the side drop positions. The layout's perimeter
+ * drop zones are only ~50px wide, so a small fixed inset reliably lands in the edge zone (splitting
+ * off the whole layout to that side) rather than nesting into a child box nearer the centre — which
+ * is what a percentage-based target does once the canvas already holds a couple of modules.
+ */
+const DROP_EDGE_INSET_PX = 24;
+
+/** Resolve the absolute (x, y) drop target within `layoutBox` for a given drop position. */
+function resolveDropTarget(
+    layoutBox: { x: number; y: number; width: number; height: number },
+    dropPosition: ModuleDropPosition,
+): { x: number; y: number } {
+    const centerX = layoutBox.x + layoutBox.width / 2;
+    const centerY = layoutBox.y + layoutBox.height / 2;
+    switch (dropPosition) {
+        case "left":
+            return { x: layoutBox.x + DROP_EDGE_INSET_PX, y: centerY };
+        case "right":
+            return { x: layoutBox.x + layoutBox.width - DROP_EDGE_INSET_PX, y: centerY };
+        case "top":
+            return { x: centerX, y: layoutBox.y + DROP_EDGE_INSET_PX };
+        case "bottom":
+            return { x: centerX, y: layoutBox.y + layoutBox.height - DROP_EDGE_INSET_PX };
+        default:
+            return { x: centerX, y: centerY };
+    }
+}
 
 /**
  * Drag a module from the modules list onto the dashboard layout.
@@ -520,8 +540,6 @@ export async function dragModuleOntoLayout(
 
     await smoothMoveToLocator(page, page.locator(`[title="${moduleDisplayName}"]`).first());
 
-    const { fx, fy } = DROP_POSITION_FRACTIONS[dropPosition];
-
     await expect(async () => {
         const moduleItem = page.locator(`[title="${moduleDisplayName}"]`).first();
         await expect(moduleItem).toBeVisible();
@@ -534,12 +552,11 @@ export async function dragModuleOntoLayout(
 
         const startX = itemBox.x + itemBox.width / 2;
         const startY = itemBox.y + itemBox.height / 2;
-        const targetX = layoutBox.x + layoutBox.width * fx;
-        const targetY = layoutBox.y + layoutBox.height * fy;
-        // Jiggle toward the layout centre so the second dwell stays inside the same edge zone even
+        const { x: targetX, y: targetY } = resolveDropTarget(layoutBox, dropPosition);
+        // Nudge the second dwell toward the layout centre so it stays inside the same edge zone even
         // when the target sits close to a boundary.
-        const jiggleX = targetX + (fx > 0.5 ? -3 : 3);
-        const jiggleY = targetY + (fy > 0.5 ? -3 : 3);
+        const jiggleX = targetX + (targetX > layoutBox.x + layoutBox.width / 2 ? -3 : 3);
+        const jiggleY = targetY + (targetY > layoutBox.y + layoutBox.height / 2 ? -3 : 3);
 
         await page.mouse.move(startX, startY);
         await page.mouse.down();
