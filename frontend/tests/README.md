@@ -88,10 +88,10 @@ Stories live in `tests/e2e/stories/`. To create a new story using Playwright Cod
 #### Running a single story
 
 While working on one story you usually don't want to run the whole suite. Pass a filter through to
-Playwright with `--` (from the `frontend/` folder):
-
+Playwright with `--`.
 ```bash
-npm run --prefix ./frontend test:e2e:record -- tests/e2e/stories/landingPage.test.ts
+cd frontend
+npm run test:e2e:record -- tests/e2e/stories/landingPage.test.ts
 ```
 
 ## Component tests

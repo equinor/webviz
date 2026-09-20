@@ -28,6 +28,8 @@ export const meta = tutorialMeta({
  */
 test.describe("Simulation Time Series module", () => {
     test("select a Drogon ensemble and render a Simulation Time Series chart", async ({ page, narrate, markStep }) => {
+        // Extended walkthrough: two ensembles, several vectors, all visualization modes and the
+        // toggles — plus narration/pacing when recording — so it needs a larger budget than default.
         test.setTimeout(180_000);
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
@@ -139,6 +141,9 @@ test.describe("Simulation Time Series module", () => {
         );
         await addVectorToSelector(page, "FGOR");
         await addVectorToSelector(page, "WGOR:A1");
+        // Adding vectors refetches the vector lists; wait for that to settle so the toggles below are
+        // neither inert (loading overlay) nor disabled before we click them.
+        await expect(page.getByText("Loading vectors...")).toBeHidden({ timeout: 90_000 });
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await multiVectorNarration;
 
@@ -147,7 +152,9 @@ test.describe("Simulation Time Series module", () => {
         const historicalNarration = narrate(
             "For vectors that have a historical counterpart, the Historical toggle overlays the actual production history alongside the simulated results.",
         );
-        await smoothClick(page, page.getByRole("checkbox", { name: "Historical" }));
+        // The checkbox itself has no accessible name (the label text is a sibling), so click the
+        // visible label text, which toggles the wrapped checkbox.
+        await smoothClick(page, page.getByText("Historical", { exact: true }));
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await historicalNarration;
 
@@ -156,10 +163,10 @@ test.describe("Simulation Time Series module", () => {
         const observationsNarration = narrate(
             "Observations \u2014 the measured data points \u2014 are shown by default when available. We can hide them, and bring them back, with the Observations toggle.",
         );
-        const observationsCheckbox = page.getByRole("checkbox", { name: "Observations" });
-        await smoothClick(page, observationsCheckbox);
+        const observationsToggle = page.getByText("Observations", { exact: true });
+        await smoothClick(page, observationsToggle);
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
-        await smoothClick(page, observationsCheckbox);
+        await smoothClick(page, observationsToggle);
         await expect(loadingBar).toBeHidden({ timeout: 90_000 });
         await observationsNarration;
 

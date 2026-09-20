@@ -5,12 +5,14 @@
  */
 import { expect } from "@playwright/test";
 
+import { DROGON_AHM } from "../support/drogonTestData";
 import { test } from "../support/recordingFixtures";
 import { tutorialMeta } from "../support/tutorialMeta";
 import {
     captureThumbnail,
     createSessionAndSelectEnsemble,
     hideDevOverlays,
+    installCaseRowRedaction,
     installFakeCursor,
 } from "../support/walkthroughHelpers";
 
@@ -27,6 +29,8 @@ test.describe("Session and ensemble selection", () => {
         test.info().annotations.push({ type: "tutorial-slug", description: meta.slug });
 
         await installFakeCursor(page);
+        // Blur every case row in the ensemble case-selector except the Drogon case we use.
+        await installCaseRowRedaction(page, [DROGON_AHM.caseUuid]);
         await hideDevOverlays(page);
 
         await page.goto("/");
