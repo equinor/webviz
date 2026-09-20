@@ -572,7 +572,14 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
 
     return (
         <Button.Group split>
-            <Button variant="contained" tone="accent" disabled={!saveEnabled} onClick={handleSaveClick} iconOnly>
+            <Button
+                variant="contained"
+                tone="accent"
+                disabled={!saveEnabled}
+                onClick={handleSaveClick}
+                iconOnly
+                aria-label="Save session"
+            >
                 {isSaving ? (
                     // Margin is explicitly added to make the spinner's position width match the save icon
                     <CircularProgress size={16} layoutClassName="mx-[2px]" />
@@ -597,7 +604,7 @@ function SessionSaveButton(props: SessionSaveButtonProps): React.ReactNode {
                 ]}
             >
                 {/* TODO: Pressed state when menu is open */}
-                <Button {...props} variant="contained" tone="accent" iconOnly compact>
+                <Button {...props} variant="contained" tone="accent" iconOnly compact aria-label="More save options">
                     <ArrowDropDown style={{ fontSize: 16 }} />
                 </Button>
             </MenuCompositions.Default>

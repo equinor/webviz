@@ -454,6 +454,39 @@ export async function smoothFill(page: Page, locator: Locator, value: string): P
 }
 
 /**
+ * Like {@link smoothFill}, but when recording the text is typed one character at a time (with a
+ * short per-key delay) so it visibly appears as if being typed instead of snapping in all at once.
+ * Falls back to an instant `fill` when not recording to keep the regression run fast.
+ */
+export async function smoothType(page: Page, locator: Locator, value: string): Promise<void> {
+    await smoothMoveToLocator(page, locator);
+    await locator.click();
+    await locator.fill("");
+    if (!RECORDING) {
+        await locator.fill(value);
+        return;
+    }
+    await locator.pressSequentially(value, { delay: 45 });
+}
+
+/**
+ * Where in the layout a dragged module should be dropped. `"center"` drops onto the middle of the
+ * canvas (replacing an empty layout, or nesting into whatever box is under the centre); the four
+ * side positions aim at the layout's edge drop zones so the module is split off to that side of the
+ * existing content (e.g. `"right"` places it beside the current module, `"bottom"` beneath it).
+ */
+export type ModuleDropPosition = "center" | "left" | "right" | "top" | "bottom";
+
+/** Fractional (x, y) target within the layout box for each drop position; see layoutBox edge zones. */
+const DROP_POSITION_FRACTIONS: Record<ModuleDropPosition, { fx: number; fy: number }> = {
+    center: { fx: 0.5, fy: 0.5 },
+    left: { fx: 0.15, fy: 0.5 },
+    right: { fx: 0.85, fy: 0.5 },
+    top: { fx: 0.5, fy: 0.15 },
+    bottom: { fx: 0.5, fy: 0.85 },
+};
+
+/**
  * Drag a module from the modules list onto the dashboard layout.
  *
  * Module placement uses native pointer events (the modules list item publishes a "new module"
@@ -466,11 +499,19 @@ export async function smoothFill(page: Page, locator: Locator, value: string): P
  *     module into the layout; without it the release is a no-op),
  *  5. release to create the module instance.
  *
+ * `dropPosition` chooses where in the layout the module lands: the layout splits off a new region on
+ * whichever edge the pointer dwells over, so aiming at an edge (rather than the centre) drops the
+ * module beside/above/below the existing content instead of nesting into its middle.
+ *
  * The gesture is retried until the module instance actually appears in the layout, because the
  * drop-preview timer can be reset by closely-spaced synthetic pointer moves and occasionally needs
  * another attempt to commit.
  */
-export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string): Promise<void> {
+export async function dragModuleOntoLayout(
+    page: Page,
+    moduleDisplayName: string,
+    dropPosition: ModuleDropPosition = "center",
+): Promise<void> {
     const layout = page.getByTestId("module-layout");
     await expect(layout).toBeVisible();
 
@@ -478,6 +519,8 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
     const droppedModule = layout.getByTitle(moduleDisplayName).first();
 
     await smoothMoveToLocator(page, page.locator(`[title="${moduleDisplayName}"]`).first());
+
+    const { fx, fy } = DROP_POSITION_FRACTIONS[dropPosition];
 
     await expect(async () => {
         const moduleItem = page.locator(`[title="${moduleDisplayName}"]`).first();
@@ -491,8 +534,12 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
 
         const startX = itemBox.x + itemBox.width / 2;
         const startY = itemBox.y + itemBox.height / 2;
-        const targetX = layoutBox.x + layoutBox.width / 2;
-        const targetY = layoutBox.y + layoutBox.height / 2;
+        const targetX = layoutBox.x + layoutBox.width * fx;
+        const targetY = layoutBox.y + layoutBox.height * fy;
+        // Jiggle toward the layout centre so the second dwell stays inside the same edge zone even
+        // when the target sits close to a boundary.
+        const jiggleX = targetX + (fx > 0.5 ? -3 : 3);
+        const jiggleY = targetY + (fy > 0.5 ? -3 : 3);
 
         await page.mouse.move(startX, startY);
         await page.mouse.down();
@@ -505,11 +552,11 @@ export async function dragModuleOntoLayout(page: Page, moduleDisplayName: string
             // pointer is stationary inside the canvas.
             await page.waitForTimeout(700);
             // A tiny jiggle + second dwell makes the preview commit reliably.
-            await page.mouse.move(targetX + 3, targetY + 3, { steps: 3 });
+            await page.mouse.move(jiggleX, jiggleY, { steps: 3 });
             await page.waitForTimeout(700);
             await page.mouse.up();
             // Keep the tracked cursor position in sync so the next glide measures the right distance.
-            lastMousePosition.set(page, { x: targetX + 3, y: targetY + 3 });
+            lastMousePosition.set(page, { x: jiggleX, y: jiggleY });
         } catch (error) {
             // Make sure we never leave the mouse button pressed between retries.
             await page.mouse.up().catch(() => undefined);
