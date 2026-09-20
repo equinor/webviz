@@ -376,6 +376,16 @@ export async function smoothMoveToLocator(page: Page, locator: Locator): Promise
  * its grow-and-fade animation lines up with (rather than trails) the action. Behaves like a plain
  * `locator.click(options)` otherwise.
  */
+/** Friendly keycap labels for click modifiers, so modified clicks read clearly in recorded videos. */
+const MODIFIER_OVERLAY_LABELS: Record<string, string> = {
+    // Recordings run on Linux Desktop Chrome, so "ControlOrMeta" resolves to Control there.
+    Control: "Ctrl",
+    ControlOrMeta: "Ctrl",
+    Meta: "\u2318",
+    Shift: "Shift",
+    Alt: "Alt",
+};
+
 export async function smoothClick(
     page: Page,
     locator: Locator,
@@ -384,6 +394,17 @@ export async function smoothClick(
     await smoothMoveToLocator(page, locator);
     if (RECORDING) {
         try {
+            // When the click holds a modifier (e.g. Ctrl for multi-select), pop a keycap badge so the
+            // recorded video shows the modifier is down — otherwise it looks like a plain click.
+            // Requires installKeyOverlay(); the call is optional-chained so it's a no-op otherwise.
+            const modifierLabels = (options?.modifiers ?? []).map((modifier) => MODIFIER_OVERLAY_LABELS[modifier] ?? modifier);
+            if (modifierLabels.length > 0) {
+                await page.evaluate(
+                    (label) =>
+                        (window as unknown as { __pwShowKey__?: (label: string) => void }).__pwShowKey__?.(label),
+                    modifierLabels.join(" + "),
+                );
+            }
             const box = await locator.boundingBox();
             if (box) {
                 const x = box.x + box.width / 2;
@@ -564,6 +585,29 @@ export async function expandAllGroupTreeNodes(page: Page, container: Locator): P
     }
 }
 
+/**
+ * Add a vector to the Simulation Time Series vector selector by typing its full name and confirming
+ * with Enter, then asserting its tag appears. The vector tree may still be loading when the field is
+ * first focused, so this retries the type-and-confirm until the tag shows up. `vectorName` uses the
+ * selector's colon-separated form for well vectors, e.g. "FOPR" or "WGOR:A1".
+ */
+export async function addVectorToSelector(page: Page, vectorName: string): Promise<void> {
+    const vectorSelectorContainer = page.getByTestId("vector-selector");
+    await expect(vectorSelectorContainer).toBeVisible();
+    const vectorInput = vectorSelectorContainer.locator("input").last();
+    const vectorTag = vectorSelectorContainer.locator(`li[title="${vectorName}"]`);
+
+    await smoothClick(page, vectorInput);
+    await expect(async () => {
+        if ((await vectorTag.count()) === 0) {
+            await vectorInput.fill("");
+            await vectorInput.pressSequentially(vectorName, { delay: 120 });
+            await vectorInput.press("Enter");
+        }
+        await expect(vectorTag).toHaveCount(1);
+    }).toPass({ timeout: 60_000, intervals: [1_000] });
+}
+
 /** Friendly on-screen glyphs for the keys we demo; falls back to the raw key name. */
 const KEY_OVERLAY_LABELS: Record<string, string> = {
     ArrowLeft: "←",
@@ -603,6 +647,8 @@ export async function pressKeyWithOverlay(
 export type SessionAndEnsembleNarrationHooks = {
     narrate?: (text: string) => Promise<void>;
     markStep?: (title: string) => void;
+    /** Further ensemble (iteration) names from the same Drogon case to add alongside the default one. */
+    additionalEnsembleNames?: string[];
 };
 
 /**
@@ -613,10 +659,18 @@ export type SessionAndEnsembleNarrationHooks = {
  * recorded walkthrough (see the "Session and ensemble selection" story) pass the fixtures through;
  * callers that only need the setup done (e.g. other stories reusing this as a precondition) omit
  * them so no narration/step is recorded for these actions.
+ *
+ * `additionalEnsembleNames` lets a story load more than one ensemble from the same case (e.g. to
+ * compare iterations); the "Ensembles in selected case" list is multi-select, so each extra name is
+ * simply clicked before applying.
  */
 export async function createSessionAndSelectEnsemble(
     page: Page,
-    { narrate = async () => undefined, markStep = () => undefined }: SessionAndEnsembleNarrationHooks = {},
+    {
+        narrate = async () => undefined,
+        markStep = () => undefined,
+        additionalEnsembleNames = [],
+    }: SessionAndEnsembleNarrationHooks = {},
 ): Promise<void> {
     const newSessionNarration = narrate("Let's start by creating a new session...");
     markStep("Create a session");
@@ -658,6 +712,12 @@ export async function createSessionAndSelectEnsemble(
     const applyNarration = narrate("We select the ensemble and apply it to load it into the session.");
     markStep("Apply the ensemble");
     await smoothClick(page, page.getByText(DROGON_AHM.ensembleName).first());
+
+    // The "Ensembles in selected case" list is multi-select, so add any further iterations by
+    // simply clicking their rows before applying.
+    for (const additionalEnsembleName of additionalEnsembleNames) {
+        await smoothClick(page, page.getByText(additionalEnsembleName).first());
+    }
 
     await smoothClick(page, page.getByRole("button", { name: "Apply" }).last());
     await pace(page);
