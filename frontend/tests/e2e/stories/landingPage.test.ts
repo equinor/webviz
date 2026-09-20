@@ -79,23 +79,27 @@ test.describe("Landing page", () => {
         markStep("Topbar section");
 
         await smoothClick(page, page.getByRole("button").first());
-        await narrate("The top bar holds a handful of important buttons.");
+        await narrate("The top bar holds important buttons and links.");
 
         await smoothMoveToLocator(page, page.getByRole("link", { name: "Sumo" }));
         await narrate(
-            "On the far left is a link to Sumo, the results management tool that Webviz fetches most of its data from...",
+            "On the far left is a link to Sumo, the results management tool that Webviz fetches most of its data from.",
         );
 
         await smoothMoveToLocator(page, page.getByRole("link", { name: "FMU Hub" }));
-        await narrate("...and next to it, a link to the FMU Hub, with general information about Fast Model Update.");
+        await narrate("Next to it, a link to the FMU Hub.");
 
         await smoothMoveToLocator(page, page.getByRole("button", { name: "Enter fullscreen (F11)" }));
         await narrate("You can also switch to fullscreen mode from here whenever you want more room to work.");
-        await narrate("If you prefer dark mode...");
+
+        const darkModeNarration = narrate("If you prefer dark mode you can toggle it on here.");
         const darkModeButton = page.getByRole("button", { name: "Toggle dark mode" });
         await smoothClick(page, darkModeButton);
-        await narrate("...you can toggle it on here, and switch back to light mode just as easily.");
+        await darkModeNarration;
+        const lightModeNarration = narrate("You can switch back to light mode just as easily.");
         await smoothClick(page, darkModeButton);
+        await lightModeNarration;
+
         await narrate("Finally, you can choose how compact the layout should be.");
         const densityModeButton = page.getByRole("button", { name: "Toggle density mode" });
         await smoothClick(page, densityModeButton);
