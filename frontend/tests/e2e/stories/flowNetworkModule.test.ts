@@ -23,7 +23,7 @@ export const meta = tutorialMeta({
     slug: "flow-network-module",
     category: "Modules",
     title: "Flow Network",
-    description: "Add the Flow Network module and view a dated flow network.",
+    description: "The Flow Network module visualizes the reservoir simulator's network tree as it evolves over time, along with the oil, gas, and water flowing through each branch.",
 });
 
 /**
@@ -63,7 +63,7 @@ test.describe("Flow Network module", () => {
         await pace(page);
 
         const introNarration = narrate(
-            "The Flow Network module visualizes the network topology from the reservoir simulator, and how much of each fluid phase flows through it.",
+            "The Flow Network module visualizes the reservoir simulator's network tree as it evolves over time, along with the oil, gas, and water flowing through each branch.",
         );
         // Open the module's info popover so its description is on screen during the introduction.
         // The help/info icon is the last button on the module list item.
@@ -175,7 +175,7 @@ test.describe("Flow Network module", () => {
         const sweepNarration = narrate(
             "As we move through time, the network evolves: the tree grows as new wells are drilled, and each edge's thickness shows how much of the selected phase flows through that branch.",
         );
-        markStep("Step through the time steps");
+        markStep("Visualize the network over time");
         await sweepSliderAcross(page, timeStepControl, { durationMs: 4_000, direction: "left" });
         await sweepSliderAcross(page, timeStepControl, { durationMs: 4_000, direction: "right" });
         await sweepNarration;
@@ -185,7 +185,7 @@ test.describe("Flow Network module", () => {
         const keyboardNarration = narrate(
             "You can also do this from the keyboard \u2014 with the slider focused, Home and End jump to the first and last time step, and the arrow keys move one step at a time.",
         );
-        markStep("Navigate with the keyboard");
+
         await timeStepThumb.focus();
         await pressKeyWithOverlay(page, timeStepThumb, "Home", { pauseMs: 1_500 });
         await pressKeyWithOverlay(page, timeStepThumb, "End", { pauseMs: 1_500 });

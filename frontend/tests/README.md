@@ -94,6 +94,11 @@ cd frontend
 npm run test:e2e:record -- tests/e2e/stories/landingPage.test.ts
 ```
 
+#### Previewing local tutorial videos in app
+
+The in-app Tutorials dialog loads its videos, thumbnails and steps from an Azure blob container by default.
+If `frontend/public/tutorial-videos` exists (created automatically by `npm run test:e2e:record`) when frontend container starts, `vite` dev server will serve these files instead of from official Azure blob storage container. Delete the folder `frontend/public/tutorial-videos` and restart the frontend dev server in order to back to using Azure as source.
+
 ## Component tests
 
 Component tests are performed using `Playwright`. Each author of a generic component (i.e. placed in the `src/lib/components/` folder) is encouraged to write one or more component tests for their respective component.

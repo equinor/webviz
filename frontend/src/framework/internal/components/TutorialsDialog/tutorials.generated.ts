@@ -6,9 +6,6 @@ export type TutorialVideo = {
     category: string;
     title: string;
     description: string;
-    videoUrl: string;
-    thumbnailUrl: string;
-    stepsUrl: string;
 };
 
 export const TUTORIAL_VIDEOS: TutorialVideo[] = [
@@ -17,44 +14,29 @@ export const TUTORIAL_VIDEOS: TutorialVideo[] = [
         category: "Framework",
         title: "Explore the landing page",
         description: "A tour of the Webviz landing page and how to start working from it.",
-        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.webm",
-        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.png",
-        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/landing-page-overview.steps.json",
     },
     {
         slug: "session-and-ensemble-selection",
         category: "Framework",
-        title: "Create a session and select an ensemble",
-        description: "Start a new session and add a Drogon ensemble to it.",
-        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.webm",
-        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.png",
-        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/session-and-ensemble-selection.steps.json",
+        title: "Create, save and share a session",
+        description: "Start a session, add an ensemble and modules, then save it and share a snapshot.",
     },
     {
         slug: "grid3d-viewer-3d-grid-model",
         category: "Modules",
         title: "3D Viewer",
         description: "Add the 3D Viewer module to a session.",
-        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.webm",
-        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.png",
-        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/grid3d-viewer-3d-grid-model.steps.json",
     },
     {
         slug: "flow-network-module",
         category: "Modules",
         title: "Flow Network",
-        description: "Add the Flow Network module and view a dated flow network.",
-        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/flow-network-module.webm",
-        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/flow-network-module.png",
-        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/flow-network-module.steps.json",
+        description: "The Flow Network module visualizes the reservoir simulator's network tree as it evolves over time, along with the oil, gas, and water flowing through each branch.",
     },
     {
         slug: "simulation-time-series-chart",
         category: "Modules",
         title: "Simulation Time Series",
         description: "Add the Simulation Time Series module.",
-        videoUrl: "https://webviz.blob.core.windows.net/tutorial-videos/simulation-time-series-chart.webm",
-        thumbnailUrl: "https://webviz.blob.core.windows.net/tutorial-videos/simulation-time-series-chart.png",
-        stepsUrl: "https://webviz.blob.core.windows.net/tutorial-videos/simulation-time-series-chart.steps.json",
     },
 ];

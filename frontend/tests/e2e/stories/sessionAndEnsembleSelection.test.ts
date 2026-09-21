@@ -76,7 +76,6 @@ test.describe("Session and ensemble selection", () => {
         await ensureModuleListItemVisible("Simulation Time Series");
         await dragModuleOntoLayout(page, "Simulation Time Series");
         await addModulesNarration;
-        await pace(page);
 
         const dropRightNarration = narrate(
             "You choose where a module goes by where you drop it. Dropping near the right edge places the next one beside the first, splitting the canvas.",
@@ -84,7 +83,6 @@ test.describe("Session and ensemble selection", () => {
         await ensureModuleListItemVisible("Flow Network");
         await dragModuleOntoLayout(page, "Flow Network", "right");
         await dropRightNarration;
-        await pace(page);
 
         const dropBottomNarration = narrate(
             "And dropping near the bottom edge stacks a module underneath, so you can arrange the layout exactly how you want it.",

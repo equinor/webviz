@@ -47,7 +47,9 @@ export const test = base.extend<NarrationFixtures, NarrationWorkerFixtures>({
         // The page (and its recording) has just been created, so this is ~frame zero of the video.
         narrator.markRecordingStart();
         await use(narrator);
-        narrator.flush();
+        // Persist the story slug (pushed as an annotation by the test) so the publish step can key off it.
+        const slug = testInfo.annotations.find((annotation) => annotation.type === "tutorial-slug")?.description;
+        narrator.flush(slug);
     },
 
     narrate: async ({ narrator }, use) => {

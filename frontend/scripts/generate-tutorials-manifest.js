@@ -6,9 +6,6 @@ import glob from "fast-glob";
 
 import { parseTutorialMeta } from "./lib/parseTutorialMeta.js";
 
-/** Private container (SAS-gated). Blob names aren't sensitive; a short-lived read token is appended when fetching. */
-const TUTORIAL_VIDEOS_BASE_URL = "https://webviz.blob.core.windows.net/tutorial-videos";
-
 const STORIES_GLOB = "tests/e2e/stories/[^_]*.test.ts";
 const OUT_PATH = path.resolve("src/framework/internal/components/TutorialsDialog/tutorials.generated.ts");
 
@@ -56,9 +53,6 @@ export async function generateTutorialsManifest() {
             `        category: ${JSON.stringify(entry.category)},\n` +
             `        title: ${JSON.stringify(entry.title)},\n` +
             `        description: ${JSON.stringify(entry.description)},\n` +
-            `        videoUrl: "${TUTORIAL_VIDEOS_BASE_URL}/${entry.slug}.webm",\n` +
-            `        thumbnailUrl: "${TUTORIAL_VIDEOS_BASE_URL}/${entry.slug}.png",\n` +
-            `        stepsUrl: "${TUTORIAL_VIDEOS_BASE_URL}/${entry.slug}.steps.json",\n` +
             `    },`,
     );
 
@@ -70,9 +64,6 @@ export async function generateTutorialsManifest() {
         `    category: string;\n` +
         `    title: string;\n` +
         `    description: string;\n` +
-        `    videoUrl: string;\n` +
-        `    thumbnailUrl: string;\n` +
-        `    stepsUrl: string;\n` +
         `};\n\n` +
         `export const TUTORIAL_VIDEOS: TutorialVideo[] = [\n${entryLines.join("\n")}\n];\n`;
 

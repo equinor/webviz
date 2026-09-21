@@ -12,6 +12,7 @@ import { Dialog } from "@lib/components/Dialog";
 import { Heading, Paragraph } from "@lib/components/Typography/compositions";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
+import { getStepsUrl, getThumbnailUrl, getVideoUrl } from "./tutorialMedia";
 import { TUTORIAL_VIDEOS, type TutorialVideo } from "./tutorials.generated";
 
 Icon.add({ play_circle });
@@ -151,7 +152,7 @@ function TutorialCard(props: TutorialCardProps): React.ReactNode {
             >
                 {/* loading="lazy" + no <video> here: only the poster image is fetched until a card is clicked. */}
                 <img
-                    src={appendSasToken(props.video.thumbnailUrl, props.sasToken)}
+                    src={appendSasToken(getThumbnailUrl(props.video.slug), props.sasToken)}
                     alt=""
                     loading="lazy"
                     className="h-full w-full object-cover"
@@ -194,7 +195,7 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
         const controller = new AbortController();
         setSteps([]);
         setCurrentTime(0);
-        fetch(`${video.stepsUrl}?${sasToken}`, { signal: controller.signal })
+        fetch(`${getStepsUrl(video.slug)}?${sasToken}`, { signal: controller.signal })
             .then((response) => (response.ok ? response.json() : null))
             .then((payload: unknown) => {
                 if (!payload || typeof payload !== "object" || !("steps" in payload)) {
@@ -311,8 +312,8 @@ function TutorialDetails(props: TutorialDetailsProps): React.ReactNode {
                     controls
                     autoPlay
                     preload="metadata"
-                    poster={appendSasToken(props.video.thumbnailUrl, sasToken)}
-                    src={appendSasToken(props.video.videoUrl, sasToken)}
+                    poster={appendSasToken(getThumbnailUrl(props.video.slug), sasToken)}
+                    src={appendSasToken(getVideoUrl(props.video.slug), sasToken)}
                     onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
                     className="border-neutral-subtle shadow-elevation-overlay aspect-video h-auto max-h-full w-auto max-w-full rounded-md border-2 object-contain"
                     style={{ viewTransitionName: `tutorial-${props.video.slug}` } as React.CSSProperties}

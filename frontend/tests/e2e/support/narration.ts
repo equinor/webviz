@@ -239,14 +239,14 @@ export class Narrator {
     }
 
     /** Write the narration manifest into the test's output folder (next to the audio and video). */
-    flush(): void {
+    flush(slug?: string): void {
         if (this.entries.length === 0 && this.steps.length === 0) {
             return;
         }
         const manifest = [...this.entries].sort((a, b) => a.startMs - b.startMs);
         writeFileSync(
             join(this.outputDir, NARRATION_MANIFEST_FILENAME),
-            JSON.stringify({ clips: manifest, steps: this.steps }, null, 2),
+            JSON.stringify({ slug, clips: manifest, steps: this.steps }, null, 2),
         );
     }
 }
@@ -256,7 +256,7 @@ export const NOOP_NARRATOR = {
     markRecordingStart: (): void => undefined,
     markStep: (_title: string): void => undefined,
     narrate: (): Promise<void> => Promise.resolve(),
-    flush: (): void => undefined,
+    flush: (_slug?: string): void => undefined,
 } as const;
 
 export type NarratorLike = Pick<Narrator, "markRecordingStart" | "markStep" | "narrate" | "flush">;

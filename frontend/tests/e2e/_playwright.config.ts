@@ -36,11 +36,8 @@ export default defineConfig({
     workers: 1,
     /*
      * Reporter to use. See https://playwright.dev/docs/test-reporters
-     * The JSON report lets a recording run's publish step (support/publish-tutorials.mjs) find each
-     * story's video/thumbnail by its "tutorial-slug" annotation, without depending on Playwright's
-     * own (hash-truncated) output folder names.
      */
-    reporter: record ? [["html"], ["json", { outputFile: "../../test-results/report.json" }]] : "html",
+    reporter: "html",
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
