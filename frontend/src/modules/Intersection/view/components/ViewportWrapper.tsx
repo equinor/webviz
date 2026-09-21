@@ -77,7 +77,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
         layerItemsBounds: props.layerItemsBounds,
         focusBounds: props.focusBounds,
         containerSize: mainDivSize,
-        workbenchServices: props.workbenchServices,
+        syncSettingsService: props.syncSettingsService,
         viewContext: props.viewContext,
     });
 
