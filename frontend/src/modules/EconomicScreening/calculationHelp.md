@@ -96,7 +96,18 @@ Incremental IRR and break-even oil price are calculated from the incremental cas
 
 ## Early value
 
-Early values start at the selected evaluation start and include all years through the selected early end year. They use the same valuation date as the full evaluation; shortening the horizon does not rebase discounting. Full-evaluation outputs remain separate.
+Early value answers a different question from the full-evaluation result: **how much discounted volume or cash flow has accumulated by a chosen year?**
+
+For example, suppose the evaluation covers 2030 through 2050, with a valuation date of 1 January 2030:
+
+- **Full evaluation:** "What is the discounted value of the whole forecast, through 2050?"
+- **Early value through 2035:** "How much discounted value has accumulated from 2030 through the end of 2035?"
+
+Both use the same production data, prices, costs, discount rate, and valuation date. The early result includes only volumes and applicable cash flows through the end of 2035; it does not move the valuation date to 2035. Early discounted cash flow includes the entered costs in that period, so it can be negative while investment is being recovered. Discounted volume outputs do not require prices or costs.
+
+This is useful when two development options produce similar total volumes but one delivers production sooner. Early outputs can also feed a connected analysis module, for example a tornado plot for a regular designed-sensitivity ensemble, to show which uncertainties affect early value.
+
+**Choosing an early-value end year adds separate cumulative outputs; it does not shorten the main evaluation.** The full-evaluation results and channels still cover 2030 through 2050 in this example.
 
 ## Reading distributions and units
 
