@@ -11,6 +11,10 @@
 
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
 
+### Fixed
+
+- **Well trajectories**: Failures when fetching well perforations or completions/screens no longer prevent drilled wellbore trajectories from loading; error details are now surfaced via the provider status indicator while still displaying trajectories.
+
 ### Added
 
 - **Multiple dashboards**: A session can now hold several dashboards. Add, clone, rename, remove, and reorder them from the dashboard bar, and switch between them instantly — a dashboard you switch away from stays ready in the background for a while, so coming back to it doesn't reload anything.

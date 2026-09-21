@@ -28,6 +28,7 @@ import { sortStringArray } from "@lib/utils/arrays";
 import { Setting } from "@modules/_shared/DataProviderFramework/settings/settingsDefinitions";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
+import { handleOptionalDpfQueryError } from "@modules/_shared/utils/propagateApiErrorToStatusWriter";
 
 import { NO_UPDATE } from "../../delegates/_utils/Dependency";
 import type {
@@ -123,12 +124,14 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
         getGlobalSetting,
         getSetting,
         getStoredData,
+        getStatusWriter,
         fetchQuery,
     }: FetchDataParams<
         DrilledWellboreTrajectoriesSettings,
         DrilledWellboreTrajectoriesData,
         DrilledWellboreTrajectoriesStoredData
     >): Promise<DrilledWellboreTrajectoriesData> {
+        const statusWriter = getStatusWriter();
         const fieldIdentifier = getGlobalSetting("fieldId");
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const selectedWellboreHeaders = getSetting(Setting.WELLBORES);
@@ -158,7 +161,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const allPerforations = await fetchQuery({
             ...perforationsQueryOptions,
-        });
+        }).catch((err) => handleOptionalDpfQueryError(err, statusWriter));
 
         const screensQueryOptions = getFieldScreensOptions({
             query: { field_identifier: fieldIdentifier ?? "" },
@@ -166,7 +169,7 @@ export class DrilledWellboreTrajectoriesProvider implements CustomDataProviderIm
 
         const allScreens = await fetchQuery({
             ...screensQueryOptions,
-        });
+        }).catch((err) => handleOptionalDpfQueryError(err, statusWriter));
 
         const formationFilter = getSetting(Setting.WELLBORE_DEPTH_FORMATION_FILTER);
         const surfaceAttribute = getSetting(Setting.WELLBORE_DEPTH_FILTER_ATTRIBUTE);

@@ -11,6 +11,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { AdjustedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdjustedWellsLayer";
+import { PolylinesLayer } from "@modules/_shared/customDeckGlLayers/PolylinesLayer";
 import { GroupType } from "@modules/_shared/DataProviderFramework/groups/groupTypes";
 import type {
     AssemblerProduct,
@@ -23,9 +24,10 @@ import type { ViewportTypeExtended, ViewsTypeExtended } from "@modules/_shared/t
 import { PlaceholderLayer } from "../../customDeckGlLayers/PlaceholderLayer";
 import type { LayerTransformationLookupMap } from "../../utils/subsurfaceViewer/hoverTransformations";
 import {
+    makeHoverTransformationLookup,
+    transformPolylineToFenceHoverData,
     transformToWellboreHoverData,
     transformToWorldPosHoverData,
-    makeHoverTransformationLookup,
 } from "../../utils/subsurfaceViewer/hoverTransformations";
 
 import { InteractionWrapper } from "./_components/InteractionWrapper";
@@ -38,7 +40,7 @@ export type DpfSubsurfaceViewerContextType = {
     onVerticalScaleChange?: (verticalScale: number) => void;
     visualizationAssemblerProduct: AssemblerProduct<any>;
     preferredViewLayout: ViewLayout;
-    bounds: BoundingBox2D | undefined;
+    bounds: BoundingBox2D | BoundingBox3D | undefined;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     hoverService: HoverService;
@@ -77,6 +79,7 @@ const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup(
     [AdjustedWellsLayer, transformToWellboreHoverData],
     [MapLayer, transformToWorldPosHoverData],
     [Grid3DLayer, transformToWorldPosHoverData],
+    [PolylinesLayer, transformPolylineToFenceHoverData],
 );
 
 export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProps): React.ReactNode {
@@ -236,7 +239,7 @@ export function DpfSubsurfaceViewerWrapper(props: DpfSubsurfaceViewerWrapperProp
                 ...props,
                 onViewStateChange: handleViewStateChange,
                 viewState,
-                bounds: props.visualizationMode === "2D" ? bounds2D : undefined,
+                bounds: props.visualizationMode === "2D" ? bounds2D : bounds3D,
                 moduleInstanceId: props.moduleInstanceId,
                 hoverService: props.hoverService,
                 hoverDataTransformationLookup: hoverDataTransformationsLookup,

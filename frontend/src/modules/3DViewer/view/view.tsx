@@ -4,11 +4,18 @@ import { useSetAtom } from "jotai";
 
 import type { ModuleViewProps } from "@framework/Module";
 import { useStableAtomGetter } from "@framework/utils/atomUtils";
+import {
+    makeHoverTransformationLookup,
+    transformToFenceHoverData,
+} from "@modules/_shared/utils/subsurfaceViewer/hoverTransformations";
 
+import { SeismicFenceMeshLayer } from "../customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 import type { Interfaces } from "../interfaces";
 
 import { verticalScaleAtom, viewStateAtom } from "./atoms/baseAtoms";
 import { VisualizationAssemblerWrapper } from "./components/VisualizationAssemblerWrapper";
+
+const HOVER_TRANSFORMATIONS = makeHoverTransformationLookup([SeismicFenceMeshLayer, transformToFenceHoverData]);
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const preferredViewLayout = props.viewContext.useSettingsToViewInterfaceValue("preferredViewLayout");
@@ -31,6 +38,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <VisualizationAssemblerWrapper
+            customHoverDataTransformations={HOVER_TRANSFORMATIONS}
             moduleInstanceId={props.viewContext.getInstanceIdString()}
             fieldId={fieldId}
             dataProviderManager={dataProviderManager}
