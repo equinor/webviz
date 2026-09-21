@@ -18,7 +18,38 @@ import type {
 } from "@modules/_shared/InplaceVolumes/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumes/volumeStringUtils";
 
-import type { TableColumnsConfig, TableRow } from "../types";
+import type { TableColumnsConfig, TableHeading, TableRow } from "../types";
+
+export type LeafColumn = {
+    /** Row property key for this leaf (e.g. "ZONE" or "STOIIP-Mean") */
+    key: string;
+    heading: TableHeading;
+    /** Labels from the top-level heading down to the leaf, e.g. ["STOIIP", "Mean"] */
+    labelPath: string[];
+};
+
+/**
+ * Flattens a `TableColumnsConfig` into ordered leaf columns, retaining the heading path.
+ * Preserves `Object.entries` insertion order at every level (on-screen column order).
+ */
+export function collectLeafColumns(columnsConfig: TableColumnsConfig): LeafColumn[] {
+    const leafColumns: LeafColumn[] = [];
+
+    function collectRecursive(heading: TableHeading, key: string, parentLabels: string[]) {
+        const labelPath = [...parentLabels, heading.label];
+        if (heading.subHeading) {
+            Object.entries(heading.subHeading).forEach(([subKey, subHeading]) =>
+                collectRecursive(subHeading, subKey, labelPath),
+            );
+        } else {
+            leafColumns.push({ key, heading, labelPath });
+        }
+    }
+
+    Object.entries(columnsConfig).forEach(([key, heading]) => collectRecursive(heading, key, []));
+
+    return leafColumns;
+}
 
 /**
  * Sorts rows by non-result columns in heading order. Index columns use the preferred category order;
