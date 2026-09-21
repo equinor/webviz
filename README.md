@@ -79,7 +79,7 @@ We have four applications in Radix built automatically and redeployed when pushi
 - [Review2 application](https://frontend-webviz-review2.c3.radix.equinor.com/) built from the `review2` branch.
 - [Review3 application](https://frontend-webviz-review3.c3.radix.equinor.com/) built from the `review3` branch.
 
-You can push/update e.g. the `review` branch with state of another feature branch with:
+You can update, for example, the `review` branch with the state of another feature branch by running:
 
 ```
 git push upstream <featurebranchname>:review --force
