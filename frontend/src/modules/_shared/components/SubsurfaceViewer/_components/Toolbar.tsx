@@ -127,6 +127,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     function handlePolylineNameChange(event: React.ChangeEvent<HTMLInputElement>) {
         setPolylineName(event.target.value);
+        props.polylinesPlugin.updateActivePolylineName(event.target.value);
     }
 
     function handleSavePolylineClick() {

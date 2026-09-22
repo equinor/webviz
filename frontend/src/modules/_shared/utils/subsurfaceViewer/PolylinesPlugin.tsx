@@ -260,6 +260,12 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 }
                 return;
             }
+            return;
+        }
+        if (key === "Enter") {
+            if (this._editingPolylineDraft && this._editingPolylineDraft.name.trim().length > 0) {
+                this.saveActivePolyline(this._editingPolylineDraft.name);
+            }
         }
     }
 
@@ -350,6 +356,18 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             this._currentEditingPolylinePathReferencePointIndex = newReferencePathPointIndex;
             this.requireRedraw();
         }
+    }
+
+    /**
+     * Updates the in-progress draft's name as the user types it, so the draft always reflects
+     * the latest typed name (e.g. for `handleKeyUpEvent`'s Enter-to-save shortcut) even before
+     * the name is committed via `saveActivePolyline`.
+     */
+    updateActivePolylineName(name: string): void {
+        if (!this._editingPolylineDraft) {
+            return;
+        }
+        this._editingPolylineDraft = { ...this._editingPolylineDraft, name };
     }
 
     private updateActivePolylinePath(newPath: number[][]): void {
