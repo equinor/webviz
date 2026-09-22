@@ -612,6 +612,17 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                     if (!polyline) {
                         return;
                     }
+
+                    // A draft can still be active while in IDLE mode (e.g. a drawing mode was
+                    // toggled off without saving) - other polylines stay pickable in that state.
+                    // Finish it first so it isn't silently overwritten; if it's still active
+                    // afterwards (e.g. save was blocked by an invalid name), leave it be rather
+                    // than replacing it.
+                    this.finishActivePolylineEditing();
+                    if (this._editingPolylineDraft) {
+                        return;
+                    }
+
                     this._editingPolylineDraft = { ...polyline, path: polyline.path.map((point) => [...point]) };
                     this.setCurrentEditingPolylineId(polyline.id, true);
                     this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
