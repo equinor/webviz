@@ -27,6 +27,18 @@ export type Polyline = {
     version?: number;
 };
 
+enum PolylineDraftOrigin {
+    // Created from scratch - saving it must always append a new entry to `_polylines`.
+    NEW = "new",
+    // Started from a polyline that already existed in `_polylines` - saving it must always
+    // replace that entry, and it must be cancelled (not saved as new) if that entry disappears
+    // from `_polylines` before the draft is saved, e.g. deleted by another mounted viewer
+    // sharing the same store.
+    EXISTING = "existing",
+}
+
+type PolylineDraft = Polyline & { origin: PolylineDraftOrigin };
+
 export enum PolylineEditingMode {
     DRAW = "draw",
     ADD_POINT = "add_point",
@@ -87,7 +99,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
     private _currentEditingPolylinePathReferencePointIndex: number | null = null;
     // Live, uncommitted copy of the polyline currently being drawn/edited - new or pre-existing.
     // `_polylines` (the committed/persisted set) is only ever mutated by an explicit save or delete.
-    private _editingPolylineDraft: Polyline | null = null;
+    private _editingPolylineDraft: PolylineDraft | null = null;
     private _polylines: Polyline[] = [];
     private _editingMode: PolylineEditingMode = PolylineEditingMode.DISABLED;
     private _draggedPathPointIndex: number | null = null;
@@ -130,6 +142,22 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         if (isEqual(this._polylines, polylines)) {
             return;
         }
+
+        // If the polyline the active draft was started from is no longer present in the
+        // incoming set (e.g. deleted by another mounted viewer sharing the same store), the
+        // draft is now orphaned - saving it would silently resurrect the polyline that was
+        // deleted elsewhere. Cancel it instead of letting it linger. A brand-new draft (not yet
+        // saved anywhere) has nothing to reconcile against and is left untouched.
+        const draft = this._editingPolylineDraft;
+        if (
+            draft &&
+            draft.origin === PolylineDraftOrigin.EXISTING &&
+            !polylines.some((polyline) => polyline.id === draft.id)
+        ) {
+            this.discardActivePolyline();
+            this.setEditingMode(PolylineEditingMode.IDLE);
+        }
+
         this._polylines = polylines;
         this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.POLYLINES);
         this.requireRedraw();
@@ -199,9 +227,14 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             return;
         }
 
-        const finalizedPolyline: Polyline = { ...draft, name };
-        const existingIndex = this._polylines.findIndex((polyline) => polyline.id === draft.id);
-        if (existingIndex === -1) {
+        const finalizedPolyline: Polyline = {
+            id: draft.id,
+            name,
+            color: draft.color,
+            path: draft.path,
+            version: draft.version,
+        };
+        if (draft.origin === PolylineDraftOrigin.NEW) {
             this._polylines = [...this._polylines, finalizedPolyline];
         } else {
             this._polylines = this._polylines.map((polyline) =>
@@ -473,6 +506,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                 color: this._colorGenerator.next().value,
                 path: [[...pickingInfo.coordinate]],
                 version: 0,
+                origin: PolylineDraftOrigin.NEW,
             };
             this._currentEditingPolylinePathReferencePointIndex = 0;
             this.setCurrentEditingPolylineId(id, true);
@@ -623,7 +657,11 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
                         return;
                     }
 
-                    this._editingPolylineDraft = { ...polyline, path: polyline.path.map((point) => [...point]) };
+                    this._editingPolylineDraft = {
+                        ...polyline,
+                        path: polyline.path.map((point) => [...point]),
+                        origin: PolylineDraftOrigin.EXISTING,
+                    };
                     this.setCurrentEditingPolylineId(polyline.id, true);
                     this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
                 },
