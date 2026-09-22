@@ -15,8 +15,7 @@ export function scaleHexColorLightness(
     const min = Math.max(0.0, minScale);
     const max = Math.min(2.0, maxScale);
 
-    // False positive
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    // eslint-disable-next-line @eslint-react/rules-of-hooks -- False positive
     const hslColor = useMode(modeHsl);
     const result = hslColor(hexColor);
     if (result) {

@@ -154,13 +154,13 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
     const [contextLost, setContextLost] = React.useState(false);
     const [generation, bumpGeneration] = React.useReducer((x) => x + 1, 0);
 
-    const wasDocumentVisible = React.useRef(isDocumentVisible);
-    const redrawFallbackTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const wasDocumentVisibleRef = React.useRef(isDocumentVisible);
+    const redrawFallbackTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const clearRedrawFallback = React.useCallback(function clearRedrawFallback() {
-        if (redrawFallbackTimeout.current !== null) {
-            clearTimeout(redrawFallbackTimeout.current);
-            redrawFallbackTimeout.current = null;
+        if (redrawFallbackTimeoutRef.current !== null) {
+            clearTimeout(redrawFallbackTimeoutRef.current);
+            redrawFallbackTimeoutRef.current = null;
         }
     }, []);
 
@@ -195,7 +195,7 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
             // "redraw" restore is under way. It can silently never complete (see
             // REDRAW_RESTORE_TIMEOUT_MS), so arm a fallback remount in case the event never arrives.
             clearRedrawFallback();
-            redrawFallbackTimeout.current = setTimeout(remount, REDRAW_RESTORE_TIMEOUT_MS);
+            redrawFallbackTimeoutRef.current = setTimeout(remount, REDRAW_RESTORE_TIMEOUT_MS);
         },
         [contextLost, props.adapter, props.recoveryStrategy, remount, clearRedrawFallback],
     );
@@ -241,8 +241,8 @@ export function GpuResourceBoundary(props: GpuResourceBoundaryProps): JSX.Elemen
 
     React.useEffect(
         function onVisibilityChangeEffect() {
-            const documentBecameVisible = !wasDocumentVisible.current && isDocumentVisible;
-            wasDocumentVisible.current = isDocumentVisible;
+            const documentBecameVisible = !wasDocumentVisibleRef.current && isDocumentVisible;
+            wasDocumentVisibleRef.current = isDocumentVisible;
 
             if (contextLost && documentBecameVisible) {
                 restore();

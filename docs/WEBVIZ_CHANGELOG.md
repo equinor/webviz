@@ -11,8 +11,14 @@
 
 - **Leaving a session**: The close (✕) button has been removed. Instead, a "Start" breadcrumb now appears in front of the session name in the top bar — click it to leave the current session or snapshot and return to the start page.
 
+### Fixed
+
+- **Well trajectories**: Failures when fetching well perforations or completions/screens no longer prevent drilled wellbore trajectories from loading; error details are now surfaced via the provider status indicator while still displaying trajectories.
+
 ### Added
 
+- **In-place volumes**: Delta ensembles can now be used in plots and tables to compare volumes per realization, with statistics calculated from the differences.
+- **In-place volumes**: A new "Inplace Volumes Comparison" module shows a waterfall chart decomposing the change in STOIIP/GIIP between two ensembles or tables into contributions from BULK, porosity, saturation, and formation volume factor.
 - **Planned well trajectories**: Planned well trajectories from SMDA can now be displayed in the 2D and 3D viewers and used as the path for Intersection views.
 - **Fluid contact surfaces**: Initial fluid contacts are now available as a separate layer in the 2D, 3D, and Intersection views.
 - **Top bar**: Clicking the FMU logo or the "FMU Analysis" title reloads the application and returns you to the start page.

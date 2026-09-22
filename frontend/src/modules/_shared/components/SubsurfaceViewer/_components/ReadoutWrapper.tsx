@@ -3,7 +3,7 @@ import React from "react";
 import type { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { View as DeckGlView } from "@deck.gl/core";
 import type { DeckGLRef } from "@deck.gl/react";
-import type { LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
+import type { BoundingBox2D, LightsType, MapMouseEvent, ViewportType, WellFeature } from "@webviz/subsurface-viewer";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { isEqual } from "lodash-es";
 import { Key } from "ts-key-enum";
@@ -79,6 +79,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlRef = React.useRef<DeckGLRef | null>(null);
     const clickTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // In 3D, the multi-picking picks in a ray behind the cursor, which causes
+    // unintuitive picking points for layers with different topology (i.e clicking
+    // a well would hit the map behind the trajectory). Therefore we limit it to 1
     const userPickingDepth = ctx.visualizationMode === "3D" ? 1 : USER_PICKING_DEPTH;
 
     React.useImperativeHandle(props.deckGlRef, () => deckGlRef.current);
@@ -87,6 +90,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.deckGlManager,
         DeckGlInstanceManagerTopic.IS_READOUT_SUPPRESSED,
     );
+
+    const [prevIsReadoutSuppressed, setPrevIsReadoutSuppressed] = React.useState(isReadoutSuppressed);
 
     React.useEffect(function onMountEffect() {
         return function onUnmountEffect() {
@@ -113,6 +118,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             if (!deck || !viewports?.length || x === undefined || y === undefined) return {};
 
             const pickingInfo: PickingInfoPerView = { ...initialPickingInfo };
+            const activeViewportId = Object.keys(initialPickingInfo)?.[0];
 
             // The SubsurfaceViewer will normally manage vertical-scale transformations for us,
             // but here we're picking directly with deck.gl, so we need to transform the
@@ -120,6 +126,12 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const coord = getScaledCoordinate(worldCoordinates, props.verticalScale);
 
             for (const viewport of viewports) {
+                // As mentioned above, since 3D picking across different topologies is un-intuitive,
+                // we only allow picks from the active viewport here
+                if (ctx.visualizationMode === "3D" && viewport.id !== activeViewportId) {
+                    continue;
+                }
+
                 // If we already have picks for this viewport (e.g. from initial hover), skip it if
                 // picks are already at max depth
                 if (initialPickingInfo[viewport.id] && initialPickingInfo[viewport.id].length >= maxPickingDepth) {
@@ -149,7 +161,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             }
             return pickingInfo;
         },
-        [props.verticalScale],
+        [ctx.visualizationMode, props.verticalScale],
     );
 
     const collectReadoutInformationFromAllViewports = React.useCallback(
@@ -196,16 +208,33 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     // debounced picks, instead of relying solely on the next hover/click event to notice.
     // Note: only the deep-pick readout is suppressed - the plain x/y/z coordinate readout stays as-is
     // (it will keep updating live via hover events while suppression is active).
+    if (prevIsReadoutSuppressed !== isReadoutSuppressed) {
+        setPrevIsReadoutSuppressed(isReadoutSuppressed);
+
+        if (isReadoutSuppressed) {
+            setReadoutMode("hover");
+            setPickingInfoPerView({});
+        }
+    }
+
     React.useEffect(
         function resetOnReadoutSuppressed() {
             if (!isReadoutSuppressed) {
                 return;
             }
             debouncedMultiViewPicking.cancel();
-            setReadoutMode("hover");
-            clearPicks();
+            onViewerHover?.(null);
+            onViewportHover?.(null);
+            onPickingInfoChange?.({});
         },
-        [isReadoutSuppressed, debouncedMultiViewPicking, clearPicks],
+        [
+            isReadoutSuppressed,
+            debouncedMultiViewPicking,
+            clearPicks,
+            onViewerHover,
+            onViewportHover,
+            onPickingInfoChange,
+        ],
     );
 
     const handleHoverEvent = React.useCallback(
@@ -335,7 +364,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             const newPickInfoDict = collectReadoutInformationFromAllViewports(
                 pickingInfoWithCoordinates.coordinate,
                 userPickingDepth,
-                {},
+                // ! We make sure to include the hovered id here, so the later logic can check what viewport we hovered
+                { [hoveredViewPort.id]: [] },
             );
 
             const yieldedPicks = Object.values(newPickInfoDict).some((picks) => picks.length > 0);
@@ -408,7 +438,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const deckGlProps = props.deckGlManager.makeDeckGlComponentProps({
         deckGlRef,
         id: `subsurface-viewer-${id}`,
-        bounds: ctx.bounds,
+        bounds: ctx.visualizationMode === "2D" ? (ctx.bounds as BoundingBox2D) : undefined,
         views: {
             ...props.views,
             viewports: props.views.viewports,

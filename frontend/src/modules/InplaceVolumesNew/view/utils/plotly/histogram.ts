@@ -2,8 +2,7 @@ import type { Dash, PlotData } from "plotly.js";
 
 import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { formatInplaceVolumesValue } from "@modules/_shared/InplaceVolumes/numberFormat";
-
-import { computeStatistics } from "../statistics";
+import { computeStatistics } from "@modules/_shared/utils/math/statistics";
 
 export type PlotlyHistogramTracesOptions = {
     title: string;
@@ -27,10 +26,14 @@ export function makePlotlyHistogramTraces({
     showStatisticalLabels,
     showPercentageInBar,
 }: PlotlyHistogramTracesOptions): Partial<PlotData>[] {
+    const finiteValues = values.filter(Number.isFinite);
+    if (finiteValues.length === 0) {
+        return [];
+    }
     const data: Partial<PlotData>[] = [];
 
     const histogram = makeHistogramTrace({
-        xValues: values,
+        xValues: finiteValues,
         numBins: numBins,
         color,
         showPercentageInBar,
@@ -43,7 +46,7 @@ export function makePlotlyHistogramTraces({
 
     if (showStatisticalMarkers) {
         const statisticLines = createStatisticLinesForHistogram(
-            values,
+            finiteValues,
             title,
             color,
             numBins,
@@ -82,8 +85,8 @@ function createStatisticLinesForHistogram(
     const binSize = range / numBins;
 
     const binCounts = new Array(numBins).fill(0);
-    xValues.forEach((value) => {
-        const binIndex = Math.min(Math.floor((value - xMin) / binSize), numBins - 1);
+    xValues.forEach(function countValueInBin(value) {
+        const binIndex = binSize === 0 ? 0 : Math.min(Math.floor((value - xMin) / binSize), numBins - 1);
         binCounts[binIndex]++;
     });
 

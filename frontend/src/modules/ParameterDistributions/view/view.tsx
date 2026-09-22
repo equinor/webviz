@@ -48,7 +48,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     ensembleSetParameterArray = sortPriorPosteriorParameters(ensembleSetParameterArray, parameterSortingMethod);
 
     return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        <div className="h-full w-full" ref={wrapperDivRef}>
             <VirtualizedParameterDistributionPlot
                 key={`param-plots-${ensembleSetParameterArray.length}`}
                 dataArr={ensembleSetParameterArray}

@@ -1,6 +1,7 @@
-import type { UseQueryResult } from "@tanstack/react-query";
+import { CancelledError, type UseQueryResult } from "@tanstack/react-query";
 
 import type { SettingsStatusWriter, ViewStatusWriter } from "@framework/StatusWriter";
+import type { StatusWriter as DpfStatusWriter } from "@framework/types/statusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 function createErrorMessageFromHelper(
@@ -23,7 +24,7 @@ function propagateApiError(error: Error, statusWriter: ViewStatusWriter | Settin
     return createErrorMessageFromHelper(helper, statusWriter);
 }
 
-export function usePropagateApiErrorToStatusWriter(
+export function propagateApiErrorToStatusWriter(
     error: Error | null,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
@@ -32,7 +33,7 @@ export function usePropagateApiErrorToStatusWriter(
     return propagateApiError(error, statusWriter);
 }
 
-export function usePropagateAllApiErrorsToStatusWriter(
+export function propagateAllApiErrorsToStatusWriter(
     errors: Error[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string[] {
@@ -48,16 +49,26 @@ function propagateQueryError(
     return createErrorMessageFromHelper(helper, statusWriter);
 }
 
-export function usePropagateQueryErrorToStatusWriter(
+export function propagateQueryErrorToStatusWriter(
     queryResult: UseQueryResult<any, any>,
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string | null {
     return propagateQueryError(queryResult, statusWriter);
 }
 
-export function usePropagateQueryErrorsToStatusWriter(
+export function propagateQueryErrorsToStatusWriter(
     queryResults: UseQueryResult<any, any>[],
     statusWriter: ViewStatusWriter | SettingsStatusWriter,
 ): string[] {
     return queryResults.map((res) => propagateQueryError(res, statusWriter)).filter((error) => error) as string[];
+}
+
+export function handleOptionalDpfQueryError(err: unknown, statusWriter: DpfStatusWriter): null {
+    if (err instanceof CancelledError) {
+        throw err;
+    }
+    const apiError = err instanceof Error ? ApiErrorHelper.fromError(err) : null;
+    const message = apiError ? apiError.makeFullErrorMessage() : err instanceof Error ? err.message : String(err);
+    statusWriter.addError(message);
+    return null;
 }

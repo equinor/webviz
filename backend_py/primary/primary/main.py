@@ -9,6 +9,7 @@ from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+from azure.identity.aio import WorkloadIdentityCredential, ClientSecretCredential
 
 from webviz_services.services_config import ServicesConfig, init_services_config
 from webviz_services.sumo_access.sumo_fingerprinter import SumoFingerprinterFactory
@@ -45,7 +46,8 @@ from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.routers.persistence.router import router as persistence_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry_for_primary
-from primary.utils.azure_service_credentials import ClientSecretVars, create_credential_for_azure_services
+from primary.utils.azure_service_credentials import create_credential_for_azure_services
+from primary.utils.azure_service_credentials import log_azure_credential_env_var_status
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
@@ -73,6 +75,9 @@ logging.getLogger("primary.persistence").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
+# Do a dump of key AZURE_ env variables that we rely on
+log_azure_credential_env_var_status()
+
 services_config = ServicesConfig(
     sumo_env=config.SUMO_ENV,
     smda_subscription_key=config.SMDA_SUBSCRIPTION_KEY,
@@ -93,21 +98,23 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     # The first part of this function, before the yield, will be executed before the FastPI application starts.
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
+    # The opt-out for the credential creation here is only meant for special scenarios such as e2e testing.
+    azure_services_credential: WorkloadIdentityCredential | ClientSecretCredential | None = None
+    if "WEBVIZ_SKIP_AZURE_CREDENTIAL_CREATION" not in os.environ:
+        azure_services_credential = create_credential_for_azure_services()
+
     if config.COSMOS_DB_EMULATOR_HOST:
         LOGGER.info(
             f"Using Cosmos DB Emulator at {config.COSMOS_DB_EMULATOR_HOST} to initialize PersistenceStoresSingleton"
         )
         PersistenceStoresSingleton.initialize_with_emulator(config.COSMOS_DB_EMULATOR_HOST)
     else:
-        client_secret_vars_for_dev = ClientSecretVars(
-            tenant_id=config.TENANT_ID,
-            client_id=config.CLIENT_ID,
-            client_secret=config.CLIENT_SECRET,
-        )
-        azure_services_credential = create_credential_for_azure_services(client_secret_vars_for_dev)
         LOGGER.info(
             f"Using credential for azure services to initialize PersistenceStoresSingleton with: {config.COSMOS_DB_URL}"
         )
+        if azure_services_credential is None:
+            raise RuntimeError("Cannot proceed without an Azure services credential.")
+
         await PersistenceStoresSingleton.initialize_with_credential_async(
             config.COSMOS_DB_URL, azure_services_credential
         )
@@ -119,8 +126,10 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
     yield
 
     await PersistenceStoresSingleton.shutdown_async()
-    if not config.COSMOS_DB_EMULATOR_HOST:
+
+    if azure_services_credential is not None:
         await azure_services_credential.close()
+
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 
@@ -128,7 +137,7 @@ async def lifespan_handler_async(_fastapi_app: FastAPI) -> AsyncIterator[None]:
 # we skip the actual initialization of the FastAPI app and just set lifespan_handler_async to None.
 # This allows us to import this module and access the app object without running the lifespan handler,
 # which may be desirable in certain contexts such as API code generation.
-if os.getenv("WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY") is not None:
+if "WEBVIZ_SKIP_LIFESPAN_GENERATE_API_ONLY" in os.environ:
     lifespan_handler_async = None  # type: ignore[assignment]
 
 app = FastAPI(
