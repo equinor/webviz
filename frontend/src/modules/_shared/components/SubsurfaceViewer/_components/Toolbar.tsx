@@ -60,7 +60,9 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
         }
     }
 
-    const canSaveActivePolyline = (activePolyline?.path.length ?? 0) >= 2;
+    const hasEnoughPointsToSave = (activePolyline?.path.length ?? 0) >= 2;
+    const hasValidNameToSave = (activePolyline?.name.trim().length ?? 0) > 0;
+    const canSaveActivePolyline = hasEnoughPointsToSave && hasValidNameToSave;
 
     function handleFitInViewClick() {
         props.onFitInView();
@@ -90,7 +92,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
             return;
         }
 
-        const activeName = activePolyline?.name ?? "This polyline";
+        const activeName = activePolyline?.name.trim() ? activePolyline.name : "This polyline";
         const actions: ConfirmAction[] = canSaveActivePolyline
             ? [
                   { id: "keep-editing", label: "Keep editing" },
@@ -102,11 +104,16 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                   { id: "discard", label: "Discard", color: "danger" },
               ];
 
+        let message = `"${activeName}" has not been saved. Do you want to save it before closing, or discard your changes?`;
+        if (!hasEnoughPointsToSave) {
+            message = `"${activeName}" needs at least two points before it can be saved. Do you want to discard it?`;
+        } else if (!hasValidNameToSave) {
+            message = `"${activeName}" needs a name before it can be saved. Do you want to discard it?`;
+        }
+
         const result = await ConfirmationService.confirm({
             title: "Unsaved polyline",
-            message: canSaveActivePolyline
-                ? `"${activeName}" has not been saved. Do you want to save it before closing, or discard your changes?`
-                : `"${activeName}" needs at least two points before it can be saved. Do you want to discard it?`,
+            message,
             actions,
         });
 
@@ -282,9 +289,11 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             />
                             <Button
                                 title={
-                                    editingPolylineId && !canSaveActivePolyline
+                                    editingPolylineId && !hasEnoughPointsToSave
                                         ? "A polyline needs at least two points before it can be saved"
-                                        : "Save polyline"
+                                        : editingPolylineId && !hasValidNameToSave
+                                          ? "A polyline needs a name before it can be saved"
+                                          : "Save polyline"
                                 }
                                 onClick={handleSavePolylineClick}
                                 disabled={!editingPolylineId || !canSaveActivePolyline}
