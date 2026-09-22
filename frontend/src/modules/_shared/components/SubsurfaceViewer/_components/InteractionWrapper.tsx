@@ -134,6 +134,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 .makeSubscriberFunction(PolylinesPluginTopic.POLYLINES_COMMITTED)(() => {
                 // We haven't changed all polylines, only the ones related to this field
                 intersectionPolylines.updatePolylines(
+                    props.fieldId,
                     convertPolylinesToIntersectionPolylines(polylinesPlugin.getPolylines(), props.fieldId),
                 );
             });

@@ -189,12 +189,13 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
 
     /**
      * Commits the in-progress edit/draft into the committed `_polylines` set and requests
-     * persistence. Requires at least two points - otherwise this is a no-op (the caller
-     * should disable the save action in that case rather than relying on this guard alone).
+     * persistence. Requires at least two points and a non-empty name - otherwise this is a
+     * no-op (the caller should disable the save action in that case rather than relying on
+     * this guard alone), leaving the draft active rather than persisting invalid state.
      */
     saveActivePolyline(name: string): void {
         const draft = this._editingPolylineDraft;
-        if (!draft || draft.path.length < 2) {
+        if (!draft || draft.path.length < 2 || name.trim().length === 0) {
             return;
         }
 
@@ -263,7 +264,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             return;
         }
         if (key === "Enter") {
-            if (this._editingPolylineDraft && this._editingPolylineDraft.name.trim().length > 0) {
+            if (this._editingPolylineDraft) {
                 this.saveActivePolyline(this._editingPolylineDraft.name);
             }
         }
@@ -368,6 +369,7 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
             return;
         }
         this._editingPolylineDraft = { ...this._editingPolylineDraft, name };
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.ACTIVE_POLYLINE);
     }
 
     private updateActivePolylinePath(newPath: number[][]): void {
