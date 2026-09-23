@@ -1,7 +1,5 @@
 import { atom } from "jotai";
 
-import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type {
     CostProfileEntry,
     EarlyValueConfiguration,
@@ -16,13 +14,14 @@ import {
     EconomicMeasure,
     GasPriceBasis,
     OilPriceBasis,
+    ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
-import type { SalesGasStrategy } from "@modules/EconomicScreening/utils/vectorResolution";
+import { EMPTY_SOURCE_SNAPSHOT, type EconomicSourceSnapshot } from "@modules/EconomicScreening/utils/sourceSnapshot";
 
-export const ensembleIdentAtom = atom<RegularEnsembleIdent | DeltaEnsembleIdent | null>(null);
-
-export const hasOilProductionVectorAtom = atom<boolean>(false);
-export const salesGasStrategyAtom = atom<SalesGasStrategy>({ kind: "UNAVAILABLE" });
+/** Read-only mirrors of the settings-to-view interface, written only by the interface effects. */
+export const sourceSnapshotAtom = atom<EconomicSourceSnapshot>(EMPTY_SOURCE_SNAPSHOT);
+export const realizationNumbersAtom = atom<number[] | null>(null);
+export const constituentGasConsumptionWarningAtom = atom<string | null>(null);
 
 export const economicAssumptionsAtom = atom<EconomicAssumptions>({
     discountRatePercent: DEFAULT_DISCOUNT_RATE_PERCENT,
@@ -42,9 +41,8 @@ export const isCostProfileDraftValidAtom = atom<boolean>(true);
 
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 
+export const resultModeAtom = atom<ResultMode>(ResultMode.DISTRIBUTION);
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
-
 export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.EXCEEDANCE);
-
-export const showCashFlowPlotAtom = atom<boolean>(false);
 export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_OIL_VOLUME);
+export const selectedRealizationAtom = atom<number | null>(null);

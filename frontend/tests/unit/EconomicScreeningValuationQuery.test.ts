@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { getAllEnsembleRealizationNumbers } from "@modules/EconomicScreening/view/atoms/queryAtoms";
+import { getAllEnsembleRealizationNumbers } from "@modules/EconomicScreening/settings/atoms/sourceQueryAtoms";
 
 function makeEnsemble() {
     return new RegularEnsemble(

@@ -1,6 +1,5 @@
-import { expect, test } from "@playwright/experimental-ct-react";
-
 import { CostProfileEditorHarness } from "./support/CostProfileEditorHarness";
+import { expect, test } from "./support/offlineComponentTest";
 
 test("keeps an edited cost schedule unavailable until its debounced commit", async ({ mount, page }) => {
     await mount(<CostProfileEditorHarness />);
@@ -20,10 +19,14 @@ test("keeps an edited cost schedule unavailable until its debounced commit", asy
 });
 
 test("revalidates signed Delta costs when switched to a regular ensemble", async ({ mount, page }) => {
-    const component = await mount(<CostProfileEditorHarness initialCostProfile={[{ year: 2020, capex: -100, opex: 0 }]} isDelta />);
+    const component = await mount(
+        <CostProfileEditorHarness initialCostProfile={[{ year: 2020, capex: -100, opex: 0 }]} isDelta />,
+    );
 
     await expect(page.getByTestId("cost-schedule-ready")).toHaveText("ready");
-    await component.update(<CostProfileEditorHarness initialCostProfile={[{ year: 2020, capex: -100, opex: 0 }]} isDelta={false} />);
+    await component.update(
+        <CostProfileEditorHarness initialCostProfile={[{ year: 2020, capex: -100, opex: 0 }]} isDelta={false} />,
+    );
 
     await expect(page.getByTestId("cost-schedule-ready")).toHaveText("pending");
     await expect(page.getByText("Investment and operating costs must be zero or greater.")).toBeVisible();
@@ -44,7 +47,9 @@ test("generates read-only calendar years without locale grouping and keeps exclu
     await expect(page.getByRole("cell", { name: "2018", exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "2019", exact: true })).toBeVisible();
     await expect(page.getByRole("textbox")).toHaveCount(4);
-    await expect(page.getByText("Costs entered for 2016 are outside 2018-2019. They are kept but not used.")).toBeVisible();
+    await expect(
+        page.getByText("Costs entered for 2016 are outside 2018-2019. They are kept but not used."),
+    ).toBeVisible();
     await expect(page.getByTestId("committed-cost-profile")).toContainText('{"year":2016,"capex":7,"opex":0}');
 });
 

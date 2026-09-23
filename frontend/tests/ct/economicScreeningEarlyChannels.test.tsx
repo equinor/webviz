@@ -1,6 +1,5 @@
-import { expect, test } from "@playwright/experimental-ct-react";
-
 import { EarlyMeasureChannelPublisherHarness } from "./support/EarlyMeasureChannelPublisherHarness";
+import { expect, test } from "./support/offlineComponentTest";
 
 test("connected consumer clears and recovers Economic Screening early contents", async ({ mount, page }) => {
     const component = await mount(<EarlyMeasureChannelPublisherHarness enabled />);

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
@@ -12,7 +12,6 @@ import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/Wor
 import { CheckboxCompositions } from "@lib/components/Checkbox/compositions";
 import { Combobox } from "@lib/components/Combobox";
 import { NumberInput } from "@lib/components/NumberInput";
-import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { Setting } from "@lib/components/Setting";
 import { useDebouncedOnChange } from "@lib/hooks/usedDebouncedStateEmit";
 import { useMakePersistableFixableAtomAnnotations } from "@modules/_shared/hooks/useMakePersistableFixableAtomAnnotations";
@@ -21,12 +20,18 @@ import { simulationVectorDescription } from "@modules/_shared/reservoirSimulatio
 import type { Interfaces } from "../interfaces";
 import {
     CashFlowProfileType,
+    CashFlowProfileTypeEnumToStringMapping,
     Currency,
+    DistributionPlotType,
+    DistributionPlotTypeEnumToStringMapping,
     EconomicMeasure,
+    EconomicMeasureEnumToStringMapping,
     GasPriceBasis,
     GasPriceBasisEnumToStringMapping,
     OilPriceBasis,
     OilPriceBasisEnumToStringMapping,
+    ResultMode,
+    ResultModeEnumToStringMapping,
 } from "../typesAndEnums";
 import type { MissingComponentAssumptions } from "../utils/vectorResolution";
 import { CalculationHelpDialog } from "../view/components/calculationHelpDialog";
@@ -36,6 +41,7 @@ import {
     cashFlowProfileTypeAtom,
     currencyAtom,
     discountRatePercentAtom,
+    distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
@@ -44,14 +50,27 @@ import {
     oilPriceAtom,
     oilPriceBasisAtom,
     predictionStartYearAtom,
+    resultModeAtom,
     selectedMeasureAtom,
-    sourceHorizonAtom,
 } from "./atoms/baseAtoms";
-import { activeVectorListQueryAtom, hasOilProductionVectorAtom, salesGasStrategyAtom } from "./atoms/derivedAtoms";
-import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
+import {
+    activeVectorListQueryAtom,
+    displayedRealizationAtom,
+    hasOilProductionVectorAtom,
+    salesGasStrategyAtom,
+} from "./atoms/derivedAtoms";
+import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./atoms/persistableFixableAtoms";
+import { validRealizationNumbersAtom } from "./atoms/sourceQueryAtoms";
+import { sourceHorizonAtom } from "./atoms/sourceSnapshotAtoms";
 import { CostProfileEditor } from "./components/costProfileEditor";
+import { NamedRadioGroup } from "./components/namedRadioGroup";
 
 const NUMBER_INPUT_DEBOUNCE_MS = 500;
+
+const DISTRIBUTION_PLOT_TYPE_ITEMS = [DistributionPlotType.EXCEEDANCE, DistributionPlotType.HISTOGRAM].map((value) => ({
+    value,
+    label: DistributionPlotTypeEnumToStringMapping[value],
+}));
 
 function toCalendarYear(value: number | null): number | null {
     return value === null ? null : Math.round(value);
@@ -74,6 +93,11 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const [, setIsCostProfileDraftValid] = useAtom(isCostProfileDraftValidAtom);
     const [selectedMeasure, setSelectedMeasure] = useAtom(selectedMeasureAtom);
     const [cashFlowProfileType, setCashFlowProfileType] = useAtom(cashFlowProfileTypeAtom);
+    const [resultMode, setResultMode] = useAtom(resultModeAtom);
+    const [distributionPlotType, setDistributionPlotType] = useAtom(distributionPlotTypeAtom);
+    const setSelectedRealization = useSetAtom(selectedRealizationAtom);
+    const displayedRealization = useAtomValue(displayedRealizationAtom);
+    const validRealizationNumbers = useAtomValue(validRealizationNumbersAtom);
     const [missingComponentAssumptionsByEnsemble, setMissingComponentAssumptionsByEnsemble] = useAtom(
         missingComponentAssumptionsAtom,
     );
@@ -139,6 +163,14 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
 
     function handleEnsembleChange(newEnsembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) {
         setSelectedEnsembleIdent(newEnsembleIdent);
+        setSelectedRealization({ ensembleIdentString: newEnsembleIdent.toString(), realization: null });
+    }
+
+    function handleRealizationChange(realization: number | null) {
+        setSelectedRealization({
+            ensembleIdentString: selectedEnsembleIdent.value?.toString() ?? null,
+            realization,
+        });
     }
 
     function handleCurrencyChange(newCurrency: Currency) {
@@ -173,6 +205,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
     const salesGasDescription = makeSalesGasDescription(salesGasStrategy.kind);
     const isDeltaEnsembleSelected =
         selectedEnsembleIdent.value !== null && isEnsembleIdentOfType(selectedEnsembleIdent.value, DeltaEnsembleIdent);
+    const realizationItems = [...(validRealizationNumbers ?? [])]
+        .sort((first, second) => first - second)
+        .map((realization) => ({ value: realization, label: realization.toString() }));
 
     return (
         <Setting.ScrollArea>
@@ -265,6 +300,79 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                     )}
                 </Setting.Section>
 
+                <Setting.Section title="Results" defaultOpen>
+                    <Setting.Field
+                        label="Show"
+                        help={{
+                            title: "Results",
+                            content:
+                                "Chooses what the view displays. Display choices do not change calculations or published channels.",
+                        }}
+                        stacked
+                    >
+                        <NamedRadioGroup
+                            value={resultMode}
+                            options={Object.values(ResultMode).map((value) => ({
+                                value,
+                                label: ResultModeEnumToStringMapping[value],
+                            }))}
+                            onValueChange={setResultMode}
+                        />
+                    </Setting.Field>
+                    {resultMode === ResultMode.DISTRIBUTION && (
+                        <>
+                            <Setting.Field label="Measure" stacked>
+                                <Combobox
+                                    items={Object.values(EconomicMeasure).map((value) => ({
+                                        value,
+                                        label: EconomicMeasureEnumToStringMapping[value],
+                                    }))}
+                                    value={selectedMeasure}
+                                    onValueChange={(value) => value !== null && setSelectedMeasure(value)}
+                                />
+                            </Setting.Field>
+                            <Setting.Field label="Plot type" stacked>
+                                <Combobox<DistributionPlotType>
+                                    items={DISTRIBUTION_PLOT_TYPE_ITEMS}
+                                    value={distributionPlotType}
+                                    onValueChange={(value) => value !== null && setDistributionPlotType(value)}
+                                />
+                            </Setting.Field>
+                        </>
+                    )}
+                    {resultMode === ResultMode.TIME_PROFILE && (
+                        <Setting.Field label="Time profile" stacked>
+                            <Combobox<CashFlowProfileType>
+                                items={Object.values(CashFlowProfileType).map((value) => ({
+                                    value,
+                                    label: CashFlowProfileTypeEnumToStringMapping[value],
+                                }))}
+                                value={cashFlowProfileType}
+                                onValueChange={(value) => value !== null && setCashFlowProfileType(value)}
+                            />
+                        </Setting.Field>
+                    )}
+                    {resultMode !== ResultMode.DISTRIBUTION && (
+                        <Setting.Field
+                            label="Realization"
+                            help={{
+                                title: "Realization",
+                                content:
+                                    "Highlights one realization over the aggregate. Clear the selection to show only the aggregate.",
+                            }}
+                            stacked
+                        >
+                            <Combobox<number>
+                                items={realizationItems}
+                                value={displayedRealization}
+                                onValueChange={handleRealizationChange}
+                                showClearAllButton
+                                placeholder="Aggregate"
+                            />
+                        </Setting.Field>
+                    )}
+                </Setting.Section>
+
                 <Setting.Section title="Advanced">
                     <Setting.Field
                         label="Fixed assumptions"
@@ -326,12 +434,10 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): ReactNode {
                                 "Enter all prices and costs in this currency. Changing it does not convert entered values.",
                         }}
                     >
-                        <RadioCompositions.GroupWithLabels
+                        <NamedRadioGroup
                             value={currency}
                             options={Object.values(Currency).map((value) => ({ value, label: value }))}
                             onValueChange={handleCurrencyChange}
-                            layout="horizontal"
-                            size="small"
                         />
                     </Setting.Field>
                     {hasOilProductionVector && (

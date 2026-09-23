@@ -10,6 +10,7 @@ import {
     EconomicMeasure,
     GasPriceBasis,
     OilPriceBasis,
+    ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
 
 import {
@@ -25,16 +26,17 @@ import {
     oilPriceAtom,
     oilPriceBasisAtom,
     predictionStartYearAtom,
+    resultModeAtom,
     selectedMeasureAtom,
-    showCashFlowPlotAtom,
 } from "./atoms/baseAtoms";
-import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
+import { displayedRealizationAtom } from "./atoms/derivedAtoms";
+import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./atoms/persistableFixableAtoms";
 
 /**
- * Only the current monthly model is persisted. Earlier experimental states lack this marker and fail
- * schema validation, so the framework discards them before any setting is changed.
+ * Only the current model is persisted. Earlier experimental states lack this marker and fail schema
+ * validation, so the framework discards them before any setting is changed.
  */
-export const SETTINGS_STATE_FORMAT = "MONTHLY_OPEX_V1";
+export const SETTINGS_STATE_FORMAT = "MONTHLY_SETTINGS_OWNED_V2";
 
 export type SerializedSettings = {
     stateFormat: typeof SETTINGS_STATE_FORMAT;
@@ -49,10 +51,12 @@ export type SerializedSettings = {
     costProfile: CostProfileEntry[];
     earlyValueEnabled: boolean;
     earlyValueEndYear: number | null;
+    resultMode: ResultMode;
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
-    showCashFlowPlot: boolean;
     cashFlowProfileType: CashFlowProfileType;
+    /** Null means Aggregate. */
+    selectedRealization: number | null;
     missingComponentAssumptionsByEnsemble: Record<
         string,
         { assumeMissingInjectionAsZero?: boolean; assumeMissingConsumptionAsZero?: boolean }
@@ -81,10 +85,11 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
         },
         earlyValueEnabled: { type: "boolean" },
         earlyValueEndYear: { type: "int32", nullable: true },
+        resultMode: { enum: Object.values(ResultMode) },
         selectedMeasure: { enum: Object.values(EconomicMeasure) },
         distributionPlotType: { enum: Object.values(DistributionPlotType) },
-        showCashFlowPlot: { type: "boolean" },
         cashFlowProfileType: { enum: Object.values(CashFlowProfileType) },
+        selectedRealization: { type: "int32", nullable: true },
         missingComponentAssumptionsByEnsemble: {
             values: {
                 optionalProperties: {
@@ -114,23 +119,35 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
         costProfile: get(costProfileAtom),
         earlyValueEnabled: earlyValueConfiguration.enabled,
         earlyValueEndYear: earlyValueConfiguration.endYear,
+        resultMode: get(resultModeAtom),
         selectedMeasure: get(selectedMeasureAtom),
         distributionPlotType: get(distributionPlotTypeAtom),
-        showCashFlowPlot: get(showCashFlowPlotAtom),
         cashFlowProfileType: get(cashFlowProfileTypeAtom),
+        // The displayed choice, so a selection that is invalid here is saved as Aggregate.
+        selectedRealization: get(displayedRealizationAtom),
         missingComponentAssumptionsByEnsemble: get(missingComponentAssumptionsAtom),
     };
 };
 
-/** Receives schema-validated current states, or partial template states. */
+/**
+ * Receives schema-validated current states, or partial template states. An omitted field leaves the
+ * setting unchanged; an explicit null is applied as a reset.
+ */
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
-    const selectedEnsembleIdent = raw.selectedEnsembleIdentString
-        ? (getEnsembleIdentFromString(raw.selectedEnsembleIdentString) ?? undefined)
-        : undefined;
+    const selectedEnsembleIdent =
+        raw.selectedEnsembleIdentString === null
+            ? null
+            : raw.selectedEnsembleIdentString
+              ? (getEnsembleIdentFromString(raw.selectedEnsembleIdentString) ?? undefined)
+              : undefined;
     const earlyValueConfiguration =
         raw.earlyValueEnabled !== undefined || raw.earlyValueEndYear !== undefined
             ? { enabled: raw.earlyValueEnabled ?? false, endYear: raw.earlyValueEndYear ?? null }
             : undefined;
+    const selectedRealization =
+        raw.selectedRealization === undefined
+            ? undefined
+            : { ensembleIdentString: raw.selectedEnsembleIdentString ?? null, realization: raw.selectedRealization };
 
     setIfDefined(set, selectedEnsembleIdentAtom, selectedEnsembleIdent);
     setIfDefined(set, discountRatePercentAtom, raw.discountRatePercent);
@@ -142,9 +159,10 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
     setIfDefined(set, gasPriceBasisAtom, raw.gasPriceBasis);
     setIfDefined(set, costProfileAtom, raw.costProfile);
     setIfDefined(set, earlyValueConfigurationAtom, earlyValueConfiguration);
+    setIfDefined(set, resultModeAtom, raw.resultMode);
     setIfDefined(set, selectedMeasureAtom, raw.selectedMeasure);
     setIfDefined(set, distributionPlotTypeAtom, raw.distributionPlotType);
-    setIfDefined(set, showCashFlowPlotAtom, raw.showCashFlowPlot);
     setIfDefined(set, cashFlowProfileTypeAtom, raw.cashFlowProfileType);
+    setIfDefined(set, selectedRealizationAtom, selectedRealization);
     setIfDefined(set, missingComponentAssumptionsAtom, raw.missingComponentAssumptionsByEnsemble);
 };

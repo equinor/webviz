@@ -14,7 +14,6 @@ export type RealizationResultsTableProps = {
     results: MonthlyRealizationEconomicResult[];
     unitContext: MeasureUnitContext;
     selectedRealization: number | null;
-    onSelectedRealizationChange: (realization: number | null) => void;
     isDelta: boolean;
 };
 
@@ -37,7 +36,10 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
     const displayScaleByMeasure = new Map(
         Object.values(EconomicMeasure).map((measure) => {
             const measureValues = getMeasureValues(props.results, measure, props.unitContext).values;
-            return [measure, getMeasureDisplayScale(measure, measureValues, getMeasureUnit(measure, props.unitContext))];
+            return [
+                measure,
+                getMeasureDisplayScale(measure, measureValues, getMeasureUnit(measure, props.unitContext)),
+            ];
         }),
     );
 
@@ -47,24 +49,31 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                 size="small"
                 compact
                 maxHeight="100%"
-                selectable
                 rowSelection={props.selectedRealization?.toString() ?? null}
-                onChangeRowSelection={(rowKey) => props.onSelectedRealizationChange(rowKey === null ? null : Number(rowKey))}
             >
-                    <Table.Head>
-                        <Table.Row>
-                            <Table.Cell colKey="realization">Realization</Table.Cell>
-                            {Object.values(EconomicMeasure).map((measure) => (
-                                <Table.Cell key={measure} colKey={measure}>
-                                    {getMeasureDisplayName(measure, props.isDelta)} [
-                                    {displayScaleByMeasure.get(measure)?.unit ?? getMeasureUnit(measure, props.unitContext)}]
-                                </Table.Cell>
-                            ))}
-                        </Table.Row>
-                    </Table.Head>
-                    <Table.Body>
-                        {props.results.map((result) => (
-                            <Table.Row key={result.realization} rowKey={result.realization.toString()}>
+                <Table.Head>
+                    <Table.Row>
+                        <Table.Cell colKey="realization">Realization</Table.Cell>
+                        {Object.values(EconomicMeasure).map((measure) => (
+                            <Table.Cell key={measure} colKey={measure}>
+                                {getMeasureDisplayName(measure, props.isDelta)} [
+                                {displayScaleByMeasure.get(measure)?.unit ?? getMeasureUnit(measure, props.unitContext)}
+                                ]
+                            </Table.Cell>
+                        ))}
+                    </Table.Row>
+                </Table.Head>
+                <Table.Body>
+                    {props.results.map((result) => {
+                        const isSelected = result.realization === props.selectedRealization;
+                        // Only the Settings-selected row is marked selectable, so it is highlighted but clicks change nothing.
+                        return (
+                            <Table.Row
+                                key={result.realization}
+                                rowKey={result.realization.toString()}
+                                selectable={isSelected}
+                                aria-current={isSelected ? "true" : undefined}
+                            >
                                 <Table.Cell>{result.realization}</Table.Cell>
                                 {Object.values(EconomicMeasure).map((measure) => (
                                     <Table.Cell key={measure}>
@@ -75,8 +84,9 @@ export function RealizationResultsTable(props: RealizationResultsTableProps): Re
                                     </Table.Cell>
                                 ))}
                             </Table.Row>
-                        ))}
-                    </Table.Body>
+                        );
+                    })}
+                </Table.Body>
             </Table.Root>
         </div>
     );

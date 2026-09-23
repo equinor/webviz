@@ -5,7 +5,7 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import type { SalesGasStrategy } from "@modules/EconomicScreening/utils/vectorResolution";
 import { determineSalesGasStrategy, OIL_PRODUCTION_VECTOR } from "@modules/EconomicScreening/utils/vectorResolution";
 
-import { selectedEnsembleIdentAtom } from "./persistableFixableAtoms";
+import { selectedEnsembleIdentAtom, selectedRealizationAtom } from "./persistableFixableAtoms";
 import { deltaEnsembleVectorListQueryAtom, regularEnsembleVectorListQueryAtom } from "./queryAtoms";
 
 export const isSelectedEnsembleDeltaAtom = atom<boolean>((get) => {
@@ -29,4 +29,10 @@ export const hasOilProductionVectorAtom = atom<boolean>((get) => {
 
 export const salesGasStrategyAtom = atom<SalesGasStrategy>((get) => {
     return determineSalesGasStrategy(get(availableVectorNamesAtom));
+});
+
+/** The realization to highlight, or null for Aggregate when the stored choice is not valid here. */
+export const displayedRealizationAtom = atom<number | null>((get) => {
+    const selection = get(selectedRealizationAtom);
+    return selection.isValidInContext ? selection.value.realization : null;
 });

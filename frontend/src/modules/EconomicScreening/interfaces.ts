@@ -1,5 +1,3 @@
-import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
@@ -15,11 +13,12 @@ import {
     oilPriceAtom,
     oilPriceBasisAtom,
     predictionStartYearAtom,
+    resultModeAtom,
     selectedMeasureAtom,
-    showCashFlowPlotAtom,
 } from "./settings/atoms/baseAtoms";
-import { hasOilProductionVectorAtom, salesGasStrategyAtom } from "./settings/atoms/derivedAtoms";
-import { selectedEnsembleIdentAtom } from "./settings/atoms/persistableFixableAtoms";
+import { displayedRealizationAtom } from "./settings/atoms/derivedAtoms";
+import { validRealizationNumbersAtom } from "./settings/atoms/sourceQueryAtoms";
+import { constituentGasConsumptionWarningAtom, sourceSnapshotAtom } from "./settings/atoms/sourceSnapshotAtoms";
 import type {
     CostProfileEntry,
     CashFlowProfileType,
@@ -28,44 +27,41 @@ import type {
     EconomicAssumptions,
     EconomicMeasure,
     PriceAssumptions,
-    SourceHorizon,
+    ResultMode,
 } from "./typesAndEnums";
-import type { SalesGasStrategy } from "./utils/vectorResolution";
-import { sourceHorizonAtom } from "./view/atoms/derivedAtoms";
+import type { EconomicSourceSnapshot } from "./utils/sourceSnapshot";
 
 export type SettingsToViewInterface = {
-    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null;
-    hasOilProductionVector: boolean;
-    salesGasStrategy: SalesGasStrategy;
+    sourceSnapshot: EconomicSourceSnapshot;
+    /** Filtered realizations of the snapshot's ensemble; results are calculated for these only. */
+    realizationNumbers: number[] | null;
+    constituentGasConsumptionWarning: string | null;
     economicAssumptions: EconomicAssumptions;
     priceAssumptions: PriceAssumptions;
     costProfile: CostProfileEntry[];
     isCostProfileDraftValid: boolean;
     earlyValueConfiguration: EarlyValueConfiguration;
+    resultMode: ResultMode;
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
-    showCashFlowPlot: boolean;
     cashFlowProfileType: CashFlowProfileType;
-};
-
-export type ViewToSettingsInterface = {
-    sourceHorizon: SourceHorizon;
+    /** Highlighted realization, or null for Aggregate. */
+    selectedRealization: number | null;
 };
 
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
-    viewToSettings: ViewToSettingsInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    ensembleIdent: (get) => {
-        return get(selectedEnsembleIdentAtom).value;
+    sourceSnapshot: (get) => {
+        return get(sourceSnapshotAtom);
     },
-    hasOilProductionVector: (get) => {
-        return get(hasOilProductionVectorAtom);
+    realizationNumbers: (get) => {
+        return get(validRealizationNumbersAtom);
     },
-    salesGasStrategy: (get) => {
-        return get(salesGasStrategyAtom);
+    constituentGasConsumptionWarning: (get) => {
+        return get(constituentGasConsumptionWarningAtom);
     },
     economicAssumptions: (get) => {
         return {
@@ -91,22 +87,19 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     earlyValueConfiguration: (get) => {
         return get(earlyValueConfigurationAtom);
     },
+    resultMode: (get) => {
+        return get(resultModeAtom);
+    },
     selectedMeasure: (get) => {
         return get(selectedMeasureAtom);
     },
     distributionPlotType: (get) => {
         return get(distributionPlotTypeAtom);
     },
-    showCashFlowPlot: (get) => {
-        return get(showCashFlowPlotAtom);
-    },
     cashFlowProfileType: (get) => {
         return get(cashFlowProfileTypeAtom);
     },
-};
-
-export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
-    sourceHorizon: (get) => {
-        return get(sourceHorizonAtom);
+    selectedRealization: (get) => {
+        return get(displayedRealizationAtom);
     },
 };

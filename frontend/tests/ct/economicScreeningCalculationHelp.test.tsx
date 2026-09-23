@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/experimental-ct-react";
-
 import { CalculationHelpDialog } from "@modules/EconomicScreening/view/components/calculationHelpDialog";
+
+import { expect, test } from "./support/offlineComponentTest";
 
 test("opens the calculation guide and returns focus after Escape", async ({ mount, page }) => {
     await mount(<CalculationHelpDialog />);

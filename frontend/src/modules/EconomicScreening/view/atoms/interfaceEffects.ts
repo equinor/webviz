@@ -2,29 +2,30 @@ import type { InterfaceEffects } from "@framework/Module";
 import type { SettingsToViewInterface } from "@modules/EconomicScreening/interfaces";
 
 import {
-    costProfileAtom,
     cashFlowProfileTypeAtom,
+    constituentGasConsumptionWarningAtom,
+    costProfileAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
-    ensembleIdentAtom,
-    hasOilProductionVectorAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
-    salesGasStrategyAtom,
+    realizationNumbersAtom,
+    resultModeAtom,
     selectedMeasureAtom,
-    showCashFlowPlotAtom,
+    selectedRealizationAtom,
+    sourceSnapshotAtom,
 } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(ensembleIdentAtom, getInterfaceValue("ensembleIdent"));
+        setAtomValue(sourceSnapshotAtom, getInterfaceValue("sourceSnapshot"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(hasOilProductionVectorAtom, getInterfaceValue("hasOilProductionVector"));
+        setAtomValue(realizationNumbersAtom, getInterfaceValue("realizationNumbers"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(salesGasStrategyAtom, getInterfaceValue("salesGasStrategy"));
+        setAtomValue(constituentGasConsumptionWarningAtom, getInterfaceValue("constituentGasConsumptionWarning"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(economicAssumptionsAtom, getInterfaceValue("economicAssumptions"));
@@ -42,15 +43,18 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(earlyValueConfigurationAtom, getInterfaceValue("earlyValueConfiguration"));
     },
     (getInterfaceValue, setAtomValue) => {
+        setAtomValue(resultModeAtom, getInterfaceValue("resultMode"));
+    },
+    (getInterfaceValue, setAtomValue) => {
         setAtomValue(selectedMeasureAtom, getInterfaceValue("selectedMeasure"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(distributionPlotTypeAtom, getInterfaceValue("distributionPlotType"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(showCashFlowPlotAtom, getInterfaceValue("showCashFlowPlot"));
+        setAtomValue(cashFlowProfileTypeAtom, getInterfaceValue("cashFlowProfileType"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(cashFlowProfileTypeAtom, getInterfaceValue("cashFlowProfileType"));
+        setAtomValue(selectedRealizationAtom, getInterfaceValue("selectedRealization"));
     },
 ];

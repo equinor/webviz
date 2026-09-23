@@ -48,6 +48,42 @@ function toAnnualSeries(result: MonthlyRealizationEconomicResult): AnnualSeries 
     };
 }
 
+function getProfileValues(series: AnnualSeries, profileType: CashFlowProfileType): number[] | null {
+    switch (profileType) {
+        case CashFlowProfileType.ANNUAL_OIL_VOLUME:
+            return series.hasOilData ? series.oilVolumes : null;
+        case CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME:
+            return series.hasSalesGasData ? series.salesGasVolumes : null;
+        case CashFlowProfileType.ANNUAL_NET_CASH_FLOW:
+            return series.netCashFlow;
+        case CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW:
+            return series.cumulativeDiscountedCashFlow;
+    }
+}
+
+function findRealizationProfile(
+    results: MonthlyRealizationEconomicResult[],
+    profileType: CashFlowProfileType,
+    realization: number | null,
+): { series: AnnualSeries; values: number[] } | null {
+    const result = results.find((candidate) => candidate.realization === realization);
+    if (!result) {
+        return null;
+    }
+    const series = toAnnualSeries(result);
+    const values = getProfileValues(series, profileType);
+    return values && values.length > 0 && values.length === series.years.length ? { series, values } : null;
+}
+
+/** False when the realization is not among the results or lacks complete data for the profile. */
+export function hasRealizationProfile(
+    results: MonthlyRealizationEconomicResult[],
+    profileType: CashFlowProfileType,
+    realization: number,
+): boolean {
+    return findRealizationProfile(results, profileType, realization) !== null;
+}
+
 export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
     const annualSeries = props.results.map(toAnnualSeries);
     const cashFlowAggregate = aggregateCashFlowProfiles(
@@ -99,20 +135,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         return <ContentInfo>No complete profile data is available for the selected time profile.</ContentInfo>;
     }
 
-    const selectedResult = annualSeries.find((result) => result.realization === props.selectedRealization);
-    const selectedValues =
-        selectedResult &&
-        (props.profileType === CashFlowProfileType.ANNUAL_OIL_VOLUME
-            ? selectedResult.hasOilData
-                ? selectedResult.oilVolumes
-                : null
-            : props.profileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME
-                ? selectedResult.hasSalesGasData
-                    ? selectedResult.salesGasVolumes
-                    : null
-                : props.profileType === CashFlowProfileType.ANNUAL_NET_CASH_FLOW
-                    ? selectedResult.netCashFlow
-                    : (selectedResult.cumulativeDiscountedCashFlow ?? null));
+    const selectedRealizationProfile = findRealizationProfile(props.results, props.profileType, props.selectedRealization);
 
     const data: Partial<PlotData>[] = [
         {
@@ -142,27 +165,31 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
             name: "P50",
             line: { color: props.color, width: 2 },
         },
-        ...(selectedResult && selectedValues && selectedValues.length === selectedResult.years.length
+        ...(selectedRealizationProfile
             ? [
                 {
-                    x: selectedResult.years,
-                    y: selectedValues,
+                    x: selectedRealizationProfile.series.years,
+                    y: selectedRealizationProfile.values,
                     type: "scatter" as const,
                     mode: "lines+markers" as const,
-                    name: `Realization ${selectedResult.realization}`,
+                    name: `Realization ${selectedRealizationProfile.series.realization}`,
                     line: { color: "#111827", width: 3 },
                 },
             ]
             : []),
     ];
 
+    // Whole calendar years only, without thousands separators, in ticks and hover labels.
+    const yearTickStep = Math.max(1, Math.ceil(selectedProfile.aggregate.years.length / 12));
     const layout: Partial<Layout> = {
         width: props.width,
         height: props.height,
         margin: { l: 70, r: 20, t: 20, b: 50 },
-        xaxis: { title: { text: "Year" } },
+        xaxis: { title: { text: "Year" }, tickformat: "d", hoverformat: "d", dtick: yearTickStep },
         yaxis: { title: { text: `${selectedProfile.name} [${selectedProfile.unit}]` }, zeroline: true },
         showlegend: true,
+        // Above the plot area, where it cannot cover the year ticks or axis title; the top margin grows to fit it.
+        legend: { x: 0, xanchor: "left", y: 1, yanchor: "bottom" },
     };
 
     return <Plot data={data} layout={layout} />;

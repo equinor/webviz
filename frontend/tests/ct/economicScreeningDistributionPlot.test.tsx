@@ -1,7 +1,7 @@
-import { expect, test } from "@playwright/experimental-ct-react";
-
 import { DistributionPlotType, EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import { MeasureDistributionPlot } from "@modules/EconomicScreening/view/components/measureDistributionPlot";
+
+import { expect, test } from "./support/offlineComponentTest";
 
 test("renders a visible marker for a single-value exceedance distribution", async ({ mount, page }) => {
     await mount(

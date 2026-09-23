@@ -1,6 +1,6 @@
 import React from "react";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import type { ModuleViewProps } from "@framework/Module";
@@ -8,36 +8,34 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Combobox } from "@lib/components/Combobox";
-import { RadioCompositions } from "@lib/components/Radio/compositions";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import {
     CashFlowProfileType,
-    CashFlowProfileTypeEnumToStringMapping,
-    DistributionPlotType,
-    DistributionPlotTypeEnumToStringMapping,
     EarlyEconomicMeasure,
     EconomicMeasure,
-    EconomicMeasureEnumToStringMapping,
+    ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
 import { countPositiveNpvAtTarget } from "@modules/EconomicScreening/utils/distributionAggregation";
 import { getMeasureUnit, getMeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
+import { SourceStatus } from "@modules/EconomicScreening/utils/sourceSnapshot";
 
 import type { Interfaces } from "../interfaces";
 
 import {
-    distributionPlotTypeAtom,
     cashFlowProfileTypeAtom,
+    distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
     economicAssumptionsAtom,
-    ensembleIdentAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
+    resultModeAtom,
     selectedMeasureAtom,
+    selectedRealizationAtom,
+    sourceSnapshotAtom,
 } from "./atoms/baseAtoms";
-import { economicScreeningResultsAtom, isFetchingAtom } from "./atoms/derivedAtoms";
-import { CashFlowPlot } from "./components/cashFlowPlot";
+import { economicScreeningResultsAtom } from "./atoms/derivedAtoms";
+import { CashFlowPlot, hasRealizationProfile } from "./components/cashFlowPlot";
 import { EarlyMeasureChannelPublisher } from "./components/earlyMeasureChannelPublisher";
 import { MeasureChannelPublisher } from "./components/measureChannelPublisher";
 import { MeasureDistributionPlot } from "./components/measureDistributionPlot";
@@ -45,42 +43,42 @@ import { RealizationResultsTable } from "./components/realizationResultsTable";
 import { ResultsStatisticsTable } from "./components/resultsStatisticsTable";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 
-enum ViewMode {
-    DISTRIBUTION = "DISTRIBUTION",
-    TIME_PROFILE = "TIME_PROFILE",
-    ALL_RESULTS = "ALL_RESULTS",
+const MIN_PLOT_HEIGHT_PX = 200;
+
+/** Fills the space left below the context and tables; its size drives the plot size. */
+function ResponsivePlotArea(props: { children: (width: number, height: number) => React.ReactNode }) {
+    const areaRef = React.useRef<HTMLDivElement>(null);
+    const areaSize = useElementSize(areaRef);
+    return (
+        <div ref={areaRef} className="min-h-52 flex-1 overflow-hidden">
+            {props.children(areaSize.width, Math.max(areaSize.height, MIN_PLOT_HEIGHT_PX))}
+        </div>
+    );
 }
 
-const PLOT_CONTROLS_HEIGHT_PX = 300;
-
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
-    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
-    const wrapperDivSize = useElementSize(wrapperDivRef);
-    const [selectedProfileRealization, setSelectedProfileRealization] = React.useState<number | null>(null);
-    const [viewMode, setViewMode] = React.useState<ViewMode>(ViewMode.DISTRIBUTION);
-
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
-    const ensembleIdent = useAtomValue(ensembleIdentAtom);
+    const sourceSnapshot = useAtomValue(sourceSnapshotAtom);
+    const resultMode = useAtomValue(resultModeAtom);
     const selectedMeasure = useAtomValue(selectedMeasureAtom);
     const distributionPlotType = useAtomValue(distributionPlotTypeAtom);
     const cashFlowProfileType = useAtomValue(cashFlowProfileTypeAtom);
+    const selectedRealization = useAtomValue(selectedRealizationAtom);
     const economicAssumptions = useAtomValue(economicAssumptionsAtom);
     const earlyValueConfiguration = useAtomValue(earlyValueConfigurationAtom);
     const earlyValueEndYear = earlyValueConfiguration.endYear;
     const isCostProfileDraftValid = useAtomValue(isCostProfileDraftValidAtom);
     const priceAssumptions = useAtomValue(priceAssumptionsAtom);
-    const isFetching = useAtomValue(isFetchingAtom);
     const { results, oilUnit, gasUnit, isEarlyValueConfigurationValid, horizon } =
         useAtomValue(economicScreeningResultsAtom);
-    const setSelectedMeasure = useSetAtom(selectedMeasureAtom);
-    const setDistributionPlotType = useSetAtom(distributionPlotTypeAtom);
-    const setCashFlowProfileType = useSetAtom(cashFlowProfileTypeAtom);
 
+    const isFetching = sourceSnapshot.isFetching || sourceSnapshot.status === SourceStatus.LOADING;
     useMakeViewStatusWriterMessages(statusWriter);
     statusWriter.setLoading(isFetching);
 
+    const ensembleIdent = sourceSnapshot.ensembleIdent;
     const ensemble = ensembleIdent ? ensembleSet.findEnsemble(ensembleIdent) : null;
     const ensembleDisplayName = ensemble?.getDisplayName() ?? "";
     const ensembleColor = ensemble?.getColor() ?? "#1f77b4";
@@ -107,17 +105,16 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             ? null
             : countPositiveNpvAtTarget(results.map((result) => result.npv ?? Number.NaN));
 
-    const activePlotHeight = Math.max(wrapperDivSize.height - PLOT_CONTROLS_HEIGHT_PX, 200);
-    const activePlotWidth = Math.max(wrapperDivSize.width - 16, 0);
-
     const hasResults = results.length > 0;
     const hasNetCashFlow = results.some((result) => result.npv !== null);
     const hasSelectedTimeProfileData =
         cashFlowProfileType === CashFlowProfileType.ANNUAL_OIL_VOLUME
             ? results.some((result) => result.hasOilData)
             : cashFlowProfileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME
-                ? results.some((result) => result.hasSalesGasData)
-                : hasNetCashFlow;
+              ? results.some((result) => result.hasSalesGasData)
+              : hasNetCashFlow;
+    const isSelectedRealizationUnavailable =
+        selectedRealization !== null && !hasRealizationProfile(results, cashFlowProfileType, selectedRealization);
     const activeAssumptions = [
         `Discount rate ${economicAssumptions.discountRatePercent}%`,
         horizon ? `Valuation 1 Jan ${horizon.startYear}` : null,
@@ -131,7 +128,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             : null;
 
     return (
-        <div className="h-full w-full overflow-auto" ref={wrapperDivRef}>
+        <div className="h-full w-full overflow-auto">
             {Object.values(EconomicMeasure).map((measure) => (
                 <MeasureChannelPublisher
                     key={measure}
@@ -146,11 +143,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         !isFetching &&
                         hasResults &&
                         (isCostProfileDraftValid ||
-                            ![
-                                EconomicMeasure.NPV,
-                                EconomicMeasure.IRR,
-                                EconomicMeasure.BREAK_EVEN_OIL_PRICE,
-                            ].includes(measure))
+                            ![EconomicMeasure.NPV, EconomicMeasure.IRR, EconomicMeasure.BREAK_EVEN_OIL_PRICE].includes(
+                                measure,
+                            ))
                     }
                     assumptionContext={activeAssumptions.join("; ")}
                 />
@@ -166,8 +161,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         measure === EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME
                             ? oilUnit
                             : measure === EarlyEconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME
-                                ? gasUnit
-                                : currency
+                              ? gasUnit
+                              : currency
                     }
                     ensembleIdentString={ensembleIdent?.toString() ?? ""}
                     ensembleDisplayName={ensembleDisplayName}
@@ -201,48 +196,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             {!isFetching && hasResults && (
                 <div className="gap-y-sm flex h-full min-h-0 flex-col p-2">
                     <div className="text-body-xs text-subtle">{activeAssumptions.join(" | ")}</div>
-                    <RadioCompositions.GroupWithLabels
-                        value={viewMode}
-                        options={[
-                            { value: ViewMode.DISTRIBUTION, label: "Distribution" },
-                            { value: ViewMode.TIME_PROFILE, label: "Time profile" },
-                            { value: ViewMode.ALL_RESULTS, label: "All results" },
-                        ]}
-                        onValueChange={setViewMode}
-                        layout="horizontal"
-                        size="small"
-                    />
-                    {viewMode === ViewMode.DISTRIBUTION && (
+                    {resultMode === ResultMode.DISTRIBUTION && (
                         <>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="flex w-96 max-w-full items-center gap-2">
-                                    <span className="text-body-xs shrink-0">Measure</span>
-                                    <Combobox
-                                        items={Object.values(EconomicMeasure).map((value) => ({
-                                            value,
-                                            label: EconomicMeasureEnumToStringMapping[value],
-                                        }))}
-                                        value={selectedMeasure}
-                                        onValueChange={(value) => value !== null && setSelectedMeasure(value)}
-                                    />
-                                </div>
-                                <div className="flex w-64 max-w-full items-center gap-2">
-                                    <span className="text-body-xs shrink-0">Plot type</span>
-                                    <Combobox<DistributionPlotType>
-                                        items={Object.values(DistributionPlotType)
-                                            .filter(
-                                                (value): value is DistributionPlotType.EXCEEDANCE | DistributionPlotType.HISTOGRAM =>
-                                                    value !== DistributionPlotType.BOX,
-                                            )
-                                            .map((value) => ({
-                                                value,
-                                                label: DistributionPlotTypeEnumToStringMapping[value],
-                                            }))}
-                                        value={distributionPlotType}
-                                        onValueChange={(value) => value !== null && setDistributionPlotType(value)}
-                                    />
-                                </div>
-                            </div>
                             <ResultsStatisticsTable
                                 measure={selectedMeasure}
                                 measureValues={measureValues}
@@ -251,77 +206,61 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                 breakEvenTargetCount={breakEvenTargetCount}
                                 isDelta={isDeltaEnsemble}
                             />
-                            <MeasureDistributionPlot
-                                measure={selectedMeasure}
-                                measureValues={measureValues}
-                                unit={getMeasureUnit(selectedMeasure, unitContext)}
-                                plotType={distributionPlotType}
-                                color={ensembleColor}
-                                width={activePlotWidth}
-                                height={activePlotHeight}
-                                targetValue={
-                                    selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
-                                        ? priceAssumptions.oilPrice
-                                        : null
-                                }
-                                isDelta={isDeltaEnsemble}
-                            />
+                            <ResponsivePlotArea>
+                                {(width, height) => (
+                                    <MeasureDistributionPlot
+                                        measure={selectedMeasure}
+                                        measureValues={measureValues}
+                                        unit={getMeasureUnit(selectedMeasure, unitContext)}
+                                        plotType={distributionPlotType}
+                                        color={ensembleColor}
+                                        width={width}
+                                        height={height}
+                                        targetValue={
+                                            selectedMeasure === EconomicMeasure.BREAK_EVEN_OIL_PRICE
+                                                ? priceAssumptions.oilPrice
+                                                : null
+                                        }
+                                        isDelta={isDeltaEnsemble}
+                                    />
+                                )}
+                            </ResponsivePlotArea>
                         </>
                     )}
-                    {viewMode === ViewMode.TIME_PROFILE && hasSelectedTimeProfileData && (
+                    {resultMode === ResultMode.TIME_PROFILE && hasSelectedTimeProfileData && (
                         <>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="flex w-96 max-w-full items-center gap-2">
-                                    <span className="text-body-xs shrink-0">Time profile</span>
-                                    <Combobox<CashFlowProfileType>
-                                        items={Object.values(CashFlowProfileType).map((value) => ({
-                                            value,
-                                            label: CashFlowProfileTypeEnumToStringMapping[value],
-                                        }))}
-                                        value={cashFlowProfileType}
-                                        onValueChange={(value) => value !== null && setCashFlowProfileType(value)}
-                                    />
+                            {isSelectedRealizationUnavailable && (
+                                <div role="status" className="text-body-xs text-subtle">
+                                    Realization {selectedRealization} has no complete data for this profile; showing the
+                                    aggregate only.
                                 </div>
-                                <div className="flex w-64 max-w-full items-center gap-2">
-                                    <label className="text-body-xs shrink-0" htmlFor="economic-screening-realization">
-                                        Realization
-                                    </label>
-                                    <Combobox<number>
-                                        id="economic-screening-realization"
-                                        items={results.map((result) => ({
-                                            value: result.realization,
-                                            label: result.realization.toString(),
-                                        }))}
-                                        value={selectedProfileRealization}
-                                        onValueChange={setSelectedProfileRealization}
-                                        showClearAllButton
-                                        placeholder="Aggregate"
+                            )}
+                            <ResponsivePlotArea>
+                                {(width, height) => (
+                                    <CashFlowPlot
+                                        results={results}
+                                        currency={currency}
+                                        profileType={cashFlowProfileType}
+                                        selectedRealization={selectedRealization}
+                                        oilUnit={oilUnit}
+                                        gasUnit={gasUnit}
+                                        color={ensembleColor}
+                                        width={width}
+                                        height={height}
                                     />
-                                </div>
-                            </div>
-                            <CashFlowPlot
-                                results={results}
-                                currency={currency}
-                                profileType={cashFlowProfileType}
-                                selectedRealization={selectedProfileRealization}
-                                oilUnit={oilUnit}
-                                gasUnit={gasUnit}
-                                color={ensembleColor}
-                                width={activePlotWidth}
-                                height={activePlotHeight}
-                            />
+                                )}
+                            </ResponsivePlotArea>
                         </>
                     )}
-                    {viewMode === ViewMode.TIME_PROFILE && !hasSelectedTimeProfileData && (
+                    {resultMode === ResultMode.TIME_PROFILE && !hasSelectedTimeProfileData && (
                         <ContentInfo>No complete profile data is available for the selected time profile.</ContentInfo>
                     )}
-                    {viewMode === ViewMode.ALL_RESULTS && (
+                    {resultMode === ResultMode.ALL_RESULTS && (
                         <div className="min-h-0 grow">
                             <RealizationResultsTable
                                 results={results}
                                 unitContext={unitContext}
-                                selectedRealization={selectedProfileRealization}
-                                onSelectedRealizationChange={setSelectedProfileRealization}
+                                selectedRealization={selectedRealization}
                                 isDelta={isDeltaEnsemble}
                             />
                         </div>

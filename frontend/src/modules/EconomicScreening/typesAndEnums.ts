@@ -95,6 +95,24 @@ export const CashFlowProfileTypeEnumToStringMapping: Record<CashFlowProfileType,
     [CashFlowProfileType.CUMULATIVE_DISCOUNTED_CASH_FLOW]: "Cumulative discounted cash flow",
 };
 
+export enum ResultMode {
+    DISTRIBUTION = "DISTRIBUTION",
+    TIME_PROFILE = "TIME_PROFILE",
+    ALL_RESULTS = "ALL_RESULTS",
+}
+
+export const ResultModeEnumToStringMapping: Record<ResultMode, string> = {
+    [ResultMode.DISTRIBUTION]: "Distribution",
+    [ResultMode.TIME_PROFILE]: "Time profile",
+    [ResultMode.ALL_RESULTS]: "All results",
+};
+
+/** A displayed realization, tied to the ensemble it was chosen in. Null realization means Aggregate. */
+export type RealizationSelection = {
+    ensembleIdentString: string | null;
+    realization: number | null;
+};
+
 /** Yearly CAPEX/OPEX. For a delta ensemble the values are interpreted as delta costs. */
 export type CostProfileEntry = {
     year: number;

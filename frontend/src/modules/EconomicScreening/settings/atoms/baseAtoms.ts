@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 
-import type { CostProfileEntry, EarlyValueConfiguration, SourceHorizon } from "@modules/EconomicScreening/typesAndEnums";
+import type { CostProfileEntry, EarlyValueConfiguration } from "@modules/EconomicScreening/typesAndEnums";
 import {
     DEFAULT_DISCOUNT_RATE_PERCENT,
     CashFlowProfileType,
@@ -9,6 +9,7 @@ import {
     EconomicMeasure,
     GasPriceBasis,
     OilPriceBasis,
+    ResultMode,
 } from "@modules/EconomicScreening/typesAndEnums";
 import type { MissingComponentAssumptions } from "@modules/EconomicScreening/utils/vectorResolution";
 
@@ -26,13 +27,10 @@ export const isCostProfileDraftValidAtom = atom<boolean>(true);
 
 export const earlyValueConfigurationAtom = atom<EarlyValueConfiguration>({ enabled: false, endYear: null });
 
+export const resultModeAtom = atom<ResultMode>(ResultMode.DISTRIBUTION);
 export const selectedMeasureAtom = atom<EconomicMeasure>(EconomicMeasure.DISCOUNTED_OIL_VOLUME);
 export const distributionPlotTypeAtom = atom<DistributionPlotType>(DistributionPlotType.EXCEEDANCE);
-export const showCashFlowPlotAtom = atom<boolean>(false);
 export const cashFlowProfileTypeAtom = atom<CashFlowProfileType>(CashFlowProfileType.ANNUAL_OIL_VOLUME);
 
 /** Explicit zero assumptions, keyed by the ensemble identity they apply to. */
 export const missingComponentAssumptionsAtom = atom<Record<string, MissingComponentAssumptions>>({});
-
-/** Source envelope received from the view, used to generate cost years. */
-export const sourceHorizonAtom = atom<SourceHorizon>({ endYear: null, isLoading: false });

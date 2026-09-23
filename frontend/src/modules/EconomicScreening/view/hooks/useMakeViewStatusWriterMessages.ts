@@ -2,11 +2,12 @@ import { useAtomValue } from "jotai";
 
 import type { ViewStatusWriter } from "@framework/StatusWriter";
 
-import { economicScreeningResultsAtom, queryErrorAtom } from "../atoms/derivedAtoms";
+import { sourceSnapshotAtom } from "../atoms/baseAtoms";
+import { economicScreeningResultsAtom } from "../atoms/derivedAtoms";
 
 export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter): void {
     const { warnings, errors } = useAtomValue(economicScreeningResultsAtom);
-    const queryError = useAtomValue(queryErrorAtom);
+    const queryError = useAtomValue(sourceSnapshotAtom).queryError;
 
     if (queryError) {
         statusWriter.addError(queryError);
