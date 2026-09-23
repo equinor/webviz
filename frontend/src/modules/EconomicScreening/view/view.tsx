@@ -23,17 +23,15 @@ import {
 } from "@modules/EconomicScreening/typesAndEnums";
 import { countPositiveNpvAtTarget } from "@modules/EconomicScreening/utils/distributionAggregation";
 import { getMeasureUnit, getMeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
-import { convertOilPriceToSimulatorUnit } from "@modules/EconomicScreening/utils/unitConversion";
 
 import type { Interfaces } from "../interfaces";
 
 import {
     distributionPlotTypeAtom,
     cashFlowProfileTypeAtom,
-    discountAssumptionsAtom,
     earlyValueConfigurationAtom,
+    economicAssumptionsAtom,
     ensembleIdentAtom,
-    evaluationWindowAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     selectedMeasureAtom,
@@ -68,14 +66,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const selectedMeasure = useAtomValue(selectedMeasureAtom);
     const distributionPlotType = useAtomValue(distributionPlotTypeAtom);
     const cashFlowProfileType = useAtomValue(cashFlowProfileTypeAtom);
-    const discountAssumptions = useAtomValue(discountAssumptionsAtom);
-    const evaluationWindow = useAtomValue(evaluationWindowAtom);
+    const economicAssumptions = useAtomValue(economicAssumptionsAtom);
     const earlyValueConfiguration = useAtomValue(earlyValueConfigurationAtom);
     const earlyValueEndYear = earlyValueConfiguration.endYear;
     const isCostProfileDraftValid = useAtomValue(isCostProfileDraftValidAtom);
     const priceAssumptions = useAtomValue(priceAssumptionsAtom);
     const isFetching = useAtomValue(isFetchingAtom);
-    const { results, oilUnit, gasUnit, isEarlyValueConfigurationValid } = useAtomValue(economicScreeningResultsAtom);
+    const { results, oilUnit, gasUnit, isEarlyValueConfigurationValid, horizon } =
+        useAtomValue(economicScreeningResultsAtom);
     const setSelectedMeasure = useSetAtom(selectedMeasureAtom);
     const setDistributionPlotType = useSetAtom(distributionPlotTypeAtom);
     const setCashFlowProfileType = useSetAtom(cashFlowProfileTypeAtom);
@@ -96,62 +94,41 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         [instanceTitle, props.viewContext],
     );
 
+    const currency = priceAssumptions.currency;
     const unitContext = {
         oilUnit,
         gasUnit,
-        currency: priceAssumptions.currency,
+        currency,
         oilPriceBasis: priceAssumptions.oilPriceBasis,
     };
     const measureValues = getMeasureValues(results, selectedMeasure, unitContext);
-    const targetOilPricePerVolume =
+    const breakEvenTargetCount =
         priceAssumptions.oilPrice === null
             ? null
-            : convertOilPriceToSimulatorUnit(priceAssumptions.oilPrice, priceAssumptions.oilPriceBasis, oilUnit);
-    const breakEvenTargetCount =
-        targetOilPricePerVolume === null
-            ? null
-            : countPositiveNpvAtTarget(
-                results.map((result) =>
-                    result.npv === null
-                        ? Number.NaN
-                        : result.npv +
-                        result.discountedOilVolume *
-                        (targetOilPricePerVolume -
-                            (priceAssumptions.excludeOilRevenue ? 0 : targetOilPricePerVolume)),
-                ),
-            );
+            : countPositiveNpvAtTarget(results.map((result) => result.npv ?? Number.NaN));
 
     const activePlotHeight = Math.max(wrapperDivSize.height - PLOT_CONTROLS_HEIGHT_PX, 200);
     const activePlotWidth = Math.max(wrapperDivSize.width - 16, 0);
 
     const hasResults = results.length > 0;
-    const hasNetCashFlow = results.some((result) => result.netCashFlow !== null);
+    const hasNetCashFlow = results.some((result) => result.npv !== null);
     const hasSelectedTimeProfileData =
         cashFlowProfileType === CashFlowProfileType.ANNUAL_OIL_VOLUME
             ? results.some((result) => result.hasOilData)
             : cashFlowProfileType === CashFlowProfileType.ANNUAL_SALES_GAS_VOLUME
                 ? results.some((result) => result.hasSalesGasData)
                 : hasNetCashFlow;
-    const availableYears = results.flatMap((result) => result.years);
-    const valuationYear = results[0]?.valuationYear ?? discountAssumptions.baseYear ?? Math.min(...availableYears);
-    const evaluationYears =
-        evaluationWindow.firstYear !== null && evaluationWindow.lastYear !== null
-            ? `${evaluationWindow.firstYear}-${evaluationWindow.lastYear}`
-            : evaluationWindow.firstYear !== null
-                ? `${evaluationWindow.firstYear} onward`
-                : evaluationWindow.lastYear !== null
-                    ? `through ${evaluationWindow.lastYear}`
-                    : "All available years";
-    const excludedProducts = [
-        priceAssumptions.excludeOilRevenue ? "oil" : null,
-        priceAssumptions.excludeGasRevenue ? "gas" : null,
-    ].filter((product): product is string => product !== null);
     const activeAssumptions = [
-        `Discount rate ${discountAssumptions.discountRatePercent}%`,
-        `Valuation 1 Jan ${valuationYear}`,
-        `Evaluation ${evaluationYears}`,
-        excludedProducts.length > 0 ? `Excluded revenue: ${excludedProducts.join(", ")}` : null,
+        `Discount rate ${economicAssumptions.discountRatePercent}%`,
+        horizon ? `Valuation 1 Jan ${horizon.startYear}` : null,
+        horizon ? `Evaluation ${horizon.startYear}-${horizon.endYear}` : null,
+        "Monthly production, revenue and OPEX; mid-year CAPEX",
+        `Currency ${currency}`,
     ].filter((assumption): assumption is string => assumption !== null);
+    const pendingMessage =
+        economicAssumptions.predictionStartYear === null
+            ? "Enter a prediction start year in the settings to calculate results."
+            : null;
 
     return (
         <div className="h-full w-full overflow-auto" ref={wrapperDivRef}>
@@ -190,7 +167,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                             ? oilUnit
                             : measure === EarlyEconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME
                                 ? gasUnit
-                                : priceAssumptions.currency
+                                : currency
                     }
                     ensembleIdentString={ensembleIdent?.toString() ?? ""}
                     ensembleDisplayName={ensembleDisplayName}
@@ -215,7 +192,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             )}
 
             {!isFetching && !hasResults && (
-                <ContentInfo>Select an ensemble with oil or sales-gas production data to compute economic results.</ContentInfo>
+                <ContentInfo>
+                    {pendingMessage ??
+                        "Select an ensemble with oil or sales-gas production data to compute economic results."}
+                </ContentInfo>
             )}
 
             {!isFetching && hasResults && (
@@ -321,7 +301,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                             </div>
                             <CashFlowPlot
                                 results={results}
-                                currency={priceAssumptions.currency}
+                                currency={currency}
                                 profileType={cashFlowProfileType}
                                 selectedRealization={selectedProfileRealization}
                                 oilUnit={oilUnit}

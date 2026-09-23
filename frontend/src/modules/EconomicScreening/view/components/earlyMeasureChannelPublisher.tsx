@@ -3,12 +3,12 @@ import { EARLY_MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channel
 import { makeEarlyMeasureDataGenerator } from "@modules/EconomicScreening/dataGenerators";
 import type { Interfaces } from "@modules/EconomicScreening/interfaces";
 import type { EarlyEconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
+import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 
 export type EarlyMeasureChannelPublisherProps = {
     viewContext: ViewContext<Interfaces>;
     measure: EarlyEconomicMeasure;
-    results: RealizationEconomicResult[];
+    results: MonthlyRealizationEconomicResult[];
     endYear: number;
     unit: string;
     ensembleIdentString: string;

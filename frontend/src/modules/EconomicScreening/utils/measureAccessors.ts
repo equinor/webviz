@@ -6,7 +6,7 @@ import {
     OilPriceBasisEnumToStringMapping,
 } from "@modules/EconomicScreening/typesAndEnums";
 
-import type { RealizationEconomicResult } from "./economicCalculations";
+import type { MonthlyRealizationEconomicResult } from "./monthlyEconomics";
 import { convertOilPriceFromSimulatorUnit } from "./unitConversion";
 
 export type MeasureValues = {
@@ -27,7 +27,7 @@ export type MeasureUnitContext = {
 };
 
 function rawMeasureValue(
-    result: RealizationEconomicResult,
+    result: MonthlyRealizationEconomicResult,
     measure: EconomicMeasure,
     context: MeasureUnitContext,
 ): number | null {
@@ -58,7 +58,7 @@ function rawMeasureValue(
 
 /** Realizations where the measure is undefined, e.g. IRR without a sign change, are left out. */
 export function getMeasureValues(
-    results: RealizationEconomicResult[],
+    results: MonthlyRealizationEconomicResult[],
     measure: EconomicMeasure,
     context: MeasureUnitContext,
 ): MeasureValues {
@@ -128,7 +128,10 @@ export function getMeasureDisplayName(measure: EconomicMeasure, isDelta = false)
     }
 }
 
-export function getMeasureUnavailableReason(results: RealizationEconomicResult[], measure: EconomicMeasure): string {
+export function getMeasureUnavailableReason(
+    results: MonthlyRealizationEconomicResult[],
+    measure: EconomicMeasure,
+): string {
     if (measure === EconomicMeasure.NPV || measure === EconomicMeasure.IRR) {
         const financialReason = results.find((result) => result.financialReason)?.financialReason;
         if (financialReason) {
@@ -142,7 +145,7 @@ export function getMeasureUnavailableReason(results: RealizationEconomicResult[]
         }
     }
     if (measure === EconomicMeasure.BREAK_EVEN_OIL_PRICE) {
-        return "Break-even requires complete oil data, a gas revenue assumption, and non-zero costs.";
+        return "Break-even requires oil coverage over the whole evaluation, a resolved gas price, and non-zero costs.";
     }
     return "No valid values are available for this metric.";
 }

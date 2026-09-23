@@ -1,13 +1,12 @@
 import type { ChannelContentMetaData, DataGenerator } from "@framework/types/dataChannnel";
 
 import { EarlyEconomicMeasure, type EconomicMeasure } from "./typesAndEnums";
-import type { RealizationEconomicResult } from "./utils/economicCalculations";
-import { extractEarlyValue } from "./utils/economicCalculations";
 import type { MeasureUnitContext } from "./utils/measureAccessors";
 import { getMeasureDisplayName, getMeasureUnit, getMeasureValues } from "./utils/measureAccessors";
+import type { MonthlyRealizationEconomicResult } from "./utils/monthlyEconomics";
 
 export function makeMeasureDataGenerator(
-    results: RealizationEconomicResult[],
+    results: MonthlyRealizationEconomicResult[],
     measure: EconomicMeasure,
     unitContext: MeasureUnitContext,
     ensembleIdentString: string,
@@ -32,8 +31,9 @@ export function makeMeasureDataGenerator(
     };
 }
 
+/** Publishes only values that are valid on the early horizon itself, which uses its own end year. */
 export function makeEarlyMeasureDataGenerator(
-    results: RealizationEconomicResult[],
+    results: MonthlyRealizationEconomicResult[],
     measure: EarlyEconomicMeasure,
     endYear: number,
     unit: string,
@@ -44,14 +44,17 @@ export function makeEarlyMeasureDataGenerator(
 ): DataGenerator {
     return () => {
         const data = results.flatMap((result) => {
-            const earlyValue = extractEarlyValue(result, endYear);
+            const earlyValue = result.early;
+            if (!earlyValue || earlyValue.endYear !== endYear) {
+                return [];
+            }
             const value =
                 measure === EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME
-                    ? result.hasOilData
+                    ? earlyValue.hasOilData
                         ? earlyValue.discountedOilVolume
                         : null
                     : measure === EarlyEconomicMeasure.DISCOUNTED_SALES_GAS_VOLUME
-                      ? result.hasSalesGasData
+                      ? earlyValue.hasSalesGasData
                           ? earlyValue.discountedSalesGasVolume
                           : null
                       : earlyValue.npv;

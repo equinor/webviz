@@ -3,18 +3,18 @@ import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
 import type { BreakEvenTargetCount } from "@modules/EconomicScreening/utils/distributionAggregation";
 import { computeDistributionSummary, countValuesAboveThreshold } from "@modules/EconomicScreening/utils/distributionAggregation";
-import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
 import type { MeasureValues } from "@modules/EconomicScreening/utils/measureAccessors";
 import {
     getMeasureDisplayName,
     getMeasureDisplayScale,
     getMeasureUnavailableReason,
 } from "@modules/EconomicScreening/utils/measureAccessors";
+import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 
 export type ResultsStatisticsTableProps = {
     measure: EconomicMeasure;
     measureValues: MeasureValues;
-    results: RealizationEconomicResult[];
+    results: MonthlyRealizationEconomicResult[];
     unit: string;
     breakEvenTargetCount: BreakEvenTargetCount | null;
     isDelta: boolean;

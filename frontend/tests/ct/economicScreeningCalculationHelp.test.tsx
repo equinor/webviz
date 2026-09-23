@@ -11,8 +11,8 @@ test("opens the calculation guide and returns focus after Escape", async ({ moun
     const dialog = page.getByRole("dialog", { name: "How calculations work" });
     await expect(dialog).toBeVisible();
     await expect(page.getByText("Worked example", { exact: true })).toBeVisible();
-    await expect(dialog.locator("pre").last()).toContainText("411.57 USD");
-    await expect(dialog.locator("pre").last()).toContainText("-0.37143 USD/Sm3");
+    await expect(dialog.locator("pre").last()).toContainText("450.93 USD");
+    await expect(dialog.locator("pre").last()).toContainText("-0.06366 USD/Sm3");
 
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog", { name: "How calculations work" })).toBeHidden();

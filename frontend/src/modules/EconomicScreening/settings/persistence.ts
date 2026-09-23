@@ -4,12 +4,11 @@ import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils"
 import { SchemaBuilder } from "@modules/_shared/jtd-schemas/SchemaBuilder";
 import type { CostProfileEntry } from "@modules/EconomicScreening/typesAndEnums";
 import {
-    DiscountConvention,
     CashFlowProfileType,
+    Currency,
     DistributionPlotType,
     EconomicMeasure,
     GasPriceBasis,
-    InvestmentTiming,
     OilPriceBasis,
 } from "@modules/EconomicScreening/typesAndEnums";
 
@@ -17,50 +16,44 @@ import {
     costProfileAtom,
     cashFlowProfileTypeAtom,
     currencyAtom,
-    discountBaseYearAtom,
-    discountConventionAtom,
     discountRatePercentAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
-    evaluationWindowAtom,
-    excludeGasRevenueAtom,
-    excludeOilRevenueAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
-    gasToOilEquivalentFactorAtom,
-    investmentTimingAtom,
     missingComponentAssumptionsAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
+    predictionStartYearAtom,
     selectedMeasureAtom,
     showCashFlowPlotAtom,
 } from "./atoms/baseAtoms";
 import { selectedEnsembleIdentAtom } from "./atoms/persistableFixableAtoms";
 
+/**
+ * Only the current monthly model is persisted. Earlier experimental states lack this marker and fail
+ * schema validation, so the framework discards them before any setting is changed.
+ */
+export const SETTINGS_STATE_FORMAT = "MONTHLY_OPEX_V1";
+
 export type SerializedSettings = {
+    stateFormat: typeof SETTINGS_STATE_FORMAT;
     selectedEnsembleIdentString: string | null;
     discountRatePercent: number;
-    discountBaseYear: number | null;
-    discountConvention: DiscountConvention;
-    investmentTiming?: InvestmentTiming;
-    gasToOilEquivalentFactor: number;
-    currency: string;
+    predictionStartYear: number | null;
+    currency: Currency;
     oilPrice: number | null;
     oilPriceBasis: OilPriceBasis;
-    excludeOilRevenue?: boolean;
     gasPrice: number | null;
     gasPriceBasis: GasPriceBasis;
-    excludeGasRevenue?: boolean;
     costProfile: CostProfileEntry[];
-    evaluationFirstYear: number | null;
-    evaluationLastYear: number | null;
-    earlyValueEnabled?: boolean;
-    earlyValueEndYear?: number | null;
+    earlyValueEnabled: boolean;
+    earlyValueEndYear: number | null;
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
     showCashFlowPlot: boolean;
-    cashFlowProfileType?: CashFlowProfileType;
-    missingComponentAssumptionsByEnsemble?: Record<
+    cashFlowProfileType: CashFlowProfileType;
+    missingComponentAssumptionsByEnsemble: Record<
         string,
         { assumeMissingInjectionAsZero?: boolean; assumeMissingConsumptionAsZero?: boolean }
     >;
@@ -68,12 +61,11 @@ export type SerializedSettings = {
 
 const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
     properties: {
+        stateFormat: { enum: [SETTINGS_STATE_FORMAT] },
         selectedEnsembleIdentString: { type: "string", nullable: true },
         discountRatePercent: { type: "float64" },
-        discountBaseYear: { type: "int32", nullable: true },
-        discountConvention: { enum: Object.values(DiscountConvention) },
-        gasToOilEquivalentFactor: { type: "float64" },
-        currency: { type: "string" },
+        predictionStartYear: { type: "int32", nullable: true },
+        currency: { enum: Object.values(Currency) },
         oilPrice: { type: "float64", nullable: true },
         oilPriceBasis: { enum: Object.values(OilPriceBasis) },
         gasPrice: { type: "float64", nullable: true },
@@ -87,13 +79,12 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
                 },
             },
         },
-        evaluationFirstYear: { type: "int32", nullable: true },
-        evaluationLastYear: { type: "int32", nullable: true },
+        earlyValueEnabled: { type: "boolean" },
+        earlyValueEndYear: { type: "int32", nullable: true },
         selectedMeasure: { enum: Object.values(EconomicMeasure) },
         distributionPlotType: { enum: Object.values(DistributionPlotType) },
         showCashFlowPlot: { type: "boolean" },
-    },
-    optionalProperties: {
+        cashFlowProfileType: { enum: Object.values(CashFlowProfileType) },
         missingComponentAssumptionsByEnsemble: {
             values: {
                 optionalProperties: {
@@ -102,38 +93,25 @@ const schemaBuilder = new SchemaBuilder<SerializedSettings>(() => ({
                 },
             },
         },
-        earlyValueEnabled: { type: "boolean" },
-        earlyValueEndYear: { type: "int32", nullable: true },
-        investmentTiming: { enum: Object.values(InvestmentTiming) },
-        excludeOilRevenue: { type: "boolean" },
-        excludeGasRevenue: { type: "boolean" },
-        cashFlowProfileType: { enum: Object.values(CashFlowProfileType) },
     },
 }));
 
 export const SERIALIZED_SETTINGS_SCHEMA = schemaBuilder.build();
 
 export const serializeSettings: SerializeStateFunction<SerializedSettings> = (get) => {
-    const evaluationWindow = get(evaluationWindowAtom);
     const earlyValueConfiguration = get(earlyValueConfigurationAtom);
 
     return {
+        stateFormat: SETTINGS_STATE_FORMAT,
         selectedEnsembleIdentString: get(selectedEnsembleIdentAtom).value?.toString() ?? null,
         discountRatePercent: get(discountRatePercentAtom),
-        discountBaseYear: get(discountBaseYearAtom),
-        discountConvention: get(discountConventionAtom),
-        investmentTiming: get(investmentTimingAtom),
-        gasToOilEquivalentFactor: get(gasToOilEquivalentFactorAtom),
+        predictionStartYear: get(predictionStartYearAtom),
         currency: get(currencyAtom),
         oilPrice: get(oilPriceAtom),
         oilPriceBasis: get(oilPriceBasisAtom),
-        excludeOilRevenue: get(excludeOilRevenueAtom),
         gasPrice: get(gasPriceAtom),
         gasPriceBasis: get(gasPriceBasisAtom),
-        excludeGasRevenue: get(excludeGasRevenueAtom),
         costProfile: get(costProfileAtom),
-        evaluationFirstYear: evaluationWindow.firstYear,
-        evaluationLastYear: evaluationWindow.lastYear,
         earlyValueEnabled: earlyValueConfiguration.enabled,
         earlyValueEndYear: earlyValueConfiguration.endYear,
         selectedMeasure: get(selectedMeasureAtom),
@@ -144,15 +122,11 @@ export const serializeSettings: SerializeStateFunction<SerializedSettings> = (ge
     };
 };
 
+/** Receives schema-validated current states, or partial template states. */
 export const deserializeSettings: DeserializeStateFunction<SerializedSettings> = (raw, set) => {
     const selectedEnsembleIdent = raw.selectedEnsembleIdentString
         ? (getEnsembleIdentFromString(raw.selectedEnsembleIdentString) ?? undefined)
         : undefined;
-
-    const evaluationWindow =
-        raw.evaluationFirstYear !== undefined || raw.evaluationLastYear !== undefined
-            ? { firstYear: raw.evaluationFirstYear ?? null, lastYear: raw.evaluationLastYear ?? null }
-            : undefined;
     const earlyValueConfiguration =
         raw.earlyValueEnabled !== undefined || raw.earlyValueEndYear !== undefined
             ? { enabled: raw.earlyValueEnabled ?? false, endYear: raw.earlyValueEndYear ?? null }
@@ -160,19 +134,13 @@ export const deserializeSettings: DeserializeStateFunction<SerializedSettings> =
 
     setIfDefined(set, selectedEnsembleIdentAtom, selectedEnsembleIdent);
     setIfDefined(set, discountRatePercentAtom, raw.discountRatePercent);
-    setIfDefined(set, discountBaseYearAtom, raw.discountBaseYear);
-    setIfDefined(set, discountConventionAtom, raw.discountConvention);
-    setIfDefined(set, investmentTimingAtom, raw.investmentTiming);
-    setIfDefined(set, gasToOilEquivalentFactorAtom, raw.gasToOilEquivalentFactor);
+    setIfDefined(set, predictionStartYearAtom, raw.predictionStartYear);
     setIfDefined(set, currencyAtom, raw.currency);
     setIfDefined(set, oilPriceAtom, raw.oilPrice);
     setIfDefined(set, oilPriceBasisAtom, raw.oilPriceBasis);
-    setIfDefined(set, excludeOilRevenueAtom, raw.excludeOilRevenue);
     setIfDefined(set, gasPriceAtom, raw.gasPrice);
     setIfDefined(set, gasPriceBasisAtom, raw.gasPriceBasis);
-    setIfDefined(set, excludeGasRevenueAtom, raw.excludeGasRevenue);
     setIfDefined(set, costProfileAtom, raw.costProfile);
-    setIfDefined(set, evaluationWindowAtom, evaluationWindow);
     setIfDefined(set, earlyValueConfigurationAtom, earlyValueConfiguration);
     setIfDefined(set, selectedMeasureAtom, raw.selectedMeasure);
     setIfDefined(set, distributionPlotTypeAtom, raw.distributionPlotType);

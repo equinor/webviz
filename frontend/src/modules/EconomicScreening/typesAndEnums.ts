@@ -32,26 +32,6 @@ export const EarlyEconomicMeasureEnumToStringMapping: Record<EarlyEconomicMeasur
     [EarlyEconomicMeasure.DISCOUNTED_CASH_FLOW]: "Early discounted cash flow",
 };
 
-export enum DiscountConvention {
-    MID_YEAR = "MID_YEAR",
-    YEAR_END = "YEAR_END",
-}
-
-export const DiscountConventionEnumToStringMapping: Record<DiscountConvention, string> = {
-    [DiscountConvention.MID_YEAR]: "Mid-year",
-    [DiscountConvention.YEAR_END]: "Year-end",
-};
-
-export enum InvestmentTiming {
-    START_OF_YEAR = "START_OF_YEAR",
-    FOLLOW_ANNUAL_TIMING = "FOLLOW_ANNUAL_TIMING",
-}
-
-export const InvestmentTimingEnumToStringMapping: Record<InvestmentTiming, string> = {
-    [InvestmentTiming.START_OF_YEAR]: "Start of year",
-    [InvestmentTiming.FOLLOW_ANNUAL_TIMING]: "Follow annual timing",
-};
-
 export enum BreakEvenSlopeDirection {
     POSITIVE = "POSITIVE",
     NEGATIVE = "NEGATIVE",
@@ -62,6 +42,11 @@ export enum IrrStatus {
     NO_FINITE_ROOT = "NO_FINITE_ROOT",
     NON_CONVENTIONAL = "NON_CONVENTIONAL",
     OUT_OF_DOMAIN = "OUT_OF_DOMAIN",
+}
+
+export enum Currency {
+    NOK = "NOK",
+    USD = "USD",
 }
 
 export enum OilPriceBasis {
@@ -118,28 +103,25 @@ export type CostProfileEntry = {
 };
 
 export type PriceAssumptions = {
-    currency: string;
+    currency: Currency;
+    /** Null means unspecified. Zero intentionally omits oil revenue. */
     oilPrice: number | null;
     oilPriceBasis: OilPriceBasis;
-    excludeOilRevenue: boolean;
+    /** Null means unspecified. Zero intentionally omits gas revenue. */
     gasPrice: number | null;
     gasPriceBasis: GasPriceBasis;
-    excludeGasRevenue: boolean;
 };
 
-export type DiscountAssumptions = {
+export type EconomicAssumptions = {
     discountRatePercent: number;
-    /** Null means "use the first year of the evaluation window". */
-    baseYear: number | null;
-    convention: DiscountConvention;
-    investmentTiming?: InvestmentTiming;
-    /** Volume of gas equivalent to one volume of oil, in the gas volume unit of the source data. */
-    gasToOilEquivalentFactor: number;
+    /** Valuation and evaluation both start on 1 January of this year. Null until entered. */
+    predictionStartYear: number | null;
 };
 
-export type EvaluationWindow = {
-    firstYear: number | null;
-    lastYear: number | null;
+/** Last year of the full-ensemble source envelope, used to generate cost years. */
+export type SourceHorizon = {
+    endYear: number | null;
+    isLoading: boolean;
 };
 
 export type EarlyValueConfiguration = {
@@ -149,5 +131,5 @@ export type EarlyValueConfiguration = {
 
 export const DEFAULT_DISCOUNT_RATE_PERCENT = 8;
 
-/** NPD/NOD convention: 1000 Sm³ gas equals 1 Sm³ oil equivalent. */
+/** SODIR convention, fixed: 1000 Sm³ gas equals 1 Sm³ oil equivalent, applied after unit conversion. */
 export const DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR = 1000;

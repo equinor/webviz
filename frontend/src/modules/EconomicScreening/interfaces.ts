@@ -6,46 +6,41 @@ import {
     costProfileAtom,
     cashFlowProfileTypeAtom,
     currencyAtom,
-    discountBaseYearAtom,
-    discountConventionAtom,
     discountRatePercentAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
-    evaluationWindowAtom,
-    excludeGasRevenueAtom,
-    excludeOilRevenueAtom,
     gasPriceAtom,
     gasPriceBasisAtom,
-    gasToOilEquivalentFactorAtom,
-    investmentTimingAtom,
     isCostProfileDraftValidAtom,
     oilPriceAtom,
     oilPriceBasisAtom,
+    predictionStartYearAtom,
     selectedMeasureAtom,
     showCashFlowPlotAtom,
 } from "./settings/atoms/baseAtoms";
-import { salesGasStrategyAtom } from "./settings/atoms/derivedAtoms";
+import { hasOilProductionVectorAtom, salesGasStrategyAtom } from "./settings/atoms/derivedAtoms";
 import { selectedEnsembleIdentAtom } from "./settings/atoms/persistableFixableAtoms";
 import type {
     CostProfileEntry,
     CashFlowProfileType,
-    DiscountAssumptions,
     DistributionPlotType,
     EarlyValueConfiguration,
+    EconomicAssumptions,
     EconomicMeasure,
-    EvaluationWindow,
     PriceAssumptions,
+    SourceHorizon,
 } from "./typesAndEnums";
 import type { SalesGasStrategy } from "./utils/vectorResolution";
+import { sourceHorizonAtom } from "./view/atoms/derivedAtoms";
 
 export type SettingsToViewInterface = {
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+    hasOilProductionVector: boolean;
     salesGasStrategy: SalesGasStrategy;
-    discountAssumptions: DiscountAssumptions;
+    economicAssumptions: EconomicAssumptions;
     priceAssumptions: PriceAssumptions;
     costProfile: CostProfileEntry[];
     isCostProfileDraftValid: boolean;
-    evaluationWindow: EvaluationWindow;
     earlyValueConfiguration: EarlyValueConfiguration;
     selectedMeasure: EconomicMeasure;
     distributionPlotType: DistributionPlotType;
@@ -53,24 +48,29 @@ export type SettingsToViewInterface = {
     cashFlowProfileType: CashFlowProfileType;
 };
 
+export type ViewToSettingsInterface = {
+    sourceHorizon: SourceHorizon;
+};
+
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
+    viewToSettings: ViewToSettingsInterface;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     ensembleIdent: (get) => {
         return get(selectedEnsembleIdentAtom).value;
     },
+    hasOilProductionVector: (get) => {
+        return get(hasOilProductionVectorAtom);
+    },
     salesGasStrategy: (get) => {
         return get(salesGasStrategyAtom);
     },
-    discountAssumptions: (get) => {
+    economicAssumptions: (get) => {
         return {
             discountRatePercent: get(discountRatePercentAtom),
-            baseYear: get(discountBaseYearAtom),
-            convention: get(discountConventionAtom),
-            investmentTiming: get(investmentTimingAtom),
-            gasToOilEquivalentFactor: get(gasToOilEquivalentFactorAtom),
+            predictionStartYear: get(predictionStartYearAtom),
         };
     },
     priceAssumptions: (get) => {
@@ -78,10 +78,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             currency: get(currencyAtom),
             oilPrice: get(oilPriceAtom),
             oilPriceBasis: get(oilPriceBasisAtom),
-            excludeOilRevenue: get(excludeOilRevenueAtom),
             gasPrice: get(gasPriceAtom),
             gasPriceBasis: get(gasPriceBasisAtom),
-            excludeGasRevenue: get(excludeGasRevenueAtom),
         };
     },
     costProfile: (get) => {
@@ -89,9 +87,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     isCostProfileDraftValid: (get) => {
         return get(isCostProfileDraftValidAtom);
-    },
-    evaluationWindow: (get) => {
-        return get(evaluationWindowAtom);
     },
     earlyValueConfiguration: (get) => {
         return get(earlyValueConfigurationAtom);
@@ -107,5 +102,11 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     cashFlowProfileType: (get) => {
         return get(cashFlowProfileTypeAtom);
+    },
+};
+
+export const viewToSettingsInterfaceInitialization: InterfaceInitialization<ViewToSettingsInterface> = {
+    sourceHorizon: (get) => {
+        return get(sourceHorizonAtom);
     },
 };

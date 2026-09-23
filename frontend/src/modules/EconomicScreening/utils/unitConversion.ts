@@ -1,4 +1,5 @@
 import type { GasPriceBasis, OilPriceBasis } from "@modules/EconomicScreening/typesAndEnums";
+import { DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR } from "@modules/EconomicScreening/typesAndEnums";
 
 const SM3_PER_STB = 0.158987294928;
 const SM3_PER_SCF = 0.028316846592;
@@ -95,4 +96,16 @@ export function convertGasToOilEquivalentFactorToSimulatorUnit(
         return null;
     }
     return (factorSm3GasPerSm3Oil * oilUnitInSm3) / gasUnitInSm3;
+}
+
+/**
+ * SODIR's fixed convention of 1000 Sm³ gas per Sm³ oil equivalent, applied after unit conversion so
+ * that the divisor matches the source vectors' own units.
+ */
+export function makeFixedOilEquivalentDivisor(oilSimulatorUnit: string, gasSimulatorUnit: string): number | null {
+    return convertGasToOilEquivalentFactorToSimulatorUnit(
+        DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
+        oilSimulatorUnit,
+        gasSimulatorUnit,
+    );
 }

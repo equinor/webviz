@@ -3,14 +3,14 @@ import { MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
 import { makeMeasureDataGenerator } from "@modules/EconomicScreening/dataGenerators";
 import type { Interfaces } from "@modules/EconomicScreening/interfaces";
 import type { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
 import type { MeasureUnitContext } from "@modules/EconomicScreening/utils/measureAccessors";
 import { getMeasureDisplayName } from "@modules/EconomicScreening/utils/measureAccessors";
+import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 
 export type MeasureChannelPublisherProps = {
     viewContext: ViewContext<Interfaces>;
     measure: EconomicMeasure;
-    results: RealizationEconomicResult[];
+    results: MonthlyRealizationEconomicResult[];
     unitContext: MeasureUnitContext;
     ensembleIdentString: string;
     ensembleDisplayName: string;

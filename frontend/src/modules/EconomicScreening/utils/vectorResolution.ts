@@ -1,5 +1,7 @@
 import type { VectorRealizationData_api } from "@api";
 
+import { adaptSourceCoverage, combineMonthCoverage, MonthCoverage, SourceKind } from "./monthlyProduction";
+
 export const OIL_PRODUCTION_VECTOR = "FOPT";
 export const SALES_GAS_VECTOR = "FGST";
 export const GAS_PRODUCTION_VECTOR = "FGPT";
@@ -20,6 +22,10 @@ export type RealizationCumulativeSeries = {
     realization: number;
     timestampsUtcMs: number[];
     values: number[];
+    /** One entry per adjacent timestamp pair, combined over every required source vector. */
+    intervalCoverage: MonthCoverage[];
+    /** End of common raw-source support over every required source vector; null when unverified. */
+    supportEndUtcMs: number | null;
 };
 
 export type MissingComponentAssumptions = {
@@ -73,12 +79,40 @@ function makeDataByRealizationMap(data: VectorRealizationData_api[]): Map<number
     return new Map(data.map((elm) => [elm.realization, elm]));
 }
 
-export function toRealizationCumulativeSeries(data: VectorRealizationData_api[]): RealizationCumulativeSeries[] {
-    return data.map((elm) => ({
-        realization: elm.realization,
-        timestampsUtcMs: elm.timestampsUtcMs,
-        values: elm.values,
-    }));
+export function toRealizationCumulativeSeries(
+    data: VectorRealizationData_api[],
+    sourceKind: SourceKind = SourceKind.REGULAR,
+): RealizationCumulativeSeries[] {
+    return data.map((elm) => {
+        const coverage = adaptSourceCoverage(elm, sourceKind);
+        return {
+            realization: elm.realization,
+            timestampsUtcMs: elm.timestampsUtcMs,
+            values: elm.values,
+            intervalCoverage: coverage.intervalCoverage,
+            supportEndUtcMs: coverage.supportEndUtcMs,
+        };
+    });
+}
+
+/** Coverage of a component for each production interval, matched by boundary dates rather than position. */
+function componentCoverageForIntervals(
+    productionTimestampsUtcMs: number[],
+    component: VectorRealizationData_api,
+    sourceKind: SourceKind,
+): MonthCoverage[] {
+    const componentCoverage = adaptSourceCoverage(component, sourceKind).intervalCoverage;
+    const indexByTimestamp = new Map(component.timestampsUtcMs.map((timestamp, index) => [timestamp, index]));
+    return productionTimestampsUtcMs.slice(0, -1).map((intervalStartUtcMs, index) => {
+        const componentIndex = indexByTimestamp.get(intervalStartUtcMs);
+        if (
+            componentIndex === undefined ||
+            component.timestampsUtcMs[componentIndex + 1] !== productionTimestampsUtcMs[index + 1]
+        ) {
+            return MonthCoverage.UNVERIFIED;
+        }
+        return componentCoverage[componentIndex];
+    });
 }
 
 /**
@@ -91,6 +125,7 @@ export function deriveSalesGasCumulative(
     gasInjectionData: VectorRealizationData_api[],
     gasConsumptionData: VectorRealizationData_api[],
     assumptions: MissingComponentAssumptions = {},
+    sourceKind: SourceKind = SourceKind.REGULAR,
 ): DerivedSalesGasCumulative {
     const injectionByRealization = makeDataByRealizationMap(gasInjectionData);
     const consumptionByRealization = makeDataByRealizationMap(gasConsumptionData);
@@ -136,10 +171,28 @@ export function deriveSalesGasCumulative(
             return production.values[i] - injected - consumed;
         });
 
+        const productionCoverage = adaptSourceCoverage(production, sourceKind);
+        const componentCoverages = [injection, consumption]
+            .filter((component): component is VectorRealizationData_api => component !== undefined)
+            .map((component) => componentCoverageForIntervals(production.timestampsUtcMs, component, sourceKind));
+        const componentSupportEnds = [injection, consumption]
+            .filter((component): component is VectorRealizationData_api => component !== undefined)
+            .map((component) => adaptSourceCoverage(component, sourceKind).supportEndUtcMs);
+        const supportEnds = [productionCoverage.supportEndUtcMs, ...componentSupportEnds];
+
         series.push({
             realization: production.realization,
             timestampsUtcMs: production.timestampsUtcMs,
             values,
+            intervalCoverage: productionCoverage.intervalCoverage.map((coverage, index) =>
+                combineMonthCoverage(
+                    coverage,
+                    ...componentCoverages.map((componentCoverage) => componentCoverage[index]),
+                ),
+            ),
+            supportEndUtcMs: supportEnds.some((supportEnd) => supportEnd === null)
+                ? null
+                : Math.min(...(supportEnds as number[])),
         });
     }
 

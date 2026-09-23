@@ -17,7 +17,7 @@ import {
     SALES_GAS_VECTOR,
 } from "@modules/EconomicScreening/utils/vectorResolution";
 
-import { ensembleIdentAtom, salesGasStrategyAtom } from "./baseAtoms";
+import { ensembleIdentAtom, hasOilProductionVectorAtom, salesGasStrategyAtom } from "./baseAtoms";
 
 /** Fixed positions of the vectors in `vectorDataQueriesAtom`. */
 export const VectorQueryIndex = {
@@ -71,10 +71,10 @@ const encodedAllEnsembleRealizationsAtom = atom<string | null>((get) => {
 });
 
 /** Per-vector enabled flags, following `VectorQueryIndex` order. */
-const isVectorNeededAtom = atom<boolean[]>((get) => {
+export const isVectorNeededAtom = atom<boolean[]>((get) => {
     const salesGasStrategy = get(salesGasStrategyAtom);
     return [
-        true,
+        get(hasOilProductionVectorAtom),
         salesGasStrategy.kind === "DIRECT",
         salesGasStrategy.kind === "DERIVED",
         salesGasStrategy.kind === "DERIVED" && salesGasStrategy.hasGasInjection,
@@ -83,11 +83,15 @@ const isVectorNeededAtom = atom<boolean[]>((get) => {
     ];
 });
 
+/**
+ * Monthly native cumulative totals with source coverage, for the full ensemble so that the evaluation
+ * horizon and cost years do not move with realization filtering; filtering is applied afterwards.
+ */
 const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
     const ensembleIdent = get(ensembleIdentAtom);
     const regularEnsembleIdent =
         ensembleIdent && isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent) ? ensembleIdent : null;
-    const realizationsEncodedAsUintListStr = get(encodedRealizationsAtom);
+    const realizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
     const isVectorNeeded = get(isVectorNeededAtom);
 
     const queries = VECTOR_NAMES_IN_QUERY_ORDER.map((vectorName, index) => {
@@ -96,7 +100,8 @@ const regularEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
                 case_uuid: regularEnsembleIdent?.getCaseUuid() ?? "",
                 ensemble_name: regularEnsembleIdent?.getEnsembleName() ?? "",
                 vector_name: vectorName,
-                resampling_frequency: Frequency_api.YEARLY,
+                resampling_frequency: Frequency_api.MONTHLY,
+                include_source_coverage: true,
                 realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
                 ...makeCacheBustingQueryParam(regularEnsembleIdent),
             },
@@ -114,7 +119,7 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
         ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) ? ensembleIdent : null;
     const comparisonEnsembleIdent = deltaEnsembleIdent?.getComparisonEnsembleIdent() ?? null;
     const referenceEnsembleIdent = deltaEnsembleIdent?.getReferenceEnsembleIdent() ?? null;
-    const realizationsEncodedAsUintListStr = get(encodedRealizationsAtom);
+    const realizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
     const isVectorNeeded = get(isVectorNeededAtom);
 
     const queries = VECTOR_NAMES_IN_QUERY_ORDER.map((vectorName, index) => {
@@ -125,7 +130,8 @@ const deltaEnsembleVectorDataQueriesAtom = atomWithQueries((get) => {
                 reference_case_uuid: referenceEnsembleIdent?.getCaseUuid() ?? "",
                 reference_ensemble_name: referenceEnsembleIdent?.getEnsembleName() ?? "",
                 vector_name: vectorName,
-                resampling_frequency: Frequency_api.YEARLY,
+                resampling_frequency: Frequency_api.MONTHLY,
+                include_source_coverage: true,
                 realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
                 ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
             },
@@ -168,68 +174,4 @@ export const vectorDataQueriesAtom = atom((get) => {
     return get(isDeltaEnsembleAtom)
         ? get(deltaEnsembleVectorDataQueriesAtom)
         : get(regularEnsembleVectorDataQueriesAtom);
-});
-
-/** Annual production vectors for the complete ensemble, independent of active realization filters. */
-const automaticBaseYearProductionVectorsAtom = atom<string[]>((get) => {
-    const salesGasStrategy = get(salesGasStrategyAtom);
-    return [OIL_PRODUCTION_VECTOR, salesGasStrategy.kind === "DIRECT" ? SALES_GAS_VECTOR : GAS_PRODUCTION_VECTOR];
-});
-
-const regularAutomaticBaseYearVectorDataQueriesAtom = atomWithQueries((get) => {
-    const ensembleIdent = get(ensembleIdentAtom);
-    const regularEnsembleIdent =
-        ensembleIdent && isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent) ? ensembleIdent : null;
-    const allRealizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
-    const productionVectors = get(automaticBaseYearProductionVectorsAtom);
-
-    const queries = productionVectors.map((vectorName) => {
-        const options = getRealizationsVectorDataOptions({
-            query: {
-                case_uuid: regularEnsembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: regularEnsembleIdent?.getEnsembleName() ?? "",
-                vector_name: vectorName,
-                resampling_frequency: Frequency_api.YEARLY,
-                realizations_encoded_as_uint_list_str: allRealizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(regularEnsembleIdent),
-            },
-        });
-        return () => ({ ...options, enabled: Boolean(regularEnsembleIdent) });
-    });
-
-    return { queries };
-});
-
-const deltaAutomaticBaseYearVectorDataQueriesAtom = atomWithQueries((get) => {
-    const ensembleIdent = get(ensembleIdentAtom);
-    const deltaEnsembleIdent =
-        ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) ? ensembleIdent : null;
-    const comparisonEnsembleIdent = deltaEnsembleIdent?.getComparisonEnsembleIdent() ?? null;
-    const referenceEnsembleIdent = deltaEnsembleIdent?.getReferenceEnsembleIdent() ?? null;
-    const allRealizationsEncodedAsUintListStr = get(encodedAllEnsembleRealizationsAtom);
-    const productionVectors = get(automaticBaseYearProductionVectorsAtom);
-
-    const queries = productionVectors.map((vectorName) => {
-        const options = getDeltaEnsembleRealizationsVectorDataOptions({
-            query: {
-                comparison_case_uuid: comparisonEnsembleIdent?.getCaseUuid() ?? "",
-                comparison_ensemble_name: comparisonEnsembleIdent?.getEnsembleName() ?? "",
-                reference_case_uuid: referenceEnsembleIdent?.getCaseUuid() ?? "",
-                reference_ensemble_name: referenceEnsembleIdent?.getEnsembleName() ?? "",
-                vector_name: vectorName,
-                resampling_frequency: Frequency_api.YEARLY,
-                realizations_encoded_as_uint_list_str: allRealizationsEncodedAsUintListStr,
-                ...makeCacheBustingQueryParam(comparisonEnsembleIdent, referenceEnsembleIdent),
-            },
-        });
-        return () => ({ ...options, enabled: Boolean(deltaEnsembleIdent) });
-    });
-
-    return { queries };
-});
-
-export const automaticBaseYearVectorDataQueriesAtom = atom((get) => {
-    return get(isDeltaEnsembleAtom)
-        ? get(deltaAutomaticBaseYearVectorDataQueriesAtom)
-        : get(regularAutomaticBaseYearVectorDataQueriesAtom);
 });

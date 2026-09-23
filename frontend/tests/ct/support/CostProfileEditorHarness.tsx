@@ -8,9 +8,13 @@ const DEFAULT_COST_PROFILE: CostProfileEntry[] = [{ year: 2020, capex: 100, opex
 export function CostProfileEditorHarness({
     initialCostProfile = DEFAULT_COST_PROFILE,
     isDelta = false,
+    startYear = 2020,
+    endYear = 2022,
 }: {
     initialCostProfile?: CostProfileEntry[];
     isDelta?: boolean;
+    startYear?: number | null;
+    endYear?: number | null;
 }) {
     const [costProfile, setCostProfile] = useState<CostProfileEntry[]>(initialCostProfile);
     const [isReady, setIsReady] = useState(true);
@@ -21,12 +25,13 @@ export function CostProfileEditorHarness({
                 value={costProfile}
                 currency="USD"
                 isDelta={isDelta}
-                evaluationWindow={{ firstYear: null, lastYear: null }}
+                startYear={startYear}
+                endYear={endYear}
                 onValueChange={setCostProfile}
                 onValidityChange={setIsReady}
             />
             <output data-testid="cost-schedule-ready">{isReady ? "ready" : "pending"}</output>
-            <output data-testid="committed-cost-year">{costProfile[0]?.year ?? "none"}</output>
+            <output data-testid="committed-cost-profile">{JSON.stringify(costProfile)}</output>
         </>
     );
 }

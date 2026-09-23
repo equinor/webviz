@@ -11,16 +11,15 @@ import { KeyKind } from "@framework/types/dataChannnel";
 import { EARLY_MEASURE_CHANNEL_ID_MAP } from "@modules/EconomicScreening/channelDefs";
 import type { Interfaces } from "@modules/EconomicScreening/interfaces";
 import { EarlyEconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
+import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import { EarlyMeasureChannelPublisher } from "@modules/EconomicScreening/view/components/earlyMeasureChannelPublisher";
 
-const RESULTS: RealizationEconomicResult[] = [
+const RESULTS: MonthlyRealizationEconomicResult[] = [
     {
         realization: 1,
-        valuationYear: 2020,
-        years: [2020],
-        oilVolumes: [100],
-        salesGasVolumes: [0],
+        predictionStartYear: 2020,
+        evaluationEndYear: 2020,
+        annualProfile: [],
         hasOilData: true,
         hasSalesGasData: true,
         gasToOilEquivalentDivisor: 1000,
@@ -32,8 +31,16 @@ const RESULTS: RealizationEconomicResult[] = [
         npv: 90,
         irr: null,
         breakEvenOilPrice: null,
-        netCashFlow: [100],
-        discountFactors: [0.9],
+        excludedCostYears: [],
+        early: {
+            endYear: 2020,
+            hasOilData: true,
+            hasSalesGasData: true,
+            discountedOilVolume: 90,
+            discountedSalesGasVolume: 0,
+            discountedOilEquivalents: 90,
+            npv: 90,
+        },
     },
 ];
 

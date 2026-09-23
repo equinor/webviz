@@ -1,7 +1,6 @@
 import { Table } from "@lib/components/Table";
 import { formatNumber } from "@modules/_shared/utils/numberFormatting";
 import { EconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
-import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
 import type { MeasureUnitContext } from "@modules/EconomicScreening/utils/measureAccessors";
 import {
     getMeasureDisplayName,
@@ -9,9 +8,10 @@ import {
     getMeasureUnit,
     getMeasureValues,
 } from "@modules/EconomicScreening/utils/measureAccessors";
+import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 
 export type RealizationResultsTableProps = {
-    results: RealizationEconomicResult[];
+    results: MonthlyRealizationEconomicResult[];
     unitContext: MeasureUnitContext;
     selectedRealization: number | null;
     onSelectedRealizationChange: (realization: number | null) => void;

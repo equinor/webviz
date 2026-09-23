@@ -2,29 +2,37 @@ import { describe, expect, test } from "vitest";
 
 import { EARLY_MEASURE_CHANNEL_ID_MAP, channelDefs } from "@modules/EconomicScreening/channelDefs";
 import { makeEarlyMeasureDataGenerator } from "@modules/EconomicScreening/dataGenerators";
-import { EarlyEconomicMeasure, DiscountConvention } from "@modules/EconomicScreening/typesAndEnums";
-import { computeRealizationEconomics } from "@modules/EconomicScreening/utils/economicCalculations";
+import { EarlyEconomicMeasure } from "@modules/EconomicScreening/typesAndEnums";
+import { computeMonthlyRealizationEconomics } from "@modules/EconomicScreening/utils/monthlyEconomics";
+import { MonthCoverage, monthIndexOf } from "@modules/EconomicScreening/utils/monthlyProduction";
 
-const result = computeRealizationEconomics(
+const oilVolumes = [10, ...new Array(11).fill(0), 20, ...new Array(11).fill(0)];
+
+const result = computeMonthlyRealizationEconomics(
     {
         realization: 12,
-        years: [2020, 2021],
-        oilVolumes: [10, 20],
-        salesGasVolumes: [0, 0],
-        hasOilData: true,
-        hasSalesGasData: false,
+        oilProfile: {
+            months: oilVolumes.map((volume, index) => ({
+                year: 2020 + Math.floor(index / 12),
+                month: (index % 12) + 1,
+                volume,
+                coverage: MonthCoverage.SOURCE_ALIGNED,
+            })),
+            totalIncrement: 30,
+            rejection: null,
+        },
+        salesGasProfile: null,
     },
     {
         discountRateFraction: 0,
-        baseYear: 2020,
-        convention: DiscountConvention.YEAR_END,
+        predictionStartYear: 2020,
+        horizonEndMonthIndex: monthIndexOf(2021, 12),
         gasToOilEquivalentDivisor: 1000,
         oilPricePerVolume: 1,
-        gasPricePerVolume: null,
-        excludeGasRevenue: true,
+        gasPricePerVolume: 0,
+        earlyEndYear: 2020,
     },
     [],
-    { firstYear: null, lastYear: null },
 );
 
 describe("makeEarlyMeasureDataGenerator", () => {
@@ -41,6 +49,20 @@ describe("makeEarlyMeasureDataGenerator", () => {
 
         expect(generated.data).toEqual([{ key: 12, value: 10 }]);
         expect(generated.metaData.displayString).toBe("Through 2020: Ensemble");
+    });
+
+    test("does not publish values computed for a different early year", () => {
+        const generated = makeEarlyMeasureDataGenerator(
+            [result],
+            EarlyEconomicMeasure.DISCOUNTED_OIL_VOLUME,
+            2021,
+            "SM3",
+            "ensemble",
+            "Ensemble",
+            "#000",
+        )();
+
+        expect(generated.data).toEqual([]);
     });
 
     test("does not publish unavailable product data as zero", () => {

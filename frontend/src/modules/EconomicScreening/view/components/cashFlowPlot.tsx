@@ -3,14 +3,14 @@ import type { Layout, PlotData } from "plotly.js";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { Plot } from "@modules/_shared/components/Plot";
 import { CashFlowProfileType } from "@modules/EconomicScreening/typesAndEnums";
-import type { RealizationEconomicResult } from "@modules/EconomicScreening/utils/economicCalculations";
+import type { MonthlyRealizationEconomicResult } from "@modules/EconomicScreening/utils/monthlyEconomics";
 import {
     aggregateAnnualVolumeProfiles,
     aggregateCashFlowProfiles,
 } from "@modules/EconomicScreening/utils/timeProfileAggregation";
 
 export type CashFlowPlotProps = {
-    results: RealizationEconomicResult[];
+    results: MonthlyRealizationEconomicResult[];
     currency: string;
     oilUnit: string;
     gasUnit: string;
@@ -21,17 +21,45 @@ export type CashFlowPlotProps = {
     height: number;
 };
 
+type AnnualSeries = {
+    realization: number;
+    years: number[];
+    oilVolumes: number[];
+    salesGasVolumes: number[];
+    hasOilData: boolean;
+    hasSalesGasData: boolean;
+    netCashFlow: number[] | null;
+    cumulativeDiscountedCashFlow: number[] | null;
+};
+
+/** Annual values are sums of already-discounted monthly results; nothing is re-discounted here. */
+function toAnnualSeries(result: MonthlyRealizationEconomicResult): AnnualSeries {
+    const profile = result.annualProfile;
+    const hasCashFlow = profile.length > 0 && profile.every((entry) => entry.netCashFlow !== null);
+    return {
+        realization: result.realization,
+        years: profile.map((entry) => entry.year),
+        oilVolumes: profile.map((entry) => entry.oilVolume),
+        salesGasVolumes: profile.map((entry) => entry.salesGasVolume),
+        hasOilData: result.hasOilData,
+        hasSalesGasData: result.hasSalesGasData,
+        netCashFlow: hasCashFlow ? profile.map((entry) => entry.netCashFlow!) : null,
+        cumulativeDiscountedCashFlow: hasCashFlow ? profile.map((entry) => entry.cumulativeDiscountedCashFlow!) : null,
+    };
+}
+
 export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
+    const annualSeries = props.results.map(toAnnualSeries);
     const cashFlowAggregate = aggregateCashFlowProfiles(
-        props.results.map((result) => ({
+        annualSeries.map((result) => ({
             realization: result.realization,
             years: result.years,
             netCashFlow: result.netCashFlow,
-            cumulativeDiscountedCashFlow: result.cumulativeDiscountedCashFlow ?? null,
+            cumulativeDiscountedCashFlow: result.cumulativeDiscountedCashFlow,
         })),
     );
     const oilAggregate = aggregateAnnualVolumeProfiles(
-        props.results.map((result) => ({
+        annualSeries.map((result) => ({
             realization: result.realization,
             years: result.years,
             values: result.oilVolumes,
@@ -39,7 +67,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         })),
     );
     const salesGasAggregate = aggregateAnnualVolumeProfiles(
-        props.results.map((result) => ({
+        annualSeries.map((result) => ({
             realization: result.realization,
             years: result.years,
             values: result.salesGasVolumes,
@@ -71,7 +99,7 @@ export function CashFlowPlot(props: CashFlowPlotProps): React.ReactNode {
         return <ContentInfo>No complete profile data is available for the selected time profile.</ContentInfo>;
     }
 
-    const selectedResult = props.results.find((result) => result.realization === props.selectedRealization);
+    const selectedResult = annualSeries.find((result) => result.realization === props.selectedRealization);
     const selectedValues =
         selectedResult &&
         (props.profileType === CashFlowProfileType.ANNUAL_OIL_VOLUME

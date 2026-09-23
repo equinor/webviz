@@ -6,6 +6,7 @@ import {
     convertGasToOilEquivalentFactorToSimulatorUnit,
     convertOilPriceFromSimulatorUnit,
     convertOilPriceToSimulatorUnit,
+    makeFixedOilEquivalentDivisor,
     volumeUnitInSm3,
 } from "@modules/EconomicScreening/utils/unitConversion";
 
@@ -67,5 +68,23 @@ describe("convertGasToOilEquivalentFactorToSimulatorUnit", () => {
 
     test("returns null when either unit is unknown", () => {
         expect(convertGasToOilEquivalentFactorToSimulatorUnit(1000, "SM3", "???")).toBeNull();
+    });
+});
+
+describe("makeFixedOilEquivalentDivisor", () => {
+    test("fixes the SODIR convention of 1000 Sm³ gas per Sm³ oil equivalent", () => {
+        expect(makeFixedOilEquivalentDivisor("SM3", "SM3")).toBeCloseTo(1000, 10);
+    });
+
+    test("applies the convention after unit conversion", () => {
+        expect(makeFixedOilEquivalentDivisor("BBL", "MSCF")).toBeCloseTo(
+            convertGasToOilEquivalentFactorToSimulatorUnit(1000, "BBL", "MSCF")!,
+            10,
+        );
+        expect(makeFixedOilEquivalentDivisor("SM3", "MSCF")).toBeCloseTo(35.3147, 3);
+    });
+
+    test("returns null when either unit is unknown", () => {
+        expect(makeFixedOilEquivalentDivisor("???", "SM3")).toBeNull();
     });
 });

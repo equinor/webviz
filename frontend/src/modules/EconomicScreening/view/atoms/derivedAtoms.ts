@@ -1,19 +1,24 @@
 import { atom } from "jotai";
 
-import type { VectorRealizationData_api } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import type { EvaluationWindow } from "@modules/EconomicScreening/typesAndEnums";
+import { DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR, type SourceHorizon } from "@modules/EconomicScreening/typesAndEnums";
 import {
-    computeRealizationEconomics,
-    type RealizationEconomicResult,
-    type ResolvedEconomicAssumptions,
-} from "@modules/EconomicScreening/utils/economicCalculations";
-import { normalizeEconomicProfiles } from "@modules/EconomicScreening/utils/normalizedProfiles";
+    computeMonthlyRealizationEconomics,
+    type MonthlyRealizationEconomicResult,
+    type ResolvedMonthlyAssumptions,
+} from "@modules/EconomicScreening/utils/monthlyEconomics";
+import {
+    computeMonthlyVolumesFromCumulative,
+    lastSupportedMonthIndex,
+    monthIndexOf,
+    SourceKind,
+    type MonthlyProductionProfile,
+} from "@modules/EconomicScreening/utils/monthlyProduction";
 import {
     convertGasPriceToSimulatorUnit,
-    convertGasToOilEquivalentFactorToSimulatorUnit,
     convertOilPriceToSimulatorUnit,
+    makeFixedOilEquivalentDivisor,
 } from "@modules/EconomicScreening/utils/unitConversion";
 import type { RealizationCumulativeSeries } from "@modules/EconomicScreening/utils/vectorResolution";
 import {
@@ -28,17 +33,16 @@ import { selectedEnsembleIdentAtom } from "../../settings/atoms/persistableFixab
 
 import {
     costProfileAtom,
-    discountAssumptionsAtom,
     earlyValueConfigurationAtom,
+    economicAssumptionsAtom,
     ensembleIdentAtom,
-    evaluationWindowAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     salesGasStrategyAtom,
 } from "./baseAtoms";
 import {
     deltaConstituentGasConsumptionQueriesAtom,
-    automaticBaseYearVectorDataQueriesAtom,
+    isVectorNeededAtom,
     validRealizationNumbersAtom,
     vectorDataQueriesAtom,
     VectorQueryIndex,
@@ -57,35 +61,43 @@ export type SalesGasData = {
     incompleteConsumptionRealizations: number[];
 };
 
+export type EvaluationHorizon = {
+    startYear: number;
+    endYear: number;
+    endMonthIndex: number;
+};
+
 export type EconomicScreeningResults = {
-    results: RealizationEconomicResult[];
+    results: MonthlyRealizationEconomicResult[];
     oilUnit: string;
     gasUnit: string;
     warnings: string[];
     errors: string[];
     isEarlyValueConfigurationValid: boolean;
+    horizon: EvaluationHorizon | null;
 };
 
-export function getEvaluationRangeError(
-    evaluationGridYears: number[],
-    evaluationWindow: EvaluationWindow,
-): string | null {
-    if (
-        evaluationWindow.firstYear !== null &&
-        evaluationWindow.lastYear !== null &&
-        evaluationWindow.firstYear > evaluationWindow.lastYear
-    ) {
-        return "Evaluation start year must be before or equal to the end year.";
-    }
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    const firstAvailableYear = Math.min(...evaluationGridYears);
-    const lastAvailableYear = Math.max(...evaluationGridYears);
-    const resolvedEvaluationFirstYear = evaluationWindow.firstYear ?? firstAvailableYear;
-    const resolvedEvaluationLastYear = evaluationWindow.lastYear ?? lastAvailableYear;
-    const hasEvaluationData = evaluationGridYears.some(
-        (year) => year >= resolvedEvaluationFirstYear && year <= resolvedEvaluationLastYear,
-    );
-    return hasEvaluationData ? null : "The evaluation range contains no production or cost years.";
+function formatMonthIndex(monthIndex: number): string {
+    return `${MONTH_NAMES[monthIndex % 12]} ${Math.floor(monthIndex / 12)}`;
+}
+
+/** The prediction start must fall inside the source envelope; there is no evaluation otherwise. */
+export function getPredictionHorizonError(
+    predictionStartYear: number | null,
+    envelopeEndMonthIndex: number | null,
+): string | null {
+    if (predictionStartYear === null) {
+        return "Enter a prediction start year to calculate results.";
+    }
+    if (envelopeEndMonthIndex === null) {
+        return "Source coverage is unavailable, so the simulation end cannot be established.";
+    }
+    if (monthIndexOf(predictionStartYear, 1) > envelopeEndMonthIndex) {
+        return `The prediction start year ${predictionStartYear} is after the supported simulation end (${formatMonthIndex(envelopeEndMonthIndex)}).`;
+    }
+    return null;
 }
 
 export const isFetchingAtom = atom<boolean>((get) => {
@@ -107,13 +119,33 @@ export const queryErrorAtom = atom<string | null>((get) => {
     return `Could not load vector data for ${failedVectorNames.join(", ")}.`;
 });
 
-const oilProductionDataAtom = atom<VectorRealizationData_api[]>((get) => {
-    return get(vectorDataQueriesAtom)[VectorQueryIndex.OIL_PRODUCTION].data ?? [];
+const sourceKindAtom = atom<SourceKind>((get) => {
+    const ensembleIdent = get(ensembleIdentAtom);
+    return ensembleIdent && isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)
+        ? SourceKind.DELTA
+        : SourceKind.REGULAR;
+});
+
+/** True only when every needed source request has succeeded; pending or failed requests never count. */
+const areRequiredSourcesLoadedAtom = atom<boolean>((get) => {
+    const queries = get(vectorDataQueriesAtom);
+    const isVectorNeeded = get(isVectorNeededAtom);
+    return isVectorNeeded.some(Boolean) && queries.every((query, index) => !isVectorNeeded[index] || query.isSuccess);
+});
+
+const oilProductionUnitAtom = atom<string>((get) => {
+    return get(vectorDataQueriesAtom)[VectorQueryIndex.OIL_PRODUCTION].data?.[0]?.unit ?? "";
+});
+
+const oilProductionSeriesAtom = atom<RealizationCumulativeSeries[]>((get) => {
+    const data = get(vectorDataQueriesAtom)[VectorQueryIndex.OIL_PRODUCTION].data ?? [];
+    return toRealizationCumulativeSeries(data, get(sourceKindAtom));
 });
 
 const salesGasDataAtom = atom<SalesGasData>((get) => {
     const salesGasStrategy = get(salesGasStrategyAtom);
     const queries = get(vectorDataQueriesAtom);
+    const sourceKind = get(sourceKindAtom);
     const ensembleKey = get(selectedEnsembleIdentAtom).value?.toString();
     const missingComponentAssumptions = ensembleKey ? get(missingComponentAssumptionsAtom)[ensembleKey] : undefined;
 
@@ -123,7 +155,7 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
             ? (queries[VectorQueryIndex.GAS_CONSUMPTION].data ?? [])
             : [];
         return {
-            series: toRealizationCumulativeSeries(data),
+            series: toRealizationCumulativeSeries(data, sourceKind),
             unit: data[0]?.unit ?? "",
             hasZeroGasConsumption: salesGasStrategy.hasGasConsumption && isCumulativeVectorAllZero(gasConsumptionData),
             isGasConsumptionMissing: !salesGasStrategy.hasGasConsumption,
@@ -149,6 +181,7 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
             gasInjectionData,
             gasConsumptionData,
             missingComponentAssumptions,
+            sourceKind,
         );
         return {
             series: derivedSalesGas.series,
@@ -180,17 +213,62 @@ const salesGasDataAtom = atom<SalesGasData>((get) => {
     };
 });
 
+type RealizationProfiles = {
+    realization: number;
+    oilProfile: MonthlyProductionProfile | null;
+    salesGasProfile: MonthlyProductionProfile | null;
+};
+
+function toProfile(series: RealizationCumulativeSeries | undefined): MonthlyProductionProfile | null {
+    return series
+        ? computeMonthlyVolumesFromCumulative(series.timestampsUtcMs, series.values, series.intervalCoverage)
+        : null;
+}
+
+/** Assumption-independent monthly profiles for every fetched realization. */
+const realizationProfilesAtom = atom<RealizationProfiles[]>((get) => {
+    const oilSeriesByRealization = new Map(get(oilProductionSeriesAtom).map((series) => [series.realization, series]));
+    const gasSeriesByRealization = new Map(get(salesGasDataAtom).series.map((series) => [series.realization, series]));
+    const realizations = [...new Set([...oilSeriesByRealization.keys(), ...gasSeriesByRealization.keys()])].sort(
+        (first, second) => first - second,
+    );
+    return realizations.map((realization) => ({
+        realization,
+        oilProfile: toProfile(oilSeriesByRealization.get(realization)),
+        salesGasProfile: toProfile(gasSeriesByRealization.get(realization)),
+    }));
+});
+
+/**
+ * Last supported month over the full fetched ensemble and every required product. Individual
+ * realizations and products are validated against this common horizon; it is not proof of their support.
+ */
+const sourceEnvelopeEndMonthIndexAtom = atom<number | null>((get) => {
+    if (!get(areRequiredSourcesLoadedAtom)) {
+        return null;
+    }
+    const supportEnds = [...get(oilProductionSeriesAtom), ...get(salesGasDataAtom).series]
+        .map((series) => series.supportEndUtcMs)
+        .filter((supportEnd): supportEnd is number => supportEnd !== null);
+    return supportEnds.length > 0 ? lastSupportedMonthIndex(Math.max(...supportEnds)) : null;
+});
+
+export const sourceHorizonAtom = atom<SourceHorizon>((get) => {
+    const envelopeEndMonthIndex = get(sourceEnvelopeEndMonthIndexAtom);
+    return {
+        endYear: envelopeEndMonthIndex === null ? null : Math.floor(envelopeEndMonthIndex / 12),
+        isLoading: get(isFetchingAtom),
+    };
+});
+
 export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get) => {
-    const oilProductionData = get(oilProductionDataAtom);
     const salesGasData = get(salesGasDataAtom);
     const ensembleIdent = get(ensembleIdentAtom);
     const isDeltaEnsemble = ensembleIdent ? isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent) : false;
     const deltaConstituentConsumptionQueries = get(deltaConstituentGasConsumptionQueriesAtom);
-    const automaticBaseYearQueries = get(automaticBaseYearVectorDataQueriesAtom);
-    const discountAssumptions = get(discountAssumptionsAtom);
+    const economicAssumptions = get(economicAssumptionsAtom);
     const priceAssumptions = get(priceAssumptionsAtom);
     const costProfile = get(costProfileAtom);
-    const evaluationWindow = get(evaluationWindowAtom);
     const earlyValueConfiguration = get(earlyValueConfigurationAtom);
     const isCostProfileDraftValid = get(isCostProfileDraftValidAtom);
     const validRealizationNumbers = get(validRealizationNumbersAtom) ?? [];
@@ -199,7 +277,7 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
     const errors: string[] = [];
     let isEarlyValueConfigurationValid = true;
 
-    const oilUnit = oilProductionData[0]?.unit ?? "";
+    const oilUnit = get(oilProductionUnitAtom);
     const gasUnit = salesGasData.unit;
     const salesGasStrategy = get(salesGasStrategyAtom);
 
@@ -263,96 +341,117 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
         );
     }
 
-    if (oilProductionData.length === 0 && salesGasData.series.length === 0) {
-        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
+    const withheld = (): EconomicScreeningResults => ({
+        results: [],
+        oilUnit,
+        gasUnit,
+        warnings,
+        errors,
+        isEarlyValueConfigurationValid,
+        horizon: null,
+    });
+
+    if (!ensembleIdent || !get(areRequiredSourcesLoadedAtom)) {
+        return withheld();
+    }
+    const realizationProfiles = get(realizationProfilesAtom);
+    if (realizationProfiles.length === 0) {
+        return withheld();
     }
 
-    const normalizedProfiles = normalizeEconomicProfiles(oilProductionData, salesGasData.series);
-    const availableYears = normalizedProfiles.flatMap((profile) => profile.years);
-    const evaluationGridYears = Array.from(
-        new Set([...availableYears, ...costProfile.map((entry) => entry.year)]),
-    ).sort((firstYear, secondYear) => firstYear - secondYear);
-    const resolvedEvaluationFirstYear = evaluationWindow.firstYear ?? Math.min(...evaluationGridYears);
-    const resolvedEvaluationLastYear = evaluationWindow.lastYear ?? Math.max(...evaluationGridYears);
-    const evaluationRangeError = getEvaluationRangeError(evaluationGridYears, evaluationWindow);
-    if (evaluationRangeError) {
-        errors.push(evaluationRangeError);
+    const { predictionStartYear, discountRatePercent } = economicAssumptions;
+    const envelopeEndMonthIndex = get(sourceEnvelopeEndMonthIndexAtom);
+    const horizonError = getPredictionHorizonError(predictionStartYear, envelopeEndMonthIndex);
+    if (horizonError) {
+        errors.push(horizonError);
     }
+    if (horizonError || predictionStartYear === null || envelopeEndMonthIndex === null) {
+        return withheld();
+    }
+    const horizon: EvaluationHorizon = {
+        startYear: predictionStartYear,
+        endYear: Math.floor(envelopeEndMonthIndex / 12),
+        endMonthIndex: envelopeEndMonthIndex,
+    };
+
     if (
         earlyValueConfiguration.enabled &&
         earlyValueConfiguration.endYear !== null &&
-        (earlyValueConfiguration.endYear < resolvedEvaluationFirstYear ||
-            earlyValueConfiguration.endYear > resolvedEvaluationLastYear)
+        (earlyValueConfiguration.endYear < horizon.startYear || earlyValueConfiguration.endYear > horizon.endYear)
     ) {
-        errors.push("Early-value end year must be within the evaluation range.");
+        errors.push(`The early-value year must be within ${horizon.startYear}-${horizon.endYear}.`);
         isEarlyValueConfigurationValid = false;
     }
 
-    if (evaluationRangeError) {
-        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
-    }
-
     const gasToOilEquivalentDivisor =
-        gasUnit === ""
-            ? discountAssumptions.gasToOilEquivalentFactor
-            : convertGasToOilEquivalentFactorToSimulatorUnit(
-                  discountAssumptions.gasToOilEquivalentFactor,
-                  oilUnit,
-                  gasUnit,
-              );
-
+        oilUnit === "" || gasUnit === ""
+            ? DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR
+            : makeFixedOilEquivalentDivisor(oilUnit, gasUnit);
     const oilPricePerVolume =
         priceAssumptions.oilPrice === null
             ? null
-            : convertOilPriceToSimulatorUnit(priceAssumptions.oilPrice, priceAssumptions.oilPriceBasis, oilUnit);
+            : oilUnit === ""
+              ? priceAssumptions.oilPrice === 0
+                  ? 0
+                  : null
+              : convertOilPriceToSimulatorUnit(priceAssumptions.oilPrice, priceAssumptions.oilPriceBasis, oilUnit);
     const gasPricePerVolume =
-        priceAssumptions.gasPrice === null || gasUnit === ""
+        priceAssumptions.gasPrice === null
             ? null
-            : convertGasPriceToSimulatorUnit(priceAssumptions.gasPrice, priceAssumptions.gasPriceBasis, gasUnit);
+            : gasUnit === ""
+              ? priceAssumptions.gasPrice === 0
+                  ? 0
+                  : null
+              : convertGasPriceToSimulatorUnit(priceAssumptions.gasPrice, priceAssumptions.gasPriceBasis, gasUnit);
 
-    if (priceAssumptions.oilPrice !== null && oilPricePerVolume === null) {
+    if (priceAssumptions.oilPrice !== null && oilUnit !== "" && oilPricePerVolume === null) {
         errors.push(`Unrecognised oil volume unit "${oilUnit}". Cannot apply the given oil price.`);
     }
     if (priceAssumptions.gasPrice !== null && gasUnit !== "" && gasPricePerVolume === null) {
         errors.push(`Unrecognised gas volume unit "${gasUnit}". Cannot apply the given gas price.`);
     }
-    if (oilUnit !== "" && gasUnit !== "" && gasToOilEquivalentDivisor === null) {
+    if (gasToOilEquivalentDivisor === null) {
         errors.push(`Cannot convert between oil unit "${oilUnit}" and gas unit "${gasUnit}".`);
     }
-
-    if (errors.some((error) => error !== "Early-value end year must be within the evaluation range.")) {
-        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
+    if (errors.some((error) => !error.startsWith("The early-value year"))) {
+        return withheld();
     }
 
-    if (discountAssumptions.baseYear === null && automaticBaseYearQueries.some((query) => query.data === undefined)) {
-        errors.push("Automatic valuation year is unavailable until ensemble production data has loaded.");
-        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
-    }
-    const automaticBaseYearTimestamps = automaticBaseYearQueries.flatMap((query) =>
-        (query.data ?? []).flatMap((series) => series.timestampsUtcMs.filter(Number.isFinite)),
-    );
-    const resolvedAutomaticBaseYear = automaticBaseYearTimestamps.length
-        ? new Date(Math.min(...automaticBaseYearTimestamps)).getUTCFullYear()
-        : null;
-    if (discountAssumptions.baseYear === null && resolvedAutomaticBaseYear === null) {
-        errors.push("Automatic valuation year is unavailable until ensemble production data has loaded.");
-        return { results: [], oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
-    }
-    const assumptions: ResolvedEconomicAssumptions = {
-        discountRateFraction: discountAssumptions.discountRatePercent / 100,
-        baseYear: discountAssumptions.baseYear ?? resolvedAutomaticBaseYear,
-        convention: discountAssumptions.convention,
-        investmentTiming: discountAssumptions.investmentTiming,
-        gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? discountAssumptions.gasToOilEquivalentFactor,
+    const assumptions: ResolvedMonthlyAssumptions = {
+        discountRateFraction: discountRatePercent / 100,
+        predictionStartYear,
+        horizonEndMonthIndex: envelopeEndMonthIndex,
+        gasToOilEquivalentDivisor: gasToOilEquivalentDivisor ?? DEFAULT_GAS_TO_OIL_EQUIVALENT_FACTOR,
         oilPricePerVolume,
         gasPricePerVolume,
-        excludeOilRevenue: priceAssumptions.excludeOilRevenue,
-        excludeGasRevenue: priceAssumptions.excludeGasRevenue,
+        earlyEndYear:
+            earlyValueConfiguration.enabled && isEarlyValueConfigurationValid ? earlyValueConfiguration.endYear : null,
     };
 
-    const results = normalizedProfiles.map((profile) => {
-        return computeRealizationEconomics(profile, assumptions, costProfile, evaluationWindow);
-    });
+    const selectedRealizations = new Set(validRealizationNumbers);
+    const results = realizationProfiles
+        .filter((profiles) => selectedRealizations.has(profiles.realization))
+        .map((profiles) => computeMonthlyRealizationEconomics(profiles, assumptions, costProfile));
+
+    const horizonLabel = `Jan ${horizon.startYear}-${formatMonthIndex(horizon.endMonthIndex)}`;
+    const incompleteOilCount = results.filter((result) => !result.hasOilData).length;
+    const incompleteGasCount = results.filter((result) => !result.hasSalesGasData).length;
+    if (get(oilProductionSeriesAtom).length > 0 && incompleteOilCount > 0) {
+        warnings.push(
+            `Oil source coverage is incomplete over ${horizonLabel} for ${incompleteOilCount} of ${results.length} realizations; their results that need oil are withheld.`,
+        );
+    }
+    if (salesGasData.series.length > 0 && incompleteGasCount > 0) {
+        warnings.push(
+            `Sales gas source coverage is incomplete over ${horizonLabel} for ${incompleteGasCount} of ${results.length} realizations; their results that need gas are withheld.`,
+        );
+    }
+    const excludedCostYears = results[0]?.excludedCostYears ?? [];
+    if (excludedCostYears.length > 0) {
+        warnings.push(
+            `Costs entered for ${excludedCostYears.join(", ")} are outside ${horizon.startYear}-${horizon.endYear} and are not used.`,
+        );
+    }
 
     if (!isCostProfileDraftValid) {
         warnings.push("Financial results are unavailable until the cost schedule is valid.");
@@ -364,17 +463,22 @@ export const economicScreeningResultsAtom = atom<EconomicScreeningResults>((get)
                 irrStatus: undefined,
                 breakEvenOilPrice: null,
                 breakEvenSlopeDirection: undefined,
-                netCashFlow: null,
-                discountedNetCashFlow: null,
-                cumulativeDiscountedCashFlow: null,
+                annualProfile: result.annualProfile.map((entry) => ({
+                    ...entry,
+                    netCashFlow: null,
+                    discountedNetCashFlow: null,
+                    cumulativeDiscountedCashFlow: null,
+                })),
+                early: result.early ? { ...result.early, npv: null } : null,
             })),
             oilUnit,
             gasUnit,
             warnings,
             errors,
             isEarlyValueConfigurationValid,
+            horizon,
         };
     }
 
-    return { results, oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid };
+    return { results, oilUnit, gasUnit, warnings, errors, isEarlyValueConfigurationValid, horizon };
 });

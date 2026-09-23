@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
 
 import {
-    getCostYearsOutsideEvaluationWindow,
+    getCostYearsOutsideRange,
     parseCostProfilePaste,
+    setCostEntry,
     validateCostProfile,
+    validatePastedCostYears,
 } from "@modules/EconomicScreening/settings/components/costProfileEditor";
 
 describe("validateCostProfile", () => {
@@ -53,17 +55,73 @@ describe("parseCostProfilePaste", () => {
     });
 });
 
-describe("getCostYearsOutsideEvaluationWindow", () => {
-    test("identifies costs excluded by an explicit evaluation range", () => {
+describe("getCostYearsOutsideRange", () => {
+    test("identifies non-zero stored costs outside the generated years", () => {
         expect(
-            getCostYearsOutsideEvaluationWindow(
+            getCostYearsOutsideRange(
                 [
-                    { year: 2024, capex: 0, opex: 0 },
-                    { year: 2025, capex: 0, opex: 0 },
-                    { year: 2027, capex: 0, opex: 0 },
+                    { year: 2024, capex: 10, opex: 0 },
+                    { year: 2025, capex: 0, opex: 5 },
+                    { year: 2027, capex: 0, opex: 3 },
+                    { year: 2028, capex: 0, opex: 0 },
                 ],
-                { firstYear: 2025, lastYear: 2026 },
+                2025,
+                2026,
             ),
         ).toEqual([2024, 2027]);
+    });
+
+    test("lists every non-zero stored cost while no cost years are available", () => {
+        expect(getCostYearsOutsideRange([{ year: 2030, capex: 1, opex: 0 }], null, 2040)).toEqual([2030]);
+    });
+});
+
+describe("validatePastedCostYears", () => {
+    test("accepts distinct generated years in any order", () => {
+        expect(
+            validatePastedCostYears(
+                [
+                    { year: 2026, capex: 1, opex: 0 },
+                    { year: 2025, capex: 1, opex: 0 },
+                ],
+                2025,
+                2026,
+            ),
+        ).toBeNull();
+    });
+
+    test("rejects pasted years outside the generated range", () => {
+        expect(validatePastedCostYears([{ year: 2027, capex: 1, opex: 0 }], 2025, 2026)).toBe(
+            "Pasted year 2027 is outside the cost years 2025-2026.",
+        );
+    });
+
+    test("rejects duplicate pasted years", () => {
+        expect(
+            validatePastedCostYears(
+                [
+                    { year: 2025, capex: 1, opex: 0 },
+                    { year: 2025, capex: 2, opex: 0 },
+                ],
+                2025,
+                2026,
+            ),
+        ).toBe("Pasted year 2025 appears more than once.");
+    });
+});
+
+describe("setCostEntry", () => {
+    test("replaces a year, keeps other entries including out-of-range ones, and drops all-zero entries", () => {
+        const stored = [
+            { year: 2020, capex: 900, opex: 0 },
+            { year: 2031, capex: 5, opex: 1 },
+        ];
+
+        expect(setCostEntry(stored, { year: 2030, capex: -10, opex: 0 })).toEqual([
+            { year: 2020, capex: 900, opex: 0 },
+            { year: 2030, capex: -10, opex: 0 },
+            { year: 2031, capex: 5, opex: 1 },
+        ]);
+        expect(setCostEntry(stored, { year: 2031, capex: 0, opex: 0 })).toEqual([{ year: 2020, capex: 900, opex: 0 }]);
     });
 });

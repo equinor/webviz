@@ -4,11 +4,11 @@ import type { SettingsToViewInterface } from "@modules/EconomicScreening/interfa
 import {
     costProfileAtom,
     cashFlowProfileTypeAtom,
-    discountAssumptionsAtom,
     distributionPlotTypeAtom,
     earlyValueConfigurationAtom,
+    economicAssumptionsAtom,
     ensembleIdentAtom,
-    evaluationWindowAtom,
+    hasOilProductionVectorAtom,
     isCostProfileDraftValidAtom,
     priceAssumptionsAtom,
     salesGasStrategyAtom,
@@ -21,10 +21,13 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
         setAtomValue(ensembleIdentAtom, getInterfaceValue("ensembleIdent"));
     },
     (getInterfaceValue, setAtomValue) => {
+        setAtomValue(hasOilProductionVectorAtom, getInterfaceValue("hasOilProductionVector"));
+    },
+    (getInterfaceValue, setAtomValue) => {
         setAtomValue(salesGasStrategyAtom, getInterfaceValue("salesGasStrategy"));
     },
     (getInterfaceValue, setAtomValue) => {
-        setAtomValue(discountAssumptionsAtom, getInterfaceValue("discountAssumptions"));
+        setAtomValue(economicAssumptionsAtom, getInterfaceValue("economicAssumptions"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(priceAssumptionsAtom, getInterfaceValue("priceAssumptions"));
@@ -34,9 +37,6 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(isCostProfileDraftValidAtom, getInterfaceValue("isCostProfileDraftValid"));
-    },
-    (getInterfaceValue, setAtomValue) => {
-        setAtomValue(evaluationWindowAtom, getInterfaceValue("evaluationWindow"));
     },
     (getInterfaceValue, setAtomValue) => {
         setAtomValue(earlyValueConfigurationAtom, getInterfaceValue("earlyValueConfiguration"));
